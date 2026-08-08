@@ -1,20 +1,1089 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="refresh" content="0;url=./app/"/>
-<title>Космограмма — бумажный самолётик в открытом космосе</title>
-<!-- Корневая табличка сейфа (v1.108.0 «Имена неба»): мгновенный перелёт в app/, где живёт игра.
-     Точка входа для BotFather — прямая ссылка: https://superduck77.github.io/cosmogram-app/app/ -->
-<style>
-  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-       background:#070b18;color:#dfe6ff;font-family:system-ui,sans-serif;text-align:center}
-  a{color:#8fb3ff}
+<!DOCTYPE html><html lang="ru"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#070b18"/>
+<title>Cosmogram</title>
+<!-- PWA «Вторая дверь»: устанавливается на домашний экран, работает офлайн -->
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Космограмма"/>
+<link rel="apple-touch-icon" href="icons/icon-180.png"/>
+<link rel="manifest" href="manifest.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
+<!-- v1.79.0: мост Telegram переехал из head в body ПОД затравку — на медленной сети
+     он больше не запирает парсер: самолётик рисуется, пока мост ещё летит.
+     Порядок исполнения не изменился: мост по-прежнему раньше core.js. -->
+<style>/* v1.88.0 «Облик в багаже»: вся таблица стилей — прямо здесь, внутри index.html.
+   Отдельного запроса за обликом больше нет: страница стилизована с первого байта,
+   окно «облик не загрузился» невозможно по конструкции. Затравка и сторож удалены —
+   старт ровно как раньше, но без голой вспышки и без занавесок. */
+html,body{margin:0;padding:0;background:#070b18;color:#dfe8ff}
+.ic{width:1em;height:1em;vertical-align:-.15em}
+canvas{display:block}
+.hidden{display:none!important}
+/* ============================================================
+   COSMOGRAM UI v2 — «Командная палуба»
+   Тёмная приборная роскошь: глубокий navy, приглушённое золото,
+   дисплейная типографика Russo One (локально, кириллица+латиница).
+   Игровой HUD/канвас (помечено HUD) — вне редизайна, не трогаем.
+   ============================================================ */
+
+/* v1.46.0: Exo 2 вместо Russo One — у Russo строчные нарисованы капителью, и весь текст выглядел КАПСОМ
+   вопреки решению «первая большая, остальные маленькие». Exo 2 — честные строчные, тот же техно-характер (OFL).
+   Переезд на GitHub Pages: путь 'fonts/...' без «..» — игра больше не живёт только в корне сайта,
+   относительный путь верен и в квартире /cosmogram-app/app/, и в корне стенда, и в zip-архиве. */
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:400; font-display:swap;
+  src:url('fonts/exo2-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:400; font-display:swap;
+  src:url('fonts/exo2-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+:root {
+  /* v1.59.0 «Подушка»: безопасная зона = максимум из env (браузер), TG-переменных (мини-апп 8.0+)
+     и JS-запаса (Android-WebView Telegram, где env мёртв). Одна пара на все миры. */
+  --sat:max(env(safe-area-inset-top), var(--tg-safe-area-inset-top,0px), var(--tg-content-safe-area-inset-top,0px), var(--js-sat,0px));
+  --sab:max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom,0px), var(--tg-content-safe-area-inset-bottom,0px), var(--js-sab,0px));
+  --bg-0:#0b1626;            /* глубина космоса — база */
+  --bg-1:#0f1f3d;            /* панели */
+  --bg-2:#162638;            /* приподнятые карточки */
+  --gold:#c9a45c;            /* главный акцент */
+  --gold-hi:#f0c040;         /* светлое золото: числа, рекорды */
+  --cream:#fce1b6;           /* тёплый вторичный текст */
+  --ink:#f4f6fb;             /* основной текст */
+  --muted:#7d8aa8;           /* приглушённый текст */
+  --line:rgba(255,255,255,.08);
+  --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d;          /* сдержанный коралл */
+  --ok:#8fff9f;
+  --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-ui:-apple-system,'Segoe UI',Roboto,sans-serif;
+  --r-btn:14px; --r-card:16px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0); touch-action:none;
+  overscroll-behavior:none; font-family:var(--font-ui);
+  font-weight:500; letter-spacing:.05em; font-variant-numeric:tabular-nums;
+  text-transform:uppercase; /* v1.101.0 «Чистое небо»: слово игрока — вся игра говорит ЗАГЛАВНЫМИ */
+  user-select:none; -webkit-user-select:none; }
+b { font-weight:inherit; } /* единая насыщенность: <b> только для цвета, не для жирности */
+/* v1.101.0: браузер молча сбрасывает регистр у форм-элементов — возвращаем им закон заглавных */
+button, input, select, textarea { text-transform:inherit; }
+#game { position:fixed; inset:0; display:block; }
+
+/* ---- Каркас экранов ---- */
+.overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; z-index:10; pointer-events:none; }
+/* читаемость экранов поверх живого фона: затемнение без blur (дорого на слабых).
+   v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen {
+  background:rgba(6,10,24,.45); }
+#settingsScreen, #achScreen, #hangarScreen { justify-content:flex-start;
+  padding-top:calc(48px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
+#settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+/* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
+   группы настроек — маленькие подписи над карточками */
+#settingsScreen, #achScreen, #hangarScreen { pointer-events:auto; }
+/* v1.65.0 «Спойлеры»: заголовок группы — сам кнопка-карточка; жмёшь — раскрывается её панель,
+   остальные складываются (аккордеон): на экране всегда всё помещается */
+.setGrp { width:min(92%,380px); margin:2px 0 10px; padding:13px 40px 13px 16px; text-align:left;
+  font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#c9d8f5;
+  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:var(--r-card);
+  position:relative; cursor:pointer; transition:background .2s; } /* v1.92.0: ровный ритм — одинаковый шаг между всеми группами */
+.setGrpSub { display:block; margin-top:3px; font-size:11px; font-weight:600; letter-spacing:.04em;
+  text-transform:none; color:rgba(158,178,224,.55); } /* v1.92.0: закрытая группа шёпотом отвечает, как себя чувствует (закон Nintendo) */
+.setGrp:active { background:rgba(120,170,255,.10); }
+.setGrp::after { content:'▾'; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  opacity:.5; font-size:12px; }
+.setGrp.open::after { content:'▴'; }
+.setGrp.open { margin-bottom:0; border-radius:var(--r-card) var(--r-card) 0 0;
+  border-bottom-color:transparent; }
+.setGrp + .setPanel { margin:0 0 10px; border-top:none; border-radius:0 0 var(--r-card) var(--r-card); }
+.stickyBack { position:sticky; bottom:10px; z-index:3; /* v1.50.0: «Назад» всегда на виду — не прячется за край, сколько бы ни было строк */
+  background:rgba(14,22,48,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 -6px 18px rgba(6,10,24,.55); }
+
+/* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
+#startScreen { justify-content:space-between;
+  padding-top:calc(30px + var(--sat)); }
+.scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
+.scrFoot { display:flex; justify-content:center; width:100%;
+  padding-bottom:calc(18px + var(--sab)); }
+
+/* Статус-бар: метрики всегда на своём месте, не поверх текста */
+.statusBar { display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+  margin-top:16px; min-height:32px; pointer-events:none; }
+/* метрики-метки — тот же материал, что пилюли HUD в полёте (v1.34.0) */
+.metric { display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+  background:rgba(16,24,54,.5); border:1px solid rgba(140,170,255,.18); border-radius:12px;
+  font-size:13px; color:#bcd2ff; }
+.metric:empty { display:none; }
+.metric b { color:#ffd76a; } /* число-валюта золотом — как счётчик звёзд в HUD */
+
+/* ---- SVG-иконки: наследуют цвет текста, одинаковы везде ---- */
+.ic { width:1.1em; height:1.1em; flex:none; vertical-align:-0.2em;
+  fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.i-s4 { width:.95em; height:.95em; vertical-align:-.12em; }
+.i-pl { width:1em; height:1em; vertical-align:-.14em; } /* v1.95.1: звезда-ювелирка счётчика — размером с букву, рисуется кистью, как жизни */
+
+/* ---- Кнопки: стекло неба, как панели оффера в полёте (v1.34.0 «Единая палуба») ----
+   Один кегль и один шрифт везде; иерархия — яркостью стекла, не золотом и не размером. */
+.btn { pointer-events:auto; cursor:pointer; margin:6px 0;
+  display:inline-flex; align-items:center; justify-content:center; gap:.55em;
+  border-radius:var(--r-btn); padding:14px 26px;
+  font-family:var(--font-ui); font-size:15px; font-weight:600; letter-spacing:.04em;
+  color:#dce9ff; background:rgba(10,18,36,.55); border:1px solid rgba(160,210,255,.18);
+  transition:transform .12s ease, border-color .2s, background .2s, color .2s; }
+.btn:active { transform:scale(.97); }
+.btn.pri { background:rgba(24,40,72,.7); border-color:rgba(190,225,255,.45); color:#f2f7ff;
+  box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); }
+.btn.ghost { background:rgba(10,18,36,.4); border-color:rgba(160,210,255,.12);
+  color:#9fb4d8; font-weight:500; }
+.btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.35); }
+.btn.small { padding:10px 18px; }
+
+/* Центральная стопка режимов: одна главная, под ней вторичная */
+.stack { display:flex; flex-direction:column; width:min(92%,380px); pointer-events:auto; }
+.stack .btn { width:100%; }
+
+/* iOS-кнопка разрешения наклона — мягко привлекает внимание (разовая настройка) */
+#tiltBtn { border-color:rgba(127,216,255,.5); color:#bfeaff;
+  animation:tiltPulse 2.2s ease-in-out infinite; }
+@keyframes tiltPulse { 0%,100% { background:rgba(10,18,36,.55); }
+  50% { background:rgba(28,48,86,.78); } }
+
+/* v1.99.2 «Бережное небо»: системный флаг «уменьшить движение» сам гасит DOM-пульсы и въезды */
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+/* Сетка 2 колонки для второстепенных кнопок (v1.34.0): ровный строй, нечётная последняя — на всю ширину */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:min(92%,380px); pointer-events:auto; }
+.grid2 .btn { width:100%; margin:0; }
+.grid2 .btn.span2 { grid-column:1 / -1; }
+
+@keyframes pulse { 0%,100%{opacity:.9} 50%{opacity:1} }
+
+/* Рекорды-чипы под режимами — материал пилюль HUD (v1.34.0) */
+#bestRow { display:flex; gap:8px; margin-top:12px; pointer-events:none; flex-wrap:wrap; justify-content:center; }
+.miniPill { font-size:12px; color:#9fb4d8;
+  border:1px solid rgba(140,170,255,.18); border-radius:10px; padding:4px 11px;
+  background:rgba(16,24,54,.5); }
+.miniPill b { color:#eaf2ff; }
+
+/* Подсказки: в потоке (подвал), а не абсолютом поверх контента */
+.hint { color:var(--muted); font-size:12px; text-align:center; line-height:1.7; padding:0 30px; }
+
+#toLoc { color:rgba(143,255,159,.8); font-size:13px; line-height:1.5; text-align:center;
+  margin:-12px 20px 14px; min-height:16px; }
+#toLoc:empty { margin:0; min-height:0; }
+
+/* ---- Заголовки экранов ---- */
+.screenTitle { font-family:var(--font-disp); font-weight:400;
+  font-size:clamp(28px,7.5vw,42px); letter-spacing:.05em; color:var(--ink);
+  text-shadow:0 0 22px rgba(140,180,255,.18); margin-bottom:20px; }
+.miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
+.achTab .ic, .topCat .ic { width:1.15em; height:1.15em; vertical-align:-0.2em; margin-right:.35em; }
+.topCat .ic:only-child { margin-right:0; width:19px; height:19px; }
+
+/* ============================================================
+   HUD — игровой полёт. ВНЕ редизайна: работает, не трогаем.
+   ============================================================ */
+/* v1.67.0 «Нативная шапка»: счёт крупно в ряду пилюль Telegram — как заголовок нативного приложения;
+   телеметрия одной компактной строкой под ним; пауза — иконка без звёзд; жизни не тронуты */
+/* v1.101.0 «Чистое небо»: счёт спущен из ряда пилюль под рамку — островку iPhone его не накрыть;
+   подпись СЧЁТ вернулась: без слова было неясно, что считает число */
+/* v1.102.0 «Остров и материк»: шапка-вырез — только у iPhone, значит и уступка — только им.
+   Материк: счёт возвращается в свободную середину полосы между кнопками Telegram —
+   СЧЁТ и число в одну строку, звёзды прижаты под «Назад», хребет подтянут.
+   Подпись — СОСЕД числа в общем вагоне #scorePack, не ребёнок:
+   игра переписывает число целиком каждый кадр, ребёнка бы стёрла */
+#scorePack { position:fixed; z-index:13; left:50%; transform:translateX(-50%);
+  top:max(2px, calc((var(--sat) - 58px)/2));
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+  /* v1.105.0 «Свет и дым»: подпись СЧЁТ строго НАД числом на всех небесах (как давно на «острове»),
+     число умерено — хребет подтягивается вплотную, пустоты между ними нет */
+#scoreLbl { font-size:11px; letter-spacing:.24em; font-weight:600;
+  color:rgba(188,210,255,.55); text-shadow:0 0 8px rgba(110,160,255,.35); }
+#score { font-size:clamp(26px,7vw,38px); line-height:1; font-weight:600; letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+  color:#eaf2ff; text-shadow:0 0 18px rgba(110,160,255,.75), 0 2px 6px rgba(6,10,30,.6); }
+#telemHud { position:fixed; top:max(60px, calc(2px + var(--sat))); /* v1.105.0: хребет вплотную под колонной вагона */ left:0; right:0; z-index:12;
+  display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; pointer-events:none; } /* одна ось, комбо — последний пункт хребта */
+/* Остров: железная чёлка занимает середину полосы — счёт живёт колонной под рамкой,
+   но зазоры подтянуты и число умерено (слово игрока: громоздко) */
+.island #scorePack { top:max(56px, var(--sat)); } /* v1.105.0: колонна — теперь язык всех небес, остров лишь держит своё место */
+.island #scoreLbl { font-size:11px; letter-spacing:.3em; }
+.island #score { font-size:clamp(34px,9.5vw,46px); }
+.island #telemHud { top:calc(max(56px, var(--sat)) + 76px); gap:4px; }
+.island #hud { padding-top:max(206px, calc(150px + var(--sat))); }
+.island #hudShade { height:calc(215px + var(--sat)); }
+.telemDot { color:rgba(188,210,255,.35); font-size:10px; }
+#starsTelem { font-size:17px; font-weight:600; color:#ffd76a; letter-spacing:.05em;
+  font-variant-numeric:tabular-nums; /* v1.76.0 */
+  text-shadow:0 0 10px rgba(255,200,80,.6), 0 1px 3px rgba(6,10,30,.7);
+  display:flex; align-items:center; gap:4px; }
+#topHud { position:fixed; top:max(72px, calc(14px + var(--sat))); height:auto; left:12px; right:12px; z-index:12;
+  /* v1.101.0 «Чистое небо»: левая колонна и жизни опущены ниже пилюль Telegram — больше не задевают
+     ни «Назад», ни окошки ⌄ ⋮, даже когда клиент врёт про инсет */
+  display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
+#pausePack { display:flex; flex-direction:column; align-items:center; gap:8px; margin-left:20px; margin-top:-26px; pointer-events:none; } /* v1.101.0: пауза над звёздами, одной осью под «Назад»; v1.102.0: призрак залегает в мёртвую зону родной пилюли (её тапы ловит сам Telegram), звёзды поднимаются вплотную под «Назад» — счётчик больше не висит в пустом небе */
+#pauseBtn { width:42px; height:42px; border-radius:50%; flex:none; /* v1.101.0: прибор кабины — своё стекло, своё кольцо */
+  background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border:1.5px solid rgba(150,205,255,.55);
+  box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+  color:#eaf3ff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; pointer-events:auto; transition:transform .12s, box-shadow .2s; }
+#pauseBtn.ghost { opacity:0; } /* v1.101.0 «Чистое небо»: у Telegram есть своя «Назад» — наша кнопка растворяется, след-подушка под ней остаётся */
+#pauseBtn:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
+#pauseBtn .ic { width:17px; height:17px; stroke-width:2.6;
+  filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
+#livesCanvas { width:66px; height:24px; } /* свечение рисует сам canvas — только живым жизням */
+.pill { background:rgba(16,24,54,.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(140,170,255,.18); border-radius:12px; padding:5px 12px;
+  font-size:11px; color:#bcd2ff; white-space:nowrap; }
+#hud { justify-content:flex-start; padding-top:max(196px, calc(140px + var(--sat))); } /* v1.102.0: дуэль/режим поднялись вслед за хором шапки; комбо — последний пункт хребта */
+/* v1.76.0 «Тень шапки»: мягкий градиент за HUD — астероид больше не проглатывает цифры,
+   текст читается на любом небе. Живёт внутри #hud — виден только в полёте */
+#hudShade { position:absolute; top:0; left:0; right:0; height:calc(190px + var(--sat)); /* v1.102.0: тень накрывает хор шапки материка; островная мера — в .island выше */
+  background:linear-gradient(to bottom, rgba(4,8,20,.55), rgba(4,8,20,0));
+  pointer-events:none; }
+#combo { margin-top:0; font-size:20px; color:#ffd76a; height:24px;
+  font-variant-numeric:tabular-nums; /* v1.76.0 */
+  text-shadow:0 0 14px rgba(255,200,80,.8), 0 1px 3px rgba(6,10,30,.7); opacity:0; transition:opacity .3s; }
+#distHud { margin-top:0; font-size:15px; letter-spacing:.08em; color:rgba(188,210,255,.75);
+  font-variant-numeric:tabular-nums; /* v1.76.0: метры бегут — строка не дышит */
+  text-shadow:0 0 10px rgba(110,160,255,.4), 0 1px 3px rgba(6,10,30,.7); }
+#distHud b { color:#bcd2ff; font-weight:600; }
+.pillCap { font-size:10px; letter-spacing:.18em; opacity:.7; font-weight:600; }
+#telemHud .pillCap { font-size:12.5px; } /* v1.105.0: подпись расстояния поднялась к числу — баланс, а не спор кеглей */
+#smoothCap { color:rgba(188,210,255,.4); }
+#smoothBar { margin-top:0; width:122px; height:8px; border-radius:4px; flex:none;
+  background:rgba(255,255,255,.12); overflow:hidden;
+  box-shadow:0 0 8px rgba(110,160,255,.25), inset 0 1px 2px rgba(0,0,0,.4); }
+#smoothFill { height:100%; width:100%; border-radius:3px; background:#8fff9f;
+  transform-origin:left center; /* v1.66.0: transform вместо width — без перекладки layout, считает композитор */
+  transition:transform .25s, background .4s; }
+#banner { font-size:clamp(30px,8vw,54px); color:#eaf2ff;
+  text-align:center; line-height:1.25;
+  text-shadow:0 0 30px rgba(140,180,255,.9); opacity:0; transform:scale(.8);
+  transition:all .4s cubic-bezier(.2,1.4,.4,1); }
+#banner.show { opacity:1; transform:scale(1); }
+#banner .small { display:block; font-size:.45em;
+  color:rgba(170,200,255,.75); margin-top:10px; }
+/* ============ конец HUD ============ */
+
+/* ---- Итоги (база М1; раскладка-«герой» — модуль М3) ---- */
+#finalScore { font-family:var(--font-disp); font-weight:400;
+  font-size:clamp(56px,15vw,96px); line-height:1; color:var(--gold-hi);
+  text-shadow:0 0 30px rgba(240,192,64,.35); margin-bottom:6px; }
+#newRecord { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:4px; }
+#goldChip { color:#ffd76a; font-size:17px; font-weight:700; text-align:center; margin:2px 0 4px;
+  text-shadow:0 0 12px rgba(255,200,90,.55); } /* v1.100.2: знак дня — золото чести */
+#dayStats { color:rgba(191,232,255,.75); font-size:13px; text-align:center; margin-bottom:6px; } /* v1.100.2: N из M */
+/* плашка нового рекорда — метка HUD, золотом говорит только текст (v1.34.0) */
+.recChip { display:inline-flex; align-items:center; gap:.5em; padding:6px 14px;
+  font-family:var(--font-disp); font-weight:400; font-size:13px; letter-spacing:.06em;
+  color:#ffd76a; background:rgba(16,24,54,.5); border:1px solid rgba(255,215,106,.25);
+  border-radius:10px; }
+.recChip .ic { width:1.15em; height:1.15em; vertical-align:-0.25em; }
+#toRecord { color:var(--gold-hi); font-size:15px; font-weight:600; min-height:20px; margin-bottom:8px;
+  text-shadow:0 0 14px rgba(240,192,64,.4); }
+#newRecord:not(:empty) { animation:pulse 1s infinite; }
+#stats { width:100%; display:flex; flex-direction:column; align-items:center; margin-bottom:22px; }
+.statGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  width:min(92%,380px); margin:8px 0 12px; }
+.statCell { background:rgba(22,38,56,.6); border:1px solid var(--line); border-radius:14px;
+  padding:11px 6px 9px; display:flex; flex-direction:column; gap:3px; align-items:center; }
+.statCell b { font-family:var(--font-disp); font-weight:400; font-size:25px;
+  line-height:1.05; color:var(--ink); }
+.statCell span { font-size:10.5px; color:var(--muted);
+  letter-spacing:.14em; } /* v1.44.0: предложный регистр везде */
+.bestPills { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; width:min(92%,380px); }
+.miniPill.runMode { color:#ffd76a; border-color:rgba(255,215,106,.25); } /* режим забега — как pill.gold в HUD */
+
+/* ---- Панели и карточки: единый материал (детальная раскладка — М4/М5) ---- */
+#achMineWrap { width:min(92%,380px); pointer-events:auto; }
+#achStats { width:100%; display:flex; flex-direction:column; align-items:center; margin:2px 0 8px; }
+.statGrid.stats4 { grid-template-columns:repeat(4,1fr); gap:6px; margin:2px 0 10px; }
+.statGrid.stats4 .statCell { padding:9px 4px 8px; }
+.statGrid.stats4 .statCell b { font-size:18px; }
+.statGrid.stats4 .statCell span { font-size:9px; letter-spacing:.08em; }
+#achProgWrap { width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin:0 0 12px; }
+#achProgBar { width:100%; height:2px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; }
+#achProgFill { display:block; height:100%; width:0; border-radius:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-hi));
+  transition:width .5s cubic-bezier(.22,1,.36,1); }
+#achList { width:100%; }
+.achCat { color:var(--muted); font-size:11.5px;
+  letter-spacing:.12em; margin:14px 4px 6px; }
+.achIt { display:flex; align-items:center; gap:10px; padding:8px 12px; margin:4px 0;
+  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:12px; }
+.achIt.got { background:rgba(120,170,255,.08); border-color:rgba(190,225,255,.35); }
+.achTx { flex:1; display:flex; flex-direction:column; line-height:1.35; min-width:0; }
+.achTx b { color:var(--ink); font-size:13.5px; }
+.achIt:not(.got) .achTx b { color:rgba(244,246,251,.66); }
+.achTx i { font-style:normal; color:var(--muted); font-size:11.5px; }
+.achRw { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:13px; flex:none; }
+.achPr { color:var(--cream); font-family:var(--font-disp); font-weight:400; font-size:13px;
+  flex:none; min-width:52px; text-align:right; }
+
+#achTabs { display:flex; gap:8px; margin:2px 0 10px; pointer-events:auto; }
+.achTab { border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+  border-radius:12px; padding:8px 18px; font-size:14px; cursor:pointer; }
+.achTab.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
+#achTopWrap { width:min(92%,380px); pointer-events:auto; }
+#topCats { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
+.topCat { border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+  border-radius:12px; padding:7px 16px; font-size:16px; cursor:pointer; }
+.topCat.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
+#topMe { color:rgba(143,255,159,.85); font-size:13px; text-align:center; min-height:18px; margin-bottom:6px; }
+.topIt { display:flex; align-items:center; gap:10px; padding:8px 12px; margin:4px 0;
+  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:12px; }
+.topIt.me { background:rgba(120,170,255,.08); border-color:rgba(190,225,255,.35); }
+.topN { width:30px; height:30px; flex:none; display:inline-flex; align-items:center; justify-content:center;
+  color:var(--muted); font-family:var(--font-disp); font-weight:400; font-size:13px; border-radius:50%; }
+.topN.m1 { background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#101b2e;
+  box-shadow:0 0 12px rgba(240,192,64,.35); }
+.topN.m2 { background:linear-gradient(180deg,#cfd6e4,#98a3b8); color:#101b2e; }
+.topN.m3 { background:linear-gradient(180deg,#d99a5b,#a8642c); color:#101b2e; }
+.topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.topNm i { font-style:normal; color:var(--muted); font-size:12px; }
+.topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
+.topMsg { color:var(--muted); font-size:13px; text-align:center; padding:24px 10px; }
+
+/* ---- М6 Моушн: переходы экранов (fade + подъём 12px), каскад строк ---- */
+@keyframes scrIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+#startScreen:not(.hidden), #pauseScreen:not(.hidden), #settingsScreen:not(.hidden),
+#gameOverScreen:not(.hidden), #hangarScreen:not(.hidden), #achScreen:not(.hidden)
+  { animation:scrIn .3s cubic-bezier(.22,1,.36,1); }
+@keyframes riseIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.achIt, .shipItem, .topIt, .rise { animation:riseIn .35s cubic-bezier(.22,1,.36,1) both; }
+
+/* ---- Настройки: строки-тумблеры с тонкими разделителями ---- */
+.setPanel { width:min(92%,380px); pointer-events:auto; background:rgba(22,38,56,.55);
+  border:1px solid var(--line); border-radius:var(--r-card); margin:2px 0 12px; overflow:hidden; }
+.setPanel .btn { width:100%; margin:0; border:none; border-radius:0; background:transparent;
+  justify-content:flex-start; padding:13px 18px; } /* v1.92.0: меньше разделителей — строки дышат воздухом, а не линейкой */
+.setPanel .btn:active { transform:none; background:rgba(120,170,255,.08); color:#dce9ff; }
+/* v1.63.0: строка «параметр — значение» — вся ширина жмётся, значение справа */
+.setRow { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:13px 16px; font-size:14px; font-weight:600; letter-spacing:.03em; color:#dce9ff;
+  cursor:pointer; transition:background .2s; } /* v1.92.0: без линеек — ровный шаг 13px, как у Nintendo */
+.setRow:active { background:rgba(120,170,255,.08); }
+.setRow .setV { flex:none; color:rgba(158,178,224,.55); font-weight:600; }
+.setRow .setV.on { color:#8fff9f; text-shadow:0 0 10px rgba(140,255,160,.35); }
+.setRow .setV.arr::after { content:'›'; margin-left:7px; opacity:.45; } /* цикл-значения подсказывают, что жмутся */
+/* v1.64.0: свитч — привычный мобильный тумблер вместо текста */
+.setSw { flex:none; width:42px; height:25px; border-radius:13px; position:relative;
+  background:rgba(140,170,255,.16); border:1px solid rgba(140,170,255,.14); transition:background .2s, border-color .2s; }
+.setSw i { position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%;
+  background:#7e92b8; transition:transform .2s, background .2s, box-shadow .2s; }
+.setSw.on { background:rgba(110,255,150,.22); border-color:rgba(140,255,160,.35); }
+.setSw.on i { transform:translateX(17px); background:#8fff9f; box-shadow:0 0 10px rgba(140,255,160,.45); }
+.setRow.solo { justify-content:center; }
+.setRow.spoiler { position:relative; }
+.setRow.spoiler::after { content:'▾'; position:absolute; right:16px; opacity:.5; font-size:12px; }
+.setRow.spoiler.open::after { content:'▴'; }
+.setRow.go { position:relative; }
+.setRow.go::after { content:'›'; position:absolute; right:16px; opacity:.5; font-size:14px; } /* v1.66.3: строка-ссылка на экран */
+.csCap { font-size:12px; opacity:.6; margin:12px 4px 6px; letter-spacing:.04em; text-align:center; } /* v1.66.3: подпись позывного в «Профиле» */
+/* v1.103.0 «Тихий нуль»: диод дыхания компасов — тихий свет вместо крика тостов */
+.calLamp { width:8px; height:8px; border-radius:50%; flex:none;
+  transition:background .3s, box-shadow .3s; }
+.calLamp[data-state=green] { background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,.8); }
+.calLamp[data-state=amber] { background:#fbbf24; box-shadow:0 0 8px rgba(251,191,36,.8); }
+.calLamp[data-state=red] { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,.8); }
+#moreBtn { border-bottom:none; }
+#moreBtn.open { border-bottom:1px solid var(--line); }
+#moreBox .hint { margin:0; }
+#accPanel .csInput { margin:0 12px 10px; width:calc(100% - 24px); } /* v1.66.3: позывной живёт в «Профиле» */
+#settingsScreen .gyroBar { margin:0 0 10px; min-height:0; }
+
+.hidden { display:none !important; }
+
+/* ---- Ангар: карточки-строки с жёсткими колонками ---- */
+#hangarScreen .statusBar { margin:2px 0 16px; min-height:0; }
+#shipList { width:100%; display:flex; flex-direction:column; align-items:center; }
+.shipItem { pointer-events:auto; display:flex; flex-wrap:wrap; align-items:center; gap:10px; width:min(92%,420px);
+  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:var(--r-card);
+  padding:6px 12px 6px 10px; margin:4px 0; cursor:pointer; transition:border-color .2s, background .2s; }
+.shipItem.sel { border-color:var(--line-gold); background:rgba(201,164,92,.10); }
+.shipPv { width:40px; height:30px; flex:none; } /* v1.50.0: компакт — ангар влезает без драки за пиксели */
+.shipItem .nm { flex:1 1 70px; min-width:0; color:var(--ink); font-size:14px; text-align:left;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } /* v1.44.0: имя не выталкивает кнопки за край */
+.shipItem .pr { flex:none; text-align:right; color:var(--gold-hi);
+  font-family:var(--font-disp); font-weight:400; font-size:15px; letter-spacing:.03em; }
+.shipItem .own { flex:none; min-width:0; display:inline-flex; align-items:center; justify-content:center;
+  gap:.4em; font-family:var(--font-disp); font-weight:400; font-size:11.5px; letter-spacing:.1em;
+  color:#101b2e; background:linear-gradient(180deg,var(--gold-hi),var(--gold));
+  border-radius:8px; padding:5px 10px; }
+.shipItem .own .ic { width:1.1em; height:1.1em; }
+.shipItem .own.isOwn { background:none; color:var(--ok); }
+.shipItem .fxTag { color:var(--gold-hi); font-size:11px; } /* метка фирменной фишки у ярких/легендарных */
+.shipItem .try { flex:none; display:inline-flex; align-items:center; justify-content:center;
+  gap:.35em; border:1px solid rgba(127,216,255,.45); color:#bfeaff; border-radius:10px;
+  padding:6px 10px; font-size:12.5px; white-space:nowrap; cursor:pointer; }
+.shipItem .try:active { transform:scale(.93); }
+.shipItem .try.off { opacity:.35; cursor:default; }
+
+/* ---- Служебные слои ---- */
+#vignette { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0;
+  background:radial-gradient(ellipse at center, transparent 55%, rgba(255,30,30,.45) 100%);
+  transition:opacity .15s; }
+#flash { position:fixed; inset:0; z-index:6; pointer-events:none; opacity:0; background:#fff; }
+/* туман: мягкое затемнение по краям, два уровня */
+#fog { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0; transition:opacity .5s;
+  background:radial-gradient(ellipse at center, transparent 42%, rgba(3,6,14,.9) 100%); }
+#fog.f1 { opacity:1; }
+#fog.f2 { opacity:1; background:radial-gradient(ellipse at center, transparent 24%, rgba(3,6,14,.96) 100%); }
+/* затемнение под паузой сильнее: HUD не должен просвечивать сквозь кнопки */
+#dim { position:fixed; inset:0; z-index:9; pointer-events:none; opacity:0; background:rgba(4,7,16,.72);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); transition:opacity .25s; }
+#dim.on { opacity:1; }
+
+#toast { position:fixed; bottom:calc(112px + var(--sab)); left:50%;
+  transform:translate(-50%,8px) scale(.96);
+  z-index:30; pointer-events:none; padding:12px 22px; border-radius:14px;
+  background:rgba(15,31,61,.92); border:1px solid var(--line-gold); color:var(--ink); font-size:15px;
+  max-width:92vw; text-align:center;
+  opacity:0; transition:opacity .2s, transform .2s; }
+#toast.show { opacity:1; transform:translate(-50%,0) scale(1); }
+
+#fpsPill { position:fixed; bottom:calc(10px + var(--sab)); left:10px; z-index:30;
+  pointer-events:none; display:none; /* только в отладке (?debug) */ }
+
+/* Карман наград: золотой бейдж-счётчик на кнопке достижений */
+#achBtn{ position:relative; }
+.achBadge{ position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; padding:0 5px;
+  border-radius:9px; background:linear-gradient(135deg,var(--gold-hi),var(--gold));
+  color:#231a06; font-family:var(--font-disp); font-size:11px; line-height:18px; text-align:center;
+  box-shadow:0 0 10px rgba(240,192,64,.55); pointer-events:none; }
+
+/* Н2: карточка награды — праздник по одной */
+#claimScreen{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+  background:rgba(6,10,20,.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+#claimScreen.hidden{ display:none; }
+.claimCard{ position:relative; width:min(84%,340px); padding:30px 24px 22px; text-align:center;
+  background:linear-gradient(180deg,var(--bg-1),var(--bg-0)); border:1px solid var(--line-gold);
+  border-radius:var(--r-card); box-shadow:0 24px 60px rgba(0,0,0,.5);
+  animation:scrIn .4s cubic-bezier(.22,1,.36,1) both; }
+.claimMedalWrap{ position:relative; width:120px; height:120px; margin:0 auto 14px; }
+.claimMedal{ position:absolute; inset:12px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:40px; background:radial-gradient(circle at 35% 30%, #2a3c5f, var(--bg-1));
+  animation:medalPulse 1.6s ease-in-out infinite; }
+.claimMedal.mGold{ border:2px solid rgba(240,192,64,.9); box-shadow:0 0 34px rgba(240,192,64,.45), inset 0 0 18px rgba(240,192,64,.18); }
+.claimMedal.mSilver{ border:2px solid rgba(176,184,200,.8); box-shadow:0 0 26px rgba(176,184,200,.35), inset 0 0 16px rgba(176,184,200,.14); }
+.claimMedal.mBronze{ border:2px solid rgba(205,127,50,.8); box-shadow:0 0 22px rgba(205,127,50,.35), inset 0 0 14px rgba(205,127,50,.14); }
+@keyframes medalPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.045); } }
+.claimMedal .ic { width:44px; height:44px; }
+.claimMedal.mGold .ic { color:var(--gold-hi); }
+.claimMedal.mSilver .ic { color:#b8c0d0; }
+.claimMedal.mBronze .ic { color:#d99a5b; }
+#claimBurst{ position:absolute; inset:0; pointer-events:none; }
+#claimBurst i{ position:absolute; left:50%; top:50%; width:5px; height:5px; border-radius:50%;
+  background:var(--gold-hi); box-shadow:0 0 8px rgba(240,192,64,.8); opacity:0;
+  animation:claimStar .8s cubic-bezier(.16,.8,.3,1) forwards; }
+@keyframes claimStar{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(.4); }
+  25%{ opacity:1; } 100%{ opacity:0; transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1); } }
+.claimCls{ font-size:10.5px; letter-spacing:.14em; color:var(--gold); margin-bottom:6px; }
+.claimName{ font-family:var(--font-disp); font-size:24px; color:var(--ink); margin-bottom:6px; }
+.claimDesc{ font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.45; }
+.claimRw{ font-family:var(--font-disp); font-size:30px; color:var(--gold-hi);
+  text-shadow:0 0 18px rgba(240,192,64,.45); margin-bottom:18px; }
+.claimQ{ margin-top:10px; font-size:11px; color:var(--muted); }
+
+/* Н3: живой ранг на экране итогов */
+#myRank{ font-family:var(--font-disp); font-size:15px; color:var(--gold-hi);
+  text-shadow:0 0 14px rgba(240,192,64,.35); min-height:19px; margin-top:2px; }
+
+/* Н4: экран достижений — незабранные светятся, прогресс-бар цели */
+.achIt.pend{ border-color:rgba(240,192,64,.55); animation:pendGlow 1.8s ease-in-out infinite; }
+@keyframes pendGlow{ 0%,100%{ box-shadow:0 0 8px rgba(240,192,64,.10); } 50%{ box-shadow:0 0 20px rgba(240,192,64,.30); } }
+.achRw.pendBtn{ cursor:pointer; background:linear-gradient(135deg,var(--gold-hi),var(--gold));
+  color:#231a06; border-radius:10px; padding:5px 10px; font-weight:700; }
+.achBar{ display:block; height:3px; margin-top:5px; border-radius:2px; background:var(--line); overflow:hidden; }
+.achBar i{ display:block; height:100%; border-radius:2px; background:linear-gradient(90deg,var(--gold),var(--gold-hi)); }
+
+/* ---------- Дуэль ---------- */
+#duelBanner{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:12px 18px 0;padding:10px 14px;border:1px solid var(--line-gold);border-radius:var(--r-card);
+  background:linear-gradient(135deg,rgba(201,164,92,.16),rgba(201,164,92,.05));
+  color:var(--ink);font-family:var(--font-disp);font-size:13px;animation:riseIn .3s ease}
+.duelX{background:none;border:none;color:var(--muted);font-size:15px;padding:4px 8px;cursor:pointer;flex:none}
+.duelX:active{color:var(--ink)}
+#duelHud{position:absolute;top:max(118px, calc(28px + var(--sat)));left:50%;transform:translateX(-50%); /* v1.68.0: под шапкой, не на ней */
+  color:var(--gold-hi);font-family:var(--font-disp);font-size:13px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#modeHud{position:absolute;top:max(142px, calc(52px + var(--sat)));left:50%;transform:translateX(-50%);white-space:nowrap;
+  color:#dce9ff;font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.modeIt{display:flex;flex-direction:column;gap:2px;align-items:center}
+.modeIt.locked{opacity:.62} /* v1.93 «Одна попытка»: закрытая дверь дня — приглушена, табличка на ней всё говорит */
+.modeIt .modeName{font-size:15px}
+.modeIt .modeDesc{font-size:11px;opacity:.62;line-height:1.25}
+.modeIt.sel{border-color:rgba(190,225,255,.45);background:rgba(120,170,255,.08)} /* лёд «Единой палубы» — выбранная дисциплина */
+
+/* v1.68.0 «Своя трасса»: конструктор забега — ползунки, чипы преград, сегменты длины */
+.forgePanel{max-height:calc(100dvh - 150px);overflow-y:auto;scrollbar-width:none}
+.forgeName{width:100%;box-sizing:border-box;background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;color:#eaf2ff;font:inherit;font-size:14px;text-align:center;outline:none}
+.forgeName:focus{border-color:rgba(190,225,255,.45)}
+.forgeRow{display:flex;align-items:center;gap:10px;width:100%}
+.forgeLbl{font-size:12px;color:var(--muted);flex:none;width:74px;text-align:left}
+.forgeLblBlk{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px;text-transform:uppercase}
+.forgeVal{flex:none;width:26px;text-align:right;font-size:13px;color:#bcd2ff}
+.forgeRow input[type=range]{flex:1;accent-color:#8ab4ff;height:22px}
+.forgeChips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%}
+.forgeChip{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+  padding:6px 11px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
+.forgeChip.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+.forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+.forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+  padding:7px 12px;font-size:12.5px;cursor:pointer;pointer-events:auto;transition:all .15s}
+.forgeSegBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+.forgeGrpLbl{font-size:11px;letter-spacing:.16em;color:#8ab4ff;margin:14px 0 0;text-transform:uppercase;
+  border-top:1px solid var(--line);padding-top:10px;width:100%;text-align:center}
+.forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-top:2px} /* v1.86.0: тихие плитки-программы */
+.forgePreset{border:1px solid rgba(140,170,255,.3);background:rgba(16,24,54,.55);color:#bcd2ff;border-radius:999px;
+  padding:6px 12px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
+.forgePreset:active{transform:scale(.95)}
+/* ---- v1.85.0 «Сначала небо»: живое превью, ручка «Жар», спойлер; v1.86.0 — вторая сборка сцены ---- */
+#forgePreview{width:100%;height:auto;border-radius:14px;border:1px solid rgba(140,170,255,.18);
+  display:block;margin-bottom:2px;background:#0b1626} /* живое мини-небо конструктора */
+.forgePresetTile{position:relative;display:flex;align-items:center;gap:9px;min-height:46px;
+  padding:7px 11px;border:1px solid var(--line);border-radius:12px;background:rgba(22,38,56,.45);
+  color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:500;letter-spacing:.01em;line-height:1.25;
+  text-align:left;cursor:pointer;pointer-events:auto;transition:border-color .2s,background .2s,color .2s,transform .12s}
+.forgePresetTile .sw{flex:none;width:22px;height:22px;border-radius:7px;position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)} /* небо программы — тихий свотч, не плакат */
+.forgePresetTile.misty .sw::after{content:'';position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(190,205,235,.4),rgba(190,205,235,.06))} /* дымка на туманных */
+.forgePresetTile.sel{border-color:rgba(190,225,255,.55);background:rgba(120,170,255,.10);color:#eaf2ff;
+  box-shadow:0 0 14px rgba(120,170,255,.12)} /* выбранная программа светится вполголоса */
+.forgePresetTile:active{transform:scale(.97)}
+.forgeHeroBtn{margin:12px 0 10px;font-size:19px;min-height:54px} /* «Лететь» — герой сцены, на первом экране */
+/* кузница — не аккордеон: кнопкам-действиям возвращаем стекло, спойлер остаётся тихой строкой (v1.86.0) */
+.forgePanel .btn.pri,.forgePanel .btn.ghost:not(.spoiler){
+  border:1px solid rgba(160,210,255,.18);border-radius:var(--r-btn);
+  background:rgba(10,18,36,.55);justify-content:center;padding:14px 26px;margin:8px 0}
+.forgePanel .btn.pri{background:rgba(24,40,72,.7);border-color:rgba(190,225,255,.45);color:#f2f7ff;
+  box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05)}
+.forgePanel .btn.ghost:not(.spoiler){background:rgba(10,18,36,.4);border-color:rgba(160,210,255,.12);color:#9fb4d8;font-weight:500}
+.forgePanel .btn.ghost.small:not(.spoiler){padding:10px 18px}
+.forgePanel .forgeHeroBtn{margin:12px 0 10px} /* у героя — свой ритм, не лесочный ноль */
+.heatRow{margin-top:10px}
+.heatRow .forgeLbl{width:auto;font-size:14px;color:#bcd2ff} /* «Жар» — хозяин строки, крупнее рядовых ручек */
+.heatRow .forgeVal{font-size:14px}
+#forgeFine .forgeName{margin-top:10px} /* название трассы живёт в сервисном меню */
+#forgeFine.hidden{display:none}
+#forgeFine{width:100%;display:flex;flex-direction:column;align-items:center}
+.forgeSky{display:flex;gap:8px;justify-content:center;width:100%}
+.forgeSkyBtn{width:34px;height:26px;border-radius:8px;border:2px solid var(--line);cursor:pointer;
+  pointer-events:auto;transition:all .15s;padding:0}
+.forgeSkyBtn.sel{border-color:rgba(190,225,255,.7);box-shadow:0 0 8px rgba(140,170,255,.35)}
+.forgeCodeRow{display:flex;gap:8px;width:100%}
+.forgeCodeRow .forgeName{text-align:left;flex:1}
+.forgeLoadBtn{flex:none;padding-left:16px;padding-right:16px}
+/* v1.73.0 «Карточка для скриншота»: итог забега картинкой — человек шлёт скриншот сам, сервер не нужен */
+#cardScreen{justify-content:center;gap:14px;z-index:12}
+.cardWrap{width:min(82vw,320px);border-radius:18px;overflow:hidden;
+  border:1px solid rgba(201,164,92,.35);box-shadow:0 12px 44px rgba(0,0,0,.55)}
+.cardWrap canvas{display:block;width:100%;height:auto}
+.cardHint{font-size:13px;color:var(--gold-hi);letter-spacing:.04em;text-align:center;padding:0 24px}
+#runPass{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0}
+#runPass .passPill{background:rgba(16,24,54,.5);border:1px solid rgba(140,170,255,.18);border-radius:999px;
+  padding:4px 10px;font-size:11px;color:#9fb4d8;font-family:var(--font-disp);letter-spacing:.04em} /* HUD-пилюля «Единой палубы» */
+#duelRes{margin:6px 0;font-size:14px;min-height:4px}
+#duelRes .duelWin{color:var(--gold-hi);font-family:var(--font-disp)}
+#duelRes .duelLose{color:var(--muted)}
+
+/* Кнопка «полететь с призраком» в строке топа (gyro/touch) */
+.topGh { flex:none; padding:3px 9px; border-radius:10px; border:1px solid rgba(191,232,255,.35);
+  background:rgba(191,232,255,.08); color:#bfe8ff; font-size:14px; line-height:1; cursor:pointer; }
+.topGh:active { transform:scale(.92); }
+
+/* ============ v1.5.1 «Склейка»: остановки — кинематографичные переходы, не выскакивание ============ */
+.overlay{transition:opacity .3s ease}
+.overlay.hidden{display:flex !important; opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity .3s ease, visibility 0s linear .3s}
+
+/* ============ v1.5.3 «Сервисный центр»: спойлеры и диагностика ============ */
+.btn.spoiler::after{content:'▾';margin-left:auto;opacity:.5;font-size:12px}
+.btn.spoiler.open::after{content:'▴'}
+#diagList .drow{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;line-height:1.35;text-align:left}
+#diagList .drow .dst{flex-shrink:0;font-weight:700}
+#diagReportBox{user-select:text;-webkit-user-select:text}
+
+/* ============ v1.9.0 «Живой интерфейс»: меню — часть неба, а не приложение ============
+   Кожа игровая, эргономика — приложения: размеры и читаемость не тронуты. */
+
+/* ---- Пауза = замёрзшее небо (v1.34.0: созвездие и золотая звезда вычеркнуты — единая палуба) ---- */
+#pauseScreen { background:rgba(6,10,24,.38); }
+
+/* ---- Экран итогов: счёт — сверхновая над небом ---- */
+#finalScore { text-shadow:0 0 30px rgba(190,225,255,.6), 0 0 60px rgba(140,200,255,.3); }
+
+/* ============ v1.10.0 «Единое небо»: живой интерфейс везде, где игра ============
+   Подсказки, тосты, ангар, зал славы, пауза, итоги — то же небо, что полёт.
+   Настройки — техника, остаются приложением. Размеры и читаемость не тронуты. */
+
+/* ---- починка раскладки: ничего не вылезает за экран ---- */
+#pauseScreen .stack { width:min(86%,352px); } /* нить и звёзды-узлы целиком на экране */
+#gameOverScreen { justify-content:flex-start; overflow-y:auto;
+  padding-top:calc(40px + var(--sat)); padding-bottom:26px; }
+#gameOverScreen > :first-child { margin-top:auto; } /* короткие итоги — по центру */
+#gameOverScreen > :last-child { margin-bottom:auto; } /* длинные — честный скролл без среза */
+#newRecord { width:min(92%,380px); } /* плашки рекордов переносятся с полями */
+
+/* ---- тосты — тот же материал неба (цвет рамки по-прежнему задаёт код) ---- */
+#toast { background:rgba(10,18,36,.62); border:1px solid rgba(160,210,255,.22);
+  text-shadow:0 0 10px rgba(140,190,255,.3);
+  box-shadow:0 0 22px rgba(90,140,230,.10), inset 0 0 14px rgba(120,170,255,.05); }
+
+/* ---- ряды ангара — стекло неба; выбранный корабль — яркое стекло, не золото (v1.34.0) ---- */
+.shipItem { background:rgba(10,18,36,.5); border-color:rgba(160,210,255,.16); }
+.shipItem.sel { border-color:rgba(190,225,255,.45); background:rgba(120,170,255,.08);
+  box-shadow:0 0 18px rgba(120,170,255,.10), inset 0 0 12px rgba(120,170,255,.04); }
+.shipItem .own { background:none; border:1px solid rgba(190,225,255,.45); color:#eaf2ff; }
+.shipItem .own.isOwn { border-color:transparent; }
+
+/* ---- карточки итогов — то же стекло, что кнопки паузы ---- */
+.statCell { background:rgba(10,18,36,.5); border-color:rgba(160,210,255,.16); }
+
+/* ============ v1.11.0 «Ни одной лишней механики»: железная иерархия итогов ============ */
+#stats.hidden { display:none; } /* сетка и плашки — за спойлером «Подробности полёта» */
+/* ============ v1.84.0 «Финал в полголоса»: одна сцена — одна мысль ============ */
+#retryBtn { font-size:20px; padding:14px 34px; min-height:56px; margin:16px 0 10px; } /* герой среди кнопок */
+#overQuiet { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:4px; }
+#overQuiet .btn { min-height:40px; padding:8px 14px; font-size:14px; opacity:.82; } /* тихая тройка — приглушены */
+#overQuiet .btn:hover, #overQuiet .btn:active { opacity:1; }
+#overMore { width:100%; display:flex; flex-direction:column; align-items:center; }
+#overMore.hidden { display:none; } /* вся вторая сцена — за спойлером */
+#menuBtn { margin-top:8px; opacity:.82; }
+.wgOff { display:none !important; } /* виджет входа промолчал (домен?) — на сцене тишина */
+#overDetailsBtn { margin:4px 0 6px; }
+#overDetailsBtn::after { margin-left:8px; } /* стрелка при тексте, не на краю */
+
+/* ---------- Одна таблица, много входов (v1.51.0): веб-вход Telegram ---------- */
+.accStatus { color:var(--muted); font-size:13px; text-align:center; line-height:1.5; padding:2px 10px; }
+.tgWidget { display:flex; justify-content:center; }
+.tgWidget:empty { display:none; }
+#webJoin { margin:2px 0 4px; text-align:center; }
+#webJoinTxt { color:var(--muted); font-size:13px; line-height:1.5; padding:0 26px; margin-bottom:6px; }
+
+/* ---------- Второй вход: Discord (v1.52.0) ---------- */
+.dcBtn { margin:6px auto 0; display:block; }
+.pvTag { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; vertical-align:2px; }
+#dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty { display:none; }
+
+/* Морзянка (v1.53.0): поле позывного */
+.csInput{width:100%;box-sizing:border-box;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(140,170,255,.28);background:rgba(10,16,34,.6);color:#eaf0ff;font:500 14px/1.2 inherit;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none}
+.csInput::placeholder{color:rgba(160,180,230,.4);letter-spacing:1px;text-transform:none}
+.csInput:focus{border-color:rgba(140,170,255,.6)}
+
+/* v1.74.0: маркер «стили применились» для сторожа стилей (аварийный inline его не дублирует) */
+:root{--cg-css-ok:1}
+
+/* ============ v1.75.0: альбомная страховка HUD ============
+   Замок Telegram (core.js) не даёт экрану лечь; это — для оставшихся путей:
+   открыли сразу в альбоме, старый клиент без замка, обычный браузер.
+   Портретная шапка (счёт 44px + телеметрия + ряд пауза/жизни ≈ 116px) в альбоме
+   съедала треть высоты и схлопывалась — собираем её в две тонкие строки. */
+@media (orientation:landscape) and (max-height:540px){
+  /* v1.82.0 «Крупная рамка»: та же ось, что в портрете — компактнее, но без сплющивания в строки;
+     пауза со звёздами и жизни — под счётом по краям, не в его ряду */
+  #scorePack { top:2px !important; height:36px !important; } /* v1.102.0: вагон — верхний ряд рамки; !important сильнее островных плёнок */
+  #score { font-size:clamp(20px,7vh,28px) !important; }
+  #scoreLbl { display:none; } /* в альбомной высоты нет — число само заголовок */
+  #topHud { top:42px; height:36px; left:8px; right:8px; }
+  #pausePack { flex-direction:row; margin-left:0; margin-top:0; gap:9px; } /* в альбомной — горизонтальный кластер, призрак без подъёма */
+  #pauseBtn { width:34px; height:34px; }
+  #pauseBtn .ic { width:14px; height:14px; }
+  #livesCanvas { width:56px; height:20px; }
+  #telemHud { top:42px !important; gap:2px; } /* хребет колонной под счётом; !important сильнее островной плёнки */
+  #distHud { font-size:12px; }
+  #smoothBar { width:84px; height:5px; }
+  #starsTelem { font-size:13px; }
+  #combo { font-size:13.5px; height:17px; }
+  #hud { padding-top:124px !important; } /* дуэль/режим — под хребтом */
+  #hudShade { height:150px !important; }
+  #banner { font-size:clamp(20px,6vh,32px); }
+}
+
+/* ============ v1.77.0 «Пульс и склейка»: подтверждения без слов ============ */
+/* Пульс счёта: звезда взята — цифра вспухает и садится (0.18с). scale — отдельное
+   свойство, не трогает transform-центровку; где поддержки нет — просто нет пульса */
+#score.pop { animation:scorePop .18s cubic-bezier(.2,1.5,.4,1); }
+@keyframes scorePop { 0%{scale:1} 35%{scale:1.14} 100%{scale:1} }
+/* Пульс жизни: удар — планка жизней вздрагивает и мерцает, самолётик гаснет не молча */
+#livesCanvas.hit { animation:lifeHit .28s ease-out; }
+@keyframes lifeHit { 0%{transform:translateX(0);opacity:1} 20%{transform:translateX(-2px);opacity:.45}
+  45%{transform:translateX(2px)} 70%{transform:translateX(-1px);opacity:.8} 100%{transform:translateX(0);opacity:1} }
+/* Склейка Game Over: итоги не рывком — мягко поднимаются из темноты за .45с */
+#gameOverScreen:not(.hidden) { animation:overIn .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes overIn { from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none} }
+
+/* v1.95.0 «Гравюра»: фирменное лицо игры (всё, что набрано Exo 2) — ЗАГЛАВНЫМИ,
+   как номер, выгравированный на кубке. Файл шрифта тот же — меняется только регистр;
+   кнопки и обычный текст сознательно остаются строчными (читаемость, «без крика»). */
+.screenTitle,#finalScore,.recChip,.statCell b,.achRw,.achPr,.topN,.topSc,
+.shipItem .pr,.shipItem .own,.achBadge,.claimName,.claimRw,#myRank,
+#duelBanner,#duelHud,#modeHud,#runPass .passPill,#duelRes .duelWin { text-transform:uppercase; }
 </style>
+<!-- v1.108.0 «Имена неба»: чужой шильдик sdk-seed снят — небо переехало на собственный хостинг,
+     игрокам лишний сторонний скрипт ни к чему. Историческая табличка старого дома — в летописи. -->
 </head>
 <body>
-  <p>✈️ Перелетаем в небо… <a href="./app/">Если небо не открылось — нажми сюда</a></p>
-  <script>location.replace('./app/');</script>
-</body>
-</html>
+<!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7"></circle><path d="M12 10v3.5l2.6 1.8M9.5 2.5h5"></path></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"></path></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v4.5a5 5 0 0 1-10 0z"></path><path d="M7 5.5H4a3 3 0 0 0 3.2 4.4M17 5.5h3a3 3 0 0 1-3.2 4.4M12 13.5v3.5M8.5 21h7M10 17h4"></path></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3.5 17.5 17.5 3.5l3 3L6.5 20.5z"></path><path d="M8.5 15.5l1.6 1.6M11.5 12.5l1.6 1.6M14.5 9.5l1.6 1.6"></path></symbol>
+<symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11.5V5.8a1.6 1.6 0 0 1 3.2 0v4.7"></path><path d="M12.2 10.5 16 11.2a2 2 0 0 1 1.6 2.4l-.9 3.8a4.2 4.2 0 0 1-4.1 3.1h-1.8a4.2 4.2 0 0 1-3.3-1.7L5.6 15a1.5 1.5 0 0 1 2.3-1.9l1.1 1.4"></path></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"></rect><path d="M11 18.5h2"></path></symbol>
+<symbol id="i-gyro" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path><path d="M21 3.5V8h-4.5"></path><path d="M12 8.5 15 12l-3 3.5L9 12z"></path></symbol>
+<symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
+<symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
+</defs></svg>
+<script src="js/vendor/telegram-web-app.js?v=1.108.0"></script><!-- мост: под затравкой, раньше core.js -->
+<canvas id="game"></canvas>
+<div id="vignette"></div>
+<div id="fog"></div>
+<div id="flash"></div>
+<div id="dim"></div>
+<div id="toast"></div>
+<!-- Н2: карточка награды — празднуем по одной -->
+<div id="claimScreen" class="hidden">
+  <div class="claimCard">
+    <div class="claimMedalWrap"><div id="claimBurst"></div><div class="claimMedal mBronze" id="claimMedal"><svg class="ic"><use href="#i-trophy"></use></svg></div></div>
+    <div class="claimCls" id="claimCls"></div>
+    <div class="claimName" id="claimName"></div>
+    <div class="claimDesc" id="claimDesc"></div>
+    <div class="claimRw" id="claimRw"></div>
+    <button class="btn pri" id="claimBtn"></button>
+    <div class="claimQ" id="claimQ"></div>
+  </div>
+</div>
+
+<!-- v1.101.0 «Чистое небо»: счёт с подписью СЧЁТ — под рамкой Telegram, одной колонной с хребтом
+     (расстояние → зелёная линия → плавность → комбо); пауза-призрак над звёздами — по оси «Назад»;
+     жизни опущены ниже окошек ⌄ ⋮ -->
+<div id="telemHud" class="hidden">
+  <span id="distHud"><span class="pillCap" id="distCap">Расстояние</span> · <b id="distN">0</b> м</span>
+  <div id="smoothBar"><div id="smoothFill"></div></div>
+  <span class="pillCap" id="smoothCap">Плавность</span>
+  <span id="combo"></span>
+</div>
+
+<div id="topHud" class="hidden">
+  <div id="pausePack">
+    <div id="pauseBtn" role="button"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
+    <span id="starsTelem"><canvas id="starJewel" class="i-pl" width="32" height="32" aria-hidden="true"></canvas> <b id="pillStarsN">0</b></span>
+  </div>
+  <canvas id="livesCanvas" width="132" height="48"></canvas>
+</div>
+
+<div id="hud" class="overlay hidden">
+  <div id="hudShade"></div> <!-- v1.76.0: тень шапки — HUD читается на любом небе -->
+  <!-- v1.102.0 «Остров и материк»: подпись и число — соседи в одном вагоне;
+       ребёнком подпись быть не может — игра переписывает число целиком каждый кадр -->
+  <div id="scorePack"><div id="scoreLbl">Счёт</div><div id="score">0</div></div>
+  <div id="duelHud" class="hidden"></div>
+  <div id="modeHud" class="hidden"></div>
+</div>
+<div id="fpsPill" class="pill"></div>
+
+<div id="bannerWrap" class="overlay"><div id="banner"></div></div>
+
+<!-- MENU -->
+<div id="startScreen" class="overlay hidden">
+  <div class="scrTop">
+    <div class="statusBar">
+      <span class="metric" id="bestScore"></span>
+      <span class="metric" id="walletMenu"></span>
+    </div>
+  </div>
+  <div class="scrMid">
+    <div class="stack">
+      <button class="btn pri" id="startBtn">Начать полёт</button>
+      <button class="btn sec" id="modesBtn">Режимы</button>
+    </div>
+    <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
+    <div class="grid2" id="menuRow">
+      <button class="btn ghost" id="hangarBtn">Ангар</button>
+      <button class="btn ghost" id="achBtn"><span id="achBtnTxt">Достижения</span><span class="achBadge hidden" id="achBadge"></span></button>
+      <button class="btn ghost" id="inviteBtn">Позвать друзей</button>
+      <button class="btn ghost" id="channelBtn">Наш канал</button>
+      <button class="btn ghost" id="settingsBtn">Настройки</button>
+      <button class="btn ghost hidden" id="homeBtn">На экран «Домой»</button>
+    </div>
+    <div id="bestRow" class="hidden">
+      <span class="miniPill" id="pillG" title="Рекорд гироскопа"><svg class="ic"><use href="#i-phone"></use></svg><b id="bpG">0</b></span>
+      <span class="miniPill" id="pillT" title="Рекорд касания"><svg class="ic"><use href="#i-hand"></use></svg><b id="bpT">0</b></span>
+      <span class="miniPill" id="pillD" title="Рекорд дистанции"><svg class="ic"><use href="#i-ruler"></use></svg><b id="bpD">0</b></span>
+      <span class="miniPill" id="pillB" title="Рекорд затишья"><svg class="ic"><use href="#i-timer"></use></svg><b id="bpB">0</b></span>
+    </div>
+  </div>
+  <div id="duelBanner" class="hidden"></div>
+  <div class="scrFoot">
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div id="pauseScreen" class="overlay hidden">
+  <div class="screenTitle" id="pauseTitle">Пауза</div>
+  <div class="stack">
+    <button class="btn pri" id="resumeBtn">Продолжить</button>
+    <button class="btn sec" id="restartBtn">Заново</button>
+    <button class="btn ghost" id="pauseSettingsBtn">Настройки</button>
+    <button class="btn ghost" id="pauseMenuBtn">Меню</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsScreen" class="overlay hidden">
+  <!-- v1.65.0 «Спойлеры»: категории — аккордеон, открыта одна панель; «Ещё» — под-спойлеры; «Назад» в потоке -->
+  <div class="screenTitle" id="settingsTitle">Настройки</div>
+  <div class="setGrp spoiler" id="setGrpSound" role="button"><span class="setGrpT">Звук и эфир</span><span class="setGrpSub" id="setGrpSoundSub"></span></div>
+  <div class="setPanel hidden" id="panelSound">
+    <div class="setRow" id="setSoundBtn" role="button"><span class="setK">Звук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMusicBtn" role="button"><span class="setK">Музыка</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseBtn" role="button"><span class="setK">Морзянка</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setVibroBtn" role="button"><span class="setK">Виброотклик</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseHapBtn" role="button"><span class="setK">Виброэфир</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+  </div>
+  <div class="setGrp spoiler" id="setGrpGame" role="button"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
+  <div class="setPanel hidden" id="panelGame">
+    <div class="setRow" id="setSensBtn" role="button"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
+    <div class="setRow" id="setGfxBtn" role="button"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setLangBtn" role="button"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setGhostBtn" role="button"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+  </div>
+  <div class="setGrp spoiler" id="setGrpProf" role="button"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
+  <div class="setPanel hidden" id="accPanel">
+    <div class="setRow solo hidden" id="gyroUnlockBtn" role="button">Открыть «Полёт без рук»</div>
+    <div class="setRow hidden" id="setGyroOffBtn" role="button"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
+    <div id="accStatus" class="accStatus"></div>
+    <div class="csCap" id="csCap">Позывной — звучит в морзянке и виброэфире</div>
+    <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
+    <div id="accWidget" class="tgWidget"></div>
+    <div id="dcWidget"></div>
+    <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
+  </div>
+  <div class="setPanel">
+    <div class="setRow solo spoiler" id="moreBtn" role="button">Ещё</div>
+    <div id="moreBox" class="hidden">
+      <div class="setRow solo" id="setCalibBtn" role="button"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+      <div class="setRow" id="setBeaconBtn" role="button"><span class="setK">Помогать экипажу отчётами</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+      <div class="setRow solo go" id="diagBtn" role="button">Сервисный центр</div>
+      <div class="setRow solo spoiler" id="aboutBtn" role="button">Об игре</div>
+      <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
+    </div>
+  </div>
+  <div class="setPanel">
+    <div class="setRow solo" id="settingsBackBtn" role="button">Назад</div>
+  </div>
+</div>
+
+<!-- СЕРВИСНЫЙ ЦЕНТР (v1.66.3): диагностика — отдельный экран ремонта, настройки больше не переполняются -->
+<div id="diagScreen" class="overlay hidden">
+  <div class="screenTitle" id="diagTitle">Сервисный центр</div>
+  <div class="setPanel">
+    <div id="diagList" style="padding:6px 8px 0"></div>
+    <div class="statusBar gyroBar" style="margin:10px 8px 0"><span class="metric" id="gyroStat"></span></div>
+    <div class="stack" style="margin-top:12px">
+      <button class="btn ghost" id="diagVibroBtn">Проверка виброэфира</button>
+      <button class="btn ghost" id="diagReportBtn">Скопировать отчёт</button>
+      <button class="btn ghost" id="diagTapeBtn">Скопировать самописец</button>
+      <button class="btn ghost" id="diagSupportBtn">Написать в поддержку</button>
+    </div>
+    <div class="statusBar gyroBar" style="margin:8px 8px 0"><span class="metric" id="diagVibroStat"></span></div>
+    <pre id="diagReportBox" class="hidden" style="white-space:pre-wrap;font-size:11px;text-align:left;margin:8px 8px 0"></pre>
+  </div>
+  <div class="setPanel">
+    <div class="setRow solo" id="diagBackBtn" role="button">Назад</div>
+  </div>
+</div>
+
+<!-- РЕЖИМЫ (v1.42.0): дисциплины под одной кнопкой -->
+<div id="modesScreen" class="overlay hidden">
+  <div class="screenTitle" id="modesTitle">Режимы</div>
+  <div class="setPanel">
+    <button class="btn ghost modeIt" id="modeDaily"><span class="modeName">Трасса дня</span><span class="modeDesc">Одна трасса на всех игроков</span></button>
+    <button class="btn ghost modeIt" id="modeBullet"><span class="modeName">Затишье</span><span class="modeDesc">Каждый пролёт впритык замедляет мир</span></button>
+    <button class="btn ghost modeIt" id="modeSpeedrun"><span class="modeName">Спидран</span><span class="modeDesc">10 000 очков на время — чистый хронометраж</span></button>
+    <button class="btn ghost modeIt" id="modeForge"><span class="modeName">Своя трасса</span><span class="modeDesc">Конструктор забега: собери и поделись кодом</span></button>
+    <button class="btn ghost" id="modesBack">Назад</button>
+  </div>
+</div>
+
+<!-- КОНСТРУКТОР ТРАССЫ (v1.68.0 «Своя трасса»): собери забег — код едет другу прямо в ссылке, сервер не нужен -->
+<!-- КУЗНИЦА — v1.85.0 «Сначала небо»: сцена — живое небо, галерея, одна ручка «Жар»;
+     все пятнадцать ручек целиком — за спойлером «Тонкая настройка» -->
+<div id="forgeScreen" class="overlay hidden">
+  <div class="screenTitle" id="forgeTitle">Своя трасса</div>
+  <div class="setPanel forgePanel">
+    <canvas id="forgePreview" width="640" height="220"></canvas>
+    <div class="forgeRow heatRow"><span class="forgeLbl" id="forgeHeatLbl">Жар</span><input type="range" id="forgeHeat" min="1" max="10" step="1" value="4"><b class="forgeVal" id="forgeHeatV">4</b></div>
+    <button class="btn pri forgeHeroBtn" id="forgePlay">Лететь</button>
+    <div class="forgePresets" id="forgePresets"></div>
+    <button class="btn ghost small spoiler" id="forgeFineBtn">Тонкая настройка</button>
+    <div id="forgeFine" class="hidden">
+      <input class="forgeName" id="forgeName" maxlength="20" placeholder="Название трассы" autocomplete="off">
+      <div class="forgeGrpLbl" id="forgeGrpHard">Сложность</div>
+      <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
+      <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
+      <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
+      <div class="forgeSeg" id="forgeLivesSeg"></div>
+      <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
+      <div class="forgeSeg" id="forgeWaveSeg"></div>
+      <div class="forgeChips" id="forgeFlatChip"></div>
+      <div class="forgeLblBlk" id="forgeBonusLbl">Бонусы</div>
+      <div class="forgeSeg" id="forgeBonusSeg"></div>
+      <div class="forgeGrpLbl" id="forgeGrpEn">Состав</div>
+      <div class="forgeLblBlk" id="forgeEnLbl">Преграды</div>
+      <div class="forgeChips" id="forgeChips"></div>
+      <div class="forgeGrpLbl" id="forgeGrpMood">Настроение</div>
+      <div class="forgeLblBlk" id="forgeLenLbl">Длина трассы</div>
+      <div class="forgeSeg" id="forgeSeg"></div>
+      <div class="forgeLblBlk" id="forgeSkyLbl">Небо</div>
+      <div class="forgeSky" id="forgeSkyRow"></div>
+      <div class="forgeLblBlk" id="forgeFogLbl">Туман</div>
+      <div class="forgeSeg" id="forgeFogSeg"></div>
+      <div class="forgeLblBlk" id="forgeCodeLbl">Трасса друга — вставь код или ссылку</div>
+      <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" placeholder="CG1.…" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
+    </div>
+    <button class="btn ghost small" id="forgeBack">Назад</button>
+  </div>
+</div>
+
+<!-- HANGAR -->
+<div id="hangarScreen" class="overlay hidden">
+  <div class="screenTitle" id="hangarTitle">Ангар</div>
+  <div class="statusBar hangarBar"><span class="metric" id="hangarWallet"><svg class="ic i-s4" aria-hidden="true"><use href="#i-star4"></use></svg> 0</span></div>
+  <div id="shipList"></div>
+  <div style="height:14px"></div>
+  <button class="btn ghost stickyBack" id="hangarBackBtn">Меню</button>
+</div>
+
+<!-- ACHIEVEMENTS + ТОП -->
+<div id="achScreen" class="overlay hidden">
+  <div class="screenTitle" id="achTitle">Достижения</div>
+  <div id="achTabs">
+    <button class="achTab sel" id="tabMine">Мои</button>
+    <button class="achTab" id="tabTop">Топ</button>
+  </div>
+  <div id="achMineWrap">
+    <div id="achStats"></div>
+    <div id="achProgWrap">
+      <span class="metric" id="achProg"></span>
+      <div id="achProgBar"><i id="achProgFill"></i></div>
+    </div>
+    <div id="achList"></div>
+  </div>
+  <div id="achTopWrap" class="hidden">
+    <div id="topCats">
+      <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
+      <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
+      <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
+      <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
+    </div>
+    <div id="topMe"></div>
+    <div id="topList"></div>
+    <div id="topLogin" class="tgWidget hidden"></div>
+    <div id="dcLogin" class="hidden"></div>
+  </div>
+  <button class="btn ghost stickyBack" id="achBackBtn">Назад</button>
+</div>
+
+<!-- «ПОЛЁТ БЕЗ РУК» (v1.16.0): подсказка в полёте + оффер гироскопа после двух минут неба -->
+<div id="tutBeat" class="overlay hidden">
+  <div class="hint" id="tutBeatB" style="position:static;padding:0 26px"></div>
+  <div class="stack" style="margin-top:14px">
+    <button class="btn pri" id="tutGyroBtn">Попробовать без рук</button>
+    <button class="btn ghost" id="tutTouchBtn">Остаться на пальце</button>
+  </div>
+</div>
+<!-- GAME OVER — v1.84.0 «Финал в полголоса»: одна сцена — одна мысль.
+     Герой — счёт; тихая строка рекорда; большая «Ещё раз»; рядом тихая тройка действий.
+     Всё второе (мотивация, ранг, паспорт, сетка статистики) — за спойлером «Подробности». -->
+<div id="gameOverScreen" class="overlay hidden">
+  <div id="finalScore">0</div>
+  <div id="newRecord"></div>
+  <div id="goldChip" class="hidden">★ Знак дня</div><!-- v1.100.2 «Золотая звезда дня»: снич пойман — честь, не очки -->
+  <div id="dayStats" class="hidden"></div><!-- v1.100.2: «сегодня её взяли N из M» -->
+  <div id="duelRes"></div>
+  <div id="webJoin" class="hidden">
+    <div id="webJoinTxt"></div>
+    <div id="webJoinWidget" class="tgWidget"></div>
+    <div id="dcJoinWidget"></div>
+  </div>
+  <button class="btn pri" id="retryBtn">Ещё раз?</button>
+  <button class="btn ghost hidden" id="watchBtn">Смотреть полёт</button>
+  <button class="btn ghost hidden" id="tribuneBtn">Трибуна чемпиона</button><!-- v1.100.1 «Трибуна чемпиона»: спектакль лучшего лётчика дня — после твоей посадки -->
+  <div id="overQuiet">
+    <button class="btn ghost hidden" id="duelBtn">Вызов</button>
+    <button class="btn ghost" id="cardBtn">Карточка</button>
+  </div>
+  <button class="btn ghost small hidden" id="statusBtn">✨ В статус</button><!-- v1.98.0 «Звезда-статус»: рекорд + Premium + 8.0 — искра в статус на 3 дня -->
+  <button class="btn ghost small spoiler" id="overDetailsBtn">Подробности полёта</button>
+  <div id="overMore" class="hidden">
+    <div id="toRecord"></div>
+    <div id="toLoc"></div>
+    <div id="myRank"></div>
+    <div id="runPass"></div>
+    <div id="stats"></div>
+  </div>
+  <button class="btn ghost small" id="menuBtn">Меню</button>
+</div>
+
+<!-- КАРТОЧКА РЕЗУЛЬТАТА (v1.73.0): красивая картинка для скриншота — Telegram не даёт
+     мини-приложениям слать картинки без сервера бота, поэтому картинку шлёт сам человек -->
+<div id="cardScreen" class="overlay hidden">
+  <div class="screenTitle" id="cardTitle">Карточка результата</div>
+  <div class="cardWrap"><canvas id="cardCanvas" width="540" height="760"></canvas></div>
+  <div class="cardHint" id="cardHint">Сохрани — и кинь друзьям</div>
+  <button class="btn pri hidden" id="cardChat">В чат</button>
+  <button class="btn ghost hidden" id="cardStory">В сторис</button>
+  <button class="btn ghost" id="cardSave">Сохранить</button>
+  <button class="btn ghost small spoiler" id="cardShare">Поделиться текстом</button>
+  <button class="btn ghost" id="cardBack">Назад</button>
+</div>
+
+<script src="js/core.js?v=1.108.0"></script>
+<script src="js/blackbox.js?v=1.108.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script src="js/beacon.js?v=1.108.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script src="js/input.js?v=1.108.0"></script>
+<script src="js/game.js?v=1.108.0"></script>
+<script src="js/ach.js?v=1.108.0"></script>
+<script src="js/sync.js?v=1.108.0"></script>
+<script src="js/render.js?v=1.108.0"></script>
+<script src="js/planetarium.js?v=1.108.0"></script>
+<script src="js/goldstar.js?v=1.108.0"></script>
+<script src="js/music.js?v=1.108.0"></script>
+<script src="js/gyro.js?v=1.108.0"></script>
+<script src="js/forge.js?v=1.108.0"></script>
+<script src="js/card.js?v=1.108.0"></script>
+<script src="js/star.js?v=1.108.0"></script>
+<script src="js/ui.js?v=1.108.0"></script>
+<script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —
+// каждый заход видит свежую версию. Вернуть = восстановить регистрацию sw.js и link manifest:
+// файлы на месте, валидатор следит за их согласованностью.
+// v1.20.1: трогаем ТОЛЬКО свой воркер (sw.js) и ТОЛЬКО свои кэши (cosmogram-*) —
+// чужие воркеры и кэши площадки не наша забота; пауза 2.5с — не гоняться с первой отдачей ассетов.
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
+  window.addEventListener('load', ()=>setTimeout(()=>{
+    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{
+      const u=(r.active&&r.active.scriptURL)||(r.waiting&&r.waiting.scriptURL)||(r.installing&&r.installing.scriptURL)||'';
+      if(/\/sw\.js(\?|$)/.test(u)) r.unregister();
+    })).catch(()=>{});
+    if(window.caches) caches.keys().then(ks=>ks.forEach(k=>{ if(k.indexOf('cosmogram-')===0) caches.delete(k); })).catch(()=>{});
+  },2500));
+}</script>
+
+</body></html>
