@@ -1,0 +1,12 @@
+COSMOGRAM — CREDITS
+===================
+
+Game Design & Development: @exxxit
+AI Assistance: Kimi (Moonshot AI)
+Platform: Telegram Mini Apps
+
+Special Thanks:
+- Telegram Team за платформу Mini Apps
+- Moonshot AI за инструмент разработки
+
+© 2026 @exxxit. Все права защищены.
