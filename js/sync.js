@@ -8,7 +8,7 @@
    ============================================================ */
 const SYNC_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-sync';
 const SYNC_KEY='sb_publishable_0Ut2DUmAbYkJoxVLTMAKqg_Qwn3OMnI'; // публичный ключ: безопасен, доступ решает подпись Telegram
-const SYNC_CATS=['gyro','touch','bullet','dist'];
+const SYNC_CATS=['gyro','touch','bullet','dist','keys'];
 const TG_BOT_USERNAME='realcosmogrambot'; // Login Widget: вход из браузера в ту же таблицу (v1.51.0 «Одна таблица»)
 
 /* ---------- Два входа, одна таблица (v1.51.0) ----------
@@ -77,8 +77,15 @@ function dcMount(el){
 function dcGo(cid){ // уходим на Discord и вернёмся с ?code=
   if(typeof sfx==='function') sfx.click();
   const ru=location.origin+location.pathname;
+  // v1.282.8 «Честный вход»: без state любой code в адресной строке принимался как свой.
+  // Атака: злоумышленник сам проходит вход Discord у себя, получает код в URL и присылает
+  // ЭТУ ссылку жертве — открыв её, жертва тихо входит в игру ПОД ЧУЖОЙ Discord-личностью,
+  // весь её последующий прогресс уходит на чужой аккаунт. state — разовый ярлык этого
+  // конкретного похода: сверяем на возврате, чужой code без нашего ярлыка молча игнорируем.
+  const state=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now();
+  try{ sessionStorage.setItem('dcState',state); }catch(e){}
   location.href='https://discord.com/oauth2/authorize?client_id='+cid+'&response_type=code'+
-    '&redirect_uri='+encodeURIComponent(ru)+'&scope=identify';
+    '&redirect_uri='+encodeURIComponent(ru)+'&scope=identify&state='+encodeURIComponent(state);
 }
 function syncDiscordCode(code, ru){ // возврат из Discord: код → сессия → мостик гостя
   return syncPost({action:'discord_login', code:code, redirect_uri:ru}).then(r=>r.ok?r.json():null).then(d=>{
@@ -92,10 +99,12 @@ function syncDiscordCode(code, ru){ // возврат из Discord: код → �
 }
 (function syncBootDiscord(){
   try{
-    const q=new URLSearchParams(location.search), code=q.get('code');
+    const q=new URLSearchParams(location.search), code=q.get('code'), state=q.get('state');
     if(!code) return;
     const ru=location.origin+location.pathname;
     history.replaceState(null,'',ru); // код вычеркнут из адресной строки сразу
+    let expected=null; try{ expected=sessionStorage.getItem('dcState'); sessionStorage.removeItem('dcState'); }catch(e){}
+    if(!expected || state!==expected) return; // v1.282.8: чужой code без нашего ярлыка — не наш поход, молчим
     syncDiscordCode(code, ru);
   }catch(e){}
 })();
@@ -134,9 +143,10 @@ function syncSubmit(scores, extra){
 }
 function syncFlush(extra){
   if(!syncAvailable()) return Promise.resolve();
+  if(typeof isLabEnv==='function' && isLabEnv()){ Store.set('syncQ',[]); return Promise.resolve(); } // v1.108.1: печать лаборатории — тестовый забег не долетает до боевого топа
   const q=syncQueue(); if(!q.length) return Promise.resolve();
   const batch=q[0];
-  return syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch}, extra||{})).then(r=>{
+  return syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, extra||{})).then(r=>{
     if(r.ok || r.status===401 || r.status===400){ // принято (или отказ навсегда) — очередь чистим
       Store.set('syncQ',[]);
     } else if(r.status===429){ Store.set('syncQ',[]); } // антиспам: следующий забег отправит свежее, старое не важно
@@ -167,13 +177,19 @@ function syncDuel(pid){
     return r.json().catch(()=>null);
   }).catch(()=>null);
 }
+function syncDuelAccept(pid){ // v1.108.1: сообщаем серверу о смене активного вызова — старый вызывающий
+  // узнает, что его вызов заменили, а не потерян бесследно. Тихо, как syncSubmit: не блокирует UI,
+  // не ждёт ответа — сам вызов уже применён локально к этому моменту (см. duelBoot → apply()).
+  if(!syncAvailable()) return;
+  syncPost(Object.assign({action:'duel_accept', challenger_pid:pid}, syncAuth())).catch(()=>{});
+}
 
 /* ---------- Призрак из топа: загрузка/скачивание треков ----------
    Сервер не даст загрузить трек сильнее верифицированного рекорда — подделка бессмысленна. */
-function syncGhostUp(o){ // {category, track, skin, best} — тихо, как syncSubmit
+function syncGhostUp(o){ // {category, track, skin, best, seed} — тихо, как syncSubmit
   if(!syncAvailable()) return Promise.resolve(false);
   return syncPost(Object.assign({action:'ghost_up',
-    category:o.category, track:o.track, skin:o.skin, best:o.best, share:true}, syncAuth())).then(r=>r.ok).catch(()=>false);
+    category:o.category, track:o.track, skin:o.skin, best:o.best, seed:o.seed, share:true}, syncAuth())).then(r=>r.ok).catch(()=>false);
 }
 function syncGhostGet(pid, cat){ // чужой трек: {ok,track,skin,best,name} | {ok:false} | null (сеть)
   if(!syncAvailable()) return Promise.resolve(null);
@@ -222,6 +238,7 @@ function syncLocalScores(){
     gyro: saneNumber(Store.get('bestGyro',0),0),
     touch: saneNumber(Store.get('bestTouch',0),0),
     bullet: saneNumber(Store.get('bestBullet',0),0),
-    dist: saneNumber(Store.get('bestDist',0),0)
+    dist: saneNumber(Store.get('bestDist',0),0),
+    keys: saneNumber(Store.get('bestKeys',0),0)
   };
 }

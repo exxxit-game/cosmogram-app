@@ -31,7 +31,7 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
   const o={v:2};
-  o.n=String(c.n==null?'':c.n).replace(/[<>&"'\\]/g,'').trim().slice(0,20);
+  o.n=(typeof sanitizeTrackName==='function') ? sanitizeTrackName(c.n) : String(c.n==null?'':c.n).replace(/[<>&"'\\]/g,'').trim().slice(0,20);
   o.d=clamp(Math.round(isFinite(+c.d)?+c.d:50),10,100);
   o.s=clamp(Math.round(isFinite(+c.s)?+c.s:50),10,100);
   o.e=clamp(Math.round(isFinite(+c.e)?+c.e:15),1,255); // минимум один вид преград
@@ -42,10 +42,13 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   o.b=clamp(Math.round(isFinite(+c.b)?+c.b:2),0,3);
   o.sky=FORGE_SKYS.indexOf(+c.sky)>=0?+c.sky:0;
   o.fog=clamp(Math.round(isFinite(+c.fog)?+c.fog:0),0,2);
+  // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
+  // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
+  o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
   return o;
 }
 function forgeEncode(cfg){
-  const a=[2,cfg.n||'',cfg.d,cfg.s,cfg.e,cfg.l,cfg.lv,cfg.w,cfg.fl,cfg.b,cfg.sky,cfg.fog];
+  const a=[2,cfg.n||'',cfg.d,cfg.s,cfg.e,cfg.l,cfg.lv,cfg.w,cfg.fl,cfg.b,cfg.sky,cfg.fog,cfg.seed||0]; // v1.108.1: seed — 13-й элемент, старые коды (без него) получат новый при decode
   const b=btoa(unescape(encodeURIComponent(JSON.stringify(a))))
     .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return 'CG1.'+b;
@@ -60,7 +63,7 @@ function forgeDecode(str){ // принимает код, полную ссылк
     const a=JSON.parse(decodeURIComponent(escape(atob(b))));
     if(!Array.isArray(a)) return null;
     if(a[0]===1) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5]}); // v1: остальное — дефолты
-    if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11]});
+    if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12]});
     return null;
   }catch(e){ return null; }
 }
@@ -271,7 +274,7 @@ function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeC
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
-  forgeCfg.n=String($('forgeName').value||'').trim().slice(0,20);
+  forgeCfg.n=sanitizeTrackName($('forgeName').value);
   forgeCfg.d=+$('forgeDen').value; forgeCfg.s=+$('forgeSpd').value;
   forgeCfg=forgeSanitize(forgeCfg);
   return forgeCfg;
@@ -291,8 +294,17 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
-  try{ if(tg&&tg.openTelegramLink) tg.openTelegramLink(shareUrl); else window.open(shareUrl,'_blank'); }
-  catch(e){ try{ window.open(shareUrl,'_blank'); }catch(e2){} }
+  if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
+    if(window.amplitude) amplitude.track('Shared Run', {method:'map', confirmed:false});
+    try{ tg.openTelegramLink(shareUrl); haptic('success'); return; }catch(e){}
+  }
+  if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
+    if(window.amplitude) amplitude.track('Shared Run', {method:'webshare', confirmed:false});
+    navigator.share({text:txt, url:link}).catch(()=>{});
+    haptic('success'); return;
+  }
+  if(window.amplitude) amplitude.track('Shared Run', {method:'map', confirmed:false});
+  try{ window.open(shareUrl,'_blank'); }catch(e2){}
   haptic('success');
 }
 function forgeLoadCode(){
@@ -330,6 +342,7 @@ function mapOver(sc){
     '<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill runMode">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
   runPassFill();
   if (typeof cardCapture==='function') cardCapture(sc,{win:!!S.mapWin}); // v1.73.0: карточка и для своей трассы — с именем автора
+  const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
   tryOnRevert(); music.sting(S.mapWin?'record':'death'); music.stop(2); engine.stop();
   $('stats').classList.add('hidden'); $('runPass').classList.add('hidden'); $('overDetailsBtn').classList.remove('open');
   setScreen('over');

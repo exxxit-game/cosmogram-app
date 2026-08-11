@@ -1,0 +1,19 @@
+{
+  "name": "Cosmogram",
+  "short_name": "Cosmogram",
+  "description": "A paper plane in open space. Arcade: dodge, collect stars, set records.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070b18",
+  "theme_color": "#070b18",
+  "lang": "en",
+  "categories": ["games"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

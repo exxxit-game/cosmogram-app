@@ -14,20 +14,42 @@ function setBack(visible){
   if(!tg||!tg.BackButton||!tgv('6.1'))return;
   try{ visible?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
 }
+// v1.108.1 «Своя кнопка Назад»: осмысленный переход по экрану, не просто «шаг назад» —
+// раньше жил только внутри tg.BackButton.onClick; вынесен отдельно, чтобы тем же самым
+// правилом пользовалась и history-ловушка для аппаратной/жестовой «Назад» вне Telegram.
+function backAction(){
+  if(screenName==='game') pauseGame();
+  else if(screenName==='pause') resumeGame();
+  else if(screenName==='hangar') toMenu();
+  else if(screenName==='ach') closeAch();
+  else if(screenName==='settings') closeSettings();
+  else if(screenName==='diag') setScreen('settings'); // v1.66.3: сервисный центр — назад в настройки
+  else if(screenName==='modes') setScreen('menu'); // v1.108.1: та же дверь, что у modesBack — раньше нативная/аппаратная «Назад» тут молчала, хотя кнопка была видна
+  else if(screenName==='forge') setScreen('modes'); // v1.68.0: конструктор — назад к дисциплинам
+  else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
+  else if(screenName==='over') toMenu();
+}
 if (tg && tg.BackButton && tgv('6.1')){
-  try{
-    tg.BackButton.onClick(()=>{
-      if(screenName==='game') pauseGame();
-      else if(screenName==='pause') resumeGame();
-      else if(screenName==='hangar') toMenu();
-      else if(screenName==='ach') closeAch();
-      else if(screenName==='settings') closeSettings();
-      else if(screenName==='diag') setScreen('settings'); // v1.66.3: сервисный центр — назад в настройки
-      else if(screenName==='forge') setScreen('modes'); // v1.68.0: конструктор — назад к дисциплинам
-      else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
-      else if(screenName==='over') toMenu();
-    });
-  }catch(e){}
+  try{ tg.BackButton.onClick(backAction); }catch(e){}
+}
+// v1.280.0 «Третья дверь»: шестерёнка в шапке Telegram — Меню/Пауза уже умеют её открывать
+// (openSettings), просто раньше не было видимой кнопки в самой шапке. Показывается/прячется
+// в setScreen() ниже — вместе с той же видимостью, что и своя кнопка настроек экрана.
+// Полёт исключён нарочно: соблазн потыкать шестерёнку посреди забега ни к чему.
+if (tg && tg.SettingsButton && tgv('6.10')){
+  try{ tg.SettingsButton.onClick(()=>openSettings(screenName==='pause'?'pause':'menu')); }catch(e){}
+}
+// Вне Telegram аппаратная/жестовая «Назад» на Android раньше закрывала вкладку/приложение целиком —
+// history здесь никогда не наполнялась. Ловушка: держим один пустой кадр истории всегда наготове;
+// когда браузер его «съедает» (это и есть нажатие «Назад»), тут же кладём новый и вызываем то же
+// правило перехода, что и у tg.BackButton. На экране меню — честно отпускаем: там уже «дом».
+if(!(tg && tg.BackButton && tgv('6.1'))){
+  try{ history.pushState({},''); }catch(e){}
+  window.addEventListener('popstate', ()=>{
+    if(screenName==='menu') return; // дом — дальше пусть ведёт себя как обычная страница
+    try{ history.pushState({},''); }catch(e){}
+    backAction();
+  });
 }
 // v1.101.0 «Чистое небо»: где у Telegram есть своя «Назад», наша пауза — призрак
 // (невидимая подушка-след под ней); где родной кнопки нет — наша видна всегда
@@ -47,15 +69,24 @@ function setScreen(name){
   $('diagScreen').classList.toggle('hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   $('modesScreen').classList.toggle('hidden', name!=='modes');
   $('forgeScreen').classList.toggle('hidden', name!=='forge'); // v1.68.0: конструктор трассы
+  // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
+  // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
+  // БЕСКОНЕЧНО до конца всей сессии, даже часы спустя, соревнуясь за кадр с настоящей игрой.
+  if(name!=='forge' && typeof _fSkyRun!=='undefined' && _fSkyRun) _fSkyRun=false;
   $('cardScreen').classList.toggle('hidden', name!=='card'); // v1.73.0: карточка для скриншота
   $('gameOverScreen').classList.toggle('hidden', name!=='over');
   const inGame = (name==='game'||name==='pause');
+  document.body.classList.toggle('flying', inGame); // v1.108.1: зум/жесты блокируются только тут, не везде
   $('hud').classList.toggle('hidden', name!=='game');
   $('topHud').classList.toggle('hidden', !inGame); // v1.46.0: верхняя панель одним рядом
   $('telemHud').classList.toggle('hidden', !inGame); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
   $('pauseBtn').classList.toggle('hidden', name!=='game');
   $('dim').classList.toggle('on', name==='pause');
   setBack(name!=='menu');
+  // v1.280.0: та же видимость, что у собственной кнопки настроек экрана — Меню и Пауза, нигде больше
+  if (tg && tg.SettingsButton && tgv('6.10')){
+    try{ (name==='menu'||name==='pause') ? tg.SettingsButton.show() : tg.SettingsButton.hide(); }catch(e){}
+  }
   hideMain(); // v1.62.0: нативная кнопка убрана — у каждого экрана есть своя
   if(name==='menu' && typeof achClaimMaybe==='function') achClaimMaybe(); // карман наград: праздник при возврате в меню
   // v1.103.0 «Тихий нуль»: пульс диода — только пока открыты настройки; ушёл — лампа спит
@@ -75,7 +106,7 @@ let champTrack=null;    // v1.100.1: лента чемпиона — отдел�
 Store.del('runMode'); // v1.92.1: старая прописка любой дисциплины снимается — большая кнопка священна
 Store.del('pact'); // v1.70.0: модификаторы удалённого режима больше не нужны
 function setRunMode(m){ runMode=m; } // v1.92.1: сессия — живёт через «Ещё раз?» и рестарт из паузы, умирает в меню и на перезапуске
-function runStart(){ runMode==='bullet'?startBullet():startGame(); } // «ЛЕТЕТЬ» — в выбранной дисциплине
+function runStart(){ if(window.amplitude) amplitude.track('Started Flight', {mode:runMode||'classic'}); runMode==='bullet'?startBullet():startGame(); } // «ЛЕТЕТЬ» — в выбранной дисциплине
 window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0)
   if (S.running && typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
@@ -104,15 +135,21 @@ function runPassFill(){ // паспорт забега: режим, время, 
 function startGame(saved){
   if (saved && saved.mode==='daily') runMode='daily'; // v1.93 «Одна попытка»: крах не жжёт попытку — автосейв дня возвращает ровно в тот же прыжок
   audio(); keepAwake();
-  mapRNG = runMode==='daily' ? dailyRNG() : (runMode==='theater' ? keyRNG(theaterDay||todayKey()) : Math.random); // v1.47.0 «Трасса дня»: сегодня небо одно на всех — детерминированный поток от даты; v1.94.0: театр ставит то самое небо дня прыжка; остальные дисциплины — случайная трасса
+  const freshSeed = Math.floor(Math.random()*4294967296); // v1.280.0: чеканится один раз за забег — источник для Классики/Bullet ниже
+  mapRNG = runMode==='daily' ? dailyRNG()
+    : runMode==='theater' ? keyRNG(theaterDay||todayKey())
+    : runMode==='speedrun' ? keyRNG(todayKey()+'·speedrun') // v1.108.1 «Честный жар»: свой поток на день, как у Трассы дня — время сравнимо между попытками и между игроками
+    : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
+    : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
   if (typeof calReset==='function') calReset(false); else { input.baseG=null; input.baseB=null; } // автокалибровка нуля на старте — из неподвижной позы (v1.4.5)
   input.tiltX=0; input.tiltY=0; // сброс low-pass — не тянет из меню
   tDown=false; tActive=false; input.touchX=null; input.touchY=null; // залипший жест (пропавший touchend в WebView) не паркует самолётик и не глушит гироскоп
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
+  if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
-    gyroSec:0,manSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,srWin:0,
+    gyroSec:0,manSec:0,touchSec:0,keysSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,srWin:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2}); // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
@@ -120,7 +157,8 @@ function startGame(saved){
   if (runMode==='daily' && !saved) Store.set('dailyRun',{d:S.dailyDay,fly:1}); // взлёт = попытка; печать дня поставлена
   if (runMode==='custom' && typeof forgeCfgGet==='function'){ // Своя трасса: конфиг автора на борт (v1.68.0, v1.69.0 — полная палуба)
     const fc=forgeCfgGet();
-    S.customE=fc.e; S.customD=forgeDensityMul(fc.d); S.customS=forgeSpeedMul(fc.s); S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
+    const am=(typeof Adaptive!=='undefined')?Adaptive.mult():{d:1,s:1}; // v1.108.1 «Мозг неба»: множитель поверх авторских настроек, не вместо них
+    S.customE=fc.e; S.customD=forgeDensityMul(fc.d)*am.d; S.customS=forgeSpeedMul(fc.s)*am.s; S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
     S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0)
     if(!saved){ S.lives=fc.lv; S.mission=fc.w; } // жизни и жара автора (автосейв честнее — не переписываем)
     S.hueShift=fc.sky; // небо автора: сдвиг оттенка стартует с его палитры
@@ -131,10 +169,12 @@ function startGame(saved){
   if (typeof goldReset==='function') goldReset(); // v1.100.2 «Золотая звезда дня»: маяк переставлен на этот взлёт (своим кубиком дня)
   if (!saved && typeof planetReset==='function') planetReset(); // v1.106.0: отметины тысяч — с чистого забега (страж П5: вторая попытка молчала до прошлого максимума)
   if (typeof morseDayCheck==='function') morseDayCheck(); // виброэфир: первый полёт дня (v1.54.0) // v1.87.0: призрак рекорда со старта убран — мотиваций хватает без тени
+  if (typeof streakDayCheck==='function') streakDayCheck(); // v1.108.1: серия дней — тот же момент, тот же принцип
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: на сцене — твоя лента дня; теней нет, зритель смотрит сам самолётик
     ghost=(theaterChamp&&champTrack)?champTrack:theaterTrack; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0; ghostTagT=0; ghostForeign=false; ghostName='';
     if (theaterChamp){ ghostForeign=true; ghostName=theaterChamp.name; ghostSkin=theaterChamp.skin; } // v1.100.1 «Трибуна чемпиона»: гость назван по имени и одет в свой скин
     else ghostSkin=-1; }
+  else if (typeof ghostLoad==='function') ghostLoad(); // v1.280.0 «Воскрешение»: определена с самого начала, но никогда не звалась — «Призрак из топа» и свой рекорд первых 7 игр молчали физически, не из-за сида
   if(saved){ // восстановление автосейва (Блок 8)
     S.score=saneNumber(saved.score,0); S.mission=saneNumber(saved.mission,1);
     S.lives=clamp(saneNumber(saved.lives,3),1,3); S.dist=saneNumber(saved.dist,0);
@@ -160,9 +200,8 @@ function startGame(saved){
   Store.del('savedRun');
 }
 function startBullet(){ // отдельный режим: каждый near-miss замедляет мир до 0.4 на 0.5с
-  startGame(); mapRNG=Math.random; S.bullet=true; // Bullet Time — режим хаоса: карта случайная
+  startGame(); S.bullet=true; // v1.280.0: свой сид уже честно поставлен внутри startGame() — раньше эта строка тут же его затирала обратно на голый Math.random()
   Stats.bulletRuns++; saveStats(); // профиль: счётчик забегов Bullet Time
-  if (typeof ghostOff==='function') ghostOff(); // призрак — только основной режим
   showBanner(L.bullet);
 }
 function retryRun(){ runMode==='bullet'?startBullet():startGame(); } // «ЕЩЁ РАЗ» — в той же дисциплине (v1.42.0)
@@ -173,16 +212,20 @@ function gameOver(){
   if (typeof playSecFlush==='function') playSecFlush(); // v1.66.1: секунды неба — в хранилище разом, не по одной
   if (typeof tgImmersion==='function') tgImmersion(false); // забег кончился — защита от свайпа больше не нужна (v1.58.0)
   const sc=Math.floor(S.score*(0.5+S.smooth*0.5)); // Smooth Flight: итог × плавность (0.75..1.0)
-  if (S.mode==='custom' && typeof mapOver==='function'){ theaterTrack=null; $('watchBtn').classList.add('hidden'); mapOver(sc); return; } // Своя трасса: не в зачёт — иначе лёгкие карты стали бы фермой звёзд (v1.68.0); v1.94.0: театр здесь не ставится — занавес опущен
-  const mode=controlMode(); // категория забега: gyro / touch
-  const modeKey=S.bullet?'bestBullet':(mode==='gyro'?'bestGyro':'bestTouch');
+  if (S.mode==='custom' && typeof mapOver==='function'){ // Своя трасса: не в зачёт — иначе лёгкие карты стали бы фермой звёзд (v1.68.0); v1.94.0: театр здесь не ставится — занавес опущен
+    if (typeof Adaptive!=='undefined') Adaptive.onDeath(S.time, S.lastHitKind); // v1.108.1 «Мозг неба»: тот же момент, что уже шлёт анонимную телеметрию — здесь только локально, для подстройки
+    theaterTrack=null; $('watchBtn').classList.add('hidden'); mapOver(sc); return;
+  }
+  const mode=controlMode(); // категория управления: gyro / touch / keys
+  const cat=S.bullet?'bullet':mode; // v1.280.0: категория забега для всего, что касается призраков — Bullet не выражается через controlMode()
+  const modeKey=S.bullet?'bestBullet':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
   const isRecord = sc>prevCat && sc>0;
-  const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' && !S.bullet &&
-    ghostPid>0 && ghostCat && mode===ghostCat && ghostBest>0 && sc>ghostBest); // призрачная месть: призрак из топа, та же категория, счёт выше его планки
+  const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
+    ghostPid>0 && ghostCat && cat===ghostCat && ghostBest>0 && sc>ghostBest); // призрачная месть: призрак из топа, та же категория, счёт выше его планки — v1.280.0: сравниваем с cat (Bullet больше не исключение)
   if (isRecord){ Store.set(modeKey,sc); haptic('success'); if (typeof confetti==='function') confetti(); // вау-момент
     setTimeout(()=>{ if (typeof hapticMorse==='function') hapticMorse(myCallsign()); },950); // виброэфир: позывной «передан в эфир» (v1.54.0)
-    if (!S.bullet && typeof ghostSave==='function') ghostSave(); } // призрак: траектория рекордного забега (bullet — нельзя)
+    if (typeof ghostSave==='function') ghostSave(); } // призрак: траектория рекордного забега — v1.280.0: Bullet больше не исключение
   if (isRecord && prevCat>0) Stats.recBeats=(Stats.recBeats||0)+1; // побит СУЩЕСТВУЮЩИЙ рекорд категории (первый зачёт — не в счёт)
   if (sc>S.best){ S.best=sc; Store.set('best',sc); } // общий максимум — для HUD и меню
   const distM=Math.floor(S.dist); // чистый пробег: без бонусов, единый для всех режимов
@@ -202,7 +245,7 @@ function gameOver(){
   if(S.comboMax>Stats.bestCombo)Stats.bestCombo=S.comboMax;
   if(S.mission>Stats.bestWave)Stats.bestWave=S.mission;
   if(S.smooth>=0.99)Stats.perfectRuns++;
-  if(S.bullet)Stats.bGames++; else if(mode==='gyro')Stats.gGames++; else Stats.tGames++;
+  if(S.bullet)Stats.bGames++; else if(mode==='gyro')Stats.gGames++; else if(mode==='keys')Stats.kGames++; else Stats.tGames++;
   if(distM===42)Stats.e42=1; if(sc>9000)Stats.e9000=1; if(sc===1337)Stats.e1337=1; // пасхалки
   saveStats();
   Store.del('savedRun');
@@ -218,8 +261,8 @@ function gameOver(){
   });
   // рекорды — золотые плашки в ряд с иконками категорий (не строки текста)
   const recChips=[];
-  if (isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':'hand'))+
-    (S.bullet?L.recordBullet:(mode==='gyro'?L.recordGyro:L.recordTouch))+'</span>');
+  if (isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':(mode==='keys'?'keys':'hand')))+
+    (S.bullet?L.recordBullet:(mode==='gyro'?L.recordGyro:(mode==='keys'?L.recordKeys:L.recordTouch)))+'</span>');
   if (isDistRecord) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ruler')+L.recordDist+'</span>');
   if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
@@ -230,8 +273,13 @@ function gameOver(){
   }
   if (S.mode==='daily'){ Store.set('dailyRun',{d:S.dailyDay||todayKey(),s:sc,done:1}); runMode='classic'; } // v1.93 «Одна попытка»: попытка сгорела — сессия закрыта, «Ещё раз?» — уже тренировка классикой
   if (ghostBeatNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ghost')+' '+L.ghostBeat(ghostName,sc,ghostBest)+'</span>');
+  // v1.108.1 «Пасхалки заговорили»: e42/e9000/e1337 взводились в Stats и молчали — теперь есть момент
+  if (distM===42) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg42+'</span>');
+  if (sc>9000) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg9000+'</span>');
+  if (sc===1337) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg1337+'</span>');
   $('newRecord').innerHTML = recChips.join('');
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
+  const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   $('toRecord').textContent = (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''; // мотивация: сколько не хватило
   const nl=(typeof achNextLoc==='function')?achNextLoc():null; // космическая шкала: «До Луны: 200 м»
   $('toLoc').textContent = nl ? L.toLoc(aT(nl).n, fmtN(nl.need-Stats.totalDist)) : '';
@@ -242,10 +290,13 @@ function gameOver(){
   if (duelWinNow) syncExtra.duel_win=dl.pid;
   if (ghostBeatNow){ syncExtra.ghost_beat=ghostPid; syncExtra.ghost_cat=ghostCat; } // сервер сам сверит свежий рекорд с его планкой
   if (typeof syncSubmit==='function') syncSubmit(syncLocalScores(), Object.keys(syncExtra).length?syncExtra:undefined); // честная таблица: локальные рекорды → сервер (тихо)
-  // призрак рекорда — в топ: трек + мой скин (живые режимы, шеринг включён; тихо, как таблица)
-  if (isRecord && !S.bullet && rec.length>=20 && Store.get('shareGhost',1) &&
-    typeof syncGhostUp==='function' && typeof ghostPack==='function')
-    syncGhostUp({category:mode, track:ghostPack(rec), skin:S.skin, best:sc});
+  // призрак рекорда — в топ: трек + мой скин (все живые категории, включая Bullet — v1.280.0; шеринг включён; тихо, как таблица)
+  const trackForGhost = (rec.length>=20 && typeof ghostPack==='function') ? ghostPack(rec) : null;
+  if (isRecord && trackForGhost && Store.get('shareGhost',1) && typeof syncGhostUp==='function')
+    syncGhostUp({category:cat, track:trackForGhost, skin:S.skin, best:sc, seed:S.seed});
+  // v1.280.0 «Хартия»: дистанция — тоже честная категория с призраком, отдельно от того, каким способом её пролетели
+  if (isDistRecord && trackForGhost && Store.get('shareGhost',1) && typeof syncGhostUp==='function')
+    syncGhostUp({category:'dist', track:trackForGhost, skin:S.skin, best:distM, seed:S.seed});
   // v1.100.1 «Трибуна чемпиона»: прыжок дня уходит в зал — результат всегда, лента (коридорные координаты) — если призраки не скрыты
   if (S.mode==='daily' && sc>0 && rec.length>=20 &&
     typeof syncDailySubmit==='function' && typeof ghostPackDaily==='function')
@@ -253,16 +304,17 @@ function gameOver(){
       track: Store.get('shareGhost',1) ? ghostPackDaily() : undefined });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
-    const rankCat=S.bullet?'bullet':(mode==='gyro'?'gyro':'touch');
+    const rankCat=cat; // v1.280.0: та же категория, что и везде — раньше здесь отдельно повторялась своя логика, включая пропущенную ветку keys
     syncTop(rankCat).then(d=>{
       if(!d||!d.ok||!d.me||!d.me.rank) return;
       const rank=d.me.rank;
-      if(Stats.topBest===0||rank<Stats.topBest){ // лучший ранг за всё время — питает ачивки t1–t3
-        Stats.topBest=rank; saveStats();
-        if(typeof achCheck==='function') achCheck();
-        if(rank<=10 && !isRecord && typeof hapticMorse==='function')
-          setTimeout(()=>hapticMorse(myCallsign()),1100); // виброэфир: аплодисменты топ-10 (v1.54.0)
-      }
+      // v1.282.5: раньше здесь жил Stats.topBest + achCheck() — «питает ачивки t1–t3»,
+      // но реестр ACH таких ачивок не содержит уже давно (тот же класс осколка, что
+      // v1.108.1 уже чинил строкой выше по файлу для других мест). topBest нигде
+      // больше не читался — чистый мёртвый груз в Store. Сам виброэфир топ-10 жив,
+      // ему это не было нужно.
+      if(rank<=10 && !isRecord && typeof hapticMorse==='function')
+        setTimeout(()=>hapticMorse(myCallsign()),1100); // виброэфир: аплодисменты топ-10 (v1.54.0)
       if(screenName==='over'){ const rl=$('myRank'); if(rl) rl.textContent=L.rankWorld(rank); }
     });
   }
@@ -290,10 +342,11 @@ function gameOver(){
       statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+
     '</div>'+
     '<div class="bestPills rise" style="animation-delay:200ms">'+
-      '<span class="miniPill runMode">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':'hand'))+
-        (S.bullet?L.bullet:(mode==='gyro'?L.modeGyro:L.modeTouch))+'</span>'+
+      '<span class="miniPill runMode">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':(mode==='keys'?'keys':'hand')))+
+        (S.bullet?L.bullet:(mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch)))+'</span>'+
       bestPill('phone',saneNumber(Store.get('bestGyro',0),0))+
       bestPill('hand',saneNumber(Store.get('bestTouch',0),0))+
+      bestPill('keys',saneNumber(Store.get('bestKeys',0),0))+
       bestPill('timer',saneNumber(Store.get('bestBullet',0),0))+
       bestPill('ruler',saneNumber(Store.get('bestDist',0),0)+' м')+
     '</div>';
@@ -322,7 +375,7 @@ function gameOver(){
 }
 function pauseGame(){
   if(!S.running||S.paused||S.pausing||S.dying)return; // занавес смерти прерывать нельзя
-  S.pausing=1; S.invuln=Math.max(S.invuln,.6); // «Склейка»: мир замирает плавно, пока вплывает меню паузы
+  S.pausing=1; grantGrace(.6); // «Склейка»: мир замирает плавно, пока вплывает меню паузы — v1.108.1: через общий лимит
   releaseAwake(); autosave();
   music.duck(true); // пауза: музыка в фон, не обрываем
   engine.duck(true);
@@ -330,7 +383,7 @@ function pauseGame(){
 }
 function resumeGame(){
   if(!S.paused&&!S.pausing)return;
-  S.paused=false; S.pausing=0; S.invuln=Math.max(S.invuln,.35); // «Склейка»: timeScale сам доползёт до 1 — плавный разгон
+  S.paused=false; S.pausing=0; grantGrace(.35); // «Склейка»: timeScale сам доползёт до 1 — плавный разгон — v1.108.1: через общий лимит
   keepAwake();
   music.duck(false);
   engine.duck(false);
@@ -360,6 +413,12 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   if (typeof tgImmersion==='function') tgImmersion(false);
   runMode='classic'; // сессия снова чиста — дом просыпается классикой
   music.stop(1); engine.stop();
+  // v1.282.10: карточка для скриншота не вызывается для Театра (cardCapture зовётся только из
+  // gameOver/mapOver, эта функция — отдельный путь) — но сама кнопка «Карточка» на экране итогов
+  // видна всегда, без разбора. Нажми её после спектакля — увидишь чужие/устаревшие данные от
+  // последнего настоящего забега (или нули, если такого забега в этой сессии ещё не было),
+  // будто это твой результат. Прячем кнопку именно для этого захода на итоги.
+  const cb=$('cardBtn'); if(cb) cb.classList.add('hidden');
   setScreen('over');
 }
 
@@ -368,7 +427,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
 function bootFly(){
   const saved = Store.get('savedRun', null);
   startGame(saved || undefined); // автосейв — возвращаем ровно в тот же полёт
-  S.invuln = Math.max(S.invuln, 2.5); // благодать на разгон: пара секунд сориентироваться в небе
+  grantGrace(2.5); // благодать на разгон: пара секунд сориентироваться в небе — v1.108.1: через общий лимит
 }
 function refreshMenu(){
   $('bestScore').textContent = S.best>0 ? L.best+': '+S.best : '';
@@ -410,10 +469,19 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
   put('setGrpProfSub', (typeof myCallsign==='function'?myCallsign():'')||L.csDefault);
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
-function langLabel(){ rowV('setLangBtn', langPref==='auto'?L.langAuto:(langPref==='ru'?'Русский':'English')); }
+function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
+let langEff='ru'; // v1.108.1: активный язык наружу — единый источник для aT() и всего, что спросит «на каком языке мы сейчас»
 function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор игрока
   const base=LANG; // автоопределение уже посчитано в core.js
-  L = I18N[langPref==='auto'?base:langPref];
+  const eff=langPref==='auto'?base:langPref;
+  langEff=eff;
+  L = I18N[eff];
+  // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
+  // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
+  // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.
+  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json'};
+  const mLink=document.getElementById('manifestLink');
+  if(mLink) mLink.href=MANIFEST_BY_LANG[eff]||MANIFEST_BY_LANG.ru;
 }
 
 /* ---------- Ангар (Блок 4/7: магазин за внутриигровые ✦) ---------- */
@@ -428,7 +496,7 @@ function tryOnRevert(){
 }
 function tryOnSkin(sk){
   if(tryOnId!==null) return; // уже в примерке
-  tryOnId=sk.id; Store.set('tryOn',new Date().toISOString().slice(0,10));
+  tryOnId=sk.id; Store.set('tryOn',todayKey()); // v1.108.1: локальный день игрока, как у Трассы дня — было UTC, рассинхрон на дальних часовых поясах
   S.skin=sk.id; // временно — Store 'skin' не трогаем
   toast(L.tryOnGo(L.skinNames[sk.name]),'rgba(127,216,255,.5)');
   haptic('light'); updateLives();
@@ -436,7 +504,7 @@ function tryOnSkin(sk){
 }
 function renderHangar(){
   $('hangarWallet').innerHTML = L.wallet+S.wallet;
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayKey(); // v1.108.1: было UTC — теперь тот же «день игрока», что у Трассы дня
   const canTry=Store.get('tryOn','')!==today;
   const list=$('shipList'); list.innerHTML='';
   SKINS.forEach((sk,skI)=>{
@@ -487,8 +555,21 @@ function shareTextFor(){ // гиро-гордость: забег на гиро�
 }
 function shareScore(){
   const text=shareTextFor();
-  const url='https://t.me/share/url?url='+encodeURIComponent('https://t.me/realcosmogrambot/app')+'&text='+encodeURIComponent(text); // v1.96.0: дверь ведёт в игру, а не в пустой домен
-  if(tg&&tg.openTelegramLink){ try{ tg.openTelegramLink(url); return; }catch(e){} }
+  const gameUrl='https://t.me/realcosmogrambot/app';
+  const url='https://t.me/share/url?url='+encodeURIComponent(gameUrl)+'&text='+encodeURIComponent(text); // v1.96.0: дверь ведёт в игру, а не в пустой домен
+  if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
+    if(window.amplitude) amplitude.track('Shared Run', {method:'text', confirmed:false}); // v1.108.1: диалог Telegram открыт, доставку подтвердить нечем
+    try{ tg.openTelegramLink(url); return; }catch(e){}
+  }
+  // v1.108.1 «Дверь пошире»: вне Telegram (веб-версия на GitHub Pages) раньше шли прямиком на
+  // Telegram-ссылку — честно работает, но принудительно сужает выбор до одного мессенджера.
+  // Системный лист ОС (WhatsApp/SMS/почта/что угодно) — то, чего здесь не хватало.
+  if(navigator.share){
+    if(window.amplitude) amplitude.track('Shared Run', {method:'webshare', confirmed:false}); // Promise молчит, какое приложение выбрал игрок — тот же честный предел, что у остальных каналов
+    navigator.share({text:text, url:gameUrl}).catch(()=>{}); // отмена/отказ — тихо, ничего не ломаем
+    return;
+  }
+  if(window.amplitude) amplitude.track('Shared Run', {method:'text', confirmed:false});
   window.open(url,'_blank');
 }
 
@@ -497,20 +578,35 @@ function shareScore(){
    Активный вызов хранится в Store (переживает перезапуск), закрывается победой или отказом. */
 let DUEL=null;
 function duelParse(sp){ const m=/^duel_(\d{1,15})$/.exec(String(sp||'')); return m?Number(m[1]):null; }
-function duelGet(){ if(DUEL) return DUEL; const d=Store.get('duel',null); DUEL=(d && d.pid>0 && d.best>0)?d:null; return DUEL; }
+const DUEL_TTL_MS = 30*24*60*60*1000; // v1.108.1 «Срок годности вызова»: 30 дней — баннер раньше висел вечно,
+  // даже если challenger давно не играет или сам факт вызова забылся; после этого срока вызов
+  // тихо считается неактуальным и снимается сам, как будто истёк — не «отклонён», просто устарел.
+function duelGet(){
+  if(DUEL) return DUEL;
+  const d=Store.get('duel',null);
+  if(d && d.pid>0 && d.best>0){
+    if(d.ts && (Date.now()-d.ts)>DUEL_TTL_MS){ Store.del('duel'); DUEL=null; return null; } // истёк — тихо снимаем, не ошибка
+    DUEL=d;
+  } else DUEL=null;
+  return DUEL;
+}
 function duelSet(d){
-  if(d) d={pid:Math.floor(d.pid), name:String(d.name||'Игрок').replace(/[<>&]/g,'').slice(0,64), best:Math.floor(d.best)};
+  if(d) d={pid:Math.floor(d.pid), name:String(d.name||'Игрок').replace(/[<>&]/g,'').slice(0,64), best:Math.floor(d.best), ts:Date.now()};
   DUEL=d;
   if(d) Store.set('duel',d); else Store.del('duel');
   if(!d && foreignFrom==='duel') ghostSetForeign(null); // вызов закрыт — его призрак больше не ждёт старта
   duelBanner();
 }
 /* Д3 Склейка: призрак вызвавшего летит рядом, пока дуэль жива (раз в сессию; gyro-трек, нет — touch) */
-let duelGhostTried=false, foreignFrom=null; // foreignFrom: 'top' | 'duel' — чей призрак ждёт старта
+let duelGhostTriedPid=0, foreignFrom=null; // foreignFrom: 'top' | 'duel' — чей призрак ждёт старта
 function duelGhostFetch(){
-  if (duelGhostTried) return;
   const dl=duelGet(); if(!dl || typeof syncGhostGet!=='function' || typeof ghostSetForeign!=='function') return;
-  duelGhostTried=true;
+  // v1.282.6: раньше флаг был один булев на всю сессию — вызов A получал попытку, а если его
+  // заменял вызов B от ДРУГОГО человека (уже честно поддержанная замена — v1.108.1 «Настоящий
+  // выбор»), попытка для B никогда не случалась: флаг уже израсходован на A. Привязка к pid
+  // самого вызова — новый соперник снова получает шанс на призрака рядом.
+  if (duelGhostTriedPid===dl.pid) return;
+  duelGhostTriedPid=dl.pid;
   syncGhostGet(dl.pid,'gyro').then(g=>{ return (g && g.ok) ? g : syncGhostGet(dl.pid,'touch'); }).then(g=>{
     if (!duelGet()) return; // дуэль уже закрылась, пока летел ответ
     if (g && g.ok){ ghostSetForeign({track:g.track, skin:g.skin, name:dl.name}); foreignFrom='duel';
@@ -540,7 +636,23 @@ function duelBoot(){ // deep-link ?startapp=duel_<pid>: забрать план�
     const pid = duelParse(sp);
     if(!pid || (typeof syncMyId==='function' && pid===syncMyId())){ duelBanner(); return false; } // не вызов / сам себе
     syncDuel(pid).then(d=>{
-      if(d && d.ok && d.best>0){ duelSet({pid:pid, name:d.name, best:d.best}); haptic('success'); }
+      if(d && d.ok && d.best>0){
+        // v1.108.1 «Настоящий выбор»: раньше новый вызов тихо стирал старый (потом — тихо с тостом
+        // постфактум). Теперь — реальный вопрос игроку ДО замены, с правом отказаться и оставить
+        // старый вызов как есть. Этот путь целиком живёт внутри Telegram (start_param не бывает
+        // вне него) — значит tg.showConfirm() здесь родной, не чужеродный интерфейс поверх своего.
+        const old=(typeof duelGet==='function')?duelGet():null;
+        const apply=()=>{ duelSet({pid:pid, name:d.name, best:d.best}); haptic('success');
+          if(typeof syncDuelAccept==='function') syncDuelAccept(pid); }; // v1.108.1: сервер узнаёт о смене — старый вызывающий получит уведомление, если был кто-то другой
+        if(old && old.pid && old.pid!==pid && typeof L!=='undefined' && L.duelReplaceQ){
+          const msg=L.duelReplaceQ(old.name||'', d.name||'');
+          if(tg && typeof tg.showConfirm==='function'){
+            tg.showConfirm(msg, ok=>{ if(ok) apply(); });
+          } else if(typeof confirm==='function'){
+            if(confirm(msg)) apply();
+          } else apply(); // нет способа спросить — честнее применить, чем тихо потерять вызов
+        } else apply();
+      }
       else duelBanner();
     });
     return true; // v1.6.0: вызов ждёт баннера — этот запуск единственный начинается с меню
@@ -630,14 +742,31 @@ $('setSoundBtn').addEventListener('click', ()=>{
   else { if(MUSIC_ON) music.start(screenName==='game'?'game':'menu'); if(S.running&&!S.paused) engine.start(); }
 });
 function musicLabel(){ rowSw('setMusicBtn', MUSIC_ON); setWellFill(); }
+function contrastLabel(){ rowSw('setContrastBtn', CONTRAST); }
+function colorblindLabel(){ rowSw('setColorblindBtn', COLORBLIND); }
+function streaksLabel(){ rowSw('setStreaksBtn', SPEED_STREAKS); }
+function canvasFilterSync(){ // v1.280.0: класс на самом canvas — оба фильтра независимы, могут стоять вместе
+  const cv=$('game'); if(!cv) return;
+  cv.classList.toggle('hc', CONTRAST);
+  cv.classList.toggle('cb', COLORBLIND);
+}
+$('setContrastBtn').addEventListener('click', ()=>{
+  CONTRAST=!CONTRAST; Store.set('contrast',CONTRAST?1:0); contrastLabel(); canvasFilterSync(); haptic('light'); sfx.click();
+});
+$('setColorblindBtn').addEventListener('click', ()=>{
+  COLORBLIND=!COLORBLIND; Store.set('colorblind',COLORBLIND?1:0); colorblindLabel(); canvasFilterSync(); haptic('light'); sfx.click();
+});
+$('setStreaksBtn').addEventListener('click', ()=>{
+  SPEED_STREAKS=!SPEED_STREAKS; Store.set('speedStreaks',SPEED_STREAKS?1:0); streaksLabel(); haptic('light'); sfx.click();
+});
 $('setMusicBtn').addEventListener('click', ()=>{
   MUSIC_ON=!MUSIC_ON; Store.set('music',MUSIC_ON?1:0); musicLabel(); haptic('light'); sfx.click();
   if(!MUSIC_ON) music.stop(.3);
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
 $('setLangBtn').addEventListener('click', ()=>{
-  const order=['auto','ru','en'];
-  langPref=order[(order.indexOf(langPref)+1)%3];
+  const order=['auto','ru','en','es','pt','fr']; // v1.108.1: добавляются языки по мере перевода
+  langPref=order[(order.indexOf(langPref)+1)%order.length];
   Store.set('lang',langPref); applyLangPref(); applyLang(); refreshMenu(); langLabel(); sfx.click();
 });
 $('diagBtn').addEventListener('click', ()=>{ // v1.66.3: сервисный центр — отдельный экран, не спойлер
@@ -800,8 +929,9 @@ $('setGfxBtn').addEventListener('click', ()=>{
 function aboutFill(){ $('aboutBox').innerHTML='Cosmogram · v'+GAME_VERSION+'<br/>'+L.channel+': '+
   CHANNEL_URL.replace('https://',''); } // aboutTags вычеркнуты (v1.27.0)
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
-function refreshGyroLock(){ const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !HAS_GYRO || gyroUnlocked());
-  const o=$('setGyroOffBtn'); if(o){ o.classList.toggle('hidden', !HAS_GYRO || !gyroUnlocked()); rowSw('setGyroOffBtn', gyroUnlocked()); } } // v1.106.0 «Штурман по желанию»: ряд-выключатель виден только при открытом замке
+function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
+  const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
+  const o=$('setGyroOffBtn'); if(o){ o.classList.toggle('hidden', !has || !gyroUnlocked()); rowSw('setGyroOffBtn', gyroUnlocked()); } } // v1.106.0 «Штурман по желанию»: ряд-выключатель виден только при открытом замке
 $('gyroUnlockBtn').addEventListener('click', async ()=>{ // открытие «Полёта без рук» из настроек — тем же ритуалом: разрешение + «держи ровно»
   audio(); sfx.click();
   if (NEEDS_TILT_PERMISSION){ let r=''; try{ r=await DeviceOrientationEvent.requestPermission(); }catch(e){ r=''; }
@@ -928,7 +1058,8 @@ let foreignGhost=null;
 function ghostSetForeign(f){
   foreignGhost=(f && typeof f.track==='string')?{track:f.track, skin:Math.floor(Number(f.skin))||0,
     name:String(f.name||'').replace(/[<>&]/g,'').slice(0,64),
-    pid:Math.floor(Number(f.pid))||0, cat:String(f.cat||''), best:Math.floor(Number(f.best))||0}:null; // имя чистим в одной точке; pid/cat/best — цель призрачной мести
+    pid:Math.floor(Number(f.pid))||0, cat:String(f.cat||''), best:Math.floor(Number(f.best))||0,
+    seed:(f.seed!=null && isFinite(Number(f.seed)))?Math.floor(Number(f.seed)):null}:null; // v1.280.0: сид едет с призраком, если сервер его знает
 }
 function ghostTakeForeign(){ const f=foreignGhost; foreignGhost=null; return f; } // разовый: съедается при старте
 $('topList').addEventListener('click', e=>{
@@ -940,7 +1071,7 @@ $('topList').addEventListener('click', e=>{
     // v1.103.0 «Тихий нуль»: знак результата рисуется ПОСЛЕ результата — неудача возвращает призрака, галочка не врёт
     if(!d || !d.ok){ b.innerHTML=ic('ghost'); toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; } // владелец скрыл трек
     b.innerHTML=ic('check');
-    ghostSetForeign({track:d.track, skin:d.skin, name:d.name, pid:pid, cat:topCat, best:Math.floor(Number(b.dataset.best))||0});
+    ghostSetForeign({track:d.track, skin:d.skin, name:d.name, pid:pid, cat:topCat, best:Math.floor(Number(b.dataset.best))||0, seed:d.seed});
     foreignFrom='top';
     toast(L.ghostWith(d.name||''),'rgba(191,232,255,.45)');
     startGame(); // призрак подхватится в ghostLoad — окно онбординга его не трогает
@@ -1003,6 +1134,7 @@ function applyLang(){
   $('pillG').title=L.pillGyro; $('pillT').title=L.pillTouch;
   $('pillD').title=L.pillDist; $('pillB').title=L.pillBullet;
   $('startBtn').textContent=L.start;
+  $('tooNarrowTitle').textContent=L.tooNarrowTitle; $('tooNarrowHint').textContent=L.tooNarrowHint; // v1.108.1: «Пол листа»
   $('modesBtn').textContent=L.modes; $('modesBack').textContent=L.modesBack; modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
@@ -1055,7 +1187,8 @@ function applyLang(){
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   $('moreBtn').textContent=L.moreLbl;
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
-   ['setMorseHapBtn','setMorseHap'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setLangBtn','setLang'],
+   ['setMorseHapBtn','setMorseHap'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
+   ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setLangBtn','setLang'],
    ['setGhostBtn','setGhost'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
 }
@@ -1086,22 +1219,41 @@ Store.init(()=>{
   // настройки: звук, вибро, графика, язык из хранилища
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
+  CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
+  SPEED_STREAKS = Store.get('speedStreaks',1)===1; // v1.280.0: по умолчанию включено
   MUSIC_ON = Store.get('music',1)!==0; // музыка — отдельная настройка от звуков
   if (typeof achQShow==='function') achQShow(); // карман наград: бейдж «ждут N» на кнопке 🏆
   // сторож звука: каждый тап — шанс разбудить; раз в 2с — самопроверка (v1.20.0)
   document.addEventListener('pointerdown', audioKeep);
   setInterval(audioKeep, 2000);
+  // v1.108.1 «Клавиатура для всех»: 22 кастомные ARIA-кнопки (role="button" на div) получали фокус
+  // по Tab (после tabindex="0" в разметке), но Enter/Space их не нажимали — так работают только
+  // настоящие <button>. Один делегированный слушатель вместо 22 отдельных — жмёт уже существующий
+  // click(), ни один из них не переписан и не продублирован.
+  document.addEventListener('keydown', function(e){
+    if ((e.key==='Enter' || e.key===' ') && e.target && e.target.getAttribute &&
+        e.target.getAttribute('role')==='button'){
+      e.preventDefault(); // пробел не должен ещё и прокручивать страницу
+      e.target.click();
+    }
+  });
   // свернули приложение — музыка и шелест в фон; вернулись — обратно
   document.addEventListener('visibilitychange', ()=>{
     music.duck(document.hidden);
     engine.duck(document.hidden);
   });
   const gm=Store.get('gfx','auto'); Q.mode = (gm==='low'||gm==='med'||gm==='high')?gm:(gm==='ultra'&&gfxUltraOk()?'ultra':'auto'); // v1.35.0: «Средняя» и «Ультра» (у флагмана) восстанавливаются как ручные
-  gfxCap(); resize(); // применяем сохранённый режим к резолюции (в т.ч. HD на флагманах)
+  // v1.282.11: восстановление Q.level ПЕРЕД gfxCap() — раньше было наоборот. Пока gfxCap() не различала
+  // уровни 0/1/2 (кроме особого случая 3), порядок был не важен. Но v1.282.3 сделала gfxCap()
+  // чувствительной именно к Q.level — и «дефолт 2 из объявления, восстановление позже» стало
+  // означать: игрок с уже выученным слабым уровнем на КАЖДОЙ загрузке стартовал бы с раздутым
+  // разрешением, пока авто-качество заново его не понизит — заикание на каждом запуске подряд,
+  // не один раз. Регрессия моей же вчерашней правки, найдена сегодня же.
   if (Q.mode==='auto') Q.level = Store.get('gfxLv', gfxTier()>=2?3:1); // v1.7.0/v1.12.0: выученный уровень; флагману — сразу «Ультра», просадка сама отучит
+  gfxCap(); resize(); // применяем сохранённый режим к резолюции (в т.ч. HD на флагманах) — теперь с верным Q.level уже на месте
   dispProbe(); // паспорт экрана: герцовка и охват — авто-качество считает по-честному
   const lp=Store.get('lang','auto');
-  langPref = (lp==='ru'||lp==='en')?lp:'auto';
+  langPref = SUPPORTED_LANGS.includes(lp)?lp:'auto';
   applyLangPref();
   if(!S.ownedSkins.includes(0)) S.ownedSkins.push(0);
   if(!S.ownedSkins.includes(S.skin)) S.skin=0;
@@ -1124,6 +1276,15 @@ Store.init(()=>{
   Store.del('tutVoice'); // гигиена: голос вычеркнут (v1.20.0)
   const mapPending = (typeof forgeBoot==='function') ? forgeBoot() : false; // трасса друга по ссылке (v1.68.0)
   const duelPending = !mapPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
+  // v1.108.1 «Одно событие, не платформа за платформой»: платформа — свойство, не отдельное событие.
+  // Reddit и любая будущая платформа впишутся сюда новым значением platform, без нового имени события.
+  if (window.amplitude) {
+    const platform = (typeof syncInitData==='function' && syncInitData()) ? 'telegram'
+      : (typeof syncWebAuth==='function' && syncWebAuth()) ? 'telegram_web'
+      : (typeof syncDcAuth==='function' && syncDcAuth()) ? 'discord'
+      : 'guest';
+    amplitude.track('Opened Game', { platform, prompt_version: 'BA400.4' });
+  }
   if (S.running){ /* v1.100.4: взлёт случился однажды — поздний ответ облака (сторож Store.init) не перезапускает небо посреди полёта */ }
   else if (mapPending){ forgeOpen(); setScreen('forge'); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } // ссылка с трассой — сразу в конструктор
   else if (duelPending) setScreen('menu'); // v1.6.0: вызов — единственное исключение с меню при загрузке
@@ -1133,3 +1294,27 @@ Store.init(()=>{
 applyLang();
 plane.x=W/2; plane.y=H*.72;
 startLoop();
+
+/* v1.108.1 «Клавиатура и пульт»: div role="button" по умолчанию не получает фокус
+   клавиатурой/пультом — только настоящий <button>. Один общий страж вместо ручной
+   правки каждого места: даёт фокус и Enter/Space-активацию всем таким кнопкам разом,
+   включая те, что появятся позже. ТВ-пульт и клавиатура получают доступ туда же,
+   куда уже дотягивается мышь и тач. */
+(function a11yButtons(){
+  function wire(el){
+    if(el.hasAttribute('tabindex')) return;
+    el.setAttribute('tabindex','0');
+    el.addEventListener('keydown', e=>{
+      if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){ e.preventDefault(); el.click(); }
+    });
+  }
+  document.querySelectorAll('[role="button"]').forEach(wire);
+  // экраны строятся и заново рисуются в рантайме (Настройки, Сервисный центр) — следим за новыми
+  new MutationObserver(muts=>{
+    for(const m of muts) for(const n of m.addedNodes){
+      if(n.nodeType!==1) continue;
+      if(n.matches && n.matches('[role="button"]')) wire(n);
+      if(n.querySelectorAll) n.querySelectorAll('[role="button"]').forEach(wire);
+    }
+  }).observe(document.body,{childList:true,subtree:true});
+})();

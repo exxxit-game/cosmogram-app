@@ -32,7 +32,30 @@ const mapRand=(a,b)=>a+mapRNG()*(b-a);
 
 /* ---------- Трасса дня: одна трасса на всех (v1.47.0 «Трасса дня») ---------- */
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); } // день игрока — локальный: сутки начинаются, когда начинаются у него
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); } // v1.108.1: чужое имя в innerHTML — никогда без экранирования
+/* v1.108.1 «Печать лаборатории — на всех дверях»: раньше верстак-щит стоял только у
+   Почты неба (beacon.js). Синк честного топа (sync.js) и Звезда-статус (star.js) писали
+   на настоящий сервер даже с localhost — тестовый забег мог попасть в боевую таблицу.
+   Теперь одна печать на все три двери сразу: window.__labOpen=true снимает её везде разом. */
+function isLabEnv(){
+  let onLocal=false; try{ const h=location.hostname; onLocal=h==='localhost'||h==='127.0.0.1'||h==='::1'||h==='[::1]'; }catch(e){}
+  return onLocal && !(typeof window!=='undefined' && window.__labOpen===true);
+}
+function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); } // v1.108.1: общий форматтер — todayKey() и streakDayCheck() делят один источник правды
+function todayKey(){ return dateKey(new Date()); } // день игрока — локальный: сутки начинаются, когда начинаются у него
+/* v1.108.1 «Благодать не бесконечна»: четыре места (вход/выход из паузы, оффер гироскопа,
+   автосейв-возврат) независимо раздавали S.invuln=Math.max(...) — каждое честно смягчает свой
+   собственный переход, но вместе, без общего счётчика, давали бесплатную неуязвимость по требованию:
+   встал на паузу перед ударом — прошёл сквозь него. Один общий страж на всех четырёх — не переделывает
+   ни одного перехода, просто считает, сколько раз благодать уже сработала в этом забеге. */
+const GRACE_LIMIT=3; // щедро для честной игры (свернул проверить телефон, посмотрел настройки) — тесно для фарма
+let graceUsed=0;
+function grantGrace(sec){
+  if(graceUsed>=GRACE_LIMIT) return; // лимит исчерпан — переход смягчаем анимацией, неуязвимость больше не подкидываем
+  if(typeof S!=='undefined' && S) S.invuln=Math.max(S.invuln||0, sec);
+  graceUsed++;
+}
+function graceReset(){ graceUsed=0; } // новый забег — новый счёт; старый честно выбранный лимит не переносится
 function keyRNG(k){ let h=2166136261; for(let i=0;i<k.length;i++){ h^=k.charCodeAt(i); h=Math.imul(h,16777619); } return mulberry32(h>>>0); } // FNV-1a от ключа-даты → детерминированный поток
 function dailyRNG(){ return keyRNG(todayKey()); } // сегодняшнее небо — одинаковое у всех игроков
 const rand=(a,b)=>a+RNG()*(b-a);
@@ -73,7 +96,7 @@ const I18N = {
     pause:'Пауза', ariaPause:'Пауза', resume:'Продолжить', restart:'Заново', calib:'Калибровка наклона',
     lampGreen:'Оба компаса дышат — наклон рулит', lampAmber:'Один канал спит или молчит — наклон рулит, запаса нет', lampRed:'Датчик молчит — руль только пальцем',
     hangar:'Ангар', best:'Рекорд',
-    recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания',
+    recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     dist:'Дистанция', recordDist:'Рекорд дистанции',
     bullet:'Затишье', recordBullet:'Рекорд затишья',
     modes:'Режимы', modesBack:'Назад',
@@ -114,10 +137,10 @@ const I18N = {
     setSound:'Звук', setMusic:'Музыка',
     setLang:'Язык', langAuto:'Авто',
     channel:'Наш канал', toRecord:'До рекорда: ',
-    setVibro:'Виброотклик',
+    setVibro:'Виброотклик', setContrast:'Высокий контраст', setColorblind:'Для дальтоников', setStreaks:'Скоростные полосы',
     setGfx:'Графика', gfxAuto:'Авто', gfxLow:'Низкая', gfxMed:'Средняя', gfxHigh:'Высокая', gfxUltra:'Ультра',
     aboutBtn:'Об игре',
-    modeGyro:'Гироскоп', modeTouch:'Касание',
+    modeGyro:'Гироскоп', modeTouch:'Касание', modeKeys:'Клавиатура',
     tiltAllow:'Разрешить управление наклоном?', tiltOn:'Наклон включён', sens:'Чувствительность',
     gyroStatTg:'Датчик: Telegram · жив', gyroStatWeb:'Датчик: веб-канал · жив', gyroStatNone:'Датчик молчит — играй пальцем',
     stars:'Звёзды', maxCombo:'Макс. комбо', share:'Поделиться', invite:'Позвать друзей',
@@ -127,6 +150,7 @@ const I18N = {
     combo:'Комбо', notEnough:'Не хватает звёзд', owned:'Выбран', buy:ic('star4','i-s4'),
     calibrated:'Наклон откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
+    tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно или поверните экран, чтобы полететь',
     setGyroOff:'Полёт без рук', gyroOffOk:'Штурвал возвращён пальцу',
     setBeacon:'Помогать экипажу отчётами', beaconSent:'Экипаж уже знает об этой ошибке — скоро починим',
     beaconNoteSoft:'Борт заметил неполадку и уже доложил экипажу — чиним',
@@ -158,12 +182,15 @@ const I18N = {
     achTitle:'Достижения', achOf:'Открыто',
     achClsB:'Бронзовая награда', achClsS:'Серебряная награда', achClsG:'Золотая награда', achClaim:'Забрать', achDone:'Готово',
     statFlights:'Полётов', statDist:'Дистанция всего', statStars:'Звёзд всего', statCombo:'Лучшее комбо',
+    statNearMiss:'Впритык', statDuelsWon:'Дуэлей выиграно', statPerfect:'Идеальных забегов', statRecBeats:'Рекордов побито',
     toLoc:(n,d)=>'До «'+n+'»: '+d+' м', rankWorld:n=>'Ты #'+n+' в мире',
-    duelBtn:'Вызов', duelBar:(n,b)=>'Вызов от '+n+': побей '+fmtN(b)+' м', duelHud:(b)=>'Вызов: '+b+' м', duelOff:'Вызов отклонён',
+    duelBtn:'Вызов', duelBar:(n,b)=>'Вызов от '+escapeHtml(n)+': побей '+fmtN(b)+' м', duelHud:(b)=>'Вызов: '+b+' м', duelOff:'Вызов отклонён',
+    duelReplaceQ:(o,n)=>'У тебя уже есть вызов от '+escapeHtml(o)+'. Заменить на вызов от '+escapeHtml(n)+'?',
+    egg42:'42 метра — ответ найден', egg9000:'Больше 9000!', egg1337:'1337 — ты в деле',
     duelTgOnly:'Вызов доступен, когда игра открыта через кнопку бота',
-    duelWin:(n,b)=>'Вызов побит! Планка '+fmtN(b)+' м от '+n+' — твоя.',
-    duelLose:(n,b)=>'Не побито: у '+n+' — '+fmtN(b)+' м. Реванш?',
-    duelShareText:(d,w)=>'Я пролетел '+fmtN(d)+' м на Волне '+w+' в Cosmogram. Сможешь лучше? ⚔️',
+    duelWin:(n,b)=>'Вызов побит! Планка '+fmtN(b)+' м от '+escapeHtml(n)+' — твоя.',
+    duelLose:(n,b)=>'Не побито: у '+escapeHtml(n)+' — '+fmtN(b)+' м. Реванш?',
+    duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' м на Волне '+w+' в Cosmogram. Сможешь лучше? ⚔️',
     mineTab:'Мои', topTab:'Топ', topMe:'Твоё место: ', topLoading:'Загрузка…',
     topEmpty:'Пока пусто — будь первым!', topTgOnly:'Войди через Telegram — таблица одна на всех',
     webJoin:'Войди через Telegram — этот полёт встанет в общую таблицу',
@@ -179,7 +206,7 @@ const I18N = {
     setGhost:'Призрак',
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Призрак недоступен: владелец скрыл трек',
     ghostWith:(n)=>'Призрак '+(n||'игрока')+' — рядом с тобой',
-    ghostBeat:(n,sc,b)=>'Призрак '+(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
+    ghostBeat:(n,sc,b)=>'Призрак '+escapeHtml(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
   },
   en: {
     start:'Start flight', retry:'Fly again?', menu:'Menu', watchFlight:'Watch flight', theaterChip:'Flight replay',
@@ -189,7 +216,7 @@ const I18N = {
     pause:'Paused', ariaPause:'Pause', resume:'Resume', restart:'Restart', calib:'Calibrate tilt',
     lampGreen:'Both compasses breathe — tilt steering live', lampAmber:'One channel asleep or silent — tilt steering live, no backup', lampRed:'No sensor data — touch steering only',
     hangar:'Hangar', best:'Best',
-    recordGyro:'Gyro record', recordTouch:'Touch record',
+    recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     dist:'Distance', recordDist:'Distance record',
     bullet:'Lull', recordBullet:'Lull record',
     modes:'Modes', modesBack:'Back',
@@ -230,10 +257,10 @@ const I18N = {
     setSound:'Sound', setMusic:'Music',
     setLang:'Language', langAuto:'Auto',
     channel:'Our channel', toRecord:'To beat: ',
-    setVibro:'Haptics',
+    setVibro:'Haptics', setContrast:'High contrast', setColorblind:'Colorblind assist', setStreaks:'Speed streaks',
     setGfx:'Graphics', gfxAuto:'Auto', gfxLow:'Low', gfxMed:'Medium', gfxHigh:'High', gfxUltra:'Ultra',
     aboutBtn:'About',
-    modeGyro:'Gyro', modeTouch:'Touch',
+    modeGyro:'Gyro', modeTouch:'Touch', modeKeys:'Keyboard',
     tiltAllow:'Allow tilt control?', tiltOn:'Tilt enabled', sens:'Sensitivity',
     gyroStatTg:'Sensor: Telegram · live', gyroStatWeb:'Sensor: web channel · live', gyroStatNone:'Sensor silent — use your finger',
     stars:'Stars', maxCombo:'Max combo', share:'Share', invite:'Invite friends',
@@ -243,6 +270,7 @@ const I18N = {
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     calibrated:'Tilt calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
+    tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window or rotate the screen to fly',
     setGyroOff:'Hands-Free Flight', gyroOffOk:'Helm returned to finger',
     setBeacon:'Help the crew with reports', beaconSent:'The crew already knows about this error — a fix is coming',
     beaconNoteSoft:'The board noticed a glitch and already told the crew — fixing it',
@@ -268,18 +296,21 @@ const I18N = {
     diagCopyFail:'Couldn’t copy — select the text below manually', diagSupportBtn:'Contact support',
     shareText:s=>'🚀 My Cosmogram record: '+s+' points! Beat it?',
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me',
-    tutGyroBtn:'Try hands-free', tutTouchBtn:'Keep the finger',
+    tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
     missionLbl:'Wave', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost'],
     tryOn:'Try on', tryOnWait:'Tomorrow', tryOnGo:n=>'Try-on: '+n+' — one run!',
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
     statFlights:'Flights', statDist:'Total distance', statStars:'Total stars', statCombo:'Best combo',
+    statNearMiss:'Close calls', statDuelsWon:'Duels won', statPerfect:'Perfect runs', statRecBeats:'Records beaten',
     toLoc:(n,d)=>'To "'+n+'": '+d+' m', rankWorld:n=>'You are #'+n+' in the world',
-    duelBtn:'Duel', duelBar:(n,b)=>'Challenge from '+n+': beat '+fmtN(b)+' m', duelHud:(b)=>'Duel: '+b+' m', duelOff:'Challenge dismissed',
+    duelBtn:'Duel', duelBar:(n,b)=>'Challenge from '+escapeHtml(n)+': beat '+fmtN(b)+' m', duelHud:(b)=>'Duel: '+b+' m', duelOff:'Challenge dismissed',
+    duelReplaceQ:(o,n)=>'You already have a challenge from '+escapeHtml(o)+'. Replace it with a challenge from '+escapeHtml(n)+'?',
+    egg42:'42 meters — the answer, found', egg9000:'Over 9000!', egg1337:'1337 — you\u2019re in',
     duelTgOnly:'Open the game via the bot button to challenge friends',
-    duelWin:(n,b)=>'Challenge beaten! The '+fmtN(b)+' m bar from '+n+' is yours.',
-    duelLose:(n,b)=>'Not beaten: '+n+' holds '+fmtN(b)+' m. Rematch?',
-    duelShareText:(d,w)=>'I flew '+fmtN(d)+' m on Wave '+w+' in Cosmogram. Beat that! ⚔️',
+    duelWin:(n,b)=>'Challenge beaten! The '+fmtN(b)+' m bar from '+escapeHtml(n)+' is yours.',
+    duelLose:(n,b)=>'Not beaten: '+escapeHtml(n)+' holds '+fmtN(b)+' m. Rematch?',
+    duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m on Wave '+w+' in Cosmogram. Beat that! ⚔️',
     mineTab:'Mine', topTab:'Top', topMe:'Your rank: ', topLoading:'Loading…',
     topEmpty:'Empty so far — be the first!', topTgOnly:'Sign in with Telegram — one shared leaderboard',
     webJoin:'Sign in with Telegram — this flight joins the shared leaderboard',
@@ -295,11 +326,412 @@ const I18N = {
     setGhost:'Ghost',
     ghostGo:'Fly with this record’s ghost', ghostNone:'Ghost unavailable: the owner hid the track',
     ghostWith:(n)=>(n||'Player')+'’s ghost flies with you',
-    ghostBeat:(n,sc,b)=>'Ghost of '+(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
+    ghostBeat:(n,sc,b)=>'Ghost of '+escapeHtml(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
+  },
+  es:{
+    start:'Iniciar vuelo', retry:'¿Otra vez?', menu:'Menú', watchFlight:'Ver vuelo', theaterChip:'Repetición de vuelo',
+    tribune:'Tribuna del campeón', tribuneNone:'El maestro aún no mostró su vuelo',
+    goldStarStats:(c,f)=>'Hoy tomaron la estrella dorada '+c+' de '+f,
+    goldChip:'★ Marca del día',
+    pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Reiniciar',
+    calib:'Calibrar inclinación',
+    lampGreen:'Ambas brújulas respiran — la inclinación controla',
+    lampAmber:'Un canal duerme o calla — la inclinación controla, sin respaldo',
+    lampRed:'Sensor en silencio — control solo con el dedo',
+    hangar:'Hangar', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
+    dist:'Distancia', recordDist:'Récord de distancia', bullet:'Calma', recordBullet:'Récord de calma',
+    modes:'Modos', modesBack:'Atrás', modeClassic:'Clásico',
+    modeBulletD:'Cada roce cercano ralentiza el mundo',
+    modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
+    srGoal:'Meta', srFinish:'¡Meta!', srNewBest:'Nuevo récord de tiempo',
+    modeDaily:'Pista del día', modeDailyD:'Una pista para todos los jugadores — marca el récord del día',
+    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'un intento',
+    dailyLocked:(s)=>'Hoy ya saltaste · tu vuelo: '+s+' · pista nueva mañana',
+    modeForge:'Pista propia', modeForgeD:'Constructor de vuelo: arma y comparte el código',
+    forgeTitle:'Pista propia', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
+    forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
+    forgeCodeLbl:'Pista de un amigo — pega el código o el enlace',
+    forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
+    forgeWin:'¡Meta!', forgeGuest:'Pista de un amigo cargada — pulsa Volar',
+    forgeShareTxt:'¡Vuela mi pista «%s» en Cosmogram!',
+    fkRock:'Asteroide', fkDebris:'Escombro', fkDrift:'Vagabundo', fkMine:'Mina', fkSat:'Satélite',
+    fkComet:'Cometa', fkSeeker:'Buscador', fkGate:'Puerta',
+    forgeGrpHard:'Dificultad', forgeGrpEn:'Composición', forgeGrpMood:'Ambiente',
+    forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
+    forgeFlat:'Calor plano — sin progresión', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
+    bOff:'Apagado', bRare:'Raro', bNorm:'Normal', bOften:'Frecuente',
+    fog0:'Sin niebla', fog1:'Ligera', fog2:'Densa',
+    fpWarm:'Calentamiento', fpRain:'Lluvia de meteoritos', fpHell:'Infierno de una vida',
+    fpFog:'Noche de niebla', fpGarden:'Jardín de cometas', fpSlalom:'Pasillo de puertas',
+    fpHunt:'Safari de buscadores', fpPulse:'Púlsar',
+    cardBtn:'Tarjeta', cardTitle:'Tarjeta de resultado', cardHint:'Guárdala y compártela con amigos',
+    cardRec:'¡Récord superado!', cardBeat:'¿Puedes superarlo?', cardSave:'Guardar', cardShare:'Compartir como texto',
+    cardChat:'Al chat', cardChatErr:'No se pudo — guarda el archivo', cardStory:'A la historia', cardStoryBtn:'Jugar',
+    statusStar:'✨ Al estado', statusStarOk:'Chispa en el estado — por 3 días',
+    statusStarErr:'No se pudo — intenta más tarde', statusStarDeny:'Telegram no dio permiso',
+    passTime:'Tiempo', passHits:'Golpes', passBonus:'Bonos', passSmooth:'Fluidez',
+    pillGyro:'Récord de giroscopio', pillTouch:'Récord de toque', pillDist:'Récord de distancia', pillBullet:'Récord de calma',
+    scoreLbl:'Puntos', distLbl:'Distancia', smoothLbl:'Fluidez',
+    settings:'Ajustes', settingsTitle:'Ajustes', back:'Atrás',
+    setSound:'Sonido', setMusic:'Música', setLang:'Idioma', langAuto:'Auto', channel:'Nuestro canal',
+    toRecord:'Para el récord: ',
+    setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setStreaks:'Estelas de velocidad', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
+    aboutBtn:'Acerca del juego',
+    modeGyro:'Giroscopio', modeTouch:'Toque', modeKeys:'Teclado',
+    tiltAllow:'¿Permitir control por inclinación?', tiltOn:'Inclinación activada', sens:'Sensibilidad',
+    gyroStatTg:'Sensor: Telegram · activo', gyroStatWeb:'Sensor: canal web · activo',
+    gyroStatNone:'Sensor en silencio — juega con el dedo',
+    stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', invite:'Invitar amigos', home:'Añadir a inicio',
+    shield:'Escudo', magnet:'Imán', slowmo:'Cámara lenta', life:'+Vida', dash:'Embestida', nova:'Supernova',
+    shieldDown:'Escudo caído', nearMiss:'Al límite', gate:'Puerta',
+    overDetails:'Detalles del vuelo', combo:'Combo',
+    notEnough:'Faltan estrellas', owned:'Elegido', buy:'',
+    calibrated:'Inclinación calibrada', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
+    noTilt:'Sin datos del sensor', wallet:' ',
+    gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
+    tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana o gira la pantalla para volar',
+    setGyroOff:'Vuelo sin manos', gyroOffOk:'Mando devuelto al dedo',
+    setBeacon:'Ayudar a la tripulación con informes',
+    beaconSent:'La tripulación ya conoce este error — lo arreglaremos pronto',
+    beaconNoteSoft:'La nave notó un fallo y ya avisó a la tripulación — lo están arreglando',
+    diagBtn:'Centro de servicio',
+    diagSensorOk:'Sensor activo · ', diagChanTg:'canal Telegram', diagChanWeb:'canal web',
+    diagSensorDead:'Sensor en silencio — no llegan paquetes', diagFixSensor:'Reactivar',
+    diagNoSensor:'Este dispositivo no tiene sensor — usa el dedo o el ratón, es normal',
+    diagZeroOk:'Cero aceptado:', diagZeroSkew:'El cero se desvía de la postura — recalibra:',
+    diagZeroWait:'Calibrando — sostén el teléfono firme', diagFixCal:'Calibrar',
+    diagPadOk:'Mando a bordo:', diagPadNone:'Sin mando conectado — normal: el dedo y el ratón también controlan',
+    diagChain:'Cadena de mando:', diagTape:'Cinta de la caja negra:', diagTapeBtn:'Copiar caja negra', diagTapeEvt:'eventos',
+    bbVNoSensor:'este dispositivo no tiene sensor de inclinación',
+    bbVLock:'bloqueado — falta completar «Vuelo sin manos»',
+    bbVSilent:'los canales callan — ni un solo paquete del sensor',
+    bbVNoChan:'el relevo de canal nunca empezó',
+    bbVNoZero:'cero no aceptado — la calibración no terminó',
+    bbVSkew:'el cero está desviado:',
+    bbVStale:'paquetes del sensor con más de 0.6s — el mando duerme',
+    bbVOk:'cadena intacta — el giroscopio controla',
+    bbVStorm:'el canal está en tormenta — el mando pasa al tranquilo',
+    diagWorld:'Mundo del cielo:', diagSheet:'Hoja del lienzo:', diagMotion:'Modo suave:', diagInk:'Tintas:',
+    diagOn:'activado', diagOff:'desactivado',
+    diagZeroIdle:'El cero se fija solo en los primeros segundos de vuelo',
+    diagFpsOk:'Fotogramas normales:', diagFpsLow:'Pocos fotogramas:', diagFixGfx:'Bajar gráficos',
+    diagSoundOn:'Sonido activado', diagSoundOff:'Sonido desactivado — botón «Sonido» arriba',
+    diagWgSilent:'El botón de acceso de Telegram calla — revisa /setdomain en BotFather',
+    diagLocked:'«Vuelo sin manos» aún cerrado — se abre en el vuelo de práctica',
+    diagKicked:'Sensor solicitado de nuevo — mueve el teléfono',
+    diagReportBtn:'Copiar informe', diagCopied:'Informe copiado — pégalo en tu mensaje',
+    diagCopyFail:'No se pudo copiar — selecciona el texto abajo manualmente',
+    diagSupportBtn:'Escribir a soporte',
+    shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' puntos! ¿Puedes superarlo?',
+    shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme',
+    tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
+    missionLbl:'Oleada',
+    skinNames:'Papel,Azur,Oro,Escarlata,Neón,Aurora,Plasma,Cromo,Fantasma',
+    tryOn:'Probar', tryOnWait:'Mañana',
+    tryOnGo:n=>'Prueba: '+n+' — ¡un solo vuelo!',
+    achTitle:'Logros', achOf:'Desbloqueado',
+    achClsB:'Premio de bronce', achClsS:'Premio de plata', achClsG:'Premio de oro',
+    achClaim:'Reclamar', achDone:'Hecho',
+    statFlights:'Vuelos', statDist:'Distancia total', statStars:'Estrellas totales', statCombo:'Mejor combo',
+    statNearMiss:'Al límite', statDuelsWon:'Duelos ganados', statPerfect:'Vuelos perfectos', statRecBeats:'Récords superados',
+    toLoc:(n,d)=>'Para «'+n+'»: '+d+' m',
+    rankWorld:n=>'Eres #'+n+' en el mundo',
+    duelBtn:'Duelo',
+    duelBar:(n,b)=>'Reto de '+escapeHtml(n)+': supera '+fmtN(b)+' m',
+    duelHud:(b)=>'Duelo: '+b+' m',
+    duelOff:'Reto rechazado',
+    duelReplaceQ:(o,n)=>'Ya tienes un reto de '+escapeHtml(o)+'. ¿Reemplazarlo con el reto de '+escapeHtml(n)+'?',
+    egg42:'42 metros — la respuesta', egg9000:'¡Más de 9000!', egg1337:'1337 — estás dentro',
+    duelTgOnly:'El duelo está disponible cuando el juego se abre desde el botón del bot',
+    duelWin:(n,b)=>'¡Reto superado! La marca de '+fmtN(b)+' m de '+escapeHtml(n)+' es tuya.',
+    duelLose:(n,b)=>'No superado: '+escapeHtml(n)+' tiene '+fmtN(b)+' m. ¿Revancha?',
+    duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m en la Oleada '+w+' en Cosmogram. ¿Puedes hacerlo mejor? ⚔️',
+    mineTab:'Mías', topTab:'Top', topMe:'Tu puesto: ', topLoading:'Cargando…',
+    topEmpty:'Vacío por ahora — ¡sé el primero!',
+    topTgOnly:'Inicia sesión con Telegram — una tabla para todos',
+    webJoin:'Inicia sesión con Telegram — este vuelo se sumará a la tabla común',
+    accGuest:'Una tabla para todos — inicia sesión con Telegram',
+    accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
+    accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord',
+    setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
+    setGrpSound:'Sonido y aire', setGrpGame:'Juego y pantalla', setGrpProf:'Perfil',
+    moreLbl:'Más',
+    setWellAll:'Todo suena', setWellSome:'Algo silenciado', setWellNone:'Silencio',
+    csCap:'Distintivo — suena en la estela Morse y el pulso vibrátil',
+    diagVibro:'Prueba de pulso vibrátil',
+    vibChTg:'Canal: API de Telegram — pulsos nítidos',
+    vibChWeb:'Canal: solo vibración del sistema — límite de la web',
+    vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
+    setGhost:'Fantasma', ghostGo:'Volar con el fantasma de este récord',
+    ghostNone:'Fantasma no disponible: el dueño ocultó la pista',
+    ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
+    ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jugador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
+  },
+  pt:{
+    start:'Iniciar voo', retry:'De novo?', menu:'Menu', watchFlight:'Ver voo', theaterChip:'Repetição de voo',
+    tribune:'Tribuna do campeão', tribuneNone:'O mestre ainda não mostrou seu voo',
+    goldStarStats:(c,f)=>'Hoje pegaram a estrela dourada '+c+' de '+f,
+    goldChip:'★ Marca do dia',
+    pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Recomeçar',
+    calib:'Calibrar inclinação',
+    lampGreen:'As duas bússolas respiram — a inclinação controla',
+    lampAmber:'Um canal dorme ou está mudo — a inclinação controla, sem reserva',
+    lampRed:'Sensor em silêncio — controle só com o dedo',
+    hangar:'Hangar', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
+    dist:'Distância', recordDist:'Recorde de distância', bullet:'Calmaria', recordBullet:'Recorde de calmaria',
+    modes:'Modos', modesBack:'Voltar', modeClassic:'Clássico',
+    modeBulletD:'Cada quase-toque desacelera o mundo',
+    modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
+    srGoal:'Meta', srFinish:'Chegada!', srNewBest:'Novo recorde de tempo',
+    modeDaily:'Pista do dia', modeDailyD:'Uma pista para todos os jogadores — bata o recorde do dia',
+    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'uma tentativa',
+    dailyLocked:(s)=>'Hoje você já voou · seu voo: '+s+' · pista nova amanhã',
+    modeForge:'Pista própria', modeForgeD:'Construtor de voo: monte e compartilhe o código',
+    forgeTitle:'Pista própria', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
+    forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
+    forgeCodeLbl:'Pista de um amigo — cole o código ou o link',
+    forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
+    forgeWin:'Chegada!', forgeGuest:'Pista de um amigo carregada — toque em Voar',
+    forgeShareTxt:'Voe na minha pista «%s» no Cosmogram!',
+    fkRock:'Asteroide', fkDebris:'Destroço', fkDrift:'Errante', fkMine:'Mina', fkSat:'Satélite',
+    fkComet:'Cometa', fkSeeker:'Perseguidor', fkGate:'Portal',
+    forgeGrpHard:'Dificuldade', forgeGrpEn:'Composição', forgeGrpMood:'Clima',
+    forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
+    forgeFlat:'Calor constante — sem progressão', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
+    bOff:'Desligado', bRare:'Raro', bNorm:'Normal', bOften:'Frequente',
+    fog0:'Nenhuma', fog1:'Leve', fog2:'Densa',
+    fpWarm:'Aquecimento', fpRain:'Chuva de meteoros', fpHell:'Inferno de uma vida',
+    fpFog:'Noite de neblina', fpGarden:'Jardim de cometas', fpSlalom:'Corredor de portões',
+    fpHunt:'Safári de perseguidores', fpPulse:'Pulsar',
+    cardBtn:'Cartão', cardTitle:'Cartão de resultado', cardHint:'Salve e mande para os amigos',
+    cardRec:'Recorde batido!', cardBeat:'Consegue superar?', cardSave:'Salvar', cardShare:'Compartilhar como texto',
+    cardChat:'No chat', cardChatErr:'Não deu — salve como arquivo', cardStory:'No stories', cardStoryBtn:'Jogar',
+    statusStar:'✨ No status', statusStarOk:'Brilho no status — por 3 dias',
+    statusStarErr:'Não deu — tente mais tarde', statusStarDeny:'O Telegram não deu permissão',
+    passTime:'Tempo', passHits:'Batidas', passBonus:'Bônus', passSmooth:'Fluidez',
+    pillGyro:'Recorde de giroscópio', pillTouch:'Recorde de toque', pillDist:'Recorde de distância', pillBullet:'Recorde de calmaria',
+    scoreLbl:'Pontos', distLbl:'Distância', smoothLbl:'Fluidez',
+    settings:'Ajustes', settingsTitle:'Ajustes', back:'Voltar',
+    setSound:'Som', setMusic:'Música', setLang:'Idioma', langAuto:'Automático', channel:'Nosso canal',
+    toRecord:'Para o recorde: ',
+    setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setStreaks:'Rastros de velocidade', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
+    aboutBtn:'Sobre o jogo',
+    modeGyro:'Giroscópio', modeTouch:'Toque', modeKeys:'Teclado',
+    tiltAllow:'Permitir controle por inclinação?', tiltOn:'Inclinação ativada', sens:'Sensibilidade',
+    gyroStatTg:'Sensor: Telegram · ativo', gyroStatWeb:'Sensor: canal web · ativo',
+    gyroStatNone:'Sensor em silêncio — jogue com o dedo',
+    stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', invite:'Convidar amigos', home:'Adicionar à tela inicial',
+    shield:'Escudo', magnet:'Ímã', slowmo:'Câmera lenta', life:'+Vida', dash:'Investida', nova:'Supernova',
+    shieldDown:'Escudo caído', nearMiss:'Por pouco', gate:'Portal',
+    overDetails:'Detalhes do voo', combo:'Combo',
+    notEnough:'Faltam estrelas', owned:'Selecionado', buy:'',
+    calibrated:'Inclinação calibrada', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
+    noTilt:'Sem dados do sensor', wallet:' ',
+    gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
+    tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela ou gire a tela para voar',
+    setGyroOff:'Voo sem mãos', gyroOffOk:'Comando devolvido ao dedo',
+    setBeacon:'Ajudar a tripulação com relatórios',
+    beaconSent:'A tripulação já sabe desse erro — vamos consertar logo',
+    beaconNoteSoft:'A nave notou uma falha e já avisou a tripulação — estamos consertando',
+    diagBtn:'Central de serviço',
+    diagSensorOk:'Sensor ativo · ', diagChanTg:'canal Telegram', diagChanWeb:'canal web',
+    diagSensorDead:'Sensor em silêncio — sem pacotes', diagFixSensor:'Reativar',
+    diagNoSensor:'Este aparelho não tem sensor — use o dedo ou o mouse, é normal',
+    diagZeroOk:'Zero aceito:', diagZeroSkew:'O zero se desviou da postura — recalibre:',
+    diagZeroWait:'Calibrando — segure o telefone firme', diagFixCal:'Calibrar',
+    diagPadOk:'Controle a bordo:', diagPadNone:'Nenhum controle conectado — normal: o dedo e o mouse também controlam',
+    diagChain:'Cadeia de comando:', diagTape:'Fita da caixa-preta:', diagTapeBtn:'Copiar caixa-preta', diagTapeEvt:'eventos',
+    bbVNoSensor:'este aparelho não tem sensor de inclinação',
+    bbVLock:'bloqueado — falta concluir «Voo sem mãos»',
+    bbVSilent:'os canais estão mudos — nenhum pacote do sensor',
+    bbVNoChan:'o revezamento de canal nunca começou',
+    bbVNoZero:'zero não aceito — a calibração não terminou',
+    bbVSkew:'o zero está desviado:',
+    bbVStale:'pacotes do sensor com mais de 0.6s — o comando dorme',
+    bbVOk:'cadeia intacta — o giroscópio está no comando',
+    bbVStorm:'o canal está em tempestade — o comando passa para o calmo',
+    diagWorld:'Mundo do céu:', diagSheet:'Folha da tela:', diagMotion:'Modo suave:', diagInk:'Tintas:',
+    diagOn:'ligado', diagOff:'desligado',
+    diagZeroIdle:'O zero se ajusta sozinho nos primeiros segundos de voo',
+    diagFpsOk:'Quadros normais:', diagFpsLow:'Poucos quadros:', diagFixGfx:'Baixar gráficos',
+    diagSoundOn:'Som ligado', diagSoundOff:'Som desligado — botão «Som» acima',
+    diagWgSilent:'O botão de acesso do Telegram está mudo — confira /setdomain no BotFather',
+    diagLocked:'«Voo sem mãos» ainda trancado — abre no voo de treino',
+    diagKicked:'Sensor solicitado de novo — mexa o telefone',
+    diagReportBtn:'Copiar relatório', diagCopied:'Relatório copiado — cole na sua mensagem',
+    diagCopyFail:'Não consegui copiar — selecione o texto abaixo manualmente',
+    diagSupportBtn:'Falar com o suporte',
+    shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' pontos! Consegue superar?',
+    shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar',
+    tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
+    missionLbl:'Onda',
+    skinNames:'Papel,Azul,Ouro,Escarlate,Neon,Aurora,Plasma,Cromo,Fantasma',
+    tryOn:'Experimentar', tryOnWait:'Amanhã',
+    tryOnGo:n=>'Experimentando: '+n+' — um voo só!',
+    achTitle:'Conquistas', achOf:'Desbloqueado',
+    achClsB:'Prêmio de bronze', achClsS:'Prêmio de prata', achClsG:'Prêmio de ouro',
+    achClaim:'Resgatar', achDone:'Concluído',
+    statFlights:'Voos', statDist:'Distância total', statStars:'Estrelas totais', statCombo:'Melhor combo',
+    statNearMiss:'Por pouco', statDuelsWon:'Duelos vencidos', statPerfect:'Voos perfeitos', statRecBeats:'Recordes batidos',
+    toLoc:(n,d)=>'Para «'+n+'»: '+d+' m',
+    rankWorld:n=>'Você é #'+n+' no mundo',
+    duelBtn:'Duelo',
+    duelBar:(n,b)=>'Desafio de '+escapeHtml(n)+': supere '+fmtN(b)+' m',
+    duelHud:(b)=>'Duelo: '+b+' m',
+    duelOff:'Desafio recusado',
+    duelReplaceQ:(o,n)=>'Você já tem um desafio de '+escapeHtml(o)+'. Substituir pelo desafio de '+escapeHtml(n)+'?',
+    egg42:'42 metros — a resposta', egg9000:'Mais de 9000!', egg1337:'1337 — você chegou',
+    duelTgOnly:'O duelo fica disponível quando o jogo é aberto pelo botão do bot',
+    duelWin:(n,b)=>'Desafio superado! A marca de '+fmtN(b)+' m de '+escapeHtml(n)+' é sua.',
+    duelLose:(n,b)=>'Não superado: '+escapeHtml(n)+' tem '+fmtN(b)+' m. Revanche?',
+    duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m na Onda '+w+' no Cosmogram. Consegue fazer melhor? ⚔️',
+    mineTab:'Minhas', topTab:'Top', topMe:'Sua posição: ', topLoading:'Carregando…',
+    topEmpty:'Vazio por enquanto — seja o primeiro!',
+    topTgOnly:'Entre com o Telegram — uma tabela para todos',
+    webJoin:'Entre com o Telegram — este voo entra na tabela geral',
+    accGuest:'Uma tabela para todos — entre com o Telegram',
+    accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
+    accOut:'Sair', dcLogin:'Entrar com Discord',
+    setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
+    setGrpSound:'Som e ar', setGrpGame:'Jogo e tela', setGrpProf:'Perfil',
+    moreLbl:'Mais',
+    setWellAll:'Tudo soando', setWellSome:'Algo abafado', setWellNone:'Silêncio',
+    csCap:'Codinome — soa no rastro Morse e no pulso vibrátil',
+    diagVibro:'Teste de pulso vibrátil',
+    vibChTg:'Canal: API do Telegram — pulsos nítidos',
+    vibChWeb:'Canal: só vibração do sistema — limite da web',
+    vibChNone:'Vibração indisponível — confira as configurações do telefone',
+    setGhost:'Fantasma', ghostGo:'Voar com o fantasma deste recorde',
+    ghostNone:'Fantasma indisponível: o dono escondeu a pista',
+    ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
+    ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jogador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
+  },
+  fr:{
+    start:'Décoller', retry:'Revoler ?', menu:'Menu', watchFlight:'Voir le vol', theaterChip:'Replay du vol',
+    tribune:'Tribune du champion', tribuneNone:'Le maître n\u2019a pas encore montré de vol',
+    goldStarStats:(c,f)=>'L\u2019étoile dorée du jour a été attrapée par '+c+' sur '+f,
+    goldChip:'★ Signe du jour',
+    pause:'Pause', ariaPause:'Pause', resume:'Reprendre', restart:'Recommencer', calib:'Calibrer l\u2019inclinaison',
+    lampGreen:'Les deux boussoles respirent — pilotage à l\u2019inclinaison actif', lampAmber:'Un canal endormi ou silencieux — pilotage à l\u2019inclinaison actif, sans secours', lampRed:'Aucune donnée du capteur — pilotage tactile uniquement',
+    hangar:'Hangar', best:'Meilleur',
+    recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
+    dist:'Distance', recordDist:'Record de distance',
+    bullet:'Accalmie', recordBullet:'Record d\u2019accalmie',
+    modes:'Modes', modesBack:'Retour',
+    modeClassic:'Classique',
+    modeBulletD:'Chaque frôlement ralentit le monde',
+    modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
+    srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
+    modeDaily:'Trace du jour', modeDailyD:'Une trace pour tous les joueurs — décroche le record du jour', dlNewBest:'Nouveau record de la Trace du jour',
+    dailyOnce:'un seul essai', dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
+    modeForge:'Trace personnalisée', modeForgeD:'Créateur de trace : règle-la et partage le code',
+    forgeTitle:'Trace personnalisée', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
+    forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
+    forgeCodeLbl:"Trace d'un ami — colle le code ou le lien",
+    forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
+    forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
+    fkRock:'Astéroïde', fkDebris:'Débris', fkDrift:'Dériveur', fkMine:'Mine',
+    fkSat:'Satellite', fkComet:'Comète', fkSeeker:'Chercheur', fkGate:'Portail',
+    forgeGrpHard:'Difficulté', forgeGrpEn:'Composition', forgeGrpMood:'Ambiance',
+    forgeFine:'Réglage fin', forgeHeat:'Intensité',
+    forgeLives:'Vies', forgeWave:'Intensité de départ', forgeFlat:'Intensité fixe — pas de montée',
+    forgeBonus:'Bonus', forgeSky:'Ciel', forgeFog:'Brouillard',
+    bOff:'Désactivé', bRare:'Rare', bNorm:'Normal', bOften:'Fréquent',
+    fog0:'Aucun', fog1:'Léger', fog2:'Épais',
+    fpWarm:'Échauffement', fpRain:'Pluie de météores', fpHell:'Enfer à une vie', fpFog:'Nuit brumeuse',
+    fpGarden:'Jardin de comètes', fpSlalom:'Slalom de portails', fpHunt:'Safari chercheurs', fpPulse:'Pulsar',
+    cardBtn:'Carte de score', cardTitle:'Carte de score du vol',
+    cardHint:'Enregistre-la — envoie-la à tes amis', cardRec:'Nouveau record !', cardBeat:'Peux-tu faire mieux ?',
+    cardSave:'Enregistrer', cardShare:'Partager en texte',
+    cardChat:'Vers le chat', cardChatErr:'Ça n\u2019a pas marché — enregistre-la en fichier',
+    cardStory:'Vers story', cardStoryBtn:'Jouer',
+    statusStar:'✨ En statut', statusStarOk:'Étoile activée — pour 3 jours',
+    statusStarErr:'Ça n\u2019a pas marché — réessaie plus tard', statusStarDeny:'Telegram a refusé',
+    passTime:'Temps', passHits:'Impacts', passBonus:'Bonus', passSmooth:'Fluidité',
+    pillGyro:'Record gyroscope', pillTouch:'Record tactile', pillDist:'Record de distance', pillBullet:'Record d\u2019accalmie',
+    scoreLbl:'Score', distLbl:'Distance', smoothLbl:'Fluidité',
+    settings:'Réglages', settingsTitle:'Réglages', back:'Retour',
+    setSound:'Son', setMusic:'Musique',
+    setLang:'Langue', langAuto:'Auto',
+    channel:'Notre chaîne', toRecord:'À battre : ',
+    setVibro:'Vibrations', setContrast:'Contraste élevé', setColorblind:'Assistance daltonisme', setStreaks:'Traînées de vitesse',
+    setGfx:'Graphismes', gfxAuto:'Auto', gfxLow:'Faible', gfxMed:'Moyen', gfxHigh:'Élevé', gfxUltra:'Ultra',
+    aboutBtn:'À propos',
+    modeGyro:'Gyroscope', modeTouch:'Tactile', modeKeys:'Clavier',
+    tiltAllow:'Autoriser le pilotage à l\u2019inclinaison ?', tiltOn:'Inclinaison activée', sens:'Sensibilité',
+    gyroStatTg:'Capteur : Telegram · actif', gyroStatWeb:'Capteur : canal web · actif', gyroStatNone:'Capteur silencieux — utilise ton doigt',
+    stars:'Étoiles', maxCombo:'Combo max', share:'Partager', invite:'Inviter des amis',
+    home:'Ajouter à l\u2019accueil',
+    shield:'Bouclier', magnet:'Aimant', slowmo:'Ralenti', life:'+Vie', dash:'Percussion', nova:'Supernova', shieldDown:'Bouclier tombé', nearMiss:'Frôlement', gate:'Portail',
+    overDetails:'Détails du vol',
+    combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
+    calibrated:'Inclinaison calibrée', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
+    gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
+    tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre ou tourne l\u2019écran pour voler',
+    setGyroOff:'Vol mains libres', gyroOffOk:'Commandes rendues au doigt',
+    setBeacon:'Aider l\u2019équipage avec des rapports', beaconSent:'L\u2019équipage connaît déjà cette erreur — un correctif arrive',
+    beaconNoteSoft:'Le bord a remarqué un problème et a déjà prévenu l\u2019équipage — en cours de réparation',
+    diagBtn:'Centre de service', diagSensorOk:'Capteur actif · ', diagChanTg:'Canal Telegram', diagChanWeb:'canal web',
+    diagSensorDead:'Capteur silencieux — aucun paquet', diagFixSensor:'Réveiller',
+    diagNoSensor:'Aucun capteur sur cet appareil — le doigt ou la souris marche très bien',
+    diagZeroOk:'Zéro réglé :', diagZeroSkew:'Le zéro dérive de la position — recalibre :', diagZeroWait:'Calibration en cours — garde le téléphone immobile', diagFixCal:'Calibrer',
+    diagPadOk:'Manette détectée :', diagPadNone:'Aucune manette connectée — pas de souci : le doigt et la souris pilotent aussi',
+    diagChain:'Chaîne de pilotage :', diagTape:'Bande de l\u2019enregistreur :', diagTapeBtn:'Copier l\u2019enregistreur de vol', diagTapeEvt:'événements',
+    bbVNoSensor:'aucun capteur d\u2019inclinaison sur cet appareil', bbVLock:'verrouillé — termine d\u2019abord le « Vol mains libres »',
+    bbVSilent:'les canaux sont silencieux — pas un seul paquet du capteur', bbVNoChan:'le transfert de canal n\u2019a jamais commencé',
+    bbVNoZero:'zéro non réglé — calibration jamais terminée', bbVSkew:'le zéro est faussé :',
+    bbVStale:'paquets du capteur vieux de plus de 0,6s — gouvernail endormi', bbVOk:'chaîne intacte — le gyroscope pilote',
+    bbVStorm:'le canal est en tempête — le volant passe au canal calme',
+    diagWorld:'Monde du ciel :', diagSheet:'Feuille du canevas :', diagMotion:'Mouvement doux :', diagInk:'Encres :', diagOn:'activé', diagOff:'désactivé',
+    diagZeroIdle:'Le zéro se règle seul dans les premières secondes du vol',
+    diagFpsOk:'FPS ok :', diagFpsLow:'FPS faible :', diagFixGfx:'Baisser les graphismes',
+    diagSoundOn:'Son activé', diagSoundOff:'Son désactivé — bouton « Son » ci-dessus',
+    diagWgSilent:'Le bouton de connexion Telegram est silencieux — vérifie /setdomain dans BotFather',
+    diagLocked:'« Vol mains libres » est verrouillé — il s\u2019ouvre pendant le vol d\u2019entraînement',
+    diagKicked:'Capteur redemandé — bouge le téléphone',
+    diagReportBtn:'Copier le rapport', diagCopied:'Rapport copié — colle-le dans ton message',
+    diagCopyFail:'Impossible de copier — sélectionne le texte ci-dessous manuellement', diagSupportBtn:'Contacter le support',
+    shareText:s=>'🚀 Mon record Cosmogram : '+s+' points ! Peux-tu faire mieux ?',
+    shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper',
+    tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
+    missionLbl:'Vague', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme'],
+    tryOn:'Essayer', tryOnWait:'Demain', tryOnGo:n=>'Essai : '+n+' — un seul vol !',
+    achTitle:'Succès', achOf:'Débloqué',
+    achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',
+    statFlights:'Vols', statDist:'Distance totale', statStars:'Étoiles totales', statCombo:'Meilleur combo',
+    statNearMiss:'Frôlements', statDuelsWon:'Duels gagnés', statPerfect:'Vols parfaits', statRecBeats:'Records battus',
+    toLoc:(n,d)=>'Vers « '+n+' » : '+d+' m', rankWorld:n=>'Tu es #'+n+' dans le monde',
+    duelBtn:'Duel', duelBar:(n,b)=>'Défi de '+escapeHtml(n)+' : dépasse '+fmtN(b)+' m', duelHud:(b)=>'Duel : '+b+' m', duelOff:'Défi refusé',
+    duelReplaceQ:(o,n)=>'Tu as déjà un défi de '+escapeHtml(o)+'. Le remplacer par un défi de '+escapeHtml(n)+' ?',
+    egg42:'42 mètres — la réponse, trouvée', egg9000:'Plus de 9000 !', egg1337:'1337 — tu es dedans',
+    duelTgOnly:'Ouvre le jeu via le bouton du bot pour défier tes amis',
+    duelWin:(n,b)=>'Défi battu ! La barre de '+fmtN(b)+' m de '+escapeHtml(n)+' est à toi.',
+    duelLose:(n,b)=>'Pas battu : '+escapeHtml(n)+' tient '+fmtN(b)+' m. Revanche ?',
+    duelShareText:(d,w)=>myCallsign()+' : '+fmtN(d)+' m Vague '+w+' dans Cosmogram. Fais mieux ! ⚔️',
+    mineTab:'Moi', topTab:'Classement', topMe:'Ton rang : ', topLoading:'Chargement…',
+    topEmpty:'Vide pour l\u2019instant — sois le premier !', topTgOnly:'Connecte-toi avec Telegram — un classement partagé',
+    webJoin:'Connecte-toi avec Telegram — ce vol rejoint le classement partagé',
+    accGuest:'Un classement pour tous — connecte-toi avec Telegram',
+    accIn:n=>n?('Tu es sur le classement sous le nom '+n):'Tu es sur le classement', accOut:'Se déconnecter',
+    dcLogin:'Connecte-toi avec Discord',
+    setMorse:'Traînée morse', csDefault:'Pilote',
+    setMorseHap:'Morse haptique',
+    setGrpSound:'Son et air', setGrpGame:'Jeu et écran', setGrpProf:'Profil', moreLbl:'Plus',
+    setWellAll:'Tout sonore', setWellSome:'Partiellement muet', setWellNone:'Silence',
+    csCap:'Indicatif — résonne dans la traînée morse et l\u2019air haptique',
+    diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
+    setGhost:'Fantôme',
+    ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Fantôme indisponible : le propriétaire a caché la trace',
+    ghostWith:(n)=>'Le fantôme de '+(n||'Joueur')+' vole avec toi',
+    ghostBeat:(n,sc,b)=>'Fantôme de '+escapeHtml(n||'joueur')+' battu : '+fmtN(sc)+' contre '+fmtN(b)
   }
 };
-const LANG = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user &&
-  (tg.initDataUnsafe.user.language_code||'ru').toLowerCase().startsWith('en')) ? 'en' : 'ru';
+const SUPPORTED_LANGS = ['ru','en','es','pt','fr']; // v1.108.1: добавляются сюда по мере перевода I18N — порядок не важен
+const LANG = (()=>{
+  const raw = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code || '').toLowerCase();
+  const found = SUPPORTED_LANGS.find(l => raw.startsWith(l));
+  return found || 'ru'; // не распознали — честный дефолт, тот же, что был всегда
+})();
 let L = I18N[LANG]; // let: настройка языка переключает словарь на лету
 
 /* ---------- Хранилище (Блок 8: CloudStorage primary, localStorage fallback) ---------- */
@@ -357,9 +789,11 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.108.0'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.282.12'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
+let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
+let SPEED_STREAKS=true; // v1.280.0: звёзды тянутся в штрихи на скорости — персист 'speedStreaks', по умолчанию включено
 function beep(f,dur,type,vol,slide){
   if(MUTED)return;
   const ac=audio(); if(!ac)return;
@@ -412,12 +846,25 @@ function morseUnits(s){ // позывной → строка единиц/нул
     for(let j=0;j<m.length;j++){ if(j) u+='0'; u+= m[j]==='-'?'111':'1'; } }
   return u;
 }
-const CS_BAD=['ХУЙ','ХУЕ','ХУИ','ХУЯ','ПИЗД','БЛЯД','БЛЯТ','БЛЯ','СУКА','МУДА','МУДИ','ЕБА','ЕБУ','ЕБЁ','FUCK','SHIT','CUNT','DICK','NAZI','NIGG']; // позывной летит в чужие небеса через призраков — фильтр обязателен
+const CS_BAD=['ХУЙ','ХУЕ','ХУИ','ХУЯ','ПИЗД','БЛЯД','БЛЯТ','БЛЯ','СУКА','МУДА','МУДИ','ЕБА','ЕБУ','ЕБЁ','FUCK','SHIT','CUNT','DICK','NAZI','NIGG',
+  'PUTA','PUTO','MIERDA','CABRON','VERGA','PENDEJO',
+  'CARALHO','FODASE','BOSTA','VIADO',
+  'MERDE','CONNA','ENCULE','SALOPE','NIQUE','BORDEL']; // v1.108.1: французский добавлен в интерфейс — тот же принцип, список расширяется на каждый новый язык позывного. PUTAIN не добавлен отдельно — уже ловится через PUTA (испанский корень, тот же префикс)
 function sanitizeCallsign(s){
-  const c=String(s||'').toUpperCase().replace(/[^A-ZА-ЯЁ0-9]/g,'').slice(0,10);
+  // v1.108.1: раньше буква с диакритикой (é, ç, ü, ã) не превращалась в обычную — вырезалась
+  // целиком (José→JOS, François→FRANOIS). NFD-разложение отделяет букву от знака ударения как
+  // двух отдельных символов; \u0300-\u036f — сами эти знаки, вырезаем только их, буква остаётся.
+  const c=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-ZА-ЯЁ0-9]/g,'').slice(0,10);
   if(!c) return '';
   for(const b of CS_BAD) if(c.indexOf(b)>=0) return '';
   return c;
+}
+function sanitizeTrackName(s){ // v1.108.1: имя трассы Кузницы неба — расшаривается публично, как и позывной,
+  // но шире по алфавиту (пробелы, до 20 символов) — тот же чёрный список CS_BAD, другой белый список символов
+  const raw=String(s||'').trim().slice(0,20);
+  const check=raw.toUpperCase().replace(/[^A-ZА-ЯЁ0-9]/g,''); // пробелы убраны именно для проверки — «P U T A» не должно обходить фильтр
+  for(const b of CS_BAD) if(check.indexOf(b)>=0) return '';
+  return raw.replace(/[<>&"'\\]/g,''); // сама вывеска — с пробелами и как ввёл автор, просто без HTML-опасных символов
 }
 function myCallsign(){ // свой позывной → имя аккаунта → нейтральный
   const c=sanitizeCallsign(Store.get('callsign',''));
@@ -482,6 +929,20 @@ function morseDayCheck(){ // первый полёт дня: «проверил 
   Store.set('morseDay',k);
   hapticMorse(myCallsign());
   return true;
+}
+function streakDayCheck(){ // v1.108.1 «Серия дней»: sfx.streak() существовал с самого начала («тёплый огонёк
+  // серии дней») — самой серии не было, звук ждал механику. Тот же принцип, что у морзянки: тихая
+  // проверка раз в день, честный сброс при пропуске, огонёк только когда серия РЕАЛЬНО продолжается.
+  const k=todayKey();
+  const last=Store.get('streakDay','');
+  if(last===k) return Store.get('streakCount',0); // уже сегодня — просто вернуть текущий счёт, ничего не менять
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const cont = last===dateKey(y); // вчера играл — серия продолжается; иначе — начинается заново
+  const count = cont ? (Store.get('streakCount',0)+1) : 1;
+  Store.set('streakDay', k);
+  Store.set('streakCount', count);
+  if (cont && count>=2 && typeof sfx!=='undefined' && sfx.streak) sfx.streak(); // не на первом дне серии — только когда она реально длится
+  return count;
 }
 
 /* ---------- Погружение (v1.58.0): полный экран, замок ориентации, защита от свайпа ----------
@@ -645,7 +1106,7 @@ const canvas = $('game');
 const P3 = (typeof matchMedia==='function') && matchMedia('(color-gamut: p3)').matches;
 function juicy(srgb, p3){ return P3 ? p3 : srgb; } // пара чернил: обычные — всем, сочные — флагману
 const ctx = canvas.getContext('2d', P3?{colorSpace:'display-p3'}:undefined); // v1.99.3: флагману — расширенный набор чернил
-let W=0, H=0, DPR=1, dprCap=2, SC=1, capPx=2560; // SC — «Метр неба» (v1.99.0): цена одного логического пикселя в css-пикселях; capPx — «Потолок листа» (v1.99.1): длинная сторона холста в настоящих пикселях
+let W=0, H=0, DPR=1, dprCap=2, SC=1, capPx=2560, SC_MIN=0.5; // SC — «Метр неба» (v1.99.0): цена одного логического пикселя в css-пикселях; capPx — «Потолок листа» (v1.99.1): длинная сторона холста в настоящих пикселях; SC_MIN — «Пол листа» (v1.108.1): ниже — не рисуем нерабочую крошку, честно просим больше места
 /* ---------- Тир устройства (v1.7.0 «Точная настройка»): почти персональный профиль ---------- */
 function gpuRenderer(){ // точное имя GPU через WebGL (незаметно для игрока; null — если скрыто браузером)
   try{
@@ -661,24 +1122,53 @@ function gpuRenderer(){ // точное имя GPU через WebGL (незам�
 function gfxTierByGpu(g){ // карта рынка GPU → тир 0/1/2 (слабый / средний / флагман)
   g=(g||'').toLowerCase();
   if(!g) return null;
-  if(/apple gpu/.test(g)) return 2; // любой iPhone с современным Safari тянет всю красоту
+  if(/apple gpu/.test(g)){
+    // v1.282.3 «Честный iPhone»: с февраля 2020 (iOS 12.2+) ВСЕ iPhone отдают одну и ту же
+    // строку «Apple GPU» — Apple намеренно скрыла модель чипа (подтверждено официальным
+    // обсуждением в gpuweb/gpuweb#2195). Раньше это означало: iPhone SE первого поколения
+    // (2016, 2 ядра) и iPhone 16 Pro (2024, 6 ядер) получали ОДИН И ТОТ ЖЕ тир 2 (флагман)
+    // безусловно. Хуже того — gfxCap() читает именно ТИР (кэш навсегда), не текущий Q.level:
+    // даже когда авто-качество честно понижало сами эффекты из-за низкого fps, разрешение
+    // холста оставалось раздутым НАВСЕГДА для любого iPhone. deviceMemory на iOS не существует
+    // вовсе (undefined всегда) — единственный оставшийся честный сигнал: число ядер.
+    // Не идеально (Apple не даёt точнее), но честнее безусловной двойки для всех подряд.
+    const cores=navigator.hardwareConcurrency||4;
+    return cores>=6?2:(cores>=4?1:0);
+  }
   const ad=g.match(/adreno[^0-9]*(\d{3})/); if(ad){ const n=+ad[1]; return n>=640?2:(n>=610?1:0); } // 640+ флагман, 610-639 средний, 5xx и ниже — слабый
   if(/immortalis|xclipse|mali-gx/.test(g)) return 2; // топы ARM/Samsung/Dimensity 9500
   const mg=g.match(/mali-g(\d{2,3})/); if(mg){ const n=+mg[1]; return n>=710?2:(n>=76?1:0); } // G710+ флагман, G76-G615 средний, G57/G52/G72 и ниже — слабый
   if(/powervr|sgx|mali-4|mali-t|maleoon/.test(g)) return 0;
   return null; // неизвестный чип — решают ядра и память
 }
-function gfxTier(){ // лучшее, что можем дать именно этому устройству; вычисляется один раз, кэш навсегда
-  const c=Store.get('gfxTier',null); if(c===0||c===1||c===2) return c;
+const GFX_TIER_LOGIC_V=1; // v1.282.9: бито на v1.282.3 (честная классификация Apple GPU по числу ядер вместо
+  // безусловной двойки для любого iPhone) — «кэш навсегда» без версии означал: фикс работал бы ТОЛЬКО
+  // для новых игроков, у кого ещё нет записи в хранилище; любой, кто уже открывал игру ДО этого фикса,
+  // навечно держал бы старый неверный тир, и исправленная логика никогда не выполнилась бы для него.
+function gfxTier(){ // лучшее, что можем дать именно этому устройству; кэш живёт, пока логика классификации не меняется
+  const cv=Store.get('gfxTierV',0);
+  const c=Store.get('gfxTier',null);
+  if(cv===GFX_TIER_LOGIC_V && (c===0||c===1||c===2)) return c;
   let t=gfxTierByGpu(gpuRenderer());
   if(t===null){
     const cores=navigator.hardwareConcurrency||4, mem=navigator.deviceMemory||4;
     t=(cores>=8&&mem>=6)?2:(cores>=6?1:0);
   }
-  Store.set('gfxTier',t);
+  Store.set('gfxTier',t); Store.set('gfxTierV',GFX_TIER_LOGIC_V);
   return t;
 }
 function gfxUltraOk(){ return gfxTier()>=2; } // «Ультра» — только флагманскому тиру: слабых и средних не дразним
+/* v1.108.1 «Android Go»: тир 0 уже ловит слабые устройства по GPU/памяти — этого достаточно для
+   обычного бюджетника. Go Edition — отдельный зверь: агрессивнее убивает фон, площе лимит памяти
+   на вкладку. Главный признак — сама строка WebView (Go Edition честно называет себя); ≤1 ГБ памяти
+   на Android — тоже почти наверняка Go-класс, даже если строка промолчала. Экономнее только там,
+   где это реально устройство такого класса, не любой бюджетник — тир 0 не трогаем, добавляем поверх.*/
+function isAndroidGo(){
+  const ua=navigator.userAgent||'';
+  if(/Android.*\bGo\b/i.test(ua)) return true;
+  const mem=navigator.deviceMemory;
+  return /Android/i.test(ua) && typeof mem==='number' && mem<=1;
+}
 function dispProbe(done){ // паспорт экрана (v1.12.0): частота — медиана кадровых интервалов rAF, охват — media query
   try{ Store.set('dispP3', (typeof matchMedia==='function' && matchMedia('(color-gamut: p3)').matches)?1:0); }catch(e){}
   const deltas=[]; let last=0, n=0;
@@ -697,9 +1187,13 @@ function gfxCap(){ // HD-резолюция по тиру: ручные режи
   else if(m==='high') dprCap=3;
   else if(m==='ultra' && gfxUltraOk()) dprCap=Math.min(raw,3.5);
   else{
-    const t=gfxTier();
-    dprCap = t>=2 ? ((typeof Q!=='undefined'&&Q.level>=3)?Math.min(raw,3.5):3)
-      : t===0 ? 1.5 : ((raw>=2.5&&(navigator.hardwareConcurrency||4)>=8)?3:2);
+    const t=gfxTier(), lv=(typeof Q!=='undefined')?Q.level:2;
+    // v1.282.3: раньше только Q.level>=3 (Ультра) снижал разрешение у тира 2+ — любое понижение
+    // до Q2/Q1/Q0 (авто-качество честно реагирует на низкий fps, включая временный троттлинг
+    // у настоящих флагманов, не только неверно определённые устройства) не трогало холст вообще,
+    // 3x оставался всегда. Теперь разрешение спускается по той же лестнице, что и сами эффекты.
+    dprCap = t>=2 ? (lv>=3?Math.min(raw,3.5):lv===2?3:lv===1?2:1.5)
+      : t===0 ? (isAndroidGo()?1:1.5) : ((raw>=2.5&&(navigator.hardwareConcurrency||4)>=8)?3:2);
   }
 }
 /* v1.99.2 «Бережное небо»: уважение к системному «уменьшить движение».
@@ -721,6 +1215,17 @@ function resize(){
      и не ниже 844 (окно реакции не короче эталона). Большой экран — просто больше
      неба по бокам; скорости, размеры и ритм уклонения везде эталонные, один в один. */
   SC = Math.min(cssW/390, cssH/844);
+  /* v1.108.1 «Пол листа»: симметрично «Потолку листа» сверху — снизу тоже нужна страховка.
+     Без неё очень узкое окно (сплит-скрин на телефоне/планшете, ужатое окно на десктопе)
+     рисовало игру в нерабочем микро-масштабе — тап-таргеты меньше пальца, читать нечего.
+     Ниже SC_MIN честно останавливаем полёт и просим больше места, вместо тихой поломки. */
+  const tooNarrow = SC < SC_MIN;
+  if (tooNarrow){
+    SC = SC_MIN;
+    if (S && S.running && !S.paused && typeof pauseGame==='function') pauseGame(); // не даём разбиться в невидимой тесноте
+  }
+  const tnEl = document.getElementById('tooNarrow');
+  if (tnEl) tnEl.classList.toggle('hidden', !tooNarrow);
   W = Math.round(cssW/SC);
   H = Math.round(cssH/SC);
   /* v1.99.1 «Потолок листа»: лист не шире capPx по длинной стороне. На экранах-монстрах
@@ -734,7 +1239,17 @@ function resize(){
   ctx.setTransform(DPR*SC,0,0,DPR*SC,0,0); // меры неба → пиксели экрана одним поворотом линейки
   if (typeof drawKick==='function') drawKick(); // v1.66.2: спящая пауза/меню — свежий кадр сразу после пересчёта
 }
-window.addEventListener('resize', resize);
+// v1.282.12: resize() физически меняет canvas.width — по спецификации Canvas это стирает
+// весь буфер немедленно. Событие 'resize' окна может сыпаться десятками раз в секунду при
+// перетаскивании края окна на десктопе (замок ориентации на строке выше уже дебаунсится —
+// сам resize() рядом остался безо всякой защиты). Схлопываем в кадр: сколько бы событий ни
+// пришло за один rAF-тик, resize() реально отработает не больше одного раза за кадр — без
+// искусственной задержки (в отличие от setTimeout-дебаунса), отклик всё ещё в пределах кадра.
+let _resizePending=false;
+window.addEventListener('resize', ()=>{
+  if(_resizePending) return; _resizePending=true;
+  requestAnimationFrame(()=>{ _resizePending=false; resize(); });
+});
 window.addEventListener('orientationchange', ()=>setTimeout(resize,150));
 if (tg && tg.onEvent){ try{ tg.onEvent('viewportChanged', ()=>{ if(tg.isExpanded) resize(); tgInsetsSoon(); }); }catch(e){} // v1.102.1: замер — после тишины
   try{ tg.onEvent('fullscreenChanged', ()=>{ resize(); tgInsetsSoon(); }); }catch(e){} // v1.71.0: вход/выход из fullscreen — canvas и подушка пересчитываются по событию, не только по таймеру; v1.102.1: один замер, не три

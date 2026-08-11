@@ -12,15 +12,24 @@
 const BEACON=(()=>{
   const URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-beacon';
   const seen=new Set(); let flushing=false, calN=0, calStormed=false;
+  const sessStart=Date.now(); let errCount=0; // v1.108.1: слой 3 — открытка сессии считает от загрузки страницы
 
   function on(){ return Store.get('beaconOn',1)===1; }
-  /* Печать лаборатории (v1.108.0): верстак молчит — письма только с настоящего неба.
-     Страж почты носит пропуск: window.__beaconLab=true снимает печать. */
-  const LAB=(()=>{ try{ const h=location.hostname;
-    return h==='localhost'||h==='127.0.0.1'||h==='::1'||h==='[::1]'; }catch(e){ return false; } })();
-  function sealed(){ return LAB && !(typeof window!=='undefined' && window.__beaconLab===true); }
+  /* Печать лаборатории (v1.107.0, вынесена в core.js как isLabEnv() — v1.108.1):
+     верстак молчит — письма только с настоящего неба. window.__labOpen=true снимает печать. */
+  function sealed(){ return typeof isLabEnv==='function' && isLabEnv(); }
   function anon(){ let a=Store.get('beaconAnon',null);
     if(!a){ a=Math.random().toString(36).slice(2,10); Store.set('beaconAnon',a); } return a; }
+  // v1.108.1 «Слой 2»: то, что уже постоянно живёт в памяти ради Адаптивного I.Q. и тира устройства —
+  // ни одного нового измерения, просто читаем готовые значения в момент, когда и так уже плохо.
+  function perfCtx(){
+    try{
+      const fps=(typeof Q!=='undefined'&&Q)?Math.round(Q.fps):'?';
+      const lvl=(typeof Q!=='undefined'&&Q)?Q.level:'?';
+      const tier=(typeof gfxTier==='function')?gfxTier():'?';
+      return 'fps:'+fps+' lvl:'+lvl+' tier:'+tier;
+    }catch(e){ return ''; }
+  }
   function postcard(kind,msg){
     let verdict='', tail='';
     try{ verdict=bbVerdict(); }catch(e){}
@@ -67,13 +76,41 @@ const BEACON=(()=>{
   function drop(kind,msg){ if(!on()||sealed()) return; // выкл значит выкл: ни писем, ни очереди; печать — то же молчание
     const key=kind+'|'+String(msg==null?'':msg).slice(0,60);
     if(seen.has(key)) return; seen.add(key); // дедуп: одна ошибка — одно письмо за сессию
+    if(kind==='error') errCount++; // v1.108.1: слой 3 считает именно падения, не сигналы-симптомы
     const q=Store.get('beaconQ',[]); q.push(postcard(kind,msg));
     Store.set('beaconQ',q.slice(-10)); // очередь — не архив: десять последних
     flush();
   }
   // падения борта — те же события, что пишет самописец (свои слушатели, чужой мост не трогаем)
-  window.addEventListener('error',e=>{ if(e&&e.message) drop('error',e.message); });
-  window.addEventListener('unhandledrejection',e=>drop('error','promise: '+String(e&&e.reason)));
+  window.addEventListener('error',e=>{ if(e&&e.message){
+    // v1.108.1: раньше письмо несло только текст ошибки — «что», без «где» и «на чём». Файл:строка:столбец
+    // берутся напрямую из события; fps/тир/качество — уже вычислены ради Адаптивного I.Q., просто читаем.
+    // При отсутствии (редкий браузер) — просто не добавляется, письмо всё равно уходит.
+    const loc=e.filename?(String(e.filename).split('/').pop()+':'+e.lineno+':'+e.colno):'';
+    const ctx=perfCtx();
+    drop('error','['+(loc?loc+' ':'')+ctx+'] '+e.message);
+  } });
+  window.addEventListener('unhandledrejection',e=>drop('error','['+perfCtx()+'] promise: '+String(e&&e.reason)));
+
+  /* v1.108.1 «Слой 3»: открытка сессии — не поток данных, а одна короткая отправка в естественный
+     момент выхода. Даёт полное покрытие (не только упавшие сессии), не только жалобы. sendBeacon,
+     не fetch — гарантированно долетает даже когда страница уже закрывается, не блокирует, не держит
+     вкладку живой. Отдельный путь от очереди (beaconQ/flush): очередь — для гарантированной доставки,
+     когда игра продолжает жить; здесь ретраить нечего — если не долетело в момент закрытия, повторной
+     попытки не будет физически. Уважает тот же переключатель и печать лаборатории, что и все письма. */
+  function sessionBeacon(){
+    if(!on()||sealed()) return;
+    if(typeof navigator==='undefined'||typeof navigator.sendBeacon!=='function') return; // старый браузер — честно молчим, не подменяем fetch'ем (он ненадёжен именно в этот момент)
+    const dur=Math.round((Date.now()-sessStart)/1000);
+    const pc=postcard('session', perfCtx()+' dur:'+dur+' err:'+errCount);
+    try{
+      const blob=new Blob([JSON.stringify(pc)],{type:'application/json'});
+      navigator.sendBeacon(URL, blob);
+    }catch(e){}
+  }
+  if(typeof document!=='undefined'){
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) sessionBeacon(); });
+  }
 
   /* сигналы-симптомы — крючки-однострочники зовут оттуда, где родился симптом:
      gfx_fix (нажал «Снизить графику» — кадры болели), liar (суд нашёл лжеца —

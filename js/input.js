@@ -8,6 +8,25 @@ const PLATFORM = (tg && tg.platform) || 'web';
 const HAS_GYRO = typeof window.DeviceOrientationEvent!=='undefined';
 // iOS 13+: датчик есть, но нужно явное разрешение пользователя (красивая кнопка в меню)
 const NEEDS_TILT_PERMISSION = HAS_GYRO && typeof DeviceOrientationEvent.requestPermission==='function';
+/* v1.108.1 «Настоящий датчик, не просто API»: HAS_GYRO проверяет только то, что браузер ЗНАЕТ
+   о существовании DeviceOrientationEvent — а его знают все современные браузеры, включая
+   ноутбучный Chrome без единого физического сенсора. Раньше именно этим объяснялось предложение
+   «Полёт без рук» на устройствах, где гироскопа нет и быть не может — ноутбуки, ТВ-браузеры,
+   Steam Deck, десктопный Telegram. Настоящее подтверждение — хотя бы один пакет с реальными
+   данными. Исключение — iOS: разрешение там даётся только явным тапом (см. NEEDS_TILT_PERMISSION),
+   данных заранее физически не бывает, поэтому там по-прежнему доверяем факту API, как и раньше. */
+const MOBILE_PLATFORMS = ['ios','android']; // строки tg.platform, где датчик почти гарантирован
+const IS_LIKELY_MOBILE = MOBILE_PLATFORMS.indexOf(PLATFORM) >= 0;
+let realGyroSeen = false;
+if (HAS_GYRO && !NEEDS_TILT_PERMISSION && !IS_LIKELY_MOBILE){
+  const proveGyro = e => {
+    if (e.beta!==null || e.gamma!==null || e.alpha!==null){
+      realGyroSeen=true; window.removeEventListener('deviceorientation', proveGyro);
+      if (typeof refreshGyroLock==='function') refreshGyroLock(); // v1.108.1: доказательство пришло позже открытия настроек — пересчитать честно
+    }
+  };
+  window.addEventListener('deviceorientation', proveGyro);
+}
 const input = { tiltX:0, tiltY:0, useGyro:false, touchX:null, touchY:null,
   keyL:false, keyR:false, keyU:false, keyD:false, baseG:null, baseB:null,
   _t:0, // время последнего пакета датчика — сторож «датчик замолчал»
@@ -37,13 +56,23 @@ const CAL_NEED=3, CAL_TOL=4, CAL_MAX=14, CAL_DEAD=40;
 const CAL_QUIET=10, CAL_QUIET_ESC=80; // v1.100.3: тишина после бури и её лавочка
 const FOREIGN_ESC=60; // v1.104.0: лавочка карантина — 60 пакетов ровной позы перевешивают чужое свидетельство
 let calN=0, calSeen=0, calG=0, calB=0, calAllG=0, calAllB=0, calRefG=0, calRefB=0, calToast=false, calQuiet=0;
+let lastCalResetT=0; // v1.108.1 «Тихий дребезг»: 24 из 48 боевых писем «Почты неба» — cal_storm (5+ сбросов за сессию).
+  // Корень — channel-flap и orientationchange дёргали calReset() без единой защиты от частоты: дрогнувший
+  // канал или дублирующее событие поворота считались отдельным честным сбросом. Гасим именно дребезг —
+  // не блокируем calReset() целиком, чтобы настоящий сброс (старт игры, реальный поворот) не потерялся.
+function calResetDebounced(toast,quiet){
+  const now=performance.now();
+  if(now-lastCalResetT<400) return; // дребезг тише 400мс подряд — не новый честный сброс, а эхо того же события
+  lastCalResetT=now;
+  calReset(toast,quiet);
+}
 let prevG=null, prevB=null, flipN=0; // страж выбросов: скачок >55° между пакетами — не рука, а сингулярность углов Эйлера при перевороте
 let poseSG=null, poseSB=null; // v1.100.4 «Верная рука»: медленный следопыт позы руки (в кадре канала, после remap) — стражу, что смотрит на руку
 let steerChan='none'; // 'none' | 'tg' | 'web' — чей кадр сейчас снимает ноль и рулит
 function calReset(toast,quiet){ input.baseG=null; input.baseB=null; calN=0; calSeen=0; calAllG=0; calAllB=0; calToast=!!toast; calQuiet=quiet?CAL_QUIET:0; prevG=null; prevB=null; flipN=0; poseSG=null; poseSB=null; foreignN=0; if(typeof BEACON!=='undefined') BEACON.calTick(); } // v1.100.4: след руки сеем заново из нового потока; v1.104.0: и счётчик лавочки карантина; v1.107.0: частые перекалибровки — симптом, почта считает
 function gyroChanIn(chan){
   if(steerChan!==chan && typeof BB!=='undefined') BB.log('chan','steer '+chan); // v1.99.7 «Чёрный ящик»: эстафета — на ленту
-  if(steerChan!=='none' && steerChan!==chan) calReset(false,true); // смена канала = смена системы координат: старый ноль врёт; v1.100.3: после эстафеты пьём только из настоящей тишины
+  if(steerChan!=='none' && steerChan!==chan) calResetDebounced(false,true); // смена канала = смена системы координат: старый ноль врёт; v1.108.1: через дребезг-страж
   steerChan=chan;
 }
 let foreignNoteT=0; // v1.102.2: запись карантина на ленту — не чаще раза в секунду
@@ -284,7 +313,7 @@ window.addEventListener('deviceorientation', e=>{
   onTilt(e);
 });
 // Поворот экрана: оси меняются, старый ноль врёт — пересчитаем на следующем пакете
-window.addEventListener('orientationchange', ()=>calReset(false,true)); // v1.100.3: поворот экрана — тоже буря для осей, ноль — из тишины
+window.addEventListener('orientationchange', ()=>calResetDebounced(false,true)); // v1.108.1: поворот экрана — тоже буря для осей, но не дважды подряд — через дребезг-страж
 
 function calibrateTilt(){ // ручная калибровка — через ту же стабильную процедуру: ноль возьмётся из устоявшейся позы
   if(lastGamma==null){ toast(L.noTilt,'rgba(255,159,176,.5)'); haptic('error'); return; }
@@ -366,20 +395,38 @@ function pollGamepad(){
   if(st&&!padPrev.st){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
   padPrev.a=a; padPrev.st=st;
 }
+/* v1.280.0 «Второй канал»: вибро-геймпада — тот же принцип, что у haptic() для тача/Telegram,
+   просто третий, независимый выход. Свежий опрос устройств каждый раз, как и в pollGamepad() —
+   ничего не кэшируется между кадрами, штурвал может отстыковаться в любой момент. */
+function gamepadRumble(strength, durationMs){
+  if(typeof navigator==='undefined'||typeof navigator.getGamepads!=='function') return;
+  try{
+    const pads=navigator.getGamepads();
+    for(let i=0;i<pads.length;i++){
+      const gp=pads[i];
+      if(gp&&gp.connected&&gp.vibrationActuator){
+        gp.vibrationActuator.playEffect('dual-rumble',
+          {duration:durationMs, strongMagnitude:strength, weakMagnitude:strength*.6}).catch(()=>{});
+        break; // один штурвал активен за раз — хватит первого найденного
+      }
+    }
+  }catch(e){}
+}
 
 window.addEventListener('keydown',e=>{
-  const k=e.key;
-  if(k==='ArrowLeft'||k==='a'||k==='A'||k==='ф'||k==='Ф'){input.keyL=true;e.preventDefault();}
-  if(k==='ArrowRight'||k==='d'||k==='D'||k==='в'||k==='В'){input.keyR=true;e.preventDefault();}
-  if(k==='ArrowUp'||k==='w'||k==='W'||k==='ц'||k==='Ц'){input.keyU=true;e.preventDefault();}
-  if(k==='ArrowDown'||k==='s'||k==='S'||k==='ы'||k==='Ы'){input.keyD=true;e.preventDefault();}
+  const k=e.key, c=e.code; // v1.108.1 «Честная клавиатура»: код физической клавиши, не символ раскладки —
+  // раньше 'a'/'A' не срабатывало на AZERTY/QWERTZ (там на месте W/A/S/D другие буквы), только на QWERTY/ЙЦУКЕН
+  if(k==='ArrowLeft'||c==='KeyA'){input.keyL=true;e.preventDefault();}
+  if(k==='ArrowRight'||c==='KeyD'){input.keyR=true;e.preventDefault();}
+  if(k==='ArrowUp'||c==='KeyW'){input.keyU=true;e.preventDefault();}
+  if(k==='ArrowDown'||c==='KeyS'){input.keyD=true;e.preventDefault();}
   if(k===' '||k==='Enter'){ if(screenName==='menu') runStart(); else if(screenName==='over') retryRun(); e.preventDefault(); } // как главная кнопка экрана: выбранная дисциплина, не всегда классика
-  if(k==='Escape'||k==='p'||k==='P'){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
+  if(k==='Escape'||c==='KeyP'){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
 });
 window.addEventListener('keyup',e=>{
-  const k=e.key;
-  if(k==='ArrowLeft'||k==='a'||k==='A'||k==='ф'||k==='Ф')input.keyL=false;
-  if(k==='ArrowRight'||k==='d'||k==='D'||k==='в'||k==='В')input.keyR=false;
-  if(k==='ArrowUp'||k==='w'||k==='W'||k==='ц'||k==='Ц')input.keyU=false;
-  if(k==='ArrowDown'||k==='s'||k==='S'||k==='ы'||k==='Ы')input.keyD=false;
+  const k=e.key, c=e.code;
+  if(k==='ArrowLeft'||c==='KeyA')input.keyL=false;
+  if(k==='ArrowRight'||c==='KeyD')input.keyR=false;
+  if(k==='ArrowUp'||c==='KeyW')input.keyU=false;
+  if(k==='ArrowDown'||c==='KeyS')input.keyD=false;
 });

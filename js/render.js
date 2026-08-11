@@ -19,12 +19,28 @@ function qualityTick(dt){
     const f = Q._n/Math.max(Q._acc,.001);
     Q.fps = lerp(Q.fps, f, .6);
     Q._acc=0; Q._n=0; Q._t=0;
-    if (Q._hold>0){ Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; } // карантин после смены уровня: небо не дёргается
+    if (Q._hold>0){
+      // v1.282.1 «Аварийный выход»: карантин был всегда ровно 8с независимо от тяжести —
+      // тройной обвал (60→20 fps, настоящий троттлинг) спускался по ступеням МЕДЛЕННО:
+      // 3с обнаружения + 8с карантина на каждую ступень, до ~24-33с заикания подряд, прежде
+      // чем стабилизироваться. Погранично плохой fps (чуть ниже dn) по-прежнему ждёт полный
+      // карантин — защита от дребезга жива. Только по-настоящему тяжёлая, устойчивая просадка
+      // (заметно ниже dn) пробивает карантин раньше срока.
+      const {dn:dnEarly}=qThr();
+      if (Q.fps < dnEarly*.6 && Q.level>0){
+        Q._ceil = Q.level; Q.level--; Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
+        Store.set('gfxLv',Q.level); gfxCap(); resize();
+        if(typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+'');
+        return;
+      }
+      Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; // карантин после смены уровня: небо не дёргается
+    }
     const {dn,up}=qThr(), cap=gfxUltraOk()?3:2; // v1.7.0: среднему тиру красоту бережём до последнего; v1.12.0: флагману доступна «Ультра»
     const ceil = Q._ceil>=0 ? Math.min(cap,Q._ceil-1) : cap; // v1.35.0: уровень, с которого упали, авто не штурмует, пока устройство не докажет стабильность
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
       Q._ceil = Q.level; Q.level--; Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
-      Store.set('gfxLv',Q.level); gfxCap(); resize(); } }
+      Store.set('gfxLv',Q.level); gfxCap(); resize();
+      if(typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+''); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
     else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); } } // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; } } // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }
@@ -333,12 +349,21 @@ function draw(){
   // параллакс-звёзды (на hq — мягкие тонированные точки + мерцание + блики)
   const twT = hq ? performance.now()/380 : 0;
   const nStars = uq ? bgStars.length : Math.min(90,bgStars.length); // «Ультра» — более густое звёздное поле
+  // v1.280.0 «Скоростные полосы»: переключаемый эффект (Настройки → Игра и экран) — на скорости
+  // точки вытягиваются в короткие штрихи. Включён по умолчанию, отдельно от самого тира графики:
+  // тир решает МОЖЕТ ли устройство, переключатель — ХОЧЕТ ли игрок. Q0 не участвует (sh=false там).
+  const streaksOn = (typeof SPEED_STREAKS==='undefined' || SPEED_STREAKS) && sh && S.speed>0;
   for (let si=0;si<nStars;si++){ const s=bgStars[si];
     s.y += .0004*S.speed*S.timeScale*(1+s.z);
     if (s.y>1) s.y-=1;
     ctx.globalAlpha = .25+s.z*.55 + (hq ? Math.sin(twT+s.x*40)*(uq?.16:.12) : 0);
     const sx=s.x*W, sy=s.y*H;
-    if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
+    if(streaksOn){
+      const len=(2+s.s*1.6)*(1+S.speed*.55)*(1+s.z*.5); // длина штриха — от скорости и глубины звезды
+      const hh=(s.x*6.13+s.z*3.7)%1, col=hh<.16?'255,247,228':hh<.38?'186,230,255':'218,230,255'; // те же тона, что starDot()
+      ctx.strokeStyle='rgba('+col+',.9)'; ctx.lineWidth=s.s;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy-len); ctx.stroke();
+    } else if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
       const hh=(s.x*6.13+s.z*3.7)%1;
       const sp=starDot(hh<.16?'w':hh<.38?'c':'b');
       const sz=s.s*(s.z>0.82?(uq?5.2:4.6):(uq?3.8:3.4));
@@ -347,7 +372,7 @@ function draw(){
       ctx.fillStyle='#cfe0ff';
       ctx.fillRect(sx, sy, s.s, s.s);
     }
-    if (hq && s.z>0.82){ // крестовидный блик у самых ярких звёзд
+    if (hq && s.z>0.82 && !streaksOn){ // крестовидный блик у самых ярких звёзд — не сочетается с вытянутым штрихом
       const fl=1.4+Math.sin(twT*1.3+s.x*40)*.7;
       ctx.strokeStyle='rgba(220,235,255,.3)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(sx-3*fl,sy); ctx.lineTo(sx+3*fl,sy);

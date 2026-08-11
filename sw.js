@@ -1,18 +1,22 @@
 /* Космограмма · Service Worker (v1.8.2 «Вторая дверь»)
    Статика игры — кэш-first (ассеты версионируются ?v=), страница — сеть-first
    с откатом в кэш офлайн. Чужие домены (API синка) не перехватываем.
-   v1.14.1: мост Telegram — свой, в шелле (вендоринг, больше никакого telegram.org). */
-const CACHE = 'cosmogram-v1.108.0';
+   v1.14.1: мост Telegram — свой, в шелле (вендоринг, больше никакого telegram.org).
+   v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
+   забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
+   она называется один раз здесь, остальное собирается из неё же. */
+const V = '1.282.12';
+const CACHE = 'cosmogram-v' + V;
+const JS_FILES = [
+  'core','blackbox','beacon','input','game','ach','sync','render','planetarium',
+  'goldstar','music','gyro','forge','adaptive','card','star','ui','vendor/telegram-web-app'
+];
 const SHELL = [
-  './', 'index.html', 'manifest.json',
-  'js/core.js?v=1.108.0', 'js/blackbox.js?v=1.108.0', 'js/input.js?v=1.108.0', 'js/game.js?v=1.108.0',
-  'js/ach.js?v=1.108.0', 'js/sync.js?v=1.108.0', 'js/render.js?v=1.108.0', 'js/planetarium.js?v=1.108.0', 'js/goldstar.js?v=1.108.0',
-  'js/music.js?v=1.108.0', 'js/gyro.js?v=1.108.0',
-  'js/forge.js?v=1.108.0', 'js/card.js?v=1.108.0', 'js/star.js?v=1.108.0', 'js/ui.js?v=1.108.0',
-  'js/vendor/telegram-web-app.js?v=1.108.0',
+  './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше
+  ...JS_FILES.map(f => 'js/' + f + '.js?v=' + V),
   'fonts/exo2-cyrillic.woff2', 'fonts/exo2-latin.woff2', 'fonts/OFL.txt', // v1.46.0: Exo 2 вместо Russo One
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png',
-  'icons/icon-maskable-512.png', 'icons/favicon-32.png'
+  'icons/icon-maskable-512.png', 'icons/favicon-32.png', 'icons/og-image.png'
 ];
 
 self.addEventListener('install', e => {

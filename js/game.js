@@ -10,7 +10,7 @@ const elScore=$('score'), elCombo=$('combo'), elLivesC=$('livesCanvas'),
       elBanner=$('banner'), elVignette=$('vignette');
 
 /* ---------- Пулы объектов с капом (Блок 3, без GC-лагов и без утечек) ---------- */
-const POOL_CAP=64, PARTICLE_CAP=220;
+const POOL_CAP=64, PARTICLE_CAP=(typeof isAndroidGo==='function'&&isAndroidGo())?120:220; // v1.108.1: Go Edition — площе лимит памяти на вкладку, меньше частиц одновременно
 function makePool(){ const free=[]; return {
   take(){ return free.pop()||{}; },
   give(o){ if(free.length<POOL_CAP) free.push(o); }
@@ -53,7 +53,7 @@ let lastScoreShown=-1, lastDistShown=-1; // чтобы не писать в DOM 
 /* ---------- Профиль игрока: счётчики для статистики и достижений (модуль ach.js) ---------- */
 let Stats = {games:0,deaths:0,totalStars:0,nearMiss:0,
   totalDist:0,bestCombo:0,bestWave:0,bulletRuns:0,
-  perfectRuns:0,gGames:0,tGames:0,bGames:0,e42:0,e9000:0,e1337:0,recBeats:0,topBest:0,duelsSent:0,duelsWon:0};
+  perfectRuns:0,gGames:0,tGames:0,bGames:0,kGames:0,e42:0,e9000:0,e1337:0,recBeats:0,duelsSent:0,duelsWon:0}; // v1.282.5: kGames — своя же сегодняшняя регрессия, ++ на undefined давал NaN навсегда с первой игры на клавиатуре, найдена аудитом
 function saveStats(){ Store.set('stats',Stats); }
 
 function initBg(){
@@ -77,16 +77,23 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
 // категория рекорда забега: «чистый гироскоп» — наклон реально рулил, а пальцем/
 // мышью/клавишами помогали меньше секунды за весь забег (случайные касания
 // уже отсеяны фильтром «тап vs свайп», так что всё остальное — осознанная помощь)
-function controlMode(){ return (S.gyroSec>0 && S.manSec<1) ? 'gyro' : 'touch'; }
+function controlMode(){
+  if (S.gyroSec>0 && S.manSec<1) return 'gyro';
+  return (S.keysSec>S.touchSec) ? 'keys' : 'touch'; // v1.280.0 «Честная клавиатура»: раньше клавиатура/геймпад тонули в 'touch' неотличимо от пальца
+}
 
 const MAXOB=14; // мягкий кап поля — ни на какой волне экран не переполняется
-/* v1.99.9 «Протокол seed»: соревновательные небеса (трасса дня, театр) играют в
-   эталонном коридоре 390 мер по центру поля. Один сид — одна геометрия на любом
-   экране: раньше x тянулся за шириной (x=mapRand(30,W-30)), и одно небо на ТВ
-   рассыпалось реже — статистически легче. Теперь спавн и самолётик в коридоре:
-   нет ни растяжения, ни «безопасной полосы» у края. Классика и Таран — во всё небо. */
-function fieldL(){ return (S.mode==='daily'||S.mode==='theater') ? Math.max(0,(W-390)/2) : 0; }
-function fieldW(){ return (S.mode==='daily'||S.mode==='theater') ? 390 : W; } // ширина трассы: коридор — зачётным небесам, всё небо — остальным
+/* v1.99.9 «Протокол seed»: небо играет в эталонном коридоре 390 мер по центру поля.
+   Один сид — одна геометрия на любом экране: раньше x тянулся за шириной
+   (x=mapRand(30,W-30)), и одно небо на широком экране рассыпалось реже —
+   статистически легче. Теперь спавн и самолётик — всегда в коридоре: нет ни
+   растяжения, ни «безопасной полосы» у края, ни в одном режиме.
+   v1.108.1 «Честный коридор для всех»: раньше корридор был только у зачётных
+   небес (трасса дня, театр), Классика и Таран летали во всё небо — статистика
+   из абзаца выше бьёт по ним ровно так же, разница была не по смыслу, а по
+   спешке. Теперь одно правило на все режимы — так и было задумано изначально. */
+function fieldL(){ return Math.max(0,(W-390)/2); }
+function fieldW(){ return 390; }
 function spawnObstacle(){
   if (obstacles.length>=MAXOB) return;
   const d = difficulty(), m = S.mission, fl = fieldL(), fw = fieldW();
@@ -212,7 +219,7 @@ function ghostRec(){
   const yq=clamp(Math.round((plane.y-H*.22)/(H*.78-50)*91),0,91); // 92 уровня по Y (было 16 ≈ 33px скачок)
   rec.push([xq,yq,S.dist]);
 }
-function ghostActive(){ return Stats.games<7; } // призрак — окно онбординга: первые 7 игр, дальше игрок уже замотивирован
+function ghostActive(){ return true; } // v1.280.0: окно онбординга (первые 7 игр) снято — призрак больше не тренировочные колёса, доступен всегда
 function ghostOff(){ ghost=null; ghostOn=false; ghostTagT=0; ghostFade=0; ghostA=0; ghostMorseBuf=[]; ghostMorseArc=0; }
 
 /* ---------- Морзянка (v1.53.0): шлейф пишет позывной ----------
@@ -258,8 +265,8 @@ function ghostPackDaily(){ // v1.100.1 «Трибуна чемпиона»: ле
   return ghostPack(rec.map(r=>[clamp(Math.round(((r[0]/91*W-fl)/fw)*91),0,91), r[1], r[2]]));
 }
 function ghostSave(){ // вызывается из gameOver при новом рекорде (только обычный режим)
-  if (!ghostActive() || rec.length<20) return; // короткий забег или окно онбординга закрыто — призрака не будет
-  Store.set('ghostRun', ghostPack(rec));
+  if (!ghostActive() || rec.length<20) return; // короткий забег — призрака не будет
+  Store.set('ghostRun', {track: ghostPack(rec), seed: S.seed}); // v1.280.0: сид едет вместе с треком — иначе будущей гонке нечего восстанавливать
 }
 function ghostLoad(){ // вызывается из startGame
   ghost=null; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0;
@@ -268,12 +275,19 @@ function ghostLoad(){ // вызывается из startGame
   if (fg){
     const g=ghostParse(fg.track);
     if (g){ ghost=g; ghostForeign=true; ghostSkin=fg.skin; ghostName=fg.name||''; ghostTagT=4;
-      ghostPid=fg.pid||0; ghostBest=fg.best||0; ghostCat=fg.cat||''; } // призрак из топа несёт цель мести
+      ghostPid=fg.pid||0; ghostBest=fg.best||0; ghostCat=fg.cat||''; // призрак из топа несёт цель мести
+      // v1.280.0 «Честная гонка»: старые призраки (записаны до этой версии) сида не несут — тогда
+      // молча остаёмся на уже поставленном свежем сиде этого забега, гонка просто менее точная, не падает.
+      if (fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); S.seed=fg.seed; } }
     return;
   }
-  if (!ghostActive()) return; // после 7 игр призрак отключается
-  const g=ghostParse(Store.get('ghostRun',''));
-  if (g){ ghost=g; ghostTagT=4; } // первые 4 секунды — подпись «сможешь лучше?»
+  if (!ghostActive()) return;
+  const gr=Store.get('ghostRun', null); // v1.280.0: раньше — просто строка; теперь {track,seed} — оба формата читаются
+  const grTrack=(gr && typeof gr==='object') ? gr.track : (typeof gr==='string' ? gr : '');
+  const grSeed=(gr && typeof gr==='object') ? gr.seed : null;
+  const g=ghostParse(grTrack);
+  if (g){ ghost=g; ghostTagT=4; // первые 4 секунды — подпись «сможешь лучше?»
+    if (grSeed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(grSeed)); S.seed=grSeed; } }
 }
 function ghostStep(){ // призрак идёт по своей траектории синхронно с текущей дистанцией
   if (!ghost){ ghostOn=false; return; }
@@ -337,14 +351,14 @@ function update(dt){
     const tx = clamp(input.touchX, 24, W-24), ty = clamp(input.touchY-90, H*.25, H-60);
     plane.vx = lerp(plane.vx, clamp((tx-plane.x)*.12,-maxV,maxV), .25);
     plane.vy = lerp(plane.vy, clamp((ty-plane.y)*.10,-maxV,maxV), .2);
-    S.manSec+=dt; // палец (или мышь с зажатой кнопкой) рулит
+    S.manSec+=dt; S.touchSec+=dt; // палец (или мышь с зажатой кнопкой) рулит; v1.280.0: свой счётчик для честной категории
   } else {
     if (input.useGyro){ ax += input.tiltX*accel*2.2; ay += input.tiltY*accel*2.2; }
     if (input.keyL) ax -= accel*2; if (input.keyR) ax += accel*2;
     if (input.keyU) ay -= accel*2; if (input.keyD) ay += accel*2;
     plane.vx = clamp(plane.vx+ax, -maxV, maxV) * .94;
     plane.vy = clamp(plane.vy+ay, -maxV, maxV) * .94;
-    if (input.keyL||input.keyR||input.keyU||input.keyD) S.manSec+=dt;
+    if (input.keyL||input.keyR||input.keyU||input.keyD){ S.manSec+=dt; S.keysSec+=dt; } // v1.280.0: клавиатура/геймпад — свой счётчик, не тонет в manSec неразличимо от пальца
     if (input.useGyro && (Math.abs(input.tiltX)>0.08||Math.abs(input.tiltY)>0.08)) S.gyroSec+=dt;
   }
   if (S.dying){ // «Склейка»: крен, падение, дымный след — ввод ниже почти не влияет (заглушен занавесом)
@@ -437,9 +451,9 @@ function update(dt){
           burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium');
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
         } else {
-          hitPlane();
+          hitPlane('gate');
           killIdx(obstacles,i,poolOb);
-          if (S.lives<=0){ startDying(); return; } // «Склейка»: slow-mo занавес вместо резкого среза
+          if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':gate'); startDying(); return; } // v1.108.1: волна+причина, анонимно — балансовая телеметрия
         }
         continue;
       }
@@ -478,9 +492,9 @@ function update(dt){
           burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium');
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
         } else {
-          hitPlane();
+          hitPlane(o.kind);
           killIdx(obstacles,i,poolOb);
-          if (S.lives<=0){ startDying(); return; } // «Склейка»: slow-mo занавес вместо резкого среза
+          if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':'+S.lastHitKind); startDying(); return; } // v1.108.1: волна+причина, анонимно — балансовая телеметрия
         }
       } else if (!o.nm && d2 < (rr+24)*(rr+24)){ // near miss: пролетел вплотную
         o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1;
@@ -601,11 +615,11 @@ function updateFx(dt){
   }
 }
 
-function hitPlane(){
-  S.lives--; S.combo=0; S.invuln=2.2; S.shake=1; S.hits++; // v1.42.0: удары — в паспорт забега
+function hitPlane(kind){
+  S.lives--; S.combo=0; S.invuln=2.2; S.shake=1; S.hits++; S.lastHitKind=kind||'?'; // v1.108.1: причина последнего удара — для анонимной балансовой телеметрии
   updateLives(); updateCombo();
   elLivesC.classList.remove('hit'); void elLivesC.offsetWidth; elLivesC.classList.add('hit'); // v1.77.0: пульс жизни — гаснет с микродрожью
-  sfx.hit(); haptic('heavy'); if (typeof music!=='undefined'&&music.kick) music.kick(); // сайдчейн: музыка приседает под ударом (v1.48.0)
+  sfx.hit(); haptic('heavy'); if(typeof gamepadRumble==='function') gamepadRumble(.7,150); if (typeof music!=='undefined'&&music.kick) music.kick(); // сайдчейн: музыка приседает под ударом (v1.48.0)
   burst(plane.x, plane.y, '#ff8f8f', 22);
   elVignette.style.opacity=1; setTimeout(()=>elVignette.style.opacity=0, 350);
 }

@@ -1,15 +1,39 @@
 <!DOCTYPE html><html lang="ru"><head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<!-- v1.108.1: убраны maximum-scale=1.0 и user-scalable=no — раньше зум был выключен ВЕЗДЕ,
+     не только в полёте; слабовидящий не мог увеличить текст в Настройках. Блокировка жестов
+     теперь только в полёте, через touch-action на body (см. setScreen) -->
 <meta name="theme-color" content="#070b18"/>
+<!-- v1.108.1 «Не жди своей очереди»: раньше оба шрифта начинали качаться только когда браузер
+     дочитывал CSS до @font-face — теперь браузер узнаёт о них сразу, в первой строке <head>. -->
+<link rel="preload" href="fonts/exo2-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/exo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- v1.280.0: preconnect на оба внешних CDN — ускоряет только САМОЕ ПЕРВОЕ обращение к каждому
+     домену (DNS+TLS заранее), сами скрипты по-прежнему грузятся своим обычным путём ниже -->
+<link rel="preconnect" href="https://browser.sentry-cdn.com" crossorigin>
+<link rel="preconnect" href="https://cdn.amplitude.com" crossorigin>
 <title>Cosmogram</title>
+<!-- v1.108.1 «Обложка книги»: раньше голая ссылка — ни описания, ни картинки в превью на любой
+     площадке за пределами Telegram (мессенджеры, форумы, поиск). Один раз, до полёта — тишина
+     внутри игры (v1.101.0) не тронута ни на йоту, эти теги её не касаются. -->
+<meta name="description" content="Бумажный самолётик в открытом космосе. Аркада: уворачивайся от астероидов, лови звёзды, ставь честные рекорды — одно небо для всех игроков."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
+<meta property="og:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды. Играй прямо в браузере или в Telegram."/>
+<meta property="og:image" content="https://superduck77.github.io/cosmogram-app/icons/og-image.png"/>
+<meta property="og:url" content="https://superduck77.github.io/cosmogram-app/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
+<meta name="twitter:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды."/>
+<meta name="twitter:image" content="https://superduck77.github.io/cosmogram-app/icons/og-image.png"/>
 <!-- PWA «Вторая дверь»: устанавливается на домашний экран, работает офлайн -->
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Космограмма"/>
 <link rel="apple-touch-icon" href="icons/icon-180.png"/>
-<link rel="manifest" href="manifest.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту -->
+<link rel="manifest" id="manifestLink" href="manifest.ru.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту; v1.108.1: язык манифеста переключается в applyLangPref() -->
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
 <!-- v1.79.0: мост Telegram переехал из head в body ПОД затравку — на медленной сети
      он больше не запирает парсер: самолётик рисуется, пока мост ещё летит.
@@ -21,6 +45,12 @@
 html,body{margin:0;padding:0;background:#070b18;color:#dfe8ff}
 .ic{width:1em;height:1em;vertical-align:-.15em}
 canvas{display:block}
+/* v1.280.0 «Честное усиление»: не претендуем на точную научную коррекцию цвета —
+   это было бы нечестно без проверки на настоящем дальтонике. Просто заметно поднимаем
+   контраст/насыщенность, что реально помогает различать оттенки при многих типах
+   недостатка цветовосприятия, и честно называется тем, чем является. */
+#game.hc{filter:contrast(1.4) saturate(1.1)}
+#game.cb{filter:saturate(1.6) contrast(1.15)}
 .hidden{display:none!important}
 /* ============================================================
    COSMOGRAM UI v2 — «Командная палуба»
@@ -63,11 +93,16 @@ canvas{display:block}
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0); touch-action:none;
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0);
   overscroll-behavior:none; font-family:var(--font-ui);
   font-weight:500; letter-spacing:.05em; font-variant-numeric:tabular-nums;
   text-transform:uppercase; /* v1.101.0 «Чистое небо»: слово игрока — вся игра говорит ЗАГЛАВНЫМИ */
   user-select:none; -webkit-user-select:none; }
+/* v1.108.1 «Зум только в полёте»: touch-action:none раньше стоял на html,body всегда —
+   блокировал жесты и зум на Настройках, Ангаре, где для слабовидящего они нужны.
+   Класс .flying включается в setScreen() только при name==='game'/'pause' — там,
+   где случайный зум/скролл реально мешает пилотировать; везде остальные — жесты живы. */
+body.flying { touch-action:none; }
 b { font-weight:inherit; } /* единая насыщенность: <b> только для цвета, не для жирности */
 /* v1.101.0: браузер молча сбрасывает регистр у форм-элементов — возвращаем им закон заглавных */
 button, input, select, textarea { text-transform:inherit; }
@@ -218,7 +253,6 @@ button, input, select, textarea { text-transform:inherit; }
 .island #telemHud { top:calc(max(56px, var(--sat)) + 76px); gap:4px; }
 .island #hud { padding-top:max(206px, calc(150px + var(--sat))); }
 .island #hudShade { height:calc(215px + var(--sat)); }
-.telemDot { color:rgba(188,210,255,.35); font-size:10px; }
 #starsTelem { font-size:17px; font-weight:600; color:#ffd76a; letter-spacing:.05em;
   font-variant-numeric:tabular-nums; /* v1.76.0 */
   text-shadow:0 0 10px rgba(255,200,80,.6), 0 1px 3px rgba(6,10,30,.7);
@@ -734,6 +768,17 @@ button, input, select, textarea { text-transform:inherit; }
      игрокам лишний сторонний скрипт ни к чему. Историческая табличка старого дома — в летописи. -->
 </head>
 <body>
+<!-- v1.108.1 «Пока грузится небо»: чистый HTML/CSS, без единой зависимости от JS — рисуется до
+     первого скрипта, значит переживёт даже полный отказ сети. Прячется инлайн-скриптом после
+     последнего <script> внизу страницы (js/ui.js) — к этому моменту все теги успели отработать. -->
+<div id="bootLoad" style="position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;background:#070b18;color:#dfe8ff;
+  font-family:system-ui,sans-serif;">
+  <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);
+    border-top-color:#8fd0ff;animation:bootSpin 0.9s linear infinite;"></div>
+  <div style="font-size:14px;opacity:.7;">Небо загружается…</div>
+</div>
+<style>@keyframes bootSpin{to{transform:rotate(360deg)}}</style>
 <!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
@@ -746,17 +791,51 @@ button, input, select, textarea { text-transform:inherit; }
 <symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11.5V5.8a1.6 1.6 0 0 1 3.2 0v4.7"></path><path d="M12.2 10.5 16 11.2a2 2 0 0 1 1.6 2.4l-.9 3.8a4.2 4.2 0 0 1-4.1 3.1h-1.8a4.2 4.2 0 0 1-3.3-1.7L5.6 15a1.5 1.5 0 0 1 2.3-1.9l1.1 1.4"></path></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"></rect><path d="M11 18.5h2"></path></symbol>
 <symbol id="i-gyro" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path><path d="M21 3.5V8h-4.5"></path><path d="M12 8.5 15 12l-3 3.5L9 12z"></path></symbol>
+<symbol id="i-keys" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"></rect><path d="M5.5 10h1M9 10h1M12.5 10h1M16 10h1M5.5 13.5h1M9 13.5h1M12.5 13.5h1M16 13.5h1M8 17h8"></path></symbol>
 <symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
 </defs></svg>
-<script src="js/vendor/telegram-web-app.js?v=1.108.0"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.282.12"></script><!-- мост: под затравкой, раньше core.js -->
+<script src="https://browser.sentry-cdn.com/8.9.2/bundle.tracing.min.js" crossorigin="anonymous"></script>
+<script>
+// v1.108.1 «Второй наблюдатель»: Sentry — независимый канал, не замена «Почте неба» (beacon.js),
+// а дополнение с более зрелым интерфейсом для разбора инцидентов. Оба работают параллельно,
+// каждый своими глобальными обработчиками — падение одного не роняет другой.
+if (window.Sentry) {
+  Sentry.init({
+    dsn: 'https://55ca5b35e5804f14b0e04473c3e2138f@o4511888537878528.ingest.de.sentry.io/4511889470980176',
+    release: 'cosmogram@1.108.1',
+    tracesSampleRate: 0, // v1.108.1: только ошибки, без трассировки производительности — экономия квоты на старте
+  });
+}
+</script>
+<script src="https://cdn.amplitude.com/script/2d7e5288f0007ea7fbf9515286e25031.js"></script>
+<script>
+// v1.108.1 «Куда игроки бросают руль»: продуктовая аналитика, отдельно от отладки ошибок —
+// Sentry/beacon.js смотрят на баги, Amplitude смотрит на поведение. Сознательно БЕЗ Session
+// Replay (полной записи экрана игрока) — это отдельное решение о приватности, не включается
+// заодно с обычной аналитикой без явного отдельного «да».
+if (window.amplitude) {
+  amplitude.init('2d7e5288f0007ea7fbf9515286e25031', {
+    fetchRemoteConfig: true,
+    autocapture: true,
+    serverZone: 'EU', // тот же регион, что и сам проект в Amplitude
+  });
+}
+</script>
 <canvas id="game"></canvas>
+<div id="tooNarrow" class="overlay hidden">
+  <div class="scrMid"><div class="stack">
+    <div class="screenTitle" id="tooNarrowTitle">Экран слишком узкий</div>
+    <div class="pillCap" id="tooNarrowHint">Разверните окно или поверните экран, чтобы полететь</div>
+  </div></div>
+</div>
 <div id="vignette"></div>
 <div id="fog"></div>
 <div id="flash"></div>
 <div id="dim"></div>
-<div id="toast"></div>
+<div id="toast" aria-live="polite" role="status"></div>
 <!-- Н2: карточка награды — празднуем по одной -->
 <div id="claimScreen" class="hidden">
   <div class="claimCard">
@@ -782,7 +861,7 @@ button, input, select, textarea { text-transform:inherit; }
 
 <div id="topHud" class="hidden">
   <div id="pausePack">
-    <div id="pauseBtn" role="button"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
+    <div id="pauseBtn" role="button" tabindex="0"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
     <span id="starsTelem"><canvas id="starJewel" class="i-pl" width="32" height="32" aria-hidden="true"></canvas> <b id="pillStarsN">0</b></span>
   </div>
   <canvas id="livesCanvas" width="132" height="48"></canvas>
@@ -849,25 +928,28 @@ button, input, select, textarea { text-transform:inherit; }
 <div id="settingsScreen" class="overlay hidden">
   <!-- v1.65.0 «Спойлеры»: категории — аккордеон, открыта одна панель; «Ещё» — под-спойлеры; «Назад» в потоке -->
   <div class="screenTitle" id="settingsTitle">Настройки</div>
-  <div class="setGrp spoiler" id="setGrpSound" role="button"><span class="setGrpT">Звук и эфир</span><span class="setGrpSub" id="setGrpSoundSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpSound" role="button" tabindex="0"><span class="setGrpT">Звук и эфир</span><span class="setGrpSub" id="setGrpSoundSub"></span></div>
   <div class="setPanel hidden" id="panelSound">
-    <div class="setRow" id="setSoundBtn" role="button"><span class="setK">Звук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMusicBtn" role="button"><span class="setK">Музыка</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMorseBtn" role="button"><span class="setK">Морзянка</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
-    <div class="setRow" id="setVibroBtn" role="button"><span class="setK">Виброотклик</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMorseHapBtn" role="button"><span class="setK">Виброэфир</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setSoundBtn" role="button" tabindex="0"><span class="setK">Звук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMusicBtn" role="button" tabindex="0"><span class="setK">Музыка</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseBtn" role="button" tabindex="0"><span class="setK">Морзянка</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setVibroBtn" role="button" tabindex="0"><span class="setK">Виброотклик</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseHapBtn" role="button" tabindex="0"><span class="setK">Виброэфир</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
-  <div class="setGrp spoiler" id="setGrpGame" role="button"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpGame" role="button" tabindex="0"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
   <div class="setPanel hidden" id="panelGame">
-    <div class="setRow" id="setSensBtn" role="button"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
-    <div class="setRow" id="setGfxBtn" role="button"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
-    <div class="setRow" id="setLangBtn" role="button"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
-    <div class="setRow" id="setGhostBtn" role="button"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
+    <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setStreaksBtn" role="button" tabindex="0"><span class="setK">Скоростные полосы</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setLangBtn" role="button" tabindex="0"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setGhostBtn" role="button" tabindex="0"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
-  <div class="setGrp spoiler" id="setGrpProf" role="button"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
   <div class="setPanel hidden" id="accPanel">
-    <div class="setRow solo hidden" id="gyroUnlockBtn" role="button">Открыть «Полёт без рук»</div>
-    <div class="setRow hidden" id="setGyroOffBtn" role="button"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
+    <div class="setRow solo hidden" id="gyroUnlockBtn" role="button" tabindex="0">Открыть «Полёт без рук»</div>
+    <div class="setRow hidden" id="setGyroOffBtn" role="button" tabindex="0"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
     <div id="accStatus" class="accStatus"></div>
     <div class="csCap" id="csCap">Позывной — звучит в морзянке и виброэфире</div>
     <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
@@ -876,17 +958,17 @@ button, input, select, textarea { text-transform:inherit; }
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
   </div>
   <div class="setPanel">
-    <div class="setRow solo spoiler" id="moreBtn" role="button">Ещё</div>
+    <div class="setRow solo spoiler" id="moreBtn" role="button" tabindex="0">Ещё</div>
     <div id="moreBox" class="hidden">
-      <div class="setRow solo" id="setCalibBtn" role="button"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-      <div class="setRow" id="setBeaconBtn" role="button"><span class="setK">Помогать экипажу отчётами</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
-      <div class="setRow solo go" id="diagBtn" role="button">Сервисный центр</div>
-      <div class="setRow solo spoiler" id="aboutBtn" role="button">Об игре</div>
+      <div class="setRow solo" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+      <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+      <div class="setRow solo go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
+      <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
       <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
     </div>
   </div>
   <div class="setPanel">
-    <div class="setRow solo" id="settingsBackBtn" role="button">Назад</div>
+    <div class="setRow solo" id="settingsBackBtn" role="button" tabindex="0">Назад</div>
   </div>
 </div>
 
@@ -906,7 +988,7 @@ button, input, select, textarea { text-transform:inherit; }
     <pre id="diagReportBox" class="hidden" style="white-space:pre-wrap;font-size:11px;text-align:left;margin:8px 8px 0"></pre>
   </div>
   <div class="setPanel">
-    <div class="setRow solo" id="diagBackBtn" role="button">Назад</div>
+    <div class="setRow solo" id="diagBackBtn" role="button" tabindex="0">Назад</div>
   </div>
 </div>
 
@@ -990,6 +1072,7 @@ button, input, select, textarea { text-transform:inherit; }
     <div id="topCats">
       <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
       <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
+      <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg></button>
       <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
       <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
     </div>
@@ -1055,22 +1138,31 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script src="js/core.js?v=1.108.0"></script>
-<script src="js/blackbox.js?v=1.108.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script src="js/beacon.js?v=1.108.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script src="js/input.js?v=1.108.0"></script>
-<script src="js/game.js?v=1.108.0"></script>
-<script src="js/ach.js?v=1.108.0"></script>
-<script src="js/sync.js?v=1.108.0"></script>
-<script src="js/render.js?v=1.108.0"></script>
-<script src="js/planetarium.js?v=1.108.0"></script>
-<script src="js/goldstar.js?v=1.108.0"></script>
-<script src="js/music.js?v=1.108.0"></script>
-<script src="js/gyro.js?v=1.108.0"></script>
-<script src="js/forge.js?v=1.108.0"></script>
-<script src="js/card.js?v=1.108.0"></script>
-<script src="js/star.js?v=1.108.0"></script>
-<script src="js/ui.js?v=1.108.0"></script>
+<script defer src="js/core.js?v=1.282.12" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.282.12"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.282.12"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.282.12"></script>
+<script defer src="js/game.js?v=1.282.12" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.282.12"></script>
+<script defer src="js/sync.js?v=1.282.12"></script>
+<script defer src="js/render.js?v=1.282.12"></script>
+<script defer src="js/planetarium.js?v=1.282.12"></script>
+<script defer src="js/goldstar.js?v=1.282.12"></script>
+<script defer src="js/music.js?v=1.282.12"></script>
+<script defer src="js/gyro.js?v=1.282.12"></script>
+<script defer src="js/forge.js?v=1.282.12"></script>
+<script defer src="js/adaptive.js?v=1.282.12"></script>
+<script defer src="js/card.js?v=1.282.12"></script>
+<script defer src="js/star.js?v=1.282.12"></script>
+<script defer src="js/ui.js?v=1.282.12"></script>
+<script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
+// выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
+// Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
+// ждём DOMContentLoaded, он по спецификации наступает строго после всех deferred-скриптов.
+window.addEventListener('DOMContentLoaded', function(){
+  if(!window.__bootFail){ var __bl=document.getElementById('bootLoad'); if(__bl) __bl.remove(); }
+});
+</script>
 <script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —
 // каждый заход видит свежую версию. Вернуть = восстановить регистрацию sw.js и link manifest:
 // файлы на месте, валидатор следит за их согласованностью.
