@@ -20,7 +20,7 @@ const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru); // v
 /* ---------- Список достижений: cat, need, val(), rw (награда ✦) ---------- */
 const ACH=[
   // Единственная цель — суммарная дистанция 100 м: ты в космосе (v1.29.0)
-  {id:'c1', cat:'cosmos', ic:'🌍', need:100, rw:25, val:()=>Stats.totalDist,
+  {id:'c1', cat:'cosmos', ic:'🌍', need:100000, rw:25, val:()=>Stats.totalDist,
     ru:{n:'Линия Кармана',d:'Ты в космосе! Официально.'}, en:{n:'Karman Line',d:'You are in space! Officially.'},
     es:{n:'Línea de Kármán',d:'¡Estás en el espacio! Oficialmente.'}, pt:{n:'Linha de Kármán',d:'Você está no espaço! Oficialmente.'},
     fr:{n:'Ligne de Kármán',d:'Tu es dans l\u2019espace ! Officiellement.'}},
@@ -56,11 +56,11 @@ const CAT_N={
   hangar:{ru:'Ангар',en:'Hangar',es:'Hangar',pt:'Hangar',fr:'Hangar'}
 };
 
-function achUnlockedSet(){ return Store.get('ach',[]); }
+function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
 
 /* Карман наград: открытые, но ещё не отпразднованные. Праздник — по одной
    карточке (модуль Н2), здесь — только тихий учёт и бейдж-счётчик. */
-function achQueue(){ return Store.get('achQ',[]); }
+function achQueue(){ return saneArray(Store.get('achQ',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: то же
 function achQShow(){
   const el=$('achBadge'); if(!el) return;
   const n=achQueue().length;

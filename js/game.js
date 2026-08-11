@@ -7,7 +7,11 @@
 /* ---------- Кэш DOM-ссылок (не дёргаем getElementById в тиках) ---------- */
 const elScore=$('score'), elCombo=$('combo'), elLivesC=$('livesCanvas'),
       elPillStarsN=$('pillStarsN'), elDistN=$('distN'),
-      elBanner=$('banner'), elVignette=$('vignette');
+      elBanner=$('banner'), elVignette=$('vignette'),
+      // v1.282.21: табло дисциплин искалось getElementById В КАЖДОМ КАДРЕ Спидрана, Трассы дня,
+      // Театра и Своей трассы — при том, что шапка этого файла прямо запрещает такое в тиках.
+      // Остальные узлы HUD честно закэшированы с самого начала, эти два забыли.
+      elModeHud=$('modeHud'), elSmoothFill=$('smoothFill');
 
 /* ---------- Пулы объектов с капом (Блок 3, без GC-лагов и без утечек) ---------- */
 const POOL_CAP=64, PARTICLE_CAP=(typeof isAndroidGo==='function'&&isAndroidGo())?120:220; // v1.108.1: Go Edition — площе лимит памяти на вкладку, меньше частиц одновременно
@@ -20,19 +24,24 @@ function killIdx(arr,i,pool){ pool.give(arr[i]); const l=arr.length-1; arr[i]=ar
 
 /* ---------- Состояние ---------- */
 const SKINS=[ // v1.44.0: палитра разведена по цветовому кругу — соседи больше не близнецы
-  // v1.46.0 ВРЕМЕННО: все скины по 10 звёзд — проверка перед релизом. ВЕРНУТЬ тир-цены (150/400/800/1500/2500/4000/7000/12000) до публикации!
+  /* v1.282.20 «Магазин снова закрыт»: временные цены сняты. С v1.46.0 здесь стояла заглушка
+     «все скины по 10 ✦ — проверка перед релизом», и она пережила 236 версий. Итог: награды за
+     достижения (130 ✦) превышали стоимость ВСЕЙ коллекции (80 ✦) — игрок открывал магазин
+     целиком, не сделав ни одного забега, и весь смысл копить звёзды исчезал. Возвращены
+     авторские тир-цены: 150/400/800 — стандартные (только цвет), 1500/2500/4000 — яркие
+     (фирменная фишка), 7000/12000 — легендарные (уникальное поведение корпуса). */
   // Тир 1 — стандартные: только цвет (никаких фишек — правило №1)
   {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,'}, // Бумажный — нейтральная бумага
-  {id:1,name:1,price:10,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,'},   // Лазурь — чистый синий (не циан!)
-  {id:2,name:2,price:10,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,'},  // Золото — жёлтое золото (тон 50°)
-  {id:3,name:3,price:10,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,'},    // Алый — настоящий красный
+  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,'},   // Лазурь — чистый синий (не циан!)
+  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,'},  // Золото — жёлтое золото (тон 50°)
+  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,'},    // Алый — настоящий красный
   // Тир 2 — яркие: фирменная фишка + богатый след (только визуал, никаких бонусов!)
-  {id:4,name:4,price:10,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,'}, // Неон — кислотно-зелёный
-  {id:5,name:5,price:10,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,'}, // Аврора — фиолет
-  {id:6,name:6,price:10,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,'}, // Плазма — глубокий апельсин (тон 23°)
+  {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,'}, // Неон — кислотно-зелёный
+  {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,'}, // Аврора — фиолет
+  {id:6,name:6,price:4000,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,'}, // Плазма — глубокий апельсин (тон 23°)
   // Тир 3 — легендарные: уникальное поведение корпуса
-  {id:7,name:7,price:10,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'}, // Хром — нейтральная сталь
-  {id:8,name:8,price:10,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,'}  // Призрак — ледяной циан (тон 185°, единственный!)
+  {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'}, // Хром — нейтральная сталь
+  {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,'}  // Призрак — ледяной циан (тон 185°, единственный!)
 ];
 const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
@@ -79,7 +88,11 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
 // уже отсеяны фильтром «тап vs свайп», так что всё остальное — осознанная помощь)
 function controlMode(){
   if (S.gyroSec>0 && S.manSec<1) return 'gyro';
-  return (S.keysSec>S.touchSec) ? 'keys' : 'touch'; // v1.280.0 «Честная клавиатура»: раньше клавиатура/геймпад тонули в 'touch' неотличимо от пальца
+  // v1.280.0 «Честная клавиатура»; v1.282.20: и мышь тоже не тонет в «касании» —
+  // у неё пиксельная точность и мгновенный переброс курсора, это другой способ игры.
+  const ms=S.mouseSec||0;
+  if (ms>S.touchSec && ms>=S.keysSec) return 'keys'; // мышь судим вместе с клавиатурой: обе — «не палец»
+  return (S.keysSec>S.touchSec) ? 'keys' : 'touch';
 }
 
 const MAXOB=14; // мягкий кап поля — ни на какой волне экран не переполняется
@@ -94,8 +107,23 @@ const MAXOB=14; // мягкий кап поля — ни на какой вол�
    спешке. Теперь одно правило на все режимы — так и было задумано изначально. */
 function fieldL(){ return Math.max(0,(W-390)/2); }
 function fieldW(){ return 390; }
+/* v1.282.20: у коридора чести появилась ВЕРТИКАЛЬ. Горизонталь честно жила в 390 мерах,
+   а всё вертикальное (потолок и пол самолётика, точка старта, цель пальца, нормировка
+   ленты призрака) меряло H — то есть высоту конкретного экрана. H по построению не
+   меньше 844, но у вытянутых телефонов доходит до 910: игрок на 21:9 видел небо на 8.5%
+   дальше и получал +0.13с на реакцию — половину человеческого времени отклика — просто
+   за форму устройства. Теперь вертикаль такая же эталонная, как горизонталь; лишняя
+   высота остаётся небом сверху и снизу. */
+function fieldT(){ return Math.max(0,(H-844)/2); }
+function fieldH(){ return 844; }
+/* v1.282.13: добавка к паузе возвращается наружу, а не пишется в spawnT изнутри.
+   Прежняя строка spawnT += .4 в ветке ворот была мёртвым кодом: вызывающий код
+   БЕЗУСЛОВНО присваивает spawnT сразу после возврата, затирая прибавку. Задуманная
+   передышка после ворот не работала ни разу — за воротами вплотную могла встать
+   следующая преграда, и связка выходила несправедливо плотной. */
 function spawnObstacle(){
-  if (obstacles.length>=MAXOB) return;
+  let extraGap = 0;
+  if (obstacles.length>=MAXOB) return extraGap;
   const d = difficulty(), m = S.mission, fl = fieldL(), fw = fieldW();
   const x = fl + mapRand(30, fw-30);
   const vy = S.speed * mapRand(.9,1.25);
@@ -103,7 +131,17 @@ function spawnObstacle(){
   const w = [ ['rock',42], ['debris',28], ['drift', m>=2?14:0], ['mine',10],
               ['sat', m>=3?8:0], ['comet', m>=4?6:0], ['seeker', m>=5?6:0], ['gate', m>=6?5:0] ];
   if (S.mode==='custom' && S.customE){ // Своя трасса (v1.68.0): только виды, выбранные автором (порядок = FORGE_KINDS)
-    for(let i=0;i<w.length;i++){ if(!(S.customE>>i&1)) w[i][1]=0; }
+    /* v1.282.13: выбор автора сильнее волнового гейта. Маска умела только гасить, а поднять
+       вес, уже обнулённый условием m>=N, не могла — поэтому автор, собравший трассу из одних
+       Ворот (гейт m>=6) и поставивший «Ровный жар» с низкой стартовой жарой, получал небо из
+       одних камней НАВСЕГДА: при customFlat волна не растёт, значит гейт не откроется никогда,
+       все веса остаются нулями и срабатывает страховка на камень. В обычном режиме беда
+       сама лечилась по мере роста волн, поэтому и не бросалась в глаза. */
+    const BASE=[42,28,14,10,8,6,6,5]; // те же веса, но без волнового гейта — воля автора вместо календаря
+    for(let i=0;i<w.length;i++){
+      if(!(S.customE>>i&1)) w[i][1]=0;
+      else if(w[i][1]===0 && !S.customWG) w[i][1]=BASE[i]||0; // автор позвал этот вид явно — гейт снят. v1.282.15: только для кодов поколения 3; у розданных раньше расстановка обязана остаться прежней. BASE[i]||0 — страховка на случай, если в w добавят вид, а сюда забудут
+    }
     if(!w.some(e=>e[1]>0)) w[0][1]=42; // страховка: всё выключено автором — летит базовый камень
   }
   let tot=0; for(const e of w) tot+=e[1];
@@ -111,6 +149,7 @@ function spawnObstacle(){
   for(const e of w){ r-=e[1]; if(r<=0){ kind=e[0]; break; } }
   const o = poolOb.take();
   o.kind=kind; o.nm=false; // near-miss: флаг сбрасывается при каждом взятии из пула
+  o._tint=null; // v1.282.14: планетарий кэширует тон камня прямо на объекте, а объект приходит из пула. Без сброса тон переживал перерождение: дрейферы красили астероиды в лиловый, астероиды дрейферов — в серый, и собственный хэш по r/rot переставал работать
   o.rot=mapRand(0,6.28);
   if (kind==='rock'){ // астероид
     o.x=x; o.y=-50; o.r=mapRand(16,34+d*16); o.vy=vy; o.vx=mapRand(-.4,.4)*d;
@@ -136,9 +175,10 @@ function spawnObstacle(){
   } else { // ворота (волна 6+): два пилона, узкий проход = бонус
     o.x=fl+mapRand(110,fw-110); o.y=-60; o.r=15; o.vy=vy*.8; o.vx=0; o.vr=0; o.rot=0;
     o.gap=mapRand(95,125); o.passed=false;
-    spawnT += .4; // ворота занимают много места — следующий спавн чуть позже
+    extraGap = .4; // ворота занимают много места — следующий спавн чуть позже
   }
   obstacles.push(o);
+  return extraGap;
 }
 function makeRockVerts(n){
   const v=[]; for(let i=0;i<n;i++){ const a=i/n*6.283; v.push({a,r:mapRand(.7,1.15)}); } return v;
@@ -183,6 +223,12 @@ function collectStar(x,y){ // единственное место, где зве
 /* ---------- Smooth Flight: резкость активного способа руления ---------- */
 let prevTiltX=0, prevTiltY=0, prevTX=null, prevTY=null;
 function smoothStep(){
+  /* v1.282.20: на занавесе смерти замер останавливается. Плавность росла и после
+     последнего удара — измерено, за 54 кадра занавеса она поднималась с 0.5 до 0.71,
+     то есть каждая гибель сама по себе дарила до +10% к итогу, и тем больше, чем грязнее
+     игрок летел. Итог считается снимком в момент смерти, так что это была чистая добавка
+     ни за что. Заодно закрывает приём «последние две секунды не трогай палец». */
+  if (S.dying) return;
   let jerk=-1; // -1 = нет активного руления (нейтральный кадр)
   if (input.touchX!=null){
     if (prevTX!=null) jerk=(Math.abs(input.touchX-prevTX)+Math.abs(input.touchY-prevTY))/28; // px → усл. ед.
@@ -192,6 +238,14 @@ function smoothStep(){
     if (input.useGyro && (Math.abs(input.tiltX)>0.08||Math.abs(input.tiltY)>0.08)){
       jerk=(Math.abs(input.tiltX-prevTiltX)+Math.abs(input.tiltY-prevTiltY))/.22;
     }
+    /* v1.282.15: клавиатура и геймпад тоже платят за резкость. Плавность мерилась только
+       для пальца и гироскопа, поэтому руление клавишами всегда давало ×1.0 к итогу (палец
+       платит до −25%) и засчитывало «безупречный полёт» КАЖДЫЙ забег. Ветка keys появилась
+       в v1.280.0 в controlMode, а сюда не дошла. Смена направления — рывок, ровное
+       удержание — ноль. */
+    const kx=(input.keyR?1:0)-(input.keyL?1:0), ky=(input.keyD?1:0)-(input.keyU?1:0);
+    if (kx||ky||prevKX||prevKY) jerk=Math.max(jerk,(Math.abs(kx-prevKX)+Math.abs(ky-prevKY))*0.9);
+    prevKX=kx; prevKY=ky;
   }
   prevTiltX=input.tiltX; prevTiltY=input.tiltY;
   if (jerk>1) S.smooth=clamp(S.smooth-.03*Math.min(jerk,2.5), .5, 1); // резкий рывок — падение
@@ -201,7 +255,7 @@ let lastSmoothShown=-1;
 function updateSmoothHud(){
   const v=Math.round(S.smooth*100);
   if (v===lastSmoothShown) return; lastSmoothShown=v;
-  const el=$('smoothFill'); if(!el) return;
+  const el=elSmoothFill; if(!el) return;
   el.style.transform='scaleX('+Math.max(0,(S.smooth-.5)*2)+')'; // v1.66.0: compositor-only
   el.style.background = S.smooth>.85?'#8fff9f':S.smooth>.65?'#ffd76a':'#ff9f8f';
 }
@@ -209,6 +263,7 @@ function updateSmoothHud(){
 /* ---------- Личный призрак: запись траектории рекордного забега ---------- */
 /* Сэмпл каждые 10 кадров: x и y по 92 уровня (~4-5px), дельта дистанции.
    Упаковка по 3 символа — влезает в лимит CloudStorage 4096 (~1300 сэмплов ≈ 3.5 мин). */
+let prevKX=0, prevKY=0; // v1.282.15: прошлое положение клавиш — для замера резкости руления
 let rec=[], recFrame=0, ghost=null, ghostIdx=0, ghostX=0, ghostY=0, ghostOn=false,
     ghostFade=0, ghostA=0, ghostTagT=0, ghostForeign=false, ghostSkin=-1, ghostName='',
     ghostPid=0, ghostBest=0, ghostCat=''; // чей призрак (месть): владелец, его рекорд, категория
@@ -278,7 +333,15 @@ function ghostLoad(){ // вызывается из startGame
       ghostPid=fg.pid||0; ghostBest=fg.best||0; ghostCat=fg.cat||''; // призрак из топа несёт цель мести
       // v1.280.0 «Честная гонка»: старые призраки (записаны до этой версии) сида не несут — тогда
       // молча остаёмся на уже поставленном свежем сиде этого забега, гонка просто менее точная, не падает.
-      if (fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); S.seed=fg.seed; } }
+      /* v1.282.20: сид призрака берём ТОЛЬКО там, где небо личное. Прошлая версия
+         подменяла ключ трассы в любом режиме — а ghostLoad зовётся из startGame для всех,
+         кроме Театра, уже ПОСЛЕ того, как поставлен ключ дня/спидрана/автора. Итог: и
+         «Трасса дня», и Спидран, и чужой код летели по сиду призрака, то есть «одно небо
+         на всех» снова переставало существовать, а игрок неделями получал одну и ту же
+         заученную трассу. Гонка с призраком имеет смысл только на общем поле; в зачётных
+         режимах поле задаёт день, и призрак там просто тень. */
+      const ownSky = (runMode==='classic'||runMode==='bullet');
+      if (ownSky && fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); mapSeedKey=String(fg.seed); mapSeqReset(); S.seed=fg.seed; } }
     return;
   }
   if (!ghostActive()) return;
@@ -287,7 +350,9 @@ function ghostLoad(){ // вызывается из startGame
   const grSeed=(gr && typeof gr==='object') ? gr.seed : null;
   const g=ghostParse(grTrack);
   if (g){ ghost=g; ghostTagT=4; // первые 4 секунды — подпись «сможешь лучше?»
-    if (grSeed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(grSeed)); S.seed=grSeed; } }
+    // v1.282.20: то же правило для своего призрака — сид поднимаем только в личном небе
+    if ((runMode==='classic'||runMode==='bullet') && grSeed && typeof keyRNG==='function'){
+      mapRNG=keyRNG(String(grSeed)); mapSeedKey=String(grSeed); mapSeqReset(); S.seed=grSeed; } }
 }
 function ghostStep(){ // призрак идёт по своей траектории синхронно с текущей дистанцией
   if (!ghost){ ghostOn=false; return; }
@@ -298,7 +363,7 @@ function ghostStep(){ // призрак идёт по своей траекто�
   const f=d1>d0?clamp((S.dist-d0)/(d1-d0),0,1):0;
   const xf=lerp(i?ghost.xs[i-1]:ghost.xs[i], ghost.xs[i], f);
   const tx=ghost.cx ? fieldL()+xf*fieldW() : xf*W; // v1.100.1 «Трибуна чемпиона»: коридорная лента чужого неба ложится в мой коридор чести
-  const ty=lerp(i?ghost.ys[i-1]:ghost.ys[i], ghost.ys[i], f)*(H*.78-50)+H*.22;
+  const ty=lerp(i?ghost.ys[i-1]:ghost.ys[i], ghost.ys[i], f)*(fieldH()*.78-50)+fieldT()+fieldH()*.22;
   if (!ghostOn){ ghostX=tx; ghostY=ty; } // появление — сразу на месте, без пролёта через экран
   else { ghostX=lerp(ghostX,tx,.18); ghostY=lerp(ghostY,ty,.18); } // сглаживание — никаких рывков
   ghostOn=true;
@@ -319,7 +384,10 @@ function ghostStep(){ // призрак идёт по своей траекто�
 // Б1 «Оплата за страх» (v1.92.0): «впритык» — плата за риск. Под слоу-мо, Bullet Time или тараном
 // риска нет — сближение честно засчитывается (статистика, свист, триггер BT), но монет не приносит.
 // Неуязвимость и занавес смерти закрыты снаружи (S.invuln<=0): там впритык даже не регистрируется.
-function fullRisk(){ return S.slowmo<=0 && S.bt<=0 && S.dash<=0; }
+// v1.282.20: щит добавлен к списку «риска нет». 14 секунд щита позволяли нырять в самую
+// гущу и снимать по 25×комбо за каждый пролёт впритык — до полутора тысяч очков с одного
+// бонуса, без единого шанса погибнуть. Остальные три страховки в списке уже были.
+function fullRisk(){ return S.slowmo<=0 && S.bt<=0 && S.dash<=0 && S.shield<=0; }
 
 /* ================= UPDATE (fixed step 1/60) ================= */
 function update(dt){
@@ -336,22 +404,58 @@ function update(dt){
   S.speed = (3.4 + d*4.6) * (input.useGyro ? GYRO_ASSIST : 1); // старт 3.4, потолок 8.0 — эталон; под штурвалом мир на 15% медленнее (v1.31.0)
   if (S.dash>0) S.speed*=1.3; // Таран: ты снаряд, а не ловушка (v1.40.0, логика v1.19.0)
   if (S.mode==='custom') S.speed*=S.customS||1; // Своя трасса: темп автора (v1.68.0)
+  /* v1.282.15: и сам спавн, и пауза до следующего берутся из ЛИЧНОГО потока этого спавна.
+     Раньше всё это черпалось из общего кубика подряд, и любое расхождение (пропуск при
+     полном поле, другой вид преграды с другим числом выборок, волна, поднятая очками)
+     сдвигало поток навсегда — две «одинаковые» трассы дня расходились. Теперь спавн №N
+     у любого игрока получает ровно свой кубик, а порядок и количество выборок внутри
+     ничего не решают. Номер тратится и при переполненном поле — расписание трассы едино
+     для всех, даже когда конкретную преграду поставить некуда. */
   spawnT -= dt;
-  if (spawnT<=0){ spawnObstacle(); spawnT = lerp(.85, .26, d) * mapRand(.75,1.25) * (input.useGyro ? 1/GYRO_ASSIST : 1) * (S.mode==='custom'?(S.customD||1):1); } // темп эталона; под штурвалом реже ровно настолько, чтобы шаг в метрах сохранился (v1.31.0); Своя трасса: плотность автора (v1.68.0)
+  if (spawnT<=0){
+    spawnT = withTrack('ob', function(){
+      const extraGap = spawnObstacle();
+      /* Передышка после ворот теперь ВНУТРИ множителей: снаружи она нарушала закон v1.31.0
+         («под штурвалом реже ровно настолько, чтобы шаг в метрах сохранился») — плоские
+         0.4с при 85% скорости давали гироскописту более короткую паузу, чем пальцевику. */
+      return (lerp(.85, .26, d) * mapRand(.75,1.25) + (extraGap||0))
+        * (input.useGyro ? 1/GYRO_ASSIST : 1) * (S.mode==='custom'?(S.customD||1):1);
+    });
+  }
   starT -= dt;
-  if (starT<=0){ spawnStar(); starT = mapRand(.8,1.5); } // честный базовый темп (эталон v1.10.0)
+  /* v1.282.20: звёзды и бонусы получают ту же поправку на штурвал, что и преграды.
+     Под гироскопом мир идёт на 15% медленнее (GYRO_ASSIST), и паузу между преградами
+     честно растягивали обратно — а звёзды и бонусы считались в секундах, то есть на
+     метр трассы их выпадало на 17.6% БОЛЬШЕ. Это давало фору в общих таблицах
+     (дистанция, Затишье, Трасса дня — там категории управления нет) и вдобавок ломало
+     сам закон сида: на одной и той же трассе дня у гироскописта N-я звезда стояла на
+     другой дистанции, чем у пальцевика. */
+  if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5) * (input.useGyro ? 1/GYRO_ASSIST : 1); }); } // честный базовый темп (эталон v1.10.0)
   powT -= dt;
-  if (powT<=0){ if (!(S.mode==='custom' && S.customB===0)) spawnPowerup(); powT = powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1); } // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
+  if (powT<=0){ powT = withTrack('pw', function(){
+    if (!(S.mode==='custom' && S.customB===0)) spawnPowerup();
+    return powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1) * (input.useGyro ? 1/GYRO_ASSIST : 1); }); } // v1.282.20: та же поправка на штурвал // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
 
   // ---- движение самолётика + учёт способа руления (категория рекорда) ----
   pollTouchHold(); // «тап vs свайп»: удержание >0.2с включает тач-руление
   const accel = .32, maxV = 7.5;
   let ax=0, ay=0;
   if (input.touchX!=null){
-    const tx = clamp(input.touchX, 24, W-24), ty = clamp(input.touchY-90, H*.25, H-60);
+    /* v1.282.20: цель пальца зажимаем КОРИДОРОМ с постоянным запасом за стеной, а не
+     шириной экрана. Управление позиционное (скорость = 0.12 от расстояния до цели), и
+     запас за стеной решал всё: на телефоне 390 мер запас был 4 меры — самолёт замирал в
+     четырёх мерах от стены и физически не мог к ней прижаться; на десктопе (W=1500) запас
+     был 500 мер, то есть прижим шёл на полной скорости мгновенно. Один и тот же манёвр
+     «уйти в край под астероид» был невозможен на одних устройствах и бесплатен на других.
+     Постоянные 70 мер за стеной уравнивают всех. */
+  const txfl=fieldL(), txfr=txfl+fieldW();
+  const txft=fieldT(), txfh=fieldH();
+  const tx = clamp(input.touchX, txfl-70, txfr+70), ty = clamp(input.touchY-90, txft+txfh*.25, txft+txfh-60); // v1.282.20: вертикаль тоже коридорная
     plane.vx = lerp(plane.vx, clamp((tx-plane.x)*.12,-maxV,maxV), .25);
     plane.vy = lerp(plane.vy, clamp((ty-plane.y)*.10,-maxV,maxV), .2);
-    S.manSec+=dt; S.touchSec+=dt; // палец (или мышь с зажатой кнопкой) рулит; v1.280.0: свой счётчик для честной категории
+    // v1.282.20: мышь считается отдельно — у неё нет гейта «тап против свайпа», которым
+    // палец платит 200мс за каждое возобновление руления. Категория ниже разводит их.
+    S.manSec+=dt; if(input.byMouse) S.mouseSec+=dt; else S.touchSec+=dt;
   } else {
     if (input.useGyro){ ax += input.tiltX*accel*2.2; ay += input.tiltY*accel*2.2; }
     if (input.keyL) ax -= accel*2; if (input.keyR) ax += accel*2;
@@ -370,7 +474,7 @@ function update(dt){
   }
   const flPlane=fieldL(); // v1.99.9: в коридоре чести нет безопасной полосы у края
   plane.x = clamp(plane.x + plane.vx, 20+flPlane, W-20-flPlane);
-  plane.y = clamp(plane.y + plane.vy, H*.22, H-50);
+  plane.y = clamp(plane.y + plane.vy, fieldT()+fieldH()*.22, fieldT()+fieldH()-50); // v1.282.20: потолок и пол — от коридора, не от высоты экрана
   if (!S.dying) plane.bank = lerp(plane.bank, clamp(plane.vx/maxV,-1,1), .15); // при занавесе крен задаёт падение
   smoothStep(); // Smooth Flight: замер резкости после обработки ввода
   ghostRec();  // призрак: запись сэмпла (каждый 10-й кадр внутри)
@@ -384,6 +488,13 @@ function update(dt){
       ghostA=0; S.invuln=1e9; // тень выключена (зритель смотрит самолётик), небо пролетает сквозь героя (мигание благодати в рендере заглушено)
       if (S.dist>=ghost.ds[ghost.ds.length-1]){ endTheater(); return; } // лента кончилась — занавес
     }
+    /* v1.282.13: нет ленты — нет спектакля. И неуязвимость, и занавес по концу ленты
+       жили ВНУТРИ проверки выше, поэтому театр без трека (трек стёрт, скос версий,
+       битое хранилище) превращался в обычный смертный забег, который к тому же
+       никогда не заканчивался сам: зритель гиб по-настоящему, гибель шла через полный
+       тракт посадки — писала статистику, near-miss-очки в рекорд категории — и съедала
+       билет. Закон v1.94.0 «в театре касса молчит» должен держаться и в этом углу. */
+    else { endTheater(); return; }
   }
 
   if (S.invuln>0) S.invuln-=dt;
@@ -403,7 +514,14 @@ function update(dt){
   // Переход (v1.31.0): ступень РАСТЁТ вместе с игроком — 400/500/600…1000 м: первое
   // событие на ~15-й секунде (казуал не ждёт), к полному жару — эталонный шаг.
   // ИЛИ 500 очков за волну — мастерство обгоняет дистанцию. Счёт честный, без капли.
-  if (!(S.mode==='custom' && S.customFlat) && (S.dist >= waveDistTarget(S.mission) || S.score >= S.mission*500)){ // «Ровный жар»: волна заморожена (v1.69.0)
+  /* v1.282.15: волну поднимает ТОЛЬКО пройденная дистанция. Прежде её поднимали ещё и
+     очки (S.score >= mission*500), а очки — это собранные звёзды и пролёты впритык, то
+     есть чистое мастерство игрока. Волна меняет таблицу весов преград, значит два игрока
+     на одном сиде получали в одной и той же точке трассы РАЗНЫЕ препятствия — и дальше
+     поля расходились навсегда. Дистанция же одинакова по определению: это координата на
+     трассе. Побочно уходит и лавина волн от Сверхновой (до 11 «дингов» подряд за 180мс),
+     потому что мгновенный скачок очков больше ничего не двигает. */
+  if (!(S.mode==='custom' && S.customFlat) && S.dist >= waveDistTarget(S.mission)){ // «Ровный жар»: волна заморожена (v1.69.0)
     S.mission++;
     S.flash=Math.max(S.flash,.25); // мягкий золотой «динг» — глаза целы, событие видно
     sfx.mission(); haptic('medium');
@@ -418,14 +536,14 @@ function update(dt){
     o.y += o.vy*S.timeScale;
     o.x += (o.vx||0)*S.timeScale;
     o.rot += o.vr*S.timeScale;
-    if (o.kind==='drift' && (o.x<o.r||o.x>W-o.r)) o.vx*=-1;
+    if (o.kind==='drift'){ const dfl=fieldL(), dfr=dfl+fieldW(); if (o.x<dfl+o.r||o.x>dfr-o.r) o.vx*=-1; } // v1.282.15: отбиваемся от стенок КОРИДОРА, а не экрана — иначе на планшете дрейфер уходил далеко в сторону и один сид давал разную геометрию
     if (o.kind==='mine'){
       o.pulse+=dt*5;
       o.vx = lerp(o.vx, clamp((plane.x-o.x)*.006,-1,1), .02);
     }
     if (o.kind==='sat'){ // синусоида вокруг базовой линии
       o.ph+=dt*2*S.timeScale;
-      o.x=clamp(o.baseX+Math.sin(o.ph)*o.amp, o.r, W-o.r);
+      { const sfl=fieldL(), sfr=sfl+fieldW(); o.x=clamp(o.baseX+Math.sin(o.ph)*o.amp, sfl+o.r, sfr-o.r); } // v1.282.15: качание спутника подрезается коридором, а не шириной экрана
     }
     if (o.kind==='seeker'){ // ловец: наведение вдвое сильнее мины
       o.pulse+=dt*5;
@@ -541,7 +659,9 @@ function update(dt){
       if (p.kind==='shield'){ S.shield=14; showPopup(L.shield,p.x,p.y,'#7fd8ff'); }
       if (p.kind==='magnet'){ S.magnet=12; showPopup(L.magnet,p.x,p.y,'#c58fff'); }
       if (p.kind==='slowmo'){ S.slowmo=6; showPopup(L.slowmo,p.x,p.y,'#8fff9f'); }
-      if (p.kind==='life'){ S.lives=Math.min(3,S.lives+1); showPopup(L.life,p.x,p.y,'#ffa1d9'); updateLives(); } // жизнь существует только для раненого: страж спавна (v1.46.0) не пускает её в небо при полном корпусе — никаких лишних жизней; v1.105.0: розовая, вне красной семьи тревоги
+      // v1.282.20: потолок жизней авторский, как и на спавне — иначе две одновременно
+      // висящие в небе жизни пробивали «Ад на одну жизнь» (customLv=1) до трёх.
+      if (p.kind==='life'){ S.lives=Math.min((S.mode==='custom')?(S.customLv||3):3, S.lives+1); showPopup(L.life,p.x,p.y,'#ffa1d9'); updateLives(); } // жизнь существует только для раненого: страж спавна (v1.46.0) не пускает её в небо при полном корпусе — никаких лишних жизней; v1.105.0: розовая, вне красной семьи тревоги
       if (p.kind==='dash'){ S.dash=4; showPopup(L.dash,p.x,p.y,'#a9bcff'); } // Таран: 4 секунды пробоя (v1.40.0)
       if (p.kind==='nova'){ if (typeof music!=='undefined'&&music.kick) music.kick(); // взрыв — музыка приседает (v1.48.0)
         // Сверхновая: вспышка сжигает все опасности на экране — каждая в очки (вес 1, редкий праздник, v1.40.0)
@@ -583,22 +703,22 @@ function update(dt){
   const d5=Math.floor(S.dist/5); // расстояние в HUD: живой счётчик, шаг 5 м — без DOM-флуда
   if(d5!==lastDistShown){ lastDistShown=d5; elDistN.textContent=d5*5; }
   if (S.mode==='speedrun'){ // Спидран: таймер + цель; 10 000 — финиш (v1.42.0)
-    const elMH=$('modeHud'), tSec=Math.floor(S.time*10)/10;
+    const elMH=elModeHud, tSec=Math.floor(S.time*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec;
       elMH.textContent=fmtTime(S.time)+' · '+L.srGoal+' '+fmtN(SR_GOAL); }
     if (S.score>=SR_GOAL && !S.dying){ startDying(); S.srWin=1; } // занавес как при смерти, но это победа
   }
   else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0)
-    const elMH=$('modeHud'), tk=todayKey(); if (elMH && !elMH._t){ elMH._t=1;
+    const elMH=elModeHud, tk=todayKey(); if (elMH && !elMH._t){ elMH._t=1;
       elMH.textContent=L.modeDaily+' · '+tk.slice(8)+'.'+tk.slice(5,7); } }
   else if (S.mode==='theater'){ // Театр призраков (v1.94.0): табло зрителя — не счёт, а название спектакля
-    const elMH=$('modeHud'); if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }
+    const elMH=elModeHud; if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }
   else if (S.mode==='custom'){ // Своя трасса (v1.68.0): имя автора + живой прогресс до финиша (шаг 5 м, как distHud)
-    const elMH=$('modeHud');
+    const elMH=elModeHud;
     if (elMH){
       const step=S.customL>0?Math.floor(S.dist/5):-1; // -1 = бесконечная: подпись ставится раз и не дёргается
       if (elMH._t2!==step){ elMH._t2=step; // свой флаг: _t занят дисциплинами и сбрасывается в 0 на старте
-        elMH.textContent='«'+(S.customName||L.forgeDefName)+'»'+(S.customL>0?' · '+step*5+'/'+S.customL+' м':''); }
+        elMH.textContent='«'+(S.customName||L.forgeDefName)+'»'+(S.customL>0?' · '+step*5+'/'+S.customL+' '+(L.unitM||'м'):''); }
     } }
   updateSmoothHud();
 }
@@ -606,7 +726,8 @@ function update(dt){
 /* ---------- эффекты живут и на паузе (частицы/попапы догорают) ---------- */
 function updateFx(dt){
   for (let i=particles.length-1;i>=0;i--){
-    const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life-=dt*2;
+    // v1.282.15: позиция по времени, а не по кадру — жизнь и так таяла по времени, и конфетти рекорда на 120 Гц разлеталось вдвое дальше, чем на 60
+    const p=particles[i]; p.x+=p.vx*dt*60; p.y+=p.vy*dt*60; p.life-=dt*2;
     if (p.life<=0) killIdx(particles,i,poolPart);
   }
   for (let i=popups.length-1;i>=0;i--){
@@ -634,7 +755,22 @@ function confetti(){ // фонтан при новом рекорде — вау
 }
 function burst(x,y,color,n){
   if (particles.length>(Q.level>=3?340:PARTICLE_CAP)) n=Math.min(n,4); // v1.38.0: у «Ультры» кап выше
-  const c = color.startsWith('rgba')?color:hexToRgba(color);
+  /* v1.282.13: чернил три вида, а не два. Флагману juicy() отдаёт широкий охват строкой
+     color(display-p3 …) — прежнее правило «не rgba, значит hex» резало её как hex, и
+     parseInt('ol',16) давал rgba(NaN,NaN,NaN,). Canvas молча отвергает негодный цвет и
+     рисует предыдущим: салют золотой звезды выходил чужого цвета именно на дорогих
+     экранах. Частице нужен «хвост под альфу» — для P3 это форма со слэшем. */
+  /* v1.282.14: форм чернил оказалось пять, а не три. Прошлая правка научила burst
+     широкому охвату, но рядом остались два незакрытых случая, дававших тот же
+     rgba(NaN,…): ПОЛНАЯ форма 'rgba(160,165,180,.45)' (дым занавеса смерти и дым взрыва —
+     самая заметная сцена в игре) проходила проверку по префиксу как готовый хвост, хотя
+     у неё уже есть и альфа, и закрывающая скобка; и КОРОТКИЙ hex '#fff' (салют любого
+     бонуса), у которого slice(5,7) пуст. Конвенция частицы — хвост БЕЗ альфы: рендер
+     сам допишет p.life и скобку. Приводим к ней все формы. */
+  const c = /^rgba\([^)]*,\s*[\d.]+\s*\)\s*$/.test(color) ? color.replace(/,\s*[\d.]+\s*\)\s*$/, ',') // полная rgba(...) → срезаем альфу и скобку
+          : color.startsWith('rgba') ? color                                    // уже хвост вида 'rgba(r,g,b,'
+          : color.startsWith('color(') ? color.replace(/\)\s*$/, ' / ')         // color(display-p3 1 .86 .44) → «… / » + альфа + «)»
+          : hexToRgba(color);
   for(let i=0;i<n;i++){
     const p=poolPart.take();
     p.x=x; p.y=y; p.vx=rand(-3,3); p.vy=rand(-3,3);
@@ -643,7 +779,9 @@ function burst(x,y,color,n){
     particles.push(p);
   }
 }
-function hexToRgba(h){ const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+function hexToRgba(h){
+  if(h.length===4) h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3]; // v1.282.14: короткая форма '#fff' давала b=NaN и молча негодный цвет
+  const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
   return `rgba(${r},${g},${b},`; }
 function showPopup(txt,x,y,color){
   const p=poolPop.take();

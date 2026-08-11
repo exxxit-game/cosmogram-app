@@ -38,4 +38,8 @@ async function statusStarAsk(){
   }catch(e){ toast(L.statusStarErr); haptic('error'); }
   finally{ b._busy=false; }
 }
-$('statusBtn').addEventListener('click', statusStarAsk);
+/* v1.282.13: единственная строка файла без проверки на месте — остальной модуль
+   (и соседние ui.js/ach.js) везде сначала спрашивает «элемент есть?». Сейчас #statusBtn
+   в разметке присутствует, так что это не падение, а гигиена: сборка без кнопки роняла
+   бы весь скрипт на этой строке. */
+const statusBtnEl=$('statusBtn'); if(statusBtnEl) statusBtnEl.addEventListener('click', statusStarAsk);
