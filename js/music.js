@@ -116,14 +116,22 @@ const music = (()=>{
     start(th){
       if(MUTED||!MUSIC_ON){ theme=null; return; }
       const ac=ensureChain(); if(!ac){ theme=null; return; }
-      if(theme===th) return;
+      /* v1.282.14: приглушение снимаем ДО раннего выхода. Флаг ducked жил дольше причины:
+         пауза ставила его, а «Заново» звало start('game') с той же темой — ранний выход,
+         гейн так и оставался на трети, и весь новый забег музыка играла вполголоса.
+         Через «В меню» тема менялась, гейн возвращался, но флаг оставался true — и тогда
+         следующая пауза уже НЕ приглушала (duck выходит по ducked===on), а kick() при ударе
+         целился в base*0.3 и ронял музыку до конца забега. У двигателя такая строка есть
+         с самого начала (engine.start ставит ducked=false) — у музыки не было. */
+      ducked=false;
+      if(theme===th){ if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
       theme=th; chordIx=0; walk=76; nextBar=ac.currentTime+.08;
       fadeTo(MG[th]||MG_GAME,1.6);
       if(!timer) timer=setInterval(tick,200);
       tick();
     },
     stop(fade){
-      theme=null;
+      theme=null; ducked=false; // v1.282.14: флаг не переживает остановку темы
       if(mg&&AC) fadeTo(0,fade||1.2);
       if(timer){ clearInterval(timer); timer=null; }
     },

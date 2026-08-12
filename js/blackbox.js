@@ -11,8 +11,14 @@ const BB=(()=>{
   const MAX=180, SAVE=120; // кольцо в памяти / сколько переживает перезагрузку
   let tape=[], dirty=false;
   const t0=performance.now();
-  try{ const old=Store.get('bbTape',null);
-    if(old && old.length) tape=old.slice(-SAVE); }catch(e){}
+  /* v1.282.20: лента читается через санацию. Битое значение (строка вместо массива)
+     проходило проверку old.length, tape становился строкой, и первый же tape.push бросал
+     TypeError ВНУТРИ инициализатора const BB — после чего привязка BB навсегда оставалась
+     в мёртвой зоне, и каждое typeof BB!=='undefined' в проекте бросало ReferenceError
+     вместо 'undefined'. Игра не взлетала вовсе. Ключ пишется каждые 4 секунды и легко
+     бьётся при скосе версий. */
+  try{ const old=(typeof saneArray==='function')?saneArray(Store.get('bbTape',[]),[]):[];
+    tape=old.filter(x=>x&&typeof x==='object').slice(-SAVE); }catch(e){ tape=[]; }
   function stamp(){ const s=(performance.now()-t0)/1000;
     return '+'+(s<100?(s<10?'00':'0'):'')+s.toFixed(1)+'s'; }
   function log(ev,d){

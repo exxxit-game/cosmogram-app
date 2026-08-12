@@ -3287,7 +3287,7 @@ async function guardHudNotQueriedInTicks(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
-/* Страж 93 — Переворот тоже идёт через дребезг-страж (последний путь calReset(), корень cal_storm).
+/* Страж 92 — Переворот тоже идёт через дребезг-страж (последний путь calReset(), корень cal_storm).
    Стережёт: flipN>=3 в onTilt (input.js).
    Беда: партия 6 защитила дребезгом orientationchange, а переход на поканальный ноль (v1.282.13)
    убрал полный сброс со смены канала вовсе — но детектор переворота телефона (flipN) как дёргал
@@ -3296,7 +3296,7 @@ async function guardHudNotQueriedInTicks(browser){
    скачки >55° между пакетами без реального переворота, и каждый такой скачок раньше считался
    отдельным честным сбросом. */
 async function guardFlipThroughDebounce(browser){
-  const name = '93. Переворот идёт через дребезг-страж (корень cal_storm)';
+  const name = '92. Переворот идёт через дребезг-страж (корень cal_storm)';
   let ctx;
   try{
     const o = await openGame(browser, { init:FRESH });
@@ -3326,6 +3326,121 @@ async function guardFlipThroughDebounce(browser){
     if(r.storms===0) return post(name,false,'переворот вообще не вызвал calReset — детектор сломан целиком');
     if(r.storms>1) return post(name,false,`два «переворота» подряд дали ${r.storms} сброса калибровки — путь flipN всё ещё в обход дребезг-стража`);
     post(name,true,'два «переворота» подряд без паузы — один честный сброс, не два');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 93 — Мост дочитывает подпись Telegram РАНЬШЕ, чем адрес очищается.
+   Стережёт: порядок между чисткой хеша (js/core.js, самая первая строка) и мостом
+   (js/vendor/telegram-web-app.js, тоже defer, идёт раньше по тегу).
+   Беда партии 16 (второй заход): страж 68 проверял только «хеш убран из адреса» — и был
+   зелён ровно в тот момент, когда правка стояла инлайновым <script> в index.html и
+   исполнялась ДО того, как мост успевал прочитать initData из хеша. Внутри Telegram
+   игрок молча становился гостем: initData пуст, вход не проходит, рекорд никуда не
+   уходит — без единой ошибки в консоли и без единого красного стража. Здесь мост не
+   настоящий (сеть заблокирована), а подложный — читает location.hash сам, ровно как
+   настоящий, и именно поэтому ловит гонку по-честному: неважно, что внутри мока, важен
+   порядок вызовов между тегом моста и core.js. */
+async function guardBridgeReadsSignatureBeforeUrlCleared(browser){
+  const name = '93. Мост дочитывает подпись Telegram раньше, чем адрес очищается';
+  let ctx;
+  try{
+    ctx = await browser.newContext({ viewport:{width:390,height:844} });
+    const page = await ctx.newPage();
+    await page.route('**/*', route=>{
+      const url=route.request().url();
+      if(/sentry-cdn\.com|cdn\.amplitude\.com|discord\.com/.test(url)) return route.abort('connectionfailed');
+      if(/supabase\.co/.test(url)) return route.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});
+      // подложный мост: тот же тег, та же defer-очередь, но читает хеш сам — как настоящий
+      if(/vendor\/telegram-web-app\.js/.test(url)) return route.fulfill({status:200,contentType:'application/javascript',
+        body:`(function(){
+          var m=/tgWebAppData=([^&]*)/.exec(location.hash||'');
+          window.Telegram={WebApp:{
+            initData: m ? decodeURIComponent(m[1]) : '',
+            initDataUnsafe:{}, platform:'weba', version:'8.0', colorScheme:'dark',
+            ready(){}, expand(){}, close(){}, setHeaderColor(){}, setBackgroundColor(){},
+            disableVerticalSwipes(){}, enableClosingConfirmation(){}, isVersionAtLeast(){return true;}
+          }};
+        })();`});
+      return route.continue();
+    });
+    await page.addInitScript(()=>{ window.__labOpen=true; try{localStorage.clear();}catch(e){} });
+    const dirty = '#tgWebAppData=user%3D%257B%2522id%2522%253A1%257D%26auth_date%3D1%26hash%3Ddeadbeefcafe&tgWebAppVersion=8.0';
+    await page.goto(BASE + dirty, { waitUntil:'domcontentloaded' });
+    await page.waitForFunction(()=>typeof GAME_VERSION!=='undefined', null, {timeout:15000});
+    const r = await page.evaluate(()=>({
+      initData: (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) || '',
+      href: location.href
+    }));
+    if(!r.initData) return post(name,false,'мост отработал раньше — но initData пуст: хеш стёрли раньше, чем мост успел его прочитать (гость в Telegram)');
+    if(/tgWebAppData|hash%3D/.test(r.href)) return post(name,false,`подпись осталась в адресе после того, как мост её прочитал: ${r.href.slice(-70)}`);
+    post(name,true,'мост прочитал initData из хеша, и только после этого адрес очищен — оба условия целы');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 94 — Взлёт не копится в шторм калибровки (Партия 21).
+   Стережёт: BEACON.calTick(source) в js/beacon.js.
+   Беда: cal_storm рождён ловить дребезг — датчик врёт, ноль не держится. Но взлёт —
+   законный сброс: каждый забег его делает (js/ui.js:189, source='takeoff'), и при
+   пороге ×5 за сессию любой, кто активно играет несколько заходов подряд, рано или
+   поздно наберёт «шторм» просто честной игрой — сигнал перестаёт отличать поломку
+   от нормального использования. Партия 19 подписала источник у каждого пути именно
+   для того, чтобы такую фильтрацию можно было сделать дёшево. Решение владельца
+   (не моё — закон 11): взлёт в счётчик шторма не идёт вовсе, остальные источники
+   (ручная калибровка, переворот, дребезг канала, залипший ноль) — как и раньше. */
+async function guardTakeoffExcludedFromCalStorm(browser){
+  const name = '94. Взлёт не считается в шторм калибровки (честный сброс — не дребезг)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      // signal() внутри beacon.js — приватная функция замыкания, calTick зовёт её напрямую,
+      // не через BEACON.signal — снаружи её не подменить. Смотрим на настоящий побочный
+      // эффект: письмо действительно ложится в очередь (Store 'beaconQ'), как и у игрока.
+      const hasStorm=()=> (Store.get('beaconQ',[])||[]).some(p=>p && p.kind==='signal' && /^cal_storm/.test(p.msg||''));
+      for(let i=0;i<8;i++) BEACON.calTick('takeoff'); // восемь честных взлётов подряд — не дребезг, не поломка
+      const afterTakeoffs = hasStorm();
+      BEACON.calTick('manual'); BEACON.calTick('manual'); BEACON.calTick('manual');
+      BEACON.calTick('manual'); BEACON.calTick('manual'); // пять чужих причин — вот это уже настоящий шторм
+      const afterManual = hasStorm();
+      return { afterTakeoffs, afterManual };
+    });
+    if(r.afterTakeoffs) return post(name,false,'восемь взлётов подряд посчитались штормом');
+    if(!r.afterManual) return post(name,false,'пять честных не-взлётных сбросов не дали cal_storm — счётчик сломан целиком, а не просто отфильтрован взлёт');
+    post(name,true,'взлёты не копятся в шторм, а настоящие причины по-прежнему считаются');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 95 — Небо Кузницы не ищет свой экран в каждом кадре (партия 22).
+   Стережёт: forgeSkyLoop() в js/forge.js.
+   Беда: тот же класс, что закон №27 (аудит 12.08, он же партия 15 для HUD) — DOM-поиск в
+   тике вместо кэша ссылки. forgeSkyLoop() каждый requestAnimationFrame звал $('forgeScreen')
+   (=document.getElementById), пока открыта «Своя трасса» — лишняя работа всё время, пока
+   игрок настраивает трассу. Найдено чтением кода при аудите, не боевым письмом. */
+async function guardForgeSkyLoopCachesScreenRef(browser){
+  const name = '95. Небо Кузницы не ищет свой экран в каждом кадре';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      document.getElementById('modeForge').click(); // вход, как игрок
+      await new Promise(res=>setTimeout(res,80)); // дать forgeSkyKick/forgeSkyLoop стартовать
+      let calls=0; const real=document.getElementById.bind(document);
+      document.getElementById=function(id){ if(id==='forgeScreen') calls++; return real(id); };
+      await new Promise(res=>{
+        let n=0; function frame(){ n++; if(n>=15) return res(); requestAnimationFrame(frame); }
+        requestAnimationFrame(frame);
+      });
+      document.getElementById=real;
+      return { calls, screen:screenName };
+    });
+    if(r.screen!=='forge') return post(name,false,`не попали в Кузницу (экран «${r.screen}») — сценарий не тот`);
+    if(r.calls>0) return post(name,false,`forgeScreen искался через getElementById ${r.calls} раз за 15 кадров превью-неба — кэш не сработал`);
+    post(name,true,'экран Кузницы не ищется повторно на каждом кадре превью-неба');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
@@ -3368,7 +3483,8 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardStaleAnswerCannotRestart, guardGhostKeepsItsOwnSeed, guardQueueSubtractsNotWipes,
                  guardSecondFingerCannotSteal, guardNothingLeaksBetweenRuns, guardTelegramPerfClassRead,
                  guardModuleGradientsCached, guardFrameStringsCached, guardHudNotQueriedInTicks,
-                 guardFlipThroughDebounce ];
+                 guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
+                 guardForgeSkyLoopCachesScreenRef ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

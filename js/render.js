@@ -41,12 +41,25 @@ function qualityTick(dt){
       Q._ceil = Q.level; Q.level--; Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
       Store.set('gfxLv',Q.level); gfxCap(); resize();
       if(typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+''); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
-    else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); } } // выученный уровень запоминаем между сессиями
+    else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; } } // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }
   }
 }
 const DEBUG_FPS = /[?&#]debug/.test(location.href);
+/* v1.282.15: сколько прошло с прошлой ОТРИСОВКИ. Нужен тому немногому внутри draw(),
+   что действительно движется само (параллакс фона): фикс-степ живёт в update(), а draw
+   зовётся с разной частотой — 60 в небе, 30 на оверлеях, 4 на замершей паузе. */
+/* v1.282.15 «Бережное небо доделано». Мигание неуязвимости переключалось каждые 90мс —
+   это 5.5 вспышки в секунду при пороге фотосенситивности WCAG в 3, и шло оно 2.2 секунды
+   после каждого удара. При этом системный флаг «уменьшить движение» учитывался ровно в
+   двух местах файла из полутора десятков — и пропущен был именно тот единственный эффект,
+   который порог превышает. Человеку, доверившемуся флагу, показываем ровную полупрозрачность
+   вместо стробоскопа. Выражение заодно собрано в одну функцию: раньше оно было размножено
+   по четырём местам и рассинхронизировалось бы при первой же правке. */
+function invulnDim(){ return RM ? true : (Math.floor(performance.now()/90)%2===0); }
+let frameDt=1/60, _lastDrawT=0;
+function frameTick(t){ const d=(t-_lastDrawT)/1000; _lastDrawT=t; frameDt=(d>0&&d<0.25)?d:1/60; }
 
 /* кисть скруглённых форм (v1.105.0 «Свет и дым»): мир не бывает прямоугольной наклейкой —
    приборы могут быть плоскими, мир не может */
@@ -72,7 +85,7 @@ let starGlowSprite=null;
 function starGlow(){
   if(!starGlowSprite){
     const c=document.createElement('canvas'); c.width=c.height=48;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const g=x.createRadialGradient(24,24,2,24,24,24);
     g.addColorStop(0,juicy('rgba(255,235,170,.9)','color(display-p3 1 .95 .72 / .9)'));
     g.addColorStop(.4,juicy('rgba(255,215,106,.35)','color(display-p3 1 .87 .42 / .35)'));
@@ -82,15 +95,25 @@ function starGlow(){
   }
   return starGlowSprite;
 }
-let vignCache={w:-1,ht:-1,d:-1,c:null}; // мягкое затемнение краёв — глубина кадра
+/* v1.282.20 «Полноэкранный спрайт меряется экраном, а не небом».
+   Офскрины на весь кадр рисовались размером W*DPR, где W — это МЕРЫ НЕБА (cssW/SC), а не
+   css-пиксели. Потом их клали на холст через drawImage(...,0,0,W,H), то есть под линейкой
+   DPR*SC. Значит на любом экране крупнее эталона (планшет, десктоп, складной) спрайт
+   растягивался ровно в SC раз: на 10" планшете фон и виньетка рендерились в ~60% плотности
+   и заметно мылили. Правильная мерка — настоящие пиксели холста: W*SC*DPR = cssW*DPR, то
+   есть ровно размер главного холста (значит и «Потолок листа» уже учтён, лишней памяти нет).
+   На массовых 390-мерных телефонах SC=1 — там не изменилось ни байта. */
+function skyPx(){ return DPR*SC; }
+let vignCache={w:-1,ht:-1,d:-1,s:-1,c:null}; // мягкое затемнение краёв — глубина кадра
 function vignetteSprite(){
-  if(vignCache.w!==W||vignCache.ht!==H||vignCache.d!==DPR){
-    const c=document.createElement('canvas'); c.width=Math.round(W*DPR); c.height=Math.round(H*DPR);
-    const x=c.getContext('2d'); x.setTransform(DPR,0,0,DPR,0,0);
+  if(vignCache.w!==W||vignCache.ht!==H||vignCache.d!==DPR||vignCache.s!==SC){
+    const px=skyPx();
+    const c=document.createElement('canvas'); c.width=Math.round(W*px); c.height=Math.round(H*px);
+    const x=ctx2d(c); x.setTransform(px,0,0,px,0,0);
     const g=x.createRadialGradient(W/2,H*.45,Math.min(W,H)*.35, W/2,H*.55, Math.max(W,H)*.78);
     g.addColorStop(0,'rgba(2,4,14,0)'); g.addColorStop(1,'rgba(2,4,14,.42)');
     x.fillStyle=g; x.fillRect(0,0,W,H);
-    vignCache={w:W,ht:H,d:DPR,c};
+    vignCache={w:W,ht:H,d:DPR,s:SC,c};
   }
   return vignCache.c;
 }
@@ -99,7 +122,7 @@ const starDotCache={};
 function starDot(tint){
   if(!starDotCache[tint]){
     const c=document.createElement('canvas'); c.width=c.height=16;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const col=tint==='w'?'255,247,228':tint==='c'?'186,230,255':'218,230,255';
     const g=x.createRadialGradient(8,8,0,8,8,8);
     g.addColorStop(0,'rgba('+col+',1)'); g.addColorStop(.35,'rgba('+col+',.8)');
@@ -114,7 +137,7 @@ const trailGlowCache={};
 function trailGlow(skin){
   if(!trailGlowCache[skin.id]){
     const c=document.createElement('canvas'); c.width=c.height=48;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const g=x.createRadialGradient(24,24,2,24,24,24);
     g.addColorStop(0,skin.trail+'.55)'); g.addColorStop(.5,skin.trail+'.22)'); g.addColorStop(1,skin.trail+'0)');
     x.fillStyle=g; x.fillRect(0,0,48,48);
@@ -127,7 +150,7 @@ const planeGlowCache={};
 function planeGlow(skin){
   if(!planeGlowCache[skin.id]){
     const c=document.createElement('canvas'); c.width=c.height=64;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,'
     const g=x.createRadialGradient(32,32,4,32,32,32);
     g.addColorStop(0,base+'.5)'); g.addColorStop(.55,base+'.18)'); g.addColorStop(1,base+'0)');
@@ -141,7 +164,7 @@ let sheenSpr=null;
 function sheenSprite(){
   if(!sheenSpr){
     const c=document.createElement('canvas'); c.width=18; c.height=48;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const g=x.createLinearGradient(0,0,18,0);
     g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,.55)'); g.addColorStop(1,'rgba(255,255,255,0)');
     x.fillStyle=g; x.fillRect(0,0,18,48);
@@ -156,12 +179,34 @@ const PLASMA_HUES=[]; for(let i=0;i<40;i++) PLASMA_HUES.push('hsl('+i+',95%,58%)
    полоса + звёздная пыль). Кадр = один drawImage; пересоздаётся только при
    смене волны/размера/DPR. Свой LCG — глобальный RNG не трогаем (от него
    зависит Daily Challenge). */
-let nfCache={w:-1,ht:-1,h:-1,d:-1,c:null};
+/* v1.282.15 «Фон перестал дёргаться каждую секунду».
+   Комментарий выше обещал «пересоздаётся только при смене волны», а ключ кэша брал
+   Math.round(S.hueShift) — величину, которая растёт на 1.2 в СЕКУНДУ (game.js: фон
+   дышит непрерывно). То есть кэш промахивался каждые 833 мс, и на каждый промах
+   приходилось: новый холст W*DPR × H*DPR (на телефоне это ~12 МБ), пять полноэкранных
+   градиентных заливок и 240 точек пыли — синхронно, внутри кадра. Ровное подёргивание
+   раз в секунду весь полёт. Авто-качество этого не ловило: один тяжёлый кадр из
+   шестидесяти даёт средние 57 fps, до порога далеко.
+   Хуже того, сид тоже шился из hueShift — поэтому весь узор туманностей и вся звёздная
+   пыль ТЕЛЕПОРТИРОВАЛИСЬ на новые места раз в секунду ради изменения цвета на 0.3°.
+   Лечим тремя ходами: сид фиксируем на забег (узор стоит на месте), квант кэша грубеем
+   до 60 единиц оттенка (это и есть «смена волны» — примерно раз в 50 секунд), и холст
+   переиспользуем, а не выбрасываем по 12 МБ в сборщик мусора. */
+const NF_HUE_STEP=60; // единиц hueShift на одну пересборку: ~50 секунд полёта
+let nfCache={w:-1,ht:-1,h:-1,d:-1,s:-1,c:null};
+let nfSeed=0;         // узор трассы: ставится один раз за забег, от оттенка не зависит
+function nebulaReseed(){ nfSeed=((Math.floor(Math.random()*4294967296))>>>0)||1; nfCache.h=-1; }
 function nebulaField(h1,h2){
-  if(nfCache.w===W&&nfCache.ht===H&&nfCache.h===Math.round(S.hueShift)&&nfCache.d===DPR) return nfCache.c;
-  const c=document.createElement('canvas'); c.width=Math.round(W*DPR); c.height=Math.round(H*DPR);
-  const x=c.getContext('2d'); x.setTransform(DPR,0,0,DPR,0,0);
-  let seed=((Math.round(S.hueShift)+11)*2654435761>>>0)||1;
+  const hq=Math.round(S.hueShift/NF_HUE_STEP);
+  if(nfCache.w===W&&nfCache.ht===H&&nfCache.h===hq&&nfCache.d===DPR&&nfCache.s===SC) return nfCache.c;
+  const px=skyPx(); // v1.282.20: настоящие пиксели экрана, а не меры неба
+  const cw=Math.round(W*px), chh=Math.round(H*px);
+  let c=nfCache.c;
+  if(!c || c.width!==cw || c.height!==chh){ c=document.createElement('canvas'); c.width=cw; c.height=chh; }
+  const x=ctx2d(c);
+  x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,cw,chh); // переиспользуем холст — чистим, а не выбрасываем
+  x.setTransform(px,0,0,px,0,0);
+  let seed=(nfSeed||1);
   const R=()=>{ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; };
   const blob=(bx,by,r,hue,li,a,sq)=>{
     x.save(); x.translate(bx,by); x.scale(1,sq||1);
@@ -197,7 +242,7 @@ function nebulaField(h1,h2){
     x.fillRect(sx,sy,sz,sz);
   }
   x.globalAlpha=1;
-  nfCache={w:W,ht:H,h:Math.round(S.hueShift),d:DPR,c};
+  nfCache={w:W,ht:H,h:Math.round(S.hueShift/NF_HUE_STEP),d:DPR,s:SC,c:c};
   return c;
 }
 let planeGradCache={skin:-1,g:null}; // градиент корпуса по скину
@@ -210,11 +255,10 @@ function planeGrad(skin){
   return planeGradCache.g;
 }
 const powGlowCache={}; // спрайт свечения любого цвета — бонусы, комета, призрак
-const satGradCache={}; // v1.108.1: градиенты панелей/корпуса/линзы спутника — o.r всегда 18, размеры фиксированы на скин
 function powGlow(color){
   if(!powGlowCache[color]){
     const c=document.createElement('canvas'); c.width=c.height=56;
-    const x=c.getContext('2d');
+    const x=ctx2d(c);
     const g=x.createRadialGradient(28,28,2,28,28,28);
     g.addColorStop(0,hexToRgba(color)+'.55)'); g.addColorStop(1,hexToRgba(color)+'0)');
     x.fillStyle=g; x.fillRect(0,0,56,56);
@@ -222,10 +266,64 @@ function powGlow(color){
   }
   return powGlowCache[color];
 }
+/* v1.282.20 «Градиент — не расходник».
+   Обломки, спутники и значки бонусов создавали свои градиенты ЗАНОВО в каждом кадре: у
+   спутника это 3–6 штук (панели, корпус, линза, тарелка), у обломка один, у каждого значка
+   один. При десятке предметов на экране выходило 2400–4800 объектов CanvasGradient в
+   секунду — каждый со своим разбором цветов и своей текстурой ramp'а, и весь этот мусор
+   потом собирает сборщик, подёргивая кадр.
+   Геометрия у них зависит только от размера предмета, а размеров — конечный набор. Кэшируем
+   по округлённому размеру (четверть меры неба — глазом неразличимо на плавном переходе).
+   Счётчик — страховка от бесконечного роста: набор ключей заведомо мал, но если когда-нибудь
+   появится непрерывный параметр, кэш обнулится, а не съест память. */
+/* v1.282.21 «Цвет — не расходник».
+   Цвет частицы собирался строкой в КАЖДОМ кадре на КАЖДУЮ частицу, причём альфа была сырым
+   double: 'rgba(255,120,60,' + 0.7263412... + ')'. Это не просто конкатенация — это ещё и
+   печать числа, и повторный разбор CSS-цвета движком канваса. Сорок живых частиц дают 2400
+   строк в секунду, на пике (кап 220, на «Ультре» 340) — до двадцати тысяч. Тот же приём, что
+   уже изобрели для морзянки: квантуем альфу на 40 ступеней (глазом неразличимо) и держим
+   готовые строки. Полосы скорости собирали три ОДНИ И ТЕ ЖЕ строки по 90 раз в кадр — их
+   просто выносим в константы. */
+const partColC={};
+function partCol(prefix, a){
+  const q=a<=0?0:(a>=1?40:Math.round(a*40));
+  const k=prefix+q;
+  let v=partColC[k];
+  if(!v){ v=prefix+(q/40).toFixed(3)+')'; partColC[k]=v; }
+  return v;
+}
+const STREAK_COL=['rgba(255,247,228,.9)','rgba(186,230,255,.9)','rgba(218,230,255,.9)'];
+const gradCache={}; let gradN=0;
+function gradPut(k,g){ if(gradN>400){ for(const q in gradCache) delete gradCache[q]; gradN=0; } gradCache[k]=g; gradN++; return g; }
 let nebCache={h:-1,a:null,b:null};
+/* v1.282.20 «Возвращение после потери холста».
+   Браузер вправе отобрать графический контекст в любой момент: Android под нехваткой
+   памяти, свёрнутая вкладка на слабом устройстве, смена GPU на ноутбуке. По спецификации
+   после этого все ранее созданные CanvasGradient и все офскрин-битмапы становятся мусором,
+   а сам холст очищается. Игра этого события не слушала вообще: после восстановления фон,
+   свечения и градиенты корпуса оставались пустыми ДО ПЕРЕЗАГРУЗКИ страницы — а игрок в
+   Telegram перезагрузить мини-приложение не догадывается.
+   Лечение — один общий сброс всех кэшей. Каждый из них ленивый: обнулили ключ, следующий
+   кадр пересоберёт заново. Ничего не рисуем здесь сами — только забываем протухшее. */
+function gfxInvalidate(){
+  bgCache={h:-1,w:-1,ht:-1,g:null};
+  coneGrad=null;
+  starGlowSprite=null;
+  vignCache={w:-1,ht:-1,d:-1,s:-1,c:null};
+  nfCache={w:-1,ht:-1,h:-1,d:-1,s:-1,c:null}; // холст тоже отпускаем: старый битмап после потери контекста пуст
+  planeGradCache={skin:-1,g:null};
+  nebCache={h:-1,a:null,b:null};
+  sheenSpr=null;
+  for(const k in starDotCache) delete starDotCache[k];
+  for(const k in trailGlowCache) delete trailGlowCache[k];
+  for(const k in planeGlowCache) delete planeGlowCache[k];
+  for(const k in powGlowCache) delete powGlowCache[k];
+  for(const k in gradCache) delete gradCache[k]; gradN=0;
+  for(const k in partColC) delete partColC[k];
+}
 function nebulaSprite(hue){ // двухтональная: яркое ядро → глубокий край
   const c=document.createElement('canvas'); c.width=c.height=200;
-  const x=c.getContext('2d');
+  const x=ctx2d(c);
   const g=x.createRadialGradient(100,100,0,100,100,100);
   g.addColorStop(0,`hsl(${hue},75%,64%)`); g.addColorStop(.45,`hsl(${hue+18},70%,45%)`); g.addColorStop(1,'transparent');
   x.fillStyle=g; x.fillRect(0,0,200,200);
@@ -233,7 +331,7 @@ function nebulaSprite(hue){ // двухтональная: яркое ядро �
 }
 function drawNebulas(h1,h2,tN){
   if(Q.level===0) return; // на слабых устройствах пропускаем
-  const hq1=Math.round(S.hueShift);
+  const hq1=Math.round(S.hueShift/NF_HUE_STEP); // v1.282.15: тот же грубый квант — иначе два спрайта 200×200 пеклись каждые 833мс
   if(nebCache.h!==hq1){
     nebCache={h:hq1,a:nebulaSprite(h1+40),b:nebulaSprite(h2+60)};
   }
@@ -269,7 +367,7 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
       ctx.drawImage(aurSp,p.x-s/2,p.y-s/2,s,s);
       continue;
     }
-    ctx.fillStyle = p.color + (p.life*.9) + ')';
+    ctx.fillStyle = partCol(p.color, p.life*.9);
     ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
   }
   ctx.globalAlpha=1;
@@ -307,8 +405,10 @@ function fillGlyphPath(x,kind){
 }
 function drawGlyph(ctx,kind,col){
   ctx.save();
-  const g=ctx.createLinearGradient(0,-7,0,7); // свет сверху, как у всего мира
-  g.addColorStop(0,'#ffffff'); g.addColorStop(.25,col); g.addColorStop(1,col);
+  // v1.282.20: геометрия у значка постоянная, меняется только цвет — кэш по цвету
+  const gk='gly'+col; let g=gradCache[gk];
+  if(!g){ g=ctx.createLinearGradient(0,-7,0,7); // свет сверху, как у всего мира
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.25,col); g.addColorStop(1,col); gradPut(gk,g); }
   if(kind==='magnet'){ // подкова — жирной дугой с круглыми концами
     ctx.strokeStyle=g; ctx.lineWidth=4.6; ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(-4.4,4.8); ctx.lineTo(-4.4,-0.8);
@@ -353,24 +453,22 @@ function draw(){
   // v1.280.0 «Скоростные полосы»: переключаемый эффект (Настройки → Игра и экран) — на скорости
   // точки вытягиваются в короткие штрихи. Включён по умолчанию, отдельно от самого тира графики:
   // тир решает МОЖЕТ ли устройство, переключатель — ХОЧЕТ ли игрок. Q0 не участвует (sh=false там).
-  const streaksOn = (typeof SPEED_STREAKS==='undefined' || SPEED_STREAKS) && sh && S.speed>0;
+  /* v1.282.15: полосы только когда мир действительно летит. S.speed обнуляется лишь в
+     startGame, поэтому на экране итогов он застывал около 8 — и фон стоял застывшим
+     «гиперпространственным» смазом из полос до 49 пикселей, которые никуда не движутся.
+     Плюс это самый «моушенный» эффект в игре, а системное «уменьшить движение» его
+     не касалось вовсе. */
+  const streaksMoving = S.running && !S.paused && !S.dying && S.timeScale>.5;
+  const streaksOn = (typeof SPEED_STREAKS==='undefined' || SPEED_STREAKS) && sh && !RM && streaksMoving && S.speed>0;
   for (let si=0;si<nStars;si++){ const s=bgStars[si];
-    s.y += .0004*S.speed*S.timeScale*(1+s.z);
+    s.y += .024*frameDt*S.speed*S.timeScale*(1+s.z); // v1.282.15: по времени, а не по кадру. Единственная симуляция внутри draw() — на дисплее 120 Гц фон летел ВДВОЕ быстрее препятствий, параллакс выворачивался наизнанку, а на замершей паузе почти стоял (0.0004×60 = 0.024)
     if (s.y>1) s.y-=1;
     ctx.globalAlpha = .25+s.z*.55 + (hq ? Math.sin(twT+s.x*40)*(uq?.16:.12) : 0);
     const sx=s.x*W, sy=s.y*H;
     if(streaksOn){
-      // v1.108.1 «Честный разгон»: раньше S.speed никогда не бывает 0 в игре (старт 3.4, потолок 8.0,
-      // под гироскопом ×0.85 → истинный пол 2.89) — формула (1+S.speed*.55) в старой версии уже на
-      // старте давала готовый штрих, роста «от точки» не было физически. Теперь — честная нормализация
-      // истинного диапазона: 0 у пола скорости (звезда почти точка), 1 у потолка (прежний максимум
-      // длины не тронут — он уже откалиброван). Квадратичный рост — медленный старт, уверенный разгон.
-      const SPD_MIN=2.89, SPD_MAX=8.0;
-      const spdT=Math.max(0,Math.min(1,(S.speed-SPD_MIN)/(SPD_MAX-SPD_MIN)));
-      const dotLen=s.s*1.1, streakLen=(2+s.s*1.6)*(1+SPD_MAX*.55)*(1+s.z*.5);
-      const len=dotLen+(streakLen-dotLen)*spdT*spdT;
-      const hh=(s.x*6.13+s.z*3.7)%1, col=hh<.16?'255,247,228':hh<.38?'186,230,255':'218,230,255'; // те же тона, что starDot()
-      ctx.strokeStyle='rgba('+col+',.9)'; ctx.lineWidth=s.s;
+      const len=(2+s.s*1.6)*(1+S.speed*.55)*(1+s.z*.5); // длина штриха — от скорости и глубины звезды
+      const hh=(s.x*6.13+s.z*3.7)%1; // те же тона, что starDot()
+      ctx.strokeStyle=STREAK_COL[hh<.16?0:hh<.38?1:2]; ctx.lineWidth=s.s;
       ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy-len); ctx.stroke();
     } else if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
       const hh=(s.x*6.13+s.z*3.7)%1;
@@ -445,8 +543,10 @@ function draw(){
       // мусор», четыре лица; габарит o.w×o.h священен — читаемость столкновения не меняется
       const sk=o.skin||0, hw=o.w/2, hh=o.h/2;
       if(sh){ ctx.globalAlpha=.4; ctx.drawImage(powGlow('#aebbd2'),-hw-9,-hh-9,o.w+18,o.h+18); ctx.globalAlpha=1; } // спрайт-ауреола
-      const mg=ctx.createLinearGradient(0,-hh,0,hh); // мягкий металл: свет сверху, тень снизу
-      mg.addColorStop(0,sk===3?'#d2dbeb':'#cdd7ea'); mg.addColorStop(.4,sk===3?'#aeb9d0':'#a9b6cf'); mg.addColorStop(1,'#7e8ba4');
+      // v1.282.20: мягкий металл (свет сверху, тень снизу) — кэш по высоте обломка и лицу
+      const qh=Math.round(hh*4)/4, mgk='dbr'+qh+(sk===3?'a':'b'); let mg=gradCache[mgk];
+      if(!mg){ mg=ctx.createLinearGradient(0,-qh,0,qh);
+        mg.addColorStop(0,sk===3?'#d2dbeb':'#cdd7ea'); mg.addColorStop(.4,sk===3?'#aeb9d0':'#a9b6cf'); mg.addColorStop(1,'#7e8ba4'); gradPut(mgk,mg); }
       ctx.fillStyle=mg;
       if(sk===1){ // погнутая панель: две половины под углом
         ctx.save(); ctx.rotate(.14); rr(ctx,-hw,-hh,hw+1,o.h,3); ctx.fill(); ctx.restore();
@@ -496,11 +596,11 @@ function draw(){
       ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
       ctx.globalAlpha=1;
       if(sh){ // внутреннее кольцо — детализация корпуса (v1.37.0: со средней)
-        ctx.strokeStyle=hexToRgba(col)+'.35)'; ctx.lineWidth=1;
+        ctx.strokeStyle=partCol(hexToRgba(col),.35); ctx.lineWidth=1;
         ctx.beginPath(); ctx.arc(0,0,o.r*.55,0,6.283); ctx.stroke();
       }
       if(uq){ // ультра: вращающийся пунктир — телеграф опасности
-        ctx.strokeStyle=hexToRgba(col)+'.55)'; ctx.lineWidth=1.2;
+        ctx.strokeStyle=partCol(hexToRgba(col),.55); ctx.lineWidth=1.2;
         ctx.setLineDash([5,7]); ctx.lineDashOffset=-performance.now()/40;
         ctx.beginPath(); ctx.arc(0,0,o.r+7,0,6.283); ctx.stroke(); ctx.setLineDash([]);
       }
@@ -516,34 +616,27 @@ function draw(){
       // циан ушёл, пришла сталь с кромкой света; маячок и линза — у каждого лица
       const sk=o.skin||0, r2=o.r;
       if(sh){ ctx.globalAlpha=.6; ctx.drawImage(powGlow('#78b4ff'),-r2,-r2,r2*2,r2*2); ctx.globalAlpha=1; } // ядро — спрайт
-      // v1.108.1: градиенты панелей/корпуса/линзы кэшируются по размеру — тот же принцип, что и у
-      // хвоста кометы (o._tg/o._tgk выше). o.r у спутника всегда 18 (game.js), значит размеры четырёх
-      // скинов — фиксированный, небольшой набор: без кэша это было 3-5 новых градиентов КАЖДЫЙ кадр
-      // НА КАЖДЫЙ спутник — комета такую же беду решала точечно, здесь просто забыли при добавлении.
-      const satPanel=(px,py,pw,ph2)=>{ const k='p'+py+'_'+ph2;
-        let g=satGradCache[k];
-        if(!g){ g=ctx.createLinearGradient(0,py,0,py+ph2);
-          g.addColorStop(0,'#4a629a'); g.addColorStop(.5,'#33487c'); g.addColorStop(1,'#263a66');
-          satGradCache[k]=g; }
+      const satPanel=(px,py,pw,ph2)=>{ const qy=Math.round(py*4)/4, qh2=Math.round(ph2*4)/4;
+        const k='sp'+qy+'_'+qh2; let g=gradCache[k];
+        if(!g){ g=ctx.createLinearGradient(0,qy,0,qy+qh2);
+          g.addColorStop(0,'#4a629a'); g.addColorStop(.5,'#33487c'); g.addColorStop(1,'#263a66'); gradPut(k,g); }
         ctx.fillStyle=g; rr(ctx,px,py,pw,ph2,2.5); ctx.fill();
         ctx.strokeStyle='rgba(180,210,250,.4)'; ctx.lineWidth=1;
         ctx.beginPath(); ctx.moveTo(px+2,py+.5); ctx.lineTo(px+pw-2,py+.5); ctx.stroke(); };
-      const satBody=(bw,bh,brad)=>{ const k='b'+bh;
-        let g=satGradCache[k];
-        if(!g){ g=ctx.createLinearGradient(0,-bh/2,0,bh/2);
-          g.addColorStop(0,'#8ea6d8'); g.addColorStop(.45,'#6c83b8'); g.addColorStop(1,'#4c5f8e');
-          satGradCache[k]=g; }
+      const satBody=(bw,bh,brad)=>{ const qb=Math.round(bh*2)/4; // половина высоты, четверть меры
+        const k='sb'+qb; let g=gradCache[k];
+        if(!g){ g=ctx.createLinearGradient(0,-qb,0,qb);
+          g.addColorStop(0,'#8ea6d8'); g.addColorStop(.45,'#6c83b8'); g.addColorStop(1,'#4c5f8e'); gradPut(k,g); }
         ctx.fillStyle=g; rr(ctx,-bw/2,-bh/2,bw,bh,brad); ctx.fill();
         ctx.strokeStyle='rgba(220,235,255,.4)'; ctx.lineWidth=1;
         ctx.beginPath(); ctx.moveTo(-bw/2+3,-bh/2+.5); ctx.lineTo(bw/2-3,-bh/2+.5); ctx.stroke(); };
       const satBeacon=(bx,by)=>{ ctx.globalAlpha=.4+.6*Math.abs(Math.sin(o.ph*2.2));
         if(sh) ctx.drawImage(powGlow('#ff7a6a'),bx-6,by-6,12,12);
         ctx.fillStyle='#ff8a7a'; ctx.beginPath(); ctx.arc(bx,by,2,0,6.283); ctx.fill(); ctx.globalAlpha=1; };
-      const satLens=(lx,ly,lr2)=>{ const k='l'+lr2;
-        let g=satGradCache[k];
-        if(!g){ g=ctx.createRadialGradient(lx-2,ly-2,1,lx,ly,lr2);
-          g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec');
-          satGradCache[k]=g; }
+      const satLens=(lx,ly,lr2)=>{ const qx=Math.round(lx*4)/4, qy2=Math.round(ly*4)/4, qr=Math.round(lr2*4)/4;
+        const k='sl'+qx+'_'+qy2+'_'+qr; let g=gradCache[k];
+        if(!g){ g=ctx.createRadialGradient(qx-2,qy2-2,1,qx,qy2,qr||.1);
+          g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec'); gradPut(k,g); }
         ctx.fillStyle=g; ctx.beginPath(); ctx.arc(lx,ly,lr2,0,6.283); ctx.fill(); };
       if(sk===1){ // кубсат: тонкие крылья-планки и куб
         satPanel(-r2*1.9,-r2*.14,r2*1.05,r2*.28); satPanel(r2*.85,-r2*.14,r2*1.05,r2*.28);
@@ -554,8 +647,9 @@ function draw(){
         satBody(r2*1.5,r2*1.0,8);
         ctx.strokeStyle='#9fabca'; ctx.lineWidth=2;
         ctx.beginPath(); ctx.moveTo(0,-r2*.5); ctx.lineTo(0,-r2*.78); ctx.stroke();
-        const g=ctx.createLinearGradient(0,-r2*1.05,0,-r2*.7);
-        g.addColorStop(0,'#8ea6d8'); g.addColorStop(1,'#4c5f8e');
+        const qd=Math.round(r2*4)/4, dk='sd'+qd; let g=gradCache[dk];
+        if(!g){ g=ctx.createLinearGradient(0,-qd*1.05,0,-qd*.7);
+          g.addColorStop(0,'#8ea6d8'); g.addColorStop(1,'#4c5f8e'); gradPut(dk,g); }
         ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-r2*.78,r2*.26,Math.PI,0); ctx.fill();
         satBeacon(r2*.42,-r2*.4); satLens(0,2,r2*.24);
       } else if(sk===3){ // телескоп: труба с объективом и одна панель
@@ -717,7 +811,12 @@ function draw(){
   ctx.restore();
 
   // виньетка поверх кадра — глубина (только hq, без шейка)
-  if(hq) ctx.drawImage(vignetteSprite(),0,0);
+  /* v1.282.13: размеры назначения обязательны. Спрайт чеканится в НАСТОЯЩИХ пикселях
+     (W*DPR × H*DPR), а холст в этот момент под трансформом DPR*SC — без явных W,H
+     картинка ложилась в DPR раз крупнее кадра, и на телефоне (DPR 2-3) затемнение
+     краёв уезжало за экран: глубины не было вовсе. На верстаке DPR=1, поэтому
+     глазами беда не ловилась. Соседний nebulaField рисуется правильно — с ,0,0,W,H. */
+  if(hq) ctx.drawImage(vignetteSprite(),0,0,W,H);
 
   // вспышка сверхновой — золотая заливка + расходящееся кольцо от самолётика (v1.18.0)
   if (S.flash>0 && !RM){ // v1.99.2 «Бережное небо»: при системном флаге вспышку заменяет тишина
@@ -817,7 +916,7 @@ function drawPlane(sh){
   if(fx==='ghost'&&hq){ drawEchoTrail(skin);
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
   ctx.save(); ctx.translate(p.x,p.y);
-  if (S.invuln>0 && S.invuln<1e8 && Math.floor(performance.now()/90)%2===0) ctx.globalAlpha=.35*ghostA; // v1.94.0: театральное бессмертие (1e9) — без мигания, спектакль идёт ровно
+  if (S.invuln>0 && S.invuln<1e8 && invulnDim()) ctx.globalAlpha=(RM?.6:.35)*ghostA; // v1.94.0: театральное бессмертие (1e9) — без мигания, спектакль идёт ровно
   else if(ghostA<1) ctx.globalAlpha=ghostA;
 
   if(!coneGrad){
@@ -827,19 +926,20 @@ function drawPlane(sh){
   }
   if(hq){ // конус светится и дышит
     ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=(.75+.25*Math.sin(performance.now()/90))*(S.invuln>0?.35:1);
+    ctx.globalAlpha=(RM?.9:(.75+.25*Math.sin(performance.now()/90)))*(S.invuln>0?.35:1); // v1.282.15: и пульсация под бережным небом замирает
   }
   ctx.fillStyle=coneGrad;
   ctx.beginPath(); ctx.moveTo(-6,10); ctx.lineTo(6,10);
   ctx.lineTo(34,150); ctx.lineTo(-34,150); ctx.closePath(); ctx.fill();
-  if(hq){ ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=S.invuln>0&&Math.floor(performance.now()/90)%2===0?.35:1; }
+  // v1.282.15: мигание через общую функцию — бережное небо гасит стробоскоп
+  if(hq){ ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=S.invuln>0&&invulnDim()?(RM?.6:.35):1; }
 
   if(hq){ // аура двигателя: тёплое аддитивное свечение кормы, дышит с огоньком
     ctx.globalCompositeOperation='lighter';
     ctx.globalAlpha=(.30+.12*Math.sin(performance.now()/70))*(S.invuln>0?.4:1)*ghostA*planetEngineK(); // v1.100.0 «Планетарий»: корма разгорается со скоростью
     ctx.drawImage(trailGlow(skin),-17,0,34,34);
     ctx.globalCompositeOperation='source-over';
-    ctx.globalAlpha=(S.invuln>0&&Math.floor(performance.now()/90)%2===0?.35:1)*ghostA;
+    ctx.globalAlpha=(S.invuln>0&&invulnDim()?(RM?.6:.35):1)*ghostA; // v1.282.15: то же
   }
 
   ctx.rotate(p.bank*.55);
@@ -898,7 +998,14 @@ function loop(t){
   let dt=(t-lastTime)/1000; lastTime=t;
   if(typeof pollGamepad==='function') pollGamepad(); // v1.99.4 «Штурвал»: опрос каждый кадр — руль и кнопки на любом экране
   if(dt>0.25)dt=0.25; if(dt<0)dt=0;
-  qualityTick(dt);
+  /* v1.282.15: метрику снимаем ТОЛЬКО в небе. qualityTick считал итерации rAF, а рисуем
+     мы на оверлеях намеренно вдвое реже (~30 fps), а на замершей паузе — вчетверо реже.
+     То есть в меню Q.fps показывал 60 при тридцати реальных кадрах дешёвой сцены: авто
+     уверенно лезло вверх по ступеням и снимало «потолок-памятку» (тот самый, что бережёт
+     уровень, с которого мы упали). Постоял в меню полминуты — и следующий полёт начинается
+     с заикания, пока лестница заново не спустится. На чужих экранах метрику замораживаем. */
+  if (screenName==='game' && S.running && !S.paused) qualityTick(dt);
+  else { Q._acc=0; Q._n=0; Q._t=0; }
   if (S.running && !S.paused){
     acc+=dt;
     let n=0;
@@ -914,14 +1021,14 @@ function loop(t){
   if (drawForce || scr!==loopScr){ // принудительный кадр не трогает часы сна; смена экрана на паузу — взводит их
     drawForce=false;
     if (scr!==loopScr){ loopScr=scr; if(scr==='pause') pauseT0=t; }
-    draw(); menuDrawT=t; return;
+    frameTick(t); draw(); menuDrawT=t; return;
   }
-  if (scr==='game'){ draw(); return; }
+  if (scr==='game'){ frameTick(t); draw(); return; }
   if (scr==='pause'){
-    if (t-menuDrawT>=((t-pauseT0<2000)?33:250)){ draw(); menuDrawT=t; }
+    if (t-menuDrawT>=((t-pauseT0<2000)?33:250)){ frameTick(t); draw(); menuDrawT=t; }
     return;
   }
-  if (t-menuDrawT>=33){ draw(); menuDrawT=t; }
+  if (t-menuDrawT>=33){ frameTick(t); draw(); menuDrawT=t; }
 }
 function startLoop(){ if(!rafId){ lastTime=performance.now(); rafId=requestAnimationFrame(loop); } }
 function stopLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId=0; } }
