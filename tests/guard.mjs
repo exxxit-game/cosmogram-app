@@ -409,6 +409,35 @@ async function guardPopupTextIsUppercase(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 102 — Показ призраков: настройка, по умолчанию выключена, реально гасит появление.
+   Стережёт: ghostActive() в game.js (ЯДРО) и настройку setGhostsBtn.
+   Беда: раньше ghostActive() жёстко возвращала true — призрак показывался всегда, без
+   возможности его скрыть. Владелец попросил вернуть переключатель, по умолчанию скрыто. */
+async function guardGhostVisibilityToggleDefaultsOff(browser){
+  const name = '102. Призраки скрыты по умолчанию и переключатель реально работает';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const defaultOn = (typeof GHOSTS_VISIBLE!=='undefined') ? GHOSTS_VISIBLE : null;
+      const activeByDefault = (typeof ghostActive==='function') ? ghostActive() : null;
+      // включаем настройку и проверяем, что дальше призрак разрешён
+      if (typeof GHOSTS_VISIBLE!=='undefined'){
+        GHOSTS_VISIBLE = true; Store.set('ghostsVisible',1);
+      }
+      const activeWhenOn = (typeof ghostActive==='function') ? ghostActive() : null;
+      return { defaultOn, activeByDefault, activeWhenOn };
+    });
+    if(r.defaultOn===null) return post(name,false,'глобальная переменная GHOSTS_VISIBLE не найдена — настройка не заведена');
+    if(r.defaultOn!==false) return post(name,false,`GHOSTS_VISIBLE по умолчанию ${r.defaultOn}, а должно быть false (призраки изначально скрыты)`);
+    if(r.activeByDefault!==false) return post(name,false,`ghostActive() по умолчанию вернула ${r.activeByDefault} — призрак покажется, хотя настройка выключена`);
+    if(r.activeWhenOn!==true) return post(name,false,`после включения настройки ghostActive() вернула ${r.activeWhenOn} — переключатель не действует`);
+    post(name,true,'по умолчанию скрыты, включение настройки реально разрешает призрака');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 async function guardBurstColorValid(browser){
   const name = '9. Салют звезды даёт годный цвет (и sRGB, и P3)';
   let ctx;
@@ -2113,7 +2142,9 @@ async function guardGhostDoesNotHijackSeed(browser){
     const o = await openGame(browser, { init:FRESH });
     ctx = o.ctx;
     const r = await o.page.evaluate(()=>{
-      // у игрока есть свой призрак с посторонним сидом
+      // у игрока есть свой призрак с посторонним сидом; страж 59 проверяет сид, не видимость —
+      // включаем показ явно, иначе с v1.282.23 призрак по умолчанию скрыт и тест ничего не поймает
+      if (typeof GHOSTS_VISIBLE!=='undefined') GHOSTS_VISIBLE=true;
       Store.set('ghostRun',{track:'#'.repeat(90), seed:777777});
       const out={};
       for(const m of ['daily','speedrun','classic']){ runMode=m; startGame(); out[m]=mapSeedKey; }
@@ -3673,7 +3704,7 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
                  guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift,
                  guardResizeSurvivesZeroViewport, guardNonTelegramHudGetsBreathingRoom,
-                 guardPopupTextIsUppercase ];
+                 guardPopupTextIsUppercase, guardGhostVisibilityToggleDefaultsOff ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

@@ -281,7 +281,7 @@ function ghostRec(){
   const yq=clamp(Math.round((plane.y-H*.22)/(H*.78-50)*91),0,91); // 92 уровня по Y (было 16 ≈ 33px скачок)
   rec.push([xq,yq,S.dist]);
 }
-function ghostActive(){ return true; } // v1.280.0: окно онбординга (первые 7 игр) снято — призрак больше не тренировочные колёса, доступен всегда
+function ghostActive(){ return typeof GHOSTS_VISIBLE!=='undefined' ? GHOSTS_VISIBLE : true; } // Каталог ошибок №32: показ призраков теперь настройка (по умолчанию выключена), а не жёстко включённая фича
 function ghostOff(){ ghost=null; ghostOn=false; ghostTagT=0; ghostFade=0; ghostA=0; ghostMorseBuf=[]; ghostMorseArc=0; }
 
 /* ---------- Морзянка (v1.53.0): шлейф пишет позывной ----------
