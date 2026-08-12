@@ -3652,7 +3652,7 @@ async function guardWaveDistTargetSped(browser){
    всех игроков дистанции (закон 12: общее небо мерят общим числом, не приватным вводом),
    отключена в Своей трассе (воля автора, S.customD важнее автоматики). */
 async function guardWaveLullContrast(browser){
-  const name = '102. Темп волн дышит: пик передышки чередуется с разгоном (партия 26)';
+  const name = '102. Темп волн дышит: пик передышки чередуется с разгоном, крючок первой волны защищён (партия 26+28)';
   let ctx;
   try{
     const o = await openGame(browser, { init:FRESH });
@@ -3667,22 +3667,27 @@ async function guardWaveLullContrast(browser){
       const atSpanEnd = lullCurve(SPAN);
       const atFlat = lullCurve(SPAN+150);
       const atNextCycle = lullCurve(PERIOD);
-      S.mode='custom'; S.dist=SPAN/2;
+      const wave1Target = waveDistTarget(1);
+      S.mode='custom'; S.dist=wave1Target+SPAN/2;
       const customMul = lullMul();
-      S.mode='classic'; S.dist=SPAN/2;
+      S.mode='classic';
+      S.dist=SPAN/2; // внутри первой волны, ровно в фазе пика передышки — крючок обязан быть защищён
+      const hookMul = lullMul();
+      S.dist=PERIOD+SPAN/2; // за первой волной, в пике СЛЕДУЮЩЕГО цикла — передышка обязана работать как и раньше
       const classicMul = lullMul();
-      return { samples, atStart, atPeak, atSpanEnd, atFlat, atNextCycle, customMul, classicMul };
+      return { samples, atStart, atPeak, atSpanEnd, atFlat, atNextCycle, customMul, hookMul, classicMul, wave1Target };
     });
     if (r.samples.some(v=>v<0.999 || v>1.95))
       return post(name,false,`lullCurve вышел за разумные границы [1, 1.9]: макс. отклонение среди сэмплов ${Math.max(...r.samples.map(v=>Math.abs(v-1)))}`);
-    if (Math.abs(r.atStart-1)>0.01) return post(name,false,`на дистанции 0 ждали базовый темп (×1), получили ${r.atStart}`);
-    if (r.atPeak < 1.8) return post(name,false,`в середине окна передышки ждали заметный пик (~×1.9), получили ${r.atPeak}`);
-    if (Math.abs(r.atSpanEnd-1)>0.01) return post(name,false,`на конце окна передышки ждали возврат к базовому темпу (×1), получили ${r.atSpanEnd}`);
-    if (Math.abs(r.atFlat-1)>0.01) return post(name,false,`вне окна передышки темп должен быть ровно базовым (×1), получили ${r.atFlat}`);
+    if (Math.abs(r.atStart-1)>0.01) return post(name,false,`на дистанции 0 ждали базовый темп (×1) у самой кривой, получили ${r.atStart}`);
+    if (r.atPeak < 1.8) return post(name,false,`в середине окна передышки ждали заметный пик кривой (~×1.9), получили ${r.atPeak}`);
+    if (Math.abs(r.atSpanEnd-1)>0.01) return post(name,false,`на конце окна передышки ждали возврат кривой к базовому темпу (×1), получили ${r.atSpanEnd}`);
+    if (Math.abs(r.atFlat-1)>0.01) return post(name,false,`вне окна передышки кривая должна быть ровно базовой (×1), получили ${r.atFlat}`);
     if (Math.abs(r.atNextCycle-r.atStart)>0.01) return post(name,false,'кривая не повторяется по периоду — цикл сломан');
     if (Math.abs(r.customMul-1)>0.001) return post(name,false,`в Своей трассе передышка обязана быть выключена (воля автора), получили множитель ${r.customMul}`);
-    if (r.classicMul<1.8) return post(name,false,`в обычном режиме на пике окна передышки множитель должен быть заметно выше 1, получили ${r.classicMul}`);
-    post(name,true,`темп дышит: пик передышки ×${r.classicMul.toFixed(2)}, вне окна — ровно ×1, Своя трасса не тронута`);
+    if (Math.abs(r.hookMul-1)>0.001) return post(name,false,`внутри первой волны (dist=${r.wave1Target/1}·½ < цель волны 1 = ${r.wave1Target}) lullMul() обязан быть ровно ×1 — крючок открытия не защищён от передышки, получили ${r.hookMul} (партия 28)`);
+    if (r.classicMul<1.8) return post(name,false,`после первой волны на пике окна передышки множитель должен быть заметно выше 1, получили ${r.classicMul}`);
+    post(name,true,`крючок первой волны — ×1 без исключений, дальше темп дышит: пик передышки ×${r.classicMul.toFixed(2)}, Своя трасса не тронута`);
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
