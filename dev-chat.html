@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="ru"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="theme-color" content="#070b18"/>
+<title>CosmoCoder — служебный чат</title>
+<meta name="robots" content="noindex, nofollow"/>
+<style>
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:400; font-display:swap;
+  src:url('fonts/exo2-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:400; font-display:swap;
+  src:url('fonts/exo2-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+  --ink:#f4f6fb; --muted:#7d8aa8;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d;
+  --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-ui:-apple-system,'Segoe UI',Roboto,sans-serif;
+  --r-btn:14px; --r-card:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;background:var(--bg-0);color:var(--ink);
+  font-family:var(--font-ui);overscroll-behavior:none}
+body{display:flex;flex-direction:column}
+
+header{padding:16px 16px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:10px;flex-shrink:0}
+header h1{font-family:var(--font-disp);font-size:16px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--gold-hi)}
+header span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:10px 14px;border-radius:var(--r-card);font-size:14px;
+  line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.msg.user{align-self:flex-end;background:var(--bg-2);border:1px solid var(--line-gold);color:var(--cream)}
+.msg.assistant{align-self:flex-start;background:var(--bg-1);border:1px solid var(--line);color:var(--ink)}
+.msg.error{align-self:center;background:rgba(224,83,61,.12);border:1px solid var(--danger);color:var(--danger);font-size:12px}
+.msg code, .msg pre{font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-size:12.5px}
+.msg pre{background:rgba(0,0,0,.35);border-radius:8px;padding:10px;overflow-x:auto;margin:6px 0}
+.msg.pending{color:var(--muted);font-style:italic}
+
+#inputRow{flex-shrink:0;display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);
+  padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+#inputBox{flex:1;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-btn);
+  color:var(--ink);font-family:var(--font-ui);font-size:14px;padding:10px 12px;resize:none;
+  max-height:120px;outline:none}
+#inputBox:focus{border-color:var(--line-gold)}
+#sendBtn{background:var(--gold);color:#1a1305;border:none;border-radius:var(--r-btn);
+  padding:0 18px;font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;
+  text-transform:uppercase;font-weight:700;cursor:pointer;flex-shrink:0}
+#sendBtn:disabled{opacity:.4;cursor:default}
+#sendBtn:not(:disabled):active{background:var(--gold-hi)}
+
+#configWarn{margin:16px;padding:12px 14px;border-radius:var(--r-card);
+  background:rgba(224,83,61,.12);border:1px solid var(--danger);color:var(--danger);
+  font-size:12.5px;line-height:1.5}
+#configWarn code{font-family:monospace;background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CosmoCoder</h1>
+  <span>служебный чат · только для экипажа</span>
+</header>
+
+<div id="log"></div>
+<div id="configWarn" class="hidden"></div>
+
+<div id="inputRow">
+  <textarea id="inputBox" rows="1" placeholder="Вопрос по коду Cosmogram…" autocomplete="off" spellcheck="false"></textarea>
+  <button id="sendBtn">Спросить</button>
+</div>
+
+<script>
+'use strict';
+
+// ЗАПОЛНИ ПОСЛЕ ДЕПЛОЯ WORKER'А (см. DEV_CHAT_SETUP.md):
+const CONFIG = {
+  workerUrl: 'https://ВСТАВЬ-СВОЙ-АДРЕС.workers.dev',
+};
+
+const $ = id => document.getElementById(id);
+const log = $('log');
+const inputBox = $('inputBox');
+const sendBtn = $('sendBtn');
+const configWarn = $('configWarn');
+
+let history = []; // [{role:'user'|'assistant', content:'...'}] — живёт только в памяти вкладки
+let sending = false;
+
+if (!CONFIG.workerUrl || CONFIG.workerUrl.includes('ВСТАВЬ')) {
+  configWarn.classList.remove('hidden');
+  configWarn.innerHTML = 'Адрес Worker\'а не настроен. Открой <code>dev-chat.html</code> и впиши свой URL в <code>CONFIG.workerUrl</code> — инструкция в <code>DEV_CHAT_SETUP.md</code>.';
+  sendBtn.disabled = true;
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+// Очень лёгкий рендер: ```код``` и `код` — остальное как есть
+function renderContent(text){
+  const parts = text.split(/```([\s\S]*?)```/g);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return '<pre>' + escapeHtml(part.replace(/^\w+\n/, '')) + '</pre>';
+    }
+    return escapeHtml(part).replace(/`([^`]+)`/g, '<code>$1</code>');
+  }).join('');
+}
+
+function addMsg(role, text, cls){
+  const el = document.createElement('div');
+  el.className = 'msg ' + (cls || role);
+  el.innerHTML = renderContent(text);
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+function autoGrow(){
+  inputBox.style.height = 'auto';
+  inputBox.style.height = Math.min(inputBox.scrollHeight, 120) + 'px';
+}
+inputBox.addEventListener('input', autoGrow);
+
+async function send(){
+  const text = inputBox.value.trim();
+  if (!text || sending) return;
+
+  history.push({ role: 'user', content: text });
+  addMsg('user', text);
+  inputBox.value = '';
+  autoGrow();
+
+  sending = true;
+  sendBtn.disabled = true;
+  const pending = addMsg('assistant', 'CosmoCoder думает…', 'assistant pending');
+
+  try {
+    const res = await fetch(CONFIG.workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history }),
+    });
+    const data = await res.json();
+
+    pending.remove();
+
+    if (!res.ok || data.error) {
+      addMsg('error', 'Ошибка: ' + (data.error || res.status), 'error');
+    } else {
+      history.push({ role: 'assistant', content: data.text });
+      addMsg('assistant', data.text);
+    }
+  } catch (e) {
+    pending.remove();
+    addMsg('error', 'Не достучался до Worker\'а. Проверь адрес и что он задеплоен.', 'error');
+  } finally {
+    sending = false;
+    sendBtn.disabled = false;
+    inputBox.focus();
+  }
+}
+
+sendBtn.addEventListener('click', send);
+inputBox.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+addMsg('assistant', 'На связи. Спрашивай про core.js, render.js, game.js, ui.js — контекст проекта уже знаю из системного промпта Worker\'а.');
+</script>
+</body></html>

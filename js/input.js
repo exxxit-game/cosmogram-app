@@ -27,7 +27,7 @@ if (HAS_GYRO && !NEEDS_TILT_PERMISSION && !IS_LIKELY_MOBILE){
   };
   window.addEventListener('deviceorientation', proveGyro);
 }
-const input = { tiltX:0, tiltY:0, useGyro:false, touchX:null, touchY:null, byMouse:false,
+const input = { tiltX:0, tiltY:0, useGyro:false, touchX:null, touchY:null,
   keyL:false, keyR:false, keyU:false, keyD:false, baseG:null, baseB:null,
   _t:0, // время последнего пакета датчика — сторож «датчик замолчал»
   sens: PLATFORM==='android' ? 1.05 : 1 };
@@ -60,111 +60,25 @@ let lastCalResetT=0; // v1.108.1 «Тихий дребезг»: 24 из 48 бо�
   // Корень — channel-flap и orientationchange дёргали calReset() без единой защиты от частоты: дрогнувший
   // канал или дублирующее событие поворота считались отдельным честным сбросом. Гасим именно дребезг —
   // не блокируем calReset() целиком, чтобы настоящий сброс (старт игры, реальный поворот) не потерялся.
-function calResetDebounced(toast,quiet,source){
+function calResetDebounced(toast,quiet){
   const now=performance.now();
   if(now-lastCalResetT<400) return; // дребезг тише 400мс подряд — не новый честный сброс, а эхо того же события
   lastCalResetT=now;
-  calReset(toast,quiet,source);
+  calReset(toast,quiet);
 }
 let prevG=null, prevB=null, flipN=0; // страж выбросов: скачок >55° между пакетами — не рука, а сингулярность углов Эйлера при перевороте
 let poseSG=null, poseSB=null; // v1.100.4 «Верная рука»: медленный следопыт позы руки (в кадре канала, после remap) — стражу, что смотрит на руку
 let steerChan='none'; // 'none' | 'tg' | 'web' — чей кадр сейчас снимает ноль и рулит
-let steerSinceT=0;    // v1.282.13: когда штурвал достался нынешнему каналу — для минимального срока владения
-
-/* v1.282.13 «У каждого компаса свой ноль».
-   Кадры моста Telegram и веба различаются на десятки градусов (одна поза: мост γ−2°,
-   веб γ79°) — это правда, и потому смена канала действительно делала старый ноль ложью.
-   Но лечение было хуже болезни: единственный общий ноль ВЫБРАСЫВАЛСЯ на каждом
-   перебросе штурвала. А переброс — обычное дело: два канала одного датчика спорят
-   постоянно. Отсюда «cal_storm» — 5+ перекалибровок за сессию, самый частый сигнал
-   телеметрии: каждая смена канала стоила игроку секунды без руля.
-   Теперь ноль хранится ОТДЕЛЬНО для каждого канала. Смена штурвала не выбрасывает
-   ничего — канал просто достаёт свой прежний ноль, снятый в его же системе координат,
-   и рулит немедленно. Калибровка нужна только когда у канала нуля ещё нет.
-   Побочно исчезает и calResetDebounced: он глушил дребезг сбросов, но при этом мог
-   ПРОГЛОТИТЬ сброс при смене канала (steerChan менялся безусловно, а сброс — нет),
-   и тогда новый канал рулил ЧУЖИМ нулём — руль мгновенно в упоре, самолёт набок. */
-const zeroBy={ tg:{g:null,b:null,t:0,pg:null,pb:null}, web:{g:null,b:null,t:0,pg:null,pb:null} };
-const ZERO_TTL=45000, ZERO_POSE=25; // ноль живёт 45с и только пока поза руки та же (±25°)
-/* v1.282.14: ноль канала — не вечная справка. Первая редакция подставляла его при
-   перебросе штурвала без всяких проверок, а он мог быть снят минуту назад под совсем
-   другой хват: игрок начал забег в одной позе, откинулся на спинку, и тут оживший мост
-   забирает руль со своим стародавним нулём. Разница в 40° по β даёт tiltY в упоре — руль
-   мгновенно вбит в стену, и страж залипшего нуля спохватится только через секунду.
-   «Нет управления» безопаснее, чем «управление в противоположную сторону»: если ноль
-   протух по времени или поза уехала — выбрасываем его и уходим в тихую калибровку. */
-let zeroFresh=false; // v1.282.14: ноль только что восстановлен — следующий пакет обязан его проверить
-function zeroApply(chan){
-  const z=zeroBy[chan];
-  if(!z || z.g==null){ input.baseG=null; input.baseB=null; return; }
-  if(performance.now()-z.t > ZERO_TTL){        // просто старый — доверия нет
-    if(typeof BB!=='undefined') BB.log('zero','stale '+chan+' — ноль протух, калибруем заново');
-    z.g=z.b=null; input.baseG=null; input.baseB=null; return;
-  }
-  input.baseG=z.g; input.baseB=z.b; zeroFresh=true;
-}
-/* Проверять свежесть нуля сравнением поз МЕЖДУ каналами нельзя — я так и сделал сперва,
-   и страж 33 честно это отбил. poseSG живёт в кадре текущего канала, а кадры моста и веба
-   расходятся на десятки градусов: сравнение всегда показывало «поза уехала», и ноль
-   выбрасывался при каждом перебросе — то есть возвращался ровно тот cal_storm, который
-   вся правка и лечит. Правильный вопрос задаётся не о позе, а о результате: если
-   восстановленный ноль сразу вбивает руль в упор, значит он чужой этой руке. Это
-   измеримо, не зависит от кадра и ловит именно ту беду, ради которой проверка нужна. */
-function zeroCheckFresh(rx,ry){
-  if(!zeroFresh) return true;
-  zeroFresh=false;
-  if(Math.abs(rx)<.9 && Math.abs(ry)<.9) return true;   // руль в разумных пределах — ноль годен
-  if(typeof BB!=='undefined') BB.log('zero','reject '+steerChan+' — восстановленный ноль сразу даёт упор, калибруем заново');
-  const z=zeroBy[steerChan]; if(z){ z.g=z.b=null; }
-  input.baseG=null; input.baseB=null; calCountersReset(true);
-  return false;
-}
-function calCountersReset(quiet){ // счётчики калибровки — без выбрасывания нулей и без сигнала шторма
-  calN=0; calSeen=0; calAllG=0; calAllB=0; calQuiet=quiet?CAL_QUIET:0;
-  prevG=null; prevB=null; flipN=0; poseSG=null; poseSB=null; foreignN=0;
-}
-/* Настоящий сброс: взлёт, ручная калибровка, переворот, поворот экрана. Здесь кадры
-   действительно поменялись у ОБОИХ каналов, поэтому чистим оба нуля — и только здесь
-   считаем перекалибровку в телеметрию: это и есть тот редкий честный сброс. */
-function calReset(toast,quiet,source){
-  zeroBy.tg.g=zeroBy.tg.b=zeroBy.tg.pg=zeroBy.tg.pb=null; zeroBy.tg.t=0;
-  zeroBy.web.g=zeroBy.web.b=zeroBy.web.pg=zeroBy.web.pb=null; zeroBy.web.t=0;
-  input.baseG=null; input.baseB=null;
-  input.tiltX=0; input.tiltY=0; // v1.282.13: руль не залипает — см. onTilt
-  calToast=!!toast; calCountersReset(quiet);
-  if(typeof BEACON!=='undefined') BEACON.calTick(source); // v1.107.0: частые перекалибровки — симптом, почта считает; v1.109.0: источник — для разбора cal_storm по корню
-}
+function calReset(toast,quiet){ input.baseG=null; input.baseB=null; calN=0; calSeen=0; calAllG=0; calAllB=0; calToast=!!toast; calQuiet=quiet?CAL_QUIET:0; prevG=null; prevB=null; flipN=0; poseSG=null; poseSB=null; foreignN=0; if(typeof BEACON!=='undefined') BEACON.calTick(); } // v1.100.4: след руки сеем заново из нового потока; v1.104.0: и счётчик лавочки карантина; v1.107.0: частые перекалибровки — симптом, почта считает
 function gyroChanIn(chan){
-  if(steerChan===chan) return;
-  if(typeof BB!=='undefined') BB.log('chan','steer '+chan); // v1.99.7 «Чёрный ящик»: эстафета — на ленту
-  if(steerChan!=='none'){
-    zeroApply(chan);                       // у канала есть свой ноль — рулим сразу, без перекалибровки
-    if(input.baseG==null) calCountersReset(true); // нуля ещё нет: тихая калибровка, но это НЕ шторм — счётчик молчит
-    else if(typeof BB!=='undefined') BB.log('zero','restore '+Math.round(input.baseG)+'/'+Math.round(input.baseB)+' ('+chan+')');
-  }
-  steerChan=chan; steerSinceT=performance.now();
+  if(steerChan!==chan && typeof BB!=='undefined') BB.log('chan','steer '+chan); // v1.99.7 «Чёрный ящик»: эстафета — на ленту
+  if(steerChan!=='none' && steerChan!==chan) calResetDebounced(false,true); // смена канала = смена системы координат: старый ноль врёт; v1.108.1: через дребезг-страж
+  steerChan=chan;
 }
 let foreignNoteT=0; // v1.102.2: запись карантина на ленту — не чаще раза в секунду
 let foreignN=0; // v1.104.0: сколько подряд пакетов поза сидит под карантином — счётчик лавочки
 function calFeed(g,b,rawB){
   if(steerChan!=='none' && chanSpread(steerChan)>STORM_SPREAD) return false; // v1.99.8: из мутного колодца не пьём — в шторм нуль не принимаем
-  /* v1.282.13 «Ноль не снимают с трупа». Верхний гейт (шторм) был, нижнего не было —
-     и это давало замёрзшему каналу структурное преимущество: проверка неподвижной позы
-     для него проходит ИДЕАЛЬНО, он же не шевелится. Мёртвый мост брал ноль за 3 пакета,
-     честная рука в полёте — за 10 подряд ровных или через лавочку в 80. Правило,
-     писавшееся как защита от бури, для трупа было бесплатным пропуском, а для живого —
-     штрафом. Отсюда «zero: accept 0/0» на первых миллисекундах и мёртвый руль следом.
-     Отказываем только при ПОЛОЖИТЕЛЬНОЙ улике: мы не дышим, а сосед дышит. Если тихи
-     оба (телефон на столе, честный штиль) — принимаем как раньше, иначе игрок с
-     единственным спокойным каналом остался бы вовсе без гироскопа. */
-  if(steerChan!=='none'){
-    const sp=chanSpread(steerChan), nb=steerChan==='tg'?'web':'tg';
-    if(sp>=0 && sp<LIVE_SPREAD && chanAlive(nb)){
-      if(typeof BB!=='undefined' && performance.now()-foreignNoteT>900){ foreignNoteT=performance.now();
-        BB.log('zero','dead: '+steerChan+' не дышит ('+sp.toFixed(1)+'°) при живом '+nb+' — ноль не берём'); }
-      return false;
-    }
-  }
   /* v1.102.2 «Два компаса»: ноль — только с согласия дышащего соседа о том, где низ.
      β — ось гравитации: в шторм Эйлера бредит γ, а β у честных каналов совпадает (та же
      рука, тот же низ). Сосед ДЫШИТ, а его β в 40°+ от кандидата — один из компасов врёт:
@@ -202,8 +116,6 @@ function calFeed(g,b,rawB){
       }
     } else foreignN=0;
     input.baseG=candG; input.baseB=candB; // согласие есть — кандидат становится нулём
-    if(steerChan!=='none' && zeroBy[steerChan]){ const z=zeroBy[steerChan];
-      z.g=candG; z.b=candB; z.t=performance.now(); z.pg=poseSG; z.pb=poseSB; } // v1.282.13: ноль принадлежит каналу, где снят; v1.282.14: с меткой времени и позой — чтобы при возврате штурвала проверить, не протух ли
     if(typeof BB!=='undefined') BB.log('zero','accept '+Math.round(input.baseG)+'/'+Math.round(input.baseB)+' ('+how+')');
     calN=0; calSeen=0; calAllG=0; calAllB=0; calQuiet=0; // v1.100.3: тишина испитa — режим снят
     if(calToast){ calToast=false; haptic('light'); svcToast(L.calibrated,'rgba(143,255,159,.5)'); } // v1.103.0: сервисный сорт — в полёте молчит
@@ -233,25 +145,16 @@ function onTilt(e){
   if(poseSG==null){ poseSG=g; poseSB=b; } else { poseSG=lerp(poseSG,g,.08); poseSB=lerp(poseSB,b,.08); } // v1.100.4: след руки — медленный, ветер пакетов не качает
   if(input.baseG==null){ // ноль ещё не принят: ждём неподвижную позу, руления до калибровки нет
     prevG=g; prevB=b;
-    /* v1.282.13 «Руль не залипает». Здесь был самый обидный из багов гироскопа: пока
-       идёт калибровка, функция уходит в ранний return, НЕ трогая сглаженный tiltX — а
-       выше по функции уже проставлена метка «датчик жив», поэтому игровой цикл честно
-       продолжал применять ПОСЛЕДНИЙ наклон до сброса. От 0.16 до 1.3 секунды самолёт
-       уводило туда, где рука была в момент перекалибровки, — «смерть на ровном месте».
-       Гасим руль к нулю тем же low-pass, что и обычное руление: не рывок, а отпускание. */
-    input.tiltX=lerp(input.tiltX,0,.2);
-    input.tiltY=lerp(input.tiltY,0,.2);
     if(!calFeed(g,b,rb)) return;
   }
   if(prevG!=null && (Math.abs(g-prevG)>55 || Math.abs(b-prevB)>55)){ // «дёрнуло набок» при перевороте: выброс в руление не пускаем
     flipN++; prevG=g; prevB=b;
-    if(flipN>=3){ flipN=0; calResetDebounced(false,true,'flip'); } // телефон действительно перевернули — заново найдём ноль новой позы; v1.100.3: после кульбита — только из тишины; v1.109.0: и этот путь — через дребезг-страж, партия 6 защитила только два из трёх
+    if(flipN>=3){ flipN=0; calReset(false,true); } // телефон действительно перевернули — заново найдём ноль новой позы; v1.100.3: после кульбита — только из тишины
     return;
   }
   flipN=0; prevG=g; prevB=b;
   const rx=clamp((g-input.baseG)/24*input.sens,-1,1);
   const ry=clamp((b-input.baseB)/24*input.sens,-1,1);
-  if(!zeroCheckFresh(rx,ry)){ input.tiltX=lerp(input.tiltX,0,.2); input.tiltY=lerp(input.tiltY,0,.2); return; } // v1.282.14: чужой ноль отвергнут — руль отпускаем, не бьём в стену
   input.tiltX=lerp(input.tiltX, deadzone(rx), .2); // low-pass
   input.tiltY=lerp(input.tiltY, deadzone(ry), .2);
   input.useGyro=true;
@@ -275,74 +178,28 @@ function onTilt(e){
    штурман не переходит, вреда нет; поднял — кто первый ожил, тот и штурман. */
 let tgOrientLive=false, tgOrientLast=0, gyroSrc='none'; // 'none' | 'tg' | 'web' — диагностика для настроек
 let tgPkt=0, webPkt=0; // счётчики пакетов мост/веб — видно, какой канал реально течёт
-/* v1.282.13 «Дыхание по осям». Разброс канала считался как размах СУММЫ γ+β — и это
-   был корень половины бед с гироскопом. Диагональный увод руки (γ растёт на +20°, β
-   падает на −20°) даёт сумму-константу, то есть размах ≈0: живой, честно работающий
-   канал объявлялся замёрзшим. Зеркально: порог 0.4° лежал НИЖЕ собственной дрожи
-   мёртвого моста Telegram (вердикт суда прямо говорит «штиль 1°») — то есть труп
-   всегда считался живым. Меряем размах каждой оси отдельно и берём больший: рука,
-   двинувшаяся хоть куда, теперь видна, а неподвижные цифры остаются неподвижными.
-   Порог живости поднят с 0.4° до 2.5° — выше шума датчика и выше дрожи мёртвого моста.
-   Пороги шторма/покоя/тишины (80/40/10) не трогаем: по осевой метрике их смысл тот же —
-   настоящая буря даёт сотни градусов размаха по оси, рука в движении — десятки. */
-const LIVE_WIN=2000, LIVE_MIN=8, LIVE_SPREAD=2.5; // окно стража, мин. пакетов для суда, порог разброса (°)
+const LIVE_WIN=2000, LIVE_MIN=8, LIVE_SPREAD=0.4; // окно стража, мин. пакетов для суда, порог разброса (°)
 const chanHist={tg:[],web:[]}; // {t,g,b} — скользящие окна дыхания каналов
-const chanCalc={tg:null,web:null}; // v1.282.13: разбор окна считается раз на пакет, а не на каждый вопрос
 function chanFeed(chan,g,b){
   const h=chanHist[chan], now=performance.now();
   h.push({t:now,g:g,b:b});
   while(h.length && now-h[0].t>LIVE_WIN) h.shift();
-  chanCalc[chan]=null; chanCalc[chan==='tg'?'web':'tg']=null; // окна сдвинулись — прошлый разбор недействителен
   liarCourt(); // v1.104.0: каждый пакет — улика; суд компасов заседает на свежих окнах
 }
-/* Один проход по окну вместо трёх: раньше chanSpread бежал по окну, а chanBetaMed
-   ещё и делал map+sort на ~120 элементов — и всё это на КАЖДЫЙ пакет каждого канала,
-   то есть до сотни сортировок в секунду внутри игрового цикла. */
-function chanScan(chan){
-  const c=chanCalc[chan]; if(c) return c;
-  const h=chanHist[chan];
-  if(h.length<LIVE_MIN) return (chanCalc[chan]={ ready:false, spread:-1, betaMed:null });
-  let mng=Infinity,mxg=-Infinity,mnb=Infinity,mxb=-Infinity;
-  const bs=new Array(h.length);
-  for(let i=0;i<h.length;i++){ const g=h[i].g, b=h[i].b;
-    if(g<mng)mng=g; if(g>mxg)mxg=g; if(b<mnb)mnb=b; if(b>mxb)mxb=b; bs[i]=b; }
-  bs.sort((x,y)=>x-y);
-  return (chanCalc[chan]={ ready:true, spread:Math.max(mxg-mng, mxb-mnb), betaMed:bs[bs.length>>1] });
+function chanSpread(chan){ // разброс (γ+β) в окне; -1 — судить рано (окно не набрано)
+  const h=chanHist[chan]; if(h.length<LIVE_MIN) return -1;
+  let mn=Infinity, mx=-Infinity;
+  for(let i=0;i<h.length;i++){ const v=h[i].g+h[i].b; if(v<mn)mn=v; if(v>mx)mx=v; }
+  return mx-mn;
 }
-function chanSpread(chan){ return chanScan(chan).spread; } // больший размах из двух осей; -1 — судить рано
-function chanSilentFor(chan){ const h=chanHist[chan]; return h.length ? performance.now()-h[h.length-1].t : Infinity; } // v1.282.13: насколько давно канал молчит
 function chanSilent(chan){ const h=chanHist[chan]; return !h.length || performance.now()-h[h.length-1].t>1000; }
 function chanAlive(chan){ return !chanSilent(chan) && chanSpread(chan)>=LIVE_SPREAD; } // пакеты свежие и значения дышат
 function chanFrozen(chan){ return !chanSilent(chan) && chanSpread(chan)>=0 && chanSpread(chan)<LIVE_SPREAD; } // пакеты бегут, значения мертвы
-/* v1.282.13 «Штурвал не передают из рук в руки каждую секунду».
-   Порядок правил был опаснее самих правил: молчание соседа проверялось РАНЬШЕ
-   приговора, поэтому любая пауза веб-канала дольше секунды отдавала руль уже
-   осуждённому лжецу — а пауза наступала ровно тогда, когда пилот замирал, чтобы
-   дать тихой калибровке добраться до конца (часть WebView просто перестаёт слать
-   deviceorientation при неизменных углах). Приговор «липнет» и не снимается сам,
-   но защитить ничего не мог. Сюда же — отсутствие гистерезиса: канал мог отобрать
-   штурвал через миг после того, как отдал, и каждый такой переброс стоил нуля.
-   Теперь: приговор читается первым, у владельца есть минимальный срок, а совсем
-   ушедшему соседу (3 секунды тишины) уступают даже осуждённому — лучше сомнительный
-   канал, чем никакого. */
-const STEER_HOLD=2000, STEER_ABANDON=3000;
 function maySteer(x){ // арбитраж штурвала: продолжение руля — всегда; смена — по молчанию, по смерти значений, по приговору
   if(steerChan===x || steerChan==='none') return true;
   const y=x==='tg'?'web':'tg';
-  if(chanSilentFor(y)>STEER_ABANDON) return true;                 // сосед ушёл совсем — руль нужен хоть какой-то
-  /* v1.282.14, порядок выверен стражами 5 и 38 — они тянули в разные стороны, и первая
-     моя перестановка сломала второго. Правильная последовательность такая:
-     1) приговор абсолютен. Осуждённый канал не берёт штурвал ни при каких условиях, в том
-        числе когда сосед замер (замирает пилот как раз затем, чтобы дать калибровке дойти);
-        отдать руль замороженному лжецу — не «хоть какое-то управление», а его отсутствие.
-     2) мёртвый штурман отдаёт руль НЕМЕДЛЕННО, срока владения у него нет. Прошлая редакция
-        держала STEER_HOLD выше этого правила: мост, перехвативший руль и заглохший через
-        пару пакетов, блокировал живой веб на все две секунды — полторы секунды слепого
-        полёта, потому что useGyro гаснет уже через 0.6с.
-     3) и только между ЖИВЫМИ каналами работает гистерезис — он для дребезга, а не для смерти. */
+  if(chanSilent(y)) return true;                                  // штурман замолчал — эстафета (старое правило тишины)
   if(chanLiar(x)) return false;                                   // v1.104.0: осуждённый лжец штурвал не отбирает
-  if(chanSilent(y)) return true;                                  // штурман замолчал — эстафета немедленно, без срока владения
-  if(performance.now()-steerSinceT<STEER_HOLD) return false;      // два живых канала спорят — дребезг не рвёт руль на части
   if((chanFrozen(y)||chanLiar(y)) && chanAlive(x)) return true;   // штурман мёртв или осуждён, а мы живы — забираем штурвал
   return false;                                                   // оба дышат честно или оба замерли — штурман не переходит, калибровка цела
 }
@@ -350,24 +207,7 @@ function maySteer(x){ // арбитраж штурвала: продолжени
    руль в полном размахе даёт лишь ~48°), тишь — дыхание руки до 40°. Живая регрессия:
    поза β~80° рядом с сингулярностью Эйлера гнала веб-канал в бред (нули 89° → −84°),
    а мост в те же секунды был тих — но арбитраж видел лишь «молчит/замёрз», не «бредит». */
-/* v1.282.14: пороги пересчитаны под ОСЕВУЮ метрику. В прошлой редакции я поменял
-   chanSpread с размаха суммы γ+β на больший из размахов по осям, а числа оставил
-   прежними — и написал в комментарии, что «смысл тот же». Это неверно арифметически:
-   при синфазном движении руки размах суммы примерно вдвое больше большего из осевых,
-   значит все пороги де-факто удвоились в терминах реального движения.
-   Что это тихо ломало: «трезвый свидетель» суда компасов требует размаха ≥CALM. Обычное
-   руление ±12° по каждой оси давало по старой метрике ~48 (свидетель трезв, лжец
-   осуждался), по новой — 24 (свидетель пьян, приговора нет). То есть защита v1.104.0
-   переставала работать для всего диапазона умеренного руления. Зеркально шторм-гейт
-   в calFeed срабатывал вдвое позже — ноль можно было снять посреди бури.
-   Пересчёт НЕ ровно вдвое: коэффициент между метриками зависит от фазы движения —
-   для синфазного он около 2, для перпендикулярного около 1.3, для противофазного вообще
-   бесконечен. Ориентируемся на реальные жесты, а не на худший случай: порог бури 65°
-   по оси уверенно отделяет настоящую сингулярность Эйлера (там сотни градусов размаха)
-   от энергичного, но честного руления, а порог «рука в движении» 22° возвращает суду
-   компасов те умеренные жесты, которые он перестал видеть. Первая моя правка ставила
-   45/22/5 — стражи показали, что 45 объявляет бурей обычное активное руление. */
-const STORM_SPREAD=65, CALM_SPREAD=22;
+const STORM_SPREAD=80, CALM_SPREAD=40;
 /* v1.104.0 «Компас и лжец»: суд компасов. Живая регрессия с чёрного ящика (Android,
    180 событий): мост дрожал рядом с нулём (β1°±1°) — страж дыхания его пропускал
    (разброс ≥0.4°), а он врал, где низ: рука честно держала β85°. Итоги: вечный
@@ -381,20 +221,18 @@ const STORM_SPREAD=65, CALM_SPREAD=22;
    согласие о низе (≤LIAR_AGREE): лжец чинится, когда клиент прогревается.
    Осуждённый теряет права: штурвал в шторм ему не отдают (gyro.js), живой сосед
    штурвал забирает (maySteer), его слово не держит карантин нуля (calFeed). */
-const LIAR_QUIET=7, LIAR_AGREE=25; // v1.282.14: порог «канал молчит» пересчитан под осевую метрику (см. STORM_SPREAD выше). LIAR_AGREE не трогаем: это разница медиан β, а не размах, — метрика её не касается
+const LIAR_QUIET=10, LIAR_AGREE=25;
 const liarMark={tg:0,web:0}; // приговор: метка времени последнего суда; 0 — чист
-/* v1.282.13: «судить рано» теперь null, а не −1. β лежит в диапазоне [−180,180], и
-   отрицательная медиана (телефон наклонён от себя — обычнейшая поза) была неотличима
-   от «окно не набрано»: проверка mc<0||mo<0 молча распускала суд компасов. То есть у
-   половины поз вся защита версии 1.104.0 — приговор лжецу, карантин нуля, охрана
-   штурвала в шторм — просто не работала, и именно в тех позах, где мост врёт чаще всего. */
-function chanBetaMed(chan){ return chanScan(chan).betaMed; } // медиана β окна — где канал видит низ; null — судить рано
+function chanBetaMed(chan){ // медиана β окна — где канал видит низ; -1 — судить рано
+  const h=chanHist[chan]; if(h.length<LIVE_MIN) return -1;
+  const a=h.map(p=>p.b).sort((x,y)=>x-y); return a[a.length>>1];
+}
 function liarCourt(){
   for(const c of ['tg','web']){
     const o=c==='tg'?'web':'tg';
     const sc=chanSpread(c), so=chanSpread(o);
     if(sc<0||so<0) continue; // окна не набраны — судить рано
-    const mc=chanBetaMed(c), mo=chanBetaMed(o); if(mc==null||mo==null) continue;
+    const mc=chanBetaMed(c), mo=chanBetaMed(o); if(mc<0||mo<0) continue;
     const sober=!chanSilent(o) && so>=CALM_SPREAD && so<STORM_SPREAD; // сосед: рука в движении, сам не в шторме
     if(sober && sc<LIAR_QUIET && Math.abs(mc-mo)>40){ // тихий врёт, где низ, — при движущейся руке
       if(!liarMark[c] && typeof BB!=='undefined') BB.log('liar',c+' осуждён: штиль '+Math.round(sc)+'° β'+Math.round(mc)+' при руке '+o+' β'+Math.round(mo)+' (разброс '+Math.round(so)+'°)');
@@ -475,11 +313,11 @@ window.addEventListener('deviceorientation', e=>{
   onTilt(e);
 });
 // Поворот экрана: оси меняются, старый ноль врёт — пересчитаем на следующем пакете
-window.addEventListener('orientationchange', ()=>calResetDebounced(false,true,'orientation')); // v1.108.1: поворот экрана — тоже буря для осей, но не дважды подряд — через дребезг-страж
+window.addEventListener('orientationchange', ()=>calResetDebounced(false,true)); // v1.108.1: поворот экрана — тоже буря для осей, но не дважды подряд — через дребезг-страж
 
 function calibrateTilt(){ // ручная калибровка — через ту же стабильную процедуру: ноль возьмётся из устоявшейся позы
   if(lastGamma==null){ toast(L.noTilt,'rgba(255,159,176,.5)'); haptic('error'); return; }
-  calReset(true,undefined,'manual'); svcToast(L.calWait,'rgba(159,232,255,.5)'); // v1.103.0: сервисный сорт — в полёте молчит
+  calReset(true); svcToast(L.calWait,'rgba(159,232,255,.5)'); // v1.103.0: сервисный сорт — в полёте молчит
 }
 /* iOS Permission: без автозапросов. Красивая кнопка «Разрешить управление
    наклоном?» живёт в меню (ui.js), системный диалог — строго по её тапу. */
@@ -491,82 +329,37 @@ function calibrateTilt(){ // ручная калибровка — через т
    или удержание (>0.2с) — осознанное руление: режим переключается на «Тач». */
 const TAP_MS=200, MOVE_PX=12;
 let tDown=false, tActive=false, tStartX=0, tStartY=0, tCurX=0, tCurY=0, tStartT=0;
-/* v1.282.20 «Свой палец».
-   Раньше касание бралось как touches[0] — по ИНДЕКСУ. Живая беда: играешь пальцем, вторым
-   случайно касаешься экрана (или это остаток пинча), убираешь первый — и touches[0] это уже
-   ВТОРОЙ палец. Самолёт мгновенно телепортируется под него, минуя гейт «тап против свайпа»;
-   обычно это удар о препятствие на ровном месте, а рывок вдобавок роняет плавность, которая
-   множит итоговый счёт. Плюс сброс висел на touches.length===0: пока лежит чужой палец,
-   ухода СВОЕГО никто не замечал.
-   Лечим единственно правильным способом: запоминаем identifier своего касания и работаем
-   только с ним. Чужие пальцы игра больше не видит вовсе. */
-let tId=null;
-function ownTouch(list){ // найти СВОЁ касание в списке, а не первое попавшееся
-  if(tId===null || !list) return null;
-  for(let i=0;i<list.length;i++) if(list[i].identifier===tId) return list[i];
-  return null;
-}
 window.addEventListener('touchstart',e=>{
   audio();
   if(tDown) return; // второй палец не сбрасывает жест первого
-  const t=e.changedTouches && e.changedTouches[0]; if(!t) return;
-  tId=t.identifier;
+  const t=e.touches[0];
   tStartX=tCurX=t.clientX; tStartY=tCurY=t.clientY; tStartT=performance.now();
   tDown=true; tActive=false; // руление НЕ включаем — ждём, тап это или свайп
 },{passive:true});
-/* v1.282.20: pointermove для касаний убран. Он и touchmove писали в один и тот же touchX,
-   причём touchmove приходил вторым и systematically перетирал выбранный «самый свежий
-   coalesced-сэмпл» обычной координатой — вся оптимизация 240 Гц была мертва по построению.
-   Оставляем один путь: touchmove, и свежий сэмпл берём прямо в нём. */
+window.addEventListener('pointermove',e=>{ // v1.12.0: экраны с опросом 240+ Гц отдают пачку сэмплов за кадр — берём самый свежий
+  if(e.pointerType!=='touch' || !tActive) return;
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():null;
+  const ev=evs&&evs.length?evs[evs.length-1]:e;
+  input.touchX=ev.clientX/SC; input.touchY=ev.clientY/SC; // v1.99.0 «Метр неба»: палец говорит мерами неба
+},{passive:true});
 window.addEventListener('touchmove',e=>{
   e.preventDefault();
-  const t=ownTouch(e.touches); if(!t) return; // чужой палец нас не касается
-  tCurX=t.clientX; tCurY=t.clientY;
+  const t=e.touches[0]; tCurX=t.clientX; tCurY=t.clientY;
   if(tDown && !tActive && Math.hypot(tCurX-tStartX,tCurY-tStartY)>MOVE_PX) tActive=true; // свайп → рулим (жест меряем пальцем, не небом)
   if(tActive){ input.touchX=tCurX/SC; input.touchY=tCurY/SC; } // v1.99.0
 },{passive:false});
-function touchEnd(){ tDown=false; tActive=false; tId=null; input.touchX=null; input.touchY=null; }
-function touchGone(e){ // ушёл ли ИМЕННО наш палец
-  if(tId===null) return;
-  if(ownTouch(e.changedTouches)) touchEnd();
-  else if(!ownTouch(e.touches)) touchEnd(); // страховка: нашего нет и среди оставшихся
-}
-window.addEventListener('touchend',touchGone);
-window.addEventListener('touchcancel',touchGone);
+function touchEnd(){ tDown=false; tActive=false; input.touchX=null; input.touchY=null; }
+window.addEventListener('touchend',e=>{ if(e.touches.length===0) touchEnd(); });
+window.addEventListener('touchcancel',touchEnd);
 // удержание на месте >0.2с — тоже осознанное руление (опрос из игрового цикла)
 function pollTouchHold(){
   if(tDown && !tActive && performance.now()-tStartT>TAP_MS){
     tActive=true; input.touchX=tCurX/SC; input.touchY=tCurY/SC; // v1.99.0 «Метр неба»
   }
 }
-/* v1.282.20: мышь помечается отдельно от пальца. Раньше она писала прямо в touchX/Y и
-   попадала в категорию «Рекорд касания» — при том что у неё нет ни гейта «тап против
-   свайпа» (200мс или 12px, см. выше), ни пальца поверх экрана, ни фазы «дотянуться»:
-   курсор телепортируется в любую точку мгновенно. 200 миллисекунд форы на каждое
-   возобновление руления — это 12.8 метра трассы на максимальной скорости. Флаг
-   input.byMouse разводит счётчики, категория считается честно. */
-/* v1.282.20 «Мышь не залипает». Две беды разом.
-   Первая: mouseup за пределами окна до window не доходит — отпустил кнопку снаружи, и touchX
-   остаётся не-null НАВСЕГДА. Самолёт паркуется у последней точки до конца забега, а гироскоп и
-   клавиши при этом полностью заблокированы: ветка «палец главнее» в game.js их не пускает.
-   Вторая: тап без движения не подавляет совместимые mouse-события, поэтому одно касание шло и
-   тач-путём, и мышиным — compat-mousedown заново ставил touchX уже ПОСЛЕ того, как touchEnd его
-   обнулил, и поднимал byMouse, из-за чего секунды уходили в «не палец» и судили категорию.
-   Лечение: мышь работает только когда пальца нет (tId===null), и есть три страховки отпускания —
-   mouseup, уход курсора из окна и потеря фокуса. */
-function mouseRelease(){ if(input.byMouse){ input.touchX=null; input.touchY=null; } }
-window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; }); // v1.99.0
-window.addEventListener('mousemove',e=>{ if(tId!==null) return; if(e.buttons){ input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; } }); // v1.99.0
-window.addEventListener('touchstart',()=>{ input.byMouse=false; },{passive:true}); // палец вернулся — снимаем метку
-window.addEventListener('mouseup',mouseRelease);
-window.addEventListener('mouseleave',mouseRelease);   // курсор ушёл из окна с зажатой кнопкой
-window.addEventListener('blur',mouseRelease);         // окно потеряло фокус — отпускания мы уже не увидим
-/* v1.282.20 «Клавиши не залипают»: keyup слушается только на window, поэтому Alt+Tab с зажатой
-   стрелкой (или системное сочетание, перехватившее клавишу) оставляет руль в нажатом положении.
-   Возврат в игру — и самолёт сам едет в стену. Пауза при сворачивании ставится, но ввод не чистит. */
-function keysRelease(){ input.keyL=input.keyR=input.keyU=input.keyD=false; }
-window.addEventListener('blur',keysRelease);
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) keysRelease(); });
+window.addEventListener('mousedown',e=>{ if(!tDown){ input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; } }); // v1.99.0; v1.108.1: не перебивать активное настоящее касание призрачным mousedown
+window.addEventListener('mousemove',e=>{ if(e.buttons && !tDown){ input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; } }); // v1.99.0; v1.108.1: та же защита
+window.addEventListener('mouseup',()=>{ if(!tDown) { input.touchX=null; input.touchY=null; } }); // v1.108.1: запоздалый синтетический mouseup от старого касания не должен гасить руление уже НОВОГО, настоящего касания
 window.addEventListener('contextmenu',e=>e.preventDefault());
 
 /* ---------- Клавиатура (desktop fallback: стрелки + WASD + рус. раскладка) ---------- */
@@ -620,23 +413,7 @@ function gamepadRumble(strength, durationMs){
   }catch(e){}
 }
 
-/* v1.282.13 «Клавиши знают своё место». Две беды сразу.
-   Первая: штурвал перехватывал буквы, когда игрок печатал. Позывной, название трассы,
-   код друга — в них нельзя было ввести w/a/s/d и пробел (preventDefault съедал), а
-   стрелки уводило у ползунков Кузницы вместо перемещения бегунка.
-   Вторая, злее: сочетания вроде Ctrl+W или Cmd+S ловились по коду физической клавиши,
-   руль вставал в true — а keyup до окна уже не доходил (браузер забирал сочетание себе),
-   и клавиша оставалась ЗАЛИПШЕЙ: самолёт уводило до конца забега.
-   Оба случая закрываются одной проверкой на входе. */
-function keysBusy(e){
-  if(e.ctrlKey||e.metaKey||e.altKey) return true;      // сочетание принадлежит системе, не рулю
-  const t=e.target;
-  if(!t||!t.tagName) return false;
-  const tag=t.tagName.toUpperCase();
-  return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t.isContentEditable===true;
-}
 window.addEventListener('keydown',e=>{
-  if(keysBusy(e)) return;
   const k=e.key, c=e.code; // v1.108.1 «Честная клавиатура»: код физической клавиши, не символ раскладки —
   // раньше 'a'/'A' не срабатывало на AZERTY/QWERTZ (там на месте W/A/S/D другие буквы), только на QWERTY/ЙЦУКЕН
   if(k==='ArrowLeft'||c==='KeyA'){input.keyL=true;e.preventDefault();}
@@ -647,8 +424,6 @@ window.addEventListener('keydown',e=>{
   if(k==='Escape'||c==='KeyP'){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
 });
 window.addEventListener('keyup',e=>{
-  // v1.282.13: отпускание слушаем ВСЕГДА, без фильтра. Поднять руль обязаны в любом
-  // случае — иначе клавиша, зажатая до того, как фокус ушёл в поле ввода, залипнет.
   const k=e.key, c=e.code;
   if(k==='ArrowLeft'||c==='KeyA')input.keyL=false;
   if(k==='ArrowRight'||c==='KeyD')input.keyR=false;

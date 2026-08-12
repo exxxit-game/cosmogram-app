@@ -66,7 +66,7 @@ function cardDraw(){
   x.beginPath(); x.moveTo(W/2-90,398); x.lineTo(W/2+90,398); x.stroke();
   // --- статы забега
   x.fillStyle='#dfe8ff'; x.font='500 25px "Exo 2",sans-serif';
-  x.fillText(L.missionLbl+' '+cardData.mission+'  ·  '+fmtN(cardData.dist)+' '+(L.unitM||'м'),W/2,452);
+  x.fillText(L.missionLbl+' '+cardData.mission+'  ·  '+fmtN(cardData.dist)+' м',W/2,452);
   x.fillText('✦ '+cardData.stars+'  ·  ×'+cardData.combo,W/2,494);
   // --- призыв
   x.fillStyle='#c9a45c'; x.font='italic 500 24px "Exo 2",sans-serif';
