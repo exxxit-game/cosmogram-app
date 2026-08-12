@@ -1,15 +1,66 @@
 <!DOCTYPE html><html lang="ru"><head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<!-- v1.108.1: убраны maximum-scale=1.0 и user-scalable=no — раньше зум был выключен ВЕЗДЕ,
+     не только в полёте; слабовидящий не мог увеличить текст в Настройках. Блокировка жестов
+     теперь только в полёте, через touch-action на body (см. setScreen) -->
 <meta name="theme-color" content="#070b18"/>
+<!-- v1.282.20 «Свежий борт». Все скрипты версионируются через ?v=, но решает, какой ?v= будет
+     запрошен, САМ index.html — а он единственный, кого никто не версионирует. Service worker
+     выключен по замыслу (см. хвост файла) и стратегию «сеть-первой» не применяет. Итог: WebView
+     Telegram держит HTTP-кэш агрессивно и переживает сворачивание — игрок мог остаться на
+     старой сборке ЦЕЛИКОМ и без единого признака, а мы бы гадали, почему правка «не приехала».
+     Мета-тег WebView уважает не всегда, поэтому рядом стоит второй замок — тихая проверка
+     версии на живом сервере (см. хвост файла). -->
+<meta http-equiv="Cache-Control" content="no-store"/>
+<!-- v1.108.1 «Не жди своей очереди»: раньше оба шрифта начинали качаться только когда браузер
+     дочитывал CSS до @font-face — теперь браузер узнаёт о них сразу, в первой строке <head>. -->
+<link rel="preload" href="fonts/exo2-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/exo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- v1.280.0: preconnect на оба внешних CDN — ускоряет только САМОЕ ПЕРВОЕ обращение к каждому
+     домену (DNS+TLS заранее), сами скрипты по-прежнему грузятся своим обычным путём ниже -->
+<link rel="preconnect" href="https://browser.sentry-cdn.com" crossorigin>
+<link rel="preconnect" href="https://cdn.amplitude.com" crossorigin>
 <title>Cosmogram</title>
+<!-- v1.108.1 «Обложка книги»: раньше голая ссылка — ни описания, ни картинки в превью на любой
+     площадке за пределами Telegram (мессенджеры, форумы, поиск). Один раз, до полёта — тишина
+     внутри игры (v1.101.0) не тронута ни на йоту, эти теги её не касаются. -->
+<meta name="description" content="Бумажный самолётик в открытом космосе. Аркада: уворачивайся от астероидов, лови звёзды, ставь честные рекорды — одно небо для всех игроков."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
+<meta property="og:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды. Играй прямо в браузере или в Telegram."/>
+<meta property="og:image" content="https://superduck77.github.io/cosmogram-app/icons/og-image.png"/>
+<meta property="og:url" content="https://superduck77.github.io/cosmogram-app/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
+<meta name="twitter:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды."/>
+<meta name="twitter:image" content="https://superduck77.github.io/cosmogram-app/icons/og-image.png"/>
 <!-- PWA «Вторая дверь»: устанавливается на домашний экран, работает офлайн -->
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Космограмма"/>
 <link rel="apple-touch-icon" href="icons/icon-180.png"/>
-<link rel="manifest" href="manifest.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту -->
+<link rel="manifest" id="manifestLink" href="manifest.ru.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту; v1.108.1: язык манифеста переключается в applyLangPref() -->
+<script>
+/* v1.282.13 «Паспорт на нужном языке — сразу». applyLangPref() правит href манифеста,
+   но зовётся из init, то есть уже после всех defer-скриптов — браузер к тому времени
+   давно прочитал манифест по стартовому manifest.ru.json. Chromium смену href подхватит,
+   а Telegram WebApp и Safari на iOS манифест повторно не разбирают: англоязычный игрок,
+   ставящий ярлык сразу, получал на домашний экран «Космограмма». Ставим правильный адрес
+   в <head>, до тела страницы — крошечно, без зависимостей, и applyLangPref остаётся
+   догоняющей поправкой на случай, когда игрок сменит язык руками. */
+(function(){
+  try{
+    var M={ru:'manifest.ru.json',en:'manifest.en.json',es:'manifest.es.json',pt:'manifest.pt.json',fr:'manifest.fr.json'};
+    var lang=null;
+    try{ var raw=localStorage.getItem('cosmogram_v2'); if(raw){ var s=JSON.parse(raw); if(s&&s.lang&&s.lang!=='auto') lang=s.lang; } }catch(e){}
+    if(!lang){ var n=(navigator.language||'ru').slice(0,2).toLowerCase(); if(M[n]) lang=n; }
+    var el=document.getElementById('manifestLink');
+    if(el && lang && M[lang]) el.href=M[lang];
+  }catch(e){}
+})();
+</script>
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
 <!-- v1.79.0: мост Telegram переехал из head в body ПОД затравку — на медленной сети
      он больше не запирает парсер: самолётик рисуется, пока мост ещё летит.
@@ -21,6 +72,12 @@
 html,body{margin:0;padding:0;background:#070b18;color:#dfe8ff}
 .ic{width:1em;height:1em;vertical-align:-.15em}
 canvas{display:block}
+/* v1.280.0 «Честное усиление»: не претендуем на точную научную коррекцию цвета —
+   это было бы нечестно без проверки на настоящем дальтонике. Просто заметно поднимаем
+   контраст/насыщенность, что реально помогает различать оттенки при многих типах
+   недостатка цветовосприятия, и честно называется тем, чем является. */
+#game.hc{filter:contrast(1.4) saturate(1.1)}
+#game.cb{filter:saturate(1.6) contrast(1.15)}
 .hidden{display:none!important}
 /* ============================================================
    COSMOGRAM UI v2 — «Командная палуба»
@@ -63,11 +120,16 @@ canvas{display:block}
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0); touch-action:none;
+html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0);
   overscroll-behavior:none; font-family:var(--font-ui);
   font-weight:500; letter-spacing:.05em; font-variant-numeric:tabular-nums;
   text-transform:uppercase; /* v1.101.0 «Чистое небо»: слово игрока — вся игра говорит ЗАГЛАВНЫМИ */
   user-select:none; -webkit-user-select:none; }
+/* v1.108.1 «Зум только в полёте»: touch-action:none раньше стоял на html,body всегда —
+   блокировал жесты и зум на Настройках, Ангаре, где для слабовидящего они нужны.
+   Класс .flying включается в setScreen() только при name==='game'/'pause' — там,
+   где случайный зум/скролл реально мешает пилотировать; везде остальные — жесты живы. */
+body.flying { touch-action:none; }
 b { font-weight:inherit; } /* единая насыщенность: <b> только для цвета, не для жирности */
 /* v1.101.0: браузер молча сбрасывает регистр у форм-элементов — возвращаем им закон заглавных */
 button, input, select, textarea { text-transform:inherit; }
@@ -80,6 +142,11 @@ button, input, select, textarea { text-transform:inherit; }
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
 #startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen {
   background:rgba(6,10,24,.45); }
+/* v1.282.13: предупреждение о тесном экране — выше всех окон. Раньше у него был общий
+   .overlay z-index:10 и никакого фона, а экраны идут ниже в разметке и с вуалью — при
+   равном слое меню рисовалось поверх. Момент, когда предупреждение нужнее всего (игрок
+   тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
+#tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
 #settingsScreen, #achScreen, #hangarScreen { justify-content:flex-start;
   padding-top:calc(48px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
@@ -205,7 +272,7 @@ button, input, select, textarea { text-transform:inherit; }
      число умерено — хребет подтягивается вплотную, пустоты между ними нет */
 #scoreLbl { font-size:11px; letter-spacing:.24em; font-weight:600;
   color:rgba(188,210,255,.55); text-shadow:0 0 8px rgba(110,160,255,.35); }
-#score { font-size:clamp(26px,7vw,38px); line-height:1; font-weight:600; letter-spacing:.02em;
+#score { font-size:clamp(30px,7.8vw,42px); line-height:1; font-weight:600; letter-spacing:.02em;
   font-variant-numeric:tabular-nums;
   color:#eaf2ff; text-shadow:0 0 18px rgba(110,160,255,.75), 0 2px 6px rgba(6,10,30,.6); }
 #telemHud { position:fixed; top:max(60px, calc(2px + var(--sat))); /* v1.105.0: хребет вплотную под колонной вагона */ left:0; right:0; z-index:12;
@@ -214,11 +281,10 @@ button, input, select, textarea { text-transform:inherit; }
    но зазоры подтянуты и число умерено (слово игрока: громоздко) */
 .island #scorePack { top:max(56px, var(--sat)); } /* v1.105.0: колонна — теперь язык всех небес, остров лишь держит своё место */
 .island #scoreLbl { font-size:11px; letter-spacing:.3em; }
-.island #score { font-size:clamp(34px,9.5vw,46px); }
+.island #score { font-size:clamp(38px,10.2vw,50px); }
 .island #telemHud { top:calc(max(56px, var(--sat)) + 76px); gap:4px; }
 .island #hud { padding-top:max(206px, calc(150px + var(--sat))); }
 .island #hudShade { height:calc(215px + var(--sat)); }
-.telemDot { color:rgba(188,210,255,.35); font-size:10px; }
 #starsTelem { font-size:17px; font-weight:600; color:#ffd76a; letter-spacing:.05em;
   font-variant-numeric:tabular-nums; /* v1.76.0 */
   text-shadow:0 0 10px rgba(255,200,80,.6), 0 1px 3px rgba(6,10,30,.7);
@@ -351,6 +417,11 @@ button, input, select, textarea { text-transform:inherit; }
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
+/* v1.282.20 «Подтверждённый рекорд»: тихая галочка у тех строк, чей результат сервер объяснил
+   паспортом забега. Метим только ПОДТВЕРЖДЁННОЕ и ничем не метим остальное — обратное чтение
+   («у него нет значка, значит жулик») несправедливо: у старых записей паспорта не было в природе. */
+.topVf { flex:none; width:16px; height:16px; margin-left:-3px; color:var(--gold-hi); opacity:1; }
+.topVf .ic, .topVf svg { width:16px; height:16px; display:block; stroke-width:2.4; }
 .topMsg { color:var(--muted); font-size:13px; text-align:center; padding:24px 10px; }
 
 /* ---- М6 Моушн: переходы экранов (fade + подъём 12px), каскад строк ---- */
@@ -422,11 +493,7 @@ button, input, select, textarea { text-transform:inherit; }
 .shipItem .own .ic { width:1.1em; height:1.1em; }
 .shipItem .own.isOwn { background:none; color:var(--ok); }
 .shipItem .fxTag { color:var(--gold-hi); font-size:11px; } /* метка фирменной фишки у ярких/легендарных */
-.shipItem .try { flex:none; display:inline-flex; align-items:center; justify-content:center;
-  gap:.35em; border:1px solid rgba(127,216,255,.45); color:#bfeaff; border-radius:10px;
-  padding:6px 10px; font-size:12.5px; white-space:nowrap; cursor:pointer; }
-.shipItem .try:active { transform:scale(.93); }
-.shipItem .try.off { opacity:.35; cursor:default; }
+/* v1.282.20: стили кнопки «Примерка» убраны вместе с фичей */
 
 /* ---- Служебные слои ---- */
 #vignette { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0;
@@ -734,6 +801,17 @@ button, input, select, textarea { text-transform:inherit; }
      игрокам лишний сторонний скрипт ни к чему. Историческая табличка старого дома — в летописи. -->
 </head>
 <body>
+<!-- v1.108.1 «Пока грузится небо»: чистый HTML/CSS, без единой зависимости от JS — рисуется до
+     первого скрипта, значит переживёт даже полный отказ сети. Прячется инлайн-скриптом после
+     последнего <script> внизу страницы (js/ui.js) — к этому моменту все теги успели отработать. -->
+<div id="bootLoad" style="position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;background:#070b18;color:#dfe8ff;
+  font-family:system-ui,sans-serif;">
+  <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);
+    border-top-color:#8fd0ff;animation:bootSpin 0.9s linear infinite;"></div>
+  <div style="font-size:14px;opacity:.7;">Небо загружается…</div>
+</div>
+<style>@keyframes bootSpin{to{transform:rotate(360deg)}}</style>
 <!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
@@ -746,17 +824,79 @@ button, input, select, textarea { text-transform:inherit; }
 <symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11.5V5.8a1.6 1.6 0 0 1 3.2 0v4.7"></path><path d="M12.2 10.5 16 11.2a2 2 0 0 1 1.6 2.4l-.9 3.8a4.2 4.2 0 0 1-4.1 3.1h-1.8a4.2 4.2 0 0 1-3.3-1.7L5.6 15a1.5 1.5 0 0 1 2.3-1.9l1.1 1.4"></path></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"></rect><path d="M11 18.5h2"></path></symbol>
 <symbol id="i-gyro" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path><path d="M21 3.5V8h-4.5"></path><path d="M12 8.5 15 12l-3 3.5L9 12z"></path></symbol>
+<symbol id="i-keys" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"></rect><path d="M5.5 10h1M9 10h1M12.5 10h1M16 10h1M5.5 13.5h1M9 13.5h1M12.5 13.5h1M16 13.5h1M8 17h8"></path></symbol>
 <symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
 </defs></svg>
-<script src="js/vendor/telegram-web-app.js?v=1.108.0"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.282.21"></script><!-- мост: под затравкой, раньше core.js -->
+<!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
+     начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
+     СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
+     он значит «мост отработает позже, вместе с остальными defer-скриптами». Хеш
+     стирался раньше, чем мост успевал его прочитать: внутри Telegram игрок становился
+     гостем без initData. core.js — тоже defer и идёт по счёту ПОСЛЕ моста, поэтому там
+     мост гарантированно уже отработал (см. core.js). Страж 68 проверял только «хеш
+     убран», не «дожил ли initData до игры» — оба неверно давали зелень при этой поломке. -->
+<script>
+/* v1.282.13 «Наблюдатели не запирают дверь»: оба сторонних канала (Sentry, Amplitude)
+   раньше висели обычными <script src> ВЫШЕ канваса — а такой тег останавливает разбор
+   страницы, пока файл не приедет. Если CDN недоступен (для части игроков это обычный
+   день), парсер не доходил до канваса и экранов, defer-скрипты игры не стартовали,
+   DOMContentLoaded не наступал — спиннер крутился, игры не было вовсе. Оба тега ниже
+   стали async: сеть их больше не ждёт, игра грузится своим ходом.
+   Запалы объявлены ЗДЕСЬ, до самих тегов, намеренно: async-файл может приехать в любой
+   момент, в том числе раньше, чем парсер дошёл бы до строки под тегом — тогда onload
+   позвал бы ещё не существующую функцию. */
+/* v1.282.20 «Один выключатель на все двери». Тумблер в настройках гасил только «Почту
+   неба», а Sentry и Amplitude собирали данные независимо и выключателя не имели вовсе —
+   при том что хартия обещает «честный выключатель: выкл значит молчание». Теперь оба
+   наблюдателя спрашивают тот же ключ, что и почта, и при выключенном тумблере просто
+   не инициализируются: не отправляют ничего и ничего не копят. */
+function __telemetryAllowed(){
+  try{ const raw=localStorage.getItem('cosmogram_v2'); if(!raw) return true;
+    const st=JSON.parse(raw); return !(st && st.beaconOn===0); }catch(e){ return true; }
+}
+function __sentryBoot(){
+  if (!__telemetryAllowed()) return;
+  if (!window.Sentry) return;
+  // Sentry — независимый канал, не замена «Почте неба» (beacon.js), а дополнение с более
+  // зрелым интерфейсом для разбора инцидентов. Оба работают параллельно, каждый своими
+  // глобальными обработчиками — падение одного не роняет другой.
+  Sentry.init({
+    dsn: 'https://55ca5b35e5804f14b0e04473c3e2138f@o4511888537878528.ingest.de.sentry.io/4511889470980176',
+    release: 'cosmogram@1.282.21', // v1.282.13: раньше здесь навсегда застыло 1.108.1 — все инциденты 174 версий слипались в один мёртвый релиз, и «когда сломалось» определить было нечем
+    tracesSampleRate: 0, // только ошибки, без трассировки производительности — экономия квоты
+  });
+}
+function __amplitudeBoot(){
+  if (!__telemetryAllowed()) return; // v1.282.20: тот же тумблер, что у «Почты неба»
+  if (!window.amplitude) return;
+  // «Куда игроки бросают руль»: продуктовая аналитика, отдельно от отладки ошибок —
+  // Sentry/beacon.js смотрят на баги, Amplitude смотрит на поведение. Сознательно БЕЗ
+  // Session Replay (полной записи экрана игрока) — это отдельное решение о приватности,
+  // не включается заодно с обычной аналитикой без явного отдельного «да».
+  amplitude.init('2d7e5288f0007ea7fbf9515286e25031', {
+    fetchRemoteConfig: true,
+    autocapture: true,
+    serverZone: 'EU', // тот же регион, что и сам проект в Amplitude
+  });
+}
+</script>
+<script async src="https://browser.sentry-cdn.com/8.9.2/bundle.tracing.min.js" crossorigin="anonymous" onload="__sentryBoot()"></script>
+<script async src="https://cdn.amplitude.com/script/2d7e5288f0007ea7fbf9515286e25031.js" onload="__amplitudeBoot()"></script>
 <canvas id="game"></canvas>
+<div id="tooNarrow" class="overlay hidden">
+  <div class="scrMid"><div class="stack">
+    <div class="screenTitle" id="tooNarrowTitle">Экран слишком узкий</div>
+    <div class="pillCap" id="tooNarrowHint">Разверните окно или поверните экран, чтобы полететь</div>
+  </div></div>
+</div>
 <div id="vignette"></div>
 <div id="fog"></div>
 <div id="flash"></div>
 <div id="dim"></div>
-<div id="toast"></div>
+<div id="toast" aria-live="polite" role="status"></div>
 <!-- Н2: карточка награды — празднуем по одной -->
 <div id="claimScreen" class="hidden">
   <div class="claimCard">
@@ -782,7 +922,7 @@ button, input, select, textarea { text-transform:inherit; }
 
 <div id="topHud" class="hidden">
   <div id="pausePack">
-    <div id="pauseBtn" role="button"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
+    <div id="pauseBtn" role="button" tabindex="0"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
     <span id="starsTelem"><canvas id="starJewel" class="i-pl" width="32" height="32" aria-hidden="true"></canvas> <b id="pillStarsN">0</b></span>
   </div>
   <canvas id="livesCanvas" width="132" height="48"></canvas>
@@ -849,25 +989,28 @@ button, input, select, textarea { text-transform:inherit; }
 <div id="settingsScreen" class="overlay hidden">
   <!-- v1.65.0 «Спойлеры»: категории — аккордеон, открыта одна панель; «Ещё» — под-спойлеры; «Назад» в потоке -->
   <div class="screenTitle" id="settingsTitle">Настройки</div>
-  <div class="setGrp spoiler" id="setGrpSound" role="button"><span class="setGrpT">Звук и эфир</span><span class="setGrpSub" id="setGrpSoundSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpSound" role="button" tabindex="0"><span class="setGrpT">Звук и эфир</span><span class="setGrpSub" id="setGrpSoundSub"></span></div>
   <div class="setPanel hidden" id="panelSound">
-    <div class="setRow" id="setSoundBtn" role="button"><span class="setK">Звук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMusicBtn" role="button"><span class="setK">Музыка</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMorseBtn" role="button"><span class="setK">Морзянка</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
-    <div class="setRow" id="setVibroBtn" role="button"><span class="setK">Виброотклик</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <div class="setRow" id="setMorseHapBtn" role="button"><span class="setK">Виброэфир</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setSoundBtn" role="button" tabindex="0"><span class="setK">Звук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMusicBtn" role="button" tabindex="0"><span class="setK">Музыка</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseBtn" role="button" tabindex="0"><span class="setK">Морзянка</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setVibroBtn" role="button" tabindex="0"><span class="setK">Виброотклик</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setMorseHapBtn" role="button" tabindex="0"><span class="setK">Виброэфир</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
-  <div class="setGrp spoiler" id="setGrpGame" role="button"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpGame" role="button" tabindex="0"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
   <div class="setPanel hidden" id="panelGame">
-    <div class="setRow" id="setSensBtn" role="button"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
-    <div class="setRow" id="setGfxBtn" role="button"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
-    <div class="setRow" id="setLangBtn" role="button"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
-    <div class="setRow" id="setGhostBtn" role="button"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
+    <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
+    <div class="setRow" id="setStreaksBtn" role="button" tabindex="0"><span class="setK">Скоростные полосы</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setLangBtn" role="button" tabindex="0"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
+    <div class="setRow" id="setGhostBtn" role="button" tabindex="0"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
-  <div class="setGrp spoiler" id="setGrpProf" role="button"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
+  <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
   <div class="setPanel hidden" id="accPanel">
-    <div class="setRow solo hidden" id="gyroUnlockBtn" role="button">Открыть «Полёт без рук»</div>
-    <div class="setRow hidden" id="setGyroOffBtn" role="button"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
+    <div class="setRow solo hidden" id="gyroUnlockBtn" role="button" tabindex="0">Открыть «Полёт без рук»</div>
+    <div class="setRow hidden" id="setGyroOffBtn" role="button" tabindex="0"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
     <div id="accStatus" class="accStatus"></div>
     <div class="csCap" id="csCap">Позывной — звучит в морзянке и виброэфире</div>
     <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
@@ -876,17 +1019,17 @@ button, input, select, textarea { text-transform:inherit; }
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
   </div>
   <div class="setPanel">
-    <div class="setRow solo spoiler" id="moreBtn" role="button">Ещё</div>
+    <div class="setRow solo spoiler" id="moreBtn" role="button" tabindex="0">Ещё</div>
     <div id="moreBox" class="hidden">
-      <div class="setRow solo" id="setCalibBtn" role="button"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-      <div class="setRow" id="setBeaconBtn" role="button"><span class="setK">Помогать экипажу отчётами</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
-      <div class="setRow solo go" id="diagBtn" role="button">Сервисный центр</div>
-      <div class="setRow solo spoiler" id="aboutBtn" role="button">Об игре</div>
+      <div class="setRow solo" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+      <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+      <div class="setRow solo go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
+      <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
       <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
     </div>
   </div>
   <div class="setPanel">
-    <div class="setRow solo" id="settingsBackBtn" role="button">Назад</div>
+    <div class="setRow solo" id="settingsBackBtn" role="button" tabindex="0">Назад</div>
   </div>
 </div>
 
@@ -906,7 +1049,7 @@ button, input, select, textarea { text-transform:inherit; }
     <pre id="diagReportBox" class="hidden" style="white-space:pre-wrap;font-size:11px;text-align:left;margin:8px 8px 0"></pre>
   </div>
   <div class="setPanel">
-    <div class="setRow solo" id="diagBackBtn" role="button">Назад</div>
+    <div class="setRow solo" id="diagBackBtn" role="button" tabindex="0">Назад</div>
   </div>
 </div>
 
@@ -990,6 +1133,7 @@ button, input, select, textarea { text-transform:inherit; }
     <div id="topCats">
       <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
       <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
+      <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg></button>
       <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
       <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
     </div>
@@ -1055,22 +1199,58 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script src="js/core.js?v=1.108.0"></script>
-<script src="js/blackbox.js?v=1.108.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script src="js/beacon.js?v=1.108.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script src="js/input.js?v=1.108.0"></script>
-<script src="js/game.js?v=1.108.0"></script>
-<script src="js/ach.js?v=1.108.0"></script>
-<script src="js/sync.js?v=1.108.0"></script>
-<script src="js/render.js?v=1.108.0"></script>
-<script src="js/planetarium.js?v=1.108.0"></script>
-<script src="js/goldstar.js?v=1.108.0"></script>
-<script src="js/music.js?v=1.108.0"></script>
-<script src="js/gyro.js?v=1.108.0"></script>
-<script src="js/forge.js?v=1.108.0"></script>
-<script src="js/card.js?v=1.108.0"></script>
-<script src="js/star.js?v=1.108.0"></script>
-<script src="js/ui.js?v=1.108.0"></script>
+<script defer src="js/core.js?v=1.282.21" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.282.21"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.282.21"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.282.21"></script>
+<script defer src="js/game.js?v=1.282.21" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.282.21"></script>
+<script defer src="js/sync.js?v=1.282.21"></script>
+<script defer src="js/render.js?v=1.282.21"></script>
+<script defer src="js/planetarium.js?v=1.282.21"></script>
+<script defer src="js/goldstar.js?v=1.282.21"></script>
+<script defer src="js/music.js?v=1.282.21"></script>
+<script defer src="js/gyro.js?v=1.282.21"></script>
+<script defer src="js/forge.js?v=1.282.21"></script>
+<script defer src="js/adaptive.js?v=1.282.21"></script>
+<script defer src="js/card.js?v=1.282.21"></script>
+<script defer src="js/star.js?v=1.282.21"></script>
+<script defer src="js/ui.js?v=1.282.21"></script>
+<script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
+// выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
+// Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
+// ждём DOMContentLoaded, он по спецификации наступает строго после всех deferred-скриптов.
+/* v1.282.13 «Чёрный экран не молчит». __bootFail взводился ТОЛЬКО атрибутом onerror у
+   core.js и game.js — то есть лишь когда файл не скачался. Если файл приехал и упал при
+   исполнении (или упал любой из остальных 16 скриптов, у которых onerror нет вовсе),
+   спиннер всё равно снимался, и игрок оставался перед пустой тьмой без единой подсказки —
+   самый безнадёжный вид поломки: непонятно даже, обновлять ли страницу.
+   Проверяем не «была ли где-то ошибка» (так спиннер застревал бы от любой безобидной
+   осечки на рабочей игре — сначала я именно так и написал, страж поймал), а факт:
+   поднялась ли игра. К моменту DOMContentLoaded все defer-скрипты по спецификации уже
+   исполнены, поэтому отсутствие GAME_VERSION или startGame означает ровно одно — не взлетели. */
+window.addEventListener('DOMContentLoaded', function(){
+  /* v1.282.14: маяк вместо косвенных признаков. Первая редакция спрашивала
+     `typeof GAME_VERSION`, и это была ошибка ровно в своём же сценарии: GAME_VERSION —
+     это `const` в середине core.js, его привязка создаётся при инстанцировании скрипта.
+     Если core.js приехал и упал ДО своей строки const, привязка навсегда остаётся в
+     «мёртвой зоне», и typeof не возвращает 'undefined', а БРОСАЕТ ReferenceError —
+     обработчик обрывался на первой строке, подсказка не появлялась, спиннер висел вечно.
+     Вторая беда: startGame — объявление функции, оно поднимается при инстанцировании,
+     поэтому упавший ui.js всё равно читался как «взлетели».
+     Теперь спрашиваем явный маяк, который ui.js ставит последней своей строкой, а весь
+     опрос — под try, потому что читать чужие привязки в неизвестном состоянии небезопасно. */
+  var alive = false;
+  try{ alive = (window.__gameUp===1) || ((typeof GAME_VERSION!=='undefined') && (typeof startGame==='function')); }catch(e){ alive=false; }
+  var __bl = document.getElementById('bootLoad');
+  if(window.__bootFail || !alive){
+    if(__bl) __bl.innerHTML='<div style="text-align:center;padding:0 24px">Игра не смогла взлететь.<br>Обновите страницу — если не поможет, напишите нам.</div>';
+    return;
+  }
+  if(__bl) __bl.remove();
+  window.__bootReady=1;
+});
+</script>
 <script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —
 // каждый заход видит свежую версию. Вернуть = восстановить регистрацию sw.js и link manifest:
 // файлы на месте, валидатор следит за их согласованностью.

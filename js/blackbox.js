@@ -11,8 +11,14 @@ const BB=(()=>{
   const MAX=180, SAVE=120; // кольцо в памяти / сколько переживает перезагрузку
   let tape=[], dirty=false;
   const t0=performance.now();
-  try{ const old=Store.get('bbTape',null);
-    if(old && old.length) tape=old.slice(-SAVE); }catch(e){}
+  /* v1.282.20: лента читается через санацию. Битое значение (строка вместо массива)
+     проходило проверку old.length, tape становился строкой, и первый же tape.push бросал
+     TypeError ВНУТРИ инициализатора const BB — после чего привязка BB навсегда оставалась
+     в мёртвой зоне, и каждое typeof BB!=='undefined' в проекте бросало ReferenceError
+     вместо 'undefined'. Игра не взлетала вовсе. Ключ пишется каждые 4 секунды и легко
+     бьётся при скосе версий. */
+  try{ const old=(typeof saneArray==='function')?saneArray(Store.get('bbTape',[]),[]):[];
+    tape=old.filter(x=>x&&typeof x==='object').slice(-SAVE); }catch(e){ tape=[]; }
   function stamp(){ const s=(performance.now()-t0)/1000;
     return '+'+(s<100?(s<10?'00':'0'):'')+s.toFixed(1)+'s'; }
   function log(ev,d){
@@ -51,8 +57,15 @@ function bbVerdict(){
     if(!HAS_GYRO) return L.bbVNoSensor;
     if(!gyroUnlocked()) return L.bbVLock;
     const tp=(typeof tgPkt==='number'?tgPkt:0), wp=(typeof webPkt==='number'?webPkt:0);
-    if(!tp && !wp) return L.bbVSilent;
+    if(!tp && !wp) return L.bbVSilent; // не текло вообще ни разу
     if(typeof steerChan!=='undefined' && steerChan==='none') return L.bbVNoChan;
+    // v1.282.4: tp/wp — счётчики ПОЖИЗНЕННЫЕ, никогда не обнуляются. Канал, что честно
+    // тёк в начале сеанса и замолчал посреди него (отозвано разрешение, фон убил датчик),
+    // проходил проверку выше как «не молчал никогда» и вердикт полз дальше по цепи на
+    // ЗАСТЫВШИХ данных. chanSilent() уже существует и уже верно определяет живость канала
+    // для самого рулевого арбитража (input.js) — вердикт им просто не пользовался.
+    if(typeof chanSilent==='function' && typeof steerChan!=='undefined' && steerChan!=='none' && chanSilent(steerChan))
+      return L.bbVSilent+' (умолк)';
     if(typeof chanSpread==='function' && chanSpread(steerChan)>80) return L.bbVStorm; // v1.99.8 «Тихий штурман»
     if(input.baseG==null) return L.bbVNoZero;
     const zm=(lastGamma!=null && typeof remapAxes==='function') ? remapAxes(lastGamma, lastBeta==null?0:lastBeta) : null;
