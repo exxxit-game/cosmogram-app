@@ -3328,6 +3328,55 @@ async function guardModuleGradientsCached(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 103 — Сброс холста после потери GPU-контекста чистит градиенты станции, звезды дня
+   и хвост кометы, а не только кэши самого render.js (партия 27).
+   Стережёт: gfxInvalidate() в render.js (ЯДРО) + новые мостики PLANET._gfxReset()/
+   GOLD._gfxReset() в модулях planetarium.js/goldstar.js.
+   Беда: владелец сообщил — «спутник на фоне [станция] и другие элементы» пропали, раньше
+   были. По коду нашлось: `staG` (planetarium.js) и `gsG` (goldstar.js) кэшируют настоящие
+   CanvasGradient «один раз навсегда» — экономия кадра, разумная сама по себе. Но
+   `gfxInvalidate()` (написан в партии «Потеря холста», v1.282.20, именно чтобы забыть все
+   протухшие градиенты после contextlost/contextrestored) знает только про свои кэши в
+   render.js — про эти два модульных кэша забыли. После восстановления контекста станция и
+   звезда дня рисуются старыми, уже мёртвыми градиентами — тихо, без ошибки, элемент просто
+   перестаёт быть виден до полной перезагрузки страницы. Третий, менее опасный случай того
+   же класса — o._tg/o._tgk (хвост кометы, кэш на самом объекте препятствия) — самоисцеляется
+   за секунды (кометы живут недолго), но починен заодно, раз уж класс один. */
+async function guardGfxInvalidateClearsModuleGradients(browser){
+  const name = '103. Сброс холста чистит градиенты станции, звезды дня и хвоста кометы (партия 27)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      runMode='daily'; startGame();
+      Q.mode='manual'; Q.level=3; // станция выходит только в богатом небе (Q.level>=2)
+      if(typeof PLANET!=='undefined' && PLANET._poke) PLANET._poke('station');
+      if(typeof GOLD!=='undefined' && GOLD._poke) GOLD._poke();
+      const c=poolOb.take(); c.kind='comet'; c.x=100; c.y=100; c.r=15; c.vx=2; c.vy=3; c.rot=0; c._tint=null; c._tg=null; c._tgk=undefined;
+      obstacles.push(c);
+      for(let f=0;f<8;f++){ update(1/60); draw(); } // прогрев: станция выходит, звезда рождается, комета летит и печёт градиенты
+      const staBefore = (typeof PLANET!=='undefined' && PLANET._gradCount)?PLANET._gradCount():-1;
+      const goldBefore = (typeof GOLD!=='undefined' && GOLD._gradCount)?GOLD._gradCount():-1;
+      const cometBefore = !!c._tg;
+      gfxInvalidate();
+      const staAfter = (typeof PLANET!=='undefined' && PLANET._gradCount)?PLANET._gradCount():-1;
+      const goldAfter = (typeof GOLD!=='undefined' && GOLD._gradCount)?GOLD._gradCount():-1;
+      const cometAfter = !!c._tg;
+      const idx=obstacles.indexOf(c); if(idx>=0) obstacles.splice(idx,1); // не мешать следующим стражам
+      return { staBefore, goldBefore, cometBefore, staAfter, goldAfter, cometAfter };
+    });
+    if (r.staBefore<1) return post(name,false,'не удалось наполнить кэш градиентов станции перед проверкой — сценарий не тот');
+    if (r.goldBefore<1) return post(name,false,'не удалось наполнить кэш градиентов звезды дня перед проверкой — сценарий не тот');
+    if (!r.cometBefore) return post(name,false,'не удалось наполнить градиент хвоста кометы перед проверкой — сценарий не тот');
+    if (r.staAfter!==0) return post(name,false,`gfxInvalidate() не очистил кэш станции: осталось ${r.staAfter} градиентов — после восстановления холста станция рисовалась бы протухшими`);
+    if (r.goldAfter!==0) return post(name,false,`gfxInvalidate() не очистил кэш звезды дня: осталось ${r.goldAfter} градиентов`);
+    if (r.cometAfter) return post(name,false,'gfxInvalidate() не сбросил градиент хвоста кометы на живом объекте');
+    post(name,true,'станция, звезда дня и хвост кометы переживают восстановление холста без протухших градиентов');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* Страж 90 — Цвет частицы не собирается строкой на каждую частицу.
    Стережёт: partCol() и STREAK_COL в render.js.
    Беда: 'rgba(255,120,60,' + 0.7263412... + ')' на КАЖДУЮ частицу в КАЖДОМ кадре —
@@ -3720,7 +3769,7 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
                  guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift,
                  guardResizeSurvivesZeroViewport, guardNonTelegramHudGetsBreathingRoom,
-                 guardPopupTextIsUppercase, guardWaveLullContrast ];
+                 guardPopupTextIsUppercase, guardWaveLullContrast, guardGfxInvalidateClearsModuleGradients ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

@@ -128,11 +128,17 @@ const GOLD=(()=>{
     ctx.restore();
   }
 
+  /* v1.282.23 «Звезда дня переживает восстановление холста» (партия 27): та же беда, что
+     у станции (см. planetarium.js) — gsG кэширует градиенты «один раз навсегда», а
+     gfxInvalidate() про него не знал. После потери GPU-контекста звезда дня рисовалась бы
+     мёртвыми градиентами до перезагрузки страницы. */
+  function gfxReset(){ for(const k in gsG) delete gsG[k]; }
   return { reset, tick, draw,
     _state:()=>({ day, frac, spawned, star:!!star,
       x:star?Math.round(star.x):-1, y:star?Math.round(star.y):-1, caught, flash:catchT>0 }),
     _poke:()=>{ S.dist=Math.max(S.dist,GOLD_DIST-LOOKAHEAD_M-2); }, // страж: пригнать миг появления
-    _catch:()=>{ if(star){ plane.x=star.x; plane.y=star.y; } } };  // страж: поднести самолётик к звезде
+    _catch:()=>{ if(star){ plane.x=star.x; plane.y=star.y; } },  // страж: поднести самолётик к звезде
+    _gradCount:()=>Object.keys(gsG).length, _gfxReset:gfxReset };
 })();
 const goldReset=()=>GOLD.reset();   // мосты — как у Планетария: без try/catch, ошибки летят в самописец
 const goldTick=(dt)=>GOLD.tick(dt);

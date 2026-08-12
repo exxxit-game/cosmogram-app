@@ -215,10 +215,18 @@ const PLANET=(()=>{
   function reset(){ mile=0; mileT=0; sparks.length=0; flash=null; met=null; sta=null; _bank=0;
     metT=8+R()*10; staT=70+R()*60; }   // те же окна, что при загрузке модуля
 
+  /* v1.282.23 «Станция переживает восстановление холста» (партия 27): staG кэшировал
+     градиенты станции «один раз навсегда» (см. комментарий у staGrad выше) — но после
+     потери GPU-контекста (contextlost/contextrestored, партия «Потеря холста» v1.282.20)
+     старые CanvasGradient становятся мусором, а gfxInvalidate() в render.js про staG не
+     знал: станцию латали от печки-в-каждом-кадре, но не от протухания после потери
+     контекста — тот же класс беды, другая половина. _gfxReset() — мостик для ядра. */
+  function gfxReset(){ for(const k in staG) delete staG[k]; }
   return { sky, rockTint, planeFx, spark, engineK, reset,
     // мостик стража: заглянуть внутрь и подтолкнуть редких гостей (тесты, не игра)
     _state:()=>({metT, met:!!met, staT, sta:!!sta, staX:sta?Math.round(sta.x):-1, staY:sta?Math.round(sta.y):-1, sparks:sparks.length, mile, mileT, flash:!!flash}),
-    _poke:(w)=>{ if(w==='meteor') metT=0; if(w==='station') staT=0; if(w==='mile'){ mile=Math.floor(S.dist/1000); } } };
+    _poke:(w)=>{ if(w==='meteor') metT=0; if(w==='station') staT=0; if(w==='mile'){ mile=Math.floor(S.dist/1000); } },
+    _gradCount:()=>Object.keys(staG).length, _gfxReset:gfxReset };
 })();
 // прямые мостики в ядро — без обёрток: ошибка должна попасть в самописец, а не утонуть
 const planetSky=(tN)=>PLANET.sky(tN);

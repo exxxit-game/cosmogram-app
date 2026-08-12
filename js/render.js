@@ -320,6 +320,14 @@ function gfxInvalidate(){
   for(const k in powGlowCache) delete powGlowCache[k];
   for(const k in gradCache) delete gradCache[k]; gradN=0;
   for(const k in partColC) delete partColC[k];
+  /* v1.282.23 «Полный сброс» (партия 27): владелец сообщил — станция и другие элементы
+     пропадают и не возвращаются. Причина — эта функция знала только про свои кэши: два
+     модульных кэша градиентов (станция в planetarium.js, звезда дня в goldstar.js) кэшируют
+     «один раз навсегда» в СВОЁМ замыкании и про потерю контекста ничего не знали. Плюс
+     кэш хвоста кометы — на самом объекте препятствия, тоже мимо общего сброса. */
+  if (typeof PLANET!=='undefined' && PLANET._gfxReset) PLANET._gfxReset();
+  if (typeof GOLD!=='undefined' && GOLD._gfxReset) GOLD._gfxReset();
+  if (typeof obstacles!=='undefined') for(const o of obstacles){ if(o.kind==='comet'){ o._tg=null; o._tgk=undefined; } }
 }
 function nebulaSprite(hue){ // двухтональная: яркое ядро → глубокий край
   const c=document.createElement('canvas'); c.width=c.height=200;
