@@ -3445,6 +3445,83 @@ async function guardForgeSkyLoopCachesScreenRef(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 97 — Шаг волны ускорен решением владельца (партия 23).
+   Стережёт: waveDistTarget() в js/game.js.
+   Контекст: аудит 12.08 (при разборе отчётов об ошибках) — бот-замер партии 22 честно показал
+   падение темпа после партий 8 («волну общего неба двигает только дистанция», закон честности)
+   и 10 (убрана дыра — щит давал бесплатные очки за риск): волна на минуте была 6, стала 5;
+   очков за минуту 2621→1594. Владельцу через AskUserQuestion дан разбор цены — «оставить»,
+   «поднять шаг волны на 10-15%», «начать Режиссёра для Классики», «пересмотреть формулу очков».
+   Выбрано: «поднять шаг волны на 10-15%». Дистанция до каждой следующей волны сокращена
+   равномерно на 12.5% (середина одобренного диапазона) — форма шага (400,500,600…1000 м)
+   не искажена, только масштаб; детерминизм общего неба и закрытая дыра щита не тронуты. */
+async function guardWaveDistTargetSped(browser){
+  const name = '97. Шаг волны ускорен на 12.5% (партия 23, решение владельца)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const got={};
+      for(let m=1;m<=9;m++) got[m]=waveDistTarget(m);
+      return got;
+    });
+    const PACE=0.875;
+    const orig = m => m<=7 ? 300*m+50*m*(m+1) : 4900+1000*(m-7);
+    for(let m=1;m<=9;m++){
+      const expect = orig(m)*PACE;
+      if (Math.abs(r[m]-expect) > 0.01)
+        return post(name,false,`волна ${m}: ждали ${expect.toFixed(1)} м (старое×0.875), получили ${r[m]} м`);
+    }
+    for(let m=1;m<9;m++){
+      if (r[m+1] <= r[m]) return post(name,false,`дистанция не растёт монотонно: волна ${m}→${m+1}`);
+    }
+    post(name,true,'дистанция до волны сокращена на 12.5% на всех волнах, форма шага не искажена');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 98 — Ноты музыки разбросаны по высоте/панораме, корень дрона плывёт (партия 24).
+   Стережёт: jitterFreq()/jitterPan() и DRONE_ROOTS-дрейф в js/music.js.
+   Контекст: присланные владельцем материалы (сверено с кодом, не взято на слово) — приём
+   Брайана Ино «неточность делает звук живым» (±3% по высоте, случайная панорама на каждой
+   ноте) и «плывущий центр» (корень дрона медленно ходит по соседним ступеням минорной
+   пентатоники, а не стоит на одной ноте вечно). music.js уже был генеративным синтезом
+   (партия «Фаза А») — это его усиление, не новая система. Владелец подтвердил объединение
+   двух пунктов разбора цены в один цикл. */
+async function guardMusicJitterAndDrift(browser){
+  const name = '98. Ноты музыки разбросаны, корень дрона плывёт (партия 24)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      runMode='classic'; startGame();
+      const freqs=[], pans=[];
+      for(let i=0;i<200;i++){ freqs.push(music._jitterFreq(440)); pans.push(music._jitterPan()); }
+      const freqBad = freqs.some(f=>f<440*0.96 || f>440*1.04);
+      const freqFlat = new Set(freqs).size < 5; // 200 бросков почти наверняка дадут разброс, если рандом реально применяется
+      const panBad = pans.some(p=>p<-1||p>1);
+      const panFlat = new Set(pans).size < 5;
+      const root0 = music._droneRoot();
+      music._kickDrift(1); const root1 = music._droneRoot();
+      music._kickDrift(1); music._kickDrift(1); music._kickDrift(1); music._kickDrift(1); music._kickDrift(1);
+      const rootClamped = music._droneRoot(); // упёрлись в потолок массива, не улетели в NaN/undefined
+      return { freqBad, freqFlat, panBad, panFlat, root0, root1, rootClamped };
+    });
+    if(r.freqFlat) return post(name,false,'jitterFreq(440) даёт одно и то же значение — разброс не работает');
+    if(r.freqBad)  return post(name,false,'jitterFreq(440) вышел за ±3% — слишком сильная расстройка');
+    if(r.panFlat)  return post(name,false,'jitterPan() даёт одно и то же значение — панорама не работает');
+    if(r.panBad)   return post(name,false,'jitterPan() вышел за границы стерео [-1,1]');
+    if(r.root0!==57) return post(name,false,`корень дрона на старте темы должен быть 57 (A3), получили ${r.root0}`);
+    if(r.root1===r.root0) return post(name,false,'корень дрона не сдвинулся после принудительного шага дрейфа');
+    if(typeof r.rootClamped!=='number' || !isFinite(r.rootClamped))
+      return post(name,false,`корень дрона улетел за пределы массива: ${r.rootClamped}`);
+    post(name,true,'высота/панорама нот разбросаны в безопасных пределах, корень дрона плывёт и не улетает за массив');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
 const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
@@ -3484,7 +3561,7 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardSecondFingerCannotSteal, guardNothingLeaksBetweenRuns, guardTelegramPerfClassRead,
                  guardModuleGradientsCached, guardFrameStringsCached, guardHudNotQueriedInTicks,
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
-                 guardForgeSkyLoopCachesScreenRef ];
+                 guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;
