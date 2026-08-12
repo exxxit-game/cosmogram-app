@@ -915,7 +915,6 @@ function musicLabel(){ rowSw('setMusicBtn', MUSIC_ON); setWellFill(); }
 function contrastLabel(){ rowSw('setContrastBtn', CONTRAST); }
 function colorblindLabel(){ rowSw('setColorblindBtn', COLORBLIND); }
 function streaksLabel(){ rowSw('setStreaksBtn', SPEED_STREAKS); }
-function ghostsLabel(){ rowSw('setGhostsBtn', GHOSTS_VISIBLE); }
 function canvasFilterSync(){ // v1.280.0: класс на самом canvas — оба фильтра независимы, могут стоять вместе
   const cv=$('game'); if(!cv) return;
   cv.classList.toggle('hc', CONTRAST);
@@ -929,9 +928,6 @@ $('setColorblindBtn').addEventListener('click', ()=>{
 });
 $('setStreaksBtn').addEventListener('click', ()=>{
   SPEED_STREAKS=!SPEED_STREAKS; Store.set('speedStreaks',SPEED_STREAKS?1:0); streaksLabel(); haptic('light'); sfx.click();
-});
-$('setGhostsBtn').addEventListener('click', ()=>{
-  GHOSTS_VISIBLE=!GHOSTS_VISIBLE; Store.set('ghostsVisible',GHOSTS_VISIBLE?1:0); ghostsLabel(); haptic('light'); sfx.click();
 });
 $('setMusicBtn').addEventListener('click', ()=>{
   MUSIC_ON=!MUSIC_ON; Store.set('music',MUSIC_ON?1:0); musicLabel(); haptic('light'); sfx.click();
@@ -1374,14 +1370,14 @@ function applyLang(){
   $('diagReportBtn').textContent=L.diagReportBtn;
   $('diagTapeBtn').textContent=L.diagTapeBtn; // v1.99.7 «Чёрный ящик»
   $('diagSupportBtn').textContent=L.diagSupportBtn;
-  sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); ghostsLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill();
+  sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill();
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   $('moreBtn').textContent=L.moreLbl;
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
-   ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setGhostsBtn','setGhosts'],['setLangBtn','setLang'],
+   ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setLangBtn','setLang'],
    ['setGhostBtn','setGhost'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
 }
@@ -1414,7 +1410,6 @@ Store.init(()=>{
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
   SPEED_STREAKS = Store.get('speedStreaks',1)===1; // v1.280.0: по умолчанию включено
-  GHOSTS_VISIBLE = Store.get('ghostsVisible',0)===1; // Каталог ошибок №32: по умолчанию скрыты
   MUSIC_ON = Store.get('music',1)!==0; // музыка — отдельная настройка от звуков
   if (typeof achQShow==='function') achQShow(); // карман наград: бейдж «ждут N» на кнопке 🏆
   // сторож звука: каждый тап — шанс разбудить; раз в 2с — самопроверка (v1.20.0)

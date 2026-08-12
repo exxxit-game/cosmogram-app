@@ -409,35 +409,6 @@ async function guardPopupTextIsUppercase(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
-/* Страж 102 — Показ призраков: настройка, по умолчанию выключена, реально гасит появление.
-   Стережёт: ghostActive() в game.js (ЯДРО) и настройку setGhostsBtn.
-   Беда: раньше ghostActive() жёстко возвращала true — призрак показывался всегда, без
-   возможности его скрыть. Владелец попросил вернуть переключатель, по умолчанию скрыто. */
-async function guardGhostVisibilityToggleDefaultsOff(browser){
-  const name = '102. Призраки скрыты по умолчанию и переключатель реально работает';
-  let ctx;
-  try{
-    const o = await openGame(browser, { init:FRESH });
-    ctx = o.ctx;
-    const r = await o.page.evaluate(()=>{
-      const defaultOn = (typeof GHOSTS_VISIBLE!=='undefined') ? GHOSTS_VISIBLE : null;
-      const activeByDefault = (typeof ghostActive==='function') ? ghostActive() : null;
-      // включаем настройку и проверяем, что дальше призрак разрешён
-      if (typeof GHOSTS_VISIBLE!=='undefined'){
-        GHOSTS_VISIBLE = true; Store.set('ghostsVisible',1);
-      }
-      const activeWhenOn = (typeof ghostActive==='function') ? ghostActive() : null;
-      return { defaultOn, activeByDefault, activeWhenOn };
-    });
-    if(r.defaultOn===null) return post(name,false,'глобальная переменная GHOSTS_VISIBLE не найдена — настройка не заведена');
-    if(r.defaultOn!==false) return post(name,false,`GHOSTS_VISIBLE по умолчанию ${r.defaultOn}, а должно быть false (призраки изначально скрыты)`);
-    if(r.activeByDefault!==false) return post(name,false,`ghostActive() по умолчанию вернула ${r.activeByDefault} — призрак покажется, хотя настройка выключена`);
-    if(r.activeWhenOn!==true) return post(name,false,`после включения настройки ghostActive() вернула ${r.activeWhenOn} — переключатель не действует`);
-    post(name,true,'по умолчанию скрыты, включение настройки реально разрешает призрака');
-  }catch(e){ post(name,false,e.message.split('\n')[0]); }
-  finally{ if(ctx) await ctx.close(); }
-}
-
 async function guardBurstColorValid(browser){
   const name = '9. Салют звезды даёт годный цвет (и sRGB, и P3)';
   let ctx;
@@ -2142,9 +2113,7 @@ async function guardGhostDoesNotHijackSeed(browser){
     const o = await openGame(browser, { init:FRESH });
     ctx = o.ctx;
     const r = await o.page.evaluate(()=>{
-      // у игрока есть свой призрак с посторонним сидом; страж 59 проверяет сид, не видимость —
-      // включаем показ явно, иначе с v1.282.23 призрак по умолчанию скрыт и тест ничего не поймает
-      if (typeof GHOSTS_VISIBLE!=='undefined') GHOSTS_VISIBLE=true;
+      // у игрока есть свой призрак с посторонним сидом
       Store.set('ghostRun',{track:'#'.repeat(90), seed:777777});
       const out={};
       for(const m of ['daily','speedrun','classic']){ runMode=m; startGame(); out[m]=mapSeedKey; }
@@ -3622,6 +3591,53 @@ async function guardWaveDistTargetSped(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 102 — Темп волн дышит: короткие передышки чередуются с разгоном, а не тянут монотонную прямую (партия 26).
+   Стережёт: lullCurve()/lullMul() в js/game.js.
+   Контекст: разбор документа «Темп волн Космограммы» (сверено с кодом и телеметрией, не взято
+   на слово) — из четырёх рекомендованных рычагов три уже были в игре (новизна видов по волнам,
+   непрерывный рост сложности внутри волны, частичный «сок»), а контраста пиков/затиший
+   в духе AI Director Left 4 Dead не было вовсе: единственная попытка (передышка после ворот,
+   v1.282.13) — точечная заплатка на 0.4с, не система. WAVE_PACE не тронут: своя телеметрия
+   ненадёжна (70 из 80 смертей в выборке — с одного тестового устройства владельца), и документ,
+   и разбор сошлись не трогать множитель дистанции сейчас. lullMul() — чистая функция общей для
+   всех игроков дистанции (закон 12: общее небо мерят общим числом, не приватным вводом),
+   отключена в Своей трассе (воля автора, S.customD важнее автоматики). */
+async function guardWaveLullContrast(browser){
+  const name = '102. Темп волн дышит: пик передышки чередуется с разгоном (партия 26)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      runMode='classic'; startGame();
+      const PERIOD=1100, SPAN=320;
+      const samples=[];
+      for(let d=0; d<=PERIOD; d+=20) samples.push(lullCurve(d));
+      const atStart = lullCurve(0);
+      const atPeak = lullCurve(SPAN/2);
+      const atSpanEnd = lullCurve(SPAN);
+      const atFlat = lullCurve(SPAN+150);
+      const atNextCycle = lullCurve(PERIOD);
+      S.mode='custom'; S.dist=SPAN/2;
+      const customMul = lullMul();
+      S.mode='classic'; S.dist=SPAN/2;
+      const classicMul = lullMul();
+      return { samples, atStart, atPeak, atSpanEnd, atFlat, atNextCycle, customMul, classicMul };
+    });
+    if (r.samples.some(v=>v<0.999 || v>1.95))
+      return post(name,false,`lullCurve вышел за разумные границы [1, 1.9]: макс. отклонение среди сэмплов ${Math.max(...r.samples.map(v=>Math.abs(v-1)))}`);
+    if (Math.abs(r.atStart-1)>0.01) return post(name,false,`на дистанции 0 ждали базовый темп (×1), получили ${r.atStart}`);
+    if (r.atPeak < 1.8) return post(name,false,`в середине окна передышки ждали заметный пик (~×1.9), получили ${r.atPeak}`);
+    if (Math.abs(r.atSpanEnd-1)>0.01) return post(name,false,`на конце окна передышки ждали возврат к базовому темпу (×1), получили ${r.atSpanEnd}`);
+    if (Math.abs(r.atFlat-1)>0.01) return post(name,false,`вне окна передышки темп должен быть ровно базовым (×1), получили ${r.atFlat}`);
+    if (Math.abs(r.atNextCycle-r.atStart)>0.01) return post(name,false,'кривая не повторяется по периоду — цикл сломан');
+    if (Math.abs(r.customMul-1)>0.001) return post(name,false,`в Своей трассе передышка обязана быть выключена (воля автора), получили множитель ${r.customMul}`);
+    if (r.classicMul<1.8) return post(name,false,`в обычном режиме на пике окна передышки множитель должен быть заметно выше 1, получили ${r.classicMul}`);
+    post(name,true,`темп дышит: пик передышки ×${r.classicMul.toFixed(2)}, вне окна — ровно ×1, Своя трасса не тронута`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* Страж 98 — Ноты музыки разбросаны по высоте/панораме, корень дрона плывёт (партия 24).
    Стережёт: jitterFreq()/jitterPan() и DRONE_ROOTS-дрейф в js/music.js.
    Контекст: присланные владельцем материалы (сверено с кодом, не взято на слово) — приём
@@ -3704,7 +3720,7 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
                  guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift,
                  guardResizeSurvivesZeroViewport, guardNonTelegramHudGetsBreathingRoom,
-                 guardPopupTextIsUppercase, guardGhostVisibilityToggleDefaultsOff ];
+                 guardPopupTextIsUppercase, guardWaveLullContrast ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

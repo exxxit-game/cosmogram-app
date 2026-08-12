@@ -196,7 +196,7 @@ const I18N = {
     setSound:'Звук', setMusic:'Музыка',
     setLang:'Язык', langAuto:'Авто',
     channel:'Наш канал', toRecord:'До рекорда: ',
-    setVibro:'Виброотклик', setContrast:'Высокий контраст', setColorblind:'Для дальтоников', setStreaks:'Скоростные полосы', setGhosts:'Показывать призраков',
+    setVibro:'Виброотклик', setContrast:'Высокий контраст', setColorblind:'Для дальтоников', setStreaks:'Скоростные полосы',
     setGfx:'Графика', gfxAuto:'Авто', gfxLow:'Низкая', gfxMed:'Средняя', gfxHigh:'Высокая', gfxUltra:'Ультра',
     aboutBtn:'Об игре',
     modeGyro:'Гироскоп', modeTouch:'Касание', modeKeys:'Клавиатура',
@@ -315,7 +315,7 @@ const I18N = {
     setSound:'Sound', setMusic:'Music',
     setLang:'Language', langAuto:'Auto',
     channel:'Our channel', toRecord:'To beat: ',
-    setVibro:'Haptics', setContrast:'High contrast', setColorblind:'Colorblind assist', setStreaks:'Speed streaks', setGhosts:'Show ghosts',
+    setVibro:'Haptics', setContrast:'High contrast', setColorblind:'Colorblind assist', setStreaks:'Speed streaks',
     setGfx:'Graphics', gfxAuto:'Auto', gfxLow:'Low', gfxMed:'Medium', gfxHigh:'High', gfxUltra:'Ultra',
     aboutBtn:'About',
     modeGyro:'Gyro', modeTouch:'Touch', modeKeys:'Keyboard',
@@ -432,7 +432,7 @@ const I18N = {
     settings:'Ajustes', settingsTitle:'Ajustes', back:'Atrás',
     setSound:'Sonido', setMusic:'Música', setLang:'Idioma', langAuto:'Auto', channel:'Nuestro canal',
     toRecord:'Para el récord: ',
-    setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setStreaks:'Estelas de velocidad', setGhosts:'Mostrar fantasmas', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
+    setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setStreaks:'Estelas de velocidad', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Acerca del juego',
     modeGyro:'Giroscopio', modeTouch:'Toque', modeKeys:'Teclado',
     tiltAllow:'¿Permitir control por inclinación?', tiltOn:'Inclinación activada', sens:'Sensibilidad',
@@ -569,7 +569,7 @@ const I18N = {
     settings:'Ajustes', settingsTitle:'Ajustes', back:'Voltar',
     setSound:'Som', setMusic:'Música', setLang:'Idioma', langAuto:'Automático', channel:'Nosso canal',
     toRecord:'Para o recorde: ',
-    setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setStreaks:'Rastros de velocidade', setGhosts:'Mostrar fantasmas', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
+    setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setStreaks:'Rastros de velocidade', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Sobre o jogo',
     modeGyro:'Giroscópio', modeTouch:'Toque', modeKeys:'Teclado',
     tiltAllow:'Permitir controle por inclinação?', tiltOn:'Inclinação ativada', sens:'Sensibilidade',
@@ -707,7 +707,7 @@ const I18N = {
     setSound:'Son', setMusic:'Musique',
     setLang:'Langue', langAuto:'Auto',
     channel:'Notre chaîne', toRecord:'À battre : ',
-    setVibro:'Vibrations', setContrast:'Contraste élevé', setColorblind:'Assistance daltonisme', setStreaks:'Traînées de vitesse', setGhosts:'Afficher les fantômes',
+    setVibro:'Vibrations', setContrast:'Contraste élevé', setColorblind:'Assistance daltonisme', setStreaks:'Traînées de vitesse',
     setGfx:'Graphismes', gfxAuto:'Auto', gfxLow:'Faible', gfxMed:'Moyen', gfxHigh:'Élevé', gfxUltra:'Ultra',
     aboutBtn:'À propos',
     modeGyro:'Gyroscope', modeTouch:'Tactile', modeKeys:'Clavier',
@@ -922,12 +922,11 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.282.27'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.282.22'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
 let SPEED_STREAKS=true; // v1.280.0: звёзды тянутся в штрихи на скорости — персист 'speedStreaks', по умолчанию включено
-let GHOSTS_VISIBLE=false; // Каталог ошибок №32: показ призраков — по умолчанию ВЫКЛЮЧЕНО, персист 'ghostsVisible'
 function beep(f,dur,type,vol,slide){
   if(MUTED)return;
   const ac=audio(); if(!ac)return;
