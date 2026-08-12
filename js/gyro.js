@@ -12,10 +12,6 @@
    ============================================================ */
 const GOFFER_SEC = 120;    // первое предложение — после двух минут неба
 const GOFFER_SNOOZE = 240; // «остаюсь на пальце» — вернёмся через четыре минуты игры
-const GOFFER_MAX_DECLINES = 3; // v1.108.1 «Утром привет, потом не мешает»: раньше оффер повторялся
-  // бесконечно каждые 4 минуты без права сказать «больше не спрашивай» — единственное место в игре,
-  // где не уважался явный выбор игрока. После трёх отказов подряд игра перестаёт спрашивать сама;
-  // включить «Полёт без рук» вручную можно в Настройках всегда, эта дверь никогда не закрывается.
 const GYRO = { live:false, goldFired:false };
 
 let gyroAccSec = 0; // секундомер живой игры: тикает в update, переживает сессии в Store
@@ -29,42 +25,28 @@ function playSecFlush(){ // сброс накопленного: из update п�
   Store.set('playSec', Store.get('playSec',0)+playSecPending); playSecPending=0;
 }
 
-function gyroSensorThere(){ // оффер только там, где наклон реален
-  // v1.108.1: iOS — разрешение только по тапу, заранее проверить нечем, доверяем API как и раньше;
-  // мобильный Telegram (Android) — датчик почти гарантирован; всё остальное (ноутбук, ТВ, десктоп,
-  // веб без подтверждённой мобильности) — только по настоящим данным, не по факту существования API.
-  if (typeof NEEDS_TILT_PERMISSION!=='undefined' && NEEDS_TILT_PERMISSION) return HAS_GYRO;
-  if (typeof IS_LIKELY_MOBILE!=='undefined' && IS_LIKELY_MOBILE) return HAS_GYRO;
-  return HAS_GYRO && (typeof realGyroSeen!=='undefined' && realGyroSeen);
+function gyroSensorThere(){ // оффер только там, где наклон реален: iOS (спросит разрешение) или датчик уже дышал
+  return HAS_GYRO; // v1.24.0: не ждём живых пакетов — они начинают дышать только ПОСЛЕ принятия оффера, отсюда и молчание
 }
 function gyroOfferDue(){
   if (GYRO.live || gyroUnlocked() || !gyroSensorThere()) return false;
   if (!S.running || S.paused || S.dying || S.bullet) return false;
-  if (Store.get('gyroDeclines',0) >= GOFFER_MAX_DECLINES) return false; // v1.108.1: наспрашивались — тишина, дверь в Настройках открыта всегда
   return Store.get('playSec',0) >= (Store.get('gyroSnooze',0) || GOFFER_SEC);
 }
 
 function gyroOfferShow(){
   GYRO.live=true;
-  S.pausing=1; grantGrace(.6); // «Склейка»: мир мягко замирает под оффером, не срезом — v1.108.1: через общий лимит
+  S.pausing=1; S.invuln=Math.max(S.invuln,.6); // «Склейка»: мир мягко замирает под оффером, не срезом
   const gb=$('tutGyroBtn'); if (gb){ gb.disabled=false; gb.textContent=L.tutGyroBtn; }
   const tb=$('tutTouchBtn'); if (tb) tb.textContent=L.tutTouchBtn;
   $('tutBeat').classList.remove('hidden');
   haptic('light');
 }
 
-/* v1.282.13: часовой калибровки живёт в переменной модуля, а не только в замыкании —
-   иначе его нечем погасить. Прежде игрок жал «остаюсь на пальце», оффер закрывался,
-   а через секунду датчик всё же калибровался, интервал доживал свой век и звал
-   gyroAct2(true): гироскоп разблокировался ВОПРЕКИ отказу, а заодно снимал паузу и
-   выдавал благодать — в произвольном состоянии экрана, куда игрок успел уйти. */
-let gyroBeatIv=0;
-function gyroBeatStop(){ if(gyroBeatIv){ clearInterval(gyroBeatIv); gyroBeatIv=0; } }
 function gyroAct2(ok){ // выбор сделан — полёт продолжается с того же места
-  gyroBeatStop(); // выбор сделан — часовой больше не нужен, чей бы ни был выбор
   GYRO.live=false;
   $('tutBeat').classList.add('hidden');
-  S.paused=false; S.pausing=0; grantGrace(.35); // «Склейка»: плавный разгон — v1.108.1: через общий лимит
+  S.paused=false; S.pausing=0; S.invuln=Math.max(S.invuln,.35); // «Склейка»: плавный разгон
   if (ok){
     Store.set('gyroUnlocked',1); // замок открывается ровно в свой момент — «Полёт без рук»
     if(typeof BB!=='undefined') BB.log('lock','gyro unlocked'); // v1.99.7 «Чёрный ящик»
@@ -72,41 +54,25 @@ function gyroAct2(ok){ // выбор сделан — полёт продолж�
     Store.set('gyroSnooze', Store.get('playSec',0)+GOFFER_SNOOZE); // вежливо отстанем на четыре минуты игры
   }
 }
-function gyroBeatTouch(){ sfx.click(); gyroDecline(); gyroAct2(false); }
-/* v1.282.13: отказ игрока и неудача железа — разные вещи, и считать надо только первый.
-   Прежде gyroBeatFail() шёл через тот же gyroAct2(false), который увеличивал счётчик
-   отказов. Три попытки, где датчик не успел откалиброваться за 7 секунд, навсегда
-   затыкали предложение «Полёт без рук» — хотя игрок трижды отвечал «да, хочу». Бил
-   этот механизм ровно по той аудитории, у которой мост Telegram болен, то есть по тем,
-   кому починка гироскопа нужнее всех. */
-function gyroDecline(){ Store.set('gyroDeclines', Store.get('gyroDeclines',0)+1); }
+function gyroBeatTouch(){ sfx.click(); gyroAct2(false); }
 async function gyroBeatGyro(){
   audio(); sfx.click();
   const gb=$('tutGyroBtn'); if (gb) gb.disabled=true;
   if (NEEDS_TILT_PERMISSION){ // iOS: системный диалог — строго по этому тапу
     let r='';
     try{ r=await DeviceOrientationEvent.requestPermission(); }catch(e){ r=''; }
-    /* v1.282.14: «Don't Allow» в системном диалоге — это осознанный отказ игрока, и
-       считать его надо. Прошлая редакция разделила отказ и техническую неудачу, но
-       забыла, что этот путь — первое, а не второе: iOS запоминает denied и отвечает
-       мгновенно, поэтому оффер всплывал бы каждые четыре минуты игры ВЕЧНО, каждый раз
-       со своей паузой. Лимит отказов должен наступать. */
-    if (r==='denied'){ gyroDecline(); gyroAct2(false); return; }
     if (r!=='granted'){ gyroBeatFail(); return; }
-    if (!GYRO.live) return; // v1.282.14: пока ждали ответа диалога, игрок мог выбрать «остаюсь на пальце» — не сбрасываем ему калибровку
   }
   if (typeof gyroKick==='function') gyroKick(); // будим мост Telegram (идемпотентно)
-  calReset(false,undefined,'gyro-unlock'); // свежий стабильный ноль под спокойную позу
+  calReset(false); // свежий стабильный ноль под спокойную позу
   $('tutBeatB').textContent=L.calWait; // «Держи телефон ровно…»
   const t0=performance.now();
-  gyroBeatStop();
-  gyroBeatIv=setInterval(()=>{
-    if (!GYRO.live){ gyroBeatStop(); return; } // оффер уже закрыт другим путём — молча уходим
-    if (input.baseG!=null){ gyroBeatStop(); gyroAct2(true); }
-    else if (performance.now()-t0>7000){ gyroBeatStop(); gyroBeatFail(); } // датчик молчит — не держим заложников
+  const iv=setInterval(()=>{
+    if (input.baseG!=null){ clearInterval(iv); gyroAct2(true); }
+    else if (performance.now()-t0>7000){ clearInterval(iv); gyroBeatFail(); } // датчик молчит — не держим заложников
   },100);
 }
-function gyroBeatFail(){ gyroAct2(false); } // fallback: палец всегда работает — молча, без упрёка (v1.27.0); v1.282.13: техническая неудача НЕ считается отказом игрока
+function gyroBeatFail(){ gyroAct2(false); } // fallback: палец всегда работает — молча, без упрёка (v1.27.0)
 
 /* Золотая секунда — без голоса (v1.20.0): праздник рисует свет, не диктор */
 
@@ -162,7 +128,7 @@ function gyroZeroGuard(dt){
   }
   if(zeroStuck>6){ zeroStuck=0; // борьба дольше 6с — ноль залип по-настоящему: старый путь
     if(typeof BB!=='undefined') BB.log('guard','stuck zero '+(input.baseG==null?'?':Math.round(input.baseG))+'° tx '+input.tiltX.toFixed(2)+' → reset'); // v1.99.7 «Чёрный ящик»
-    calReset(true,true,'stuck-zero'); } // v1.100.3 «Тихий ноль»: после залипшего нуля пьём только из настоящей тишины
+    calReset(true,true); } // v1.100.3 «Тихий ноль»: после залипшего нуля пьём только из настоящей тишины
 }
 
 /* Вызывается из update() каждый кадр: секундомер, золотая секунда, оффер */

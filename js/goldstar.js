@@ -15,7 +15,7 @@ const GOLD=(()=>{
   let day='', frac=.5, spawned=false, star=null, caught=false, catchT=0, sparkA=[], t0=0;
 
   function reset(){ // зовёт startGame: новый взлёт — новая постановка маяка
-    day=S.dailyDay||trackDayKey(); // v1.282.20: место звезды — от дня трассы, он общий для всех
+    day=S.dailyDay||todayKey();
     _seed=(hashDay(day+'·gold')^0x5bd1e995)>>>0;
     frac=.3+R()*.4; // доля коридора: середина-половина — досягаемо на любом небе, одинаково у всех
     star=null; spawned=false; caught=false; catchT=0; sparkA=[]; t0=performance.now()/1000;
@@ -33,19 +33,14 @@ const GOLD=(()=>{
     }
     if (!star) return;
     star.y+=star.vy*S.timeScale; star.ph+=dt*3;
-    /* v1.282.13: ловим там же, где рисуем. Спрайт качается по горизонтали (sin(ph)*4),
-       а поимка считалась по неподвижному star.x — у края звезды выходил и промах по
-       видимой звезде, и захват по пустому месту. Качание считаем один раз за кадр и
-       кладём на саму звезду, чтобы отрисовка ниже брала ту же цифру, а не свою. */
-    star.sx = star.x + Math.sin(star.ph)*4;
     if (S.mode==='daily' && !S.dying && !caught){
-      const dx=star.sx-plane.x, dy=star.y-plane.y;
+      const dx=star.x-plane.x, dy=star.y-plane.y;
       if (dx*dx+dy*dy < (plane.r+star.r+10)*(plane.r+star.r+10)){
         caught=true; catchT=.8; S.goldStar=true; // знак дня твой — честь, не очки
         sparkA=[]; for(let i=0;i<12;i++) sparkA.push(Math.random()*6.283);
-        burst(star.sx,star.y,juicy('#ffd76a','color(display-p3 1 .86 .44)'), Q.level>=2?16:10); // v1.282.13: салют там же, где звезда видна
-        planetSpark(star.sx,star.y); planetSpark(star.sx+8,star.y-8); // золотые искры догоняют героя — дважды, это ведь снич
-        showPopup('★', star.sx, star.y, '#ffe9a8');
+        burst(star.x,star.y,juicy('#ffd76a','color(display-p3 1 .86 .44)'), Q.level>=2?16:10);
+        planetSpark(star.x,star.y); planetSpark(star.x+8,star.y-8); // золотые искры догоняют героя — дважды, это ведь снич
+        showPopup('★', star.x, star.y, '#ffe9a8');
         sfx.coin(10); haptic('success');
         if (typeof BB!=='undefined') BB.log('goldstar','day '+day); // взлётная лента помнит миг
         star=null;
@@ -55,23 +50,6 @@ const GOLD=(()=>{
     if (star && star.y>H+60) star=null; // пролетела мимо — попытка одна, звезда ждёт завтра в новом месте
   }
 
-  /* Кэши золотой звезды: ключ — только округлённый радиус, остальное постоянно. */
-  const gsG={}, gsRingC={}, gsNeedC={};
-  function gsGrad(k){
-    let g=gsG[k];
-    if(!g){
-      if(k==='beam'){ g=ctx.createLinearGradient(0,-130,0,0);
-        g.addColorStop(0,'rgba(255,214,120,0)'); g.addColorStop(1,'rgba(255,214,120,.22)'); }
-      else if(k.slice(0,4)==='aura'){ const R=(+k.slice(4))||1; g=ctx.createRadialGradient(0,0,0,0,0,R);
-        g.addColorStop(0,'rgba(255,222,130,.5)'); g.addColorStop(.45,'rgba(255,190,90,.15)'); g.addColorStop(1,'rgba(255,180,80,0)'); }
-      else { const R=(+k.slice(4))||1; g=ctx.createRadialGradient(0,0,0,0,0,R);
-        g.addColorStop(0,'#fff7dd'); g.addColorStop(.55,'#ffd76a'); g.addColorStop(1,'#f0a83e'); }
-      gsG[k]=g;
-    }
-    return g;
-  }
-  function gsRing(a){ const q=Math.round(a*40); return gsRingC[q]||(gsRingC[q]='rgba(255,214,120,'+(q/40).toFixed(3)+')'); }
-  function gsNeedle(a){ const q=Math.round(a*40); return gsNeedC[q]||(gsNeedC[q]='rgba(255,232,170,'+(q/40).toFixed(3)+')'); }
   function draw(){
     const tN=performance.now()/1000-t0;
     const pulse=RM? .85 : .75+.25*Math.sin(tN*2.4);
@@ -92,53 +70,45 @@ const GOLD=(()=>{
       ctx.restore();
     }
     if (!star) return;
-    const x=(star.sx!=null?star.sx:star.x+Math.sin(star.ph)*4), y=star.y, r=star.r; // v1.282.13: одна цифра качания на отрисовку и на поимку
-    /* v1.282.21: три градиента звезды создавались заново в КАЖДОМ кадре — до 240 объектов в
-       секунду, пока она в небе. Мешали две вещи: координаты (звезда качается) и дыхание альфы.
-       Обе снимаются без потери картинки: рисуем в местных координатах через translate, а дыхание
-       отдаём globalAlpha — все стопы и так множились на pulse ЦЕЛИКОМ, значит вынести множитель
-       наружу это тождественная замена, пиксель в пиксель. Строки цвета кольца и игл квантуются
-       по альфе тем же приёмом, что уже принят для морзянки. */
+    const x=star.x+Math.sin(star.ph)*4, y=star.y, r=star.r;
     ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.translate(x,y);
     if (Q.level>0 && y<H*.45){ // маяк-столбик: далёкая звезда зовёт однозначно, не путается с монетной
-      ctx.globalAlpha=pulse;
-      ctx.fillStyle=gsGrad('beam'); ctx.fillRect(-2.5,-130,5,130);
-      ctx.globalAlpha=1;
+      const bg=ctx.createLinearGradient(0,y-130,0,y);
+      bg.addColorStop(0,'rgba(255,214,120,0)');
+      bg.addColorStop(1,'rgba(255,214,120,'+(.22*pulse)+')');
+      ctx.fillStyle=bg; ctx.fillRect(x-2.5,y-130,5,130);
     }
     const R0=Q.level>0? r*3.4 : r*2.2;
-    ctx.globalAlpha=pulse;
-    ctx.fillStyle=gsGrad('aura'+Math.round(R0)); ctx.beginPath(); ctx.arc(0,0,R0,0,7); ctx.fill();
-    ctx.globalAlpha=1;
+    const g=ctx.createRadialGradient(x,y,0,x,y,R0);
+    g.addColorStop(0,'rgba(255,222,130,'+(.5*pulse)+')');
+    g.addColorStop(.45,'rgba(255,190,90,'+(.15*pulse)+')');
+    g.addColorStop(1,'rgba(255,180,80,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,R0,0,7); ctx.fill();
     if (Q.level>0){
-      ctx.strokeStyle=gsRing(.28*pulse); ctx.lineWidth=1.5; // ореол-кольцо: дыхание «я здесь»
-      ctx.beginPath(); ctx.arc(0,0,r*2.1+(RM?0:3*Math.sin(tN*2.4)),0,7); ctx.stroke();
-      ctx.strokeStyle=gsNeedle(.75*pulse); ctx.lineWidth=1.3; // лучи-иглы
+      ctx.strokeStyle='rgba(255,214,120,'+(.28*pulse)+')'; ctx.lineWidth=1.5; // ореол-кольцо: дыхание «я здесь»
+      ctx.beginPath(); ctx.arc(x,y,r*2.1+(RM?0:3*Math.sin(tN*2.4)),0,7); ctx.stroke();
+      ctx.strokeStyle='rgba(255,232,170,'+(.75*pulse)+')'; ctx.lineWidth=1.3; // лучи-иглы
       for(let i=0;i<4;i++){ const a=i*Math.PI/2+(RM?0:tN*.15), L=r*1.85;
-        ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*.75, Math.sin(a)*r*.75);
-        ctx.lineTo(Math.cos(a)*L, Math.sin(a)*L); ctx.stroke(); }
+        ctx.beginPath(); ctx.moveTo(x+Math.cos(a)*r*.75, y+Math.sin(a)*r*.75);
+        ctx.lineTo(x+Math.cos(a)*L, y+Math.sin(a)*L); ctx.stroke(); }
     }
     ctx.beginPath(); // тело: пять лучей, белое сердце в золоте
     for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rr=i%2? r*.45 : r;
-      const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
+      const px=x+Math.cos(a)*rr, py=y+Math.sin(a)*rr;
       i? ctx.lineTo(px,py) : ctx.moveTo(px,py); }
     ctx.closePath();
     if (Q.level>0){ ctx.shadowColor='rgba(255,200,90,.9)'; ctx.shadowBlur=r*1.5; }
-    ctx.fillStyle=gsGrad('core'+Math.round(r)); ctx.fill();
+    const cg=ctx.createRadialGradient(x,y,0,x,y,r);
+    cg.addColorStop(0,'#fff7dd'); cg.addColorStop(.55,'#ffd76a'); cg.addColorStop(1,'#f0a83e');
+    ctx.fillStyle=cg; ctx.fill();
     ctx.restore();
   }
 
-  /* v1.282.23 «Звезда дня переживает восстановление холста» (партия 27): та же беда, что
-     у станции (см. planetarium.js) — gsG кэширует градиенты «один раз навсегда», а
-     gfxInvalidate() про него не знал. После потери GPU-контекста звезда дня рисовалась бы
-     мёртвыми градиентами до перезагрузки страницы. */
-  function gfxReset(){ for(const k in gsG) delete gsG[k]; }
   return { reset, tick, draw,
     _state:()=>({ day, frac, spawned, star:!!star,
       x:star?Math.round(star.x):-1, y:star?Math.round(star.y):-1, caught, flash:catchT>0 }),
     _poke:()=>{ S.dist=Math.max(S.dist,GOLD_DIST-LOOKAHEAD_M-2); }, // страж: пригнать миг появления
-    _catch:()=>{ if(star){ plane.x=star.x; plane.y=star.y; } },  // страж: поднести самолётик к звезде
-    _gradCount:()=>Object.keys(gsG).length, _gfxReset:gfxReset };
+    _catch:()=>{ if(star){ plane.x=star.x; plane.y=star.y; } } };  // страж: поднести самолётик к звезде
 })();
 const goldReset=()=>GOLD.reset();   // мосты — как у Планетария: без try/catch, ошибки летят в самописец
 const goldTick=(dt)=>GOLD.tick(dt);

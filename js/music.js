@@ -10,32 +10,9 @@ const music = (()=>{
   let theme=null, ducked=false;          // 'menu' | 'game' | null
   let timer=null, nextBar=0, chordIx=0, walk=76;
   let layerState={pulse:false, arp:false, tension:false};
-  /* v1.282.26 (партия 24): «плывущий центр» — корень дрона медленно ходит по соседним ступеням
-     минорной пентатоники (A3,C4,D4,E4,G4), вместо того чтобы стоять на A3 всю игру. Старт —
-     всегда индекс 0 (ровно прежний звук A3), дрейф включается только со временем — не чинит то,
-     что не сломано, только не даёт застыть надолго. Квинта/тревога считаются ОТ корня (+7/+13
-     полутонов), а не абсолютными нотами — интервалы сохраняются при любом сдвиге корня. */
-  const DRONE_ROOTS=[57,60,62,64,67]; // A3,C4,D4,E4,G4
-  let droneRootIx=0;
   const stats={pads:0, notes:0, stings:0, kicks:0}; // счётчики для тестового стенда
 
   function midi(m){ return 440*Math.pow(2,(m-69)/12); }
-  /* v1.282.26 (партия 24): приём Брайана Ино — «неточность делает звук живым». Ни одна нота
-     не должна звучать дважды буквально идентично, иначе через N циклов мозг заучивает узор
-     и музыка начинает раздражать (материал прислан владельцем, сверено с кодом — сама идея
-     подтверждена, но music.js уже был генеративным синтезом, это его усиление, не новая
-     система). ±3% по высоте — на слух как «живое», не как «расстроенное». Панорама — мягкая
-     ([-0.6,0.6]), не крайности стерео, чтобы не потерять узкий динамик телефона в моно. */
-  function jitterFreq(f){ return f*(1+(Math.random()*2-1)*0.03); }
-  function jitterPan(){ return (Math.random()*2-1)*0.6; }
-  function panNode(ac,v){ // StereoPannerNode есть не везде (старый Safari) — тихий пропуск, не критично для эмбиента
-    if (typeof ac.createStereoPanner!=='function') return null;
-    const p=ac.createStereoPanner(); p.pan.value=v; return p;
-  }
-  function toMix(node,ac){ // подключить голос к музыкальной шине, по возможности через случайную панораму
-    const pn=panNode(ac,jitterPan());
-    if(pn){ node.connect(pn); pn.connect(mg); } else { node.connect(mg); }
-  }
   function impulse(ac,dur,decay){ // «космический хвост»: шум с экспоненциальным затуханием
     const rate=ac.sampleRate, len=Math.floor(rate*dur);
     const buf=ac.createBuffer(2,len,rate);
@@ -64,18 +41,18 @@ const music = (()=>{
     const flt=ac.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=1300; flt.Q.value=.4;
     for(const det of [-5,5]){
       const o=ac.createOscillator(); o.type='triangle';
-      o.frequency.value=jitterFreq(f); o.detune.value=det;
+      o.frequency.value=f; o.detune.value=det;
       o.connect(flt); o.start(t); o.stop(t+dur+.05);
     }
-    flt.connect(g); toMix(g,ac); stats.pads++;
+    flt.connect(g); g.connect(mg); stats.pads++;
   }
   function note(ac,t,f,dur,vol,type){ // колокольчик/пульс/арпеджио
-    const o=ac.createOscillator(); o.type=type||'sine'; o.frequency.value=jitterFreq(f);
+    const o=ac.createOscillator(); o.type=type||'sine'; o.frequency.value=f;
     const g=ac.createGain();
     g.gain.setValueAtTime(0,t);
     g.gain.linearRampToValueAtTime(vol,t+.02);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    o.connect(g); toMix(g,ac); o.start(t); o.stop(t+dur+.05); stats.notes++;
+    o.connect(g); g.connect(mg); o.start(t); o.stop(t+dur+.05); stats.notes++;
   }
 
   /* Темы: меню — медленные аккорды Am→F→G→Em с редкими колокольчиками;
@@ -106,13 +83,10 @@ const music = (()=>{
     }
     if(theme==='game'){
       const ly=layerState;
-      // v1.282.26: редкий, случайный шаг ±1 по DRONE_ROOTS — «плывущий центр», не тикающий метроном
-      if(Math.random()<.035) droneRootIx=Math.max(0,Math.min(DRONE_ROOTS.length-1,droneRootIx+((Math.random()<.5)?-1:1)));
-      const root=DRONE_ROOTS[droneRootIx];
-      padVoice(ac,t,midi(root),GAME_BAR+1.5,MIX.drone); // дрон — слышен на телефоне
-      padVoice(ac,t,midi(root+7),GAME_BAR+1.5,MIX.quint); // квинта — шире пространство
-      if(ly.tension) padVoice(ac,t,midi(root+13),GAME_BAR+1.5,MIX.tension); // тревожный полутон над корнем
-      if(ly.pulse) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,ly.tension?MIX.pulseT:MIX.pulse);
+      padVoice(ac,t,midi(57),GAME_BAR+1.5,MIX.drone); // дрон A3 — слышен на телефоне
+      padVoice(ac,t,midi(64),GAME_BAR+1.5,MIX.quint); // квинта E4 — шире пространство
+      if(ly.tension) padVoice(ac,t,midi(70),GAME_BAR+1.5,MIX.tension); // Bb4 — тревожный полутон
+      if(ly.pulse) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(57),.16,ly.tension?MIX.pulseT:MIX.pulse);
       if(ly.arp && !ly.tension){ // арпеджио: случайная прогулка по пентатонике
         for(let b=0;b<8;b++){
           if(Math.random()<.55){
@@ -142,22 +116,14 @@ const music = (()=>{
     start(th){
       if(MUTED||!MUSIC_ON){ theme=null; return; }
       const ac=ensureChain(); if(!ac){ theme=null; return; }
-      /* v1.282.14: приглушение снимаем ДО раннего выхода. Флаг ducked жил дольше причины:
-         пауза ставила его, а «Заново» звало start('game') с той же темой — ранний выход,
-         гейн так и оставался на трети, и весь новый забег музыка играла вполголоса.
-         Через «В меню» тема менялась, гейн возвращался, но флаг оставался true — и тогда
-         следующая пауза уже НЕ приглушала (duck выходит по ducked===on), а kick() при ударе
-         целился в base*0.3 и ронял музыку до конца забега. У двигателя такая строка есть
-         с самого начала (engine.start ставит ducked=false) — у музыки не было. */
-      ducked=false;
-      if(theme===th){ if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
-      theme=th; chordIx=0; walk=76; droneRootIx=0; nextBar=ac.currentTime+.08;
+      if(theme===th) return;
+      theme=th; chordIx=0; walk=76; nextBar=ac.currentTime+.08;
       fadeTo(MG[th]||MG_GAME,1.6);
       if(!timer) timer=setInterval(tick,200);
       tick();
     },
     stop(fade){
-      theme=null; ducked=false; // v1.282.14: флаг не переживает остановку темы
+      theme=null;
       if(mg&&AC) fadeTo(0,fade||1.2);
       if(timer){ clearInterval(timer); timer=null; }
     },
@@ -192,10 +158,7 @@ const music = (()=>{
     _layers:()=>({...layerState}),
     _ducked:()=>ducked,
     _levels:()=>({menu:MG_MENU, game:MG_GAME}), // страж громкости: не вернуть «тихую» музыку
-    _mix:()=>({...MIX}),
-    _jitterFreq:jitterFreq, _jitterPan:jitterPan, // партия 24 — стенд проверяет разброс напрямую
-    _droneRoot:()=>DRONE_ROOTS[droneRootIx],
-    _kickDrift(dir){ droneRootIx=Math.max(0,Math.min(DRONE_ROOTS.length-1,droneRootIx+(dir||1))); } // партия 24 — принудительный шаг для теста, минуя случайность
+    _mix:()=>({...MIX})
   };
 })();
 

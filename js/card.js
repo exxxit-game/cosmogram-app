@@ -60,17 +60,17 @@ function cardDraw(){
   x.fillStyle='#f0c040'; x.font='800 92px "Exo 2",sans-serif';
   x.fillText(fmtN(cardData.sc),W/2,322);
   x.fillStyle=cardData.rec?'#ffd76a':'#8fa3c8'; x.font='500 23px "Exo 2",sans-serif';
-  x.fillText((cardData.rec?L.cardRec:(cardData.win?L.forgeWin:cardModeName())).toUpperCase(),W/2,362);
+  x.fillText(cardData.rec?L.cardRec:(cardData.win?L.forgeWin:cardModeName()),W/2,362);
   // --- разделитель
   x.strokeStyle='rgba(201,164,92,.4)'; x.lineWidth=1;
   x.beginPath(); x.moveTo(W/2-90,398); x.lineTo(W/2+90,398); x.stroke();
   // --- статы забега
   x.fillStyle='#dfe8ff'; x.font='500 25px "Exo 2",sans-serif';
-  x.fillText((L.missionLbl+' '+cardData.mission+'  ·  '+fmtN(cardData.dist)+' '+(L.unitM||'м')).toUpperCase(),W/2,452);
+  x.fillText(L.missionLbl+' '+cardData.mission+'  ·  '+fmtN(cardData.dist)+' м',W/2,452);
   x.fillText('✦ '+cardData.stars+'  ·  ×'+cardData.combo,W/2,494);
   // --- призыв
   x.fillStyle='#c9a45c'; x.font='italic 500 24px "Exo 2",sans-serif';
-  x.fillText(L.cardBeat.toUpperCase(),W/2,642);
+  x.fillText(L.cardBeat,W/2,642);
   x.fillStyle='#5d6f92'; x.font='400 19px "Exo 2",sans-serif';
   x.fillText('@realcosmogrambot',W/2,682);
 }
@@ -126,7 +126,7 @@ async function cardSend(){
       body:JSON.stringify({action:'share_card',initData:tg.initData,png,caption})});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
-    tg.shareMessage(ans.id,function(ok){ if(ok){ haptic('success'); if(window.amplitude) amplitude.track('Shared Run', {method:'chat', confirmed:true}); } });
+    tg.shareMessage(ans.id,function(ok){ if(ok) haptic('success'); });
     sfx.click();
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
@@ -150,7 +150,6 @@ async function cardStory(){
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
     tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:L.cardStoryBtn||'Играть'}});
     sfx.click(); haptic('light');
-    if(window.amplitude) amplitude.track('Shared Run', {method:'story', confirmed:false}); // v1.108.1: Telegram не даёт колбэк успеха у shareToStory — честно «попытка», не «доставлено»
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
 }

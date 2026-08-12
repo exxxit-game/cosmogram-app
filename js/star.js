@@ -18,7 +18,6 @@ function starStatusGate(rec){ // rec — был ли этот забег рек�
 }
 async function statusStarAsk(){
   const b=$('statusBtn'); if(!b || b._busy) return;
-  if(typeof isLabEnv==='function' && isLabEnv()){ toast('Печать лаборатории: статус не меняем на верстаке'); return; } // v1.108.1
   b._busy=true;
   try{
     sfx.click();
@@ -31,15 +30,10 @@ async function statusStarAsk(){
     const ans=await r.json().catch(()=>({}));
     if(!r.ok || !ans.ok || !ans.emoji_id){ toast(L.statusStarErr); haptic('error'); return; }
     tg.setEmojiStatus(ans.emoji_id,{duration:259200},ok=>{ // 3 дня: награда за рекорд гаснет сама
-      if(ok){ toast(L.statusStarOk); haptic('success'); b.classList.add('hidden'); // искра надета — дверь закрылась
-        if(typeof BEACON!=='undefined') BEACON.signal('star_ok',''); } // v1.108.1: раньше не было подтверждения, что фича вообще у кого-то срабатывает
+      if(ok){ toast(L.statusStarOk); haptic('success'); b.classList.add('hidden'); } // искра надета — дверь закрылась
       else { toast(L.statusStarErr); haptic('error'); }
     });
   }catch(e){ toast(L.statusStarErr); haptic('error'); }
   finally{ b._busy=false; }
 }
-/* v1.282.13: единственная строка файла без проверки на месте — остальной модуль
-   (и соседние ui.js/ach.js) везде сначала спрашивает «элемент есть?». Сейчас #statusBtn
-   в разметке присутствует, так что это не падение, а гигиена: сборка без кнопки роняла
-   бы весь скрипт на этой строке. */
-const statusBtnEl=$('statusBtn'); if(statusBtnEl) statusBtnEl.addEventListener('click', statusStarAsk);
+$('statusBtn').addEventListener('click', statusStarAsk);

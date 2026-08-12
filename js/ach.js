@@ -12,7 +12,7 @@
    ============================================================ */
 
 const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
-const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru); // v1.108.1: было бинарно en/ru — теперь честно по активному языку, с запасным путём
+const aT=a=>(L===I18N.en?a.en:a.ru); // имя/описание на активном языке
 
 /* Профиль: счётчики живут в game.js (Stats). Старые сохранения мержатся
    на дефолты в boot (ui.js) — новых полей там просто не было. */
@@ -20,47 +20,16 @@ const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru); // v
 /* ---------- Список достижений: cat, need, val(), rw (награда ✦) ---------- */
 const ACH=[
   // Единственная цель — суммарная дистанция 100 м: ты в космосе (v1.29.0)
-  {id:'c1', cat:'cosmos', ic:'🌍', need:100000, rw:25, val:()=>Stats.totalDist,
-    ru:{n:'Линия Кармана',d:'Ты в космосе! Официально.'}, en:{n:'Karman Line',d:'You are in space! Officially.'},
-    es:{n:'Línea de Kármán',d:'¡Estás en el espacio! Oficialmente.'}, pt:{n:'Linha de Kármán',d:'Você está no espaço! Oficialmente.'},
-    fr:{n:'Ligne de Kármán',d:'Tu es dans l\u2019espace ! Officiellement.'}},
-  // v1.108.1 «Ачивки-призраки»: achCheck() звал их по имени в комментариях с v1.99.7/v1.100.1/v1.6.0 —
-  // сам реестр после «Одна цель — одна категория» (v1.29.0) их не содержал. Стучались в пустую комнату,
-  // теперь дверь на месте — по одному достижению на каждый момент, что уже честно проверяется в коде.
-  {id:'f1', cat:'flight', ic:'📡', need:1, rw:15, val:()=>Store.get('gyroGold',0),
-    ru:{n:'Пилот',d:'Впервые послушался наклона — «Полёт без рук» ожил.'}, en:{n:'Pilot',d:'Tilt obeyed for the first time — "Hands-Free Flight" came alive.'},
-    es:{n:'Piloto',d:'La inclinación respondió por primera vez — «Vuelo sin manos» cobró vida.'}, pt:{n:'Piloto',d:'A inclinação obedeceu pela primeira vez — «Voo sem mãos» ganhou vida.'},
-    fr:{n:'Pilote',d:'L\u2019inclinaison a obéi pour la première fois — le « Vol mains libres » a pris vie.'}},
-  {id:'d1', cat:'duel', ic:'⚔️', need:1, rw:10, val:()=>Stats.duelsSent||0,
-    ru:{n:'Первый вызов',d:'Бросил другу вызов на Дуэль.'}, en:{n:'First Challenge',d:'Sent a friend a Duel challenge.'},
-    es:{n:'Primer reto',d:'Le enviaste a un amigo un reto de Duelo.'}, pt:{n:'Primeiro desafio',d:'Enviou a um amigo um desafio de Duelo.'},
-    fr:{n:'Premier défi',d:'Tu as envoyé un défi de Duel à un ami.'}},
-  {id:'d2', cat:'duel', ic:'🏆', need:1, rw:20, val:()=>Stats.duelsWon||0,
-    ru:{n:'Победитель дуэли',d:'Побил чужую планку в Дуэли.'}, en:{n:'Duel Winner',d:'Beat someone\u2019s bar in a Duel.'},
-    es:{n:'Ganador del duelo',d:'Superaste la marca de alguien en un Duelo.'}, pt:{n:'Vencedor do duelo',d:'Superou a marca de alguém em um Duelo.'},
-    fr:{n:'Vainqueur du duel',d:'Tu as battu la marque de quelqu\u2019un en Duel.'}},
-  {id:'h1', cat:'hangar', ic:'🎨', need:2, rw:10, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
-    ru:{n:'Первый скин',d:'Купил свой первый скин в Ангаре.'}, en:{n:'First Skin',d:'Bought your first skin in the Hangar.'},
-    es:{n:'Primera piel',d:'Compraste tu primera piel en el Hangar.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin no Hangar.'},
-    fr:{n:'Première skin',d:'Tu as acheté ta première skin dans le Hangar.'}},
-  {id:'h2', cat:'hangar', ic:'👑', need:9, rw:50, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
-    ru:{n:'Вся коллекция',d:'Собрал все скины Ангара.'}, en:{n:'Full Collection',d:'Collected every skin in the Hangar.'},
-    es:{n:'Colección completa',d:'Reuniste todas las pieles del Hangar.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins do Hangar.'},
-    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins du Hangar.'}}, // need=9: SKINS.length сегодня — обновить вместе, если добавите скин
+  {id:'c1', cat:'cosmos', ic:'🌍', need:100, rw:25, val:()=>Stats.totalDist, ru:{n:'Линия Кармана',d:'Ты в космосе! Официально.'}, en:{n:'Karman Line',d:'You are in space! Officially.'}},
 ];
-const CATS=['cosmos','flight','duel','hangar']; // v1.108.1: было одно «одна цель — одна категория», теперь честно по числу целей
-const CAT_N={
-  cosmos:{ru:'Космическая шкала',en:'Cosmic ladder',es:'Escala cósmica',pt:'Escala cósmica',fr:'Échelle cosmique'},
-  flight:{ru:'Полёт',en:'Flight',es:'Vuelo',pt:'Voo',fr:'Vol'},
-  duel:{ru:'Дуэль',en:'Duel',es:'Duelo',pt:'Duelo',fr:'Duel'},
-  hangar:{ru:'Ангар',en:'Hangar',es:'Hangar',pt:'Hangar',fr:'Hangar'}
-};
+const CATS=['cosmos']; // одна цель — одна категория (v1.29.0)
+const CAT_N={ cosmos:{ru:'Космическая шкала',en:'Cosmic ladder'} };
 
-function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
+function achUnlockedSet(){ return Store.get('ach',[]); }
 
 /* Карман наград: открытые, но ещё не отпразднованные. Праздник — по одной
    карточке (модуль Н2), здесь — только тихий учёт и бейдж-счётчик. */
-function achQueue(){ return saneArray(Store.get('achQ',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: то же
+function achQueue(){ return Store.get('achQ',[]); }
 function achQShow(){
   const el=$('achBadge'); if(!el) return;
   const n=achQueue().length;
@@ -174,34 +143,27 @@ function achNextLoc(){
 
 /* ---------- Экран «🏆 Достижения»: статистика + список ---------- */
 function favMode(){
-  const g=Stats.gGames||0, t=Stats.tGames||0, b=Stats.bGames||0, k=Stats.kGames||0; // v1.280.0: keys — своя честная категория, не тонет в touch
-  if(g===0&&t===0&&b===0&&k===0) return '—';
-  if(b>=g&&b>=t&&b>=k) return L.bullet;
-  if(k>=g&&k>=t) return L.modeKeys;
-  return g>=t?L.modeGyro:L.modeTouch;
+  const g=Stats.gGames||0, t=Stats.tGames||0, b=Stats.bGames||0;
+  if(g===0&&t===0&&b===0) return '—';
+  return (b>=g&&b>=t)?L.bullet:(g>=t?L.modeGyro:L.modeTouch);
 }
 function renderAch(){
   const un=achUnlockedSet(), q=achQueue();
   // статистика — ряд метрик с крупными числами; режимы — плашки с иконками
   const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
-  const gN=Stats.gGames||0, tN=Stats.tGames||0, bN=Stats.bGames||0, kN=Stats.kGames||0;
-  const favIc=(bN>=gN&&bN>=tN&&bN>=kN)?'timer':((kN>=gN&&kN>=tN)?'keys':(gN>=tN?'phone':'hand'));
+  const gN=Stats.gGames||0, tN=Stats.tGames||0, bN=Stats.bGames||0;
+  const favIc=(bN>=gN&&bN>=tN)?'timer':(gN>=tN?'phone':'hand');
   $('achStats').innerHTML =
     '<div class="statGrid stats4">'+
       statCell(fmtN(Stats.games||0),L.statFlights)+
       statCell(fmtN(Stats.totalDist||0),L.statDist)+
       statCell(fmtN(Stats.totalStars||0),L.statStars)+
       statCell('×'+(Stats.bestCombo||0),L.statCombo)+
-      statCell(fmtN(Stats.nearMiss||0),L.statNearMiss)+
-      statCell(fmtN(Stats.duelsWon||0),L.statDuelsWon)+
-      statCell(fmtN(Stats.perfectRuns||0),L.statPerfect)+
-      statCell(fmtN(Stats.recBeats||0),L.statRecBeats)+
     '</div>'+
     '<div class="bestPills">'+
-      (gN+tN+bN+kN>0?'<span class="miniPill runMode">'+ic(favIc)+favMode()+'</span>':'')+
+      (gN+tN+bN>0?'<span class="miniPill runMode">'+ic(favIc)+favMode()+'</span>':'')+
       '<span class="miniPill">'+ic('phone')+'<b>'+fmtN(gN)+'</b></span>'+
       '<span class="miniPill">'+ic('hand')+'<b>'+fmtN(tN)+'</b></span>'+
-      '<span class="miniPill">'+ic('keys')+'<b>'+fmtN(kN)+'</b></span>'+
       '<span class="miniPill">'+ic('timer')+'<b>'+fmtN(bN)+'</b></span>'+
     '</div>';
   $('achProg').innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
@@ -209,7 +171,7 @@ function renderAch(){
   let h='', hI=0; // hI — счётчик каскадной задержки строк (+60ms, потолок 600ms)
   for(const cid of CATS){
     const items=ACH.filter(a=>a.cat===cid); if(!items.length) continue;
-    h+='<div class="achCat">'+(CAT_N[cid][typeof langEff!=='undefined'?langEff:'ru'] || CAT_N[cid].en || CAT_N[cid].ru)+'</div>';
+    h+='<div class="achCat">'+(L===I18N.en?CAT_N[cid].en:CAT_N[cid].ru)+'</div>';
     for(const a of items){
       const got=un.indexOf(a.id)>=0, tt=aT(a);
       const name=tt.n, desc=tt.d; // секретов в реестре нет (v1.32.0) — имя и описание всегда настоящие
