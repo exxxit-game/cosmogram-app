@@ -769,7 +769,7 @@ function draw(){
       ctx.save(); ctx.globalAlpha=clamp(ghostTagT,0,1)*.85;
       ctx.fillStyle=gCol; ctx.textAlign='center'; ctx.textBaseline='bottom';
       ctx.font='500 12px -apple-system,"Segoe UI",Roboto,sans-serif';
-      ctx.fillText(ghostName, ghostX, ghostY-30);
+      ctx.fillText((ghostName||'').toUpperCase(), ghostX, ghostY-30);
       ctx.restore();
     }
   }

@@ -385,6 +385,30 @@ async function guardVignetteFitsFrame(browser){
    color(display-p3 …). burst считал «не rgba — значит hex», резал её
    как hex и получал rgba(NaN,NaN,NaN,) — canvas молча игнорирует
    негодный цвет и рисует предыдущим. */
+/* Страж 101 — Всплывающий текст на канвасе всегда заглавный, как и весь остальной текст игры.
+   Стережёт: showPopup() в game.js и отрисовку имени призрака в render.js.
+   Беда: CSS-правило text-transform:uppercase на html,body не действует на канвас вообще —
+   всплывающие очки/подписи («впритык», «щит» и т.п.) рисуются ровно так, как записаны
+   в словаре L.xxx, минуя правило заглавных букв, принятое для всей остальной игры. */
+async function guardPopupTextIsUppercase(browser){
+  const name = '101. Всплывающий текст на канвасе заглавный';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      popups.length = 0;
+      showPopup('щит sHield', 10, 10, '#7fd8ff'); // смешанный регистр — честная проверка, не совпадение с уже верхним
+      const got = popups.length ? popups[popups.length-1].txt : null;
+      return { got };
+    });
+    if(r.got==null) return post(name,false,'showPopup не создал всплывающий текст — страж не смог проверить регистр');
+    if(r.got !== r.got.toUpperCase()) return post(name,false,`showPopup вернул «${r.got}» — не заглавный, хотя весь текст игры заглавный`);
+    post(name,true,`showPopup отдаёт «${r.got}» — заглавный, как и остальной текст игры`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 async function guardBurstColorValid(browser){
   const name = '9. Салют звезды даёт годный цвет (и sRGB, и P3)';
   let ctx;
@@ -2601,6 +2625,92 @@ async function guardCanvasContextLossRecovers(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 99 — Нулевой вьюпорт в момент resize() не оставляет канвас-спрайты нулевого размера.
+   Стережёт: resize() в core.js (ЯДРО) и vignetteSprite() в render.js.
+   Беда (Каталог ошибок №29): Telegram может на миг отдать cssW/cssH=0 в момент входа/выхода
+   из fullscreen (viewportChanged до того, как вьюпорт устаканился). resize() тогда пишет W=0,
+   vignetteSprite() кэширует офскрин-канвас 0×0, и следующий же ctx.drawImage(vignetteSprite())
+   бросает InvalidStateError — источник нулевого размера недопустим для drawImage. */
+/* Страж 100 — Вне Telegram верхний HUD не прилипает к самому краю экрана.
+   Стережёт: tgInsetsSync() в core.js (ЯДРО).
+   Беда: --js-sat считается только из сигналов Telegram (t.contentSafeAreaInset, «родная шапка
+   96px»). Вне Telegram (t=null) ни один из них не срабатывает, --js-sat остаётся 0, и
+   #scorePack/#topHud падают к минимальным 2px/72px — вплотную к верхнему краю экрана, тогда
+   как внутри Telegram под родную шапку выделено ~96px. Разница ощущается как «пауза/звёзды/
+   счёт слишком тесно жмутся к краю» на скринах вне Telegram. */
+async function guardNonTelegramHudGetsBreathingRoom(browser){
+  const name = '100. Вне Telegram HUD получает такую же подушку сверху, как внутри';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const isTg = !!(typeof tgApp==='function' && tgApp());
+      tgInsetsSync();
+      const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--js-sat')) || 0;
+      const scoreTop = parseFloat(getComputedStyle(document.getElementById('scorePack')).top) || 0;
+      return { isTg, sat, scoreTop };
+    });
+    if(r.isTg) return post(name,false,'тестовый стенд неожиданно посчитал себя внутри Telegram — страж не проверил нужный случай');
+    if(r.sat<96) return post(name,false,`вне Telegram --js-sat=${r.sat}px — меньше 96px родной шапки Telegram, HUD не совпадёт между окружениями`);
+    if(r.scoreTop<15) return post(name,false,`#scorePack.top=${r.scoreTop}px вне Telegram — счёт всё ещё вплотную к верхнему краю`);
+    post(name,true,`вне Telegram --js-sat=${r.sat}px, #scorePack.top=${r.scoreTop}px — совпадает с телеграмным отступом`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+async function guardResizeSurvivesZeroViewport(browser){
+  const name = '99. Нулевой вьюпорт в момент resize() не ломает vignetteSprite()';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const errs=[];
+    o.page.on('pageerror', e=>errs.push(e.message));
+    const r = await o.page.evaluate(()=>{
+      runMode='classic'; startGame();
+      const beforeW = W, beforeH = H, beforeCw = canvas.width, beforeCh = canvas.height;
+      // эмулируем телеграмовский миг нулевого вьюпорта в момент resize()
+      const origW = Object.getOwnPropertyDescriptor(window,'innerWidth');
+      Object.defineProperty(window,'innerWidth',{configurable:true,get:()=>0});
+      let threw=false, thrownMsg='';
+      try{
+        resize();
+        // ровно то, что делает render.js:819 на следующем кадре
+        ctx2d(canvas).drawImage(vignetteSprite(),0,0,W||1,H||1);
+      }catch(e){ threw=true; thrownMsg=e.message; }
+      finally{
+        if(origW) Object.defineProperty(window,'innerWidth',origW);
+        else delete window.innerWidth;
+      }
+      const spriteAfterZero = vignetteSprite();
+      resize(); // реальный корректирующий resize, как в игре
+      const spriteAfterRecover = vignetteSprite();
+      return {
+        threw, thrownMsg,
+        wAfterZero: W, hAfterZero: H,
+        cwAfterZero: canvas.width, chAfterZero: canvas.height,
+        spriteW0: spriteAfterZero.width, spriteH0: spriteAfterZero.height,
+        spriteW1: spriteAfterRecover.width, spriteH1: spriteAfterRecover.height,
+        beforeW, beforeH, beforeCw, beforeCh
+      };
+    });
+    if(r.threw) return post(name,false,`drawImage бросил исключение при нулевом вьюпорте: ${r.thrownMsg}`);
+    if(r.wAfterZero<=0 || r.hAfterZero<=0)
+      return post(name,false,`resize() при cssW=0 обнулил мир (W=${r.wAfterZero}, H=${r.hAfterZero}) вместо того, чтобы оставить прежний`);
+    if(r.cwAfterZero<=0 || r.chAfterZero<=0)
+      return post(name,false,`resize() при cssW=0 обнулил канвас (${r.cwAfterZero}×${r.chAfterZero})`);
+    if(r.spriteW0<=0 || r.spriteH0<=0)
+      return post(name,false,`vignetteSprite() вернул спрайт нулевого размера сразу после cssW=0`);
+    if(r.spriteW1<=0 || r.spriteH1<=0)
+      return post(name,false,`vignetteSprite() остался нулевого размера даже после корректирующего resize()`);
+    if(errs.length) return post(name,false,`исключение вне evaluate: ${errs[0]}`);
+    post(name,true,`resize() не принял cssW=0 (мир остался ${r.wAfterZero}×${r.hAfterZero}), drawImage не упал`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+
 /* Страж 74 — Градиенты спутников и обломков не создаются каждый кадр.
    Стережёт: gradCache в render.js.
    Беда: у спутника 3–6 градиентов, у обломка один, у значка бонуса один —
@@ -3561,7 +3671,9 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardSecondFingerCannotSteal, guardNothingLeaksBetweenRuns, guardTelegramPerfClassRead,
                  guardModuleGradientsCached, guardFrameStringsCached, guardHudNotQueriedInTicks,
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
-                 guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift ];
+                 guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift,
+                 guardResizeSurvivesZeroViewport, guardNonTelegramHudGetsBreathingRoom,
+                 guardPopupTextIsUppercase ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

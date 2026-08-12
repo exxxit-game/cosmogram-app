@@ -792,7 +792,10 @@ function hexToRgba(h){
   return `rgba(${r},${g},${b},`; }
 function showPopup(txt,x,y,color){
   const p=poolPop.take();
-  p.txt=txt; p.x=x; p.y=y; p.color=color; p.life=1;
+  // Каталог ошибок №31 «Канвас не слышит CSS»: text-transform:uppercase на html,body не
+  // действует на канвас — без этого всплывающий текст рисовался ровно так, как записан
+  // в словаре L.xxx, выбиваясь из заглавных букв всей остальной игры.
+  p.txt=String(txt).toUpperCase(); p.x=x; p.y=y; p.color=color; p.life=1;
   popups.push(p);
 }
 
