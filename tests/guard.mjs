@@ -3287,6 +3287,49 @@ async function guardHudNotQueriedInTicks(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 93 — Переворот тоже идёт через дребезг-страж (последний путь calReset(), корень cal_storm).
+   Стережёт: flipN>=3 в onTilt (input.js).
+   Беда: партия 6 защитила дребезгом orientationchange, а переход на поканальный ноль (v1.282.13)
+   убрал полный сброс со смены канала вовсе — но детектор переворота телефона (flipN) как дёргал
+   calReset() напрямую в обход дребезга, так и дёргал. На живых устройствах именно этот путь дал
+   23 из 31 боевых cal_storm за четыре дня — почти все с одного Android 15: дрожащий канал даёт
+   скачки >55° между пакетами без реального переворота, и каждый такой скачок раньше считался
+   отдельным честным сбросом. */
+async function guardFlipThroughDebounce(browser){
+  const name = '93. Переворот идёт через дребезг-страж (корень cal_storm)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      let storms=0; const realTick=BEACON.calTick; BEACON.calTick=()=>{storms++;};
+      lastCalResetT=-99999; // страница молодая — дребезг-страж не должен спутать «раньше 400мс» со «сроду не сбрасывали»
+      calReset(false); storms=0; // честный сброс на взлёте не считаем
+
+      gyroChanIn('tg');
+      for(let i=0;i<16;i++) onTilt({gamma:0, beta:1}); // берём ноль в спокойной позе
+
+      // «переворот» №1 — три скачка подряд >55°, детектор считает это честным переворотом
+      onTilt({gamma:90, beta:1});
+      onTilt({gamma:0,  beta:1});
+      onTilt({gamma:90, beta:1}); // flipN дошёл до 3 — calReset должен сработать
+
+      // сразу, без паузы, калибруемся заново и повторяем ту же дрожь — как дрожащий канал
+      for(let i=0;i<16;i++) onTilt({gamma:0, beta:1});
+      onTilt({gamma:90, beta:1});
+      onTilt({gamma:0,  beta:1});
+      onTilt({gamma:90, beta:1}); // «переворот» №2, меньше чем через 400мс после первого
+
+      BEACON.calTick = realTick;
+      return { storms };
+    });
+    if(r.storms===0) return post(name,false,'переворот вообще не вызвал calReset — детектор сломан целиком');
+    if(r.storms>1) return post(name,false,`два «переворота» подряд дали ${r.storms} сброса калибровки — путь flipN всё ещё в обход дребезг-стража`);
+    post(name,true,'два «переворота» подряд без паузы — один честный сброс, не два');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
 const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
@@ -3324,7 +3367,8 @@ const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit,
                  guardDayJournalCounts, guardProfileRespectsToggle, guardDaysAckOnlyOnServerWord,
                  guardStaleAnswerCannotRestart, guardGhostKeepsItsOwnSeed, guardQueueSubtractsNotWipes,
                  guardSecondFingerCannotSteal, guardNothingLeaksBetweenRuns, guardTelegramPerfClassRead,
-                 guardModuleGradientsCached, guardFrameStringsCached, guardHudNotQueriedInTicks ];
+                 guardModuleGradientsCached, guardFrameStringsCached, guardHudNotQueriedInTicks,
+                 guardFlipThroughDebounce ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

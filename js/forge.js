@@ -15,7 +15,12 @@ const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']
 const FORGE_LENS=[500,1000,1500,2500,4000,0]; // 0 = бесконечная
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
 // по умолчанию — ровная средняя трасса на полтора километра
-const FORGE_DEF={v:2,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0};
+/* v1.282.15: схема v3. Правка v1.282.13 сняла волновой гейт для видов, выбранных автором
+   (иначе трасса из одних Ворот на «Ровном жаре» давала вечные камни) — но применилась она
+   и к УЖЕ РОЗДАННЫМ кодам, то есть молча переписала чужие трассы: у карты, вылизанной под
+   свой рекорд, преграды поехали с первой секунды. Признак wg («волновой гейт») разводит
+   поколения: коды v1 и v2 читаются со старым поведением, новые пишутся с новым. */
+const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0};
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
   {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1000,lv:3,w:1,fl:0,b:3,sky:0,fog:0}},
   {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:2500,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
@@ -30,7 +35,7 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
-  const o={v:2};
+  const o={v:3};
   o.n=(typeof sanitizeTrackName==='function') ? sanitizeTrackName(c.n) : String(c.n==null?'':c.n).replace(/[<>&"'\\]/g,'').trim().slice(0,20);
   o.d=clamp(Math.round(isFinite(+c.d)?+c.d:50),10,100);
   o.s=clamp(Math.round(isFinite(+c.s)?+c.s:50),10,100);
@@ -45,10 +50,11 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
   o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
+  o.wg=c.wg?1:0; // 1 — старая раскладка: волновой гейт держит выбранные автором виды до своей волны
   return o;
 }
 function forgeEncode(cfg){
-  const a=[2,cfg.n||'',cfg.d,cfg.s,cfg.e,cfg.l,cfg.lv,cfg.w,cfg.fl,cfg.b,cfg.sky,cfg.fog,cfg.seed||0]; // v1.108.1: seed — 13-й элемент, старые коды (без него) получат новый при decode
+  const a=[3,cfg.n||'',cfg.d,cfg.s,cfg.e,cfg.l,cfg.lv,cfg.w,cfg.fl,cfg.b,cfg.sky,cfg.fog,cfg.seed||0]; // v1.108.1: seed — 13-й элемент; v1.282.15: схема 3 — воля автора сильнее волнового гейта (у кодов 1 и 2 гейт остаётся, иначе их расстановка поехала бы)
   const b=btoa(unescape(encodeURIComponent(JSON.stringify(a))))
     .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return 'CG1.'+b;
@@ -62,8 +68,11 @@ function forgeDecode(str){ // принимает код, полную ссылк
     while(b.length%4) b+='=';
     const a=JSON.parse(decodeURIComponent(escape(atob(b))));
     if(!Array.isArray(a)) return null;
-    if(a[0]===1) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5]}); // v1: остальное — дефолты
-    if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12]});
+    // v1.282.15: у поколений 1 и 2 поднимаем флаг старой раскладки — их расстановка обязана
+    // остаться той же, какой была, когда автор делился ссылкой.
+    if(a[0]===1) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],wg:1}); // v1: остальное — дефолты
+    if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:1});
+    if(a[0]===3) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:0});
     return null;
   }catch(e){ return null; }
 }
@@ -126,7 +135,14 @@ function forgeSkyLoop(ts){ // мягкий цикл: рисует только �
   if(sc&&!sc.classList.contains('hidden')){ const dt=Math.min(.05,(ts-(_fSkyRun===true?ts:_fSkyRun))/1000)||0.016; _fSkyRun=ts; forgeSkyPaint(dt); }
   requestAnimationFrame(forgeSkyLoop);
 }
-function forgeSkyKick(){ if(_fSkyRun) { forgeSkyPaint(0.016); return; } _fSkyRun=true;
+function forgeSkyKick(){
+  /* v1.282.13: небо рисуется только когда Кузница на экране. forgeSyncWidgets зовётся и
+     из forgeFill, а тот — из applyLang(): смена языка на экране Настроек запускала
+     холостую rAF-цепочку превью, которая жила до следующей навигации. Хуже: если
+     setScreen успел погасить _fSkyRun, а кадр уже был поставлен, цепочек становилось две. */
+  const scr=(typeof document!=='undefined')?document.getElementById('forgeScreen'):null;
+  if(scr && scr.classList.contains('hidden')) return;
+  if(_fSkyRun) { forgeSkyPaint(0.016); return; } _fSkyRun=true;
   forgeSkyPaint(0.016); if(typeof requestAnimationFrame==='function') requestAnimationFrame(forgeSkyLoop); }
 
 /* ---------- Состояние конструктора ---------- */
@@ -225,14 +241,20 @@ function forgeFill(){ // подписи + состояние виджетов п
       b.className='forgeChip'; b.dataset.bit=i; b.textContent=names[i];
       b.addEventListener('click',function(){
         forgeCfg.e^=(1<<i); if(!forgeCfg.e) forgeCfg.e=(1<<i); // последний вид не гасим — небо не бывает пустым насовсем
-        b.classList.toggle('sel',!!(forgeCfg.e>>i&1)); sfx.click(); haptic('light');
+        sfx.click(); haptic('light');
+        /* v1.282.13: пересобираем всё, а не только свой класс. Раньше чип красил сам себя и
+           замолкал — мини-небо продолжало показывать прошлый состав, а подсветка пресета
+           врала, пока не тронешь другой виджет. forgeSyncWidgets и класс проставит, и небо
+           перерисует: обещание модуля «небо перерисовывается на каждый поворот ручки»
+           наконец выполняется и для видов преград. */
+        forgeSyncWidgets();
       });
       chips.appendChild(b);
     });
   }
   if(chips) for(let i=0;i<8;i++) chips.children[i].textContent=names[i];
   // сегменты
-  forgeSegBuild($('forgeSeg'),FORGE_LENS.map(function(m){ return {v:m,t:m>0?m+' м':L.forgeInf}; }),
+  forgeSegBuild($('forgeSeg'),FORGE_LENS.map(function(m){ return {v:m,t:m>0?m+' '+(L.unitM||'м'):L.forgeInf}; }),
     function(){return forgeCfg.l;},function(v){forgeCfg.l=v;});
   forgeSegBuild($('forgeLivesSeg'),[{v:1,t:'1'},{v:2,t:'2'},{v:3,t:'3'}],
     function(){return forgeCfg.lv;},function(v){forgeCfg.lv=v;});
@@ -256,7 +278,11 @@ function forgeFill(){ // подписи + состояние виджетов п
   forgeSyncWidgets();
 }
 function forgeSyncWidgets(){ // конфиг → виджеты
-  $('forgeName').value=forgeCfg.n;
+  /* v1.282.14: имя не перетираем, пока его печатают. У #forgeName нет слушателя ввода
+     (конфиг читается только в forgeReadForm при запуске), а эта функция — общая точка
+     выхода всех виджетов: игрок набирал «Ад Пилота», трогал любой чип — и имя молча
+     возвращалось к прежнему. Пишем в поле только когда курсор не в нём. */
+  const nmEl=$('forgeName'); if(nmEl && document.activeElement!==nmEl) nmEl.value=forgeCfg.n;
   $('forgeDen').value=forgeCfg.d; $('forgeDenV').textContent=forgeCfg.d;
   $('forgeSpd').value=forgeCfg.s; $('forgeSpdV').textContent=forgeCfg.s;
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); $('forgeHeatV').textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
@@ -311,6 +337,11 @@ function forgeLoadCode(){
   const cfg=forgeDecode($('forgeCode').value);
   if(!cfg){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
   forgeCfg=cfg; forgeSyncWidgets(); $('forgeCode').value='';
+  /* v1.282.13: трасса гостя должна пережить выход из Кузницы. Раньше чужая карта жила
+     только в памяти, а forgeOpen при следующем входе перечитывает forgeLast из хранилища —
+     и молча заменял её на прошлую свою, хотя тост «трасса гостя» игрок уже видел.
+     forgeBoot (тот же путь через deep-link) давно записывает — здесь просто не хватало. */
+  Store.set('forgeLast',cfg);
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
 }
 
@@ -333,11 +364,16 @@ function forgeBoot(){ // true = есть трасса друга: этот за�
 function mapOver(sc){
   const distM=Math.floor(S.dist);
   $('myRank').textContent=''; $('newRecord').innerHTML=''; $('toRecord').textContent=''; $('toLoc').textContent=''; $('duelRes').innerHTML='';
+  /* v1.282.14: гасим и то, что ставит только gameOver. Своя трасса — не в зачёт, но экран
+     итогов у неё общий с обычным забегом, и на нём оставались висеть виджеты предыдущего:
+     «✨ В статус» (награда за рекорд — её можно было надеть по итогам незачётного забега),
+     «★ Знак дня», статистика дня и мёртвая кнопка трибуны. */
+  ['goldChip','dayStats','tribuneBtn','statusBtn'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
   $('finalScore').textContent=sc;
   const statCell=function(v,l){ return '<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>'; };
   const winPill=S.mapWin?'<span class="miniPill">'+ic('trophy')+L.forgeWin+'</span>':'';
   $('stats').innerHTML='<div class="statGrid rise" style="animation-delay:120ms">'+
-    statCell(S.mission,L.missionLbl)+statCell(distM+' м',L.dist)+
+    statCell(S.mission,L.missionLbl)+statCell(distM+' '+(L.unitM||'м'),L.dist)+
     statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+'</div>'+
     '<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill runMode">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
   runPassFill();
@@ -354,6 +390,14 @@ function mapOver(sc){
 $('forgePlay').addEventListener('click', forgePlay);
 $('forgeLoad').addEventListener('click', forgeLoadCode);
 $('forgeBack').addEventListener('click', function(){ sfx.click(); setScreen('modes'); });
-$('forgeDen').addEventListener('input', function(){ $('forgeDenV').textContent=this.value; });
-$('forgeSpd').addEventListener('input', function(){ $('forgeSpdV').textContent=this.value; });
+/* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
+   меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой
+   другой виджет, пресет, смена языка) возвращал слайдер на старое значение: правка автора
+   молча пропадала, а живое мини-небо на неё вообще не отзывалось. Здесь намеренно НЕ зовём
+   forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
+$('forgeDen').addEventListener('input', function(){ forgeCfg.d=+this.value; $('forgeDenV').textContent=this.value; forgeSkyKick(); });
+$('forgeSpd').addEventListener('input', function(){ forgeCfg.s=+this.value; $('forgeSpdV').textContent=this.value; forgeSkyKick(); });
 $('forgeCode').addEventListener('keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
+// v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
+// и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
+$('forgeName').addEventListener('input', function(){ forgeCfg.n=this.value; });

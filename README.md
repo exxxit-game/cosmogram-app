@@ -183,3 +183,5 @@
 ---
 
 © superduck77, 2026, All rights reserved.
+Created with assistance of Kimi AI (Moonshot AI).
+Moonshot AI claims no ownership of this game.
