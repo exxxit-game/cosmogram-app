@@ -10,21 +10,9 @@
    локально через Store (тот же механизм, что и остальные настройки игрока). */
 const Adaptive = {
   KEY: 'adaptiveProfile',
-  /* v1.282.13 «Профиль не роняет взлёт»: раньше значение из Store отдавалось как есть, и
-     любой профиль без поля deathsByKind (частичная запись, скос версий, зеркало из облака
-     Telegram) валил mult() на Object.values(undefined) — TypeError прилетал прямо из
-     startGame(), и забег просто не начинался. Store ничего не валидирует по замыслу, значит
-     проверять обязан тот, кто читает. Санитайзер того же покроя, что saneNumber в ядре:
-     любой мусор молча становится честным нулём, а не поводом уронить небо. */
   profile(){
     const p = Store.get(this.KEY, null);
-    const num = (v)=>{ const n = +v; return isFinite(n) && n >= 0 ? n : 0; }; // NaN/строка/минус → 0
-    const src = (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
-    const rawKinds = (src.deathsByKind && typeof src.deathsByKind === 'object' && !Array.isArray(src.deathsByKind))
-      ? src.deathsByKind : {};
-    const deathsByKind = {};
-    for (const k in rawKinds){ const n = num(rawKinds[k]); if (n > 0) deathsByKind[k] = n; }
-    return { avgSurvival: num(src.avgSurvival), deathsByKind, runs: num(src.runs) };
+    return p || { avgSurvival: 0, deathsByKind: {}, runs: 0 };
   },
   save(p){ Store.set(this.KEY, p); },
   // Зовётся один раз при гибели в «Своей трассе» — survivalSec/hitKind те же данные,
@@ -37,13 +25,7 @@ const Adaptive = {
     // строкой выше. Игрок, выучившийся не врезаться в камни месяц назад, всё ещё получал бы
     // подстройку под камни сегодня. Тот же принцип «недавнее весит больше»: старые причины
     // смерти тихо выцветают на каждой новой смерти, не пропадают резко.
-    // v1.282.13: выцветшее до неразличимости — выпалываем. Умножение на 0.92 стремит вес
-    // к нулю, но ключ жил вечно: профиль в хранилище рос монотонно длинными хвостами
-    // дробей, а Store пишет весь blob целиком на каждую запись.
-    for (const k in p.deathsByKind){
-      const v = p.deathsByKind[k] * 0.92;
-      if (v < 0.01) delete p.deathsByKind[k]; else p.deathsByKind[k] = Math.round(v*1000)/1000;
-    }
+    for (const k in p.deathsByKind) p.deathsByKind[k] *= 0.92;
     p.deathsByKind[hitKind||'?'] = (p.deathsByKind[hitKind||'?']||0) + 1;
     p.runs++;
     this.save(p);
@@ -55,10 +37,7 @@ const Adaptive = {
     if (p.avgSurvival < 90) return 'pro';
     return 'ace';
   },
-  /* {d,s} — d читается как «доля плотности неба» (0.6 = небо на 60% плотности), s — как
-     множитель скорости. ВАЖНО для того, кто будет это применять: в game.js customD попадает
-     в ПАУЗУ между спавнами, значит применять d нужно делением, а не умножением, иначе знак
-     переворачивается и новичок получает небо плотнее, чем ас (так и было до v1.282.20). */
+  // {d,s} — множители плотности и скорости. Перемножаются с авторскими S.customD/S.customS.
   mult(){
     const p = this.profile();
     const t = this.tier(p);

@@ -5,14 +5,6 @@
      не только в полёте; слабовидящий не мог увеличить текст в Настройках. Блокировка жестов
      теперь только в полёте, через touch-action на body (см. setScreen) -->
 <meta name="theme-color" content="#070b18"/>
-<!-- v1.282.20 «Свежий борт». Все скрипты версионируются через ?v=, но решает, какой ?v= будет
-     запрошен, САМ index.html — а он единственный, кого никто не версионирует. Service worker
-     выключен по замыслу (см. хвост файла) и стратегию «сеть-первой» не применяет. Итог: WebView
-     Telegram держит HTTP-кэш агрессивно и переживает сворачивание — игрок мог остаться на
-     старой сборке ЦЕЛИКОМ и без единого признака, а мы бы гадали, почему правка «не приехала».
-     Мета-тег WebView уважает не всегда, поэтому рядом стоит второй замок — тихая проверка
-     версии на живом сервере (см. хвост файла). -->
-<meta http-equiv="Cache-Control" content="no-store"/>
 <!-- v1.108.1 «Не жди своей очереди»: раньше оба шрифта начинали качаться только когда браузер
      дочитывал CSS до @font-face — теперь браузер узнаёт о них сразу, в первой строке <head>. -->
 <link rel="preload" href="fonts/exo2-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
@@ -42,25 +34,6 @@
 <meta name="apple-mobile-web-app-title" content="Космограмма"/>
 <link rel="apple-touch-icon" href="icons/icon-180.png"/>
 <link rel="manifest" id="manifestLink" href="manifest.ru.json"/> <!-- v1.72.0: ярлык на домашний экран — паспорт приложения снова на борту; v1.108.1: язык манифеста переключается в applyLangPref() -->
-<script>
-/* v1.282.13 «Паспорт на нужном языке — сразу». applyLangPref() правит href манифеста,
-   но зовётся из init, то есть уже после всех defer-скриптов — браузер к тому времени
-   давно прочитал манифест по стартовому manifest.ru.json. Chromium смену href подхватит,
-   а Telegram WebApp и Safari на iOS манифест повторно не разбирают: англоязычный игрок,
-   ставящий ярлык сразу, получал на домашний экран «Космограмма». Ставим правильный адрес
-   в <head>, до тела страницы — крошечно, без зависимостей, и applyLangPref остаётся
-   догоняющей поправкой на случай, когда игрок сменит язык руками. */
-(function(){
-  try{
-    var M={ru:'manifest.ru.json',en:'manifest.en.json',es:'manifest.es.json',pt:'manifest.pt.json',fr:'manifest.fr.json'};
-    var lang=null;
-    try{ var raw=localStorage.getItem('cosmogram_v2'); if(raw){ var s=JSON.parse(raw); if(s&&s.lang&&s.lang!=='auto') lang=s.lang; } }catch(e){}
-    if(!lang){ var n=(navigator.language||'ru').slice(0,2).toLowerCase(); if(M[n]) lang=n; }
-    var el=document.getElementById('manifestLink');
-    if(el && lang && M[lang]) el.href=M[lang];
-  }catch(e){}
-})();
-</script>
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
 <!-- v1.79.0: мост Telegram переехал из head в body ПОД затравку — на медленной сети
      он больше не запирает парсер: самолётик рисуется, пока мост ещё летит.
@@ -142,11 +115,6 @@ button, input, select, textarea { text-transform:inherit; }
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
 #startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen {
   background:rgba(6,10,24,.45); }
-/* v1.282.13: предупреждение о тесном экране — выше всех окон. Раньше у него был общий
-   .overlay z-index:10 и никакого фона, а экраны идут ниже в разметке и с вуалью — при
-   равном слое меню рисовалось поверх. Момент, когда предупреждение нужнее всего (игрок
-   тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
-#tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
 #settingsScreen, #achScreen, #hangarScreen { justify-content:flex-start;
   padding-top:calc(48px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
@@ -417,11 +385,6 @@ button, input, select, textarea { text-transform:inherit; }
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
-/* v1.282.20 «Подтверждённый рекорд»: тихая галочка у тех строк, чей результат сервер объяснил
-   паспортом забега. Метим только ПОДТВЕРЖДЁННОЕ и ничем не метим остальное — обратное чтение
-   («у него нет значка, значит жулик») несправедливо: у старых записей паспорта не было в природе. */
-.topVf { flex:none; width:16px; height:16px; margin-left:-3px; color:var(--gold-hi); opacity:1; }
-.topVf .ic, .topVf svg { width:16px; height:16px; display:block; stroke-width:2.4; }
 .topMsg { color:var(--muted); font-size:13px; text-align:center; padding:24px 10px; }
 
 /* ---- М6 Моушн: переходы экранов (fade + подъём 12px), каскад строк ---- */
@@ -493,7 +456,11 @@ button, input, select, textarea { text-transform:inherit; }
 .shipItem .own .ic { width:1.1em; height:1.1em; }
 .shipItem .own.isOwn { background:none; color:var(--ok); }
 .shipItem .fxTag { color:var(--gold-hi); font-size:11px; } /* метка фирменной фишки у ярких/легендарных */
-/* v1.282.20: стили кнопки «Примерка» убраны вместе с фичей */
+.shipItem .try { flex:none; display:inline-flex; align-items:center; justify-content:center;
+  gap:.35em; border:1px solid rgba(127,216,255,.45); color:#bfeaff; border-radius:10px;
+  padding:6px 10px; font-size:12.5px; white-space:nowrap; cursor:pointer; }
+.shipItem .try:active { transform:scale(.93); }
+.shipItem .try.off { opacity:.35; cursor:default; }
 
 /* ---- Служебные слои ---- */
 #vignette { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0;
@@ -829,64 +796,27 @@ button, input, select, textarea { text-transform:inherit; }
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.282.21"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.282.12"></script><!-- мост: под затравкой, раньше core.js -->
+<script src="https://browser.sentry-cdn.com/8.9.2/bundle.tracing.min.js" crossorigin="anonymous"></script>
 <script>
-/* v1.282.20 «Подпись не едет в чужие руки». Telegram кладёт tgWebAppData — а внутри неё
-   user, auth_date и HASH, то есть верительную грамоту игрока, — прямо в адрес страницы,
-   и сам его оттуда не убирает. А адрес страницы уходит наружу: Sentry прикладывает
-   location.href к каждой ошибке, Amplitude с autocapture — к каждому событию. Всякий, у
-   кого есть доступ к этим проектам, мог взять подпись и обратиться к нашей же edge-функции
-   от имени игрока: отправить очки, поставить эмодзи-статус, собрать сообщение от его лица.
-   Мост к этому моменту уже прочитал параметры и положил их в sessionStorage (см.
-   telegram-web-app.js), поэтому стирание хеша ничего не ломает — проверено стражем 68.
-   Ставим сразу после моста, до Sentry и Amplitude: важно, чтобы адрес был чист ДО того,
-   как их код вообще увидит страницу. */
-(function(){
-  try{
-    if(!location.hash || location.hash.indexOf('tgWebApp')<0) return;
-    var clean = location.pathname + location.search;
-    history.replaceState(null, '', clean);
-  }catch(e){}
-})();
-</script>
-<script>
-/* v1.282.13 «Наблюдатели не запирают дверь»: оба сторонних канала (Sentry, Amplitude)
-   раньше висели обычными <script src> ВЫШЕ канваса — а такой тег останавливает разбор
-   страницы, пока файл не приедет. Если CDN недоступен (для части игроков это обычный
-   день), парсер не доходил до канваса и экранов, defer-скрипты игры не стартовали,
-   DOMContentLoaded не наступал — спиннер крутился, игры не было вовсе. Оба тега ниже
-   стали async: сеть их больше не ждёт, игра грузится своим ходом.
-   Запалы объявлены ЗДЕСЬ, до самих тегов, намеренно: async-файл может приехать в любой
-   момент, в том числе раньше, чем парсер дошёл бы до строки под тегом — тогда onload
-   позвал бы ещё не существующую функцию. */
-/* v1.282.20 «Один выключатель на все двери». Тумблер в настройках гасил только «Почту
-   неба», а Sentry и Amplitude собирали данные независимо и выключателя не имели вовсе —
-   при том что хартия обещает «честный выключатель: выкл значит молчание». Теперь оба
-   наблюдателя спрашивают тот же ключ, что и почта, и при выключенном тумблере просто
-   не инициализируются: не отправляют ничего и ничего не копят. */
-function __telemetryAllowed(){
-  try{ const raw=localStorage.getItem('cosmogram_v2'); if(!raw) return true;
-    const st=JSON.parse(raw); return !(st && st.beaconOn===0); }catch(e){ return true; }
-}
-function __sentryBoot(){
-  if (!__telemetryAllowed()) return;
-  if (!window.Sentry) return;
-  // Sentry — независимый канал, не замена «Почте неба» (beacon.js), а дополнение с более
-  // зрелым интерфейсом для разбора инцидентов. Оба работают параллельно, каждый своими
-  // глобальными обработчиками — падение одного не роняет другой.
+// v1.108.1 «Второй наблюдатель»: Sentry — независимый канал, не замена «Почте неба» (beacon.js),
+// а дополнение с более зрелым интерфейсом для разбора инцидентов. Оба работают параллельно,
+// каждый своими глобальными обработчиками — падение одного не роняет другой.
+if (window.Sentry) {
   Sentry.init({
     dsn: 'https://55ca5b35e5804f14b0e04473c3e2138f@o4511888537878528.ingest.de.sentry.io/4511889470980176',
-    release: 'cosmogram@1.282.21', // v1.282.13: раньше здесь навсегда застыло 1.108.1 — все инциденты 174 версий слипались в один мёртвый релиз, и «когда сломалось» определить было нечем
-    tracesSampleRate: 0, // только ошибки, без трассировки производительности — экономия квоты
+    release: 'cosmogram@1.108.1',
+    tracesSampleRate: 0, // v1.108.1: только ошибки, без трассировки производительности — экономия квоты на старте
   });
 }
-function __amplitudeBoot(){
-  if (!__telemetryAllowed()) return; // v1.282.20: тот же тумблер, что у «Почты неба»
-  if (!window.amplitude) return;
-  // «Куда игроки бросают руль»: продуктовая аналитика, отдельно от отладки ошибок —
-  // Sentry/beacon.js смотрят на баги, Amplitude смотрит на поведение. Сознательно БЕЗ
-  // Session Replay (полной записи экрана игрока) — это отдельное решение о приватности,
-  // не включается заодно с обычной аналитикой без явного отдельного «да».
+</script>
+<script src="https://cdn.amplitude.com/script/2d7e5288f0007ea7fbf9515286e25031.js"></script>
+<script>
+// v1.108.1 «Куда игроки бросают руль»: продуктовая аналитика, отдельно от отладки ошибок —
+// Sentry/beacon.js смотрят на баги, Amplitude смотрит на поведение. Сознательно БЕЗ Session
+// Replay (полной записи экрана игрока) — это отдельное решение о приватности, не включается
+// заодно с обычной аналитикой без явного отдельного «да».
+if (window.amplitude) {
   amplitude.init('2d7e5288f0007ea7fbf9515286e25031', {
     fetchRemoteConfig: true,
     autocapture: true,
@@ -894,8 +824,6 @@ function __amplitudeBoot(){
   });
 }
 </script>
-<script async src="https://browser.sentry-cdn.com/8.9.2/bundle.tracing.min.js" crossorigin="anonymous" onload="__sentryBoot()"></script>
-<script async src="https://cdn.amplitude.com/script/2d7e5288f0007ea7fbf9515286e25031.js" onload="__amplitudeBoot()"></script>
 <canvas id="game"></canvas>
 <div id="tooNarrow" class="overlay hidden">
   <div class="scrMid"><div class="stack">
@@ -1033,7 +961,7 @@ function __amplitudeBoot(){
     <div class="setRow solo spoiler" id="moreBtn" role="button" tabindex="0">Ещё</div>
     <div id="moreBox" class="hidden">
       <div class="setRow solo" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-      <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+      <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
       <div class="setRow solo go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
       <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
       <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
@@ -1210,56 +1138,29 @@ function __amplitudeBoot(){
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.282.21" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.282.21"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.282.21"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.282.21"></script>
-<script defer src="js/game.js?v=1.282.21" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.282.21"></script>
-<script defer src="js/sync.js?v=1.282.21"></script>
-<script defer src="js/render.js?v=1.282.21"></script>
-<script defer src="js/planetarium.js?v=1.282.21"></script>
-<script defer src="js/goldstar.js?v=1.282.21"></script>
-<script defer src="js/music.js?v=1.282.21"></script>
-<script defer src="js/gyro.js?v=1.282.21"></script>
-<script defer src="js/forge.js?v=1.282.21"></script>
-<script defer src="js/adaptive.js?v=1.282.21"></script>
-<script defer src="js/card.js?v=1.282.21"></script>
-<script defer src="js/star.js?v=1.282.21"></script>
-<script defer src="js/ui.js?v=1.282.21"></script>
+<script defer src="js/core.js?v=1.282.12" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.282.12"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.282.12"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.282.12"></script>
+<script defer src="js/game.js?v=1.282.12" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.282.12"></script>
+<script defer src="js/sync.js?v=1.282.12"></script>
+<script defer src="js/render.js?v=1.282.12"></script>
+<script defer src="js/planetarium.js?v=1.282.12"></script>
+<script defer src="js/goldstar.js?v=1.282.12"></script>
+<script defer src="js/music.js?v=1.282.12"></script>
+<script defer src="js/gyro.js?v=1.282.12"></script>
+<script defer src="js/forge.js?v=1.282.12"></script>
+<script defer src="js/adaptive.js?v=1.282.12"></script>
+<script defer src="js/card.js?v=1.282.12"></script>
+<script defer src="js/star.js?v=1.282.12"></script>
+<script defer src="js/ui.js?v=1.282.12"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
 // ждём DOMContentLoaded, он по спецификации наступает строго после всех deferred-скриптов.
-/* v1.282.13 «Чёрный экран не молчит». __bootFail взводился ТОЛЬКО атрибутом onerror у
-   core.js и game.js — то есть лишь когда файл не скачался. Если файл приехал и упал при
-   исполнении (или упал любой из остальных 16 скриптов, у которых onerror нет вовсе),
-   спиннер всё равно снимался, и игрок оставался перед пустой тьмой без единой подсказки —
-   самый безнадёжный вид поломки: непонятно даже, обновлять ли страницу.
-   Проверяем не «была ли где-то ошибка» (так спиннер застревал бы от любой безобидной
-   осечки на рабочей игре — сначала я именно так и написал, страж поймал), а факт:
-   поднялась ли игра. К моменту DOMContentLoaded все defer-скрипты по спецификации уже
-   исполнены, поэтому отсутствие GAME_VERSION или startGame означает ровно одно — не взлетели. */
 window.addEventListener('DOMContentLoaded', function(){
-  /* v1.282.14: маяк вместо косвенных признаков. Первая редакция спрашивала
-     `typeof GAME_VERSION`, и это была ошибка ровно в своём же сценарии: GAME_VERSION —
-     это `const` в середине core.js, его привязка создаётся при инстанцировании скрипта.
-     Если core.js приехал и упал ДО своей строки const, привязка навсегда остаётся в
-     «мёртвой зоне», и typeof не возвращает 'undefined', а БРОСАЕТ ReferenceError —
-     обработчик обрывался на первой строке, подсказка не появлялась, спиннер висел вечно.
-     Вторая беда: startGame — объявление функции, оно поднимается при инстанцировании,
-     поэтому упавший ui.js всё равно читался как «взлетели».
-     Теперь спрашиваем явный маяк, который ui.js ставит последней своей строкой, а весь
-     опрос — под try, потому что читать чужие привязки в неизвестном состоянии небезопасно. */
-  var alive = false;
-  try{ alive = (window.__gameUp===1) || ((typeof GAME_VERSION!=='undefined') && (typeof startGame==='function')); }catch(e){ alive=false; }
-  var __bl = document.getElementById('bootLoad');
-  if(window.__bootFail || !alive){
-    if(__bl) __bl.innerHTML='<div style="text-align:center;padding:0 24px">Игра не смогла взлететь.<br>Обновите страницу — если не поможет, напишите нам.</div>';
-    return;
-  }
-  if(__bl) __bl.remove();
-  window.__bootReady=1;
+  if(!window.__bootFail){ var __bl=document.getElementById('bootLoad'); if(__bl) __bl.remove(); }
 });
 </script>
 <script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —

@@ -90,13 +90,19 @@ const PLANET=(()=>{
           ctx.globalAlpha=.30; ctx.drawImage(powGlow('#6f93cf'),-70,-56,140,112);
           ctx.globalAlpha=.42;
           // корпус: объёмный градиент (свет сверху, тень снизу)
-          ctx.fillStyle=staGrad('hull'); rr(ctx,-14,-9,28,18,4); ctx.fill();
+          let g=ctx.createLinearGradient(0,-9,0,9);
+          g.addColorStop(0,'#2a3d66'); g.addColorStop(.5,'#1a2947'); g.addColorStop(1,'#101b33');
+          ctx.fillStyle=g; rr(ctx,-14,-9,28,18,4); ctx.fill();
           // ферма
-          ctx.fillStyle=staGrad('mast'); rr(ctx,-2,-22,4,44,2); ctx.fill();
+          g=ctx.createLinearGradient(0,-22,0,22);
+          g.addColorStop(0,'#24385f'); g.addColorStop(1,'#14213c');
+          ctx.fillStyle=g; rr(ctx,-2,-22,4,44,2); ctx.fill();
           // панели: холодная сталь с кромкой света только сверху — никаких рамок
-          for(const p of STA_PANELS){
-            ctx.fillStyle=staGrad('pan'+p[1]);
-            rr(ctx,p[0],p[1],p[2],p[3],2.5); ctx.fill();
+          const panels=[[-48,-15,30,10],[18,-15,30,10],[-44,7,22,8],[22,7,22,8]];
+          for(const p of panels){
+            g=ctx.createLinearGradient(0,p[1],0,p[1]+p[3]);
+            g.addColorStop(0,'#3d5a8f'); g.addColorStop(1,'#22365e');
+            ctx.fillStyle=g; rr(ctx,p[0],p[1],p[2],p[3],2.5); ctx.fill();
             ctx.strokeStyle='rgba(170,205,250,.35)'; ctx.lineWidth=1;
             ctx.beginPath(); ctx.moveTo(p[0]+2,p[1]+.5); ctx.lineTo(p[0]+p[2]-2,p[1]+.5); ctx.stroke();
           }
@@ -130,28 +136,6 @@ const PLANET=(()=>{
   }
 
   /* ---------- самолётик: крыло сверкает при крене, искры летят к герою ---------- */
-  /* v1.282.21 «Станция не печёт градиенты каждый кадр».
-     Партия 11 закрыла обломки, спутники и значки бонусов в render.js — а этот модуль остался
-     в стороне. Станция создавала ШЕСТЬ CanvasGradient в каждом кадре (корпус, ферма, четыре
-     панели) плюс литерал массива панелей: 360 объектов в секунду всё время, пока она ползёт
-     по экрану, и каждый со своим разбором цветов. При этом вся геометрия здесь ПОСТОЯННАЯ —
-     рисуется в местных координатах после translate. Значит кэш даже без ключа по размеру:
-     один раз навсегда. */
-  const STA_PANELS=[[-48,-15,30,10],[18,-15,30,10],[-44,7,22,8],[22,7,22,8]];
-  const staG={};
-  function staGrad(k){
-    let g=staG[k];
-    if(!g){
-      if(k==='hull'){ g=ctx.createLinearGradient(0,-9,0,9);
-        g.addColorStop(0,'#2a3d66'); g.addColorStop(.5,'#1a2947'); g.addColorStop(1,'#101b33'); }
-      else if(k==='mast'){ g=ctx.createLinearGradient(0,-22,0,22);
-        g.addColorStop(0,'#24385f'); g.addColorStop(1,'#14213c'); }
-      else { const y=+k.slice(3); g=ctx.createLinearGradient(0,y,0,y+(y<0?10:8));
-        g.addColorStop(0,'#3d5a8f'); g.addColorStop(1,'#22365e'); }
-      staG[k]=g;
-    }
-    return g;
-  }
   let _bank=0, flash=null;
   const sparks=[]; // {x,y,vx,vy,life}
   function spark(x,y){ // крюк из collectStar: золото догоняет самолётик
@@ -208,12 +192,7 @@ const PLANET=(()=>{
 
   /* новый взлёт — отметины тысяч считаются заново (нашёл страж П5, v1.106.0):
      иначе после краха вторая попытка молчала до прошлого максимума */
-  /* v1.282.20: сброс был неполным — чистились только вёрсты. Искры золота, недоигранная
-     вспышка крыла, метеор и станция посреди траектории переживали посадку и всплывали в
-     первых кадрах СЛЕДУЮЩЕГО забега: «из ниоткуда прилетают золотые искры», станция
-     появляется из середины пролёта. Тот же класс, что модуль уже лечил в v1.280.0. */
-  function reset(){ mile=0; mileT=0; sparks.length=0; flash=null; met=null; sta=null; _bank=0;
-    metT=8+R()*10; staT=70+R()*60; }   // те же окна, что при загрузке модуля
+  function reset(){ mile=0; mileT=0; }
 
   return { sky, rockTint, planeFx, spark, engineK, reset,
     // мостик стража: заглянуть внутрь и подтолкнуть редких гостей (тесты, не игра)

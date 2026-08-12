@@ -59,15 +59,9 @@ window.onTelegramAuth=function(u){ // ответ виджета — уже по�
 let _dcCid=undefined; // undefined — ещё не спрашивали; null — не настроено
 function syncDcClientId(){
   if(_dcCid!==undefined) return Promise.resolve(_dcCid);
-  /* v1.282.13: серверная беда — тоже «спросим в следующий раз». Раньше сюда попадал
-     любой не-ok ответ, включая 5xx, и «не настроено» запиралось в кэш до перезагрузки:
-     кнопка Discord пропадала насовсем из-за одной минутной хандры сервера. А сервер
-     отдаёт именно 503 not_configured, когда не смог прочитать токен, — попадание реальное.
-     Кэшируем только осмысленный ответ; на 5xx бросаем в общий .catch, который не кэширует. */
-  return syncPost({action:'public_config'})
-    .then(r=>{ if(!r.ok){ if(r.status>=500) throw 0; return null; } return r.json().catch(()=>null); })
+  return syncPost({action:'public_config'}).then(r=>r.ok?r.json():null)
     .then(d=>{ _dcCid=(d && d.ok && d.discord_client_id) || null; return _dcCid; })
-    .catch(()=>null); // сеть или сервер упали — не кэшируем, спросим в следующий раз
+    .catch(()=>null); // сеть упала — не кэшируем, спросим в следующий раз
 }
 function dcMount(el){
   if(!el || typeof document==='undefined') return;
@@ -125,23 +119,12 @@ function syncEnqueue(scores){
   for(const c in scores) m[c]=Math.max(m[c]||0, scores[c]||0);
   Store.set('syncQ',[m]);
 }
-/* v1.282.13 «Поводок»: у всех запросов синка есть предел терпения. Раньше fetch уходил без
-   таймаута, и на «полусетевом» канале (соединение открыто, ответа нет) промис висел вечно:
-   очередь не чистилась и не повторялась, а вызывающий код ждал ответа, которого не будет.
-   В логах сервера уже видны ответы под 2.3 секунды — до висяка недалеко. */
-const POST_TIMEOUT=10000;
-function syncFetch(url, body){
-  const ctl=(typeof AbortController==='function')?new AbortController():null;
-  const t=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },POST_TIMEOUT):0;
-  return fetch(url,{method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SYNC_KEY},
-    body:JSON.stringify(body), signal:ctl?ctl.signal:undefined})
-    .finally(()=>{ if(t) clearTimeout(t); });
-}
 function syncPost(payload){
   const burnWeb=!syncInitData() && !!syncWebAuth(); // 401 по веб-сессии = подпись протухла (неделя) — сгорает, вход снова в один тап
   const burnDc=!syncInitData() && !syncWebAuth() && !!syncDcAuth(); // то же для сессии Discord
-  return syncFetch(SYNC_URL,payload).then(r=>{
+  return fetch(SYNC_URL,{method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SYNC_KEY},
+    body:JSON.stringify(payload)}).then(r=>{
     if(r.status===401 && (burnWeb||burnDc)){
       if(burnWeb) Store.del('tgWebAuth');
       if(burnDc) Store.del('dcAuth');
@@ -158,61 +141,17 @@ function syncSubmit(scores, extra){
   syncEnqueue(scores);
   return syncFlush(extra);
 }
-/* v1.282.13: одна отправка за раз. Раньше два почти одновременных повода (посадка и
-   мостик входа/Discord) читали одну и ту же очередь и слали батч дважды. Сервер к
-   дублю почти терпим — он монотонен, — но антиспам на нём НЕ атомарен: читает
-   last_submit, сверяет, потом пишет. Два запроса успевают прочитать старую метку и
-   пройти оба, а разовые поля вроде duel_win уходят в бота дважды, и друг получает
-   два уведомления об одной победе. Пока отправка в полёте — возвращаем её же промис. */
-let _syncFlying=null;
 function syncFlush(extra){
   if(!syncAvailable()) return Promise.resolve();
-  /* v1.282.14: занятую линию НЕ подменяем чужим промисом, а становимся в очередь.
-     Прошлая редакция возвращала промис уже летящей отправки — и это молча теряло вторую:
-     её очки стирал завершающийся первый запрос (Store.set('syncQ',[])), а разовые поля
-     (duel_win, ghost_beat) вообще нигде не хранятся, они живут только в аргументе.
-     Живой сценарий: на старте идёт доотправка прошлой сессии (до 10с по таймауту), игрок
-     за это время выигрывает дуэль — друг не получает уведомления вовсе. Плюс цепочка
-     afterSubmit в gameOver резолвилась по чужому давнему запросу, и призрак снова уходил
-     раньше рекорда, ради чего вся правка и делалась. */
-  if(_syncFlying) return (_syncFlying = _syncFlying.catch(()=>{}).then(()=>syncFlush(extra)));
   if(typeof isLabEnv==='function' && isLabEnv()){ Store.set('syncQ',[]); return Promise.resolve(); } // v1.108.1: печать лаборатории — тестовый забег не долетает до боевого топа
-  /* v1.282.20 «Ничья отправка не съедает чужую».
-     Прошлая редакция чинила только половину беды: промис больше не подменялся, а очередь
-     по-прежнему затиралась целиком (Store.set('syncQ',[])). Живой сценарий: на старте идёт
-     доотправка прошлой сессии (до 10с), игрок за это время садится, выиграв дуэль. Его очки
-     легли в очередь, вторая отправка встала в цепочку — и тут первая приходит с 200 и сносит
-     запись второй. Цепочка просыпается, видит пустую очередь и выходит НЕ ОТПРАВИВ НИЧЕГО:
-     вместе с очками теряются разовые поля, которые нигде больше не живут — duel_win (друг не
-     узнаёт о победе), ghost_beat, паспорт забега и дневник дней.
-     Лечим тем же приёмом, что уже выучен в «Почте неба»: вычитаем ровно доставленное, а не
-     перезаписываем очередь. И extra отправляем ВСЕГДА — даже когда очков в очереди нет: разовые
-     поля не имеют к очереди никакого отношения. */
-  const q=syncQueue();
-  const batch=q.length?q[0]:{};
-  const hasExtra=!!(extra && Object.keys(extra).length);
-  if(!q.length && !hasExtra) return Promise.resolve();
-  const sent=batch;
-  function drain(){ // вычесть доставленное: то, что положили ПОКА мы летели, остаётся в очереди
-    const cur=syncQueue(); if(!cur.length) return;
-    const m={}; for(const it of cur) for(const c in it) m[c]=Math.max(m[c]||0, it[c]||0);
-    let left=false;
-    for(const c in m){ if(m[c]>(sent[c]||0)) left=true; else delete m[c]; }
-    Store.set('syncQ', left?[m]:[]);
-  }
-  const p=syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, extra||{})).then(r=>{
-    if(r.ok || r.status===401 || r.status===400){ // принято (или отказ навсегда) — вычитаем доставленное
-      drain();
-    } else if(r.status===429){ drain(); } // антиспам: следующий забег отправит свежее, старое не важно
+  const q=syncQueue(); if(!q.length) return Promise.resolve();
+  const batch=q[0];
+  return syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, extra||{})).then(r=>{
+    if(r.ok || r.status===401 || r.status===400){ // принято (или отказ навсегда) — очередь чистим
+      Store.set('syncQ',[]);
+    } else if(r.status===429){ Store.set('syncQ',[]); } // антиспам: следующий забег отправит свежее, старое не важно
     // 5xx / сеть — оставляем в очереди до следующего gameOver
-    /* v1.282.20: раньше отправка резолвилась пустотой — звавшему нечего было узнать об
-       исходе. Дневнику это нужно: он вычёркивает дни только по ответу сервера. Возвращаем
-       разобранное тело (или null), поведение очереди при этом не меняется ни на строку. */
-    return r.ok ? r.json().catch(()=>null) : null;
-  }).catch(()=>null /* офлайн: очередь ждёт */)
-    .finally(()=>{ _syncFlying=null; }); // поводок снят — следующий забег отправит заново
-  _syncFlying=p;
-  return p;
+  }).catch(()=>{ /* офлайн: очередь ждёт */ });
 }
 
 /* Топ-100 + моё место. Возвращает Promise с данными или null. */
@@ -270,7 +209,9 @@ function syncGhostShare(share){ // приватность: выкл — серв
    полёт лучшего — и только тому, кто сам сегодня прыгал: призрак не подсказка. */
 const SYNC_DAILY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-daily';
 function syncDailyPost(payload){
-  return syncFetch(SYNC_DAILY_URL,payload).catch(()=>null); // v1.282.13: тот же поводок, что у основной двери — без него запрос дня висел вечно
+  return fetch(SYNC_DAILY_URL,{method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SYNC_KEY},
+    body:JSON.stringify(payload)}).catch(()=>null);
 }
 function syncDailySubmit(o){ // {day, score, skin, track?} — тихо, как вся синхронизация
   if(!syncAvailable()) return Promise.resolve(false);
@@ -292,20 +233,12 @@ function syncDailyStats(day){ // v1.100.2: {ok, flyers, catchers} — «звез
 }
 
 /* Текущие локальные рекорды пакетом — для отправки */
-/* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
-   средство восстановления после офлайна. Правдоподобие проверять обязан сервер, но
-   отправлять заведомую чушь клиент не должен даже случайно: испорченный ключ
-   (`bestDist:1e15`, отрицательное число) раньше уезжал в мировую таблицу как есть.
-   Потолок выбран заведомо выше любого настоящего результата — он режет мусор и
-   грубую подделку, а честному рекордсмену не мешает. */
-const SCORE_CEIL=5000000;
-function saneScore(v){ const n=saneNumber(v,0); return (isFinite(n)&&n>0) ? Math.min(Math.floor(n),SCORE_CEIL) : 0; }
 function syncLocalScores(){
   return {
-    gyro: saneScore(Store.get('bestGyro',0)),
-    touch: saneScore(Store.get('bestTouch',0)),
-    bullet: saneScore(Store.get('bestBullet',0)),
-    dist: saneScore(Store.get('bestDist',0)),
-    keys: saneScore(Store.get('bestKeys',0))
+    gyro: saneNumber(Store.get('bestGyro',0),0),
+    touch: saneNumber(Store.get('bestTouch',0),0),
+    bullet: saneNumber(Store.get('bestBullet',0),0),
+    dist: saneNumber(Store.get('bestDist',0),0),
+    keys: saneNumber(Store.get('bestKeys',0),0)
   };
 }
