@@ -665,46 +665,199 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
    и тихая заглушка безопаснее, чем правка трёх путей выхода из забега ради удаления. */
 function tryOnRevert(){}
 let scoreCountGen=0; // поколение анимации count-up счёта на итогах
-function renderHangar(){
-  $('hangarWallet').innerHTML = L.wallet+S.wallet;
-  const list=$('shipList'); list.innerHTML='';
-  SKINS.forEach((sk,skI)=>{
-    const owned = S.ownedSkins.includes(sk.id);
-    const sel = S.skin===sk.id;
-    const div=document.createElement('div');
-    div.className='shipItem'+(sel?' sel':'');
-    div.style.animationDelay=(Math.min(skI,10)*60)+'ms'; // каскад +60ms, потолок 600ms
-    div.innerHTML='<canvas class="shipPv" width="96" height="72"></canvas>'+
-      '<div class="nm">'+L.skinNames[sk.name]+(sk.fx?' <span class="fxTag">✦</span>':'')+'</div>'+
-      (sel?'<div class="own">'+L.owned+'</div>':(owned?'<div class="own isOwn">'+ic('check')+'</div>':
-        '<div class="pr">'+L.buy+sk.price+'</div>')); // v1.282.20: кнопка примерки убрана вместе с фичей
-    // превью — мини-модель скина: та же отрисовка, что жизни в HUD (форма + цвета)
-    const pv=div.querySelector('.shipPv').getContext('2d');
-    pv.setTransform(2,0,0,2,0,0); pv.clearRect(0,0,48,36);
-    pv.save(); pv.translate(24,20); pv.scale(.62,.62);
-    pv.shadowColor=sk.glow; pv.shadowBlur=7;
-    pv.fillStyle=sk.body;
-    pv.beginPath(); pv.moveTo(0,-22); pv.lineTo(-16,14); pv.lineTo(0,6); pv.lineTo(16,14); pv.closePath(); pv.fill();
-    pv.fillStyle=sk.fold;
-    pv.beginPath(); pv.moveTo(0,-22); pv.lineTo(0,6); pv.lineTo(16,14); pv.closePath(); pv.fill();
-    pv.shadowBlur=0; pv.strokeStyle='rgba(120,140,180,.5)'; pv.lineWidth=1.6;
-    pv.beginPath(); pv.moveTo(0,-22); pv.lineTo(0,6); pv.stroke();
-    pv.restore();
-    div.addEventListener('click',()=>{
-      if(sel) return;
-      if(owned){ S.skin=sk.id; Store.set('skin',sk.id); sfx.click(); haptic('light'); renderHangar(); updateLives(); } // жизни-модельки — под новый скин
-      else if(S.wallet>=sk.price){
-        S.wallet-=sk.price; S.ownedSkins.push(sk.id); S.skin=sk.id;
-        Store.set('wallet',S.wallet); Store.set('ownedSkins',S.ownedSkins); Store.set('skin',sk.id);
-        sfx.buy(); haptic('success'); renderHangar(); refreshMenu(); updateLives(); // «кассовый» аккорд покупки
-        if (typeof achCheck==='function') achCheck(); // достижения ангара (первый скин / вся коллекция)
-      } else {
-        toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); // тост виден поверх ангара
-      }
-    });
-    list.appendChild(div);
-  });
+
+/* ============================================================
+   АНГАР — витрина (13.08.2026, страж 112)
+
+   Прежний ангар был списком товаров: девять строк, у каждой свой холст, и на каждый
+   выбор — list.innerHTML='' и полная пересборка с каскадом анимации. Экран мигал,
+   скролл прыгал вверх, девять кораблей перерисовывались, чтобы поменять один класс
+   на одной карточке.
+
+   Теперь три правила:
+   1. Жетоны строятся ОДИН раз. Выбор меняет классы и подписи, узлы живут.
+   2. Небо с бортом наверху — настоящий корабль, а не значок: то же, что игрок видит
+      в полёте. Живое, но с мерой (см. angarPvStart).
+   3. Кошелёк под кнопкой покупки, а не над витриной.
+   ============================================================ */
+
+/* Один рисунок корабля на все места ангара: и в жетоне, и в большом небе.
+   Форма — та же, что в полёте (render.js drawPlane): нос, крылья, складка. */
+function angarShip(x, sk, s, bolshoy){
+  x.save(); x.scale(s,s);
+  if(bolshoy){ // в небе борт светится так же, как в полёте: аура кормы и аура корпуса
+    const g=x.createRadialGradient(0,16,1,0,16,20);
+    g.addColorStop(0,sk.trail+'.5)'); g.addColorStop(.5,sk.trail+'.2)'); g.addColorStop(1,sk.trail+'0)');
+    x.globalCompositeOperation='lighter'; x.fillStyle=g; x.fillRect(-20,-4,40,40);
+    x.globalCompositeOperation='source-over';
+    const gg=x.createRadialGradient(0,-4,2,0,-4,32);
+    const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
+    gg.addColorStop(0,base+'.40)'); gg.addColorStop(.55,base+'.14)'); gg.addColorStop(1,base+'0)');
+    x.fillStyle=gg; x.fillRect(-32,-36,64,64);
+  }
+  x.fillStyle=sk.body;
+  x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+  x.fillStyle=sk.fold;
+  x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+  if(bolshoy){ // кромки крыльев и блик — только на большом борту, в жетоне это каша
+    x.strokeStyle='rgba(255,255,255,.32)'; x.lineWidth=1.1;
+    x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14); x.stroke();
+    x.fillStyle='rgba(255,255,255,.75)';
+    x.beginPath(); x.ellipse(-3,-12,2.6,5,.25,0,6.283); x.fill();
+  } else {
+    x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
+    x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();
+  }
+  x.restore();
 }
+
+/* Небо ангара. Рисуется в мерах 380×190 — тех же логических пикселях, что весь
+   интерфейс; настоящие пиксели даёт DPR, как и везде в игре. */
+const ANGAR_PV = { kadrov:0 };
+try{ window.__angarPv = ANGAR_PV; }catch(e){} // окно наружу — для стража 112
+let angarPvRaf=0, angarPvTouch=0;
+const ANGAR_PV_SON = 20000;  // 20 секунд без касания — превью засыпает
+const ANGAR_PV_SHAG = 33;    // ~30 кадров в секунду, а не 60
+
+function angarPvDraw(t){
+  const cv=$('angarPv'); if(!cv) return;
+  const sk = SKINS[S.skin]||SKINS[0];
+  const W=380, H=190, d=(window.devicePixelRatio||1);
+  if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
+  const x=cv.getContext('2d'); if(!x) return;
+  x.setTransform(cv.width/W,0,0,cv.width/W,0,0);
+  x.clearRect(0,0,W,H);
+  /* Звёзды заданы списком, а не случайны: небо ангара не должно мерцать по-новому
+     на каждый вход — это витрина, а не полёт. */
+  const ZV=[[40,30,.7,.5],[95,120,.6,.35],[160,50,.5,.4],[240,95,.8,.5],
+            [310,40,.6,.45],[350,150,.5,.3],[200,168,.6,.35],[280,155,.5,.25]];
+  for(let i=0;i<ZV.length;i++){ const z=ZV[i];
+    x.globalAlpha = z[3]*(RM?1:(0.6+0.4*Math.sin(t/700+i)));
+    x.fillStyle='#dce8ff'; x.beginPath(); x.arc(z[0],z[1],z[2],0,6.283); x.fill(); }
+  x.globalAlpha=1;
+  x.save(); x.translate(W/2,H/2+10);
+  x.rotate(RM?0.06:Math.sin(t/1400)*0.10); // борт покачивается — под бережным небом стоит ровно
+  angarShip(x, sk, 1.6, true);
+  // огонёк двигателя — живой только когда живо всё превью
+  x.globalAlpha = RM?.85:(.6+.4*Math.sin(t/70));
+  x.fillStyle=sk.trail+'.95)';
+  x.beginPath(); x.arc(0,11*1.6,3.0*1.6,0,6.283); x.fill();
+  x.globalAlpha=1; x.restore();
+  ANGAR_PV.kadrov++;
+}
+
+/* «Умное живое»: 30 кадров в секунду вместо 60, засыпает через 20 секунд без касания
+   и не запускается вовсе на нулевом ярусе качества и под бережным небом. Меню не имеет
+   права крутить второй игровой цикл: в полёте расход хотя бы оправдан игрой. */
+function angarPvStart(){
+  angarPvTouch = performance.now();
+  const slabo = (typeof Q!=='undefined' && Q.level===0) || RM;
+  if(slabo){ angarPvStop(); angarPvDraw(performance.now()); return; } // один честный кадр — и тишина
+  if(angarPvRaf) return;
+  let posl=0;
+  const tick=(now)=>{
+    if(screenName!=='hangar'){ angarPvRaf=0; return; }              // ушли с экрана — цикл умер
+    if(now-angarPvTouch>ANGAR_PV_SON){ angarPvRaf=0; return; }       // уснуло само
+    if(now-posl>=ANGAR_PV_SHAG){ posl=now; angarPvDraw(now); }
+    angarPvRaf=requestAnimationFrame(tick);
+  };
+  angarPvRaf=requestAnimationFrame(tick);
+}
+function angarPvStop(){ if(angarPvRaf){ cancelAnimationFrame(angarPvRaf); angarPvRaf=0; } }
+function angarPvWake(){ // касание будит уснувшее превью
+  if(screenName!=='hangar') return;
+  angarPvTouch=performance.now();
+  if(!angarPvRaf) angarPvStart();
+}
+
+/* Подпись под жетоном и кнопка покупки — единственное, что меняется при выборе. */
+function angarItemFill(el, sk){
+  const owned = S.ownedSkins.includes(sk.id);
+  const sel   = S.skin===sk.id;
+  el.classList.toggle('sel', sel);
+  const nm=el.querySelector('.nm'), pr=el.querySelector('.pr');
+  if(nm) nm.textContent = L.skinNames[sk.name];
+  if(pr){
+    pr.classList.toggle('own', owned);
+    pr.innerHTML = owned ? (sel?L.owned:ic('check'))
+                         : ic('star4','i-s4')+Math.round(sk.price);
+  }
+}
+function angarBuyFill(){
+  const sk = SKINS[angarSel]||SKINS[0];
+  const owned = S.ownedSkins.includes(sk.id);
+  const nadet = owned && S.skin===sk.id;
+  const b=$('angarBuy'); if(!b) return;
+  b.innerHTML = nadet ? L.hangarWorn
+              : owned ? L.hangarWear
+              : (L.hangarBuy+' — '+ic('star4','i-s4')+Math.round(sk.price));
+  b.classList.toggle('ghost', nadet);   // надетый борт — кнопка гаснет: делать нечего
+  b.classList.toggle('pri', !nadet);
+  $('angarWalletN').textContent = Math.round(S.wallet);
+}
+let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый борт)
+let angarBuilt = false;    // жетоны построены — второй раз не строим
+
+function renderHangar(){
+  angarSel = S.skin;
+  const grid=$('angarGrid'); if(!grid) return;
+  if(!angarBuilt){
+    grid.innerHTML='';
+    SKINS.forEach(sk=>{
+      const el=document.createElement('div');
+      el.className='angarIt';
+      el.innerHTML='<span class="dot"><canvas width="186" height="144"></canvas></span>'+
+                   '<span class="nm"></span><span class="pr"></span>';
+      const cv=el.querySelector('canvas');
+      const x=cv.getContext('2d');
+      x.setTransform(3,0,0,3,0,0); x.translate(31,26); // 62×48 мер при DPR 3
+      angarShip(x, sk, .92, false);
+      el.addEventListener('click',()=>{ angarPick(sk.id); });
+      grid.appendChild(el);
+    });
+    angarBuilt = true;
+  }
+  SKINS.forEach((sk,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, sk); });
+  angarBuyFill();
+  angarPvStart();
+}
+
+/* Тап по жетону — только смотрю. Надеть или купить — отдельным действием по кнопке:
+   так случайный тап по дорогому борту не тратит звёзды (беда v1.282.20, страж 45). */
+function angarPick(id){
+  if(angarSel===id) return;
+  angarSel=id; sfx.click(); haptic('light');
+  const grid=$('angarGrid');
+  SKINS.forEach((sk,i)=>{ const el=grid.children[i];
+    if(el) el.classList.toggle('sel', sk.id===angarSel); });
+  angarBuyFill(); angarPvWake();
+  // небо показывает выбранный жетон, даже если борт ещё не надет
+  const sk=SKINS[angarSel]||SKINS[0]; const nast=S.skin; S.skin=sk.id;
+  angarPvDraw(performance.now()); S.skin=nast;
+}
+function angarAct(){ // одна кнопка: надеть, если своё; купить, если чужое
+  const sk=SKINS[angarSel]||SKINS[0];
+  const owned=S.ownedSkins.includes(sk.id);
+  if(owned){
+    if(S.skin===sk.id) return;
+    S.skin=sk.id; Store.set('skin',sk.id); sfx.click(); haptic('light');
+    SKINS.forEach((s2,i)=>{ const el=$('angarGrid').children[i]; if(el) angarItemFill(el,s2); });
+    angarBuyFill(); updateLives(); angarPvWake();
+    return;
+  }
+  if(S.wallet>=sk.price){
+    S.wallet-=sk.price; S.ownedSkins.push(sk.id); S.skin=sk.id;
+    Store.set('wallet',S.wallet); Store.set('ownedSkins',S.ownedSkins); Store.set('skin',sk.id);
+    sfx.buy(); haptic('success');
+    SKINS.forEach((s2,i)=>{ const el=$('angarGrid').children[i]; if(el) angarItemFill(el,s2); });
+    angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
+    if (typeof achCheck==='function') achCheck(); // достижения ангара (первый скин / вся коллекция)
+  } else {
+    toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
+  }
+}
+if(typeof $==='function' && $('angarBuy')) $('angarBuy').addEventListener('click', angarAct);
+if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
 /* ---------- Шаринг (Блок 9) ---------- */
 function shareTextFor(){ // гиро-гордость: забег на гироскопе — другой текст шаринга
@@ -1381,6 +1534,8 @@ function applyLang(){
   $('restartBtn').textContent=L.restart;
   $('pauseMenuBtn').textContent=L.menu;
   $('hangarTitle').textContent=L.hangar;
+  $('angarWalletLbl').textContent=L.walletYours; // 13.08.2026: подпись кошелька под кнопкой покупки
+  if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
   $('hangarBackBtn').textContent=L.menu;
   $('retryBtn').textContent=L.retry;
   $('watchBtn').textContent=L.watchFlight;

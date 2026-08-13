@@ -207,6 +207,9 @@ const I18N = {
     shield:'Щит', magnet:'Магнит', slowmo:'Замедление', life:'+Жизнь', dash:'Таран', nova:'Сверхновая', shieldDown:'Щит снят', nearMiss:'Впритык', gate:'Ворота',
     overDetails:'Подробности полёта',
     combo:'Комбо', notEnough:'Не хватает звёзд', owned:'Выбран', buy:ic('star4','i-s4'),
+    /* 13.08.2026 «Ангар-витрина»: слова экрана покупки. Кошелёк переехал под кнопку и
+       получил подпись — голое число под кнопкой читалось как ещё одна цена. */
+    hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
     calibrated:'Наклон откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
     tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно или поверните экран, чтобы полететь',
@@ -262,6 +265,7 @@ const I18N = {
     csCap:'Позывной — звучит в морзянке и виброэфире',
     diagVibro:'Проверка виброэфира', vibChTg:'Канал: Telegram API — импульсы отчётливые', vibChWeb:'Канал: только системная вибрация — предел веба', vibChNone:'Вибрация недоступна — проверь настройки телефона',
     setGhost:'Призрак',
+    again:'ЕЩЁ РАЗ?', // подпись над своей тенью и имя строки настроек: текст один — ключ один
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Призрак недоступен: владелец скрыл трек',
     ghostWith:(n)=>'Призрак '+(n||'игрока')+' — рядом с тобой',
     ghostBeat:(n,sc,b)=>'Призрак '+escapeHtml(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
@@ -326,6 +330,7 @@ const I18N = {
     shield:'Shield', magnet:'Magnet', slowmo:'Slow-mo', life:'+Life', dash:'Ram', nova:'Supernova', shieldDown:'Shield down', nearMiss:'Close call', gate:'Gate',
     overDetails:'Flight details',
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
+    hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
     calibrated:'Tilt calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
     tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window or rotate the screen to fly',
@@ -381,6 +386,7 @@ const I18N = {
     csCap:'Callsign — sounds in morse trail and haptic air',
     diagVibro:'Haptic morse test', vibChTg:'Channel: Telegram API — crisp impulses', vibChWeb:'Channel: system vibration only — web limit', vibChNone:'No vibration — check phone settings',
     setGhost:'Ghost',
+    again:'AGAIN?',
     ghostGo:'Fly with this record’s ghost', ghostNone:'Ghost unavailable: the owner hid the track',
     ghostWith:(n)=>(n||'Player')+'’s ghost flies with you',
     ghostBeat:(n,sc,b)=>'Ghost of '+escapeHtml(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
@@ -442,7 +448,8 @@ const I18N = {
     shield:'Escudo', magnet:'Imán', slowmo:'Cámara lenta', life:'+Vida', dash:'Embestida', nova:'Supernova',
     shieldDown:'Escudo caído', nearMiss:'Al límite', gate:'Puerta',
     overDetails:'Detalles del vuelo', combo:'Combo',
-    notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'), // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
+    notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
     calibrated:'Inclinación calibrada', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
@@ -518,6 +525,7 @@ const I18N = {
     vibChWeb:'Canal: solo vibración del sistema — límite de la web',
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
     setGhost:'Fantasma', ghostGo:'Volar con el fantasma de este récord',
+    again:'¿OTRA VEZ?',
     ghostNone:'Fantasma no disponible: el dueño ocultó la pista',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jugador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
@@ -579,7 +587,8 @@ const I18N = {
     shield:'Escudo', magnet:'Ímã', slowmo:'Câmera lenta', life:'+Vida', dash:'Investida', nova:'Supernova',
     shieldDown:'Escudo caído', nearMiss:'Por pouco', gate:'Portal',
     overDetails:'Detalhes do voo', combo:'Combo',
-    notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'), // v1.282.15: значок валюты вернулся
+    notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas', // v1.282.15: значок валюты вернулся
     calibrated:'Inclinação calibrada', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
@@ -655,6 +664,7 @@ const I18N = {
     vibChWeb:'Canal: só vibração do sistema — limite da web',
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
     setGhost:'Fantasma', ghostGo:'Voar com o fantasma deste recorde',
+    again:'DE NOVO?',
     ghostNone:'Fantasma indisponível: o dono escondeu a pista',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jogador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
@@ -718,6 +728,7 @@ const I18N = {
     shield:'Bouclier', magnet:'Aimant', slowmo:'Ralenti', life:'+Vie', dash:'Percussion', nova:'Supernova', shieldDown:'Bouclier tombé', nearMiss:'Frôlement', gate:'Portail',
     overDetails:'Détails du vol',
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
+    hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
     calibrated:'Inclinaison calibrée', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
     tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre ou tourne l\u2019écran pour voler',
@@ -773,6 +784,7 @@ const I18N = {
     csCap:'Indicatif — résonne dans la traînée morse et l\u2019air haptique',
     diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
     setGhost:'Fantôme',
+    again:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
     ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Fantôme indisponible : le propriétaire a caché la trace',
     ghostWith:(n)=>'Le fantôme de '+(n||'Joueur')+' vole avec toi',
     ghostBeat:(n,sc,b)=>'Fantôme de '+escapeHtml(n||'joueur')+' battu : '+fmtN(sc)+' contre '+fmtN(b)
@@ -1368,7 +1380,18 @@ const canvas = $('game');
    sRGB-краски в P3-холсте звучат ровно как раньше: экран без P3 не заметит ничего. */
 const P3 = (typeof matchMedia==='function') && matchMedia('(color-gamut: p3)').matches;
 function juicy(srgb, p3){ return P3 ? p3 : srgb; } // пара чернил: обычные — всем, сочные — флагману
-const ctx = canvas.getContext('2d', P3?{colorSpace:'display-p3'}:undefined); // v1.99.3: флагману — расширенный набор чернил
+/* 13.08.2026 «Кадр не платит лишнего».
+   alpha:false — небо непрозрачно ВСЕГДА: мы закрашиваем весь кадр каждый раз, и альфа
+   у главного холста нужна была ровно затем, чтобы браузер каждый кадр смешивал его со
+   страницей под ним. Работа, результат которой не видит никто.
+   desynchronized НЕ включаем намеренно: это подсказка «рисуй мимо композитора», она
+   меняет то, что игрок видит, и умеет давать разрыв кадра. Такое включают, посмотрев
+   на живые снимки, а прибора «глаза» у нас сейчас нет — включим, когда будет чем
+   доказать, что стало лучше, а не только быстрее. */
+const ctx = canvas.getContext('2d', Object.assign({alpha:false}, P3?{colorSpace:'display-p3'}:null)); // v1.99.3: флагману — расширенный набор чернил
+/* Умолчание imageSmoothingQuality зависит от браузера, и часть берёт бикубику ('high') —
+   заметно дороже на полноэкранных спрайтах, а разницы на нашем небе не видно. */
+try{ ctx.imageSmoothingQuality='low'; }catch(e){}
 /* v1.282.20 «Сочные чернила и в кэшах»: офскрин-холсты (свечения, туманности, виньетка)
    создавались обычным getContext('2d') — то есть всегда в sRGB. Всё, что нарисовано в них
    красками juicy(), обрезалось до охвата sRGB ещё до попадания на главный холст: сочные
