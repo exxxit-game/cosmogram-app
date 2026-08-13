@@ -4456,8 +4456,63 @@ async function guardPortraitLockAsks(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 116 — «Таблица — витрина, а не клуб».
+   Гость жал «ТОП» и получал строку «войди через Telegram» вместо пятнадцати живых игроков.
+   Просил показать — получал отказ, и выглядело это как поражение по его вине.
+
+   Страж проверяет три обещания:
+   1. Невошедший ВИДИТ таблицу (сервер отвечает публичной витриной, экран её рисует).
+   2. Его собственной строки в ней нет — он не представлялся, подделывать некому.
+   3. Приглашение стоит ПОД таблицей, а не вместо неё.
+   Сеть на стенде запечатана, поэтому ответ сервера подменяется здесь же: страж проверяет
+   ЭКРАН, а не связь — за связь отвечают живые пробы через базу. */
+async function guardTopIsShowcase(browser){
+  const name = '116. Гость видит таблицу, а приглашение стоит под ней';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const spat = ms => new Promise(r=>setTimeout(r,ms));
+      /* Подменяем ответ витрины: пять чужих строк, своего места нет — ровно то, что
+         присылает cosmogram-top невошедшему. */
+      window.syncTop = ()=>Promise.resolve({ ok:true, category:'touch', guest:true, me:null,
+        top:[{pid:1,name:'Комета',best:8007,verified:true},
+             {pid:2,name:'Ирис',  best:6120,verified:false},
+             {pid:3,name:'Норд',  best:5480,verified:false},
+             {pid:4,name:'Астра', best:4210,verified:false},
+             {pid:5,name:'Вега',  best:3980,verified:false}] });
+      Store.set('bestTouch', 4500);          // свой рекорд: между Астрой и Вегой -> 4-е из 5
+      topCat='touch';
+      setScreen('ach'); achTabSel(false);
+      await spat(400);
+
+      const list=document.getElementById('topList');
+      const strok = list ? list.querySelectorAll('.topIt').length : -1;
+      const otkaz = list ? /войди|sign in|inicia|entre com|connecte/i.test(String(list.textContent||'')) : false;
+      const moih  = list ? list.querySelectorAll('.topIt.me').length : -1;
+      const wb=document.getElementById('topWouldBe'), jn=document.getElementById('topJoin');
+      const vidim = el => !!(el && !el.classList.contains('hidden'));
+      const nizhe = !!(list && jn && (list.compareDocumentPosition(jn) & Node.DOCUMENT_POSITION_FOLLOWING));
+      return { strok, otkaz, moih, mesto:(wb?String(wb.textContent||''):''),
+               mestoVidno:vidim(wb), priglVidno:vidim(jn), nizhe };
+    });
+    if(r.strok <= 0) return post(name,false,
+      `гость не увидел ни одной строки таблицы${r.otkaz?' — вместо неё отказ «войди»':''}`);
+    if(r.otkaz) return post(name,false,'на месте таблицы всё ещё стоит отказ «войди»');
+    if(r.moih !== 0) return post(name,false,
+      `в таблице ${r.moih} строк помечено как «моя» — гость не представлялся, своей строки у него быть не может`);
+    if(!r.mestoVidno || !/4/.test(r.mesto)) return post(name,false,
+      `гостю не показано его место в чужой таблице (строка: «${r.mesto}»)`);
+    if(!r.priglVidno) return post(name,false,'приглашение войти не показано гостю вовсе');
+    if(!r.nizhe) return post(name,false,'приглашение стоит ВЫШЕ таблицы — снова читается как условие входа');
+    post(name,true,`строк ${r.strok}, своей нет, место «${r.mesto.trim()}», приглашение под таблицей`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardTopIsShowcase, guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
