@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bump_version.py — «Четыре места, а не три, и умение чинить разъехавшееся»
+"""bump_version.py — «Все места сразу, и умение чинить разъехавшееся»
 
 История в трёх заходах:
 
@@ -34,11 +34,11 @@
     python3 bump_version.py 1.283.0 --align    # свести разъехавшиеся места
 
 Что делает:
-    1. Читает версию из всех четырёх мест: sw.js (const V), js/core.js (GAME_VERSION),
-       index.html (все ?v=X.Y.Z) и index.html (release: 'cosmogram@X.Y.Z').
+    1. Читает версию из всех мест сразу: sw.js (const V), js/core.js (GAME_VERSION),
+       index.html (все ?v=X.Y.Z) и, если он есть, release: 'cosmogram@X.Y.Z'.
     2. Если места разошлись — печатает таблицу и останавливается; с --align идёт дальше.
     3. Проверяет, что новая версия строго выше каждой найденной.
-    4. Заменяет номер во всех четырёх местах, считая совпадения до и после.
+    4. Заменяет номер во всех этих местах, считая совпадения до и после.
     5. Показывает diff на экран. Ничего не коммитит: git add/commit — решение человека.
 
 Не трогает: manifest.*.json (у них своей версии игры нет), CHANGELOG.md (летопись
@@ -106,11 +106,10 @@ def main():
     if not m_core:
         print("Не нашёл `const GAME_VERSION='...';` в js/core.js — ничего не меняю.")
         sys.exit(1)
+    # Четвёртым местом была подпись релиза Sentry. Sentry убран из игры совсем, поэтому
+    # место стало необязательным — но если оно когда-нибудь вернётся, скрипт обязан вести
+    # и его: именно из-за незамеченного четвёртого места версия однажды разъехалась.
     m_rel = RE_REL.search(html_c)
-    if not m_rel:
-        print("Не нашёл `release: 'cosmogram@...'` в index.html — ничего не меняю.")
-        print("Это подпись инцидентов Sentry; без неё они слипаются в один мёртвый релиз.")
-        sys.exit(1)
     tags = RE_TAG.findall(html_c)
     if not tags:
         print('В index.html не нашлось ни одного ?v=X.Y.Z — кэшбастера у раздачи нет вовсе.')
@@ -121,11 +120,11 @@ def main():
         'sw.js (const V)':                m_sw[1],
         'js/core.js (GAME_VERSION)':      m_core[1],
         f'index.html ({len(tags)} тегов ?v=)': ', '.join(tag_versions),
-        'index.html (release Sentry)':    m_rel[1],
+        'index.html (release Sentry)':    (m_rel[1] if m_rel else '— нет, канал убран'),
     }
-    all_versions = sorted({m_sw[1], m_core[1], m_rel[1], *tags}, key=vtuple)
+    all_versions = sorted({m_sw[1], m_core[1], *( [m_rel[1]] if m_rel else [] ), *tags}, key=vtuple)
 
-    print('Что сейчас в четырёх местах:')
+    print(f'Что сейчас в местах, где живёт версия ({3 if not m_rel else 4}):')
     for k, v in found.items():
         print(f'  {k:38} {v}')
     print()
@@ -158,7 +157,7 @@ def main():
         ('sw.js const V',            len(RE_SW.findall(new_sw)),          len(RE_SW.findall(sw_c))),
         ('js/core.js GAME_VERSION',  len(RE_CORE.findall(new_core)),      len(RE_CORE.findall(core_c))),
         ('index.html ?v=',           len(RE_TAG.findall(new_html)),       len(tags)),
-        ('index.html release',       len(RE_REL.findall(new_html)),       len(RE_REL.findall(html_c))),
+        ('index.html release',       len(RE_REL.findall(new_html)),       len(RE_REL.findall(html_c))),  # 0 == 0, когда канала нет
     ]
     for what, after, before in checks:
         if after != before:
@@ -173,7 +172,7 @@ def main():
 
     print(f'sw.js:                     {m_sw[1]} → {new_v}')
     print(f'js/core.js GAME_VERSION:   {m_core[1]} → {new_v}')
-    print(f'index.html release Sentry: {m_rel[1]} → {new_v}')
+    if m_rel: print(f'index.html release Sentry: {m_rel[1]} → {new_v}')
     print(f'index.html ?v=:            {len(tags)} мест ({", ".join(tag_versions)}) → {new_v}')
     print()
     show_diff('sw.js', sw_c, new_sw)
@@ -186,7 +185,7 @@ def main():
     write('js/core.js', new_core)
     write('index.html', new_html)
     print()
-    print(f'Готово. {len(tags) + 3} мест обновлено ({len(tags)} тегов ?v= + sw.js + GAME_VERSION + релиз Sentry).')
+    print(f'Готово. {len(tags) + 2 + (1 if m_rel else 0)} мест обновлено ({len(tags)} тегов ?v= + sw.js + GAME_VERSION{" + релиз" if m_rel else ""}).')
     print('Дальше — руками: прогнать стражей (страж 96 стережёт именно это), проверить diff, git add/commit.')
 
 
