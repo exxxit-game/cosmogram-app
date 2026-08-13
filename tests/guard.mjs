@@ -2372,40 +2372,46 @@ async function guardBrokenTapeDoesNotKillBoot(browser){
    ПАРТИЯ 11 — ЧЕСТНОСТЬ ЦИФР, ПРИВАТНОСТЬ И КАДР
    ============================================================ */
 
-/* Страж 67 — Тумблер телеметрии гасит все каналы, а не один.
-   Стережёт: __telemetryAllowed() в index.html.
-   Беда: выключатель в настройках назывался «помогать отчётами», но
-   гасил только «Почту неба». Sentry и Amplitude собирали независимо и
-   выключателя не имели вовсе — человек нажал «нет», а данные шли. */
+/* Страж 67 — Тумблер телеметрии гасит наш собственный канал.
+   Стережёт: BEACON в js/beacon.js.
+   Беда, ради которой страж родился: выключатель в настройках назывался «помогать
+   отчётами», но гасил только «Почту неба», а Sentry и Amplitude собирали независимо
+   и выключателя не имели вовсе — человек нажал «нет», а данные шли.
+   Переписан после того, как оба сторонних канала убрали из игры совсем (страж 104).
+   Смысл стража не изменился, изменился список дверей: дверь осталась одна, и она
+   обязана слушаться того же тумблера. Проверяем поведением, а не чтением флага:
+   при «нет» письмо не должно ни уходить, ни копиться в очереди. */
 async function guardTelemetryToggleStopsAll(browser){
-  const name = '67. Выключатель телеметрии гасит и Sentry, и Amplitude';
+  const name = '67. Выключатель телеметрии гасит «Почту неба» — и не копит про запас';
   let ctx;
   try{
     const o = await openGame(browser, { init:()=>{ try{ localStorage.clear();
       localStorage.setItem('cosmogram_v2', JSON.stringify({beaconOn:0})); }catch(e){} } });
     ctx = o.ctx;
-    const r = await o.page.evaluate(()=>{
-      if(typeof __telemetryAllowed!=='function') return {missing:true};
-      const off = __telemetryAllowed();
-      let sentryInit=0, ampInit=0;
-      window.Sentry = { init:()=>{ sentryInit++; }, setTag:()=>{} };
-      window.amplitude = { init:()=>{ ampInit++; }, add:()=>{}, sessionReplayPlugin:()=>({}) };
-      try{ __sentryBoot(); }catch(e){}
-      try{ __amplitudeBoot(); }catch(e){}
-      // а теперь игрок разрешил — те же ворота должны открыться
-      const raw=JSON.parse(localStorage.getItem('cosmogram_v2')||'{}'); raw.beaconOn=1;
-      localStorage.setItem('cosmogram_v2', JSON.stringify(raw));
-      const on = __telemetryAllowed();
-      try{ __sentryBoot(); }catch(e){}
-      try{ __amplitudeBoot(); }catch(e){}
-      return { off, on, sentryInit, ampInit };
+    const r = await o.page.evaluate(async ()=>{
+      if(typeof BEACON!=='object' || !BEACON) return {missing:true};
+      let sent=0;
+      const realFetch = window.fetch;
+      window.fetch = function(u,opt){ if(String(u).indexOf('beacon')>=0) sent++; return realFetch.apply(this,arguments); };
+      BEACON.signal('guard_probe_off','страж 67: тумблер выключен');
+      await new Promise(r=>setTimeout(r,120));
+      const off = { sent, q: BEACON._state().q, on: BEACON._state().on };
+
+      /* Включаем через Store, а не правкой localStorage: у хранилища свой слепок в памяти,
+         и запись мимо него канал бы не увидел — ровно так же, как не увидел бы игрок. */
+      Store.set('beaconOn',1);
+      BEACON.signal('guard_probe_on','страж 67: тумблер включён');
+      await new Promise(r=>setTimeout(r,120));
+      const on = { q: BEACON._state().q, on: BEACON._state().on };
+      window.fetch = realFetch;
+      return { off, on };
     });
-    if(r.missing) return post(name,false,'общих ворот телеметрии нет — Sentry и Amplitude выключателя не знают');
-    if(r.off!==false) return post(name,false,'при выключенном тумблере ворота всё равно открыты');
-    if(r.sentryInit!==1) return post(name,false,`Sentry инициализировался ${r.sentryInit} раз вместо одного (при «нет» — молчание, при «да» — работа)`);
-    if(r.ampInit!==1) return post(name,false,`Amplitude инициализировался ${r.ampInit} раз вместо одного`);
-    if(r.on!==true) return post(name,false,'после согласия ворота не открылись — тумблер сломал наблюдение совсем');
-    post(name,true,'при «нет» оба канала молчат, при «да» поднимаются по одному разу');
+    if(r.missing) return post(name,false,'BEACON не поднялся — судить о тумблере не по чему');
+    if(r.off.on!==false) return post(name,false,'при выключенном тумблере канал считает себя разрешённым');
+    if(r.off.sent!==0)   return post(name,false,`при «нет» ушло ${r.off.sent} запросов — выключатель не выключает`);
+    if(r.off.q!==0)      return post(name,false,`при «нет» в очереди осело ${r.off.q} писем: молчание превратилось в «копим и пошлём потом»`);
+    if(r.on.on!==true)   return post(name,false,'после согласия канал не открылся — тумблер сломал наблюдение совсем');
+    post(name,true,'при «нет» ни одного запроса и пустая очередь; при «да» канал снова открыт');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
@@ -2898,7 +2904,7 @@ async function guardFontLicenseShipped(browser){
    (Германия) и Amplitude (ЕС). Обещание, которое код не выполняет, — не
    мелочь текста, а неверные сведения для игрока. */
 async function guardPrivacyMatchesCode(browser){
-  const name = '79. Политика конфиденциальности называет реальных получателей данных';
+  const name = '79. Политика называет реальных получателей — и только их';
   let ctx;
   try{
     const o = await openGame(browser, { init:FRESH });
@@ -2912,14 +2918,25 @@ async function guardPrivacyMatchesCode(browser){
       }catch(e){ return { missing:true }; }
     });
     if(r.missing) return post(name,false,'privacy.html не отдаётся');
-    const need = ['Supabase','Sentry','Amplitude'];
+    /* Список получателей стал короче: сторонние каналы убраны из игры (страж 104).
+       Теперь политика обязана называть тех, кто РЕАЛЬНО получает данные, — и НЕ называть
+       тех, кто больше не получает: обещание передачи, которой нет, врёт ровно так же,
+       как умолчание о передаче, которая есть. */
+    const need = ['Supabase','Telegram'];
     const gone = need.filter(w=>!new RegExp(w,'i').test(r.t));
     if(gone.length) return post(name,false,`в политике не названы получатели данных: ${gone.join(', ')}`);
+    const ghostsOfPast = ['Sentry','Amplitude'].filter(w=>{
+      const m = r.t.match(new RegExp('[^.]*'+w+'[^.]*\\.','ig')) || [];
+      // упоминание в прошедшем времени («отключены и удалены») допустимо и полезно;
+      // недопустимо — называть их среди действующих получателей
+      return m.some(sent=>!/удал|отключ|больше не|прежде|раньше/i.test(sent));
+    });
+    if(ghostsOfPast.length) return post(name,false,`политика называет действующими получателями тех, кого в игре нет: ${ghostsOfPast.join(', ')}`);
     if(/в рамках экосистемы Telegram/i.test(r.t))
       return post(name,false,'осталось обещание «обработка в рамках экосистемы Telegram» — код его не выполняет');
     if(!/переключател|тумблер|Настройки/i.test(r.t))
       return post(name,false,'в политике не сказано, как выключить телеметрию');
-    post(name,true,'названы Supabase, Sentry и Amplitude; описан выключатель; ложного обещания нет');
+    post(name,true,'названы Supabase и Telegram; сторонние каналы упомянуты только как удалённые; описан выключатель');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
@@ -3749,7 +3766,7 @@ async function guardMusicJitterAndDrift(browser){
    Рассинхрон невидим в игре: она работает, просто у части игроков работает
    вчерашняя. Поэтому стеречь его должен стенд, а не аудит через семь партий. */
 async function guardVersionIsOneEverywhere(){
-  const name = '96. Номер версии совпадает в sw.js, GAME_VERSION, всех ?v= и релизе Sentry';
+  const name = '96. Номер версии совпадает в sw.js, GAME_VERSION и во всех ?v=';
   try{
     const sw   = fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
     const core = fs.readFileSync(path.join(ROOT,'js/core.js'),'utf8');
@@ -3759,8 +3776,11 @@ async function guardVersionIsOneEverywhere(){
     if(!mSw) return post(name,false,"в sw.js не нашлось `const V = '…';` — версию раздачи взять неоткуда");
     const mCore = core.match(/const GAME_VERSION='([\d.]+)';/);
     if(!mCore) return post(name,false,"в js/core.js не нашлось `const GAME_VERSION='…';`");
+    /* Четвёртым местом был `release: 'cosmogram@…'` — подпись инцидентов Sentry. Sentry
+       из игры убран совсем (страж 104), вместе с ним ушла и подпись: мест снова три.
+       Проверку не выбрасываем, а переворачиваем — если релиз вернулся, он обязан
+       совпадать со всеми остальными, иначе беда воспроизведётся ровно как в прошлый раз. */
     const mRel = html.match(/release:\s*'cosmogram@([\d.]+)'/);
-    if(!mRel) return post(name,false,"в index.html не нашлось `release: 'cosmogram@…'` — подпись инцидентов Sentry потеряна");
 
     const tags = [...html.matchAll(/\?v=([\d.]+)/g)].map(m=>m[1]);
     if(!tags.length) return post(name,false,'в index.html не нашлось ни одного ?v= — кэшбастера у раздачи нет вовсе');
@@ -3768,19 +3788,64 @@ async function guardVersionIsOneEverywhere(){
     const V = mSw[1];
     const bad = [];
     if(mCore[1] !== V) bad.push(`GAME_VERSION=${mCore[1]}`);
-    if(mRel[1]  !== V) bad.push(`release Sentry=${mRel[1]}`);
+    if(mRel && mRel[1] !== V) bad.push(`release Sentry=${mRel[1]}`);
     const odd = [...new Set(tags.filter(t=>t!==V))];
     if(odd.length) bad.push(`?v= в index.html: ${odd.join(', ')} (${tags.filter(t=>t!==V).length} из ${tags.length} тегов)`);
 
     if(bad.length)
       return post(name,false,`sw.js на ${V}, а рядом — ${bad.join('; ')}. Раздача врёт: адрес модуля не сменился, игрок вправе получить старый файл`);
 
-    post(name,true,`версия ${V} одинакова во всех четырёх местах: sw.js, GAME_VERSION, ${tags.length} тегов ?v=, релиз Sentry`);
+    post(name,true,`версия ${V} одинакова везде: sw.js, GAME_VERSION, ${tags.length} тегов ?v=${mRel?', релиз':''}`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+}
+
+/* Страж 104 — На странице нет сторонних каналов наблюдения.
+   Стережёт: index.html (теги, preconnect, запалы) и все модули (вызовы amplitude).
+   Решение: Sentry и Amplitude убраны совсем. Причина не в идеологии, а в замере —
+   за всё время оба дали НОЛЬ событий, и не могли дать: у русской аудитории они
+   режутся фильтрами, а Cloudflare под ними тротлится. Мы держали два запроса к чужим
+   CDN на каждой загрузке, целый раздел в политике приватности и вопрос по 152-ФЗ —
+   ради нуля. Краши ловит «Почта неба» (beacon.js), поведение — дневник дней; обе
+   первой стороной, обе в нашей же базе.
+   Зачем страж: убрать легко, а вот НЕ ВЕРНУТЬ обратно — это как раз то, что забывается.
+   Стоит кому-нибудь снова подключить чужую аналитику «на попробовать» — политика
+   мгновенно разойдётся с кодом, а этот случай в проекте уже был (находка №14 Каталога).
+   Проверяем по файлам, а не по сети: стенд и так рвёт сторонние CDN, поэтому живой
+   запрос ничего бы не доказал — отсутствие запроса там означало бы лишь блокировку. */
+async function guardNoThirdPartyTelemetry(){
+  const name = '104. Сторонних каналов наблюдения на странице нет';
+  try{
+    /* Ловим ИСПОЛЬЗОВАНИЕ, а не слово: рассказ о том, почему каналов больше нет, обязан
+       остаться в комментарии — иначе следующий инженер подключит их заново, не зная замера. */
+    const html = fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const code = html.replace(/<!--[\s\S]*?-->/g,' '); // комментарии не код
+    const bad = [];
+    if(/sentry-cdn\.com|cdn\.amplitude\.com|ingest\.[a-z]*\.?sentry\.io/i.test(code))
+      bad.push('в index.html вернулась загрузка со стороннего CDN наблюдения');
+    if(/Sentry\s*\.\s*init|amplitude\s*\.\s*init/.test(code))
+      bad.push('в index.html вернулась инициализация стороннего канала');
+    if(/__sentryBoot|__amplitudeBoot/.test(code))
+      bad.push('в index.html остались запалы сторонних каналов');
+
+    const jsDir = path.join(ROOT,'js');
+    for(const f of fs.readdirSync(jsDir)){
+      if(!f.endsWith('.js')) continue;
+      const src = fs.readFileSync(path.join(jsDir,f),'utf8');
+      if(/amplitude\s*\.\s*track|window\.amplitude/.test(src)) bad.push(`js/${f} зовёт amplitude`);
+      if(/Sentry\s*\.\s*(init|captureException)/.test(src))    bad.push(`js/${f} зовёт Sentry`);
+    }
+    if(bad.length) return post(name,false,bad.join('; ')+'. Оба канала давали ноль событий — если их вернули, политика приватности снова врёт');
+
+    // Своя телеметрия обязана остаться на месте: убрать чужое — не то же самое, что ослепнуть.
+    const beacon = fs.readFileSync(path.join(jsDir,'beacon.js'),'utf8');
+    if(!/beaconOn/.test(beacon)) return post(name,false,'«Почта неба» перестала спрашивать тумблер — вместе с чужими каналами вынесли свой');
+
+    post(name,true,'ни Sentry, ни Amplitude ни в странице, ни в модулях; «Почта неба» на месте и подчиняется тумблеру');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
 }
 
 /* ============================================================ */
-const GUARDS = [ guardVersionIsOneEverywhere,
+const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
