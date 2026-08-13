@@ -3733,8 +3733,55 @@ async function guardMusicJitterAndDrift(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 96 — Номер версии совпадает во всех четырёх местах сразу.
+   Стережёт: sw.js, js/core.js, index.html.
+   Беда: у номера версии две работы, и обе тихие. Первая — он единственный
+   кэшбастер раздачи: адрес модуля кончается на ?v=НОМЕР, и пока номер не
+   изменился, браузер и CDN вправе отдать игроку старый файл под тем же
+   адресом. Вторая — игрок называет этот номер в отчёте об ошибке, и по нему
+   же подписываются инциденты Sentry.
+   Как это уже стреляло: GAME_VERSION ушёл на 1.282.24, а sw.js и все 18
+   тегов ?v= остались на 1.282.21 — bump_version.py не прогонялся семь партий
+   подряд, и в телеметрии за 48 часов оказалось шесть разных версий сразу.
+   Отдельно: строку релиза Sentry (release: 'cosmogram@…') скрипт не знал
+   вовсе — та же беда, что чинила партия «Пожар», когда там навсегда застыло
+   1.108.1 и инциденты 174 версий слипались в один мёртвый релиз.
+   Рассинхрон невидим в игре: она работает, просто у части игроков работает
+   вчерашняя. Поэтому стеречь его должен стенд, а не аудит через семь партий. */
+async function guardVersionIsOneEverywhere(){
+  const name = '96. Номер версии совпадает в sw.js, GAME_VERSION, всех ?v= и релизе Sentry';
+  try{
+    const sw   = fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+    const core = fs.readFileSync(path.join(ROOT,'js/core.js'),'utf8');
+    const html = fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+
+    const mSw = sw.match(/const V = '([\d.]+)';/);
+    if(!mSw) return post(name,false,"в sw.js не нашлось `const V = '…';` — версию раздачи взять неоткуда");
+    const mCore = core.match(/const GAME_VERSION='([\d.]+)';/);
+    if(!mCore) return post(name,false,"в js/core.js не нашлось `const GAME_VERSION='…';`");
+    const mRel = html.match(/release:\s*'cosmogram@([\d.]+)'/);
+    if(!mRel) return post(name,false,"в index.html не нашлось `release: 'cosmogram@…'` — подпись инцидентов Sentry потеряна");
+
+    const tags = [...html.matchAll(/\?v=([\d.]+)/g)].map(m=>m[1]);
+    if(!tags.length) return post(name,false,'в index.html не нашлось ни одного ?v= — кэшбастера у раздачи нет вовсе');
+
+    const V = mSw[1];
+    const bad = [];
+    if(mCore[1] !== V) bad.push(`GAME_VERSION=${mCore[1]}`);
+    if(mRel[1]  !== V) bad.push(`release Sentry=${mRel[1]}`);
+    const odd = [...new Set(tags.filter(t=>t!==V))];
+    if(odd.length) bad.push(`?v= в index.html: ${odd.join(', ')} (${tags.filter(t=>t!==V).length} из ${tags.length} тегов)`);
+
+    if(bad.length)
+      return post(name,false,`sw.js на ${V}, а рядом — ${bad.join('; ')}. Раздача врёт: адрес модуля не сменился, игрок вправе получить старый файл`);
+
+    post(name,true,`версия ${V} одинакова во всех четырёх местах: sw.js, GAME_VERSION, ${tags.length} тегов ?v=, релиз Sentry`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
+const GUARDS = [ guardVersionIsOneEverywhere,
+                 guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
                  guardVignetteFitsFrame, guardBurstColorValid, guardDuckSurvivesPause,
