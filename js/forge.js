@@ -327,15 +327,12 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
-    if(window.amplitude) amplitude.track('Shared Run', {method:'map', confirmed:false});
     try{ tg.openTelegramLink(shareUrl); haptic('success'); return; }catch(e){}
   }
   if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
-    if(window.amplitude) amplitude.track('Shared Run', {method:'webshare', confirmed:false});
     navigator.share({text:txt, url:link}).catch(()=>{});
     haptic('success'); return;
   }
-  if(window.amplitude) amplitude.track('Shared Run', {method:'map', confirmed:false});
   try{ window.open(shareUrl,'_blank'); }catch(e2){}
   haptic('success');
 }

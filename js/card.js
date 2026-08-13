@@ -126,7 +126,7 @@ async function cardSend(){
       body:JSON.stringify({action:'share_card',initData:tg.initData,png,caption})});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
-    tg.shareMessage(ans.id,function(ok){ if(ok){ haptic('success'); if(window.amplitude) amplitude.track('Shared Run', {method:'chat', confirmed:true}); } });
+    tg.shareMessage(ans.id,function(ok){ if(ok){ haptic('success'); } });
     sfx.click();
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
@@ -150,7 +150,6 @@ async function cardStory(){
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
     tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:L.cardStoryBtn||'Играть'}});
     sfx.click(); haptic('light');
-    if(window.amplitude) amplitude.track('Shared Run', {method:'story', confirmed:false}); // v1.108.1: Telegram не даёт колбэк успеха у shareToStory — честно «попытка», не «доставлено»
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
 }

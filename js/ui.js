@@ -106,7 +106,7 @@ let champTrack=null;    // v1.100.1: лента чемпиона — отдел�
 Store.del('runMode'); // v1.92.1: старая прописка любой дисциплины снимается — большая кнопка священна
 Store.del('pact'); // v1.70.0: модификаторы удалённого режима больше не нужны
 function setRunMode(m){ runMode=m; } // v1.92.1: сессия — живёт через «Ещё раз?» и рестарт из паузы, умирает в меню и на перезапуске
-function runStart(){ if(window.amplitude) amplitude.track('Started Flight', {mode:runMode||'classic'}); runMode==='bullet'?startBullet():startGame(); } // «ЛЕТЕТЬ» — в выбранной дисциплине
+function runStart(){ runMode==='bullet'?startBullet():startGame(); } // «ЛЕТЕТЬ» — в выбранной дисциплине
 window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0)
   if (S.running && typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
@@ -712,18 +712,15 @@ function shareScore(){
   const gameUrl='https://t.me/realcosmogrambot/app';
   const url='https://t.me/share/url?url='+encodeURIComponent(gameUrl)+'&text='+encodeURIComponent(text); // v1.96.0: дверь ведёт в игру, а не в пустой домен
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
-    if(window.amplitude) amplitude.track('Shared Run', {method:'text', confirmed:false}); // v1.108.1: диалог Telegram открыт, доставку подтвердить нечем
     try{ tg.openTelegramLink(url); return; }catch(e){}
   }
   // v1.108.1 «Дверь пошире»: вне Telegram (веб-версия на GitHub Pages) раньше шли прямиком на
   // Telegram-ссылку — честно работает, но принудительно сужает выбор до одного мессенджера.
   // Системный лист ОС (WhatsApp/SMS/почта/что угодно) — то, чего здесь не хватало.
   if(navigator.share){
-    if(window.amplitude) amplitude.track('Shared Run', {method:'webshare', confirmed:false}); // Promise молчит, какое приложение выбрал игрок — тот же честный предел, что у остальных каналов
     navigator.share({text:text, url:gameUrl}).catch(()=>{}); // отмена/отказ — тихо, ничего не ломаем
     return;
   }
-  if(window.amplitude) amplitude.track('Shared Run', {method:'text', confirmed:false});
   window.open(url,'_blank');
 }
 
@@ -1472,15 +1469,10 @@ Store.init(()=>{
   Store.del('tutVoice'); // гигиена: голос вычеркнут (v1.20.0)
   const mapPending = (typeof forgeBoot==='function') ? forgeBoot() : false; // трасса друга по ссылке (v1.68.0)
   const duelPending = !mapPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
-  // v1.108.1 «Одно событие, не платформа за платформой»: платформа — свойство, не отдельное событие.
-  // Reddit и любая будущая платформа впишутся сюда новым значением platform, без нового имени события.
-  if (window.amplitude) {
-    const platform = (typeof syncInitData==='function' && syncInitData()) ? 'telegram'
-      : (typeof syncWebAuth==='function' && syncWebAuth()) ? 'telegram_web'
-      : (typeof syncDcAuth==='function' && syncDcAuth()) ? 'discord'
-      : 'guest';
-    amplitude.track('Opened Game', { platform, prompt_version: 'BA400.4' });
-  }
+  /* Здесь стояла отправка «Opened Game» в Amplitude с полем platform: telegram / telegram_web /
+     discord / guest. Канал убран (см. index.html), но САМА мысль верная и ещё пригодится:
+     это единственное место, где игра различает вошедшего и гостя. Когда дойдём до партии
+     «Гость виден», отличать его надо здесь, а слать — в свою базу, не наружу. */
   if (S.running){ /* v1.100.4: взлёт случился однажды — поздний ответ облака (сторож Store.init) не перезапускает небо посреди полёта */ }
   else if (mapPending){ setScreen('forge'); forgeOpen(); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } // ссылка с трассой — сразу в конструктор; v1.282.14: сначала экран, потом наполнение (см. страж forgeSkyKick)
   else if (duelPending) setScreen('menu'); // v1.6.0: вызов — единственное исключение с меню при загрузке
