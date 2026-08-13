@@ -4272,6 +4272,12 @@ async function guardHangarShowcase(browser){
       const wal = document.getElementById('angarWallet');
       if(!buy || !wal) return { netUzlov:[!buy&&'angarBuy', !wal&&'angarWallet'].filter(Boolean) };
       const nizhe = !!(buy.compareDocumentPosition(wal) & Node.DOCUMENT_POSITION_FOLLOWING);
+      /* 13.08.2026, поломка того же дня: кнопка действия уехала под сетку жетонов и на
+         эталонном экране оказалась ЗА нижним краем. Тап по жетону подсвечивал его — и
+         больше ничего, потому что единственное действие лежало вне видимости. Мерим не
+         «есть ли кнопка», а видна ли она без прокрутки. */
+      const knopkaVidna = buy.getBoundingClientRect().bottom <= window.innerHeight;
+      const knopkaNiz = Math.round(buy.getBoundingClientRect().bottom);
 
       // 1. клик по чужому жетону не пересоздаёт узлы
       const zhetony = Array.from(grid.children);
@@ -4293,13 +4299,16 @@ async function guardHangarShowcase(browser){
       const b2 = kadrov(); await spat(220); const s2 = kadrov();
       const naSlabom = s2 - b2;
 
-      return { nizhe, zhetonov:zhetony.length, perezhili, zhivoe, naSlabom };
+      return { nizhe, knopkaVidna, knopkaNiz, okno:window.innerHeight,
+               zhetonov:zhetony.length, perezhili, zhivoe, naSlabom };
     });
     if(r.netUzlov) return post(name,false,`в ангаре нет узлов: ${r.netUzlov.join(', ')} — витрина не построена`);
     if(!r.zhetonov) return post(name,false,'в сетке ангара ноль жетонов');
     if(r.perezhili !== r.zhetonov) return post(name,false,
       `после выбора уцелело ${r.perezhili} узлов из ${r.zhetonov} — список пересобран целиком, экран мигает`);
     if(!r.nizhe) return post(name,false,'кошелёк стоит выше кнопки покупки — он снова украшение, а не ответ');
+    if(!r.knopkaVidna) return post(name,false,
+      `кнопка действия уходит за нижний край (низ ${r.knopkaNiz} при окне ${r.okno}) — жетон подсветится, а сделать будет нечем`);
     if(r.zhivoe < 2) return post(name,false,
       `на полном ярусе превью нарисовало ${r.zhivoe} кадров за 0.2 с — оно не живое`);
     if(r.naSlabom > 1) return post(name,false,
