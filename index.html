@@ -473,6 +473,53 @@ button, input, select, textarea { text-transform:inherit; }
 
 .hidden { display:none !important; }
 
+/* ============================================================
+   АНГАР — витрина (13.08.2026). Было: список строк, где каждая карточка несла
+   мини-холст, а выбор скина перерисовывал весь список заново — экран мигал и
+   скролл прыгал вверх. Стало: небо с живым бортом сверху, лента слоёв, сетка
+   жетонов по три в ряд и покупка с кошельком под ней. Жетон выбран потому, что
+   он единственный не растёт вместе с каталогом: девять корпусов — три ряда,
+   а со шлейфами и свечениями вариантов станет вдвое больше. Страж 112.
+   ============================================================ */
+/* Небо превью — та же карточка, что все панели игры */
+#angarSky { width:min(92%,380px); height:190px; margin:2px 0 12px; position:relative; overflow:hidden;
+  border:1px solid var(--line); border-radius:var(--r-card);
+  background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
+  box-shadow:inset 0 0 40px rgba(80,130,220,.10); }
+#angarPv { position:absolute; inset:0; width:100%; height:100%; }
+/* Лента слоёв: прокручивается, справа мягкий срез — видно, что есть продолжение */
+#angarTabs { display:flex; gap:8px; width:min(92%,380px); margin-bottom:12px; overflow-x:auto;
+  scrollbar-width:none; -webkit-mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%); }
+#angarTabs::-webkit-scrollbar { display:none; }
+.angarTab { flex:none; border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+  border-radius:999px; padding:9px 16px; font-size:12px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; cursor:pointer; white-space:nowrap; }
+.angarTab.sel { background:rgba(120,170,255,.12); border-color:rgba(190,225,255,.5); color:#eaf2ff;
+  box-shadow:0 0 16px rgba(120,170,255,.14); }
+/* Жетоны — три в ряд */
+#angarGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(92%,380px); }
+.angarIt { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+  pointer-events:auto; }
+.angarIt .dot { width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
+  border:1px solid var(--line); background:rgba(16,26,50,.55); transition:border-color .2s, background .2s; }
+.angarIt canvas { width:62px; height:48px; }
+.angarIt .nm { font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase;
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.angarIt .pr { font-size:11px; color:var(--gold-hi); display:flex; align-items:center; gap:3px; margin-top:-3px; }
+.angarIt .pr .ic { width:10px; height:10px; }
+.angarIt .pr.own { color:var(--ok); }
+.angarIt.sel .dot { border-color:rgba(190,225,255,.55); background:rgba(120,170,255,.10);
+  box-shadow:0 0 20px rgba(120,170,255,.16); }
+.angarIt.sel .nm { color:#eaf2ff; }
+/* Покупка и кошелёк под ней: баланс нужен ровно тогда, когда палец над кнопкой */
+#angarBuy { width:min(92%,380px); margin:16px 0 0; }
+#angarBuy .ic { width:14px; height:14px; vertical-align:-.12em; margin:0 4px; }
+#angarWallet { margin-top:10px; display:flex; align-items:center; gap:6px; font-size:12px;
+  color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+#angarWallet b { color:#eaf2ff; font-weight:600; letter-spacing:.04em; }
+#angarWallet .ic { width:13px; height:13px; color:var(--gold-hi); }
+
 /* ---- Ангар: карточки-строки с жёсткими колонками ---- */
 #hangarScreen .statusBar { margin:2px 0 16px; min-height:0; }
 #shipList { width:100%; display:flex; flex-direction:column; align-items:center; }
@@ -1079,8 +1126,11 @@ button, input, select, textarea { text-transform:inherit; }
 <!-- HANGAR -->
 <div id="hangarScreen" class="overlay hidden">
   <div class="screenTitle" id="hangarTitle">Ангар</div>
-  <div class="statusBar hangarBar"><span class="metric" id="hangarWallet"><svg class="ic i-s4" aria-hidden="true"><use href="#i-star4"></use></svg> 0</span></div>
-  <div id="shipList"></div>
+  <div id="angarSky"><canvas id="angarPv"></canvas></div>
+  <div id="angarTabs" class="hidden"></div>
+  <div id="angarGrid"></div>
+  <button class="btn pri" id="angarBuy">Выбрать</button>
+  <div id="angarWallet"><svg class="ic" aria-hidden="true"><use href="#i-star4"></use></svg><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
   <div style="height:14px"></div>
   <button class="btn ghost stickyBack" id="hangarBackBtn">Меню</button>
 </div>
