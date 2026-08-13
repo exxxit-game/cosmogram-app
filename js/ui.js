@@ -588,12 +588,12 @@ function bootFly(){
   if(!saved) grantGrace(2.5); // v1.108.1: через общий лимит
 }
 function refreshMenu(){
-  $('bestScore').textContent = S.best>0 ? L.best+': '+S.best : '';
-  $('walletMenu').innerHTML = S.wallet>0 ? L.wallet+S.wallet : '';
-  const bg=saneNumber(Store.get('bestGyro',0),0), bt=saneNumber(Store.get('bestTouch',0),0),
-        bd=saneNumber(Store.get('bestDist',0),0), bb=saneNumber(Store.get('bestBullet',0),0);
-  $('bpG').textContent=bg; $('bpT').textContent=bt; $('bpD').textContent=bd>0?bd+' '+(L.unitM||'м'):'0'; $('bpB').textContent=bb;
-  $('bestRow').classList.toggle('hidden', bg+bt+bd+bb===0);
+  /* 13.08.2026 «Главный экран — дверь, а не витрина»: отсюда убраны шесть чисел —
+     лучший счёт, кошелёк и четыре рекорда по видам управления. Они не пропали:
+     рекорды показывает разбор забега и экран Достижений, кошелёк — Ангар. Пятого
+     рекорда (клавиатура) в этой строке не было вовсе, и это было отдельной бедой —
+     человек, играющий только клавиатурой, не видел строки совсем. Убрав строку,
+     мы закрыли и её. Страж 110. */
   gridBalance($('menuRow')); // v1.45.0: «Продолжить полёт» убран — перезапуск сам возвращает в небо (bootFly), в сессии есть пауза // «Единая палуба»: сетка меню без одиноких половинок
   if (typeof duelBanner==='function') duelBanner(); // дуэль: плашка вызова в меню
 }
@@ -620,7 +620,7 @@ function autosave(){
 /* ---------- Настройки (звук, язык, гироскоп, помощь) ---------- */
 let settingsFrom='menu'; // куда вернуться: меню или пауза
 let langPref='auto';
-function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw('setBeaconBtn', Store.get('beaconOn',1)===1); setScreen('settings'); gyroStatus(); setWellFill(); sfx.click(); } // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
+function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw('setBeaconBtn', Store.get('beaconOn',1)===1); againLabel(); setScreen('settings'); gyroStatus(); setWellFill(); sfx.click(); } // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
 function closeSettings(){ setScreen(settingsFrom); sfx.click(); }
 function rowV(btnId,val,on){ // v1.63.0: строка настроек «параметр — значение» (цикл-значения)
   const b=$(btnId); if(!b) return; const v=b.querySelector('.setV'); if(!v) return;
@@ -1120,6 +1120,17 @@ $('setGyroOffBtn').addEventListener('click', ()=>{ // v1.106.0 «Штурман 
   haptic('light'); sfx.click();
   toast(L.gyroOffOk,'rgba(159,232,255,.5)');
 });
+/* «ЕЩЁ РАЗ?»: тумблер с тремя состояниями за двумя положениями.
+   Показываем ФАКТ (летит тень сейчас или нет), а нажатие переводит в явное «да»/«нет» —
+   противоположное тому, что игрок видит. Пока он не трогал тумблер, состояние 'auto':
+   первые три забега тень есть, дальше нет, и переключатель честно это отражает сам. */
+function againLabel(){ rowSw('setAgainBtn', typeof ghostActive==='function' ? ghostActive() : true); }
+$('setAgainBtn').addEventListener('click', ()=>{
+  const bylo = (typeof ghostActive==='function') ? ghostActive() : true;
+  Store.set('ghostAgain', bylo ? 0 : 1);
+  againLabel();
+  haptic('light'); sfx.click();
+});
 $('setBeaconBtn').addEventListener('click', ()=>{ // v1.107.0 «Почта неба»: честный выключатель — выкл значит молчание (даже очередь не копится)
   const on = Store.get('beaconOn',1)===1 ? 0 : 1;
   Store.set('beaconOn',on);
@@ -1321,8 +1332,10 @@ $('channelBtn').addEventListener('click', openChannel); // v1.84.0: на сце�
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
   // v1.34.0 «Единая палуба»: иконки перед текстом убраны из всех окон — кнопки говорят текстом
-  $('pillG').title=L.pillGyro; $('pillT').title=L.pillTouch;
-  $('pillD').title=L.pillDist; $('pillB').title=L.pillBullet;
+  /* 13.08.2026: подписи pillGyro/pillTouch/pillDist/pillBullet больше некому раздавать —
+     строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
+     core.js — ядро, и вычищать из него пять языков ради четырёх мёртвых строк дороже,
+     чем оставить. Записано в долги. */
   $('startBtn').textContent=L.start;
   $('tooNarrowTitle').textContent=L.tooNarrowTitle; $('tooNarrowHint').textContent=L.tooNarrowHint; // v1.108.1: «Пол листа»
   $('modesBtn').textContent=L.modes; $('modesBack').textContent=L.modesBack; modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
@@ -1379,7 +1392,7 @@ function applyLang(){
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setLangBtn','setLang'],
-   ['setGhostBtn','setGhost'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
+   ['setGhostBtn','setGhost'],['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
 }
 /* баланс сетки 2 колонки: нечётная последняя видимая кнопка растягивается на всю ширину (v1.34.0) */
