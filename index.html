@@ -146,7 +146,12 @@ button, input, select, textarea { text-transform:inherit; }
    тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
 #tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
 #settingsScreen, #achScreen, #hangarScreen { justify-content:flex-start;
-  padding-top:calc(48px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
+  /* 13.08.2026 «Подушка не для меню». var(--sat) — это защита от чужой шапки: внутри
+     Telegram она перекрывает верх экрана, и под неё нельзя писать. А вот лишние 48px
+     сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
+     экране — шестую часть высоты, отданную ни за что, на КАЖДОМ экране меню.
+     Защиту оставляем, украшение снимаем. */
+  padding-top:calc(10px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
@@ -172,7 +177,7 @@ button, input, select, textarea { text-transform:inherit; }
 
 /* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
 #startScreen { justify-content:space-between;
-  padding-top:calc(30px + var(--sat)); }
+  padding-top:calc(12px + var(--sat)); }   /* 13.08.2026: см. «Подушка не для меню» выше */
 .scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
 .scrFoot { display:flex; justify-content:center; width:100%;
   padding-bottom:calc(18px + var(--sab)); }
@@ -522,9 +527,9 @@ button, input, select, textarea { text-transform:inherit; }
   box-shadow:0 0 20px rgba(120,170,255,.16); }
 .angarIt.sel .nm { color:#eaf2ff; }
 /* Покупка и кошелёк под ней: баланс нужен ровно тогда, когда палец над кнопкой */
-#angarBuy { width:min(92%,380px); margin:16px 0 0; }
+#angarBuy { width:min(92%,380px); margin:10px 0 0; }
 #angarBuy .ic { width:14px; height:14px; vertical-align:-.12em; margin:0 4px; }
-#angarWallet { margin-top:10px; display:flex; align-items:center; gap:6px; font-size:12px;
+#angarWallet { margin:8px 0 14px; display:flex; align-items:center; gap:6px; font-size:12px;
   color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
 #angarWallet b { color:#eaf2ff; font-weight:600; letter-spacing:.04em; }
 #angarWallet .ic { width:13px; height:13px; color:var(--gold-hi); }
@@ -752,7 +757,7 @@ button, input, select, textarea { text-transform:inherit; }
 /* ---- починка раскладки: ничего не вылезает за экран ---- */
 #pauseScreen .stack { width:min(86%,352px); } /* нить и звёзды-узлы целиком на экране */
 #gameOverScreen { justify-content:flex-start; overflow-y:auto;
-  padding-top:calc(40px + var(--sat)); padding-bottom:26px; }
+  padding-top:calc(12px + var(--sat)); padding-bottom:26px; }   /* 13.08.2026: см. «Подушка не для меню» */
 #gameOverScreen > :first-child { margin-top:auto; } /* короткие итоги — по центру */
 #gameOverScreen > :last-child { margin-bottom:auto; } /* длинные — честный скролл без среза */
 #newRecord { width:min(92%,380px); } /* плашки рекордов переносятся с полями */
@@ -1144,11 +1149,21 @@ button, input, select, textarea { text-transform:inherit; }
 <div id="hangarScreen" class="overlay hidden">
   <div class="screenTitle" id="hangarTitle">Ангар</div>
   <div id="angarSky"><canvas id="angarPv"></canvas></div>
-  <div id="angarTabs" class="hidden"></div>
-  <div id="angarGrid"></div>
+  <!-- 13.08.2026, поломка того же дня: кнопка действия стояла ПОД сеткой жетонов и на
+       эталонном экране оказывалась за нижним краем (замер: верх кнопки 852 при высоте
+       окна 844). Человек тапал по жетону, тот подсвечивался — и ничего не происходило,
+       потому что единственное, что могло произойти, лежало за экраном. Кнопка и кошелёк
+       подняты под небо: теперь борт, действие и цена видны без прокрутки, а листать
+       нужно только каталог. Страж 112 сторожит, что кнопка в первом экране. -->
   <button class="btn pri" id="angarBuy">Выбрать</button>
   <div id="angarWallet"><svg class="ic" aria-hidden="true"><use href="#i-star4"></use></svg><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
-  <div style="height:14px"></div>
+  <div id="angarTabs" class="hidden"></div>
+  <div id="angarGrid"></div>
+  <!-- 13.08.2026: «Меню» — липкая кнопка, она всегда висит у нижнего края и содержимое
+       проезжает ПОД ней. Раньше под списком строк это было незаметно, а над сеткой жетонов
+       она накрывала средний жетон нижнего ряда. Пустая полоса даёт последнему ряду место,
+       чтобы прокрутиться выше кнопки. -->
+  <div style="height:72px"></div>
   <button class="btn ghost stickyBack" id="hangarBackBtn">Меню</button>
 </div>
 
