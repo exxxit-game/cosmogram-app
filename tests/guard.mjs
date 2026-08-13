@@ -4118,8 +4118,49 @@ async function guardPoolReturnsCleanObject(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 110 — «Главный экран чист».
+   Решение владельца от 13.08.2026: главный экран — это дверь в небо, а не витрина
+   достижений. Строка рекордов, пилюля «РЕКОРД …» и кошелёк с него убраны совсем.
+   Рекорды живут на итогах забега и в Достижениях, кошелёк — в Ангаре, там же, где
+   его тратят.
+
+   Страж сторожит невозврат: числа легко возвращаются на главный экран по одному —
+   «ну хоть рекорд-то пусть будет». Поэтому проверяется не отсутствие конкретного
+   элемента, а отсутствие ЧИСЕЛ игрока на экране: ставим приметные рекорд, кошелёк
+   и лучший счёт и смотрим, не всплыло ли хоть одно из них. */
+async function guardMenuIsClean(browser){
+  const name = '110. Главный экран не показывает ни рекордов, ни кошелька';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const METKI = { best:987654, wallet:876543, bestGyro:765432, bestTouch:654321,
+                      bestKeys:543219, bestDist:432198, bestBullet:321987 };
+      for(const k in METKI) Store.set(k, METKI[k]);
+      if(typeof S!=='undefined'){ S.best=METKI.best; S.wallet=METKI.wallet; }
+      if(typeof refreshMenu==='function') refreshMenu();
+      if(typeof toMenu==='function') toMenu(); else setScreen('menu');
+      const scr = document.getElementById('startScreen');
+      if(!scr) return { netEkrana:true };
+      const tekst = String(scr.textContent||'');
+      const vsplyli = Object.keys(METKI).filter(k=>tekst.indexOf(String(METKI[k]))>=0);
+      const uzly = ['bestScore','walletMenu','bestRow','pillG','pillT','pillD','pillB']
+        .filter(id=>{ const el=document.getElementById(id); return el && scr.contains(el); });
+      return { vsplyli, uzly };
+    });
+    if(r.netEkrana) return post(name,false,'нет #startScreen — стражу нечего смотреть');
+    if(r.vsplyli.length) return post(name,false,
+      `на главном экране всплыли числа игрока: ${r.vsplyli.join(', ')} — экран снова стал витриной`);
+    if(r.uzly.length) return post(name,false,
+      `на главном экране остались узлы ${r.uzly.join(', ')} — пусть пустые, но они вернут числа при первой правке`);
+    post(name,true,'ни рекордов, ни кошелька — экран чист');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
