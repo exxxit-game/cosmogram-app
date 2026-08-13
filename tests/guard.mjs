@@ -2115,6 +2115,14 @@ async function guardGhostDoesNotHijackSeed(browser){
     const r = await o.page.evaluate(()=>{
       // у игрока есть свой призрак с посторонним сидом
       Store.set('ghostRun',{track:'#'.repeat(90), seed:777777});
+      /* 13.08.2026: включаем призрака ЯВНО. С партии «ЕЩЁ РАЗ?» своя тень по умолчанию
+         живёт только первые три забега, а этот страж делает три взлёта поверх того,
+         которым игра открывается, — и последний, «classic», приходился уже на четвёртый,
+         где тени нет по замыслу. Страж стережёт СИД призрака, а не окно онбординга:
+         посторонняя зависимость здесь мешает, а не помогает. Это ровно тот случай,
+         о котором предупреждает Каталог №32 — смена умолчания у флага, который читают
+         чужие стражи, есть скрытая правка каждого из них. */
+      Store.set('ghostAgain', 1);
       const out={};
       for(const m of ['daily','speedrun','classic']){ runMode=m; startGame(); out[m]=mapSeedKey; }
       return { out, today:todayKey() };
@@ -3909,8 +3917,209 @@ async function guardGuestDiaryTravels(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 106 — «ЕЩЁ РАЗ?»: призрак первых трёх забегов, дальше по желанию.
+   Стережёт: ghostActive() в js/game.js, подпись в js/render.js, словарь в js/core.js,
+   строку настроек в index.html и ui.js.
+   Замысел: своя тень летит рядом первые три забега с установки и всегда носит подпись
+   «ЕЩЁ РАЗ?». После третьего гаснет сама. Вернуть — тумблером в настройках.
+   Почему три состояния, а не два: если хранить обычное вкл/выкл, то «погас сам» и
+   «выключил игрок» станут неотличимы, и на четвёртом забеге тумблер будет выглядеть
+   выключенным, хотя человек его не трогал. Поэтому 'auto' (по умолчанию), '1' и '0'.
+   Отдельно проверяем все пять языков: подпись попадает НА ЭКРАН игры, а правило проекта
+   требует, чтобы там не было ни одной английской строки у неанглийского игрока. */
+async function guardAgainTagAndOnboarding(browser){
+  const name = '106. «ЕЩЁ РАЗ?»: три забега сама, дальше тумблером, и на пяти языках';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      if(typeof ghostActive!=='function') return { missing:'ghostActive' };
+      const langs = (typeof SUPPORTED_LANGS!=='undefined') ? SUPPORTED_LANGS : ['ru'];
+      const bezPerevoda = langs.filter(l=>{
+        try{ const s = I18N[l] && I18N[l].again; return !s || typeof s!=='string' || !s.trim(); }
+        catch(e){ return true; }
+      });
+      const ru = (I18N && I18N.ru) ? I18N.ru.again : '';
+      const en = (I18N && I18N.en) ? I18N.en.again : '';
+
+      const probe = (games, flag)=>{
+        if(typeof Stats!=='undefined' && Stats) Stats.games = games;
+        if(flag===null) Store.del('ghostAgain'); else Store.set('ghostAgain', flag);
+        return ghostActive();
+      };
+      const auto = [probe(0,null), probe(1,null), probe(2,null), probe(3,null), probe(50,null)];
+      const vsegda = probe(99,1);
+      const nikogda = probe(0,0);
+      probe(0,null);
+
+      const row = document.getElementById('setAgainBtn');
+      return { bezPerevoda, ru, en, auto, vsegda, nikogda,
+               row: !!row, rowText: row ? (row.querySelector('.setK')||{}).textContent : '' };
+    });
+    if(r.missing) return post(name,false,`нет ${r.missing}`);
+    if(!r.row)    return post(name,false,'в настройках нет строки #setAgainBtn — вернуть призрака нечем');
+    if(r.bezPerevoda.length)
+      return post(name,false,`подпись не переведена на языки: ${r.bezPerevoda.join(', ')} — на экран игры попадёт чужой язык`);
+    if(r.ru===r.en) return post(name,false,`подпись одинакова в ru и en ("${r.ru}") — похоже, перевод не сделан, а скопирован`);
+    const [g1,g2,g3,g4,g50] = r.auto;
+    if(!(g1&&g2&&g3)) return post(name,false,`в первых трёх забегах призрак обязан быть, получили ${JSON.stringify(r.auto.slice(0,3))}`);
+    if(g4||g50)       return post(name,false,'после третьего забега призрак не погас сам');
+    if(!r.vsegda)     return post(name,false,'тумблер «включено» не возвращает призрака ветерану');
+    if(r.nikogda)     return post(name,false,'тумблер «выключено» не гасит призрака новичку');
+    post(name,true,`первые три забега — есть, четвёртый — нет; тумблер возвращает и гасит; переведено на ${r.bezPerevoda.length===0?'все языки':'?'} (ru: «${r.ru}»)`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 107 — Силуэт камня чеканится один раз, а не каждый кадр.
+   Стережёт: отрисовку астероида и дрейфера в render.js (ЯДРО).
+   Беда: форма камня — семь вершин, и каждая считалась заново в КАЖДОМ кадре:
+   `o.verts.forEach` с Math.cos и Math.sin внутри. При четырнадцати объектах на поле
+   это около шести тысяч пар тригонометрии в секунду — на ровном месте, потому что
+   форма чеканится при спавне и больше не меняется никогда (o.verts и o.r ставятся
+   один раз и не мутируют за жизнь объекта).
+   Отдельно стережём грабли пула: объект приходит из `poolOb` переиспользованным, и
+   кэш формы обязан сбрасываться при взятии — ровно как `_tint`, который в v1.282.14
+   уже успел покрасить астероиды в лиловый цвет дрейферов. */
+async function guardRockPathCached(browser){
+  const name = '107. Силуэт камня чеканится один раз, а не в каждом кадре';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      runMode='classic'; startGame();
+      Q.mode='manual'; Q.level=3;
+      let built=0;
+      const Real = window.Path2D;
+      if(typeof Real!=='function') return { noPath2D:true };
+      window.Path2D = function(){ built++; return new Real(); };
+
+      // даём небу наполниться камнями
+      for(let f=0;f<240;f++){ update(1/60); draw(); }
+      const kamney = obstacles.filter(x=>x.kind==='rock'||x.kind==='drift').length;
+      const warm = built;
+      built = 0;
+      const idsDo = obstacles.filter(x=>x.kind==='rock'||x.kind==='drift').map(x=>!!x._path);
+      for(let f=0;f<30;f++){ draw(); }   // только рисуем: ни спавна, ни движения
+      const hot = built;
+      window.Path2D = Real;
+      return { kamney, warm, hot, vseSKeshem: idsDo.length>0 && idsDo.every(Boolean) };
+    });
+    if(r.noPath2D) return post(name,false,'в этом браузере нет Path2D — судить не по чему');
+    if(!r.kamney)  return post(name,false,'за четыре секунды полёта не появилось ни одного камня — стражу нечего мерить');
+    if(!r.vseSKeshem) return post(name,false,'не у всех камней на поле есть готовый силуэт — форма всё ещё собирается на ходу');
+    if(r.hot!==0)  return post(name,false,`за 30 кадров БЕЗ движения построено ${r.hot} новых силуэтов — форма пересобирается в кадре`);
+    post(name,true,`${r.kamney} камней на поле, за 30 кадров отрисовки — ноль новых силуэтов (при спавне было ${r.warm})`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 108 — Кадр не платит за то, чем не пользуется.
+   Стережёт: создание главного холста в core.js (ЯДРО) и vignetteSprite() в render.js (ЯДРО).
+   Три разные беды, но все три — про «платим и не берём»:
+   1) Холст создавался с альфой. Небо непрозрачно всегда — мы закрашиваем весь кадр,
+      — а браузер каждый кадр смешивал холст со страницей под ним. Работа впустую.
+   2) imageSmoothingQuality нигде не задавалось. Умолчание зависит от браузера, и часть
+      из них берёт бикубику ('high') — заметно дороже на полноэкранных спрайтах.
+   3) vignetteSprite() создавала НОВЫЙ холст при каждой смене W/H/DPR/SC и не обнуляла
+      старый. Соседняя nebulaField() тот же урок выучила в v1.282.20 и холст
+      переиспользует; виньетка осталась единственным нарушителем. На iOS WKWebView
+      суммарная память канвасов ограничена ~384 МБ, и брошенные холсты её держат,
+      пока сборщик мусора не дойдёт — а он не спешит. */
+async function guardFrameCostsNothingExtra(browser){
+  const name = '108. Холст непрозрачен, сглаживание дешёвое, виньетка не плодит холсты';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const at = (typeof ctx!=='undefined' && ctx && ctx.getContextAttributes) ? ctx.getContextAttributes() : null;
+      const smooth = (typeof ctx!=='undefined' && ctx) ? ctx.imageSmoothingQuality : null;
+      if(typeof vignetteSprite!=='function') return { noVign:true, at, smooth };
+      const a = vignetteSprite();
+      const b = vignetteSprite();              // тот же кэш-ключ — обязан вернуть тот же холст
+      const same = (a === b);
+      const wasW = a.width;
+      // меняем ключ кэша так же, как это делает настоящий resize
+      const oldH = H; H = H + 7;
+      const c = vignetteSprite();
+      const novy = (c !== a) || (c.width !== wasW);
+      const staryObnulen = (c === a) ? true : (a.width === 0 && a.height === 0);
+      H = oldH; vignetteSprite();              // возвращаем как было
+      return { at, smooth, same, novy, staryObnulen, pereispolzovan: (c === a) };
+    });
+    if(r.noVign) return post(name,false,'vignetteSprite() не найдена');
+    if(!r.at)    return post(name,false,'у холста не спросить настроек — getContextAttributes недоступен');
+    if(r.at.alpha !== false) return post(name,false,'холст создан с альфой — браузер каждый кадр зря смешивает непрозрачное небо со страницей');
+    if(r.smooth !== 'low')   return post(name,false,`imageSmoothingQuality = ${r.smooth} вместо 'low' — умолчание браузера может оказаться бикубикой`);
+    if(!r.same)  return post(name,false,'два вызова подряд с тем же ключом дали РАЗНЫЕ холсты — кэша нет вовсе');
+    if(!r.novy)  return post(name,false,'после смены размера виньетка осталась прежней — спрайт не пересобрался');
+    if(!r.staryObnulen) return post(name,false,'старый холст не обнулён и не переиспользован — память держится до сборщика мусора');
+    post(name,true, (r.pereispolzovan ? 'холст переиспользован' : 'старый холст обнулён') + ", alpha:false, сглаживание low");
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 109 — Объект из пула не приносит чужой кэш градиента.
+   Стережёт: взятие из пула в game.js:186-190 (ЯДРО) и кэш хвоста кометы в render.js:687-690.
+   Беда — третья грань одной семьи за сутки. Объект приходит из `poolOb` переиспользованным,
+   а модули кэшируют на нём тяжёлые вещи прямо полями:
+     `_tint`  — тон камня (Планетарий). Не сбрасывался → астероиды красились в лиловый цвет
+                дрейферов. Стоило версии, чинено в v1.282.14.
+     `_path`  — силуэт камня (Path2D). Добавлен 13.08.2026 — и сброс добавлен сразу, потому
+                что урок уже был выучен.
+     `_tg`/`_tgk` — CanvasGradient хвоста кометы. НЕ сбрасывается до сих пор.
+   Почему сегодня не стреляет: ключ `_tgk` честно сторожит содержимое, а он собран из
+   координат хвоста (непрерывные float из mapRand) — совпадение у переродившейся кометы
+   практически невероятно. То есть беда латентная, и именно поэтому её никто не заметил.
+   Но есть второй путь, где ключ не спасает: `gfxInvalidate()` при потере контекста холста
+   обходит ТОЛЬКО живой массив obstacles (render.js:341). До объектов, лежащих в пуле, он не
+   дотягивается — и они выносят обратно в небо градиент МЁРТВОГО контекста.
+   Страж проверяет не ключ, а правило: что бы модуль ни повесил на объект, из пула он
+   обязан выйти чистым. */
+async function guardPoolReturnsCleanObject(browser){
+  const name = '109. Объект из пула не приносит чужой кэш градиента';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      runMode='classic'; startGame();
+      const STEP=1/60;
+      for(let f=0;f<180 && obstacles.length<3;f++){ S.invuln=10; update(STEP); }
+      if(!obstacles.length) return { pusto:true };
+
+      // Метим всё, что сейчас в небе, как будто модуль повесил свой кэш
+      const MET='ПОДДЕЛКА';
+      for(const ob of obstacles){ ob._tg=MET; ob._tgk=424242; ob._tint=MET; ob._path=MET; }
+      const pomecheno = obstacles.length;
+
+      // Сгоняем помеченные вниз — они уйдут в пул штатным путём (killIdx)
+      for(const ob of obstacles) ob.y = H + 500;
+      for(let f=0;f<4;f++){ S.invuln=10; update(STEP); }
+
+      // И ждём, пока пул отдаст их обратно новыми преградами
+      let novyh=0;
+      for(let f=0;f<600 && novyh<3;f++){ S.invuln=10; update(STEP); novyh=obstacles.length; }
+
+      const gryaznye = obstacles.filter(ob=>ob._tg===MET || ob._tint===MET || ob._path===MET);
+      return { pomecheno, vsego: obstacles.length,
+               gryaznyh: gryaznye.length,
+               polya: gryaznye.length ? Object.keys(gryaznye[0]).filter(k=>gryaznye[0][k]===MET) : [] };
+    });
+    if(r.pusto) return post(name,false,'за три секунды полёта не родилось ни одной преграды — стражу нечего мерить');
+    if(!r.vsego) return post(name,false,'после прогона в небе пусто — пул не отдал ни одного объекта');
+    if(r.gryaznyh) return post(name,false,
+      `${r.gryaznyh} из ${r.vsego} объектов вышли из пула с чужим кэшем в полях ${r.polya.join(', ')} — переиспользованный объект унёс чужое`);
+    post(name,true,`пометили ${r.pomecheno}, вернули в пул, взяли ${r.vsego} — все чистые`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels,
+const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
