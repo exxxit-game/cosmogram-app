@@ -4511,8 +4511,59 @@ async function guardTopIsShowcase(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 117 — «Никто не спрашивает про экран, которого ещё нет».
+   Живая ошибка с боевой 1.284.0, второе устройство:
+     input.js:442 Uncaught ReferenceError: screenName is not defined
+
+   `screenName` объявлен через `let` в ui.js, а ui.js грузится ПОСЛЕ input.js. Пакеты моста
+   ориентации идут 60 раз в секунду и начинают идти, как только мост ожил, — то есть попадают
+   в окно между «input.js отработал» и «ui.js объявил переменную». В этом окне переменная не
+   `undefined`, а в мёртвой зоне: голое обращение бросает ReferenceError. Тот же класс, что
+   находка v1.282.14 про `S` в core.js.
+
+   Страж смотрит не на поведение, а на ИСХОДНИК: поймать гонку загрузки на стенде можно только
+   случайно, а запретить голое обращение — навсегда. Правило: в input.js слово screenName
+   встречается только внутри ekran() и в комментариях. Любое новое голое обращение — красный. */
+async function guardNobodyAsksMissingScreen(browser){
+  const name = '117. input.js не трогает screenName напрямую (он объявлен позже)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const src = await fetch('js/input.js').then(r=>r.text()).catch(()=>'');
+      if(!src) return { netFayla:true };
+      const stroki = src.split('\n');
+      const golye = [];
+      let vBloke = false;
+      for(let i=0;i<stroki.length;i++){
+        let ln = stroki[i];
+        if(/\/\*/.test(ln)) vBloke = true;
+        const konec = /\*\//.test(ln);
+        const bylBlok = vBloke;
+        if(konec) vBloke = false;
+        if(bylBlok) continue;                     // блочный комментарий целиком мимо
+        ln = ln.replace(/\/\/.*$/, '');           // строчный комментарий отрезаем
+        if(ln.indexOf('screenName') < 0) continue;
+        if(/function\s+ekran\s*\(/.test(ln)) continue;   // единственное законное место
+        golye.push((i+1)+': '+ln.trim().slice(0,80));
+      }
+      const estEkran = typeof ekran === 'function';
+      const pustoDoUi = (()=>{ try{ return typeof ekran==='function' ? typeof ekran()==='string' : false; }catch(e){ return false; } })();
+      return { golye, estEkran, pustoDoUi };
+    });
+    if(r.netFayla) return post(name,false,'не смог прочитать js/input.js — стражу нечего смотреть');
+    if(!r.estEkran) return post(name,false,'в input.js нет ekran() — единственного законного входа к экрану');
+    if(!r.pustoDoUi) return post(name,false,'ekran() вернул не строку — сравнения со скринами станут ложью');
+    if(r.golye.length) return post(name,false,
+      `в input.js ${r.golye.length} голых обращений к screenName — первое ${r.golye[0]}`);
+    post(name,true,'все обращения к экрану идут через ekran(), голых нет');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardTopIsShowcase, guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
