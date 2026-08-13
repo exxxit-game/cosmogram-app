@@ -676,9 +676,9 @@ button, input, select, textarea { text-transform:inherit; }
 /* ============ v1.5.3 «Сервисный центр»: спойлеры и диагностика ============ */
 .btn.spoiler::after{content:'▾';margin-left:auto;opacity:.5;font-size:12px}
 .btn.spoiler.open::after{content:'▴'}
-#diagList .drow{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;line-height:1.35;text-align:left}
-#diagList .drow .dst{flex-shrink:0;font-weight:700}
-#diagReportBox{user-select:text;-webkit-user-select:text}
+/* 13.08.2026: строки живут в двух списках — видимом и том, что под «Ещё». Правило одно на оба. */
+#diagList .drow, #diagListRare .drow{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;line-height:1.35;text-align:left}
+#diagList .drow .dst, #diagListRare .drow .dst{flex-shrink:0;font-weight:700}
 
 /* ============ v1.9.0 «Живой интерфейс»: меню — часть неба, а не приложение ============
    Кожа игровая, эргономика — приложения: размеры и читаемость не тронуты. */
@@ -999,16 +999,25 @@ button, input, select, textarea { text-transform:inherit; }
 <div id="diagScreen" class="overlay hidden">
   <div class="screenTitle" id="diagTitle">Сервисный центр</div>
   <div class="setPanel">
+    <!-- 13.08.2026 «Ответ, а не отчёт». Здесь шли подряд до четырнадцати строк в порядке
+         написания кода: «штурвал не подключён — это нормально» выше, чем размер мира, а
+         настоящая беда могла оказаться седьмой сверху. Теперь сверху только то, что
+         мешает лететь и что человек проверяет чаще всего; всё техническое — под «Ещё».
+         Две кнопки ручной отправки убраны: «Почта неба» присылает то же самое сама.
+         Страж 111. -->
     <div id="diagList" style="padding:6px 8px 0"></div>
-    <div class="statusBar gyroBar" style="margin:10px 8px 0"><span class="metric" id="gyroStat"></span></div>
+    <div class="setRow solo spoiler" id="diagMoreBtn" role="button" tabindex="0">Ещё</div>
+    <div id="diagMoreBox" class="hidden">
+      <div id="diagListRare" style="padding:6px 8px 0"></div>
+      <div class="statusBar gyroBar" style="margin:10px 8px 0"><span class="metric" id="gyroStat"></span></div>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn ghost" id="diagVibroBtn">Проверка виброэфира</button>
+      </div>
+      <div class="statusBar gyroBar" style="margin:8px 8px 0"><span class="metric" id="diagVibroStat"></span></div>
+    </div>
     <div class="stack" style="margin-top:12px">
-      <button class="btn ghost" id="diagVibroBtn">Проверка виброэфира</button>
-      <button class="btn ghost" id="diagReportBtn">Скопировать отчёт</button>
-      <button class="btn ghost" id="diagTapeBtn">Скопировать самописец</button>
       <button class="btn ghost" id="diagSupportBtn">Написать в поддержку</button>
     </div>
-    <div class="statusBar gyroBar" style="margin:8px 8px 0"><span class="metric" id="diagVibroStat"></span></div>
-    <pre id="diagReportBox" class="hidden" style="white-space:pre-wrap;font-size:11px;text-align:left;margin:8px 8px 0"></pre>
   </div>
   <div class="setPanel">
     <div class="setRow solo" id="diagBackBtn" role="button" tabindex="0">Назад</div>
