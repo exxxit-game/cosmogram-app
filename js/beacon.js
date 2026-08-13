@@ -177,5 +177,49 @@ const BEACON=(()=>{
   // v1.282.13: сеть вернулась — вот честный повод разослать накопившееся, вместо того
   // чтобы биться в каждую ошибку офлайном (flush теперь выходит сразу, если сети нет).
   if(typeof window!=='undefined') window.addEventListener('online',()=>flush().catch(()=>{}));
-  return { signal, calTick, _flush:flush, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+  /* «Гость виден» (13.08.2026): дневник дней у невошедшего игрока.
+     Гость ведёт журнал с первого полёта — dayMark() и dayAdd() в core.js зовутся без
+     всякой проверки входа и держат до 60 дней. Но отправить его ему было нечем:
+     syncSubmit() начинается с раннего возврата на syncAvailable(), и таких возвратов
+     в sync.js двенадцать. Данные были собраны и лежали у человека в браузере, а мы
+     считали, что «гостей не видно». Везём их тем же анонимным каналом, что и письма.
+     У вошедшего молчим намеренно: его дневник едет именным путём вместе с рекордом,
+     и если бы ехал ещё и здесь, один и тот же день лёг бы в две таблицы разом.
+     Свой список отправленного (daysSentAnon), а НЕ общий с именным каналом: иначе
+     человек, который однажды войдёт, не довезёт до своего аккаунта то, что уже отдал
+     гостем — день был бы помечен отправленным и в личную таблицу уже не поехал. */
+  async function days(){
+    if(!on() || sealed()) return false;                       // тумблер и печать лаборатории — те же, что у писем
+    if(typeof syncAvailable==='function' && syncAvailable()) return false; // вошёл — везёт именной канал
+    if(typeof daysToSend!=='function') return false;
+    let list=[]; try{ list=daysToSend()||[]; }catch(e){ return false; }
+    const sentRaw=Store.get('daysSentAnon',[]);
+    const sent=new Set(Array.isArray(sentRaw)?sentRaw:[]);
+    const today=(typeof todayKey==='function')?todayKey():'';
+    list=list.filter(r=>r && r.d && (r.d===today || !sent.has(r.d))); // сегодняшний везём всегда: он ещё меняется
+    if(!list.length) return false;
+    if(typeof navigator!=='undefined' && navigator.onLine===false) return false; // офлайн — дождёмся следующей посадки
+    const ctl=(typeof AbortController==='function')?new AbortController():null;
+    const t=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },SEND_TIMEOUT):0;
+    try{
+      const r=await fetch(URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'),
+                              anon:anon(), days:list }),
+        keepalive:true, signal:ctl?ctl.signal:undefined});
+      if(!r||!r.ok) return false;
+      let body=null; try{ body=await r.json(); }catch(e){}
+      /* Вычёркиваем день ТОЛЬКО по слову сервера, а не по факту двухсотки: тот же закон,
+         что уже выучен на quiet и на days_ack именного дневника. Иначе день, который
+         сервер подрезал или отбросил, для клиента считался бы сданным навсегда. */
+      const ack=(body && Array.isArray(body.days_ack)) ? body.days_ack : [];
+      if(ack.length){
+        ack.forEach(d=>{ if(d && d!==today) sent.add(d); });
+        Store.set('daysSentAnon', Array.from(sent).sort().slice(-60));
+      }
+      return ack.length>0;
+    }catch(e){ return false; }
+    finally{ if(t) clearTimeout(t); }
+  }
+
+  return { signal, calTick, days, _flush:flush, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();

@@ -419,6 +419,10 @@ function gameOver(){
      дождаться следующей посадки, иначе дни теряются молча — ровно та беда, что уже была
      у «Почты неба» (HTTP 200 не значит «дело сделано»). */
   Promise.resolve(submitP).then(d=>{ if(d && d.ok && d.days_ack && typeof daysAck==='function') daysAck(d.days_ack); }).catch(()=>{});
+  /* «Гость виден»: у невошедшего строка выше не сделает ничего — syncSubmit() вернулся
+     на первой же проверке. Его дневник везёт анонимный канал «Почты неба»; внутри
+     BEACON.days() стоит обратная проверка, поэтому у вошедшего этот вызов молчит. */
+  if (typeof BEACON==='object' && BEACON && typeof BEACON.days==='function') BEACON.days();
   const afterSubmit = Promise.resolve(submitP).catch(()=>{}); // отправка молчит о сбоях — экран итогов не должен от них зависеть
   // призрак рекорда — в топ: трек + мой скин (все живые категории, включая Bullet — v1.280.0; шеринг включён; тихо, как таблица)
   const trackForGhost = (rec.length>=20 && typeof ghostPack==='function') ? ghostPack(rec) : null;
