@@ -435,11 +435,30 @@ function onTgOrient(e){ // пакет с моста Telegram; данные в th
   gyroStatusTick(); // v1.66.1: DOM — только когда настройки открыты
 }
 
+/* ============================================================
+   13.08.2026 «Экран, которого ещё нет».
+   Найдено телеметрией на живой 1.284.0, второе устройство:
+     input.js:442 Uncaught ReferenceError: screenName is not defined
+
+   Корень — тот же, что у находки v1.282.14 про `S` в core.js, только в другом файле.
+   `screenName` объявлен через `let` в ui.js, а ui.js грузится ПОСЛЕ input.js (см. порядок
+   тегов в index.html: core → input → … → ui). Пакеты от моста ориентации Telegram идут
+   60 раз в секунду и начинают идти сразу, как мост ожил, — то есть могут прийти в окно
+   между «input.js отработал» и «ui.js объявил screenName». В этом окне переменная не
+   `undefined`, а в мёртвой зоне (TDZ), и голое обращение к ней бросает ReferenceError,
+   а не читается как пустое значение.
+
+   Лечим корень, а не строку 442: один вход для всех пяти мест, где input.js спрашивает
+   про экран. Пока ui.js не отработал, ответ — пустая строка: ни одно сравнение не совпадёт,
+   и обработчик тихо ничего не сделает. Это верно и по смыслу: экрана ещё нет.
+   ============================================================ */
+function ekran(){ try{ return typeof screenName!=='undefined' ? screenName : ''; }catch(e){ return ''; } }
+
 let gyroLastErr=''; // последняя причина отказа моста — выводится в диагностику настроек
 let tiltBtnGone=false; // v1.66.1: кнопка разрешения скрыта — больше не спрашиваем DOM на каждый пакет
 let gyroHudT=0;
 function gyroStatusTick(){ // v1.66.1: DOM-диагностика — только при открытых настройках и не чаще ~3 Гц;
-  if (screenName!=='settings' && screenName!=='diag') return; // v1.66.3: + экран сервисного центра; в полёте пакеты идут 60 Гц — и ни одной записи в DOM
+  { const scr=ekran(); if (scr!=='settings' && scr!=='diag') return; } // v1.66.3: + экран сервисного центра; в полёте пакеты идут 60 Гц — и ни одной записи в DOM
   const now=performance.now(); if (now-gyroHudT<300) return; gyroHudT=now;
   gyroStatus();
 }
@@ -598,8 +617,8 @@ function pollGamepad(){
   if(U){input.keyU=true;padOwn.u=true;} else if(padOwn.u){input.keyU=false;padOwn.u=false;}
   if(D){input.keyD=true;padOwn.d=true;} else if(padOwn.d){input.keyD=false;padOwn.d=false;}
   const a=btn(0), st=btn(9); // фронты, не уровни: зажатая кнопка не долбит
-  if(a&&!padPrev.a){ if(screenName==='menu') runStart(); else if(screenName==='over') retryRun(); }
-  if(st&&!padPrev.st){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
+  if(a&&!padPrev.a){ const scr=ekran(); if(scr==='menu') runStart(); else if(scr==='over') retryRun(); }
+  if(st&&!padPrev.st){ const scr=ekran(); if(scr==='game') pauseGame(); else if(scr==='pause') resumeGame(); }
   padPrev.a=a; padPrev.st=st;
 }
 /* v1.280.0 «Второй канал»: вибро-геймпада — тот же принцип, что у haptic() для тача/Telegram,
@@ -643,8 +662,8 @@ window.addEventListener('keydown',e=>{
   if(k==='ArrowRight'||c==='KeyD'){input.keyR=true;e.preventDefault();}
   if(k==='ArrowUp'||c==='KeyW'){input.keyU=true;e.preventDefault();}
   if(k==='ArrowDown'||c==='KeyS'){input.keyD=true;e.preventDefault();}
-  if(k===' '||k==='Enter'){ if(screenName==='menu') runStart(); else if(screenName==='over') retryRun(); e.preventDefault(); } // как главная кнопка экрана: выбранная дисциплина, не всегда классика
-  if(k==='Escape'||c==='KeyP'){ if(screenName==='game') pauseGame(); else if(screenName==='pause') resumeGame(); }
+  if(k===' '||k==='Enter'){ const scr=ekran(); if(scr==='menu') runStart(); else if(scr==='over') retryRun(); e.preventDefault(); } // как главная кнопка экрана: выбранная дисциплина, не всегда классика
+  if(k==='Escape'||c==='KeyP'){ const scr=ekran(); if(scr==='game') pauseGame(); else if(scr==='pause') resumeGame(); }
 });
 window.addEventListener('keyup',e=>{
   // v1.282.13: отпускание слушаем ВСЕГДА, без фильтра. Поднять руль обязаны в любом
