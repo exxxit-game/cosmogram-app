@@ -99,6 +99,11 @@ canvas{display:block}
   /* v1.59.0 «Подушка»: безопасная зона = максимум из env (браузер), TG-переменных (мини-апп 8.0+)
      и JS-запаса (Android-WebView Telegram, где env мёртв). Одна пара на все миры. */
   --sat:max(env(safe-area-inset-top), var(--tg-safe-area-inset-top,0px), var(--tg-content-safe-area-inset-top,0px), var(--js-sat,0px));
+  /* 13.08.2026 «Подушка не для меню»: --sat — подушка ПОЛЁТА (под неё свёрстан верхний HUD,
+     в ней есть назначенные 96 мер). --sat-menu — настоящее перекрытие: чёлка, островок,
+     шапка клиента. Меню держатся за неё и не платят за красоту HUD. Восемь мер снизу —
+     чтобы заголовок не лип к самой кромке даже там, где перекрытия нет вовсе. */
+  --sat-menu:max(8px, env(safe-area-inset-top), var(--tg-safe-area-inset-top,0px), var(--tg-content-safe-area-inset-top,0px), var(--js-sat-real,0px));
   --sab:max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom,0px), var(--tg-content-safe-area-inset-bottom,0px), var(--js-sab,0px));
   --bg-0:#0b1626;            /* глубина космоса — база */
   --bg-1:#0f1f3d;            /* панели */
@@ -151,7 +156,7 @@ button, input, select, textarea { text-transform:inherit; }
      сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
      экране — шестую часть высоты, отданную ни за что, на КАЖДОМ экране меню.
      Защиту оставляем, украшение снимаем. */
-  padding-top:calc(10px + var(--sat)); padding-bottom:24px; overflow-y:auto; }
+  padding-top:calc(10px + var(--sat-menu)); padding-bottom:24px; overflow-y:auto; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
@@ -177,7 +182,7 @@ button, input, select, textarea { text-transform:inherit; }
 
 /* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
 #startScreen { justify-content:space-between;
-  padding-top:calc(12px + var(--sat)); }   /* 13.08.2026: см. «Подушка не для меню» выше */
+  padding-top:calc(12px + var(--sat-menu)); }   /* 13.08.2026: см. «Подушка не для меню» выше */
 .scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
 .scrFoot { display:flex; justify-content:center; width:100%;
   padding-bottom:calc(18px + var(--sab)); }
@@ -757,7 +762,7 @@ button, input, select, textarea { text-transform:inherit; }
 /* ---- починка раскладки: ничего не вылезает за экран ---- */
 #pauseScreen .stack { width:min(86%,352px); } /* нить и звёзды-узлы целиком на экране */
 #gameOverScreen { justify-content:flex-start; overflow-y:auto;
-  padding-top:calc(12px + var(--sat)); padding-bottom:26px; }   /* 13.08.2026: см. «Подушка не для меню» */
+  padding-top:calc(12px + var(--sat-menu)); padding-bottom:26px; }   /* 13.08.2026: см. «Подушка не для меню» */
 #gameOverScreen > :first-child { margin-top:auto; } /* короткие итоги — по центру */
 #gameOverScreen > :last-child { margin-bottom:auto; } /* длинные — честный скролл без среза */
 #newRecord { width:min(92%,380px); } /* плашки рекордов переносятся с полями */
