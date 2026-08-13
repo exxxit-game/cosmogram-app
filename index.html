@@ -229,8 +229,9 @@ button, input, select, textarea { text-transform:inherit; }
 
 @keyframes pulse { 0%,100%{opacity:.9} 50%{opacity:1} }
 
-/* Рекорды-чипы под режимами — материал пилюль HUD (v1.34.0) */
-#bestRow { display:flex; gap:8px; margin-top:12px; pointer-events:none; flex-wrap:wrap; justify-content:center; }
+/* Пилюли-чипы — материал пилюль HUD (v1.34.0). Здесь же жил #bestRow, строка рекордов
+   главного экрана; 13.08.2026 она убрана целиком, а сам материал остался: им живут
+   пилюли на итогах забега (.bestPills) и метка режима в полёте. */
 .miniPill { font-size:12px; color:#9fb4d8;
   border:1px solid rgba(140,170,255,.18); border-radius:10px; padding:4px 11px;
   background:rgba(16,24,54,.5); }
@@ -906,12 +907,11 @@ button, input, select, textarea { text-transform:inherit; }
 
 <!-- MENU -->
 <div id="startScreen" class="overlay hidden">
-  <div class="scrTop">
-    <div class="statusBar">
-      <span class="metric" id="bestScore"></span>
-      <span class="metric" id="walletMenu"></span>
-    </div>
-  </div>
+  <!-- 13.08.2026 «Главный экран — дверь, а не витрина». Здесь стояли пилюля «Рекорд: N»
+       и кошелёк, а внизу экрана — строка из четырёх мини-пилюль с рекордами по видам
+       управления. Убраны по решению владельца: главный экран ведёт в небо, а числа
+       игрока живут там, где им место, — рекорды на итогах забега и в Достижениях,
+       кошелёк в Ангаре, там же, где его тратят. Страж 110 сторожит невозврат. -->
   <div class="scrMid">
     <div class="stack">
       <button class="btn pri" id="startBtn">Начать полёт</button>
@@ -925,12 +925,6 @@ button, input, select, textarea { text-transform:inherit; }
       <button class="btn ghost" id="channelBtn">Наш канал</button>
       <button class="btn ghost" id="settingsBtn">Настройки</button>
       <button class="btn ghost hidden" id="homeBtn">На экран «Домой»</button>
-    </div>
-    <div id="bestRow" class="hidden">
-      <span class="miniPill" id="pillG" title="Рекорд гироскопа"><svg class="ic"><use href="#i-phone"></use></svg><b id="bpG">0</b></span>
-      <span class="miniPill" id="pillT" title="Рекорд касания"><svg class="ic"><use href="#i-hand"></use></svg><b id="bpT">0</b></span>
-      <span class="miniPill" id="pillD" title="Рекорд дистанции"><svg class="ic"><use href="#i-ruler"></use></svg><b id="bpD">0</b></span>
-      <span class="miniPill" id="pillB" title="Рекорд затишья"><svg class="ic"><use href="#i-timer"></use></svg><b id="bpB">0</b></span>
     </div>
   </div>
   <div id="duelBanner" class="hidden"></div>
@@ -970,6 +964,10 @@ button, input, select, textarea { text-transform:inherit; }
     <div class="setRow" id="setStreaksBtn" role="button" tabindex="0"><span class="setK">Скоростные полосы</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
     <div class="setRow" id="setLangBtn" role="button" tabindex="0"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
     <div class="setRow" id="setGhostBtn" role="button" tabindex="0"><span class="setK">Призрак</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <!-- «ЕЩЁ РАЗ?» — своя тень первых трёх забегов. Строка отдельная от «Призрака» намеренно:
+         тот про «делиться своим призраком», отдавать ленту другим, — совсем другой смысл.
+         Подпись строки берётся из словаря в applyLang, как и у соседей. -->
+    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setK">ЕЩЁ РАЗ?</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
   <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
   <div class="setPanel hidden" id="accPanel">
