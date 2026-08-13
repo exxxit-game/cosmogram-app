@@ -3996,9 +3996,16 @@ async function guardRockPathCached(browser){
       if(typeof Real!=='function') return { noPath2D:true };
       window.Path2D = function(){ built++; return new Real(); };
 
-      // даём небу наполниться камнями
-      for(let f=0;f<240;f++){ update(1/60); draw(); }
-      const kamney = obstacles.filter(x=>x.kind==='rock'||x.kind==='drift').length;
+      /* Даём небу наполниться камнями. 13.08.2026: сюда добавлены неуязвимость и ожидание
+         по факту, а не по счётчику. Прежде страж летел ровно 240 тиков без защиты — и если
+         корабль по дороге разбивался, поле оказывалось пустым, страж честно говорил
+         «нечего мерить» и падал красным. На нагруженном стенде это выпадало примерно
+         в двух прогонах из пяти и выглядело как поломка кода, которой не было.
+         Закон: страж, который может не найти материал для измерения, обязан его дождаться,
+         а не считать отсутствие материала виной кода. */
+      const kamnej = ()=>obstacles.filter(x=>x.kind==='rock'||x.kind==='drift').length;
+      for(let f=0; f<900 && kamnej()<3; f++){ S.invuln=10; update(1/60); draw(); }
+      const kamney = kamnej();
       const warm = built;
       built = 0;
       const idsDo = obstacles.filter(x=>x.kind==='rock'||x.kind==='drift').map(x=>!!x._path);
@@ -4008,7 +4015,7 @@ async function guardRockPathCached(browser){
       return { kamney, warm, hot, vseSKeshem: idsDo.length>0 && idsDo.every(Boolean) };
     });
     if(r.noPath2D) return post(name,false,'в этом браузере нет Path2D — судить не по чему');
-    if(!r.kamney)  return post(name,false,'за четыре секунды полёта не появилось ни одного камня — стражу нечего мерить');
+    if(!r.kamney)  return post(name,false,'за пятнадцать секунд неуязвимого полёта не появилось ни одного камня — стражу нечего мерить');
     if(!r.vseSKeshem) return post(name,false,'не у всех камней на поле есть готовый силуэт — форма всё ещё собирается на ходу');
     if(r.hot!==0)  return post(name,false,`за 30 кадров БЕЗ движения построено ${r.hot} новых силуэтов — форма пересобирается в кадре`);
     post(name,true,`${r.kamney} камней на поле, за 30 кадров отрисовки — ноль новых силуэтов (при спавне было ${r.warm})`);
@@ -4159,8 +4166,72 @@ async function guardMenuIsClean(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 111 — «Сервисный центр отвечает на вопрос, а не отчитывается».
+   Экран задуман как место, куда человек приходит с бедой: «не рулит», «дёргается»,
+   «не слышно». А показывал он до четырнадцати строк подряд в порядке написания кода:
+   «штурвал не подключён — это нормально» (у 99 из 100 нет геймпада) стояло выше, чем
+   размер мира и лист холста, а беда могла оказаться седьмой сверху.
+
+   Плюс две кнопки ручной отправки — «Скопировать отчёт» и «Скопировать самописец».
+   Они из времён, когда мы просили игрока прислать данные руками. С тех пор появилась
+   «Почта неба», которая присылает то же самое сама, и просить человека что-то копировать
+   значит делать вид, что мы этого не умеем.
+
+   Страж сторожит три правила разом: беда — не ниже первой строки; редкое — не на виду
+   при входе; ручной отправки на экране нет. */
+async function guardServiceCenterIsSorted(browser){
+  const name = '111. Сервисный центр: беда сверху, редкое под спойлером, ручной отправки нет';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      /* Ставим настоящую беду, которую экран обязан показать первой: мало кадров.
+         Q.fps<45 — та же ветка, что у живого игрока на слабом телефоне. */
+      if(typeof Q!=='undefined') Q.fps = 20;
+      setScreen('diag'); if(typeof diagBuild==='function') diagBuild();
+
+      const vidim = el => { // виден ли узел на самом деле, а не «есть в разметке»
+        for(let n=el; n && n!==document.body; n=n.parentElement){
+          if(n.classList && n.classList.contains('hidden')) return false;
+          const st=getComputedStyle(n); if(st.display==='none'||st.visibility==='hidden') return false;
+        }
+        return true;
+      };
+      const knopki = ['diagReportBtn','diagTapeBtn'].filter(id=>document.getElementById(id));
+      const list = document.getElementById('diagList');
+      if(!list) return { netSpiska:true };
+      const stroki = Array.from(list.querySelectorAll('.drow')).filter(vidim);
+      const tekst  = stroki.map(d=>String(d.textContent||''));
+      /* Значок состояния строки: '!' — беда, 'OK'/'i' — не беда. Правило не «беда первая»,
+         а «ни одна не-беда не стоит выше беды»: бед может быть несколько, и порядок между
+         ними — дело кода, а вот спокойная строка выше тревожной это уже отчёт. */
+      const znaki = stroki.map(d=>{ const z=d.querySelector('.dst'); return z?String(z.textContent||'').trim():'i'; });
+      const pervayaSpokoynaya = znaki.findIndex(z=>z!=='!');
+      const posledn9yaBeda = znaki.lastIndexOf('!');
+      const bedaVyshe = pervayaSpokoynaya<0 || posledn9yaBeda<0 || posledn9yaBeda < pervayaSpokoynaya;
+      const bedaNa = tekst.findIndex(t=>t.indexOf(L.diagFpsLow)>=0);
+      const redkoeNa = tekst.findIndex(t=>t.indexOf(L.diagPadNone)>=0 || t.indexOf(L.diagSheet)>=0);
+      return { knopki, vsego:stroki.length, bedaNa, redkoeNa, bedaVyshe,
+               poryadok: znaki.join(' '), pervaya:tekst[0]||'' };
+    });
+    if(r.netSpiska) return post(name,false,'нет #diagList — стражу нечего смотреть');
+    if(r.knopki.length) return post(name,false,
+      `на экране остались кнопки ручной отправки: ${r.knopki.join(', ')} — «Почта неба» присылает то же самое сама`);
+    if(r.bedaNa < 0) return post(name,false,'беда «мало кадров» вообще не показана');
+    if(!r.bedaVyshe) return post(name,false,
+      `спокойная строка стоит выше тревожной — порядок значков: ${r.poryadok}`);
+    if(r.redkoeNa >= 0) return post(name,false,
+      `редкая строка видна при входе (${r.redkoeNa+1}-й) — ей место под спойлером`);
+    if(r.vsego > 7) return post(name,false,
+      `при входе видно ${r.vsego} строк — экран снова стал отчётом, а не ответом`);
+    post(name,true,`беды сверху, видимых строк ${r.vsego}, редкое спрятано, ручной отправки нет`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
