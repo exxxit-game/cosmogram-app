@@ -4318,8 +4318,56 @@ async function guardHangarShowcase(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 113 — «Набок — это не узко».
+   Формула масштаба: SC = min(cssW/390, cssH/844). У телефона, положенного набок, урезает
+   ВТОРОЕ слагаемое: ширины с избытком, не хватает высоты. А окно предупреждения говорило
+   «экран слишком узкий — поверните экран» — то есть отправляло человека ровно туда, откуда
+   беда, и звучало как отказ по вине его телефона.
+
+   Решение владельца 13.08.2026: альбомную ориентацию мы не поддерживаем. Значит окно
+   обязано это честно сказать и попросить повернуть обратно, а не «развернуть окно».
+
+   Страж проверяет оба случая на одном борту: узкое вертикальное окно и нормальный телефон
+   набок. Тексты сверяются со словарём, а не с русскими строками. */
+async function guardLandscapeSpeaksTruth(browser){
+  const name = '113. Телефон набок слышит «поверните», а не «слишком узко»';
+  let ctx;
+  try{
+    ctx = await browser.newContext({ viewport:{width:800,height:360}, deviceScaleFactor:2 });
+    const page = await ctx.newPage();
+    await page.addInitScript(()=>{ try{ localStorage.clear(); }catch(e){} window.__labOpen=true; window.__beaconLab=true; });
+    await page.goto(BASE, { waitUntil:'domcontentloaded' });
+    await page.waitForFunction(()=>typeof GAME_VERSION!=='undefined' && typeof startGame==='function');
+
+    const nabok = await page.evaluate(()=>{
+      const el=document.getElementById('tooNarrow');
+      return { vidno: !!(el && !el.classList.contains('hidden')),
+               zagolovok: (document.getElementById('tooNarrowTitle')||{}).textContent||'',
+               podskazka: (document.getElementById('tooNarrowHint')||{}).textContent||'',
+               zhdem: { t:L.landTitle||'', h:L.landHint||'' }, sc:+SC.toFixed(3) };
+    });
+    if(!nabok.vidno) return post(name,false,`при 800×360 окно «тесно» не показалось вовсе (SC ${nabok.sc}) — беда молчит`);
+    if(nabok.zagolovok.trim() !== String(nabok.zhdem.t).trim())
+      return post(name,false,`набок показан заголовок «${nabok.zagolovok.trim()}» вместо «${nabok.zhdem.t}»`);
+    if(nabok.podskazka.trim() !== String(nabok.zhdem.h).trim())
+      return post(name,false,`набок показана подсказка «${nabok.podskazka.trim()}» вместо «${nabok.zhdem.h}»`);
+
+    // и обратный случай: узкое ВЕРТИКАЛЬНОЕ окно должно просить развернуть окно, а не крутить телефон
+    await page.setViewportSize({ width:180, height:400 });
+    await page.waitForTimeout(300);
+    const uzko = await page.evaluate(()=>({
+      vidno: !document.getElementById('tooNarrow').classList.contains('hidden'),
+      zagolovok: (document.getElementById('tooNarrowTitle')||{}).textContent||'',
+      zhdem: L.tooNarrowTitle||'' }));
+    if(uzko.vidno && uzko.zagolovok.trim() !== String(uzko.zhdem).trim())
+      return post(name,false,`узкое вертикальное окно получило текст про поворот телефона: «${uzko.zagolovok.trim()}»`);
+    post(name,true,`набок — «${nabok.zagolovok.trim()}»; узкий портрет — «${uzko.zagolovok.trim()||'окно не тесное'}»`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
