@@ -4366,8 +4366,49 @@ async function guardLandscapeSpeaksTruth(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 114 — «Меню не платит за подушку полёта».
+   В игре две разные величины сверху, и их легко перепутать обратно в одну:
+     --sat       — подушка ПОЛЁТА. В ней есть НАЗНАЧЕННЫЕ 96 мер: под столько свёрстан
+                   верхний HUD, чтобы счёт не лепился к краю (находка №30 «Голый край»).
+     --sat-menu  — ИЗМЕРЕННОЕ перекрытие: чёлка, островок, шапка клиента.
+   Пока они были одной переменной, каждый экран меню отдавал 144 меры пустоты — шестую
+   часть телефона ни за что.
+
+   Страж стережёт обе стороны сразу, и это важнее, чем кажется: «починить» пустоту можно
+   и вредным способом — обнулив подушку целиком, — и тогда счёт в полёте снова уедет под
+   чужую шапку. Поэтому меряем и то, что верх меню высоко, и то, что HUD своё сохранил. */
+async function guardMenuDoesNotPayForHud(browser){
+  const name = '114. Меню не платит за подушку полёта, а полёт её не теряет';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const verh = id => { setScreen(id==='hangar'?'hangar':id);
+        const scr=document.getElementById(id==='hangar'?'hangarScreen':(id+'Screen'));
+        const t=scr && scr.querySelector('.screenTitle');
+        return t ? Math.round(t.getBoundingClientRect().top) : -1; };
+      if(typeof renderHangar==='function'){ setScreen('hangar'); renderHangar(); }
+      const ekrany = { hangar:verh('hangar'), settings:verh('settings'), ach:verh('ach') };
+      const hud=document.getElementById('hud');
+      const podushkaHud = hud ? Math.round(parseFloat(getComputedStyle(hud).paddingTop)||0) : -1;
+      const st=getComputedStyle(document.documentElement);
+      return { ekrany, podushkaHud,
+               sat:st.getPropertyValue('--js-sat').trim(),
+               satReal:st.getPropertyValue('--js-sat-real').trim() };
+    });
+    const plohie = Object.entries(r.ekrany).filter(([,v])=>v<0 || v>70);
+    if(plohie.length) return post(name,false,
+      `верх экрана слишком низко: ${plohie.map(([k,v])=>k+' '+v).join(', ')} — подушка полёта опять достаётся меню`);
+    if(r.podushkaHud < 120) return post(name,false,
+      `подушка HUD ${r.podushkaHud} мер — счёт в полёте уедет под чужую шапку (лечили пустоту не тем местом)`);
+    post(name,true,`верх меню ${Object.values(r.ekrany).join('/')}, подушка HUD ${r.podushkaHud}, назначено ${r.sat}, измерено ${r.satReal}`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
