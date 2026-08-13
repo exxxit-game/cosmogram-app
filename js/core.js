@@ -1337,8 +1337,27 @@ function tgImmersion(on){
 // повороте: первый же портрет — и экран больше не ложится. Открытый сразу в альбоме
 // (или старый клиент/браузер) — подхватывает альбомная страховка в CSS.
 function tgOrientLock(){
-  const t=tgApp(); if(!t || !tgVerAtLeast(t,'8.0') || !t.lockOrientation) return;
-  if(window.innerHeight >= window.innerWidth){ try{ t.lockOrientation(); }catch(e){} }
+  const portret = window.innerHeight >= window.innerWidth;
+  const t=tgApp();
+  if(t && tgVerAtLeast(t,'8.0') && t.lockOrientation){
+    if(portret){ try{ t.lockOrientation(); }catch(e){} }
+    return;                       // мост справился — второй замок ни к чему
+  }
+  /* 13.08.2026 «Замок и без моста». Проверка снимком владельца: игра лежала набок не в
+     Telegram, а в обычном браузере — там первая же строка прежнего замка (`if(!t) return`)
+     выключала его целиком. У браузера есть свой замок, но он даётся только в полном экране;
+     в обычной вкладке платформа запрещает странице держать ориентацию, и обойти это нечем.
+     Поэтому просим — и спокойно принимаем отказ: окно «Поверните телефон» остаётся
+     последней страховкой ровно для этого случая.
+     Обещание ОБЯЗАНО быть поймано: браузер отвечает отказом (rejected promise), и без
+     .catch каждый поворот телефона печатал бы в консоль необработанную ошибку. */
+  try{
+    const so = (typeof screen!=='undefined') && screen.orientation;
+    if(so && so.lock && portret){
+      const p = so.lock('portrait');
+      if(p && p.catch) p.catch(()=>{});
+    }
+  }catch(e){}
 }
 tgOrientLock();
 window.addEventListener('orientationchange', ()=>setTimeout(tgOrientLock,200));
