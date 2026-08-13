@@ -1534,6 +1534,7 @@ function applyLang(){
   $('restartBtn').textContent=L.restart;
   $('pauseMenuBtn').textContent=L.menu;
   $('hangarTitle').textContent=L.hangar;
+  $('brandSub').textContent=L.brandSub;          // 13.08.2026: обещание игры — на языке игрока
   $('angarWalletLbl').textContent=L.walletYours; // 13.08.2026: подпись кошелька под кнопкой покупки
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
   $('hangarBackBtn').textContent=L.menu;

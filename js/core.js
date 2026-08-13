@@ -210,6 +210,7 @@ const I18N = {
     /* 13.08.2026 «Ангар-витрина»: слова экрана покупки. Кошелёк переехал под кнопку и
        получил подпись — голое число под кнопкой читалось как ещё одна цена. */
     hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
+    brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
     calibrated:'Наклон откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
     tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно или поверните экран, чтобы полететь',
@@ -331,6 +332,7 @@ const I18N = {
     overDetails:'Flight details',
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
+    brandSub:'One sky for everyone',
     calibrated:'Tilt calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
     tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window or rotate the screen to fly',
@@ -449,7 +451,8 @@ const I18N = {
     shieldDown:'Escudo caído', nearMiss:'Al límite', gate:'Puerta',
     overDetails:'Detalles del vuelo', combo:'Combo',
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
-    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas',
+    brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
     calibrated:'Inclinación calibrada', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
@@ -588,7 +591,8 @@ const I18N = {
     shieldDown:'Escudo caído', nearMiss:'Por pouco', gate:'Portal',
     overDetails:'Detalhes do voo', combo:'Combo',
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
-    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas', // v1.282.15: значок валюты вернулся
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas',
+    brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
     calibrated:'Inclinação calibrada', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
@@ -729,6 +733,7 @@ const I18N = {
     overDetails:'Détails du vol',
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
     hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
+    brandSub:'Un ciel pour tous',
     calibrated:'Inclinaison calibrée', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
     tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre ou tourne l\u2019écran pour voler',
