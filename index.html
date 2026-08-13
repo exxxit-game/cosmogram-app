@@ -414,6 +414,12 @@ button, input, select, textarea { text-transform:inherit; }
   border-radius:12px; padding:7px 16px; font-size:16px; cursor:pointer; }
 .topCat.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
 #topMe { color:rgba(143,255,159,.85); font-size:13px; text-align:center; min-height:18px; margin-bottom:6px; }
+/* 13.08.2026: «твои N — это M-е место» и приглашение под таблицей — тот же материал, что панели */
+#topWouldBe { margin-top:10px; text-align:center; font-size:13px; color:var(--gold-hi); letter-spacing:.03em; }
+#topJoin { width:min(92%,380px); margin:12px auto 0; padding:14px 16px; text-align:center;
+  background:rgba(22,38,56,.5); border:1px solid var(--line); border-radius:var(--r-card); }
+#topJoinTitle { font-size:13px; color:var(--ink); }
+#topJoinSub { margin-top:4px; font-size:12px; color:var(--muted); line-height:1.45; }
 .topIt { display:flex; align-items:center; gap:10px; padding:8px 12px; margin:4px 0;
   background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:12px; }
 .topIt.me { background:rgba(120,170,255,.08); border-color:rgba(190,225,255,.35); }
@@ -894,7 +900,7 @@ button, input, select, textarea { text-transform:inherit; }
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.284.0"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.284.1"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1197,6 +1203,14 @@ button, input, select, textarea { text-transform:inherit; }
     </div>
     <div id="topMe"></div>
     <div id="topList"></div>
+    <!-- 13.08.2026 «Витрина, а не клуб»: приглашение стоит ПОД таблицей. Раньше на его месте
+         была сама таблица — точнее, отказ вместо неё, и гость читал «войди» вместо пятнадцати
+         живых строк. Теперь он сначала видит, куда его зовут, и только потом — приглашение. -->
+    <div id="topWouldBe" class="hidden"></div>
+    <div id="topJoin" class="hidden">
+      <div id="topJoinTitle"></div>
+      <div id="topJoinSub"></div>
+    </div>
     <div id="topLogin" class="tgWidget hidden"></div>
     <div id="dcLogin" class="hidden"></div>
   </div>
@@ -1257,23 +1271,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.284.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.284.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.284.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.284.0"></script>
-<script defer src="js/game.js?v=1.284.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.284.0"></script>
-<script defer src="js/sync.js?v=1.284.0"></script>
-<script defer src="js/render.js?v=1.284.0"></script>
-<script defer src="js/planetarium.js?v=1.284.0"></script>
-<script defer src="js/goldstar.js?v=1.284.0"></script>
-<script defer src="js/music.js?v=1.284.0"></script>
-<script defer src="js/gyro.js?v=1.284.0"></script>
-<script defer src="js/forge.js?v=1.284.0"></script>
-<script defer src="js/adaptive.js?v=1.284.0"></script>
-<script defer src="js/card.js?v=1.284.0"></script>
-<script defer src="js/star.js?v=1.284.0"></script>
-<script defer src="js/ui.js?v=1.284.0"></script>
+<script defer src="js/core.js?v=1.284.1" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.284.1"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.284.1"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.284.1"></script>
+<script defer src="js/game.js?v=1.284.1" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.284.1"></script>
+<script defer src="js/sync.js?v=1.284.1"></script>
+<script defer src="js/render.js?v=1.284.1"></script>
+<script defer src="js/planetarium.js?v=1.284.1"></script>
+<script defer src="js/goldstar.js?v=1.284.1"></script>
+<script defer src="js/music.js?v=1.284.1"></script>
+<script defer src="js/gyro.js?v=1.284.1"></script>
+<script defer src="js/forge.js?v=1.284.1"></script>
+<script defer src="js/adaptive.js?v=1.284.1"></script>
+<script defer src="js/card.js?v=1.284.1"></script>
+<script defer src="js/star.js?v=1.284.1"></script>
+<script defer src="js/ui.js?v=1.284.1"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
