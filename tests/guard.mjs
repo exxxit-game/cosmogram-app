@@ -4154,14 +4154,26 @@ async function guardMenuIsClean(browser){
       const vsplyli = Object.keys(METKI).filter(k=>tekst.indexOf(String(METKI[k]))>=0);
       const uzly = ['bestScore','walletMenu','bestRow','pillG','pillT','pillD','pillB']
         .filter(id=>{ const el=document.getElementById(id); return el && scr.contains(el); });
-      return { vsplyli, uzly };
+      /* 13.08.2026: пустой верх экрана — не цель. Числа ушли, а имя игры и её обещание
+         обязаны остаться: это первое, что видит человек, и это единственное, что говорит
+         ему, куда он попал. Обещание проверяем не по русской строке, а по словарю —
+         иначе страж покраснеет у испанца. */
+      const imya = document.getElementById('brandName');
+      const obeshanie = document.getElementById('brandSub');
+      const brendEst = !!(imya && obeshanie && scr.contains(imya) &&
+        /cosmogram/i.test(String(imya.textContent||'')) &&
+        String(obeshanie.textContent||'').trim() === String(L.brandSub||'').trim() &&
+        String(obeshanie.textContent||'').trim().length > 3);
+      return { vsplyli, uzly, brendEst };
     });
     if(r.netEkrana) return post(name,false,'нет #startScreen — стражу нечего смотреть');
     if(r.vsplyli.length) return post(name,false,
       `на главном экране всплыли числа игрока: ${r.vsplyli.join(', ')} — экран снова стал витриной`);
     if(r.uzly.length) return post(name,false,
       `на главном экране остались узлы ${r.uzly.join(', ')} — пусть пустые, но они вернут числа при первой правке`);
-    post(name,true,'ни рекордов, ни кошелька — экран чист');
+    if(!r.brendEst) return post(name,false,
+      'на главном экране нет имени игры или её обещания — верх опустел вместо того, чтобы заговорить');
+    post(name,true,'ни рекордов, ни кошелька; имя игры и обещание на месте');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
