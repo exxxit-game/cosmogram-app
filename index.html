@@ -473,6 +473,15 @@ button, input, select, textarea { text-transform:inherit; }
 
 .hidden { display:none !important; }
 
+/* Имя игры на главном экране (13.08.2026). Заглавные и разрядка — как у всех наших
+   заголовков; подпись под именем набрана мельче и глуше, чтобы читалась как обещание,
+   а не как второй заголовок. */
+#brandName { font-family:var(--font-disp); font-weight:400; letter-spacing:.06em;
+  font-size:clamp(30px,9vw,46px); line-height:1.05; color:var(--ink); text-transform:uppercase;
+  text-shadow:0 0 26px rgba(140,180,255,.22); margin-top:6px; }
+#brandSub { margin-top:4px; font-size:clamp(11px,3.2vw,14px); letter-spacing:.18em;
+  text-transform:uppercase; color:rgba(190,215,255,.55); }
+
 /* ============================================================
    АНГАР — витрина (13.08.2026). Было: список строк, где каждая карточка несла
    мини-холст, а выбор скина перерисовывал весь список заново — экран мигал и
@@ -954,6 +963,14 @@ button, input, select, textarea { text-transform:inherit; }
 
 <!-- MENU -->
 <div id="startScreen" class="overlay hidden">
+  <div class="scrTop">
+    <!-- 13.08.2026 «У двери есть имя». Этого текста в коде не было НИГДЕ, кроме meta description:
+         на снимках владельца он остался от старой сборки. Возвращён как постоянная часть экрана,
+         а не как заставка на полторы секунды: верх главного освободился от чисел, и туда просится
+         не пустота, а обещание игры. Страж 110. -->
+    <div id="brandName">Cosmogram</div>
+    <div id="brandSub">Одно небо для всех</div>
+  </div>
   <!-- 13.08.2026 «Главный экран — дверь, а не витрина». Здесь стояли пилюля «Рекорд: N»
        и кошелёк, а внизу экрана — строка из четырёх мини-пилюль с рекордами по видам
        управления. Убраны по решению владельца: главный экран ведёт в небо, а числа
