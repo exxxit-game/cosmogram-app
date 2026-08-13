@@ -215,9 +215,24 @@ function syncFlush(extra){
   return p;
 }
 
-/* Топ-100 + моё место. Возвращает Promise с данными или null. */
+/* Публичная витрина таблицы (13.08.2026). Отдельный адрес и отдельная функция на сервере —
+   она умеет ТОЛЬКО читать. Временная: как только чтение переедет внутрь cosmogram-sync,
+   здесь останется один адрес вместо двух. Форма ответа у обеих одна, поэтому разбор ниже
+   не знает, откуда пришли данные, и знать не должен. */
+const TOP_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-top';
+
+/* Топ-100 + моё место. Возвращает Promise с данными или null.
+   13.08.2026: гость больше не получает отказ. Раньше первая строка возвращала null без входа —
+   и экран показывал «войди через Telegram» вместо пятнадцати живых игроков. Таблица рекордов
+   публична по природе: её видит любой вошедший, и прятать её от невошедшего значило выдавать
+   витрину за клуб. Своего места у гостя нет (сервер не знает, кто он) — его посчитает экран. */
 function syncTop(category){
-  if(!syncAvailable()) return Promise.resolve(null);
+  if(!syncAvailable()){
+    return syncFetch(TOP_URL,{category:category}).then(r=>{
+      if(!r.ok) return null;
+      return r.json().catch(()=>null);
+    }).catch(()=>null);
+  }
   return syncPost(Object.assign({action:'top', category:category}, syncAuth())).then(r=>{
     if(!r.ok) return null;
     return r.json().catch(()=>null);

@@ -1390,24 +1390,63 @@ function syncAuthChanged(){ // зовёт sync.js после входа видж
 }
 $('accOutBtn').addEventListener('click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
 
+/* Свой рекорд в этой категории — тот, что лежит на устройстве. Нужен гостю: сервер про него
+   не знает и знать не может, а «ты был бы 9-м из 15» — единственное, что превращает чужую
+   таблицу из витрины чужих успехов в разговор о твоём месте в ней. */
+function myBestFor(cat){
+  const k = cat==='gyro'?'bestGyro' : cat==='touch'?'bestTouch' : cat==='keys'?'bestKeys'
+          : cat==='bullet'?'bestBullet' : cat==='dist'?'bestDist' : null;
+  return k ? saneNumber(Store.get(k,0),0) : 0;
+}
+/* ============================================================
+   13.08.2026 «Витрина, а не клуб».
+   Было: гость жал «ТОП» и вместо таблицы получал строку «войди через Telegram». В таблице
+   при этом пятнадцать живых игроков — то есть человек просил показать, а ему отказывали,
+   и выглядело это как поражение по его вине.
+   Стало: таблицу видят все. Приглашение стоит ПОД ней и говорит о возможности.
+   Своё место гостю считает экран — по уже полученному списку, без второго запроса к серверу.
+   ============================================================ */
 function renderTop(){
   const list=$('topList'), me=$('topMe');
+  const wb=$('topWouldBe'), jn=$('topJoin'), tl=$('topLogin'), dl=$('dcLogin');
+  const gost = (typeof syncAvailable!=='function') || !syncAvailable();
   me.textContent=''; list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
-  const tl=$('topLogin');
-  if (typeof syncTop!=='function' || !syncAvailable()){
-    list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>';
-    const dl=$('dcLogin');
-    if (tl){ tl.classList.remove('hidden'); if(!syncInitData()) tgWidgetMount(tl); } // гостю — вход прямо здесь (v1.51.0)
-    if (dl){ dl.classList.remove('hidden'); if(!syncInitData()) dcMount(dl); } // …или через Discord (v1.52.0)
-    return;
+  if(wb) wb.classList.add('hidden');
+  if(jn) jn.classList.add('hidden');
+  if (typeof syncTop!=='function'){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+  /* Виджеты входа: гостю — под таблицей, вошедшему — прочь. Раньше они появлялись ВМЕСТО
+     таблицы, теперь только рядом с приглашением. */
+  if (gost){
+    if (tl){ tl.classList.remove('hidden'); if(!syncInitData()) tgWidgetMount(tl); } // v1.51.0
+    if (dl){ dl.classList.remove('hidden'); if(!syncInitData()) dcMount(dl); }       // v1.52.0
+  } else {
+    if (tl){ tl.classList.add('hidden'); tl.innerHTML=''; }
+    if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; }
   }
-  if (tl){ tl.classList.add('hidden'); tl.innerHTML=''; }
-  { const dl=$('dcLogin'); if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; } }
   const askCat=topCat; // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком
   syncTop(askCat).then(d=>{
     if(screenName!=='ach' || topCat!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
     if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
     me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+fmtN(d.me.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')) : '';
+    /* Гостю — его собственное место в чужой таблице и приглашение. Считаем здесь, а не на
+       сервере: сервер не знает, кто это, и спрашивать его второй раз не о чем. */
+    if (gost){
+      const moy = myBestFor(askCat);
+      const spisok = (d.top||[]);
+      if (wb){
+        if (moy>0 && spisok.length){
+          const vyshe = spisok.filter(r=>Number(r.best)>moy).length;
+          const ed = askCat==='dist' ? ' '+(L.unitM||'м') : '';
+          wb.textContent = L.topWouldBe(fmtN(moy)+ed, vyshe+1, spisok.length);
+          wb.classList.remove('hidden');
+        } else wb.classList.add('hidden');
+      }
+      if (jn){
+        $('topJoinTitle').textContent = L.topJoinTitle;
+        $('topJoinSub').textContent   = L.topJoinSub;
+        jn.classList.remove('hidden');
+      }
+    }
     if(!d.top || !d.top.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
     list.innerHTML=d.top.map((r,i)=>'<div class="topIt'+(r.me?' me':'')+'" style="animation-delay:'+(Math.min(i,10)*60)+'ms"><span class="topN'+(i<3?' m'+(i+1):'')+'">'+(i+1)+'</span>'+
       /* v1.282.20: экранирование вместо выкусывания. Раньше из чужого имени просто вырезались

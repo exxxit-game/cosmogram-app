@@ -258,7 +258,13 @@ const I18N = {
     duelLose:(n,b)=>'Не побито: у '+escapeHtml(n)+' — '+fmtN(b)+' м. Реванш?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' м на Волне '+w+' в Cosmogram. Сможешь лучше? ⚔️',
     mineTab:'Мои', topTab:'Топ', topMe:'Твоё место: ', topLoading:'Загрузка…',
-    topEmpty:'Пока пусто — будь первым!', topTgOnly:'Войди через Telegram — таблица одна на всех',
+    topEmpty:'Пока пусто — будь первым!', topTgOnly:'Таблица пока не отвечает — попробуй позже',
+    /* 13.08.2026 «Витрина, а не клуб». Гость видит таблицу целиком; приглашение стоит ПОД ней
+       и говорит о возможности, а не об условии. Прежний topTgOnly («войди через Telegram —
+       таблица одна на всех») стоял ВМЕСТО таблицы и читался как отказ по вине игрока. */
+    topWouldBe:(s,r,t)=>'Твои '+s+' — это '+r+'-е место из '+t,
+    topJoinTitle:'Хочешь встать в таблицу?',
+    topJoinSub:'Войди — и твой рекорд появится здесь под твоим именем',
     webJoin:'Войди через Telegram — этот полёт встанет в общую таблицу',
     accGuest:'Общая таблица одна на всех — войди через Telegram',
     accIn:n=>n?('Ты в общей таблице как '+n):'Ты в общей таблице', accOut:'Выйти',
@@ -381,7 +387,10 @@ const I18N = {
     duelLose:(n,b)=>'Not beaten: '+escapeHtml(n)+' holds '+fmtN(b)+' m. Rematch?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m on Wave '+w+' in Cosmogram. Beat that! ⚔️',
     mineTab:'Mine', topTab:'Top', topMe:'Your rank: ', topLoading:'Loading…',
-    topEmpty:'Empty so far — be the first!', topTgOnly:'Sign in with Telegram — one shared leaderboard',
+    topEmpty:'Empty so far — be the first!', topTgOnly:'The board is not answering — try later',
+    topWouldBe:(s,r,t)=>'Your '+s+' would be #'+r+' of '+t,
+    topJoinTitle:'Want to be on the board?',
+    topJoinSub:'Sign in — your record will appear here under your name',
     webJoin:'Sign in with Telegram — this flight joins the shared leaderboard',
     accGuest:'One leaderboard for everyone — sign in with Telegram',
     accIn:n=>n?('You are on the leaderboard as '+n):'You are on the leaderboard', accOut:'Sign out',
@@ -519,7 +528,10 @@ const I18N = {
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m en la Oleada '+w+' en Cosmogram. ¿Puedes hacerlo mejor? ⚔️',
     mineTab:'Mías', topTab:'Top', topMe:'Tu puesto: ', topLoading:'Cargando…',
     topEmpty:'Vacío por ahora — ¡sé el primero!',
-    topTgOnly:'Inicia sesión con Telegram — una tabla para todos',
+    topTgOnly:'La tabla no responde — inténtalo más tarde',
+    topWouldBe:(s,r,t)=>'Tus '+s+' serían el puesto '+r+' de '+t,
+    topJoinTitle:'¿Quieres estar en la tabla?',
+    topJoinSub:'Inicia sesión — tu récord aparecerá aquí con tu nombre',
     webJoin:'Inicia sesión con Telegram — este vuelo se sumará a la tabla común',
     accGuest:'Una tabla para todos — inicia sesión con Telegram',
     accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
@@ -660,7 +672,10 @@ const I18N = {
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m na Onda '+w+' no Cosmogram. Consegue fazer melhor? ⚔️',
     mineTab:'Minhas', topTab:'Top', topMe:'Sua posição: ', topLoading:'Carregando…',
     topEmpty:'Vazio por enquanto — seja o primeiro!',
-    topTgOnly:'Entre com o Telegram — uma tabela para todos',
+    topTgOnly:'A tabela não responde — tente mais tarde',
+    topWouldBe:(s,r,t)=>'Seus '+s+' seriam o '+r+'º de '+t,
+    topJoinTitle:'Quer entrar na tabela?',
+    topJoinSub:'Entre — seu recorde aparecerá aqui com seu nome',
     webJoin:'Entre com o Telegram — este voo entra na tabela geral',
     accGuest:'Uma tabela para todos — entre com o Telegram',
     accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
@@ -785,7 +800,10 @@ const I18N = {
     duelLose:(n,b)=>'Pas battu : '+escapeHtml(n)+' tient '+fmtN(b)+' m. Revanche ?',
     duelShareText:(d,w)=>myCallsign()+' : '+fmtN(d)+' m Vague '+w+' dans Cosmogram. Fais mieux ! ⚔️',
     mineTab:'Moi', topTab:'Classement', topMe:'Ton rang : ', topLoading:'Chargement…',
-    topEmpty:'Vide pour l\u2019instant — sois le premier !', topTgOnly:'Connecte-toi avec Telegram — un classement partagé',
+    topEmpty:'Vide pour l\u2019instant — sois le premier !', topTgOnly:'Le classement ne répond pas — réessaie plus tard',
+    topWouldBe:(s,r,t)=>'Tes '+s+' seraient '+r+'e sur '+t,
+    topJoinTitle:'Envie d\u2019être au classement ?',
+    topJoinSub:'Connecte-toi — ton record apparaîtra ici à ton nom',
     webJoin:'Connecte-toi avec Telegram — ce vol rejoint le classement partagé',
     accGuest:'Un classement pour tous — connecte-toi avec Telegram',
     accIn:n=>n?('Tu es sur le classement sous le nom '+n):'Tu es sur le classement', accOut:'Se déconnecter',
@@ -947,7 +965,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.0'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.1'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
