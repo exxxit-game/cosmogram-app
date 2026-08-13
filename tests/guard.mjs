@@ -4230,8 +4230,75 @@ async function guardServiceCenterIsSorted(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 112 — «Ангар: витрина, а не список; превью живёт, но знает меру».
+   Три обещания цикла 1, каждое из которых легко потерять при первой же правке:
+
+   1. Выбор скина не пересобирает список. Прежний renderHangar() делал list.innerHTML=''
+      и заново строил все карточки с каскадом анимации — на каждый клик экран мигал и
+      скролл прыгал вверх. Теперь жетоны строятся один раз, а выбор меняет только классы.
+   2. Живое превью не запускается на слабом ярусе и под бережным небом. Иначе меню
+      начнёт крутить второй игровой цикл там, где сейчас не крутится ничего.
+   3. Кошелёк стоит ПОД кнопкой покупки. Наверху он был украшением; внизу он ответ на
+      вопрос «хватит ли», заданный ровно в тот момент, когда палец над кнопкой. */
+async function guardHangarShowcase(browser){
+  const name = '112. Ангар: список не мигает, превью знает меру, кошелёк под покупкой';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const spat = ms => new Promise(r=>setTimeout(r,ms));
+      if(typeof Q!=='undefined'){ Q.mode='manual'; Q.level=3; }
+      setScreen('hangar'); renderHangar();
+
+      const pv = document.getElementById('angarPv');
+      const grid = document.getElementById('angarGrid');
+      if(!pv || !grid) return { netUzlov:[!pv&&'angarPv', !grid&&'angarGrid'].filter(Boolean) };
+
+      // 3. порядок: кошелёк ниже кнопки покупки
+      const buy = document.getElementById('angarBuy');
+      const wal = document.getElementById('angarWallet');
+      if(!buy || !wal) return { netUzlov:[!buy&&'angarBuy', !wal&&'angarWallet'].filter(Boolean) };
+      const nizhe = !!(buy.compareDocumentPosition(wal) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+      // 1. клик по чужому жетону не пересоздаёт узлы
+      const zhetony = Array.from(grid.children);
+      zhetony.forEach((z,i)=>{ z.__metka = 'ж'+i; });
+      const chuzhoy = zhetony.find(z=>!z.classList.contains('sel'));
+      if(chuzhoy) chuzhoy.click();
+      await spat(60);
+      const posle = Array.from(grid.children);
+      const perezhili = posle.filter(z=>z.__metka).length;
+
+      // 2. живое превью: на полном ярусе крутится, на нулевом и под бережным небом — нет
+      const kadrov = ()=> (window.__angarPv ? window.__angarPv.kadrov : -1);
+      const bylo = kadrov(); await spat(220); const stalo = kadrov();
+      const zhivoe = stalo - bylo;
+
+      setScreen('menu');
+      if(typeof Q!=='undefined') Q.level = 0;
+      setScreen('hangar'); renderHangar();
+      const b2 = kadrov(); await spat(220); const s2 = kadrov();
+      const naSlabom = s2 - b2;
+
+      return { nizhe, zhetonov:zhetony.length, perezhili, zhivoe, naSlabom };
+    });
+    if(r.netUzlov) return post(name,false,`в ангаре нет узлов: ${r.netUzlov.join(', ')} — витрина не построена`);
+    if(!r.zhetonov) return post(name,false,'в сетке ангара ноль жетонов');
+    if(r.perezhili !== r.zhetonov) return post(name,false,
+      `после выбора уцелело ${r.perezhili} узлов из ${r.zhetonov} — список пересобран целиком, экран мигает`);
+    if(!r.nizhe) return post(name,false,'кошелёк стоит выше кнопки покупки — он снова украшение, а не ответ');
+    if(r.zhivoe < 2) return post(name,false,
+      `на полном ярусе превью нарисовало ${r.zhivoe} кадров за 0.2 с — оно не живое`);
+    if(r.naSlabom > 1) return post(name,false,
+      `на нулевом ярусе превью нарисовало ${r.naSlabom} кадров — меню крутит цикл там, где нельзя`);
+    post(name,true,`жетонов ${r.zhetonov}, узлы пережили выбор, превью ${r.zhivoe} кадров на полном и ${r.naSlabom} на нулевом`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
