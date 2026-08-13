@@ -108,8 +108,19 @@ let vignCache={w:-1,ht:-1,d:-1,s:-1,c:null}; // мягкое затемнени�
 function vignetteSprite(){
   if(vignCache.w!==W||vignCache.ht!==H||vignCache.d!==DPR||vignCache.s!==SC){
     const px=skyPx();
-    const c=document.createElement('canvas'); c.width=Math.round(W*px); c.height=Math.round(H*px);
-    const x=ctx2d(c); x.setTransform(px,0,0,px,0,0);
+    const cw=Math.round(W*px), chh=Math.round(H*px);
+    /* 13.08.2026: переиспользуем холст, как это с v1.282.20 делает соседняя nebulaField().
+       Раньше здесь на каждую смену W/H/DPR/SC создавался НОВЫЙ холст, а старый бросался
+       как есть. На iOS WKWebView суммарная память канвасов ограничена (~384 МБ, на части
+       устройств меньше), и брошенный холст держит её, пока не дойдёт сборщик мусора —
+       а он не спешит. Если размер тот же, чистим и рисуем поверх; если другой — старому
+       явно ставим нулевой размер, это единственный способ отдать его память сразу. */
+    let c=vignCache.c;
+    if(c && (c.width!==cw || c.height!==chh)){ c.width=0; c.height=0; c=null; }
+    if(!c){ c=document.createElement('canvas'); c.width=cw; c.height=chh; }
+    const x=ctx2d(c);
+    x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,cw,chh);
+    x.setTransform(px,0,0,px,0,0);
     const g=x.createRadialGradient(W/2,H*.45,Math.min(W,H)*.35, W/2,H*.55, Math.max(W,H)*.78);
     g.addColorStop(0,'rgba(2,4,14,0)'); g.addColorStop(1,'rgba(2,4,14,.42)');
     x.fillStyle=g; x.fillRect(0,0,W,H);
@@ -720,11 +731,20 @@ function draw(){
     } else {
       ctx.fillStyle=planetRockTint(o); // v1.100.0 «Планетарий»: тон камня — база, лёд или железо (мина остаётся красной)
       ctx.strokeStyle='rgba(200,215,240,.35)'; ctx.lineWidth=1.5;
-      ctx.beginPath();
-      o.verts.forEach((v,i)=>{ const x=Math.cos(v.a)*v.r*o.r, y=Math.sin(v.a)*v.r*o.r;
-        i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
-      ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.save(); ctx.clip(); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
+      /* Силуэт чеканится ОДИН РАЗ на объект и живёт в нём. Форма не меняется никогда:
+         o.verts и o.r ставятся при спавне и за жизнь объекта не мутируют — а считалась
+         она заново в каждом кадре, семь пар Math.cos/sin на камень, около шести тысяч
+         пар в секунду при полном поле. Кэш обязан сбрасываться при взятии из пула
+         (см. game.js), иначе переиспользованный объект унесёт чужую форму — ровно так
+         в v1.282.14 астероиды покрасились в лиловый цвет дрейферов через `_tint`. */
+      if(!o._path){
+        const pth=new Path2D();
+        o.verts.forEach((v,i)=>{ const x=Math.cos(v.a)*v.r*o.r, y=Math.sin(v.a)*v.r*o.r;
+          i?pth.lineTo(x,y):pth.moveTo(x,y); });
+        pth.closePath(); o._path=pth;
+      }
+      ctx.fill(o._path); ctx.stroke(o._path);
+      ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
       if(sh){ // объём: блик сверху-слева + светлый кратер (v1.37.0: со средней)
         ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
         ctx.beginPath(); ctx.arc(0,0,o.r*.9,-2.7,-1.2); ctx.stroke();
@@ -773,12 +793,21 @@ function draw(){
     ctx.globalAlpha=ghostA*.55; // складка — тот же цвет, половинная плотность
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
     ctx.restore();
-    if (ghostTagT>0 && ghostForeign && ghostName){ // подпись первые 4 секунды — только чужой призрак, с именем владельца (v1.87.0: своей тени и её слов больше нет)
-      ctx.save(); ctx.globalAlpha=clamp(ghostTagT,0,1)*.85;
-      ctx.fillStyle=gCol; ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ctx.font='500 12px -apple-system,"Segoe UI",Roboto,sans-serif';
-      ctx.fillText((ghostName||'').toUpperCase(), ghostX, ghostY-30);
-      ctx.restore();
+    /* Подпись первые 4 секунды и тает. Чужой призрак подписан именем владельца — это
+       живая витрина ангара. Своя тень с 13.08.2026 подписана «ЕЩЁ РАЗ?»: v1.87.0
+       отобрала у неё слова намеренно, владелец вернул их так же намеренно.
+       Текст берём из словаря — подпись попадает на экран игры, а там не должно быть
+       ни одной строки на чужом для игрока языке. Заглавные — как весь текст на канвасе
+       (Каталог №31: canvas не слышит text-transform из CSS). */
+    if (ghostTagT>0){
+      const tag = ghostForeign ? (ghostName||'') : ((typeof L!=='undefined' && L && L.again) ? L.again : '');
+      if (tag){
+        ctx.save(); ctx.globalAlpha=clamp(ghostTagT,0,1)*.85;
+        ctx.fillStyle=gCol; ctx.textAlign='center'; ctx.textBaseline='bottom';
+        ctx.font='500 12px -apple-system,"Segoe UI",Roboto,sans-serif';
+        ctx.fillText(String(tag).toUpperCase(), ghostX, ghostY-30);
+        ctx.restore();
+      }
     }
   }
 
