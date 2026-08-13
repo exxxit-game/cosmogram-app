@@ -4407,8 +4407,57 @@ async function guardMenuDoesNotPayForHud(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+/* Страж 115 — «Замок ориентации просит портрет и не падает от отказа».
+   Игра вертикальная. Внутри Telegram 8.0+ её держит мост (lockOrientation). Но снимок
+   владельца показал её лежащей набок в ОБЫЧНОМ браузере — там прежний замок выключался
+   первой же строкой (`if(!t) return`), потому что моста нет.
+
+   Теперь есть второй путь: screen.orientation.lock. Он даётся только в полном экране, и
+   в обычной вкладке браузер отвечает ОТКАЗОМ — это законный, ожидаемый исход. Опасность
+   не в отказе, а в том, что отказ прилетает отвергнутым обещанием: без .catch каждый
+   поворот телефона писал бы в консоль необработанную ошибку, а страж 0 («игра не сорит
+   ошибками») ловил бы её как поломку.
+
+   Поэтому страж проверяет три вещи: манифест обещает портрет, замок зовётся без падения,
+   и отказ платформы не оставляет следа. */
+async function guardPortraitLockAsks(browser){
+  const name = '115. Замок ориентации просит портрет и молча принимает отказ';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const page = o.page;
+    const shum = [];
+    page.on('pageerror', e => shum.push('ошибка: ' + String(e.message).split('\n')[0]));
+    page.on('console', m => { if(m.type()==='error') shum.push('консоль: ' + m.text().slice(0,120)); });
+
+    const r = await page.evaluate(async ()=>{
+      const m = await fetch('manifest.json').then(r=>r.json()).catch(()=>null);
+      let prosili=false, upalo='';
+      const so = (typeof screen!=='undefined') && screen.orientation;
+      const bylLock = !!(so && so.lock);
+      if(so){ const nast=so.lock; so.lock = function(){ prosili=true; return nast ? nast.apply(so,arguments) : Promise.reject(new Error('нет замка')); }; }
+      try{ tgOrientLock(); }catch(e){ upalo = String(e.message||e); }
+      await new Promise(r=>setTimeout(r,250));   // даём отказу прилететь
+      return { orient: m && m.orientation, bylLock, prosili, upalo,
+               portret: window.innerHeight >= window.innerWidth };
+    });
+
+    if(r.orient !== 'portrait') return post(name,false,
+      `манифест обещает ориентацию «${r.orient}» вместо «portrait» — установленное приложение ляжет набок`);
+    if(r.upalo) return post(name,false,`tgOrientLock упал: ${r.upalo}`);
+    if(r.bylLock && r.portret && !r.prosili) return post(name,false,
+      'замок браузера есть, окно вертикальное — а портрет никто не попросил');
+    await o.page.waitForTimeout(150);
+    if(shum.length) return post(name,false,
+      `отказ платформы оставил след: ${shum[0]} — обещание не поймано`);
+    post(name,true,`манифест «${r.orient}», портрет ${r.prosili?'попрошен':'не нужен'}, отказ принят молча`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
+const GUARDS = [ guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
