@@ -213,7 +213,11 @@ const I18N = {
     brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
     calibrated:'Наклон откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
-    tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно или поверните экран, чтобы полететь',
+    tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно, чтобы полететь',
+    /* 13.08.2026: альбомную ориентацию мы не поддерживаем — решение владельца. Раньше окно
+       говорило «слишком узкий, поверните экран» тому, кто экран как раз повернул: совет вёл
+       ровно в ту сторону, откуда беда. Теперь у двух разных бед два разных текста. */
+    landTitle:'Поверните телефон', landHint:'Игра рассчитана на вертикальный экран',
     setGyroOff:'Полёт без рук', gyroOffOk:'Штурвал возвращён пальцу',
     setBeacon:'Помогать экипажу отчётами и статистикой', beaconSent:'Экипаж уже знает об этой ошибке — скоро починим',
     beaconNoteSoft:'Борт заметил неполадку и уже доложил экипажу — чиним',
@@ -335,7 +339,8 @@ const I18N = {
     brandSub:'One sky for everyone',
     calibrated:'Tilt calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
-    tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window or rotate the screen to fly',
+    tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window to fly',
+    landTitle:'Turn the phone upright', landHint:'The game is made for a vertical screen',
     setGyroOff:'Hands-Free Flight', gyroOffOk:'Helm returned to finger',
     setBeacon:'Help the crew with reports and stats', beaconSent:'The crew already knows about this error — a fix is coming',
     beaconNoteSoft:'The board noticed a glitch and already told the crew — fixing it',
@@ -456,7 +461,8 @@ const I18N = {
     calibrated:'Inclinación calibrada', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
-    tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana o gira la pantalla para volar',
+    tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana para volar',
+    landTitle:'Gira el teléfono', landHint:'El juego está hecho para pantalla vertical',
     setGyroOff:'Vuelo sin manos', gyroOffOk:'Mando devuelto al dedo',
     setBeacon:'Ayudar a la tripulación con informes y estadísticas',
     beaconSent:'La tripulación ya conoce este error — lo arreglaremos pronto',
@@ -596,7 +602,8 @@ const I18N = {
     calibrated:'Inclinação calibrada', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
-    tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela ou gire a tela para voar',
+    tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela para voar',
+    landTitle:'Gire o telefone', landHint:'O jogo foi feito para tela vertical',
     setGyroOff:'Voo sem mãos', gyroOffOk:'Comando devolvido ao dedo',
     setBeacon:'Ajudar a tripulação com relatórios e estatísticas',
     beaconSent:'A tripulação já sabe desse erro — vamos consertar logo',
@@ -736,7 +743,8 @@ const I18N = {
     brandSub:'Un ciel pour tous',
     calibrated:'Inclinaison calibrée', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
-    tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre ou tourne l\u2019écran pour voler',
+    tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre pour voler',
+    landTitle:'Tourne le téléphone', landHint:'Le jeu est conçu pour un écran vertical',
     setGyroOff:'Vol mains libres', gyroOffOk:'Commandes rendues au doigt',
     setBeacon:'Aider l\u2019équipage avec des rapports et statistiques', beaconSent:'L\u2019équipage connaît déjà cette erreur — un correctif arrive',
     beaconNoteSoft:'Le bord a remarqué un problème et a déjà prévenu l\u2019équipage — en cours de réparation',
@@ -1236,6 +1244,14 @@ function satProbe(){ // честный замер env(safe-area-inset-top): на
 let cgImm=null; // оптимистичное погружение: что МЫ попросили у Telegram (true=полный экран) — раньше его событий
 let satNow=-1;  // действующая подушка: от неё меряем дрожь
 let satTimer=0; // таймер тишины для событийных замеров
+/* Текст окна «тесно»: лежит ли телефон набок. Вынесено отдельно, потому что зовут двое —
+   resize() при каждом замере и applyLang() при смене языка; иначе одно затирало другое. */
+function tooNarrowText(nabok){
+  if (typeof L==='undefined' || !L) return;
+  const t=document.getElementById('tooNarrowTitle'), h=document.getElementById('tooNarrowHint');
+  if(t) t.textContent = nabok ? (L.landTitle||L.tooNarrowTitle) : L.tooNarrowTitle;
+  if(h) h.textContent = nabok ? (L.landHint ||L.tooNarrowHint)  : L.tooNarrowHint;
+}
 function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная зона в CSS-переменные --js-sat/--js-sab
   const r=document.documentElement && document.documentElement.style; if(!r) return;
   let top=0, bot=0;
@@ -1548,7 +1564,14 @@ function resize(){
     if (typeof S!=='undefined' && S && S.running && !S.paused && typeof pauseGame==='function') pauseGame(); // не даём разбиться в невидимой тесноте
   }
   const tnEl = document.getElementById('tooNarrow');
-  if (tnEl) tnEl.classList.toggle('hidden', !tooNarrow);
+  if (tnEl){
+    tnEl.classList.toggle('hidden', !tooNarrow);
+    /* 13.08.2026: под одним окном живут ДВЕ разные беды, и совет у них противоположный.
+       Настоящий виновник виден в самой формуле выше: SC = min(cssW/390, cssH/844). У телефона
+       набок урезает второе слагаемое — не хватает ВЫСОТЫ, а не ширины. Просить «поверните
+       экран» человека, который только что повернул, — это отправить его туда, откуда беда. */
+    tooNarrowText(cssW > cssH);
+  }
   W = Math.round(cssW/SC);
   H = Math.round(cssH/SC);
   /* v1.99.1 «Потолок листа»: лист не шире capPx по длинной стороне. На экранах-монстрах

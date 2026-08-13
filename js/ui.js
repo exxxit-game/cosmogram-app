@@ -1511,7 +1511,9 @@ function applyLang(){
      core.js — ядро, и вычищать из него пять языков ради четырёх мёртвых строк дороже,
      чем оставить. Записано в долги. */
   $('startBtn').textContent=L.start;
-  $('tooNarrowTitle').textContent=L.tooNarrowTitle; $('tooNarrowHint').textContent=L.tooNarrowHint; // v1.108.1: «Пол листа»
+  /* 13.08.2026: тексты «тесно» зависят от ориентации — их раздаёт tooNarrowText(),
+     иначе смена языка возвращала бы совет «поверните экран» лежащему набок телефону. */
+  if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
   $('modesBtn').textContent=L.modes; $('modesBack').textContent=L.modesBack; modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
