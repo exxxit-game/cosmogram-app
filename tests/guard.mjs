@@ -3844,8 +3844,73 @@ async function guardNoThirdPartyTelemetry(){
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
 }
 
+/* Страж 105 — Дневник гостя уезжает, хотя вход ему закрыт.
+   Стережёт: BEACON.days() в js/beacon.js и его вызов на посадке в js/ui.js.
+   Беда: человек, открывший игру без входа, для нас не существовал вовсе. Отправка
+   рекордов ему закрыта двенадцатью ранними возвратами на syncAvailable() в sync.js —
+   и вместе с рекордами не уезжало НИЧЕГО, включая дневник дней, который он при этом
+   честно ведёт с первого полёта (dayMark/dayAdd зовутся без всякой проверки входа
+   и хранят до 60 дней). Данные были собраны и лежали у человека в браузере, а мы
+   считали, что «гостей не видно».
+   Три условия сразу, потому что порознь они дают ложное спокойствие:
+     1) у гостя дневник уезжает анонимным каналом;
+     2) при выключенном тумблере не уезжает ничего;
+     3) у вошедшего анонимный канал молчит — его дневник везёт свой, именной путь,
+        иначе один и тот же день лёг бы в две таблицы разом. */
+async function guardGuestDiaryTravels(browser){
+  const name = '105. Дневник гостя уезжает без входа, и только у гостя';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      if(typeof BEACON!=='object' || !BEACON || typeof BEACON.days!=='function')
+        return { missing:true };
+      if(typeof syncAvailable==='function' && syncAvailable())
+        return { notGuest:true };
+
+      const j = { '2026-08-11':{runs:3,best:900,dist:1200,sec:90,stars:12,modes:{classic:3},ctl:{touch:3},deaths:{rock:2}},
+                  '2026-08-12':{runs:1,best:400,dist:500,sec:40,stars:4,modes:{classic:1},ctl:{touch:1},deaths:{mine:1}} };
+      Store.set('dayJournal', j);
+      Store.set('daysSentAnon', []);
+
+      const posted = [];
+      const realFetch = window.fetch;
+      window.fetch = function(u, opt){
+        try{ if(String(u).indexOf('cosmogram-beacon')>=0 && opt && opt.body)
+               posted.push(JSON.parse(opt.body)); }catch(e){}
+        return Promise.resolve(new Response('{"ok":true}', {status:200}));
+      };
+
+      Store.set('beaconOn', 0);
+      await BEACON.days(); await new Promise(r=>setTimeout(r,60));
+      const offCount = posted.length;
+
+      Store.set('beaconOn', 1);
+      await BEACON.days(); await new Promise(r=>setTimeout(r,60));
+      const withDays = posted.filter(p=>p && Array.isArray(p.days) && p.days.length);
+
+      window.fetch = realFetch;
+      const last = withDays.length ? withDays[withDays.length-1] : null;
+      return { offCount, sent: withDays.length,
+               dney: last ? last.days.length : 0,
+               anon: last ? !!last.anon : false,
+               imeni: last ? JSON.stringify(last).indexOf('initData')>=0 : false };
+    });
+    if(r.missing)  return post(name,false,'BEACON.days() нет — гостю по-прежнему нечем отправить дневник');
+    if(r.notGuest) return post(name,false,'стенд оказался авторизован — страж проверяет не тот случай');
+    if(r.offCount!==0) return post(name,false,`при выключенном тумблере ушло ${r.offCount} отправок — выключатель не выключает`);
+    if(r.sent===0)  return post(name,false,'при включённом тумблере дневник гостя никуда не уехал');
+    if(r.dney!==2)  return post(name,false,`ожидали 2 дня в посылке, приехало ${r.dney}`);
+    if(!r.anon)     return post(name,false,'в посылке нет анонимной метки устройства — серверу некуда её класть');
+    if(r.imeni)     return post(name,false,'в анонимную посылку попала подпись Telegram — гость перестал быть гостем');
+    post(name,true,'при «нет» тихо; при «да» два дня уехали анонимной меткой, без подписи');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
-const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry,
+const GUARDS = [ guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
                  guardDailyMenuClearsSave, guardWinIsNotDeath, guardBrokenProfileSurvives,
                  guardLastHitKindReset,
