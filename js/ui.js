@@ -942,6 +942,9 @@ $('setLangBtn').addEventListener('click', ()=>{
 });
 $('diagBtn').addEventListener('click', ()=>{ // v1.66.3: сервисный центр — отдельный экран, не спойлер
   setScreen('diag'); diagLastT=0; diagBuild(); gyroStatus(); // свежие галочки и строка датчика на входе
+  /* 13.08.2026: спойлер закрываем на каждом входе. Иначе один раз открытое «Ещё» остаётся
+     открытым навсегда, и экран возвращается к тому самому отчёту, от которого мы уходим. */
+  { const b=$('diagMoreBox'); if(b){ b.classList.add('hidden'); $('diagMoreBtn').classList.remove('open'); } }
   haptic('light'); sfx.click();
 });
 $('diagBackBtn').addEventListener('click', ()=>{ setScreen('settings'); sfx.click(); });
@@ -964,7 +967,7 @@ function diagRows(){
     else R.push({st:'info', txt:L.diagZeroIdle});
     if (typeof bbVerdict==='function'){ // v1.99.7 «Чёрный ящик»: первое сломанное звено цепи — одной строкой
       const v=bbVerdict();
-      R.push({st:(v===L.bbVOk)?'ok':((v.indexOf(L.bbVSkew)===0)?'warn':'info'), txt:L.diagChain+' '+v});
+      R.push({st:(v===L.bbVOk)?'ok':((v.indexOf(L.bbVSkew)===0)?'warn':'info'), txt:L.diagChain+' '+v, rare:true});
     }
   }
   if (Q.fps>=45) R.push({st:'ok', txt:L.diagFpsOk+' '+Math.round(Q.fps)});
@@ -974,13 +977,17 @@ function diagRows(){
   // геймпад, мерку неба, лист с потолком, бережный режим, чернила.
   let pads=[]; try{ if(typeof navigator!=='undefined'&&navigator.getGamepads)
     pads=Array.from(navigator.getGamepads()).filter(p=>p&&p.connected); }catch(e){}
+  /* 13.08.2026: у строки появилась метка `rare`. Редкое — не то, что неважно, а то, что
+     человек не проверяет: техническое устройство борта. Штурвал — особый случай: пока его
+     нет, это самая бесполезная строка на экране; как только он появился, это ответ на
+     вопрос «а он вообще виден?». Поэтому редкость у него не постоянная, а по факту. */
   if (pads.length) R.push({st:'ok', txt:L.diagPadOk+' '+pads[0].id.split('(')[0].trim()});
-  else R.push({st:'info', txt:L.diagPadNone});
-  if (typeof BB!=='undefined') R.push({st:'info', txt:L.diagTape+' '+BB.count()+' '+L.diagTapeEvt}); // v1.99.7
-  R.push({st:'info', txt:L.diagWorld+' '+W+'×'+H+' · ×'+(Math.round(SC*100)/100)});
-  R.push({st:'info', txt:L.diagSheet+' '+canvas.width+'×'+canvas.height+' ≤'+capPx});
-  R.push({st:'info', txt:L.diagMotion+' '+(RM?L.diagOn:L.diagOff)});
-  R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb')});
+  else R.push({st:'info', txt:L.diagPadNone, rare:true});
+  if (typeof BB!=='undefined') R.push({st:'info', txt:L.diagTape+' '+BB.count()+' '+L.diagTapeEvt, rare:true}); // v1.99.7
+  R.push({st:'info', txt:L.diagWorld+' '+W+'×'+H+' · ×'+(Math.round(SC*100)/100), rare:true});
+  R.push({st:'info', txt:L.diagSheet+' '+canvas.width+'×'+canvas.height+' ≤'+capPx, rare:true});
+  R.push({st:'info', txt:L.diagMotion+' '+(RM?L.diagOn:L.diagOff), rare:true});
+  R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb'), rare:true});
   if (window.__tgWgSilent) R.push({st:'warn', txt:L.diagWgSilent}); // v1.84.0: виджет входа промолчал — сцена чиста, здесь честно
   if (HAS_GYRO && !gyroUnlocked()) R.push({st:'info', txt:L.diagLocked});
   return R;
@@ -988,19 +995,39 @@ function diagRows(){
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
-function diagBuild(){
-  const list=$('diagList'); if(!list) return; list.innerHTML='';
-  for (const r of diagRows()){
-    const d=document.createElement('div'); d.className='drow';
-    const icn=r.st==='ok'?'OK':(r.st==='warn'?'!':'i');
-    const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ff9fb0':'#8fd0ff');
-    d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+'</span>';
-    if (r.fix){ const b=document.createElement('button'); b.className='btn ghost dbtn';
-      b.style.cssText='font-size:12px;padding:6px 12px;min-height:0;margin:0 0 0 auto';
-      b.textContent=r.fix; b.addEventListener('click',()=>{ sfx.click(); r.act(); }); d.appendChild(b); }
-    list.appendChild(d);
-  }
+function diagRowNode(r){ // одна строка сервисного центра: значок состояния, текст, кнопка лечения
+  const d=document.createElement('div'); d.className='drow';
+  const icn=r.st==='ok'?'OK':(r.st==='warn'?'!':'i');
+  const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ff9fb0':'#8fd0ff');
+  d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+'</span>';
+  if (r.fix){ const b=document.createElement('button'); b.className='btn ghost dbtn';
+    b.style.cssText='font-size:12px;padding:6px 12px;min-height:0;margin:0 0 0 auto';
+    b.textContent=r.fix; b.addEventListener('click',()=>{ sfx.click(); r.act(); }); d.appendChild(b); }
+  return d;
 }
+/* 13.08.2026 «Ответ, а не отчёт». Порядок больше не совпадает с порядком написания кода.
+   Сверху — беды, потому что человек пришёл сюда именно с бедой, и она не должна быть
+   седьмой строкой. Под ними — то, что проверяют чаще всего: датчик, ноль, кадры, звук.
+   Всё техническое — под «Ещё», свёрнутым по умолчанию: оно нужно раз в жизни и мешает
+   каждый раз. Страж 111 стережёт все три правила. */
+function diagBuild(){
+  const list=$('diagList'); if(!list) return;
+  const rows=diagRows();
+  const bedy=rows.filter(r=>r.st==='warn');            // мешает лететь — всегда наверх
+  const glav=rows.filter(r=>r.st!=='warn' && !r.rare); // проверяют часто
+  const redk=rows.filter(r=>r.st!=='warn' && r.rare);  // устройство борта — под спойлер
+  list.innerHTML='';
+  for (const r of bedy.concat(glav)) list.appendChild(diagRowNode(r));
+  const rare=$('diagListRare');
+  if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
+}
+$('diagMoreBtn').addEventListener('click', ()=>{ // тот же спойлер, что «Ещё» в настройках
+  const b=$('diagMoreBox'); b.classList.toggle('hidden');
+  const open=!b.classList.contains('hidden');
+  $('diagMoreBtn').classList.toggle('open', open);
+  if (open){ try{ $('diagMoreBtn').scrollIntoView({block:'nearest'}); }catch(e){} }
+  haptic('light'); sfx.click();
+});
 async function diagFixSensor(){
   audio();
   if (NEEDS_TILT_PERMISSION){ let r=''; try{ r=await DeviceOrientationEvent.requestPermission(); }catch(e){ r=''; }
@@ -1009,7 +1036,11 @@ async function diagFixSensor(){
   toast(L.diagKicked,'rgba(143,255,159,.5)');
 }
 function diagFixGfx(){ Q.mode='low'; Store.set('gfx','low'); gfxCap(); resize(); gfxLabel(); diagLastT=0; diagRefresh(); haptic('light'); if(typeof BEACON!=='undefined') BEACON.signal('gfx_fix',''); } // v1.107.0: нажал «Снизить графику» — кадры болели, почта знает
-function diagReport(){ // слепок для поддержки: игрок вставляет его в сообщение — и мы видим всё сразу
+/* 13.08.2026: слепок остался, а кнопка «Скопировать отчёт» ушла. Просить игрока копировать
+   текст и вставлять его в сообщение мы больше не будем: «Почта неба» присылает то же самое
+   сама и без его участия. Сам diagReport() держим живым намеренно — это готовый паспорт
+   борта, и когда мы захотим приложить его к письму об ошибке, он уже написан. */
+function diagReport(){
   const Ln=[];
   Ln.push('Cosmogram v'+GAME_VERSION);
   Ln.push('platform: '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'));
@@ -1039,21 +1070,11 @@ $('diagVibroBtn').addEventListener('click', ()=>{ // v1.60.0: длинный с�
     [0,260,520].forEach(t=>setTimeout(()=>{ try{ hf.impactOccurred('heavy'); }catch(e){} },t)); }
   else if (navigator.vibrate){ try{ navigator.vibrate([300,120,300,120,300]); }catch(e){} }
 });
-$('diagReportBtn').addEventListener('click', ()=>{
-  sfx.click(); haptic('light');
-  const rep=diagReport();
-  const done=()=>toast(L.diagCopied,'rgba(143,255,159,.5)');
-  const fail=()=>{ const box=$('diagReportBox'); if(box){ box.textContent=rep; box.classList.remove('hidden'); } toast(L.diagCopyFail,'rgba(255,159,176,.5)'); };
-  try{ navigator.clipboard.writeText(rep).then(done).catch(fail); }catch(e){ fail(); }
-});
-$('diagTapeBtn').addEventListener('click', ()=>{ // v1.99.7 «Чёрный ящик»: вся лента разом — паспорт, вердикт, события
-  sfx.click(); haptic('light');
-  if(typeof BB==='undefined'){ toast(L.diagCopyFail,'rgba(255,159,176,.5)'); return; }
-  const rep=BB.text();
-  const done=()=>toast(L.diagCopied,'rgba(143,255,159,.5)');
-  const fail=()=>{ const box=$('diagReportBox'); if(box){ box.textContent=rep; box.classList.remove('hidden'); } toast(L.diagCopyFail,'rgba(255,159,176,.5)'); };
-  try{ navigator.clipboard.writeText(rep).then(done).catch(fail); }catch(e){ fail(); }
-});
+/* 13.08.2026: здесь стояли слушатели двух кнопок ручной отправки — «Скопировать отчёт»
+   и «Скопировать самописец». Обе просили игрока сделать нашу работу: скопировать текст,
+   открыть переписку, вставить. С появлением «Почты неба» это стало притворством —
+   те же данные приходят к нам сами. Кнопки и запасное окно с текстом убраны.
+   Дверь к людям осталась одна и живая: «Написать в поддержку». */
 $('diagSupportBtn').addEventListener('click', ()=>{
   sfx.click(); haptic('light');
   try{ if (typeof tg!=='undefined'&&tg&&tg.openTelegramLink) tg.openTelegramLink(SUPPORT_URL); else window.open(SUPPORT_URL,'_blank'); }
@@ -1381,8 +1402,7 @@ function applyLang(){
   $('diagBtn').textContent=L.diagBtn;
   $('diagTitle').textContent=L.diagBtn; $('diagBackBtn').textContent=L.back; // v1.66.3: экран сервисного центра
   $('csCap').textContent=L.csCap; // v1.66.3: подпись позывного в «Профиле»
-  $('diagReportBtn').textContent=L.diagReportBtn;
-  $('diagTapeBtn').textContent=L.diagTapeBtn; // v1.99.7 «Чёрный ящик»
+  $('diagMoreBtn').textContent=L.moreLbl; // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   $('diagSupportBtn').textContent=L.diagSupportBtn;
   sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill();
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
