@@ -191,7 +191,7 @@ const z = a;
 console.log(`Сборка ${z.versiya} · режим ${z.rezhim} · сид 20260813`);
 console.log(`  пролетел ${z.metrov} м за ${z.sekund} с, очков ${z.ochkov}, волна на конце ${z.volna_na_konce}`);
 console.log(`  на километр: преград ${z.spawnov_na_km}, звёзд ${z.zvyozd_na_km}, бонусов ${z.bonusov_na_km}`);
-console.log(`  плавность просела до ${z.plavnost_min}`);
+console.log(`  плавность (минимум за забег, 1 = безупречно): ${z.plavnost_min}`);
 console.log(`  коридор: ширина ${z.koridor.shirina} мер, левая стена на ${z.koridor.levaya}`);
 console.log(`  волны наступили на метрах: ${Object.entries(z.volny).map(([m,d])=>m+'→'+d).join(', ') || '—'}`);
 console.log(`  расчётный шаг волн: ${z.shag_volny ? z.shag_volny.join(', ') : '—'}`);

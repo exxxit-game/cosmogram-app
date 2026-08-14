@@ -538,8 +538,15 @@ window.addEventListener('touchstart',e=>{
    coalesced-сэмпл» обычной координатой — вся оптимизация 240 Гц была мертва по построению.
    Оставляем один путь: touchmove, и свежий сэмпл берём прямо в нём. */
 window.addEventListener('touchmove',e=>{
-  e.preventDefault();
+  /* v1.284.6: preventDefault стоял ПЕРВОЙ строкой — до проверки «наш ли палец» и без
+     оглядки на экран. Он отменял нативную прокрутку ВЕЗДЕ: прибор «Теснота» намерил, что
+     за краем остаётся 275 px Ангара и 297 px Достижений на телефоне владельца (348 и 466
+     на малом), и всё это было недостижимо пальцем. index.html:136-139 при этом прямо
+     описывает обратное решение — touch-action:none стоит только на body.flying, «везде
+     остальные жесты живы». Запрет, сознательно снятый в CSS, возвращался из JS.
+     Теперь отменяем только там, где жест — это руль: в полёте и своим пальцем. Страж 129. */
   const t=ownTouch(e.touches); if(!t) return; // чужой палец нас не касается
+  if (ekran()==='game') e.preventDefault();    // руль: браузеру этот жест не отдаём
   tCurX=t.clientX; tCurY=t.clientY;
   if(tDown && !tActive && Math.hypot(tCurX-tStartX,tCurY-tStartY)>MOVE_PX) tActive=true; // свайп → рулим (жест меряем пальцем, не небом)
   if(tActive){ input.touchX=tCurX/SC; input.touchY=tCurY/SC; } // v1.99.0

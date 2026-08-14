@@ -49,6 +49,12 @@ function gyroOfferShow(){
   S.pausing=1; grantGrace(.6); // «Склейка»: мир мягко замирает под оффером, не срезом — v1.108.1: через общий лимит
   const gb=$('tutGyroBtn'); if (gb){ gb.disabled=false; gb.textContent=L.tutGyroBtn; }
   const tb=$('tutTouchBtn'); if (tb) tb.textContent=L.tutTouchBtn;
+  /* v1.284.3: блок объяснения не заполнялся ВООБЩЕ — оверлей вставал посреди полёта с двумя
+     кнопками и без единого слова о том, что предлагают. Ключа под этот текст не было ни в
+     одном из пяти словарей. Единственное, что сюда когда-либо писалось, — «Держи телефон
+     ровно…» уже ПОСЛЕ согласия (строка ниже по файлу), то есть при повторном показе игрок
+     видел ответ на вопрос, которого ему не задали. Страж 124. */
+  const bd=$('tutBeatB'); if (bd) bd.textContent=(L&&L.tutGyroBody)||'';
   $('tutBeat').classList.remove('hidden');
   haptic('light');
 }

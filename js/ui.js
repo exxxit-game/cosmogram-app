@@ -103,6 +103,7 @@ let theaterDay='';      // v1.94.0 «Театр призраков» Т1: ден
 let theaterTrack=null;  // лента твоего прыжка ({xs,ys,ds} — призраковый формат), живёт до конца сессии
 let theaterChamp=null;  // v1.100.1 «Трибуна чемпиона»: {name,skin} гостя на сцене — null, когда идёт твой собственный повтор
 let champTrack=null;    // v1.100.1: лента чемпиона — отдельный моток: твой билет (theaterTrack) спектакль не съедает
+let theaterRecord=false; // v1.284.4: сцена — повтор чужого рекорда, а не спектакль дня. Читает goldstar (страж 126)
 Store.del('runMode'); // v1.92.1: старая прописка любой дисциплины снимается — большая кнопка священна
 Store.del('pact'); // v1.70.0: модификаторы удалённого режима больше не нужны
 function setRunMode(m){ runMode=m; } // v1.92.1: сессия — живёт через «Ещё раз?» и рестарт из паузы, умирает в меню и на перезапуске
@@ -431,10 +432,14 @@ function gameOver(){
      рекордного забега уезжала на сервер с сидом ЧУЖОГО неба. Скачавший такого призрака летел по
      другой трассе, а будущая серверная сверка по сиду отбила бы честный рекорд как подделку. */
   const ghSkin=S.skin, ghSeed=S.seed;
-  if (isRecord && trackForGhost && Store.get('shareGhost',1) && typeof syncGhostUp==='function')
+  /* v1.284.5: выгрузка ленты больше НЕ стоит за тумблером. Лента — доказательство рекорда,
+     а не украшение: пока результат заявлен в общей таблице, его должно быть можно посмотреть
+     и воспроизвести. Скрывший призрака по-прежнему невидим чужим (сервер спрашивает
+     share_ghost при выдаче) — но улика существует. Страж 128. */
+  if (isRecord && trackForGhost && typeof syncGhostUp==='function')
     afterSubmit.then(()=>syncGhostUp({category:cat, track:trackForGhost, skin:ghSkin, best:sc, seed:ghSeed}));
   // v1.280.0 «Хартия»: дистанция — тоже честная категория с призраком, отдельно от того, каким способом её пролетели
-  if (isDistRecord && trackForGhost && Store.get('shareGhost',1) && typeof syncGhostUp==='function')
+  if (isDistRecord && trackForGhost && typeof syncGhostUp==='function')
     afterSubmit.then(()=>syncGhostUp({category:'dist', track:trackForGhost, skin:ghSkin, best:distM, seed:ghSeed}));
   // v1.100.1 «Трибуна чемпиона»: прыжок дня уходит в зал — результат всегда, лента (коридорные координаты) — если призраки не скрыты
   if (S.mode==='daily' && sc>0 && !S.wasRestored && rec.length>=20 && // v1.282.20: восстановленный прыжок дня в зал не идёт
@@ -502,7 +507,7 @@ function gameOver(){
     ? { xs:rec.map(r=>r[0]/91), ys:rec.map(r=>r[1]/91), ds:rec.map(r=>r[2]) }
     : null; // v1.94.0 «Театр призраков» Т1: билет снимается со свежего финиша — потом лента может уйти под новый забег
   if (theaterTrack) theaterDay=S.dailyDay||trackDayKey();
-  theaterChamp=null; champTrack=null; // v1.100.1: свежий финиш — сцена снова твоя, гость уходит за кулисы до нового зова
+  theaterChamp=null; champTrack=null; theaterRecord=false; // v1.100.1: свежий финиш — сцена снова твоя, гость уходит за кулисы до нового зова. v1.284.4: и признак «повтор рекорда» гаснет, иначе следующий спектакль дня остался бы без золотой звезды
   $('watchBtn').classList.toggle('hidden', !theaterTrack); // «Смотреть полёт» — только с билетом: честный забег дня с живой лентой
   $('tribuneBtn').classList.toggle('hidden', !theaterTrack || typeof syncDailyChampion!=='function' || !syncAvailable()); // «Трибуна чемпиона» — рядом с билетом: день завершён, можно смотреть мастера
   $('goldChip').classList.toggle('hidden', !(S.mode==='daily' && S.goldStar)); // v1.100.2: знак дня сияет рядом с рекордными плашками
@@ -1019,7 +1024,10 @@ $('tribuneBtn').addEventListener('click', ()=>{ // v1.100.1 «Трибуна ч�
   syncDailyChampion(day).then(r=>{
     if (!runSame(genT)) return; // v1.282.20: пока летел ответ, игрок успел слетать ещё раз — в театр его не тащим
     if (screenName!=='over' || runMode==='theater') return; // зритель уже ушёл со сцены итогов
-    if (!r || !r.ok){ toast(L.tribuneNone,'rgba(191,232,255,.45)'); return; } // мастер ещё не показал полёт (или скрыл его) — трибуна молчит, не врёт
+    // v1.284.3: сервер может сказать «да» и не приложить чемпиона — тогда r.champion.track
+    // бросал TypeError внутри .then. Сеть тут ни при чём (syncDailyPost гасит отказы своим
+    // .catch) — дыра была ровно в теле обработчика: кнопка залипала без единого слова. Страж 123.
+    if (!r || !r.ok || !r.champion){ toast(L.tribuneNone,'rgba(191,232,255,.45)'); return; } // мастер ещё не показал полёт (или скрыл его) — трибуна молчит, не врёт
     const g=ghostParse(r.champion.track);
     if (!g){ toast(L.tribuneNone,'rgba(191,232,255,.45)'); return; }
     g.cx=true; // лента чемпиона — в коридорных координатах: ghostStep положит её в мой коридор чести
@@ -1456,7 +1464,11 @@ function renderTop(){
       '<span class="topSc">'+fmtN(r.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')+'</span>'+
       // v1.282.20: сервер отдаёт verified — рекорд объяснён паспортом забега, а не чтением хранилища
       (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('check')+'</span>':'')+
-      ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topGh" data-gh="'+(Math.floor(Number(r.pid))||0)+'" data-best="'+Math.floor(Number(r.best)||0)+'" title="'+L.ghostGo+'">'+ic('ghost')+'</button>':'')+'</div>').join('');
+      ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topGh" data-gh="'+(Math.floor(Number(r.pid))||0)+'" data-best="'+Math.floor(Number(r.best)||0)+'" title="'+L.ghostGo+'">'+ic('ghost')+'</button>':'')+
+      /* v1.284.4: у рекорда появилась вторая дверь. Первая — «лететь рядом» (учиться манёврам),
+         вторая — «смотреть» (увидеть полёт целиком, как трибуну чемпиона). До этой партии
+         рекорд был числом в таблице: посмотреть его было нельзя ни одним способом. Страж 126. */
+      ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
   });
 }
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
@@ -1469,6 +1481,44 @@ function ghostSetForeign(f){
     seed:(f.seed!=null && isFinite(Number(f.seed)))?Math.floor(Number(f.seed)):null}:null; // v1.280.0: сид едет с призраком, если сервер его знает
 }
 function ghostTakeForeign(){ const f=foreignGhost; foreignGhost=null; return f; } // разовый: съедается при старте
+/* ---------- v1.284.4: «Смотреть этот полёт» — вторая дверь у чужого рекорда ----------
+   Владелец сказал прямо: «есть рекорд, а посмотреть нельзя — это тупо». Так и было:
+   единственный способ увидеть чужой полёт целиком вёл через Трибуну чемпиона, а она
+   открывается только с итогов Трассы дня. Рекорд Классики оставался числом в таблице.
+
+   Всё, что нужно, уже построено: лента едет через ghost_get, сид едет вместе с ней
+   (v1.280.0), Театр умеет ставить на сцену чужой моток (champTrack, v1.100.1). Не было
+   только двери.
+
+   Главная тонкость, ради которой написан страж 126: ЛЕНТА НЕ СОДЕРЖИТ НЕБА. ghostStep
+   кладёт её на ТЕКУЩУЮ трассу. Значит без сохранённого сида владельца мы показали бы его
+   полёт над чужой расстановкой — он уворачивался бы от пустоты и врезался в воздух, а
+   зритель решил бы, что рекордсмен жульничает. Поэтому дверь открывается только когда
+   сервер знает сид, и честно отказывает, когда не знает.
+
+   cx=true: лента пишется в долях ЭКРАНА (ghostRec: plane.x/W), а коридор чести — 390 мер
+   по центру. На телефоне W=390 и это одно и то же, на широком экране — нет: без коридорной
+   укладки чужой полёт ушёл бы за стены. Тот же приём, что у Трибуны чемпиона. */
+$('topList').addEventListener('click', e=>{
+  const b=e.target.closest('.topWatch'); if(!b) return;
+  const pid=Math.floor(Number(b.dataset.wt));
+  if(!pid || typeof syncGhostGet!=='function' || b._busy) return;
+  sfx.click(); haptic('light'); b._busy=1; b.textContent='…';
+  const gen=runNow(), cat0=topCat; // то же поколение, что у соседней двери: медленный ответ не должен запускать игру задним числом
+  syncGhostGet(pid, cat0).then(d=>{
+    b._busy=0; b.innerHTML=ic('play');
+    if(!runSame(gen) || screenName!=='ach') return; // зритель ушёл, пока летел ответ
+    if(!d || !d.ok){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    if(d.seed==null || !isFinite(Number(d.seed))){ // небо того полёта неизвестно — показывать нечего, и врать не будем
+      toast(L.topWatchNoSky,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    const g=ghostParse(d.track);
+    if(!g){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    g.cx=true;
+    champTrack=g; theaterDay=String(Math.floor(Number(d.seed))); theaterRecord=true;
+    theaterChamp={ name:String(d.name||'').slice(0,64), skin:Math.floor(Number(d.skin))||0 };
+    runMode='theater'; startGame();
+  }).catch(()=>{ b._busy=0; b.innerHTML=ic('play'); });
+});
 $('topList').addEventListener('click', e=>{
   const b=e.target.closest('.topGh'); if(!b) return;
   const pid=Math.floor(Number(b.dataset.gh));

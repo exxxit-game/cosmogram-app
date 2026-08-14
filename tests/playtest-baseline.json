@@ -1,0 +1,37 @@
+{
+  "rezhim": "classic",
+  "metrov": 6000,
+  "kadrov": 6527,
+  "sekund": 109,
+  "ochkov": 1675,
+  "volny": {
+    "2": 350,
+    "3": 788,
+    "4": 1313,
+    "5": 1926,
+    "6": 2625,
+    "7": 3413,
+    "8": 4288,
+    "9": 5163
+  },
+  "volna_na_konce": 9,
+  "spawnov_na_km": 43.7,
+  "zvyozd_na_km": 14.5,
+  "bonusov_na_km": 2.2,
+  "plavnost_min": 1,
+  "koridor": {
+    "levaya": 0,
+    "shirina": 390
+  },
+  "shag_volny": [
+    350,
+    788,
+    1313,
+    1925,
+    2625,
+    3413,
+    4288,
+    5163
+  ],
+  "versiya": "1.284.3"
+}

@@ -655,7 +655,14 @@ Deno.serve(async (req: Request) => {
       // корона: кто сейчас #1 категории (ДО этой записи)? свержение — только с чужого трона
       const { data: king } = await sb.from('scores').select('player_id, best').eq('category', cat)
         .order('best', { ascending: false }).limit(1).maybeSingle();
-      await sb.from('scores').upsert({ player_id: pid, category: cat, best: v, verified: isVerified, updated_at: new Date().toISOString() });
+      /* v23 «Небо рекорда». readRun уже читал сид из паспорта — и он тут же выбрасывался.
+         Итог: 30 рекордов из 34 в боевой базе нельзя ни посмотреть, ни воспроизвести, ни
+         проверить, потому что неизвестно, на какой трассе они добыты. Решение владельца:
+         игрок обязан давать сид для подтверждения всех своих рекордов. Сид кладём только
+         тот, что объяснён паспортом ЭТОЙ категории: чужой паспорт не должен подписывать
+         чужое небо. Страж 127. */
+      const seedForCat = (run && run.cat === cat && run.seed != null) ? run.seed : null;
+      await sb.from('scores').upsert({ player_id: pid, category: cat, best: v, verified: isVerified, seed: seedForCat, updated_at: new Date().toISOString() });
       /* Триггер public.scores_guard мог подрезать значение ещё раз (потолок прироста за отправку).
          Читаем, что реально легло, — иначе уведомления и ответ клиенту врали бы о чужой цифре. */
       const { data: after } = await sb.from('scores').select('best').eq('player_id', pid).eq('category', cat).maybeSingle();
@@ -851,10 +858,16 @@ Deno.serve(async (req: Request) => {
   }
 
   if (body.action === 'ghost_share') {
-    // Приватность: выкл — призраки удаляются сразу, чужие их больше не видят
+    /* v23 «Лента — доказательство». Раньше здесь стояло удаление: выключил тумблер —
+       ленты стёрты немедленно. Это уничтожало единственную улику под рекордом, который
+       при этом продолжал стоять в таблице. В соревновательной игре так нельзя: пока
+       результат заявлен, доказательство обязано существовать.
+       Скрытность при этом не страдает ни на йоту — выдача чужого призрака (ghost_get)
+       УЖЕ спрашивает players.share_ghost и отказывает. Удаление было лишним слоем,
+       который стоил улики. Стирание ленты — теперь только по запросу к экипажу, руками.
+       Решение владельца, зафиксировано в privacy.html. Страж 128. */
     const share = body.share !== false;
     await sb.from('players').upsert({ id: pid, first_name: name, username: uname, last_seen: new Date().toISOString(), share_ghost: share });
-    if (!share) await sb.from('ghosts').delete().eq('player_id', pid);
     return json({ ok: true });
   }
 

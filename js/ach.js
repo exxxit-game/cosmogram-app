@@ -89,15 +89,22 @@ function achCheck(){
 /* ---------- Н2: карточка награды — праздник по одной ---------- */
 let claimOpen=false, claimTotal=0, claimPos=0, walletCountGen=0;
 function achTier(a){ return a.rw>=400?'mGold':(a.rw>=100?'mSilver':'mBronze'); }
-function walletCountUp(from,to){ // кошелёк в меню досчитывает награду (0.5с, easeOutCubic)
-  const el=$('walletMenu'); if(!el) return;
+/* v1.284.3: досчёт искал #walletMenu — элемент, которого в разметке НЕТ ни одного:
+   кошелёк убрали с главного экрана, а функция осталась искать его и выходить по !el.
+   Игрок жал «Забрать» и не видел ни одного признака, что звёзды пришли. Теперь строка
+   награды на самой карточке («+25 ✦») превращается в новый итог кошелька, и только
+   после досчёта карточка уступает место следующей. Страж 125. */
+function walletCountUp(from,to,done){ // строка награды досчитывает до нового кошелька (0.5с, easeOutCubic)
+  const el=$('claimRw');
+  if(!el){ if(done) done(); return; }
   const t0=performance.now(), g=++walletCountGen;
   requestAnimationFrame(function tick(now){
-    if(g!==walletCountGen) return;
+    if(g!==walletCountGen) return; // праздник перебит следующим — этот досчёт больше не наш
     const k=Math.min(1,(now-t0)/500);
     const v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));
-    el.innerHTML = v>0 ? L.wallet+v : '';
+    el.innerHTML = L.wallet+v;
     if(k<1) requestAnimationFrame(tick);
+    else if(done) done();
   });
 }
 function achClaimMaybe(){ // автопоказ при возврате в меню с непустым карманом
@@ -143,8 +150,11 @@ function achClaimTake(){
   S.wallet+=a.rw; Store.set('wallet',S.wallet);
   Store.set('achQ',q.slice(1)); achQShow();
   haptic('light');
-  walletCountUp(from,S.wallet);
-  if(achQueue().length) achClaimShow(); else achClaimHide();
+  /* Досчёт обязан быть виден: раньше карточка пряталась (или переписывалась следующей)
+     в тот же кадр, и анимация не успевала родиться. Ждём её конца. */
+  walletCountUp(from,S.wallet,()=>{
+    if(achQueue().length) achClaimShow(); else achClaimHide();
+  });
 }
 function achClaimHide(){ claimOpen=false; $('claimScreen').classList.add('hidden'); }
 if(typeof $==='function' && $('claimBtn')) $('claimBtn').addEventListener('click', achClaimTake);

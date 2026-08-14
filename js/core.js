@@ -243,7 +243,7 @@ const I18N = {
     diagCopyFail:'Не смог скопировать — выдели текст ниже вручную', diagSupportBtn:'Написать в поддержку',
     shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' очков! Сможешь больше?',
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться',
-    tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
+    tutGyroBody:'Телефон умеет быть штурвалом. Наклоняй — самолётик слушается. Передумаешь — вернёшь палец одним касанием.', tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
     missionLbl:'Волна', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак'],
     achTitle:'Достижения', achOf:'Открыто',
     achClsB:'Бронзовая награда', achClsS:'Серебряная награда', achClsG:'Золотая награда', achClaim:'Забрать', achDone:'Готово',
@@ -278,6 +278,7 @@ const I18N = {
     setGhost:'Призрак',
     again:'ЕЩЁ РАЗ?', // подпись над своей тенью и имя строки настроек: текст один — ключ один
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Призрак недоступен: владелец скрыл трек',
+    topWatch:'Смотреть этот полёт', topWatchNoSky:'Небо того полёта не сохранилось — показать нечего',
     ghostWith:(n)=>'Призрак '+(n||'игрока')+' — рядом с тобой',
     ghostBeat:(n,sc,b)=>'Призрак '+escapeHtml(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
   },
@@ -372,7 +373,7 @@ const I18N = {
     diagCopyFail:'Couldn’t copy — select the text below manually', diagSupportBtn:'Contact support',
     shareText:s=>'🚀 My Cosmogram record: '+s+' points! Beat it?',
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me',
-    tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
+    tutGyroBody:'Your phone can be the yoke. Tilt it — the plane follows. Change your mind and one tap brings the finger back.', tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
     missionLbl:'Wave', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost'],
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
@@ -404,6 +405,7 @@ const I18N = {
     setGhost:'Ghost',
     again:'AGAIN?',
     ghostGo:'Fly with this record’s ghost', ghostNone:'Ghost unavailable: the owner hid the track',
+    topWatch:'Watch this flight', topWatchNoSky:'That flight’s sky wasn’t saved — nothing to show',
     ghostWith:(n)=>(n||'Player')+'’s ghost flies with you',
     ghostBeat:(n,sc,b)=>'Ghost of '+escapeHtml(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
   },
@@ -506,7 +508,7 @@ const I18N = {
     diagSupportBtn:'Escribir a soporte',
     shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' puntos! ¿Puedes superarlo?',
     shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme',
-    tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
+    tutGyroBody:'El teléfono puede ser el timón. Inclínalo y el avión obedece. Si cambias de idea, un toque devuelve el dedo.', tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
     missionLbl:'Oleada',
     skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
     achTitle:'Logros', achOf:'Desbloqueado',
@@ -545,7 +547,7 @@ const I18N = {
     vibChTg:'Canal: API de Telegram — pulsos nítidos',
     vibChWeb:'Canal: solo vibración del sistema — límite de la web',
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
-    setGhost:'Fantasma', ghostGo:'Volar con el fantasma de este récord',
+    setGhost:'Fantasma', topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
     again:'¿OTRA VEZ?',
     ghostNone:'Fantasma no disponible: el dueño ocultó la pista',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
@@ -650,7 +652,7 @@ const I18N = {
     diagSupportBtn:'Falar com o suporte',
     shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' pontos! Consegue superar?',
     shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar',
-    tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
+    tutGyroBody:'O telefone pode ser o leme. Incline-o e o avião obedece. Se mudar de ideia, um toque devolve o dedo.', tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
     missionLbl:'Onda',
     skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: то же — единственное расхождение типов во всём словаре
     achTitle:'Conquistas', achOf:'Desbloqueado',
@@ -689,7 +691,7 @@ const I18N = {
     vibChTg:'Canal: API do Telegram — pulsos nítidos',
     vibChWeb:'Canal: só vibração do sistema — limite da web',
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
-    setGhost:'Fantasma', ghostGo:'Voar com o fantasma deste recorde',
+    setGhost:'Fantasma', topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
     again:'DE NOVO?',
     ghostNone:'Fantasma indisponível: o dono escondeu a pista',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
@@ -785,7 +787,7 @@ const I18N = {
     diagCopyFail:'Impossible de copier — sélectionne le texte ci-dessous manuellement', diagSupportBtn:'Contacter le support',
     shareText:s=>'🚀 Mon record Cosmogram : '+s+' points ! Peux-tu faire mieux ?',
     shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper',
-    tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
+    tutGyroBody:'Le téléphone peut être le manche. Incline-le, l\'avion suit. Si tu changes d\'avis, une touche rend le doigt.', tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
     missionLbl:'Vague', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme'],
     achTitle:'Succès', achOf:'Débloqué',
     achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',
@@ -817,6 +819,7 @@ const I18N = {
     setGhost:'Fantôme',
     again:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
     ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Fantôme indisponible : le propriétaire a caché la trace',
+    topWatch:'Regarder ce vol', topWatchNoSky:'Le ciel de ce vol n’a pas été enregistré — rien à montrer',
     ghostWith:(n)=>'Le fantôme de '+(n||'Joueur')+' vole avec toi',
     ghostBeat:(n,sc,b)=>'Fantôme de '+escapeHtml(n||'joueur')+' battu : '+fmtN(sc)+' contre '+fmtN(b)
   }
@@ -833,7 +836,11 @@ let L = I18N[LANG]; // let: настройка языка переключает
    облаком, до трёх секунд ожидания. Всё это время интерфейс был нарисован автоопределённым
    языком, потом мигал и перерисовывался. Ключ lang локальный, localStorage читается
    синхронно уже здесь — ждать нечего. */
-try{ const _lp=Store.get('lang','auto'); if(_lp!=='auto' && I18N[_lp]) L=I18N[_lp]; }catch(e){}
+/* v1.284.3: сама строка переехала ниже — см. хвост блока «Хранилище». Здесь она стояла
+   ВЫШЕ `const Store = {`, то есть в мёртвой зоне: обращение бросало ReferenceError,
+   его съедал собственный catch, и обещание «применяем выбор игрока СРАЗУ» не работало
+   ни одного дня с v1.282.15. Разбор ровно этой ловушки уже был написан в index.html
+   (про GAME_VERSION) — урок не перенесли в соседний файл. Страж 119. */
 
 /* ---------- Хранилище (Блок 8: CloudStorage primary, localStorage fallback) ---------- */
 function gyroUnlocked(){ return Store.get('gyroUnlocked',0)===1; } // замок гироскопа (v1.5.2): рулит только после «Полёта без рук» — новичку наклоны не ломают первые полёты
@@ -942,6 +949,10 @@ const Store = {
     if(this.cloud && this.CLOUD_KEYS.indexOf(k)>=0){ try{ this.cloud.removeItem(k,()=>{}); }catch(e){} }
   }
 };
+
+/* Выбор языка применяем сразу: ключ lang локальный, localStorage читается синхронно,
+   ждать облако незачем. Обязано стоять ПОСЛЕ объявления Store (страж 119). */
+try{ const _lp=Store.get('lang','auto'); if(_lp!=='auto' && I18N[_lp]) L=I18N[_lp]; }catch(e){}
 // санация значений из облака — мусор не должен ронять игру
 function saneNumber(v,def){ if(v==null||v==='') return def; v=+v; return isFinite(v)?v:def; } // v1.282.15: +null и +'' дают 0, а не дефолт — saneNumber(null,3) возвращал 0. Сейчас не стреляет только потому, что Store.get сам отсекает null; это латентная мина под чтением автосейва (жизни, волна, чувствительность)
 function saneArray(v,def){ return Array.isArray(v)?v:def; }
@@ -965,7 +976,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.2'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.6'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1086,6 +1097,11 @@ function morseHF(){ // тактильный мост Telegram — по факт�
   return null;
 }
 function hapticMorse(cs){
+  /* v1.284.3: виброотклик — общий выключатель тактильности, эфир — частный. Раньше эфир
+     спрашивал только свой тумблер, и выключенное вибро всё равно отстукивало позывной при
+     рекорде, первом полёте дня и входе в топ-10. Согласие даётся на смысл, а не на
+     подсистему (закон 11). Страж 120. */
+  if (typeof VIBRO!=='undefined' && !VIBRO) return;
   if (!morseHapOn()) return;
   const seq=morseHapSeq(cs); if (!seq.length) return;
   const hf=morseHF();
@@ -1464,7 +1480,8 @@ try{ ctx.imageSmoothingQuality='low'; }catch(e){}
    чернила зажигались только там, где рисуют напрямую. Один общий вход — и кэши говорят на
    том же языке цвета, что и небо. sRGB-краски в P3-холсте звучат ровно как раньше. */
 function ctx2d(c, opt){ try{ return c.getContext('2d', Object.assign({}, P3?{colorSpace:'display-p3'}:null, opt||null)); }catch(e){ return c.getContext('2d'); } }
-let W=0, H=0, DPR=1, dprCap=2, SC=1, capPx=2560, SC_MIN=0.5; // SC — «Метр неба» (v1.99.0): цена одного логического пикселя в css-пикселях; capPx — «Потолок листа» (v1.99.1): длинная сторона холста в настоящих пикселях; SC_MIN — «Пол листа» (v1.108.1): ниже — не рисуем нерабочую крошку, честно просим больше места
+let W=0, H=0, DPR=1, dprCap=2, SC=1, capPx=2560, SC_MIN=0.5;
+let stableH=0; // v1.284.6: последняя высота вьюпорта БЕЗ клавиатуры — см. resize(), страж 131 // SC — «Метр неба» (v1.99.0): цена одного логического пикселя в css-пикселях; capPx — «Потолок листа» (v1.99.1): длинная сторона холста в настоящих пикселях; SC_MIN — «Пол листа» (v1.108.1): ниже — не рисуем нерабочую крошку, честно просим больше места
 /* ---------- Тир устройства (v1.7.0 «Точная настройка»): почти персональный профиль ---------- */
 function gpuRenderer(){ // точное имя GPU через WebGL (незаметно для игрока; null — если скрыто браузером)
   try{
@@ -1588,11 +1605,25 @@ function resize(){
      Отказ раньше входа честнее подмены нулём: прежняя геометрия остаётся в силе один лишний
      кадр, соседний resize() (событие/таймер/viewportChanged) досчитает правду через мгновение. */
   if (cssW<=0 || cssH<=0) return;
+  /* v1.284.6 «Клавиатура — не узкое окно». Экранная клавиатура съедает 250-350 px высоты
+     из 667, SC проваливается ниже пола, и поверх поля, в которое игрок ПЕЧАТАЕТ, встаёт
+     полноэкранное «Разверните окно, чтобы полететь». Совет бессмысленный: окно у телефона
+     не разворачивается. Замерено прибором «Теснота»: при высоте вьюпорта 420 px и ниже
+     срабатывание гарантировано, а Android-клавиатура оставляет 300-420.
+     Признак берём самый честный и единственный, который не гадает: клавиатура поднимается
+     ТОЛЬКО при фокусе в поле ввода. Пока фокус там — держим последнюю спокойную высоту:
+     геометрия мира не пересчитывается, полёт не встаёт, окно тесноты не показывается.
+     Настоящая теснота (узко по ШИРИНЕ, сплит-скрин, ужатое окно на десктопе) ловится как
+     прежде — ширину клавиатура не трогает. Страж 131. */
+  const ae = document.activeElement;
+  const kbd = !!(ae && (ae.tagName==='INPUT' || ae.tagName==='TEXTAREA' || ae.isContentEditable));
+  if (!kbd || cssH > stableH) stableH = cssH;   // спокойная высота запоминается, пока клавиатуры нет
+  const cssHu = kbd ? Math.max(cssH, stableH) : cssH;
   /* v1.99.0 «Метр неба»: мир меряем эталоном (390×844), а не сырыми пикселями.
      Мерка — по меньшей из двух сторон: небо никогда не уже 390 (поле не гуще эталона)
      и не ниже 844 (окно реакции не короче эталона). Большой экран — просто больше
      неба по бокам; скорости, размеры и ритм уклонения везде эталонные, один в один. */
-  SC = Math.min(cssW/390, cssH/844);
+  SC = Math.min(cssW/390, cssHu/844);
   /* v1.108.1 «Пол листа»: симметрично «Потолку листа» сверху — снизу тоже нужна страховка.
      Без неё очень узкое окно (сплит-скрин на телефоне/планшете, ужатое окно на десктопе)
      рисовало игру в нерабочем микро-масштабе — тап-таргеты меньше пальца, читать нечего.

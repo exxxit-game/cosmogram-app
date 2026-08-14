@@ -69,8 +69,14 @@ function post(name, ok, detail){
 
 /* Страница с уже загруженной игрой. cdn:'block' — рвём сторонние
    CDN, как это делает недоступная сеть у игрока. */
-async function openGame(browser, {cdn='block', init=null, timeout=15000}={}){
-  const ctx = await browser.newContext({ viewport:{width:412,height:915}, deviceScaleFactor:3 });
+async function openGame(browser, {cdn='block', init=null, timeout=15000, viewport=null, mobile=false}={}){
+  /* v1.284.6: вьюпорт и мобильность стали параметрами. Стражи тесноты (129-131) мерили
+     ноль там, где прибор «Теснота» видел 275 px за краем: без isMobile/hasTouch вёрстка
+     раскладывается по-десктопному, и экран, на который жалуется игрок, стенду не виден.
+     Умолчание прежнее — все старые стражи получают ровно тот же борт, что и раньше. */
+  const ctx = await browser.newContext(Object.assign(
+    { viewport: viewport || {width:412,height:915}, deviceScaleFactor:3 },
+    mobile ? { isMobile:true, hasTouch:true } : null));
   const page = await ctx.newPage();
   const thirdParty = /sentry-cdn\.com|cdn\.amplitude\.com|telegram\.org\/js|discord\.com/;
   await page.route('**/*', route=>{
@@ -3739,21 +3745,31 @@ async function guardMusicJitterAndDrift(browser){
       const freqFlat = new Set(freqs).size < 5; // 200 бросков почти наверняка дадут разброс, если рандом реально применяется
       const panBad = pans.some(p=>p<-1||p>1);
       const panFlat = new Set(pans).size < 5;
-      const root0 = music._droneRoot();
+      /* v1.284.3: раньше здесь стояло `root0 должен быть 57`. Но дрейф корня — случайный
+         шаг с вероятностью 3.5% на такт, и планировщик музыки тикает по своему таймеру
+         сразу после startGame(). Между стартом и этой строкой мог пройти такт, кубик мог
+         выпасть — и страж краснел на честно работающей игре примерно раз на десяток
+         прогонов. Проверяем не конкретное число, а сам контракт: корень всегда из своего
+         набора, шаг двигает ровно на одну ступень, потолок держит. Закон №40. */
+      const ROOTS=[57,60,62,64,67];
+      for(let i=0;i<9;i++) music._kickDrift(-1); // уводим в заведомо нижний край, мимо гонки с планировщиком
+      const rootLow = music._droneRoot();
       music._kickDrift(1); const root1 = music._droneRoot();
-      music._kickDrift(1); music._kickDrift(1); music._kickDrift(1); music._kickDrift(1); music._kickDrift(1);
+      for(let i=0;i<9;i++) music._kickDrift(1);
       const rootClamped = music._droneRoot(); // упёрлись в потолок массива, не улетели в NaN/undefined
-      return { freqBad, freqFlat, panBad, panFlat, root0, root1, rootClamped };
+      return { freqBad, freqFlat, panBad, panFlat, rootLow, root1, rootClamped, ROOTS };
     });
     if(r.freqFlat) return post(name,false,'jitterFreq(440) даёт одно и то же значение — разброс не работает');
     if(r.freqBad)  return post(name,false,'jitterFreq(440) вышел за ±3% — слишком сильная расстройка');
     if(r.panFlat)  return post(name,false,'jitterPan() даёт одно и то же значение — панорама не работает');
     if(r.panBad)   return post(name,false,'jitterPan() вышел за границы стерео [-1,1]');
-    if(r.root0!==57) return post(name,false,`корень дрона на старте темы должен быть 57 (A3), получили ${r.root0}`);
-    if(r.root1===r.root0) return post(name,false,'корень дрона не сдвинулся после принудительного шага дрейфа');
-    if(typeof r.rootClamped!=='number' || !isFinite(r.rootClamped))
-      return post(name,false,`корень дрона улетел за пределы массива: ${r.rootClamped}`);
-    post(name,true,'высота/панорама нот разбросаны в безопасных пределах, корень дрона плывёт и не улетает за массив');
+    if(r.ROOTS.indexOf(r.rootLow)<0) return post(name,false,`корень дрона ушёл за свой набор: ${r.rootLow}`);
+    if(r.rootLow!==r.ROOTS[0]) return post(name,false,`девять шагов вниз не довели корень до нижнего края набора: ${r.rootLow}`);
+    if(r.root1===r.rootLow) return post(name,false,'корень дрона не сдвинулся после принудительного шага дрейфа');
+    if(r.ROOTS.indexOf(r.root1)<0) return post(name,false,`шаг дрейфа вывел корень за набор: ${r.root1}`);
+    if(r.rootClamped!==r.ROOTS[r.ROOTS.length-1])
+      return post(name,false,`потолок набора не удержал корень: ${r.rootClamped}`);
+    post(name,true,'высота/панорама нот разбросаны в безопасных пределах, корень дрона ходит по своему набору и держит оба края');
   }catch(e){ post(name,false,e.message.split('\n')[0]); }
   finally{ if(ctx) await ctx.close(); }
 }
@@ -4562,6 +4578,600 @@ async function guardNobodyAsksMissingScreen(browser){
   finally{ if(ctx) await ctx.close(); }
 }
 
+
+/* ============================================================
+   ВОЛНА 1 — стражи починок (партия 29). Каждый написан ДО правки
+   и обязан сначала покраснеть.
+   ============================================================ */
+
+/* Страж 118 — Подпись Discord в Трассе дня собирается из байтов, а не из ArrayBuffer.
+   Беда: cosmogram-sync уже знает этот баг и чинил его (там стоит комментарий v12),
+   а в cosmogram-daily та же строка осталась в прежнем виде. ArrayBuffer не итерируется,
+   поэтому [...sig] бросает TypeError, его глотает общий catch в validateSession, и
+   игрок, вошедший через Discord, получает молчаливый 401 на КАЖДОЕ действие Трассы дня.
+   Закон №25: правка класса ошибок не закончена, пока не проверены все, кто умеет то же самое. */
+async function guardWave1DailySignatureBytes(browser){
+  const name = '118. Подпись в Трассе дня собирается из Uint8Array, а не из ArrayBuffer';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const out = {};
+      for(const f of ['cosmogram-daily','cosmogram-sync']){
+        try{
+          const rs = await fetch('./_supabase/functions/'+f+'/index.ts?probe='+Math.random());
+          out[f] = rs.ok ? await rs.text() : null;
+        }catch(e){ out[f] = null; }
+      }
+      return out;
+    });
+    if(!r['cosmogram-daily']) return post(name,false,'исходник cosmogram-daily не отдаётся — проверять нечего');
+    /* Комментарии вырезаем: страж судит код, а не прозу. Первая версия покраснела на
+       собственном пояснении, где [...sig] упомянут как описание прежней беды. */
+    const strip = t => String(t||'').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+    const grab = t => { const c = strip(t); const i = c.indexOf('function hmacHex'); return i<0 ? null : c.slice(i, i+520); };
+    const d = grab(r['cosmogram-daily']);
+    if(!d) return post(name,false,'в cosmogram-daily нет hmacHex — сценарий не тот');
+    if(/\[\s*\.\.\.\s*sig\s*\]/.test(d))
+      return post(name,false,'cosmogram-daily разворачивает ArrayBuffer через [...sig] — вход через Discord падает молча');
+    if(!/new\s+Uint8Array\s*\(\s*sig\s*\)/.test(d))
+      return post(name,false,'cosmogram-daily не оборачивает подпись в Uint8Array');
+    const s = grab(r['cosmogram-sync']||'');
+    if(s && !/new\s+Uint8Array\s*\(\s*sig\s*\)/.test(s))
+      return post(name,false,'cosmogram-sync потерял обёртку Uint8Array — класс ошибки вернулся с другой стороны');
+    post(name,true,'обе функции собирают подпись из байтов — вход через Discord доживает до проверки');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 119 — Сохранённый язык читается ПОСЛЕ объявления хранилища.
+   Беда: правка v1.282.15 обещала применять выбор игрока сразу, но обращение к Store
+   стоит на четыре строки ВЫШЕ `const Store = {`. Это временная мёртвая зона: строка
+   бросает ReferenceError, его съедает собственный catch, и язык остаётся автоопределённым
+   до колбэка Store.init — то есть ровно то, что правка чинила. Разбор TDZ в index.html
+   (про GAME_VERSION) абсолютно верный — урок не перенесли в соседний файл (закон №23). */
+async function guardWave1LangReadAfterStore(browser){
+  const name = '119. Сохранённый язык читается после объявления Store, а не в мёртвой зоне';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const src = await o.page.evaluate(async ()=>{
+      try{ const rs=await fetch('./js/core.js?probe='+Math.random()); return rs.ok?await rs.text():null; }catch(e){ return null; }
+    });
+    if(!src) return post(name,false,'core.js не отдаётся');
+    const decl = src.search(/\bconst\s+Store\s*=\s*\{/);
+    const use  = src.search(/Store\.get\(\s*'lang'/);
+    if(decl<0) return post(name,false,'в core.js не найдено объявление const Store — сценарий не тот');
+    if(use<0)  return post(name,false,'в core.js не найдено чтение Store.get(\'lang\') — правка v1.282.15 пропала целиком');
+    const lineOf = i => src.slice(0,i).split('\n').length;
+    if(use < decl) return post(name,false,
+      `чтение языка на строке ${lineOf(use)} стоит ВЫШЕ const Store (строка ${lineOf(decl)}) — TDZ, ReferenceError съедается своим catch`);
+    post(name,true,`язык читается на строке ${lineOf(use)}, Store объявлен на ${lineOf(decl)} — мёртвой зоны нет`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 120 — Выключенный виброотклик глушит и виброэфир.
+   Беда: haptic() спрашивает VIBRO, hapticMorse() — нет. Игрок выключил вибро, а телефон
+   всё равно отстукивает позывной морзянкой при рекорде, первом полёте дня и входе в топ-10.
+   Закон 11 промта эксперта: согласие даётся на смысл, а не на подсистему. */
+async function guardWave1VibroSilencesMorse(browser){
+  const name = '120. Выключенный виброотклик глушит и виброэфир (позывной морзянкой)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      if(typeof hapticMorse!=='function' || typeof VIBRO==='undefined') return {missing:true};
+      Store.set('morseHap',1); // виброэфир включён — иначе проверяем не то
+      /* Каналов два, и вне Telegram мост всё равно отдаёт HapticFeedback — значит
+         считать надо ОБА, иначе страж проверяет пустую ветку и зеленеет зря. */
+      let calls=0;
+      const realVib = navigator.vibrate;
+      const hf = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) || null;
+      const realImp = hf ? hf.impactOccurred : null;
+      try{
+        Object.defineProperty(navigator,'vibrate',{configurable:true,value:()=>{ calls++; return true; }});
+        if(hf) hf.impactOccurred = ()=>{ calls++; };
+      }catch(e){ return {nostub:true}; }
+      const was = VIBRO;
+      /* MH_BUDGET=1900: импульсы висят на setTimeout почти две секунды. Первая версия ждала
+         700 мс, и хвост первой пачки долетал во второе окно — страж винил игру в собственной
+         спешке. Ждём дольше бюджета и только потом обнуляем счётчик. */
+      VIBRO = true;  calls=0; hapticMorse('AB'); await new Promise(r=>setTimeout(r,2200)); const onCalls = calls;
+      VIBRO = false; calls=0; hapticMorse('AB'); await new Promise(r=>setTimeout(r,2200)); const offCalls = calls;
+      VIBRO = was;
+      try{
+        Object.defineProperty(navigator,'vibrate',{configurable:true,value:realVib});
+        if(hf && realImp) hf.impactOccurred = realImp;
+      }catch(e){}
+      return { onCalls, offCalls };
+    });
+    if(r.missing) return post(name,false,'hapticMorse или VIBRO не найдены — сценарий не тот');
+    if(r.nostub)  return post(name,false,'не удалось подменить navigator.vibrate — мерить нечем');
+    if(r.onCalls===0) return post(name,false,'при ВКЛЮЧЁННОМ вибро эфир молчит — страж проверяет не тот путь');
+    if(r.offCalls>0)  return post(name,false,
+      `виброотклик выключен, а виброэфир всё равно отстучал позывной (${r.offCalls} раз) — ярлык настройки врёт`);
+    post(name,true,'вибро включено — эфир звучит, выключено — молчит; один выключатель на один смысл');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 121 — Высокий контраст не гасится тумблером «Для дальтоников».
+   Беда: #game.hc и #game.cb — две строки одной специфичности, правила .hc.cb нет.
+   При обоих включённых тумблерах побеждает последняя строка, и высокий контраст
+   молча перестаёт действовать. Комментарий в canvasFilterSync утверждает обратное:
+   «оба фильтра независимы, могут стоять вместе». */
+async function guardWave1ContrastSurvivesColorblind(browser){
+  const name = '121. Высокий контраст не гасится тумблером «Для дальтоников»';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      const c=document.getElementById('game'); if(!c) return {missing:true};
+      const was=c.className;
+      const read=cls=>{ c.className=cls; return getComputedStyle(c).filter||'none'; };
+      const hc=read('hc'), cb=read('cb'), both=read('hc cb');
+      c.className=was;
+      const num=s=>{ const m=/contrast\(([\d.]+)\)/.exec(s); return m?parseFloat(m[1]):1; };
+      return { hc, cb, both, hcN:num(hc), cbN:num(cb), bothN:num(both) };
+    });
+    if(r.missing) return post(name,false,'канвас #game не найден');
+    if(r.hcN<=1) return post(name,false,`класс hc не даёт контраста (filter=${r.hc}) — сценарий не тот`);
+    if(r.both===r.cb) return post(name,false,
+      `при обоих тумблерах фильтр совпал с одним лишь «дальтониками» (${r.both}) — высокий контраст молча выключен`);
+    if(r.bothN < r.hcN) return post(name,false,
+      `контраст при обоих тумблерах (${r.bothN}) ниже, чем при одном высоком контрасте (${r.hcN})`);
+    post(name,true,`hc=${r.hcN}, cb=${r.cbN}, оба=${r.bothN} — контраст переживает включение дальтоников`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 122 — Табло Трассы дня показывает день СОРЕВНОВАНИЯ, а не личный день.
+   Беда: трасса шьётся из trackDayKey() (UTC, закон №17), а на табло в полёте
+   рисуется todayKey() — местная дата. В UTC+3 вечером игрок видит завтрашнее
+   число при сегодняшней трассе. Разведение шкал сделано намеренно и правильно;
+   ошибка только в том, какая из них попала на табло общего события. */
+async function guardWave1DailyHudShowsContestDay(browser){
+  const name = '122. Табло Трассы дня подписано днём соревнования (UTC), а не личным днём';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      if(typeof trackDayKey!=='function' || typeof todayKey!=='function') return {missing:true};
+      runMode='daily'; startGame();
+      for(let f=0;f<4;f++){ update(1/60); }
+      const el=document.getElementById('modeHud');
+      const txt=el?String(el.textContent||''):'';
+      const fmt=k=>k.slice(8)+'.'+k.slice(5,7);
+      return { txt, utc:fmt(trackDayKey()), loc:fmt(todayKey()), same:trackDayKey()===todayKey() };
+    });
+    const src = await o.page.evaluate(async ()=>{
+      try{ const rs=await fetch('./js/game.js?probe='+Math.random()); return rs.ok?await rs.text():null; }catch(e){ return null; }
+    });
+    if(!src) return post(name,false,'game.js не отдаётся');
+    /* Поведением баг ловится только в те часы, когда местная и мировая даты РАСХОДЯТСЯ.
+       Чтобы страж не зеленел по случайному совпадению календарей, источник проверяется
+       отдельно: в ветке Трассы дня не должно быть todayKey(). */
+    /* Комментарии вырезаем — как в страже 118. Оба раза за одну партию страж краснел на
+       собственном пояснении к правке: слово todayKey() в комментарии «здесь стоял todayKey()»
+       неотличимо от вызова, если читать файл как текст. Страж судит код, а не прозу. */
+    const codeOnly = src.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+    const br = /S\.mode\s*===\s*'daily'\s*\)\s*\{([\s\S]{0,900}?)\}/.exec(codeOnly);
+    if(!br) return post(name,false,'не найдена ветка табло Трассы дня в game.js — сценарий не тот');
+    if(/todayKey\s*\(/.test(br[1])) return post(name,false,
+      'табло Трассы дня берёт todayKey() — личный день вместо дня соревнования (закон №17)');
+    if(!/trackDayKey\s*\(/.test(br[1])) return post(name,false,
+      'табло Трассы дня не берёт trackDayKey() — источник подписи не тот');
+    if(r.missing) return post(name,false,'trackDayKey/todayKey не найдены — сценарий не тот');
+    if(!r.txt) return post(name,false,'табло режима пустое — сценарий не тот');
+    if(r.txt.indexOf(r.utc)<0) return post(name,false,
+      `на табло «${r.txt}», а день соревнования ${r.utc} — подпись из другой шкалы времени`);
+    /* Когда местная и мировая даты совпали, страж не может отличить одну от другой —
+       он честно говорит об этом, а не выдаёт совпадение за доказательство. */
+    post(name,true, r.same
+      ? `на табло ${r.utc} — сегодня местная дата совпала с мировой, различить их этим прогоном нельзя (источник проверен строкой кода)`
+      : `на табло ${r.utc} (мировая), местная сегодня ${r.loc} — взята правильная шкала`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 123 — Трибуна переживает ответ сервера без чемпиона.
+   Беда: обработчик проверяет r.ok и сразу читает r.champion.track. Ответ вида
+   {ok:true} без поля champion даёт TypeError внутри .then — необработанное отклонение,
+   кнопка залипает без единого слова игроку. Сеть здесь ни при чём: syncDailyPost
+   уже гасит отказы своим .catch — дыра ровно в теле обработчика. */
+async function guardWave1TribuneSurvivesEmptyChampion(browser){
+  const name = '123. Трибуна переживает ответ сервера без чемпиона, не роняя обработчик';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const btn=document.getElementById('tribuneBtn'); if(!btn) return {missing:true};
+      const boom=[];
+      const onErr=e=>boom.push(String(e.message||e.reason&&e.reason.message||e.reason||e));
+      const onRej=e=>boom.push(String((e.reason&&e.reason.message)||e.reason||'rejection'));
+      window.addEventListener('error',onErr); window.addEventListener('unhandledrejection',onRej);
+      window.syncDailyChampion = ()=>Promise.resolve({ ok:true }); // сервер ответил «да» и не приложил чемпиона
+      theaterTrack = { xs:[0], ys:[0], n:1 }; // билет на месте: день завершён
+      setScreen('over');
+      btn.click();
+      await new Promise(res=>setTimeout(res,180));
+      window.removeEventListener('error',onErr); window.removeEventListener('unhandledrejection',onRej);
+      return { boom, scr:screenName };
+    });
+    if(r.missing) return post(name,false,'кнопки трибуны нет — сценарий не тот');
+    if(r.boom.length) return post(name,false,
+      `ответ без чемпиона уронил обработчик: ${r.boom[0]} — игрок видит залипшую кнопку и ни слова`);
+    if(r.scr!=='over') return post(name,false,`экран уехал в «${r.scr}» на пустом ответе — зритель не должен попадать в театр без спектакля`);
+    post(name,true,'пустой ответ обработан молча и честно: экран итогов на месте, исключения нет');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+
+/* Страж 124 — Оверлей «Полёт без рук» открывается со словами, а не пустым.
+   Беда: gyroOfferShow подписывал обе кнопки и снимал hidden, но блок объяснения
+   #tutBeatB не заполнял ВООБЩЕ, и ключа под этот текст не было ни в одном из пяти
+   словарей. Игрок посреди полёта получал паузу и выбор без единого слова о том, что
+   ему предлагают. Единственное, что туда когда-либо писалось, — «Держи телефон ровно…»
+   уже ПОСЛЕ согласия: при повторном показе оставался ответ на незаданный вопрос. */
+async function guardWave1GyroOfferHasWords(browser){
+  const name = '124. Оверлей «Полёт без рук» открывается с объяснением, а не пустым';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(()=>{
+      if(typeof gyroOfferShow!=='function') return {missing:true};
+      const bd=document.getElementById('tutBeatB'); if(!bd) return {missing:true};
+      bd.textContent=''; // чистый лист: проверяем, что текст кладёт именно оффер
+      runMode='classic'; startGame();
+      gyroOfferShow();
+      const body=String(bd.textContent||'').trim();
+      const shown=!document.getElementById('tutBeat').classList.contains('hidden');
+      if(typeof gyroAct2==='function') gyroAct2(false); // не оставляем полёт под оверлеем следующим стражам
+      return { body, shown, calWait:String((typeof L!=='undefined'&&L.calWait)||'') };
+    });
+    if(r.missing) return post(name,false,'gyroOfferShow или блок #tutBeatB не найдены — сценарий не тот');
+    if(!r.shown) return post(name,false,'оффер не показался — сценарий не тот');
+    if(!r.body) return post(name,false,'оверлей открылся ПУСТЫМ: две кнопки и ни слова о том, что предлагают');
+    if(r.calWait && r.body===r.calWait) return post(name,false,
+      'в блоке объяснения стоит «'+r.calWait+'» — это ответ после согласия, а не вопрос');
+    if(r.body.length<20) return post(name,false,`объяснение в ${r.body.length} символов — слишком коротко, чтобы что-то объяснить: «${r.body}»`);
+    post(name,true,`оффер объясняет себя: «${r.body.slice(0,60)}…»`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 125 — «Забрать» показывает игроку, что звёзды пришли.
+   Беда: досчёт кошелька искал #walletMenu — элемент, которого в разметке нет ни одного
+   (кошелёк убрали с главного экрана, функция осталась его искать и выходить по !el).
+   Награда начислялась молча: игрок жал кнопку и не видел ни одного признака. */
+async function guardWave1ClaimShowsReward(browser){
+  const name = '125. Кнопка «Забрать» показывает, что звёзды пришли';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      if(typeof achClaimTake!=='function' || typeof achClaimMaybe!=='function') return {missing:true};
+      setScreen('menu');
+      S.wallet=100; Store.set('wallet',100);
+      Store.set('achQ',['h1']); // одна награда в кармане — 10 ✦
+      achClaimMaybe();
+      const card=document.getElementById('claimScreen');
+      if(card.classList.contains('hidden')) return {noCard:true};
+      const before=String(document.getElementById('claimRw').textContent||'');
+      achClaimTake();
+      const atOnce=String(document.getElementById('claimRw').textContent||'');
+      const hiddenAtOnce=card.classList.contains('hidden');
+      await new Promise(res=>setTimeout(res,700));
+      const after=String(document.getElementById('claimRw').textContent||'');
+      return { before, atOnce, after, hiddenAtOnce, wallet:S.wallet, seen:atOnce+'|'+after };
+    });
+    if(r.missing) return post(name,false,'achClaimTake/achClaimMaybe не найдены — сценарий не тот');
+    if(r.noCard)  return post(name,false,'карточка награды не открылась — сценарий не тот');
+    if(r.wallet!==110) return post(name,false,`кошелёк стал ${r.wallet} вместо 110 — начисление сломано`);
+    if(r.hiddenAtOnce) return post(name,false,'карточка спряталась в тот же кадр — отклику негде родиться');
+    if(r.seen.indexOf('110')<0) return post(name,false,
+      `после «Забрать» новый итог кошелька (110) нигде не показан — было «${r.before}», стало «${r.after}»`);
+    post(name,true,`строка награды досчитала до нового кошелька: «${r.before}» → «${r.after}»`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+
+/* Страж 126 — У чужого рекорда есть дверь «смотреть», и она ставит на сцену НЕБО ВЛАДЕЛЬЦА.
+   Беда: рекорд в таблице был просто числом. Призрака скачать было можно (кнопка «лететь
+   рядом»), а посмотреть полёт целиком — только чемпиона Трассы дня, и только со своих
+   итогов. Владелец назвал это прямо: «есть рекорд, а посмотреть нельзя».
+   Тонкость, ради которой страж и написан: лента призрака НЕ содержит неба. ghostStep
+   кладёт её на ТЕКУЩУЮ трассу. Значит без сида владельца мы покажем его полёт над чужим
+   небом — он будет уворачиваться от пустоты и врезаться в воздух. Дверь обязана
+   открываться ТОЛЬКО когда сервер знает сид, и обязана честно отказывать, когда не знает. */
+async function guardWatchOthersRecord(browser){
+  const name = '126. У чужого рекорда есть дверь «смотреть», и она ставит небо владельца';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      if(typeof ghostPack!=='function') return {missing:'ghostPack'};
+      const rec=[]; for(let i=0;i<40;i++) rec.push([45+(i%7),40+(i%5),i*30]);
+      const track=ghostPack(rec);
+      const rows=[{pid:4242, name:'Рекордсмен', best:9000, verified:true},
+                  {pid:4343, name:'Безнебый',   best:8000, verified:false}];
+      window.syncTop=()=>Promise.resolve({ok:true, top:rows.map(x=>({name:x.name,best:x.best,pid:x.pid,verified:x.verified}))});
+      let asked=null;
+      window.syncGhostGet=(pid)=>{ asked=pid;
+        return Promise.resolve(pid===4242 ? {ok:true, track:track, skin:2, name:'Рекордсмен', seed:987654}
+                                          : {ok:true, track:track, skin:0, name:'Безнебый'}); }; // сида нет
+      openAch(); topCat='touch'; renderTop();
+      await new Promise(res=>setTimeout(res,220));
+      const list=document.getElementById('topList');
+      const watch=list.querySelectorAll('.topWatch');
+      if(!watch.length) return {noButton:true, html:list.innerHTML.slice(0,300)};
+      // 1) рекорд с сидом — сцена обязана встать на его небо
+      watch[0].click(); await new Promise(res=>setTimeout(res,320));
+      const okSeed = { mode:runMode, key:mapSeedKey, day:theaterDay, hasChamp:!!champTrack,
+                       champName:(theaterChamp&&theaterChamp.name)||'', scr:screenName };
+      /* «Золотая звезда дня» считает своей сценой и Театр (goldstar.js: onSky = daily||theater).
+         В повторе чужого рекорда Классики она бы взошла — и зритель увидел бы звезду, которую
+         рекордсмен якобы проигнорировал. Небо чужого забега не принадлежит никакому дню:
+         звезды в нём быть не должно. */
+      let gold={skip:true};
+      if(typeof GOLD!=='undefined' && GOLD._poke && GOLD._state){
+        GOLD._poke(); for(let i=0;i<40;i++) update(1/60);
+        const st=GOLD._state(); gold={skip:false, spawned:!!st.spawned, star:!!st.star, day:String(st.day||'')};
+      }
+      // возврат на витрину и попытка со вторым — у него сида нет
+      if(typeof endTheater==='function') endTheater(); setScreen('menu'); openAch(); topCat='touch'; renderTop();
+      await new Promise(res=>setTimeout(res,220));
+      const w2=document.getElementById('topList').querySelectorAll('.topWatch');
+      let noSeed={skipped:true};
+      if(w2.length>1){ w2[1].click(); await new Promise(res=>setTimeout(res,320));
+        noSeed={ mode:runMode, scr:screenName, skipped:false }; }
+      return { okSeed, noSeed, gold, buttons:watch.length, asked };
+    });
+    if(r.missing)  return post(name,false,`нет ${r.missing} — сценарий не тот`);
+    if(r.noButton) return post(name,false,'в строке чужого рекорда нет кнопки «смотреть»: '+r.html);
+    if(r.okSeed.mode!=='theater') return post(name,false,`после нажатия режим «${r.okSeed.mode}», а не театр — полёт не показан`);
+    if(String(r.okSeed.key)!=='987654') return post(name,false,
+      `сцена встала на ключ «${r.okSeed.key}» вместо сида владельца 987654 — чужой полёт идёт над ЧУЖИМ небом`);
+    if(!r.okSeed.hasChamp) return post(name,false,'лента владельца не попала на сцену');
+    if(!r.okSeed.champName) return post(name,false,'полёт показан без имени владельца — зритель не знает, кого смотрит');
+    if(!r.gold.skip && (r.gold.spawned || r.gold.star)) return post(name,false,
+      `в повторе чужого рекорда взошла Золотая звезда дня (день «${r.gold.day}») — зритель видит звезду, которой в том забеге не было`);
+    if(!r.noSeed.skipped && r.noSeed.mode==='theater') return post(name,false,
+      'рекорд БЕЗ сохранённого сида всё равно открыл театр — его полёт показали бы над чужой трассой');
+    post(name,true,`дверь ведёт на небо владельца (ключ ${r.okSeed.key}, имя «${r.okSeed.champName}»); рекорд без сида честно не пускают`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+
+/* Страж 127 — Счёт не уходит на сервер без неба, на котором добыт.
+   Решение владельца: «игрок обязан давать свой сид для подтверждения всех своих рекордов».
+   Проверено по базе: 30 рекордов из 34 не имеют ни ленты, ни сида — их нельзя ни посмотреть,
+   ни воспроизвести. Клиент сид УЖЕ шлёт (паспорт забега), сервер его УЖЕ читает (readRun) —
+   и выбрасывает при записи. Страж стережёт обе половины: клиент кладёт сид в паспорт,
+   сервер кладёт его в строку рекорда. */
+async function guardRecordCarriesSeed(browser){
+  const name = '127. Рекорд уезжает вместе с небом, на котором добыт (сид в паспорте и в строке)';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      let payload=null;
+      window.syncAvailable=()=>true;
+      window.syncAuth=()=>({initData:'x'});
+      window.syncPost=(b)=>{ if(b && b.action==='submit') payload=b; return Promise.resolve({ok:true, status:200, json:()=>Promise.resolve({ok:true})}); };
+      runMode='classic'; startGame();
+      const seedWas=S.seed;
+      for(let i=0;i<240;i++) update(1/60);
+      S.score=1234; S.dist=900;
+      gameOver();
+      await new Promise(res=>setTimeout(res,260));
+      const src = await (await fetch('./_supabase/functions/cosmogram-sync/index.ts?p='+Math.random())).text();
+      const code = src.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+      const up = /from\('scores'\)\.upsert\(\{[^}]*\}/.exec(code);
+      return { seedWas, hasRun: !!(payload&&payload.run), runSeed: payload&&payload.run?payload.run.seed:undefined,
+               upsert: up?up[0]:null };
+    });
+    if(!r.seedWas && r.seedWas!==0) return post(name,false,'у забега Классики нет своего сида — воспроизводить нечего');
+    if(!r.hasRun) return post(name,false,'паспорт забега не уехал вместе со счётом');
+    if(r.runSeed==null) return post(name,false,'паспорт уехал БЕЗ сида — рекорд нельзя привязать к небу');
+    if(String(r.runSeed)!==String(r.seedWas)) return post(name,false,`в паспорте сид ${r.runSeed}, а летели на ${r.seedWas}`);
+    if(!r.upsert) return post(name,false,'не нашёл запись в scores в исходнике сервера — сценарий не тот');
+    if(!/\bseed\b/.test(r.upsert)) return post(name,false,
+      'сервер читает сид из паспорта, но НЕ кладёт его в строку рекорда — доказательство теряется при записи');
+    post(name,true,`сид ${r.seedWas} доехал в паспорте и попадает в строку рекорда`);
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 128 — Выключенный тумблер ПРЯЧЕТ ленту, а не стирает её.
+   Решение владельца: «стереть их нельзя самим, только через запрос к нам».
+   Лента — доказательство рекорда; пока рекорд стоит в таблице, доказательство обязано
+   существовать. Скрытность при этом никуда не девается: выдача чужого призрака уже
+   спрашивает players.share_ghost и отказывает — удаление было лишним и уничтожало улику. */
+async function guardTapeIsEvidenceNotProperty(browser){
+  const name = '128. Выключенный тумблер прячет ленту, а не стирает — доказательство рекорда живёт';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH });
+    ctx = o.ctx;
+    const r = await o.page.evaluate(async ()=>{
+      const src = await (await fetch('./_supabase/functions/cosmogram-sync/index.ts?p='+Math.random())).text();
+      const code = src.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+      const i = code.indexOf("action === 'ghost_share'");
+      const block = i<0 ? null : code.slice(i, i+700);
+      const readsFlag = /share_ghost/.test(code.slice(Math.max(0,code.indexOf("action === 'ghost_get'")), code.indexOf("action === 'ghost_get'")+700));
+      // клиентская половина: выгрузка ленты не должна зависеть от тумблера
+      let uploaded=false;
+      window.syncGhostUp=()=>{ uploaded=true; return Promise.resolve(true); };
+      Store.set('shareGhost',0); // игрок скрыл призрака
+      const ui = await (await fetch('./js/ui.js?p='+Math.random())).text();
+      const uiCode = ui.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+      const gu = /if\s*\([^)]*shareGhost[^)]*\)[^\n]*\n?[^\n]*syncGhostUp/.test(uiCode);
+      return { block, readsFlag, gatedUpload: gu };
+    });
+    if(!r.block) return post(name,false,'не нашёл ветку ghost_share в исходнике сервера — сценарий не тот');
+    if(/from\('ghosts'\)\s*\.delete\(/.test(r.block)) return post(name,false,
+      'ghost_share по-прежнему УДАЛЯЕТ ленты — игрок стирает доказательство своего рекорда одним тумблером');
+    if(!r.readsFlag) return post(name,false,
+      'выдача чужого призрака не спрашивает share_ghost — перестав удалять, мы раскроем скрытые ленты');
+    if(r.gatedUpload) return post(name,false,
+      'выгрузка ленты по-прежнему стоит за тумблером — скрывший призрака не оставит доказательства вовсе');
+    post(name,true,'лента хранится всегда как доказательство, тумблер решает только видимость');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+
+/* Страж 129 — Лента прокручивается пальцем на каждом экране, кроме полёта.
+   Беда: e.preventDefault() в touchmove (input.js) стоит ДО проверки «наш ли палец» и без
+   оглядки на экран — он отменяет нативную прокрутку везде. Прибор «Теснота» намерил, что
+   за краем остаётся 275 px Ангара и 297 px Достижений на телефоне владельца (348 и 466 на
+   малом), и всё это недостижимо. При этом index.html:136-139 прямо описывает обратное
+   решение: touch-action:none стоит только на body.flying, «везде остальные — жесты живы».
+   Запрет, сознательно снятый в CSS, вернулся из JS. Жест здесь настоящий — CDP-события,
+   а не синтетические: синтетические прокрутили бы страницу и мимо preventDefault. */
+async function guardScreensScrollByFinger(browser){
+  const name = '129. Лента прокручивается пальцем на каждом экране, кроме полёта';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH, viewport:{width:361,height:667}, mobile:true }); // вьюпорт владельца под шапкой Telegram
+    ctx = o.ctx; const page = o.page;
+    const cdp = await ctx.newCDPSession(page);
+    const drag = async ()=>{
+      const t = (y)=>[{x:180,y,radiusX:8,radiusY:8,force:1,id:1}];
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:t(520)});
+      for(let i=1;i<=14;i++) await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:t(520-i*24)});
+      await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      await page.waitForTimeout(90);
+    };
+    const bad=[], ok=[];
+    for(const [nm,go,sel] of [['ангар',"renderHangar();setScreen('hangar')",'#hangarScreen'],
+                              ['достижения',"openAch()",'#achScreen']]){
+      await page.evaluate(g=>{ const rows=[]; for(let i=0;i<14;i++) rows.push({name:'ПИЛОТ'+i,best:9000-i*500,pid:100+i});
+        window.syncTop=()=>Promise.resolve({ok:true,top:rows}); eval(g); }, go);
+      await page.waitForTimeout(180);
+      const before = await page.evaluate(sl=>{ const el=document.querySelector(sl);
+        let b=el; el.querySelectorAll('*').forEach(n=>{ if(n.scrollHeight-n.clientHeight>b.scrollHeight-b.clientHeight) b=n; });
+        window.__sc=b; return {over:b.scrollHeight-b.clientHeight, top:b.scrollTop}; }, sel);
+      if(before.over<40){ ok.push(`${nm}: за краем всего ${before.over} px — прокручивать нечего`); continue; }
+      await drag();
+      const after = await page.evaluate(()=>window.__sc.scrollTop);
+      if(after<=before.top+4) bad.push(`${nm}: за краем ${before.over} px, палец не сдвинул ленту (${before.top}→${after})`);
+      else ok.push(`${nm}: ${before.top}→${after} из ${before.over}`);
+    }
+    /* Контроль наоборот: в полёте жест обязан оставаться рулём, а не прокруткой. */
+    await page.evaluate(()=>{ runMode='classic'; startGame(); });
+    await page.waitForTimeout(120);
+    await drag();
+    const flying = await page.evaluate(()=>({run:S.running, scrolled:document.scrollingElement.scrollTop}));
+    if(!flying.run) bad.push('полёт оборвался от жеста');
+    if(flying.scrolled>0) bad.push(`в полёте страница прокрутилась на ${flying.scrolled} px — жест перестал быть рулём`);
+    if(bad.length) return post(name,false,bad.join(' · '));
+    post(name,true,'жест прокручивает ленту вне полёта и остаётся рулём в полёте — '+ok.join(' · '));
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 130 — Липкая кнопка «Назад» ничего не прячет навсегда.
+   Беда: .stickyBack (position:sticky; bottom:10px, v1.50.0 «Назад всегда на виду») лежит
+   ПОВЕРХ ленты, а запаса снизу у ленты нет. На снимках владельца «МЕНЮ» закрывает скин
+   «Неон», «НАЗАД» — восьмую строку таблицы. Замысел кнопки верный; беда в том, что даже
+   при работающей прокрутке последняя строка останется под ней. Лечится запасом снизу,
+   а не отменой липкости. */
+async function guardStickyBackHidesNothing(browser){
+  const name = '130. Липкая кнопка «Назад» не прячет под собой ни одной строки';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH, viewport:{width:361,height:667}, mobile:true });
+    ctx = o.ctx; const page = o.page;
+    const bad=[];
+    for(const [w,h] of [[361,667],[320,560]]){
+      await page.setViewportSize({width:w, height:h});
+      for(const [nm,go,back,sel] of [['ангар',"renderHangar();setScreen('hangar')",'#hangarBackBtn','#hangarScreen'],
+                                     ['достижения',"openAch()",'#achBackBtn','#achScreen']]){
+        await page.evaluate(g=>{ const rows=[]; for(let i=0;i<14;i++) rows.push({name:'ПИЛОТ'+i,best:9000-i*500,pid:100+i});
+          window.syncTop=()=>Promise.resolve({ok:true,top:rows}); eval(g); }, go);
+        await page.waitForTimeout(180);
+        const r = await page.evaluate(([bs,sl])=>{
+          const el=document.querySelector(sl);
+          let sc=el; el.querySelectorAll('*').forEach(n=>{ if(n.scrollHeight-n.clientHeight>sc.scrollHeight-sc.clientHeight) sc=n; });
+          sc.scrollTop = sc.scrollHeight; // доезжаем до самого низа — там и живёт беда
+          const b=document.querySelector(bs); if(!b) return {noBack:true};
+          const br=b.getBoundingClientRect();
+          const items=[...el.querySelectorAll('.angarIt,.topIt,.achIt,.btn')].filter(n=>n!==b);
+          const hidden=items.filter(n=>{ const q=n.getBoundingClientRect();
+            return q.bottom>br.top+2 && q.top<br.bottom-2 && q.left<br.right && q.right>br.left; });
+          return {hidden:hidden.length, txt:hidden.slice(0,2).map(n=>(n.textContent||'').trim().slice(0,18))};
+        }, [back,sel]);
+        if(r.noBack) continue;
+        if(r.hidden>0) bad.push(`${nm} ${w}×${h}: у самого низа ${r.hidden} строк под кнопкой (${r.txt.join(', ')})`);
+      }
+    }
+    if(bad.length) return post(name,false,bad.join(' · '));
+    post(name,true,'на дне ленты под кнопкой «Назад» не остаётся ни одной строки — запас снизу есть');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
+/* Страж 131 — Клавиатура не роняет игру в «экран слишком узкий».
+   Беда: пол листа (SC_MIN) писался против сплит-скрина и ужатого окна на десктопе, а
+   срабатывает на обычной экранной клавиатуре: она съедает 250-350 px из 667, SC падает
+   ниже 0.5, и поверх поля, в которое игрок печатает, встаёт полноэкранное «Разверните
+   окно, чтобы полететь». Совет бессмысленный: окно у телефона не разворачивается.
+   Клавиатура — временное сжатие, а не размер экрана. */
+async function guardKeyboardDoesNotBreakScreen(browser){
+  const name = '131. Экранная клавиатура не роняет игру в «экран слишком узкий»';
+  let ctx;
+  try{
+    const o = await openGame(browser, { init:FRESH, viewport:{width:361,height:667}, mobile:true });
+    ctx = o.ctx; const page = o.page;
+    /* Поле позывного в Настройках — самое надёжное поле ввода в игре: оно есть всегда,
+       а поля Кузницы живут под спойлером «Тонкая настройка» и могут быть скрыты. */
+    await page.evaluate(()=>{ if(typeof openSettings==='function') openSettings('menu');
+      const g=document.getElementById('setGrpProf'); if(g) g.click(); });
+    await page.waitForTimeout(240);
+    const focused = await page.evaluate(()=>{ for(const s of ['#csInput','#forgeName','#forgeCode']){
+        const i=document.querySelector(s); if(!i) continue; try{ i.focus(); }catch(e){}
+        if(document.activeElement===i) return s; } return ''; });
+    const bad=[];
+    for(const h of [420, 340, 300]){        // клавиатура открыта: вьюпорт сжат по ВЫСОТЕ
+      await page.setViewportSize({width:361, height:h});
+      /* Фокус возвращаем перед каждым шагом: окно «слишком узко» само его и отбирает
+         (pointer-events:auto поверх всего) — это часть беды, а не помеха замеру. */
+      await page.evaluate(()=>{ const i=document.getElementById('csInput'); if(i) try{ i.focus(); }catch(e){} });
+      await page.waitForTimeout(170);
+      const r = await page.evaluate(()=>({
+        narrow:!document.getElementById('tooNarrow').classList.contains('hidden'),
+        sc:+SC.toFixed(3), focus:(document.activeElement&&document.activeElement.tagName)||'' }));
+      if(r.narrow) bad.push(`высота ${h} px (клавиатура, фокус в ${r.focus||'?'}) → «экран слишком узкий», SC ${r.sc}`);
+    }
+    /* Контроль: настоящая теснота обязана по-прежнему ловиться — узкое окно по ШИРИНЕ. */
+    await page.evaluate(()=>{ const a=document.activeElement; if(a&&a.blur) a.blur(); });
+    await page.setViewportSize({width:150, height:667});
+    await page.waitForTimeout(170);
+    const real = await page.evaluate(()=>!document.getElementById('tooNarrow').classList.contains('hidden'));
+    if(!real) bad.push('по-настоящему узкое окно (150 px) перестало ловиться — страж съел полезную защиту');
+    if(!focused) bad.push('не удалось поставить фокус ни в одно поле ввода — сценарий не тот');
+    if(bad.length) return post(name,false,bad.join(' · '));
+    post(name,true,'сжатие по высоте под клавиатурой не роняет экран, а настоящая узость по ширине по-прежнему ловится');
+  }catch(e){ post(name,false,e.message.split('\n')[0]); }
+  finally{ if(ctx) await ctx.close(); }
+}
+
 /* ============================================================ */
 const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortraitLockAsks, guardMenuDoesNotPayForHud, guardLandscapeSpeaksTruth, guardHangarShowcase, guardServiceCenterIsSorted, guardMenuIsClean, guardVersionIsOneEverywhere, guardNoThirdPartyTelemetry, guardGuestDiaryTravels, guardAgainTagAndOnboarding, guardRockPathCached, guardFrameCostsNothingExtra, guardPoolReturnsCleanObject,
                  guardNothingBroken, guardBootWithoutCdn, guardGhostAfterSubmit, guardCustomFinishClearsSave,
@@ -4604,14 +5214,23 @@ const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortrait
                  guardFlipThroughDebounce, guardBridgeReadsSignatureBeforeUrlCleared, guardTakeoffExcludedFromCalStorm,
                  guardForgeSkyLoopCachesScreenRef, guardWaveDistTargetSped, guardMusicJitterAndDrift,
                  guardResizeSurvivesZeroViewport, guardNonTelegramHudGetsBreathingRoom,
-                 guardPopupTextIsUppercase, guardWaveLullContrast, guardGfxInvalidateClearsModuleGradients ];
+                 guardPopupTextIsUppercase, guardWaveLullContrast, guardGfxInvalidateClearsModuleGradients,
+                 guardWave1DailySignatureBytes, guardWave1LangReadAfterStore, guardWave1VibroSilencesMorse,
+                 guardWave1ContrastSurvivesColorblind, guardWave1DailyHudShowsContestDay,
+                 guardWave1TribuneSurvivesEmptyChampion, guardWave1GyroOfferHasWords,
+                 guardWave1ClaimShowsReward, guardWatchOthersRecord,
+                 guardRecordCarriesSeed, guardTapeIsEvidenceNotProperty,
+                 guardScreensScrollByFinger, guardStickyBackHidesNothing, guardKeyboardDoesNotBreakScreen ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;
 const browser = await chromium.launch({ args:['--no-sandbox','--mute-audio'] });
 console.log(`\nСТРАЖИ КОСМОГРАММЫ · партия «Пожар»\nборт: ${BASE}\n`);
-for(const g of GUARDS) await g(browser);
+const ONLY = (process.argv.find(a=>a.startsWith('--only='))||'').slice(7);
+const RUN = ONLY ? GUARDS.filter(g=>new RegExp(ONLY,'i').test(g.name)) : GUARDS;
+if(ONLY && !RUN.length){ console.log(`\n❌ --only=${ONLY} не совпал ни с одним стражем\n`); process.exit(2); }
+for(const g of RUN) await g(browser);
 await browser.close(); server.close();
 
-console.log(`\n${failed ? `❌ ПРОПУЩЕНО БЕД: ${failed} из ${GUARDS.length}` : `✅ ВСЕ ${GUARDS.length} СТРАЖЕЙ НА ПОСТУ`}\n`);
+console.log(`\n${failed ? `❌ ПРОПУЩЕНО БЕД: ${failed} из ${RUN.length}` : `✅ ВСЕ ${RUN.length} СТРАЖЕЙ НА ПОСТУ`}\n`);
 process.exit(failed ? 1 : 0);

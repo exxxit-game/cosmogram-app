@@ -21,7 +21,12 @@ const GOLD=(()=>{
     star=null; spawned=false; caught=false; catchT=0; sparkA=[]; t0=performance.now()/1000;
     S.goldStar=false; // знак не переживает взлёт: S обновляется заплатками, и вчерашняя честь не должна просочиться в завтра
   }
-  function onSky(){ return S.mode==='daily'||S.mode==='theater'; } // звезда принадлежит небу дня — и его сцене
+  /* v1.284.4: Театр обслуживает две разные сцены. Спектакль дня — небо, которому звезда
+     принадлежит. Повтор чужого рекорда Классики — чужой забег, не принадлежащий никакому
+     дню: звезда там взошла бы над полётом, в котором её не было, и рекордсмен выглядел бы
+     так, будто прошёл мимо неё. Флаг ставит ui.js на входе в сцену. Страж 126. */
+  function onSky(){ if (typeof theaterRecord!=='undefined' && theaterRecord) return false;
+    return S.mode==='daily'||S.mode==='theater'; } // звезда принадлежит небу дня — и его сцене
 
   function tick(dt){
     if (!onSky()){ star=null; spawned=false; caught=false; catchT=0; return; }

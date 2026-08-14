@@ -767,7 +767,10 @@ function update(dt){
     if (S.score>=SR_GOAL && !S.dying){ startDying(); S.srWin=1; } // занавес как при смерти, но это победа
   }
   else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0)
-    const elMH=elModeHud, tk=todayKey(); if (elMH && !elMH._t){ elMH._t=1;
+    // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
+    // из которого шьётся сама трасса. Здесь стоял todayKey() — личная дата: в UTC+3 вечером
+    // игрок видел завтрашнее число при сегодняшней трассе. Закон №17. Страж 122.
+    const elMH=elModeHud, tk=trackDayKey(); if (elMH && !elMH._t){ elMH._t=1;
       elMH.textContent=L.modeDaily+' · '+tk.slice(8)+'.'+tk.slice(5,7); } }
   else if (S.mode==='theater'){ // Театр призраков (v1.94.0): табло зрителя — не счёт, а название спектакля
     const elMH=elModeHud; if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }

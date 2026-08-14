@@ -90,7 +90,12 @@ async function hmacHex(secret: string, msg: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(msg));
-  return [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
+  // v6: здесь был [...sig] прямо по ArrayBuffer — а ArrayBuffer не итерируется, и весь
+  // вход через Discord падал TypeError'ом внутрь общего catch в validateSession, отдавая
+  // игроку молчаливый 401 на каждое действие Трассы дня. В cosmogram-sync тот же баг был
+  // найден и починен (v12), сюда правка не доехала: закон №25 — правка класса ошибок не
+  // закончена, пока не проверены ВСЕ, кто умеет делать то же самое. Страж 118.
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 async function validateSession(sess: string, secret: string): Promise<{ provider: string; providerId: string; playerId: number; name: string } | null> {
   try {
