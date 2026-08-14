@@ -285,6 +285,24 @@ let tgPkt=0, webPkt=0; // счётчики пакетов мост/веб — в
    Порог живости поднят с 0.4° до 2.5° — выше шума датчика и выше дрожи мёртвого моста.
    Пороги шторма/покоя/тишины (80/40/10) не трогаем: по осевой метрике их смысл тот же —
    настоящая буря даёт сотни градусов размаха по оси, рука в движении — десятки. */
+/* v1.284.16 «Вектор вместо угла» (решение владельца 14.08).
+   Браузер отдаёт ориентацию углами Эйлера, а у них есть полюс: когда телефон подходит
+   к вертикали, gamma вырождается и скачет от малейшего движения. Замер прибором
+   tests/polyus.mjs при спокойной руке ±2°: размах gamma 4° на позе β=20° и 171° на β=89°.
+   Отсюда и пачки строк `storm: web spread 92…178` в ленте владельца — игра объявляла
+   шторм там, где рука неподвижна, и переставала брать ноль.
+
+   Считаем боковой наклон не углом, а направлением силы тяжести. Третья строка матрицы
+   поворота — это «где верх» в системе координат телефона: u = (−cosβ·sinγ, sinβ, cosβ·cosγ).
+   Alpha в неё НЕ входит вовсе — компас не нужен, новых разрешений тоже. Боковой наклон —
+   угол между силой тяжести и плоскостью экрана. У него нет полюса: знаменатель обращается
+   в ноль, только когда телефон лежит точно на боку.
+   При β=0 величина в точности равна gamma — для обычной позы не меняется ничего. */
+function tiltBok(b, g){
+  const B=(b||0)*Math.PI/180, G=(g||0)*Math.PI/180;
+  const ux=-Math.cos(B)*Math.sin(G), uy=Math.sin(B), uz=Math.cos(B)*Math.cos(G);
+  return Math.atan2(-ux, Math.hypot(uy, uz)) * 180/Math.PI;
+}
 const LIVE_WIN=2000, LIVE_MIN=8, LIVE_SPREAD=2.5; // окно стража, мин. пакетов для суда, порог разброса (°)
 const chanHist={tg:[],web:[]}; // {t,g,b} — скользящие окна дыхания каналов
 const chanCalc={tg:null,web:null}; // v1.282.13: разбор окна считается раз на пакет, а не на каждый вопрос
@@ -458,6 +476,7 @@ function onTgOrient(e){ // пакет с моста Telegram; данные в th
   const a=(e && typeof e.alpha==='number') ? e.alpha : (TG_ORIENT && typeof TG_ORIENT.alpha==='number' ? TG_ORIENT.alpha : null);
   if(g==null || !isFinite(g) || !isFinite(b)) return;
   tgOrientLive=true; tgOrientLast=performance.now(); tgPkt++; gyroLastErr='';
+  g = tiltBok(b,g); // v1.284.16: боковой наклон по силе тяжести — у него нет полюса
   chanFeed('tg',g,b); // v1.89.0: стражу — каждый пакет, даже если рулит не мост
   if(!maySteer('tg')){ gyroStatusTick(); return; } // мост мёртв по значениям — живой веб-канал не сдаёт штурвал
   gyroSrc='tg';
@@ -515,14 +534,19 @@ if (TG_ORIENT){
 }
 
 window.addEventListener('deviceorientation', e=>{
-  const g=e.gamma, b=(e.beta==null?0:e.beta);
+  const b=(e.beta==null?0:e.beta);
+  const g=(typeof e.gamma==='number' && isFinite(e.gamma) && isFinite(b)) ? tiltBok(b,e.gamma) : e.gamma; // v1.284.16: по силе тяжести
   if(typeof g==='number' && isFinite(g) && isFinite(b)) chanFeed('web',g,b); // v1.89.0: стражу — каждый пакет, даже отфильтрованный
   if (tgOrientLive && performance.now()-tgOrientLast<1000 && steerChan!=='web' && !((chanFrozen('tg')||chanLiar('tg')) && chanAlive('web'))) return; // мост свеж и дышит — не дублируем; мост мёртв или осуждён, а веб жив — принимаем эстафету. v1.99.8: действующий штурман не тонет в шлюзе — иначе оживший мост глушил веб, а сам не рулил (руль замирал при двух живых каналах). v1.104.0: осуждённый лжец эксклюзив не держит
   if (tgOrientLive && performance.now()-tgOrientLast>=1000) tgOrientLive=false; // мост замолчал >1с — эксклюзив снят
   if (!maySteer('web')) return; // штурман жив, а веб мёртв — штурвал не отбираем
   gyroSrc='web'; webPkt++; gyroStatusTick(); // v1.66.1: DOM — только когда настройки открыты
   gyroChanIn('web');
-  onTilt(e);
+  /* v1.284.16: в руль уходит та же величина, что и стражу. Первая редакция правки
+     конвертировала только пакет для chanFeed, а onTilt получал сырое событие — суд
+     считал бы по вектору, а рулил бы игрок по-старому, через полюс. Расхождение между
+     тем, что меряют, и тем, чем управляют, — худший вид починки. */
+  onTilt({gamma:g, beta:b, alpha:e.alpha});
 });
 // Поворот экрана: оси меняются, старый ноль врёт — пересчитаем на следующем пакете
 window.addEventListener('orientationchange', ()=>calResetDebounced(false,true,'orientation')); // v1.108.1: поворот экрана — тоже буря для осей, но не дважды подряд — через дребезг-страж
