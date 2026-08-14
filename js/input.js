@@ -142,7 +142,7 @@ function gyroChanIn(chan){
     if(input.baseG==null) calCountersReset(true); // нуля ещё нет: тихая калибровка, но это НЕ шторм — счётчик молчит
     else if(typeof BB!=='undefined') BB.log('zero','restore '+Math.round(input.baseG)+'/'+Math.round(input.baseB)+' ('+chan+')');
   }
-  steerChan=chan; steerSinceT=performance.now();
+  steerChan=chan; steerSinceT=performance.now(); steerNoneSinceT=0; // хозяин найден — запас терпения ни к чему
 }
 let foreignNoteT=0; // v1.102.2: запись карантина на ленту — не чаще раза в секунду
 let foreignN=0; // v1.104.0: сколько подряд пакетов поза сидит под карантином — счётчик лавочки
@@ -327,7 +327,24 @@ function chanFrozen(chan){ return !chanSilent(chan) && chanSpread(chan)>=0 && ch
    канал, чем никакого. */
 const STEER_HOLD=2000, STEER_ABANDON=3000;
 function maySteer(x){ // арбитраж штурвала: продолжение руля — всегда; смена — по молчанию, по смерти значений, по приговору
-  if(steerChan===x || steerChan==='none') return true;
+  if(steerChan===x) return true;
+  /* v1.284.15: штурвал ничей — раньше его забирал тот, кто заговорил первым. На телефоне
+     владельца первым просыпается мост, и он же мёртв: две секунды каждого забега руль был
+     у канала с разбросом 0°, а первая преграда приходит на 0.8с. Теперь при ничьём руле
+     нужно доказательство жизни — восемь пакетов с настоящим размахом. Три оговорки, без
+     которых лекарство было бы хуже болезни:
+       — осуждённый не получает руль никогда, даже как единственный желающий;
+       — если сосед осуждён, доказывать не у кого и не перед кем: отдаём сразу;
+       — если ни один не доказал за PROOF_WAIT, отдаём хоть кому — игрок без гироскопа
+         хуже, чем игрок с неточным. */
+  if(steerChan==='none'){
+    if(chanLiar(x)) return false;
+    const y = x==='tg' ? 'web' : 'tg';
+    if(chanLiar(y)) return true;                                  // соперника нет — доказывать не перед кем
+    if(chanAlive(x)) return true;                                 // дышит: восемь пакетов с размахом
+    if(!steerNoneSinceT) steerNoneSinceT=performance.now();       // запас терпения пошёл
+    return performance.now()-steerNoneSinceT>PROOF_WAIT;          // никто не доказал — руль лучше хоть какой-то
+  }
   const y=x==='tg'?'web':'tg';
   if(chanSilentFor(y)>STEER_ABANDON) return true;                 // сосед ушёл совсем — руль нужен хоть какой-то
   /* v1.282.14, порядок выверен стражами 5 и 38 — они тянули в разные стороны, и первая
@@ -383,6 +400,20 @@ const STORM_SPREAD=65, CALM_SPREAD=22;
    штурвал забирает (maySteer), его слово не держит карантин нуля (calFeed). */
 const LIAR_QUIET=7, LIAR_AGREE=25; // v1.282.14: порог «канал молчит» пересчитан под осевую метрику (см. STORM_SPREAD выше). LIAR_AGREE не трогаем: это разница медиан β, а не размах, — метрика её не касается
 const liarMark={tg:0,web:0}; // приговор: метка времени последнего суда; 0 — чист
+/* v1.284.15 «Штурвал за доказательство» (решение владельца, вариант В).
+   Лента самописца владельца, четыре сборки подряд: канал Telegram отдаёт неподвижную
+   цифру, суд его осуждает — и каждый раз заново, с нуля. Приговор жил только в памяти
+   вкладки, поэтому при каждом запуске руль снова уходил мертвецу, и первые две секунды
+   забега наклон не рулил вовсе. Теперь приговор переживает перезапуск, а ветка
+   реабилитации (канал задышал и согласен с соседом) его снимает — починившееся
+   устройство не наказано навсегда. */
+function liarSave(){ try{ const m={}; if(liarMark.tg) m.tg=1; if(liarMark.web) m.web=1;
+  if(m.tg||m.web) Store.set('liarSeen',m); else Store.del('liarSeen'); }catch(e){} }
+function liarLoad(){ try{ const m=Store.get('liarSeen',null);
+  if(m && typeof m==='object'){ if(m.tg) liarMark.tg=1; if(m.web) liarMark.web=1; } }catch(e){} }
+liarLoad();
+let steerNoneSinceT=0; // когда штурвал остался ничей — отсюда считается запас терпения
+const PROOF_WAIT=1200; // сколько ждём доказательства жизни, прежде чем отдать руль хоть кому
 /* v1.282.13: «судить рано» теперь null, а не −1. β лежит в диапазоне [−180,180], и
    отрицательная медиана (телефон наклонён от себя — обычнейшая поза) была неотличима
    от «окно не набрано»: проверка mc<0||mo<0 молча распускала суд компасов. То есть у
@@ -399,10 +430,10 @@ function liarCourt(){
     if(sober && sc<LIAR_QUIET && Math.abs(mc-mo)>40){ // тихий врёт, где низ, — при движущейся руке
       if(!liarMark[c] && typeof BB!=='undefined') BB.log('liar',c+' осуждён: штиль '+Math.round(sc)+'° β'+Math.round(mc)+' при руке '+o+' β'+Math.round(mo)+' (разброс '+Math.round(so)+'°)');
       if(!liarMark[c] && typeof BEACON!=='undefined') BEACON.signal('liar',c); // v1.107.0 «Почта неба»: приговор лжецу — симптом железа, летит экипажу
-      liarMark[c]=performance.now();
+      liarMark[c]=performance.now(); liarSave(); // приговор переживает перезапуск
     } else if(liarMark[c] && sc>=LIAR_QUIET && sc<STORM_SPREAD && Math.abs(mc-mo)<=LIAR_AGREE){ // задышал и согласен — реабилитирован
       if(typeof BB!=='undefined') BB.log('liar',c+' реабилитирован: дышит '+Math.round(sc)+'°, β'+Math.round(mc)+' ≈ '+o+' β'+Math.round(mo));
-      liarMark[c]=0;
+      liarMark[c]=0; liarSave(); // реабилитирован — снимаем и с диска
     }
   }
 }
