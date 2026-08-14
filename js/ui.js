@@ -1096,6 +1096,19 @@ function musicLabel(){ rowSw('setMusicBtn', MUSIC_ON); setWellFill(); }
 function contrastLabel(){ rowSw('setContrastBtn', CONTRAST); }
 function colorblindLabel(){ rowSw('setColorblindBtn', COLORBLIND); }
 function streaksLabel(){ rowSw('setStreaksBtn', SPEED_STREAKS); }
+/* v1.284.20 «Выключатель руля» (партия 47). Строка гасит не только себя: «Чувствительность»
+   и «Калибровка гироскопа» — настройки того же руля, и оставлять их живыми под выключенным
+   тумблером значит предлагать настраивать то, чего нет. Гасим видом и снимаем нажатие. */
+function gyroRowLabel(){
+  const est = (typeof gyroRul==='function') ? gyroRul() : true;
+  rowSw('setGyroBtn', est);
+  for(const id of ['setSensBtn','setCalibBtn']){
+    const el=$(id); if(!el) continue;
+    el.style.opacity = est ? '' : '.35';
+    el.style.pointerEvents = est ? '' : 'none';
+    el.setAttribute('aria-disabled', est ? 'false' : 'true');
+  }
+}
 function canvasFilterSync(){ // v1.280.0: класс на самом canvas — оба фильтра независимы, могут стоять вместе
   const cv=$('game'); if(!cv) return;
   cv.classList.toggle('hc', CONTRAST);
@@ -1106,6 +1119,15 @@ $('setContrastBtn').addEventListener('click', ()=>{
 });
 $('setColorblindBtn').addEventListener('click', ()=>{
   COLORBLIND=!COLORBLIND; Store.set('colorblind',COLORBLIND?1:0); colorblindLabel(); canvasFilterSync(); haptic('light'); sfx.click();
+});
+$('setGyroBtn').addEventListener('click', ()=>{
+  const budet = !((typeof gyroRul==='function') ? gyroRul() : true);
+  Store.set('gyroOn', budet?1:0);
+  /* Выключили посреди живого забега — руль обязан отпуститься сейчас, а не на следующем
+     пакете датчика: пакета может не быть вовсе, и самолёт остался бы уведённым туда, где
+     рука была в момент выключения. Тот же класс беды, что «руль не залипает» (v1.282.13). */
+  if(!budet && typeof input!=='undefined'){ input.tiltX=0; input.tiltY=0; input.useGyro=false; }
+  gyroRowLabel(); haptic('light'); sfx.click();
 });
 $('setStreaksBtn').addEventListener('click', ()=>{
   SPEED_STREAKS=!SPEED_STREAKS; Store.set('speedStreaks',SPEED_STREAKS?1:0); streaksLabel(); haptic('light'); sfx.click();
@@ -1696,13 +1718,13 @@ function applyLang(){
   $('csCap').textContent=L.csCap; // v1.66.3: подпись позывного в «Профиле»
   $('diagMoreBtn').textContent=L.moreLbl; // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   $('diagSupportBtn').textContent=L.diagSupportBtn;
-  sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill();
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   $('moreBtn').textContent=L.moreLbl;
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
-   ['setMorseHapBtn','setMorseHap'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
+   ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setLangBtn','setLang'],
    ['setGhostBtn','setGhost'],['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
@@ -1730,7 +1752,7 @@ Store.init(()=>{
   // устройство без датчика — гиро-кнопки не показываем вовсе
   if(NEEDS_TILT_PERMISSION && !TG_ORIENT) $('tiltBtn').classList.remove('hidden');
   gyroStatus(); // диагностика датчика в настройках: Telegram / браузер / молчит
-  if(!HAS_GYRO){ $('setCalibBtn').classList.add('hidden'); $('setSensBtn').classList.add('hidden'); }
+  if(!HAS_GYRO){ $('setCalibBtn').classList.add('hidden'); $('setSensBtn').classList.add('hidden'); $('setGyroBtn').classList.add('hidden'); } // v1.284.20: нет датчика — нечего и выключать
   // настройки: звук, вибро, графика, язык из хранилища
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;

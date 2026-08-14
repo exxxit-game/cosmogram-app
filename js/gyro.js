@@ -38,6 +38,10 @@ function gyroSensorThere(){ // оффер только там, где накло
   return HAS_GYRO && (typeof realGyroSeen!=='undefined' && realGyroSeen);
 }
 function gyroOfferDue(){
+  // v1.284.20 (партия 47): игрок выключил гироскоп — значит вопрос уже задан и уже отвечен.
+  // Предлагать «Полёт без рук» после этого — переспрашивать несогласного. Дверь в Настройках
+  // открыта всегда, и это единственное место, где разговор возобновляется по воле игрока.
+  if (typeof gyroRul==='function' && !gyroRul()) return false;
   if (GYRO.live || gyroUnlocked() || !gyroSensorThere()) return false;
   if (!S.running || S.paused || S.dying || S.bullet) return false;
   if (Store.get('gyroDeclines',0) >= GOFFER_MAX_DECLINES) return false; // v1.108.1: наспрашивались — тишина, дверь в Настройках открыта всегда

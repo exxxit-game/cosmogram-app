@@ -188,8 +188,8 @@ const I18N = {
     tribune:'Трибуна чемпиона', tribuneNone:'Мастер ещё не показал полёт',
     goldStarStats:(c,f)=>'Золотую звезду сегодня взяли '+c+' из '+f,
     goldChip:'★ Знак дня',
-    pause:'Пауза', ariaPause:'Пауза', resume:'Продолжить', restart:'Заново', calib:'Калибровка наклона',
-    lampGreen:'Оба компаса дышат — наклон рулит', lampAmber:'Один канал спит или молчит — наклон рулит, запаса нет', lampRed:'Датчик молчит — руль только пальцем',
+    pause:'Пауза', ariaPause:'Пауза', resume:'Продолжить', restart:'Заново', calib:'Калибровка гироскопа',
+    lampGreen:'Оба компаса дышат — гироскоп рулит', lampAmber:'Один канал спит или молчит — гироскоп рулит, запаса нет', lampRed:'Датчик молчит — руль только пальцем',
     hangar:'Ангар', best:'Рекорд',
     recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     topVerified:'Результат подтверждён забегом', unitM:'м', dist:'Дистанция', recordDist:'Рекорд дистанции',
@@ -236,7 +236,7 @@ const I18N = {
     setGfx:'Графика', gfxAuto:'Авто', gfxLow:'Низкая', gfxMed:'Средняя', gfxHigh:'Высокая', gfxUltra:'Ультра',
     aboutBtn:'Об игре',
     modeGyro:'Гироскоп', modeTouch:'Касание', modeKeys:'Клавиатура',
-    tiltAllow:'Разрешить управление наклоном?', tiltOn:'Наклон включён', sens:'Чувствительность',
+    tiltAllow:'Разрешить гироскоп?', tiltOn:'Гироскоп включён', setGyroRow:'Гироскоп', sens:'Чувствительность',
     gyroStatTg:'Датчик: Telegram · жив', gyroStatWeb:'Датчик: веб-канал · жив', gyroStatNone:'Датчик молчит — играй пальцем',
     stars:'Звёзды', maxCombo:'Макс. комбо', share:'Поделиться', invite:'Позвать друзей',
     home:'На экран «Домой»',
@@ -247,7 +247,7 @@ const I18N = {
        получил подпись — голое число под кнопкой читалось как ещё одна цена. */
     hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
     brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
-    calibrated:'Наклон откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
+    calibrated:'Гироскоп откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
     tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно, чтобы полететь',
     /* 13.08.2026: альбомную ориентацию мы не поддерживаем — решение владельца. Раньше окно
@@ -324,8 +324,8 @@ const I18N = {
     tribune:'Champion’s stand', tribuneNone:'The master hasn’t shown a flight yet',
     goldStarStats:(c,f)=>'Today’s golden star was caught by '+c+' of '+f,
     goldChip:'★ Sign of the day',
-    pause:'Paused', ariaPause:'Pause', resume:'Resume', restart:'Restart', calib:'Calibrate tilt',
-    lampGreen:'Both compasses breathe — tilt steering live', lampAmber:'One channel asleep or silent — tilt steering live, no backup', lampRed:'No sensor data — touch steering only',
+    pause:'Paused', ariaPause:'Pause', resume:'Resume', restart:'Restart', calib:'Calibrate gyro',
+    lampGreen:'Both compasses breathe — gyro steering live', lampAmber:'One channel asleep or silent — gyro steering live, no backup', lampRed:'No sensor data — touch steering only',
     hangar:'Hangar', best:'Best',
     recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     topVerified:'Result confirmed by the run', unitM:'m', dist:'Distance', recordDist:'Distance record',
@@ -372,7 +372,7 @@ const I18N = {
     setGfx:'Graphics', gfxAuto:'Auto', gfxLow:'Low', gfxMed:'Medium', gfxHigh:'High', gfxUltra:'Ultra',
     aboutBtn:'About',
     modeGyro:'Gyro', modeTouch:'Touch', modeKeys:'Keyboard',
-    tiltAllow:'Allow tilt control?', tiltOn:'Tilt enabled', sens:'Sensitivity',
+    tiltAllow:'Allow gyro control?', tiltOn:'Gyro enabled', setGyroRow:'Gyro', sens:'Sensitivity',
     gyroStatTg:'Sensor: Telegram · live', gyroStatWeb:'Sensor: web channel · live', gyroStatNone:'Sensor silent — use your finger',
     stars:'Stars', maxCombo:'Max combo', share:'Share', invite:'Invite friends',
     home:'Add to Home',
@@ -381,7 +381,7 @@ const I18N = {
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
     brandSub:'One sky for everyone',
-    calibrated:'Tilt calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
+    calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
     tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window to fly',
     landTitle:'Turn the phone upright', landHint:'The game is made for a vertical screen',
@@ -453,9 +453,9 @@ const I18N = {
     goldStarStats:(c,f)=>'Hoy tomaron la estrella dorada '+c+' de '+f,
     goldChip:'★ Marca del día',
     pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Reiniciar',
-    calib:'Calibrar inclinación',
-    lampGreen:'Ambas brújulas respiran — la inclinación controla',
-    lampAmber:'Un canal duerme o calla — la inclinación controla, sin respaldo',
+    calib:'Calibrar giroscopio',
+    lampGreen:'Ambas brújulas respiran — el giroscopio controla',
+    lampAmber:'Un canal duerme o calla — el giroscopio controla, sin respaldo',
     lampRed:'Sensor en silencio — control solo con el dedo',
     hangar:'Hangar', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia', bullet:'Calma', recordBullet:'Récord de calma',
@@ -497,7 +497,7 @@ const I18N = {
     setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setStreaks:'Estelas de velocidad', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Acerca del juego',
     modeGyro:'Giroscopio', modeTouch:'Toque', modeKeys:'Teclado',
-    tiltAllow:'¿Permitir control por inclinación?', tiltOn:'Inclinación activada', sens:'Sensibilidad',
+    tiltAllow:'¿Permitir el giroscopio?', tiltOn:'Giroscopio activado', setGyroRow:'Giroscopio', sens:'Sensibilidad',
     gyroStatTg:'Sensor: Telegram · activo', gyroStatWeb:'Sensor: canal web · activo',
     gyroStatNone:'Sensor en silencio — juega con el dedo',
     stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', invite:'Invitar amigos', home:'Añadir a inicio',
@@ -507,7 +507,7 @@ const I18N = {
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas',
     brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
-    calibrated:'Inclinación calibrada', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
+    calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
     tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana para volar',
@@ -598,9 +598,9 @@ const I18N = {
     goldStarStats:(c,f)=>'Hoje pegaram a estrela dourada '+c+' de '+f,
     goldChip:'★ Marca do dia',
     pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Recomeçar',
-    calib:'Calibrar inclinação',
-    lampGreen:'As duas bússolas respiram — a inclinação controla',
-    lampAmber:'Um canal dorme ou está mudo — a inclinação controla, sem reserva',
+    calib:'Calibrar giroscópio',
+    lampGreen:'As duas bússolas respiram — o giroscópio controla',
+    lampAmber:'Um canal dorme ou está mudo — o giroscópio controla, sem reserva',
     lampRed:'Sensor em silêncio — controle só com o dedo',
     hangar:'Hangar', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância', bullet:'Calmaria', recordBullet:'Recorde de calmaria',
@@ -642,7 +642,7 @@ const I18N = {
     setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setStreaks:'Rastros de velocidade', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Sobre o jogo',
     modeGyro:'Giroscópio', modeTouch:'Toque', modeKeys:'Teclado',
-    tiltAllow:'Permitir controle por inclinação?', tiltOn:'Inclinação ativada', sens:'Sensibilidade',
+    tiltAllow:'Permitir o giroscópio?', tiltOn:'Giroscópio ativado', setGyroRow:'Giroscópio', sens:'Sensibilidade',
     gyroStatTg:'Sensor: Telegram · ativo', gyroStatWeb:'Sensor: canal web · ativo',
     gyroStatNone:'Sensor em silêncio — jogue com o dedo',
     stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', invite:'Convidar amigos', home:'Adicionar à tela inicial',
@@ -652,7 +652,7 @@ const I18N = {
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas',
     brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
-    calibrated:'Inclinação calibrada', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
+    calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
     tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela para voar',
@@ -742,8 +742,8 @@ const I18N = {
     tribune:'Tribune du champion', tribuneNone:'Le maître n\u2019a pas encore montré de vol',
     goldStarStats:(c,f)=>'L\u2019étoile dorée du jour a été attrapée par '+c+' sur '+f,
     goldChip:'★ Signe du jour',
-    pause:'Pause', ariaPause:'Pause', resume:'Reprendre', restart:'Recommencer', calib:'Calibrer l\u2019inclinaison',
-    lampGreen:'Les deux boussoles respirent — pilotage à l\u2019inclinaison actif', lampAmber:'Un canal endormi ou silencieux — pilotage à l\u2019inclinaison actif, sans secours', lampRed:'Aucune donnée du capteur — pilotage tactile uniquement',
+    pause:'Pause', ariaPause:'Pause', resume:'Reprendre', restart:'Recommencer', calib:'Calibrer le gyroscope',
+    lampGreen:'Les deux boussoles respirent — pilotage au gyroscope actif', lampAmber:'Un canal endormi ou silencieux — pilotage au gyroscope actif, sans secours', lampRed:'Aucune donnée du capteur — pilotage tactile uniquement',
     hangar:'Hangar', best:'Meilleur',
     recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
     topVerified:'Résultat confirmé par la partie', unitM:'m', dist:'Distance', recordDist:'Record de distance',
@@ -789,7 +789,7 @@ const I18N = {
     setGfx:'Graphismes', gfxAuto:'Auto', gfxLow:'Faible', gfxMed:'Moyen', gfxHigh:'Élevé', gfxUltra:'Ultra',
     aboutBtn:'À propos',
     modeGyro:'Gyroscope', modeTouch:'Tactile', modeKeys:'Clavier',
-    tiltAllow:'Autoriser le pilotage à l\u2019inclinaison ?', tiltOn:'Inclinaison activée', sens:'Sensibilité',
+    tiltAllow:'Autoriser le gyroscope ?', tiltOn:'Gyroscope activé', setGyroRow:'Gyroscope', sens:'Sensibilité',
     gyroStatTg:'Capteur : Telegram · actif', gyroStatWeb:'Capteur : canal web · actif', gyroStatNone:'Capteur silencieux — utilise ton doigt',
     stars:'Étoiles', maxCombo:'Combo max', share:'Partager', invite:'Inviter des amis',
     home:'Ajouter à l\u2019accueil',
@@ -798,7 +798,7 @@ const I18N = {
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
     hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
     brandSub:'Un ciel pour tous',
-    calibrated:'Inclinaison calibrée', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
+    calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
     tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre pour voler',
     landTitle:'Tourne le téléphone', landHint:'Le jeu est conçu pour un écran vertical',
@@ -1057,7 +1057,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.19'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.20'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
