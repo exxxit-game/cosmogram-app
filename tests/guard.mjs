@@ -5140,6 +5140,39 @@ async function guardStickyBackHidesNothing(browser){
 /* 134. Партия 33 «Чёрный экран заговорит». Обещание игроку: игра взлетает даже там, где
    браузер запретил хранилище (режим инкогнито, запрет сторонних данных в webview).
    Проверяем не наличие try/catch в тексте, а факт: рисуются ли кадры и поднялся ли маяк. */
+/* 136. Партия 35 «Две вкладки». Обещание игроку: рекорд и покупка не исчезают оттого,
+   что игра открыта в двух местах. Сцена настоящая: два окна в ОДНОМ контексте, значит
+   с общим хранилищем — ровно как две вкладки браузера у человека. */
+async function guardSecondTabKeepsRecord(browser){
+  const name = '136. Вторая вкладка не стирает рекорд и покупку первой';
+  let ctx;
+  try{
+    ctx = await browser.newContext({ viewport:{width:412,height:915}, deviceScaleFactor:3, isMobile:true, hasTouch:true });
+    await ctx.route('**://telegram.org/**', r=>r.abort());
+    const a = await ctx.newPage(); await a.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000}); await a.waitForTimeout(2500);
+    const b = await ctx.newPage(); await b.goto(BASE,{waitUntil:'domcontentloaded',timeout:15000}); await b.waitForTimeout(2500);
+
+    /* Вкладка Б сняла свой снимок при загрузке. Теперь вкладка А зарабатывает. */
+    await a.evaluate(()=>{ Store.set('best',4242); Store.set('wallet',989); Store.set('ownedSkins',[0,3]); });
+    await a.waitForTimeout(200);
+
+    /* А вкладка Б делает самое обычное: любой Store.set. Не «сохранить игру», а морзянку дня,
+       статистику, автосейв, флаш самописца — всё, что идёт само. */
+    await b.evaluate(()=>{ Store.set('morseDay','2026-08-14'); });
+    await b.waitForTimeout(200);
+
+    const disk = await b.evaluate(()=>{ try{ return JSON.parse(localStorage.getItem('cosmogram_v2')||'{}'); }catch(e){ return {}; } });
+    const bad = [];
+    if(+disk.best !== 4242) bad.push(`рекорд ${disk.best} вместо 4242`);
+    if(+disk.wallet !== 989) bad.push(`кошелёк ${disk.wallet} вместо 989`);
+    if(!Array.isArray(disk.ownedSkins) || !disk.ownedSkins.includes(3)) bad.push('купленный скин пропал');
+    if(disk.morseDay !== '2026-08-14') bad.push('запись второй вкладки не легла вовсе');
+    if(bad.length) return post(name,false,'после обычной записи из второй вкладки: '+bad.join(' · '));
+    return post(name,true,'рекорд 4242, кошелёк 989 и купленный скин пережили запись из второй вкладки');
+  }catch(e){ return post(name,false,'страж не отработал: '+e.message); }
+  finally{ if(ctx) await ctx.close().catch(()=>{}); }
+}
+
 async function guardStorageDeniedStillFlies(browser){
   const name = '134. Запрещённое хранилище не мешает взлёту';
   let ctx;
@@ -5326,7 +5359,7 @@ const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortrait
                  guardRecordCarriesSeed, guardTapeIsEvidenceNotProperty,
                  guardScreensScrollByFinger, guardStickyBackHidesNothing, guardKeyboardDoesNotBreakScreen,
                  guardNoApiKeyInRepo,
-                 guardStorageDeniedStillFlies, guardBootFailureSpeaks ];
+                 guardStorageDeniedStillFlies, guardBootFailureSpeaks, guardSecondTabKeepsRecord ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;

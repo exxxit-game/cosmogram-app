@@ -845,14 +845,14 @@ let L = I18N[LANG]; // let: настройка языка переключает
 /* ---------- Хранилище (Блок 8: CloudStorage primary, localStorage fallback) ---------- */
 function gyroUnlocked(){ return Store.get('gyroUnlocked',0)===1; } // замок гироскопа (v1.5.2): рулит только после «Полёта без рук» — новичку наклоны не ломают первые полёты
 const Store = {
-  mem:{}, cloud:null, _loaded:false,
+  mem:{}, cloud:null, _loaded:false, _lastRaw:'',
   _load(){ // v1.70.0: ленивая загрузка — раньше gfxCap() на парсинге core.js писал gfxTier в пустой mem
     if(this._loaded) return; this._loaded=true; // ДО init() и затирал весь blob (настройки, runMode, forgeLast…)
     /* v1.282.13: битое хранилище не затираем молча. Раньше catch просто ставил пустой
        mem — и первый же Store.set перезаписывал ещё восстановимую сырую строку пустотой,
        то есть неудачный разбор превращался в необратимую потерю рекордов и кошелька.
        Теперь сырьё откладывается в сторону: игра стартует чистой, но данные можно вынуть. */
-    try{ const raw=localStorage.getItem('cosmogram_v2'); if(raw) this.mem=JSON.parse(raw)||{}; }
+    try{ const raw=localStorage.getItem('cosmogram_v2'); if(raw){ this.mem=JSON.parse(raw)||{}; this._lastRaw=raw; } }
     catch(e){ this.mem={};
       try{ const raw=localStorage.getItem('cosmogram_v2');
         if(raw && !localStorage.getItem('cosmogram_v2_broken')) localStorage.setItem('cosmogram_v2_broken',raw); }catch(e2){}
@@ -910,7 +910,7 @@ const Store = {
      сбросить объёмное и некритичное (ленту, очередь писем, автосейв) и записать снова;
      если и это не спасло — сигналим в почту неба, чтобы беда была видна. */
   _write(){
-    try{ localStorage.setItem('cosmogram_v2',JSON.stringify(this.mem)); return true; }
+    try{ const raw=JSON.stringify(this.mem); localStorage.setItem('cosmogram_v2',raw); this._lastRaw=raw; return true; }
     catch(e){
       /* v1.282.14: разгружаем ТОЛЬКО при настоящем переполнении. Первая редакция сносила
          тяжёлые ключи на любой отказ записи — а в WebView с запрещённым хранилищем
@@ -932,6 +932,39 @@ const Store = {
   /* v1.282.15: слияние вынесено отдельно — и чтобы читалось, и чтобы страж мог его
      проверить, не поднимая настоящий мост Telegram. */
   MAX_KEYS:{best:1,wallet:1,bestGyro:1,bestTouch:1,bestKeys:1,bestDist:1,bestBullet:1,srBest:1},
+  /* v1.284.9: рекорды отдельно от кошелька. Для облака они слиты в один список MAX_KEYS, и
+     там это уместно. Здесь — нет: рекорд не убывает никогда, а кошелёк убывает при каждой
+     покупке. Взять максимум для кошелька значило бы отменять списание звёзд. */
+  RECORD_KEYS:{best:1,bestGyro:1,bestTouch:1,bestKeys:1,bestDist:1,bestBullet:1,srBest:1},
+  /* v1.284.9 «Две вкладки». Диск — такой же чужой источник, как облако: пока мы держим свой
+     снимок в памяти, соседняя вкладка пишет туда рекорды и покупки. Снимок снимался ровно
+     один раз при загрузке и больше с диском не сверялся, поэтому ЛЮБАЯ запись из старой
+     вкладки — морзянка дня, статистика, автосейв, флаш самописца раз в 4 секунды —
+     возвращала на диск устаревшее целиком. Рекорд и купленный скин исчезали молча.
+     Лечим по закону «новый источник складывается со старым»: перед записью сливаем диск
+     в память теми же правилами, что и облако. Дёшево: пока на диске лежит наша же строка,
+     разбора не происходит вовсе — сравниваем сырьё и выходим.
+     `keep` — ключ, который мы прямо сейчас меняем: там наше намерение сильнее диска,
+     иначе покупка скина откатывалась бы соседней вкладкой. Исключение — рекорды: они
+     не убывают ни при каких обстоятельствах, даже по собственной просьбе устаревшей вкладки.
+     Удаления с диска не переносим намеренно: пропажа ключа у соседа не должна стирать наш. */
+  _mergeDisk(keep){
+    let raw=null;
+    try{ raw=localStorage.getItem('cosmogram_v2'); }catch(e){ return; } // хранилище запрещено — сливать не с чем
+    if(raw==null || raw===this._lastRaw) return;
+    let disk=null; try{ disk=JSON.parse(raw); }catch(e){ return; } // битое сырьё бережёт _load, здесь молчим
+    if(!disk || typeof disk!=='object') return;
+    for(const k in disk){
+      const nv=disk[k], cur=this.mem[k];
+      if(k===keep){
+        if(this.RECORD_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
+        continue;
+      }
+      if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
+      else if((k==='ownedSkins'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else this.mem[k]=nv;
+    }
+  },
   _mergeCloud(res){
     for(const k in res){
       const v=res[k];
@@ -946,12 +979,12 @@ const Store = {
   },
   get(k,def){ this._load(); const v=this.mem[k]; return v==null?def:v; },
   set(k,v){
-    this._load(); this.mem[k]=v;
+    this._load(); this.mem[k]=v; this._mergeDisk(k);
     this._write();
     if(this.cloud && this.CLOUD_KEYS.indexOf(k)>=0){ try{ this.cloud.setItem(k,JSON.stringify(v),()=>{}); }catch(e){} }
   },
   del(k){
-    this._load(); delete this.mem[k];
+    this._load(); this._mergeDisk(k); delete this.mem[k]; // сливаем ДО удаления: чужие ключи спасаем, свой убираем
     this._write();
     if(this.cloud && this.CLOUD_KEYS.indexOf(k)>=0){ try{ this.cloud.removeItem(k,()=>{}); }catch(e){} }
   }
@@ -983,7 +1016,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.8'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.9'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
