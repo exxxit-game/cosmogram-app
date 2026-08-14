@@ -1057,7 +1057,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.20'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.21'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
