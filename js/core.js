@@ -860,8 +860,15 @@ const Store = {
   },
   init(done){
     this._load();
+    /* v1.284.8 «Чёрный экран заговорит»: миграция старого рекорда стоила взлёта. Там, где
+       браузер запретил хранилище (инкогнито, запрет данных сайта в webview), getItem не
+       возвращает пустоту, а БРОСАЕТ SecurityError — и он вылетал из Store.init прямо в
+       верхний уровень ui.js: колбэк не исполнялся, startLoop() не звался, маяк __gameUp
+       не поднимался, игрок видел чёрный немой экран. Строкой выше, в _load, обращение
+       к тому же хранилищу уже под try — урок был выучен в одном месте и не перенесён
+       в соседнее. Рекорд из прошлой версии — приятная мелочь, взлёт — обещание. */
     if (this.mem.best==null){ // миграция рекорда v1
-      const ob=+(localStorage.getItem('cosmogram_best')||0); if(ob) this.mem.best=ob;
+      try{ const ob=+(localStorage.getItem('cosmogram_best')||0); if(ob) this.mem.best=ob; }catch(e){}
     }
     if (tg && tg.CloudStorage && tgv('6.9')){
       this.cloud = tg.CloudStorage;
@@ -976,7 +983,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.6'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.8'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'

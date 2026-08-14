@@ -84,6 +84,20 @@ const CONFIG = {
   workerUrl: 'https://ВСТАВЬ-СВОЙ-АДРЕС.workers.dev',
 };
 
+/* Личный ключ входа (DEV_KEY воркера) НЕ живёт в этом файле: файл публичный, он лежит
+   на GitHub Pages и его исходник видит любой. Ключ спрашивается один раз и хранится
+   в этом браузере. Забыть его — «сменить ключ» внизу страницы. */
+const KEY_STORE = 'cosmocoder_key';
+function devKey(){ try { return localStorage.getItem(KEY_STORE) || ''; } catch(e){ return ''; } }
+function askKey(force){
+  let k = force ? '' : devKey();
+  if (!k) {
+    k = (prompt('Личный ключ входа (DEV_KEY из настроек воркера):') || '').trim();
+    if (k) { try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
+  }
+  return k;
+}
+
 const $ = id => document.getElementById(id);
 const log = $('log');
 const inputBox = $('inputBox');
@@ -145,7 +159,7 @@ async function send(){
   try {
     const res = await fetch(CONFIG.workerUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-cosmo-key': askKey(false) },
       body: JSON.stringify({ messages: history }),
     });
     const data = await res.json();
@@ -153,6 +167,9 @@ async function send(){
     pending.remove();
 
     if (!res.ok || data.error) {
+      /* Ключ не подошёл — стираем сохранённый, чтобы следующая отправка спросила заново,
+         иначе игрок в собственном чате застревает навсегда с одной и той же ошибкой. */
+      if (res.status === 401) { try { localStorage.removeItem(KEY_STORE); } catch(e){} }
       addMsg('error', 'Ошибка: ' + (data.error || res.status), 'error');
     } else {
       history.push({ role: 'assistant', content: data.text });
@@ -167,6 +184,15 @@ async function send(){
     inputBox.focus();
   }
 }
+
+/* Кнопка смены ключа: без неё опечатка в ключе чинится только через настройки браузера. */
+(function(){
+  const b=document.createElement('button');
+  b.textContent='сменить ключ'; b.id='keyBtn';
+  b.style.cssText='position:fixed;right:10px;bottom:10px;font-size:11px;opacity:.5;padding:4px 8px;cursor:pointer';
+  b.onclick=()=>{ askKey(true); };
+  document.body.appendChild(b);
+})();
 
 sendBtn.addEventListener('click', send);
 inputBox.addEventListener('keydown', e => {

@@ -5133,6 +5133,110 @@ async function guardStickyBackHidesNothing(browser){
    ниже 0.5, и поверх поля, в которое игрок печатает, встаёт полноэкранное «Разверните
    окно, чтобы полететь». Совет бессмысленный: окно у телефона не разворачивается.
    Клавиатура — временное сжатие, а не размер экрана. */
+/* 133. Ключ Anthropic не должен попасть в репозиторий (партия 33 «CosmoCoder»).
+   Страж исходниковый и намеренно не открывает игру: беда здесь не в поведении, а в том,
+   что секрет уедет в публичную раздачу и его увидит любой. Проверяем весь рабочий каталог,
+   а не только страницу чата: ключ легко забыть в заметке, в патче или в инструкции. */
+/* 134. Партия 33 «Чёрный экран заговорит». Обещание игроку: игра взлетает даже там, где
+   браузер запретил хранилище (режим инкогнито, запрет сторонних данных в webview).
+   Проверяем не наличие try/catch в тексте, а факт: рисуются ли кадры и поднялся ли маяк. */
+async function guardStorageDeniedStillFlies(browser){
+  const name = '134. Запрещённое хранилище не мешает взлёту';
+  let ctx;
+  try{
+    ctx = await browser.newContext({ viewport:{width:412,height:915}, deviceScaleFactor:3, isMobile:true, hasTouch:true });
+    const page = await ctx.newPage();
+    /* Запрещаем хранилище ДО единой строки игры — ровно как это делает браузер игрока:
+       не «пусто», а бросает SecurityError на любое обращение. */
+    await page.addInitScript(()=>{
+      const boom = ()=>{ throw new DOMException('The operation is insecure.','SecurityError'); };
+      const dead = { getItem:boom, setItem:boom, removeItem:boom, clear:boom, key:boom, get length(){ return boom(); } };
+      try{ Object.defineProperty(window,'localStorage',{ configurable:true, get(){ return dead; } }); }catch(e){}
+      try{ Object.defineProperty(window,'sessionStorage',{ configurable:true, get(){ return dead; } }); }catch(e){}
+    });
+    await page.route('**://telegram.org/**', r=>r.abort());
+    await page.goto(BASE, { waitUntil:'domcontentloaded', timeout:15000 });
+    await page.waitForTimeout(4500);
+
+    const up = await page.evaluate(()=> window.__gameUp===1 );
+    const painted = await page.evaluate(()=>{
+      const c=document.getElementById('game'); if(!c) return -1;
+      try{
+        const g=c.getContext('2d'); const d=g.getImageData(0,0,Math.min(c.width,300),Math.min(c.height,300)).data;
+        let n=0; for(let i=0;i<d.length;i+=4) if(d[i]||d[i+1]||d[i+2]) n++;
+        return n;
+      }catch(e){ return -2; }
+    });
+    const shown = await page.evaluate(()=>{
+      const b=document.getElementById('bootLoad');
+      return !!(b && b.offsetParent!==null && (b.textContent||'').trim().length>0);
+    });
+
+    if(!up) return post(name,false,'маяк __gameUp не поднялся: ui.js оборвался, взлёта не было'+(shown?' (экран хотя бы говорит)':' — и экран молчит'));
+    if(painted===-1) return post(name,false,'канваса #game нет вовсе');
+    if(painted<=0) return post(name,false,`кадр пустой: ${painted} ненулевых проб — чёрный экран`);
+    return post(name,true,`взлетели с запрещённым хранилищем: маяк поднят, в кадре ${painted} ненулевых проб`);
+  }catch(e){ return post(name,false,'страж не отработал: '+e.message); }
+  finally{ if(ctx) await ctx.close().catch(()=>{}); }
+}
+
+/* 135. Второй слой того же обещания: если взлёта ВСЁ-ТАКИ не было, экран обязан заговорить.
+   Проверка контрактная, по исходнику: маяк __gameUp — единственный признак живости.
+   Косвенные негодны и это уже стоило нам чёрного экрана: `startGame` — объявление функции,
+   оно поднимается даже из упавшего файла, поэтому связка через `||` признаёт мёртвую игру
+   живой и снимает спиннер. Комментарии перед сравнением вырезаем (закон 18). */
+async function guardBootFailureSpeaks(browser){
+  const name = '135. Несостоявшийся взлёт не остаётся немым';
+  let ctx;
+  try{
+    const o = await openGame(browser, {});
+    ctx = o.ctx;
+    const src = await o.page.evaluate(async ()=>{
+      try{ const r=await fetch('./index.html?probe='+Math.random()); return r.ok?await r.text():null; }catch(e){ return null; }
+    });
+    if(!src) return post(name,false,'index.html не отдаётся');
+    const clean = src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+    /* Берём присваивание внутри try, а не первое попавшееся: строкой выше стоит
+       `var alive = false;`, и первая редакция стража цеплялась за неё — краснела по делу,
+       но с неверным объяснением. Прибор, который врёт в свою пользу, хуже отсутствующего. */
+    const m = clean.match(/try\s*\{\s*alive\s*=\s*([^;]+);/);
+    if(!m) return post(name,false,'в index.html не найдено присваивание alive внутри try — сценарий не тот');
+    const expr = m[1];
+    if(!/__gameUp/.test(expr)) return post(name,false,'признак живости не опирается на маяк __gameUp');
+    if(/startGame|GAME_VERSION/.test(expr))
+      return post(name,false,'признак живости всё ещё принимает косвенные приметы ('+expr.trim()+') — упавший ui.js читается как «взлетели», спиннер снимается, игрок видит немой чёрный экран');
+    if(!/Игра не смогла взлететь/.test(src))
+      return post(name,false,'нет текста для несостоявшегося взлёта — экран останется немым');
+    return post(name,true,'живость только по маяку, и для неудачи есть слова');
+  }catch(e){ return post(name,false,'страж не отработал: '+e.message); }
+  finally{ if(ctx) await ctx.close().catch(()=>{}); }
+}
+
+async function guardNoApiKeyInRepo(){
+  const name = '133. Ключ Anthropic и личный пароль чата не лежат в репозитории';
+  try{
+    const { execSync } = await import('node:child_process');
+    const list = execSync('git ls-files', { cwd: ROOT }).toString().split('\n').filter(Boolean);
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const bad = [];
+    for (const rel of list){
+      if (/\.(png|jpg|jpeg|zip|woff2?|ico|webp)$/i.test(rel)) continue;
+      let txt = '';
+      try{ txt = fs.readFileSync(path.join(ROOT, rel), 'utf8'); }catch(e){ continue; }
+      /* Ищем настоящий ключ, а не слово «sk-ant» в объяснении: у живого ключа за префиксом
+         идёт длинный хвост. Инструкция, где написано «начинается на sk-ant-...», честная
+         и краснеть на ней страж не должен — это закон 18 (страж не сторожит прозу). */
+      const m = txt.match(/sk-ant-[A-Za-z0-9_-]{20,}/);
+      if (m) bad.push(rel + ' → ' + m[0].slice(0, 12) + '…');
+      const w = txt.match(/DEV_KEY\s*[:=]\s*['"][^'"]{4,}['"]/);
+      if (w) bad.push(rel + ' → DEV_KEY вписан значением');
+    }
+    if (bad.length) return post(name, false, 'секрет в репозитории: ' + bad.join(' · '));
+    return post(name, true, 'ни ключа Anthropic, ни пароля чата в отслеживаемых файлах нет');
+  }catch(e){ return post(name, false, 'страж не отработал: ' + e.message); }
+}
+
 async function guardKeyboardDoesNotBreakScreen(browser){
   const name = '131. Экранная клавиатура не роняет игру в «экран слишком узкий»';
   let ctx;
@@ -5220,7 +5324,9 @@ const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortrait
                  guardWave1TribuneSurvivesEmptyChampion, guardWave1GyroOfferHasWords,
                  guardWave1ClaimShowsReward, guardWatchOthersRecord,
                  guardRecordCarriesSeed, guardTapeIsEvidenceNotProperty,
-                 guardScreensScrollByFinger, guardStickyBackHidesNothing, guardKeyboardDoesNotBreakScreen ];
+                 guardScreensScrollByFinger, guardStickyBackHidesNothing, guardKeyboardDoesNotBreakScreen,
+                 guardNoApiKeyInRepo,
+                 guardStorageDeniedStillFlies, guardBootFailureSpeaks ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;
