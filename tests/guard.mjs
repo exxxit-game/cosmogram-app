@@ -5245,11 +5245,44 @@ async function guardBootFailureSpeaks(browser){
   finally{ if(ctx) await ctx.close().catch(()=>{}); }
 }
 
+/* 137. Партия 36 «Наружу только игра» (решение владельца, открытый вопрос 6, вариант А).
+   Обещание: в публичную раздачу не попадает ничего, кроме самой игры — ни стенд, ни
+   серверные исходники, ни документы со списком незакрытых дыр. И обратное тоже: игра
+   не должна оказаться неполной, иначе «безопасно» превратится в «не запускается».
+   Список один и лежит в tests/relizy.mjs — правило в двух местах разъезжается. */
+async function guardOnlyGameGoesPublic(){
+  const name = '137. Наружу уходит только игра — ни стенда, ни сервера, ни документов';
+  try{
+    const { execSync } = await import('node:child_process');
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const rel = await import('./relizy.mjs');
+    const files = execSync('git ls-files -z', { cwd: ROOT }).toString().split('\0').filter(Boolean); // -z: см. страж 133
+    const { igra, ekipazh, spornye } = rel.splitTree(files);
+    if(spornye.length) return post(name,false,'список сам себе противоречит: '+spornye.join(' · '));
+
+    const beda = [];
+    for(const f of igra){ const z = rel.zapreshen(f); if(z) beda.push(f+' ('+z.why+')'); }
+    if(beda.length) return post(name,false,'в публичный архив пролезло: '+beda.join(' · '));
+
+    /* Вторая половина обещания: всё, что тянет страница, обязано быть внутри. */
+    const html = fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+    const nado = rel.nuzhnoStranice(html);
+    const net = nado.filter(p => !igra.includes(p) && files.includes(p));
+    if(net.length) return post(name,false,'игра осталась бы неполной, не хватает: '+net.join(' · '));
+
+    const skrytо = ekipazh.length;
+    return post(name,true,`наружу ${igra.length} файлов, у экипажа остаётся ${skrytо} (стенд, сервер, документы)`);
+  }catch(e){ return post(name,false,'страж не отработал: '+e.message); }
+}
+
 async function guardNoApiKeyInRepo(){
   const name = '133. Ключ Anthropic и личный пароль чата не лежат в репозитории';
   try{
     const { execSync } = await import('node:child_process');
-    const list = execSync('git ls-files', { cwd: ROOT }).toString().split('\n').filter(Boolean);
+    /* -z: иначе git отдаёт русские имена в кавычках и восьмеричных последовательностях,
+       файл по такому имени не открывается, и страж молча пропускает все документы. */
+    const list = execSync('git ls-files -z', { cwd: ROOT }).toString().split('\0').filter(Boolean);
     const fs = await import('node:fs');
     const path = await import('node:path');
     const bad = [];
@@ -5359,7 +5392,8 @@ const GUARDS = [ guardNobodyAsksMissingScreen, guardTopIsShowcase, guardPortrait
                  guardRecordCarriesSeed, guardTapeIsEvidenceNotProperty,
                  guardScreensScrollByFinger, guardStickyBackHidesNothing, guardKeyboardDoesNotBreakScreen,
                  guardNoApiKeyInRepo,
-                 guardStorageDeniedStillFlies, guardBootFailureSpeaks, guardSecondTabKeepsRecord ];
+                 guardStorageDeniedStillFlies, guardBootFailureSpeaks, guardSecondTabKeepsRecord,
+                 guardOnlyGameGoesPublic ];
 
 const server = await serve();
 BASE = `http://127.0.0.1:${server.address().port}/index.html`;
