@@ -992,7 +992,17 @@ function audioKeep(){
   if (S.running) music.start('game');
   else if (screenName==='menu') music.start('menu');
 }
-function onHidden(){ if(S.running&&!S.paused) pauseGame(); autosave(); if (typeof playSecFlush==='function') playSecFlush(); stopLoop(); } // v1.66.1: + секунды неба
+/* v1.284.10 «Свернул — не потерял». `pauseGame()` только НАЧИНАЕТ паузу: он ставит
+   `S.pausing=1`, а `S.paused` появляется позже, в update(), когда «Склейка» доведёт
+   время мира до 5%. Здесь же следом гасился цикл — и разгон, рассчитанный на полсекунды
+   плавного замирания, переносился на момент ВОЗВРАТА. Игрок возвращался, видел меню
+   паузы, а мир под этим меню пролетал остаток склейки и врезался: на последней жизни
+   это стоило всего забега. Прятать плавность некому — экран уже не виден, поэтому
+   доводим паузу до конца сразу. Занавес смерти не трогаем: у него свой путь до итогов. */
+function onHidden(){
+  if(S.running&&!S.paused) pauseGame();
+  if(S.pausing && !S.dying){ S.pausing=0; S.paused=true; S.timeScale=.05; } // пауза достигнута ДО остановки цикла
+  autosave(); if (typeof playSecFlush==='function') playSecFlush(); stopLoop(); } // v1.66.1: + секунды неба
 function onShown(){ startLoop(); if(S.running&&!S.paused) keepAwake(); audioKeep();
   /* v1.282.20: замок вертикальных свайпов ставился ОДИН раз на загрузке. После сворачивания и
      возврата Telegram его не восстанавливает — и свайп вниз снова сворачивает мини-апп прямо
