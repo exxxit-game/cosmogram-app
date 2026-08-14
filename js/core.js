@@ -25,6 +25,42 @@
 
 /* ---------- Telegram WebApp (Блок 1) ---------- */
 const tg = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ? window.Telegram.WebApp : null;
+
+/* v1.284.14 «Мост не глотает» — ЯДРО, правка по прямому решению владельца (14.08).
+   Мост оборачивает КАЖДЫЙ вызов нашего колбэка в собственный try/catch и молчит
+   (`callEventCallbacks` в vendor/telegram-web-app.js). Значит всё, что падает внутри
+   обработчиков viewport, полного экрана, безопасных зон, гироскопа и сворачивания,
+   не доходит ни до window.onerror, ни до «Почты неба», ни до самописца: весь этот тракт
+   работал под непроницаемым колпаком, и охота на шторм калибровок заняла шесть партий
+   именно поэтому. Сам мост не правим — он чужой и восстанавливается с сервера Telegram.
+   Оборачиваем ВХОД: любой колбэк, отданный мосту, сперва докладывает о падении сам.
+   Одно место вместо восьми — и девятая подписка, добавленная завтра, защищена сразу.
+   Ошибку после доклада отпускаем дальше: мост её всё равно проглотит, но след уже есть. */
+if (tg && typeof tg.onEvent === 'function' && !tg.__cgSafe) {
+  const rodnoyOn = tg.onEvent.bind(tg);
+  tg.onEvent = function(ev, cb){
+    if (typeof cb !== 'function') return rodnoyOn(ev, cb);
+    if (cb.__cgWrap) return rodnoyOn(ev, cb.__cgWrap); // повторная подписка тем же колбэком
+    const obolochka = function(){
+      try { return cb.apply(this, arguments); }
+      catch(e){
+        const gde = 'мост ' + ev + ': ' + ((e && (e.message || e.name)) || e);
+        try { if (typeof BB !== 'undefined' && BB.log) BB.log('err', gde); } catch(_){}
+        try { if (typeof BEACON !== 'undefined' && BEACON.err) BEACON.err(gde); } catch(_){}
+        throw e;
+      }
+    };
+    try { cb.__cgWrap = obolochka; } catch(_){} // чтобы offEvent снял ту же функцию, а не исходную
+    return rodnoyOn(ev, obolochka);
+  };
+  if (typeof tg.offEvent === 'function') {
+    const rodnoyOff = tg.offEvent.bind(tg);
+    /* Без этого отписка молча перестала бы работать: мост держит обёртку, а снять просили
+       исходный колбэк. Обработчики копились бы навсегда — беда тише исходной. */
+    tg.offEvent = function(ev, cb){ return rodnoyOff(ev, (cb && cb.__cgWrap) || cb); };
+  }
+  tg.__cgSafe = 1;
+}
 // v1.14.0: мост без initData = браузер, а не Telegram — включаем веб-запасные пути (вибро и др.)
 function tgv(v){ // feature-gating по версии клиента
   try{ return !!(tg && tg.isVersionAtLeast && tg.isVersionAtLeast(v)); }catch(e){ return false; }
@@ -219,6 +255,7 @@ const I18N = {
        ровно в ту сторону, откуда беда. Теперь у двух разных бед два разных текста. */
     landTitle:'Поверните телефон', landHint:'Игра рассчитана на вертикальный экран',
     setGyroOff:'Полёт без рук', gyroOffOk:'Штурвал возвращён пальцу',
+    diagCopy:'Скопировать самописец', diagCopyOk:'Лента скопирована — пришлите её экипажу', diagCopyManual:'Буфер закрыт — выделите текст ниже и скопируйте вручную',
     setBeacon:'Помогать экипажу отчётами и статистикой', beaconSent:'Экипаж уже знает об этой ошибке — скоро починим',
     beaconNoteSoft:'Борт заметил неполадку и уже доложил экипажу — чиним',
     diagBtn:'Сервисный центр', diagSensorOk:'Датчик жив · ', diagChanTg:'канал Telegram', diagChanWeb:'веб-канал',
@@ -349,6 +386,7 @@ const I18N = {
     tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window to fly',
     landTitle:'Turn the phone upright', landHint:'The game is made for a vertical screen',
     setGyroOff:'Hands-Free Flight', gyroOffOk:'Helm returned to finger',
+    diagCopy:'Copy flight recorder', diagCopyOk:'Tape copied — send it to the crew', diagCopyManual:'Clipboard blocked — select the text below and copy it manually',
     setBeacon:'Help the crew with reports and stats', beaconSent:'The crew already knows about this error — a fix is coming',
     beaconNoteSoft:'The board noticed a glitch and already told the crew — fixing it',
     diagBtn:'Service center', diagSensorOk:'Sensor alive · ', diagChanTg:'Telegram channel', diagChanWeb:'web channel',
@@ -475,6 +513,7 @@ const I18N = {
     tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana para volar',
     landTitle:'Gira el teléfono', landHint:'El juego está hecho para pantalla vertical',
     setGyroOff:'Vuelo sin manos', gyroOffOk:'Mando devuelto al dedo',
+    diagCopy:'Copiar la grabadora', diagCopyOk:'Cinta copiada — envíala a la tripulación', diagCopyManual:'Portapapeles bloqueado — selecciona el texto de abajo y cópialo a mano',
     setBeacon:'Ayudar a la tripulación con informes y estadísticas',
     beaconSent:'La tripulación ya conoce este error — lo arreglaremos pronto',
     beaconNoteSoft:'La nave notó un fallo y ya avisó a la tripulación — lo están arreglando',
@@ -619,6 +658,7 @@ const I18N = {
     tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela para voar',
     landTitle:'Gire o telefone', landHint:'O jogo foi feito para tela vertical',
     setGyroOff:'Voo sem mãos', gyroOffOk:'Comando devolvido ao dedo',
+    diagCopy:'Copiar o gravador', diagCopyOk:'Fita copiada — envie-a à tripulação', diagCopyManual:'Área de transferência bloqueada — selecione o texto abaixo e copie à mão',
     setBeacon:'Ajudar a tripulação com relatórios e estatísticas',
     beaconSent:'A tripulação já sabe desse erro — vamos consertar logo',
     beaconNoteSoft:'A nave notou uma falha e já avisou a tripulação — estamos consertando',
@@ -763,6 +803,7 @@ const I18N = {
     tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre pour voler',
     landTitle:'Tourne le téléphone', landHint:'Le jeu est conçu pour un écran vertical',
     setGyroOff:'Vol mains libres', gyroOffOk:'Commandes rendues au doigt',
+    diagCopy:'Copier l’enregistreur', diagCopyOk:'Bande copiée — envoyez-la à l’équipage', diagCopyManual:'Presse-papiers bloqué — sélectionnez le texte ci-dessous et copiez-le à la main',
     setBeacon:'Aider l\u2019équipage avec des rapports et statistiques', beaconSent:'L\u2019équipage connaît déjà cette erreur — un correctif arrive',
     beaconNoteSoft:'Le bord a remarqué un problème et a déjà prévenu l\u2019équipage — en cours de réparation',
     diagBtn:'Centre de service', diagSensorOk:'Capteur actif · ', diagChanTg:'Canal Telegram', diagChanWeb:'canal web',
@@ -1016,7 +1057,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.10'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.284.14'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'

@@ -252,6 +252,10 @@ function startGame(saved){
     S.smooth=clamp(saneNumber(saved.smooth,1),.5,1); S.time=saneNumber(saved.time,0);
     S.hits=saneNumber(saved.hits,0); S.bonuses=saneNumber(saved.bonuses,0);
     S.goldStar=!!saved.goldStar; S.wasRestored=1;
+    /* v1.284.11: у автосейвов, записанных до этой версии, поля `bullet` нет — для них
+       восстанавливаем режим по дисциплине забега, иначе игрок, свернувшийся вчера,
+       завтра доиграет Затишье как классику и получит рекорд в чужой категории. */
+    S.bullet = (saved.bullet!=null) ? !!saved.bullet : (saved.mode==='bullet');
     // v1.282.20: вёрсты подводим ПОСЛЕ восстановления дистанции — иначе всполохи «каждая тысяча»
     // молчали бы от нуля до уже пройденного километража (страж П5, но с другой стороны двери)
     if (typeof PLANET!=='undefined' && PLANET && PLANET._poke) PLANET._poke('mile');
@@ -616,7 +620,12 @@ function autosave(){
        подскакивает до 1.0 (+33% к итогу), часы Спидрана обнуляются (рекорд «за 10 секунд»),
        благодать выдаётся заново. Флаг wasRestored помечает такой забег: рекорд Спидрана и
        знак дня он больше не приносит. */
-    Store.set('savedRun',{score:S.score,mission:S.mission,lives:S.lives,dist:S.dist,
+    /* v1.284.11: `bullet` в автосейве. Затишье — не дисциплина, а флаг поверх классики:
+       `runMode='bullet'` доезжает через `mode`, а сам `S.bullet` ставит только startBullet().
+       Без этого поля восстановленный забег летел без механики Затишья, а на посадке
+       категория считалась как `S.bullet?'bullet':controlMode()` и очки ложились в `bestTouch` —
+       и тот же ярлык уезжал в мировую таблицу. */
+    Store.set('savedRun',{score:S.score,mission:S.mission,lives:S.lives,dist:S.dist,bullet:!!S.bullet,
       smooth:S.smooth,time:S.time,hits:S.hits,bonuses:S.bonuses,goldStar:!!S.goldStar,restored:1,
       starsCollected:S.starsCollected,comboMax:S.comboMax,hueShift:S.hueShift,mode:S.mode,dailyDay:S.dailyDay||''}); // v1.93: крах дня помнит дисциплину и день взлёта
   }
@@ -1246,6 +1255,31 @@ $('diagVibroBtn').addEventListener('click', ()=>{ // v1.60.0: длинный с�
    открыть переписку, вставить. С появлением «Почты неба» это стало притворством —
    те же данные приходят к нам сами. Кнопки и запасное окно с текстом убраны.
    Дверь к людям осталась одна и живая: «Написать в поддержку». */
+/* v1.284.13 «Лента в руки» (решение владельца 14.08). Кнопка ничего не отправляет —
+   «Почта неба» шлёт сама. Она отдаёт игроку ленту самописца: паспорт борта, вердикт цепи
+   руля и события с метками времени. Нужна затем, что мост Telegram глотает исключения
+   внутри своих колбэков, и такие падения не доходят ни до почты, ни до окна «экипаж знает»:
+   единственный способ их увидеть — прочитать ленту глазами.
+   Буфер в webview бывает запрещён, поэтому текст всегда кладётся и в поле для выделения:
+   кнопка, которая молча ничего не сделала, хуже отсутствующей. */
+$('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
+  let text=''; try{ text = (typeof BB!=='undefined' && BB.text) ? BB.text() : ''; }catch(e){}
+  if(!text) text = 'Cosmogram v'+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?')+' blackbox · лента пуста';
+  const box=$('diagTapeBox');
+  if(box){ box.value=text; box.classList.remove('hidden'); }
+  sfx.click(); haptic('light');
+  let done=false;
+  const skazat=(ok)=>{ if(done) return; done=true;
+    if(typeof svcToast==='function') svcToast(ok?L.diagCopyOk:L.diagCopyManual,'rgba(159,232,255,.5)');
+    if(!ok && box){ try{ box.focus(); box.select(); }catch(e){} } };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(text).then(()=>skazat(true), ()=>skazat(false));
+    else skazat(false);
+  }catch(e){ skazat(false); }
+  setTimeout(()=>skazat(false), 1200); // молчащий буфер: обещание не может висеть без ответа
+});
+
 $('diagSupportBtn').addEventListener('click', ()=>{
   sfx.click(); haptic('light');
   try{ if (typeof tg!=='undefined'&&tg&&tg.openTelegramLink) tg.openTelegramLink(SUPPORT_URL); else window.open(SUPPORT_URL,'_blank'); }
@@ -1604,6 +1638,7 @@ $('channelBtn').addEventListener('click', openChannel); // v1.84.0: на сце�
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
+  { const b=$('diagCopyBtn'); if(b && L.diagCopy) b.textContent=L.diagCopy; } // v1.284.13: подпись кнопки самописца на пяти языках
   // v1.34.0 «Единая палуба»: иконки перед текстом убраны из всех окон — кнопки говорят текстом
   /* 13.08.2026: подписи pillGyro/pillTouch/pillDist/pillBullet больше некому раздавать —
      строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
