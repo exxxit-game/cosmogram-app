@@ -178,10 +178,8 @@
 
 ## Экипаж
 
-Капитан и владелец курса — **superduck77**. Борт-инженер — **Kimi**. Каждый игрок — голос корабля.
+Капитан и владелец курса — **exxxit-game**.
 
 ---
 
-© superduck77, 2026, All rights reserved.
-Created with assistance of Kimi AI (Moonshot AI).
-Moonshot AI claims no ownership of this game.
+© exxxit-game, 2026
