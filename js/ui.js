@@ -107,7 +107,13 @@ let theaterRecord=false; // v1.284.4: сцена — повтор чужого �
 Store.del('runMode'); // v1.92.1: старая прописка любой дисциплины снимается — большая кнопка священна
 Store.del('pact'); // v1.70.0: модификаторы удалённого режима больше не нужны
 function setRunMode(m){ runMode=m; } // v1.92.1: сессия — живёт через «Ещё раз?» и рестарт из паузы, умирает в меню и на перезапуске
-function runStart(){ runMode==='bullet'?startBullet():startGame(); } // «ЛЕТЕТЬ» — в выбранной дисциплине
+let runStartBusy=false;
+function runStart(){
+  if(runStartBusy) return;
+  runStartBusy=true;
+  try{ runMode==='bullet'?startBullet():startGame(); }
+  finally{ setTimeout(()=>{ runStartBusy=false; },350); }
+} // «ЛЕТЕТЬ» — в выбранной дисциплине; короткий lock защищает от двойного тапа
 window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0)
   if (S.running && typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
@@ -1469,6 +1475,8 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
   accFill(); webJoinFill();
+  if(typeof syncFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncFlush().catch(()=>{});
+  if(typeof syncDailyFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncDailyFlush().catch(()=>{});
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
 }
 $('accOutBtn').addEventListener('click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });

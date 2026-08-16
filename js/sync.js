@@ -164,10 +164,13 @@ function syncPost(payload){
 /* Отправка рекордов после забега. Тихая: никаких тостов/ошибок игроку.
    extra — разовые поля к этому забегу (duel_win: «я побил планку вызова»). */
 function syncSubmit(scores, extra){
-  if(!syncAvailable()) return Promise.resolve();
   syncEnqueue(scores);
-  return syncFlush(extra);
+  if(extra && Object.keys(extra).length) syncExtraEnqueue(extra);
+  if(!syncAvailable()) return Promise.resolve();
+  return syncFlush();
 }
+function syncExtraQueue(){ return saneArray(Store.get('syncExtraQ',[]),[]); }
+function syncExtraEnqueue(extra){ Store.set('syncExtraQ',syncExtraQueue().concat([Object.assign({},extra)]).slice(-10)); }
 /* v1.282.13: одна отправка за раз. Раньше два почти одновременных повода (посадка и
    мостик входа/Discord) читали одну и ту же очередь и слали батч дважды. Сервер к
    дублю почти терпим — он монотонен, — но антиспам на нём НЕ атомарен: читает
@@ -198,9 +201,10 @@ function syncFlush(extra){
      Лечим тем же приёмом, что уже выучен в «Почте неба»: вычитаем ровно доставленное, а не
      перезаписываем очередь. И extra отправляем ВСЕГДА — даже когда очков в очереди нет: разовые
      поля не имеют к очереди никакого отношения. */
-  const q=syncQueue();
+  const q=syncQueue(), extraQ=syncExtraQueue();
   const batch=q.length?q[0]:{};
-  const hasExtra=!!(extra && Object.keys(extra).length);
+  const sentExtra=extraQ.length?extraQ[0]:(extra||{});
+  const hasExtra=!!Object.keys(sentExtra).length;
   if(!q.length && !hasExtra) return Promise.resolve();
   const sent=batch;
   function drain(){ // вычесть доставленное: то, что положили ПОКА мы летели, остаётся в очереди
@@ -210,10 +214,12 @@ function syncFlush(extra){
     for(const c in m){ if(m[c]>(sent[c]||0)) left=true; else delete m[c]; }
     Store.set('syncQ', left?[m]:[]);
   }
-  const p=syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, extra||{})).then(r=>{
+  function drainExtra(){ Store.set('syncExtraQ',syncExtraQueue().filter(x=>x!==sentExtra)); }
+  const p=syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, sentExtra)).then(r=>{
     if(r.ok || r.status===401 || r.status===400){ // принято (или отказ навсегда) — вычитаем доставленное
       drain();
-    } else if(r.status===429){ drain(); } // антиспам: следующий забег отправит свежее, старое не важно
+      if(r.ok || r.status===400) drainExtra();
+    } else if(r.status===429){ drain(); } // extra остаётся: уведомление повторится после антифлуда
     // 5xx / сеть — оставляем в очереди до следующего gameOver
     /* v1.282.20: раньше отправка резолвилась пустотой — звавшему нечего было узнать об
        исходе. Дневнику это нужно: он вычёркивает дни только по ответу сервера. Возвращаем
@@ -297,9 +303,33 @@ const SYNC_DAILY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosm
 function syncDailyPost(payload){
   return syncFetch(SYNC_DAILY_URL,payload).catch(()=>null); // v1.282.13: тот же поводок, что у основной двери — без него запрос дня висел вечно
 }
-function syncDailySubmit(o){ // {day, score, skin, track?} — тихо, как вся синхронизация
-  if(!syncAvailable()) return Promise.resolve(false);
-  return syncDailyPost(Object.assign({action:'daily_submit'}, syncAuth(), o)).then(r=>!!(r&&r.ok));
+function syncDailyQueue(){ return saneArray(Store.get('dailyQ',[]),[]); }
+function syncDailyEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncDailyQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('dailyQ',q.slice(-14));
+}
+let _dailyFlying=null;
+function syncDailyFlush(){
+  if(_dailyFlying) return _dailyFlying;
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncDailyQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'daily_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('dailyQ',syncDailyQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _dailyFlying=null; });
+  _dailyFlying=p; return p;
+}
+function syncDailySubmit(o){ // {day, score, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncDailyEnqueue(o);
+  return syncDailyFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncDailyFlush());
+  setTimeout(()=>syncDailyFlush(),4000);
 }
 function syncDailyChampion(day){ // {ok,champion:{name,score,skin,track,me}} | {ok:false,reason} | null (сеть)
   if(!syncAvailable()) return Promise.resolve(null);

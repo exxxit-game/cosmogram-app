@@ -224,11 +224,12 @@ function spawnPowerup(forceKind){ // forceKind — урок III «Ловец б�
   // слот спавна один (пауза ~10-14с на старте, ~6-8с на пике) — новые бонусы делят его со старыми, поле не переполняется
   const kinds=['shield','magnet','slowmo','life','dash','nova']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая
   const lifeCap=(S.mode==='custom')?(S.customLv||3):3; // v1.70.0: потолок жизней — у своей трассы он авторский, иначе бонус ломал бы «Ад на одну жизнь»
-  const weights=[3,3,2, (S.lives<lifeCap)?1:0, 1, S.time>=45?1:0]; // сверхновая закрыта первые 45 секунд — вес 0; жизнь — только раненым (v1.42.0)
-  let tot=weights.reduce((a,b)=>a+b,0), r=mapRNG()*tot, kind='shield';
+  const weights=[3,3,2,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток
+  let r=mapRNG()*9, kind='shield';
   for(let i=0;i<kinds.length;i++){ r-=weights[i]; if(r<=0){kind=kinds[i];break;} }
   if (typeof forceKind==='string') kind=forceKind;
   if (kind==='life' && S.lives>=lifeCap) kind='shield'; // v1.46.0: жизнь — только раненым. Страж абсолютный: даже принудительный спавн не выдаст жизнь при полном корпусе
+  if (kind==='nova' && S.time<45) kind='shield'; // слот сверхновой сохраняется, но ранняя награда остаётся безопасной
   const p=poolPow.take();
   p.x=fieldL()+mapRand(50,fieldW()-50); p.y=-30; p.r=14; p.vy=S.speed; p.kind=kind; p.ph=0;
   powerups.push(p);
@@ -470,7 +471,10 @@ function update(dt){
      у любого игрока получает ровно свой кубик, а порядок и количество выборок внутри
      ничего не решают. Номер тратится и при переполненном поле — расписание трассы едино
      для всех, даже когда конкретную преграду поставить некуда. */
-  spawnT -= dt;
+  const basePace=3.4+d*4.6;
+  const paceFactor=basePace>0?S.speed/basePace:1;
+  const trackDt=dt*S.timeScale*paceFactor;
+  spawnT -= trackDt;
   if (spawnT<=0){
     spawnT = withTrack('ob', function(){
       const extraGap = spawnObstacle();
@@ -481,7 +485,7 @@ function update(dt){
         * (input.useGyro ? 1/GYRO_ASSIST : 1) * (S.mode==='custom'?(S.customD||1):1); // множитель передышки убран в партии 45 — см. запись у spawnObstacle
     });
   }
-  starT -= dt;
+  starT -= trackDt;
   /* v1.282.20: звёзды и бонусы получают ту же поправку на штурвал, что и преграды.
      Под гироскопом мир идёт на 15% медленнее (GYRO_ASSIST), и паузу между преградами
      честно растягивали обратно — а звёзды и бонусы считались в секундах, то есть на
@@ -490,7 +494,7 @@ function update(dt){
      сам закон сида: на одной и той же трассе дня у гироскописта N-я звезда стояла на
      другой дистанции, чем у пальцевика. */
   if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5) * (input.useGyro ? 1/GYRO_ASSIST : 1); }); } // честный базовый темп (эталон v1.10.0)
-  powT -= dt;
+  powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
     if (!(S.mode==='custom' && S.customB===0)) spawnPowerup();
     return powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1) * (input.useGyro ? 1/GYRO_ASSIST : 1); }); } // v1.282.20: та же поправка на штурвал // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
@@ -593,20 +597,20 @@ function update(dt){
   for (let i=obstacles.length-1;i>=0;i--){
     const o=obstacles[i];
     o.y += o.vy*S.timeScale;
-    o.x += (o.vx||0)*S.timeScale;
-    o.rot += o.vr*S.timeScale;
+    o.x += (o.vx||0)*S.timeScale*paceFactor;
+    o.rot += o.vr*S.timeScale*paceFactor;
     if (o.kind==='drift'){ const dfl=fieldL(), dfr=dfl+fieldW(); if (o.x<dfl+o.r||o.x>dfr-o.r) o.vx*=-1; } // v1.282.15: отбиваемся от стенок КОРИДОРА, а не экрана — иначе на планшете дрейфер уходил далеко в сторону и один сид давал разную геометрию
     if (o.kind==='mine'){
-      o.pulse+=dt*5;
-      o.vx = lerp(o.vx, clamp((plane.x-o.x)*.006,-1,1), .02);
+      o.pulse+=dt*5*paceFactor;
+      o.vx = lerp(o.vx, clamp((plane.x-o.x)*.006,-1,1), .02*paceFactor);
     }
     if (o.kind==='sat'){ // синусоида вокруг базовой линии
-      o.ph+=dt*2*S.timeScale;
+      o.ph+=dt*2*S.timeScale*paceFactor;
       { const sfl=fieldL(), sfr=sfl+fieldW(); o.x=clamp(o.baseX+Math.sin(o.ph)*o.amp, sfl+o.r, sfr-o.r); } // v1.282.15: качание спутника подрезается коридором, а не шириной экрана
     }
     if (o.kind==='seeker'){ // ловец: наведение вдвое сильнее мины
-      o.pulse+=dt*5;
-      o.vx = lerp(o.vx, clamp((plane.x-o.x)*.012,-1.8,1.8), .04);
+      o.pulse+=dt*5*paceFactor;
+      o.vx = lerp(o.vx, clamp((plane.x-o.x)*.012,-1.8,1.8), .04*paceFactor);
     }
     if (o.y>H+80){ killIdx(obstacles,i,poolOb); continue; }
     if (o.kind==='gate'){ // ворота: два пилона, проход между ними — бонус
