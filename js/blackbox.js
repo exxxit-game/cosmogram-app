@@ -59,6 +59,8 @@ function bbVerdict(){
     const tp=(typeof tgPkt==='number'?tgPkt:0), wp=(typeof webPkt==='number'?webPkt:0);
     if(!tp && !wp) return L.bbVSilent; // не текло вообще ни разу
     if(typeof steerChan!=='undefined' && steerChan==='none') return L.bbVNoChan;
+    if(typeof chanLiar==='function' && typeof steerChan!=='undefined' && steerChan!=='none' && chanLiar(steerChan))
+      return L.bbVLiar;
     // v1.282.4: tp/wp — счётчики ПОЖИЗНЕННЫЕ, никогда не обнуляются. Канал, что честно
     // тёк в начале сеанса и замолчал посреди него (отозвано разрешение, фон убил датчик),
     // проходил проверку выше как «не молчал никогда» и вердикт полз дальше по цепи на

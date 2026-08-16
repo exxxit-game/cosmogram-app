@@ -107,7 +107,7 @@ const PLANET=(()=>{
             ctx.drawImage(powGlow('#ffd9a0'),px-4,-9,8,8);
             ctx.fillStyle='rgba(255,236,190,.95)'; ctx.beginPath(); ctx.arc(px+1.5,-3,1.4,0,6.283); ctx.fill();
           }
-          if(Math.sin(performance.now()/280)>0){             // бортовой огонь мигает и светится
+          if(Math.sin(tN*3.57)>0){             // бортовой огонь мигает и светится
             ctx.drawImage(powGlow('#ff7a6a'),38,-20,16,16);
             ctx.fillStyle='rgba(255,120,100,.95)'; ctx.beginPath(); ctx.arc(47.5,-10.5,1.6,0,6.283); ctx.fill(); }
           ctx.restore(); ctx.globalAlpha=1;
@@ -193,6 +193,7 @@ const PLANET=(()=>{
       const sp=7+(1-s.life)*9; // разгоняются по пути
       s.x+=dx/d*sp; s.y+=dy/d*sp; s.life-=dt*1.1;
       if(d<18||s.life<=0){ sparks.splice(i,1); continue; }
+      if(s.x<-20||s.x>W+20||s.y<-20||s.y>H+20) continue;
       ctx.save(); ctx.globalCompositeOperation='lighter';
       ctx.globalAlpha=Math.min(1,s.life*2)*.85;
       ctx.drawImage(starGlow(), s.x-9, s.y-9, 18, 18);

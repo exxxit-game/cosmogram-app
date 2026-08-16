@@ -26,8 +26,7 @@ async function statusStarAsk(){
       try{ tg.requestEmojiStatusAccess(ok=>res(!!ok)); }catch(e){ res(false); }
     });
     if(!allowed){ toast(L.statusStarDeny); haptic('error'); return; }
-    const r=await fetch(SYNC_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'status_emoji',initData:tg.initData})});
+    const r=await syncFetch(SYNC_URL,{action:'status_emoji',initData:tg.initData});
     const ans=await r.json().catch(()=>({}));
     if(!r.ok || !ans.ok || !ans.emoji_id){ toast(L.statusStarErr); haptic('error'); return; }
     tg.setEmojiStatus(ans.emoji_id,{duration:259200},ok=>{ // 3 дня: награда за рекорд гаснет сама

@@ -32,6 +32,7 @@ const input = { tiltX:0, tiltY:0, useGyro:false, touchX:null, touchY:null, byMou
   _t:0, // время последнего пакета датчика — сторож «датчик замолчал»
   sens: PLATFORM==='android' ? 1.05 : 1 };
 let lastGamma=null, lastBeta=null, lastAlpha=null;
+function tiltPermissionGranted(){ return Store.get('tiltPermission',0)===1; }
 
 /* Стабильная автокалибровка (v1.4.5→v1.4.6). Ноль принимаем из неподвижной
    позы: 3 подряд пакета в пределах 4° (≈50мс на 60Гц — раньше, чем игрок
@@ -596,11 +597,14 @@ function ownTouch(list){ // найти СВОЁ касание в списке, 
 window.addEventListener('touchstart',e=>{
   audio();
   if(tDown) return; // второй палец не сбрасывает жест первого
+  // Android WebView: passive touchstart adds measurable input lag to steering. We must
+  // keep this listener active so the gesture is processed immediately and the touch->flight
+  // response stays snappy on low-end devices.
   const t=e.changedTouches && e.changedTouches[0]; if(!t) return;
   tId=t.identifier;
   tStartX=tCurX=t.clientX; tStartY=tCurY=t.clientY; tStartT=performance.now();
   tDown=true; tActive=false; // руление НЕ включаем — ждём, тап это или свайп
-},{passive:true});
+},{passive:false});
 /* v1.282.20: pointermove для касаний убран. Он и touchmove писали в один и тот же touchX,
    причём touchmove приходил вторым и systematically перетирал выбранный «самый свежий
    coalesced-сэмпл» обычной координатой — вся оптимизация 240 Гц была мертва по построению.

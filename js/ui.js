@@ -1001,6 +1001,15 @@ function audioKeep(){
   if (S.running) music.start('game');
   else if (screenName==='menu') music.start('menu');
 }
+let audioKeepIv=0;
+function audioKeepStart(){
+  if(audioKeepIv || document.hidden) return;
+  audioKeepIv=setInterval(audioKeep, 6000);
+}
+function audioKeepStop(){
+  if(!audioKeepIv) return;
+  clearInterval(audioKeepIv); audioKeepIv=0;
+}
 /* v1.284.10 «Свернул — не потерял». `pauseGame()` только НАЧИНАЕТ паузу: он ставит
    `S.pausing=1`, а `S.paused` появляется позже, в update(), когда «Склейка» доведёт
    время мира до 5%. Здесь же следом гасился цикл — и разгон, рассчитанный на полсекунды
@@ -1011,8 +1020,9 @@ function audioKeep(){
 function onHidden(){
   if(S.running&&!S.paused) pauseGame();
   if(S.pausing && !S.dying){ S.pausing=0; S.paused=true; S.timeScale=.05; } // пауза достигнута ДО остановки цикла
+  audioKeepStop();
   autosave(); if (typeof playSecFlush==='function') playSecFlush(); stopLoop(); } // v1.66.1: + секунды неба
-function onShown(){ startLoop(); if(S.running&&!S.paused) keepAwake(); audioKeep();
+function onShown(){ startLoop(); if(S.running&&!S.paused) keepAwake(); audioKeep(); audioKeepStart();
   /* v1.282.20: замок вертикальных свайпов ставился ОДИН раз на загрузке. После сворачивания и
      возврата Telegram его не восстанавливает — и свайп вниз снова сворачивает мини-апп прямо
      посреди полёта вместо руления. Переподтверждаем при каждом возврате. */
@@ -1095,7 +1105,8 @@ $('setSoundBtn').addEventListener('click', ()=>{
 function musicLabel(){ rowSw('setMusicBtn', MUSIC_ON); setWellFill(); }
 function contrastLabel(){ rowSw('setContrastBtn', CONTRAST); }
 function colorblindLabel(){ rowSw('setColorblindBtn', COLORBLIND); }
-function streaksLabel(){ rowSw('setStreaksBtn', SPEED_STREAKS); }
+/* Скоростные полосы удалены полностью, чтобы не оставлять пустой переключатель и не
+   держать эффект в активном состоянии. Остальные настройки не зависят от этого флага. */
 /* v1.284.20 «Выключатель руля» (партия 47). Строка гасит не только себя: «Чувствительность»
    и «Калибровка гироскопа» — настройки того же руля, и оставлять их живыми под выключенным
    тумблером значит предлагать настраивать то, чего нет. Гасим видом и снимаем нажатие. */
@@ -1128,9 +1139,6 @@ $('setGyroBtn').addEventListener('click', ()=>{
      рука была в момент выключения. Тот же класс беды, что «руль не залипает» (v1.282.13). */
   if(!budet && typeof input!=='undefined'){ input.tiltX=0; input.tiltY=0; input.useGyro=false; }
   gyroRowLabel(); haptic('light'); sfx.click();
-});
-$('setStreaksBtn').addEventListener('click', ()=>{
-  SPEED_STREAKS=!SPEED_STREAKS; Store.set('speedStreaks',SPEED_STREAKS?1:0); streaksLabel(); haptic('light'); sfx.click();
 });
 $('setMusicBtn').addEventListener('click', ()=>{
   MUSIC_ON=!MUSIC_ON; Store.set('music',MUSIC_ON?1:0); musicLabel(); haptic('light'); sfx.click();
@@ -1725,7 +1733,7 @@ function applyLang(){
   $('moreBtn').textContent=L.moreLbl;
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
-   ['setColorblindBtn','setColorblind'],['setStreaksBtn','setStreaks'],['setLangBtn','setLang'],
+   ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
    ['setGhostBtn','setGhost'],['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
 }
@@ -1757,12 +1765,13 @@ Store.init(()=>{
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
-  SPEED_STREAKS = Store.get('speedStreaks',1)===1; // v1.280.0: по умолчанию включено
+  // Скоростные полосы полностью вырезаны: чтение флага хранилища удалено, чтобы не
+  // восстанавливать отключённый эффект при старом сохранённом значении.
   MUSIC_ON = Store.get('music',1)!==0; // музыка — отдельная настройка от звуков
   if (typeof achQShow==='function') achQShow(); // карман наград: бейдж «ждут N» на кнопке 🏆
-  // сторож звука: каждый тап — шанс разбудить; раз в 2с — самопроверка (v1.20.0)
+  // сторож звука: каждый тап — шанс разбудить; фоновая самопроверка — только когда вкладка видима.
   document.addEventListener('pointerdown', audioKeep);
-  setInterval(audioKeep, 2000);
+  audioKeepStart();
   // v1.108.1 «Клавиатура для всех»: 22 кастомные ARIA-кнопки (role="button" на div) получали фокус
   // по Tab (после tabindex="0" в разметке), но Enter/Space их не нажимали — так работают только
   // настоящие <button>. Один делегированный слушатель вместо 22 отдельных — жмёт уже существующий

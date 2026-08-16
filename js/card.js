@@ -122,8 +122,7 @@ async function cardSend(){
   try{
     const png=cv.toDataURL('image/png');
     const caption=(typeof shareTextFor==='function')?shareTextFor():('Cosmogram: '+cardData.sc);
-    const r=await fetch(SYNC_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'share_card',initData:tg.initData,png,caption})});
+    const r=await syncFetch(SYNC_URL,{action:'share_card',initData:tg.initData,png,caption});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
     tg.shareMessage(ans.id,function(ok){ if(ok){ haptic('success'); } });
@@ -144,8 +143,7 @@ async function cardStory(){
   if(!b||!cv||b._busy) return; b._busy=1;
   try{
     const png=cv.toDataURL('image/png');
-    const r=await fetch(SYNC_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'card_url',initData:tg.initData,png})});
+    const r=await syncFetch(SYNC_URL,{action:'card_url',initData:tg.initData,png});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
     tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:L.cardStoryBtn||'Играть'}});

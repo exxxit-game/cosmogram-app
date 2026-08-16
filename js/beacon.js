@@ -9,6 +9,23 @@
    Законы: дедуп (одна ошибка — одно письмо за сессию), сервер тормозит
    флуд сам; ядро получает по одной строке-вызову (сигналы-симптомы).
    ============================================================ */
+function pickDispatchCandidate(queue, limit=2){
+  if(!Array.isArray(queue)) return [];
+  const items=[]; const seen=new Set();
+  for(const item of queue){
+    if(!item || typeof item!=='object') continue;
+    const key=(item.kind||'')+'|'+String(item.msg==null?'':item.msg).slice(0,60);
+    if(seen.has(key)) continue;
+    seen.add(key); items.push(item);
+  }
+  items.sort((a,b)=>{
+    const pa = a.kind==='error' ? 1 : 0;
+    const pb = b.kind==='error' ? 1 : 0;
+    if(pa!==pb) return pb-pa;
+    return (a.ts||0)-(b.ts||0);
+  });
+  return items.slice(0, limit);
+}
 const BEACON=(()=>{
   const URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-beacon';
   const seen=new Set(); let flushing=false, calN=0, calStormed=false, calSources={};
@@ -76,7 +93,9 @@ const BEACON=(()=>{
     }
     Store.set('beaconNote',0);
   }
-  setInterval(()=>{ if(Store.get('beaconNote',0)>0) note(); },2000); // спрашиваем: небо отпустило?
+  if(typeof Store!=='undefined'){
+    setInterval(()=>{ if(Store.get('beaconNote',0)>0) note(); },2000); // спрашиваем: небо отпустило?
+  }
 
   function queue(){ return saneArray(Store.get('beaconQ',[]),[]); } // v1.282.13: очередь читается через санацию, как syncQ в sync.js — битое значение (облако, скос версий) роняло flush прямо внутри async, и отказ уходил в unhandledrejection → drop → flush → круг
 
@@ -150,17 +169,6 @@ const BEACON=(()=>{
     Store.set('beaconQ',q.slice(-10)); // очередь — не архив: десять последних
     razbudit(); // v1.284.19: не «отправить сейчас», а «прийти, когда дверь откроется» — см. окно вежливости выше
   }
-  // падения борта — те же события, что пишет самописец (свои слушатели, чужой мост не трогаем)
-  window.addEventListener('error',e=>{ if(e&&e.message){
-    // v1.108.1: раньше письмо несло только текст ошибки — «что», без «где» и «на чём». Файл:строка:столбец
-    // берутся напрямую из события; fps/тир/качество — уже вычислены ради Адаптивного I.Q., просто читаем.
-    // При отсутствии (редкий браузер) — просто не добавляется, письмо всё равно уходит.
-    // v1.282.13: loc (файл:строка:столбец) устойчив — он часть личности ошибки и остаётся в msg,
-    // а перчинка perfCtx уходит третьим доводом, мимо ключа дедупа.
-    const loc=e.filename?(String(e.filename).split('/').pop()+':'+e.lineno+':'+e.colno):'';
-    drop('error',(loc?loc+' ':'')+e.message, perfCtx());
-  } });
-  window.addEventListener('unhandledrejection',e=>drop('error','promise: '+String(e&&e.reason), perfCtx()));
 
   /* v1.108.1 «Слой 3»: открытка сессии — не поток данных, а одна короткая отправка в естественный
      момент выхода. Даёт полное покрытие (не только упавшие сессии), не только жалобы. sendBeacon,
@@ -190,6 +198,19 @@ const BEACON=(()=>{
   if(typeof document!=='undefined'){
     document.addEventListener('visibilitychange', ()=>{ if(document.hidden) sessionBeacon(); });
   }
+  if(typeof window!=='undefined'){
+    window.addEventListener('error',e=>{ if(e&&e.message){
+      const loc=e.filename?(String(e.filename).split('/').pop()+':'+e.lineno+':'+e.colno):'';
+      drop('error',(loc?loc+' ':'')+e.message, perfCtx());
+    } });
+    window.addEventListener('unhandledrejection',e=>drop('error','promise: '+String(e&&e.reason), perfCtx()));
+  }
+  if(typeof window!=='undefined' && typeof Store!=='undefined'){
+    setTimeout(()=>razbudit(),4000); // доотправка очереди прошлой сессии — как syncFlush; v1.284.19: через окно вежливости, а не напролом
+    // v1.282.13: сеть вернулась — вот честный повод разослать накопившееся, вместо того
+    // чтобы биться в каждую ошибку офлайном (flush теперь выходит сразу, если сети нет).
+    window.addEventListener('online',()=>razbudit());
+  }
 
   /* сигналы-симптомы — крючки-однострочники зовут оттуда, где родился симптом:
      gfx_fix (нажал «Снизить графику» — кадры болели), liar (суд нашёл лжеца —
@@ -212,10 +233,6 @@ const BEACON=(()=>{
     }
   }
 
-  setTimeout(()=>razbudit(),4000); // доотправка очереди прошлой сессии — как syncFlush; v1.284.19: через окно вежливости, а не напролом
-  // v1.282.13: сеть вернулась — вот честный повод разослать накопившееся, вместо того
-  // чтобы биться в каждую ошибку офлайном (flush теперь выходит сразу, если сети нет).
-  if(typeof window!=='undefined') window.addEventListener('online',()=>razbudit());
   /* «Гость виден» (13.08.2026): дневник дней у невошедшего игрока.
      Гость ведёт журнал с первого полёта — dayMark() и dayAdd() в core.js зовутся без
      всякой проверки входа и держат до 60 дней. Но отправить его ему было нечем:
@@ -266,3 +283,4 @@ const BEACON=(()=>{
   function err(msg){ drop('error', String(msg==null?'':msg), perfCtx()); }
   return { signal, err, calTick, days, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
+if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

@@ -72,9 +72,11 @@ function initBg(){
 initBg();
 
 /* ================= СПАВН ================= */
-function difficulty(){ // формула эталона (возврат v1.30.0): волна + полёт, никаких кривых
+function difficulty(){ // волна + полёт; ранний ramp делает первые секунды живыми, затем затухает
   if (S.mode==='custom' && S.customFlat) return Math.min(1, (S.customW-1)*0.20); // «Ровный жар» (v1.69.0): без разгона по дистанции
-  return Math.min(1, (S.mission-1)*0.20 + S.dist/6000); }
+  const base=(S.mission-1)*0.20 + S.dist/6000;
+  const opening=.62*(1-Math.exp(-S.dist/100))*Math.exp(-S.dist/900); // к ~5с даёт живой темп, к поздней игре почти исчезает
+  return Math.min(1, base+opening); }
 const SR_GOAL=10000; // Спидран: цель по очкам — решение режиссёра (v1.42.0)
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
@@ -148,12 +150,12 @@ function fieldH(){ return 844; }
 function spawnObstacle(){
   let extraGap = 0;
   if (obstacles.length>=MAXOB) return extraGap;
-  const d = difficulty(), m = S.mission, fl = fieldL(), fw = fieldW();
+  const d = difficulty(), m = S.mission, kindWave=m+(S.dist>=120?1:0)+(S.dist>=300?1:0), fl = fieldL(), fw = fieldW();
   const x = fl + mapRand(30, fw-30);
   const vy = S.speed * mapRand(.9,1.25);
   // веса видов эталона (возврат v1.30.0): каждая волна — событие, новый вид в поле
-  const w = [ ['rock',42], ['debris',28], ['drift', m>=2?14:0], ['mine',10],
-              ['sat', m>=3?8:0], ['comet', m>=4?6:0], ['seeker', m>=5?6:0], ['gate', m>=6?5:0] ];
+  const w = [ ['rock',42], ['debris',28], ['drift', kindWave>=2?14:0], ['mine',10],
+              ['sat', kindWave>=3?8:0], ['comet', kindWave>=4?6:0], ['seeker', kindWave>=5?6:0], ['gate', kindWave>=6?5:0] ];
   if (S.mode==='custom' && S.customE){ // Своя трасса (v1.68.0): только виды, выбранные автором (порядок = FORGE_KINDS)
     /* v1.282.13: выбор автора сильнее волнового гейта. Маска умела только гасить, а поднять
        вес, уже обнулённый условием m>=N, не могла — поэтому автор, собравший трассу из одних
@@ -743,7 +745,8 @@ function update(dt){
 
   // тягач-частицы (кап частиц + авто-качество)
   const thrusterP = Q.level>=3 ? .8 : Q.level===2 ? .6 : Q.level===1 ? .35 : .18; // v1.38.0: «Ультра» — самый густой след (был перекос: получала минимум)
-  if (RNG()<thrusterP && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
+  const fxK = (Q.mode==='auto' && Q.fps<48) ? (Q.fps<40 ? .55 : .75) : 1;
+  if (RNG()<(thrusterP*fxK) && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
     const t=poolPart.take(), sk=SKINS[S.skin]||SKINS[0];
     t.x=plane.x+rand(-3,3); t.y=plane.y+16; t.vx=rand(-.3,.3); t.vy=rand(1,2.4);
     t.life=rand(.4,.8); t.color=sk.trail; t.size=rand(1,2.5);
@@ -797,7 +800,8 @@ function updateFx(dt){
 }
 
 function hitPlane(kind){
-  S.lives--; S.combo=0; S.invuln=2.2; S.shake=1; S.hits++; S.lastHitKind=kind||'?'; // v1.108.1: причина последнего удара — для анонимной балансовой телеметрии
+  S.lives--; S.combo=0; S.invuln=2.2; S.shake=1; S.hits++; S.lastHitKind=kind||'?';
+  S.smooth = clamp(S.smooth - 0.12, 0.5, 1); // v1.284.25: удар должен немедленно ухудшать "Smooth Flight" — без этого итоговый счёт не отражал реальную резкость столкновения.
   updateLives(); updateCombo();
   elLivesC.classList.remove('hit'); void elLivesC.offsetWidth; elLivesC.classList.add('hit'); // v1.77.0: пульс жизни — гаснет с микродрожью
   sfx.hit(); haptic('heavy'); if(typeof gamepadRumble==='function') gamepadRumble(.7,150); if (typeof music!=='undefined'&&music.kick) music.kick(); // сайдчейн: музыка приседает под ударом (v1.48.0)
@@ -814,6 +818,9 @@ function confetti(){ // фонтан при новом рекорде — вау
   for(let b=0;b<4;b++) burst(W/2+rand(-70,70), H*.3+rand(-20,20), cols[b], 16);
 }
 function burst(x,y,color,n){
+  if(Q.mode==='auto' && Q.fps<48){
+    n=Math.min(n, Q.fps<40 ? Math.max(2,(n*.4)|0) : Math.max(3,(n*.6)|0));
+  }
   if (particles.length>(Q.level>=3?340:PARTICLE_CAP)) n=Math.min(n,4); // v1.38.0: у «Ультры» кап выше
   /* v1.282.13: чернил три вида, а не два. Флагману juicy() отдаёт широкий охват строкой
      color(display-p3 …) — прежнее правило «не rgba, значит hex» резало её как hex, и

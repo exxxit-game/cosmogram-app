@@ -24,7 +24,8 @@
 })();
 
 /* ---------- Telegram WebApp (Блок 1) ---------- */
-const tg = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ? window.Telegram.WebApp : null;
+const tgWebApp = window.Telegram && window.Telegram.WebApp;
+const tg = tgWebApp && (tgWebApp.initData || window.TelegramWebviewProxy) ? tgWebApp : null;
 
 /* v1.284.14 «Мост не глотает» — ЯДРО, правка по прямому решению владельца (14.08).
    Мост оборачивает КАЖДЫЙ вызов нашего колбэка в собственный try/catch и молчит
@@ -124,7 +125,7 @@ function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':
    на настоящий сервер даже с localhost — тестовый забег мог попасть в боевую таблицу.
    Теперь одна печать на все три двери сразу: window.__labOpen=true снимает её везде разом. */
 function isLabEnv(){
-  let onLocal=false; try{ const h=location.hostname; onLocal=h==='localhost'||h==='127.0.0.1'||h==='::1'||h==='[::1]'; }catch(e){}
+  let onLocal=false; try{ const h=location.hostname; onLocal=location.protocol==='file:'||h==='localhost'||h==='127.0.0.1'||h==='::1'||h==='[::1]'; }catch(e){}
   return onLocal && !(typeof window!=='undefined' && window.__labOpen===true);
 }
 function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); } // v1.108.1: общий форматтер — todayKey() и streakDayCheck() делят один источник правды
@@ -232,7 +233,7 @@ const I18N = {
     setSound:'Звук', setMusic:'Музыка',
     setLang:'Язык', langAuto:'Авто',
     channel:'Наш канал', toRecord:'До рекорда: ',
-    setVibro:'Виброотклик', setContrast:'Высокий контраст', setColorblind:'Для дальтоников', setStreaks:'Скоростные полосы',
+    setVibro:'Виброотклик', setContrast:'Высокий контраст', setColorblind:'Для дальтоников',
     setGfx:'Графика', gfxAuto:'Авто', gfxLow:'Низкая', gfxMed:'Средняя', gfxHigh:'Высокая', gfxUltra:'Ультра',
     aboutBtn:'Об игре',
     modeGyro:'Гироскоп', modeTouch:'Касание', modeKeys:'Клавиатура',
@@ -368,7 +369,7 @@ const I18N = {
     setSound:'Sound', setMusic:'Music',
     setLang:'Language', langAuto:'Auto',
     channel:'Our channel', toRecord:'To beat: ',
-    setVibro:'Haptics', setContrast:'High contrast', setColorblind:'Colorblind assist', setStreaks:'Speed streaks',
+    setVibro:'Haptics', setContrast:'High contrast', setColorblind:'Colorblind assist',
     setGfx:'Graphics', gfxAuto:'Auto', gfxLow:'Low', gfxMed:'Medium', gfxHigh:'High', gfxUltra:'Ultra',
     aboutBtn:'About',
     modeGyro:'Gyro', modeTouch:'Touch', modeKeys:'Keyboard',
@@ -494,7 +495,7 @@ const I18N = {
     settings:'Ajustes', settingsTitle:'Ajustes', back:'Atrás',
     setSound:'Sonido', setMusic:'Música', setLang:'Idioma', langAuto:'Auto', channel:'Nuestro canal',
     toRecord:'Para el récord: ',
-    setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setStreaks:'Estelas de velocidad', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
+    setVibro:'Vibración', setContrast:'Alto contraste', setColorblind:'Asistencia daltonismo', setGfx:'Gráficos', gfxAuto:'Auto', gfxLow:'Baja', gfxMed:'Media', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Acerca del juego',
     modeGyro:'Giroscopio', modeTouch:'Toque', modeKeys:'Teclado',
     tiltAllow:'¿Permitir el giroscopio?', tiltOn:'Giroscopio activado', setGyroRow:'Giroscopio', sens:'Sensibilidad',
@@ -639,7 +640,7 @@ const I18N = {
     settings:'Ajustes', settingsTitle:'Ajustes', back:'Voltar',
     setSound:'Som', setMusic:'Música', setLang:'Idioma', langAuto:'Automático', channel:'Nosso canal',
     toRecord:'Para o recorde: ',
-    setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setStreaks:'Rastros de velocidade', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
+    setVibro:'Vibração', setContrast:'Alto contraste', setColorblind:'Assistência daltonismo', setGfx:'Gráficos', gfxAuto:'Automático', gfxLow:'Baixa', gfxMed:'Média', gfxHigh:'Alta', gfxUltra:'Ultra',
     aboutBtn:'Sobre o jogo',
     modeGyro:'Giroscópio', modeTouch:'Toque', modeKeys:'Teclado',
     tiltAllow:'Permitir o giroscópio?', tiltOn:'Giroscópio ativado', setGyroRow:'Giroscópio', sens:'Sensibilidade',
@@ -785,7 +786,7 @@ const I18N = {
     setSound:'Son', setMusic:'Musique',
     setLang:'Langue', langAuto:'Auto',
     channel:'Notre chaîne', toRecord:'À battre : ',
-    setVibro:'Vibrations', setContrast:'Contraste élevé', setColorblind:'Assistance daltonisme', setStreaks:'Traînées de vitesse',
+    setVibro:'Vibrations', setContrast:'Contraste élevé', setColorblind:'Assistance daltonisme',
     setGfx:'Graphismes', gfxAuto:'Auto', gfxLow:'Faible', gfxMed:'Moyen', gfxHigh:'Élevé', gfxUltra:'Ultra',
     aboutBtn:'À propos',
     modeGyro:'Gyroscope', modeTouch:'Tactile', modeKeys:'Clavier',
@@ -1057,11 +1058,13 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.284.22'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.400.1'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
-let SPEED_STREAKS=true; // v1.280.0: звёзды тянутся в штрихи на скорости — персист 'speedStreaks', по умолчанию включено
+// Скоростные полосы полностью удалены: они не участвуют в игровой логике и не должны
+// оставаться в настройках, хранилище или рендере. Это безопасный способ отключить эффект
+// без ломки оставшихся систем и без побочных зависимостей по флагу.
 function beep(f,dur,type,vol,slide){
   if(MUTED)return;
   const ac=audio(); if(!ac)return;
@@ -1170,10 +1173,12 @@ function morseHapSeq(cs){ // позывной → расписание импу�
   }
   return seq;
 }
-function morseHF(){ // тактильный мост Telegram — по факту умения, без версий
+function morseHF(){ // тактильный мост Telegram — только там, где версия поддерживает Haptics
   try{
     const w=window.Telegram&&window.Telegram.WebApp;
-    if (w&&w.HapticFeedback&&w.HapticFeedback.impactOccurred) return w.HapticFeedback;
+    if (!w || !w.HapticFeedback || !tgv('6.1')) return null;
+    const hf=w.HapticFeedback;
+    if (typeof hf.impactOccurred==='function' || typeof hf.notificationOccurred==='function') return hf;
   }catch(e){}
   return null;
 }
@@ -1188,7 +1193,7 @@ function hapticMorse(cs){
   const hf=morseHF();
   if (hf){ // точка — лёгкий импульс, тире — тяжёлый, по расписанию
     seq.forEach(e=>setTimeout(()=>{ try{ hf.impactOccurred(e.k==='dash'?'heavy':'light'); }catch(_){ } }, e.t));
-  } else if (navigator.vibrate){ // веб: точка 50мс, тире 150мс, паузы по расписанию
+  } else if (navigator.vibrate && userGestureReady){ // веб: точка 50мс, тире 150мс, паузы по расписанию
     const pat=[]; let prevEnd=0;
     seq.forEach((e,i)=>{ const d=e.k==='dash'?150:50;
       if (i) pat.push(Math.max(0,e.t-prevEnd));
@@ -1341,7 +1346,7 @@ function vibroChannel(){ // 2=Telegram API, 1=системная веб-вибр
 }
 function tgApp(){ // мост Telegram: живая ссылка или свежий window.Telegram (тесты подменяют)
   if (typeof tg!=='undefined' && tg) return tg;
-  try{ const w=window.Telegram&&window.Telegram.WebApp; return (w&&w.initData)?w:null; }catch(e){ return null; }
+  try{ const w=window.Telegram&&window.Telegram.WebApp; return (w&&(w.initData||window.TelegramWebviewProxy))?w:null; }catch(e){ return null; }
 }
 function tgVerAtLeast(t,v){ // «8.0»+ → true; версия моста — строка «мажор.минор»
   const p=String((t&&t.version)||'0').split('.').map(Number), q=String(v).split('.').map(Number);
@@ -1475,11 +1480,13 @@ function tgOrientLock(){
   }catch(e){}
 }
 tgOrientLock();
-window.addEventListener('orientationchange', ()=>setTimeout(tgOrientLock,200));
-// часть Android-клиентов глотает orientationchange (сплит-скрин, замок поворота в системе) —
-// дублируем на resize с лёгким дебаунсом: первый портретный кадр довзводит замок
-let _olT=0;
-window.addEventListener('resize', ()=>{ if(_olT) return; _olT=setTimeout(()=>{ _olT=0; tgOrientLock(); },250); });
+if (typeof window!=='undefined' && typeof window.addEventListener==='function') {
+  window.addEventListener('orientationchange', ()=>setTimeout(tgOrientLock,200));
+  // часть Android-клиентов глотает orientationchange (сплит-скрин, замок поворота в системе) —
+  // дублируем на resize с лёгким дебаунсом: первый портретный кадр довзводит замок
+  let _olT=0;
+  window.addEventListener('resize', ()=>{ if(_olT) return; _olT=setTimeout(()=>{ _olT=0; tgOrientLock(); },250); });
+}
 
 const sfx={
   coin:c=>{ const f=scaleF(c-1); beep(f,.14,'sine',.09,f*1.5); beep(f*2,.09,'sine',.028,f*2.4); }, // звезда — перезвон в тон музыке: комбо поднимается по пентатонике, серия = мелодия (v1.49.0)
@@ -1517,6 +1524,8 @@ const sfx={
 
 /* ---------- Тактиль (Блок 5: rate-limit 100мс + vibrate fallback) ---------- */
 let lastHap=0;
+let userGestureReady=false;
+function allowHapticsNow(){ userGestureReady=true; }
 function haptic(kind){
   if(!VIBRO)return;
   const now=performance.now(); if(now-lastHap<100)return; lastHap=now;
@@ -1528,7 +1537,16 @@ function haptic(kind){
       done=true;
     }
   }catch(e){}
-  if(!done && navigator.vibrate){ try{ navigator.vibrate(kind==='heavy'?70:kind==='medium'?40:15); }catch(e){} }
+  if(!done && navigator.vibrate && userGestureReady){
+    try{ navigator.vibrate(kind==='heavy'?70:kind==='medium'?40:15); }catch(e){}
+  }
+}
+if (typeof window!=='undefined' && typeof window.addEventListener==='function') {
+  const unlockHaptics = function(){ allowHapticsNow(); };
+  window.addEventListener('pointerdown', unlockHaptics, { passive:true, once:true });
+  window.addEventListener('touchstart', unlockHaptics, { passive:true, once:true });
+  window.addEventListener('keydown', unlockHaptics, { passive:true, once:true });
+  window.addEventListener('click', unlockHaptics, { passive:true, once:true });
 }
 
 /* ---------- Wake Lock (Блок 1) ---------- */
@@ -1651,6 +1669,8 @@ function dispProbe(done){ // паспорт экрана (v1.12.0): частот
 function gfxCap(){ // HD-резолюция по тиру: ручные режимы без изменений; авто — флагман до 3x, слабый 1.5x экономия
   const raw=window.devicePixelRatio||1;
   const m=Store.get('gfx','auto');
+  const lowMem = (typeof navigator!=='undefined' && typeof navigator.deviceMemory==='number' && navigator.deviceMemory<=2)
+    || isAndroidGo();
   if(m==='low') dprCap=1.5;
   else if(m==='med') dprCap=2;
   else if(m==='high') dprCap=3;
@@ -1663,6 +1683,7 @@ function gfxCap(){ // HD-резолюция по тиру: ручные режи
     // 3x оставался всегда. Теперь разрешение спускается по той же лестнице, что и сами эффекты.
     dprCap = t>=2 ? (lv>=3?Math.min(raw,3.5):lv===2?3:lv===1?2:1.5)
       : t===0 ? (isAndroidGo()?1:1.5) : ((raw>=2.5&&(navigator.hardwareConcurrency||4)>=8)?3:2);
+    if(lowMem && dprCap>1.5) dprCap=1.5;
   }
 }
 /* v1.99.2 «Бережное небо»: уважение к системному «уменьшить движение».
@@ -1674,17 +1695,10 @@ let RM=false;
 try{ const mqRM=matchMedia('(prefers-reduced-motion: reduce)'); RM=!!mqRM.matches;
   if(mqRM.addEventListener) mqRM.addEventListener('change',e=>{ RM=!!e.matches; }); }catch(e){}
 function resize(){
-  DPR = Math.min(window.devicePixelRatio||1, dprCap);
   const cssW = window.innerWidth;
   const rt=tgApp(); // v1.71.0: в fullscreen viewportStableHeight на Android может лагать — берём честный innerHeight
   const cssH = (rt && rt.isFullscreen) ? window.innerHeight
     : (rt && rt.viewportStableHeight && rt.isExpanded) ? rt.viewportStableHeight : window.innerHeight;
-  /* Каталог ошибок №29 «Дно вьюпорта»: Telegram в момент входа/выхода из fullscreen (и раз в
-     синюю луну на голом старте) может на один вызов отдать cssW или cssH равным 0, пока свой
-     вьюпорт ещё не устаканился. Раньше это тихо протаскивалось в W=0/H=0, canvas.width=0 и в
-     кэш vignetteSprite() — а следующий же кадр ронял drawImage() на канвасе нулевого размера.
-     Отказ раньше входа честнее подмены нулём: прежняя геометрия остаётся в силе один лишний
-     кадр, соседний resize() (событие/таймер/viewportChanged) досчитает правду через мгновение. */
   if (cssW<=0 || cssH<=0) return;
   /* v1.284.6 «Клавиатура — не узкое окно». Экранная клавиатура съедает 250-350 px высоты
      из 667, SC проваливается ниже пола, и поверх поля, в которое игрок ПЕЧАТАЕТ, встаёт
@@ -1704,7 +1718,19 @@ function resize(){
      Мерка — по меньшей из двух сторон: небо никогда не уже 390 (поле не гуще эталона)
      и не ниже 844 (окно реакции не короче эталона). Большой экран — просто больше
      неба по бокам; скорости, размеры и ритм уклонения везде эталонные, один в один. */
-  SC = Math.min(cssW/390, cssHu/844);
+  const nextSC = Math.min(cssW/390, cssHu/844);
+  const nextDpr = Math.min(window.devicePixelRatio||1, dprCap);
+  const nextW = Math.round(cssW/nextSC);
+  const nextH = Math.round(cssHu/nextSC);
+  const nextLongest = Math.max(cssW, cssH) * nextDpr;
+  let finalDpr = nextDpr;
+  if (nextLongest > capPx) finalDpr *= capPx / nextLongest;
+  const nextCanvasW = Math.round(cssW*finalDpr);
+  const nextCanvasH = Math.round(cssH*finalDpr);
+  const sameSize = W===nextW && H===nextH && DPR===finalDpr && SC===nextSC && canvas.width===nextCanvasW && canvas.height===nextCanvasH && canvas.style.width===cssW+'px' && canvas.style.height===cssH+'px';
+  if (sameSize) return; // прежняя геометрия уже ровно такая же — без повторного пересоздания холста.
+  DPR = finalDpr;
+  SC = nextSC;
   /* v1.108.1 «Пол листа»: симметрично «Потолку листа» сверху — снизу тоже нужна страховка.
      Без неё очень узкое окно (сплит-скрин на телефоне/планшете, ужатое окно на десктопе)
      рисовало игру в нерабочем микро-масштабе — тап-таргеты меньше пальца, читать нечего.
@@ -1721,7 +1747,7 @@ function resize(){
     if (typeof S!=='undefined' && S && S.running && !S.paused && typeof pauseGame==='function') pauseGame(); // не даём разбиться в невидимой тесноте
   }
   const tnEl = document.getElementById('tooNarrow');
-  if (tnEl){
+  if (tnEl && tnEl.classList && typeof tnEl.classList.toggle==='function'){
     tnEl.classList.toggle('hidden', !tooNarrow);
     /* 13.08.2026: под одним окном живут ДВЕ разные беды, и совет у них противоположный.
        Настоящий виновник виден в самой формуле выше: SC = min(cssW/390, cssH/844). У телефона
@@ -1735,8 +1761,8 @@ function resize(){
      (4K-телевизор с двойной чёткостью = 7680×4320 точек, ~130 МБ памяти на один лист)
      ужимаем чёткость листа, а не мир: телевизор сам мягко растянет картинку, с дивана
      глаз не различит. На телефонах и ноутбуках страховка молчит всю жизнь. */
-  const longest = Math.max(cssW, cssH) * DPR;
-  if (longest > capPx) DPR *= capPx / longest;
+  const capLongest = Math.max(cssW, cssH) * DPR;
+  if (capLongest > capPx) DPR = Math.max(1, DPR * capPx / capLongest);
   canvas.width = Math.round(cssW*DPR); canvas.height = Math.round(cssH*DPR); // настоящих пикселей ровно столько же, сколько было (лишь не шире потолка)
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
   ctx.setTransform(DPR*SC,0,0,DPR*SC,0,0); // меры неба → пиксели экрана одним поворотом линейки

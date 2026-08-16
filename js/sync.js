@@ -19,6 +19,10 @@ function syncWebAuth(){ const w=Store.get('tgWebAuth',null); return (w && w.id &
 function syncDcAuth(){ const w=Store.get('dcAuth',null); return (w && w.sess) ? w : null; } // сессия Discord: HMAC-подпись нашего сервера (v1.52.0 «Второй вход»)
 function syncAuth(){ const d=syncInitData(); if(d) return {initData:d}; const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; return null; }
 function syncAvailable(){ return !!syncAuth(); }
+function ghostAccessStateForAuth(isAuthed, labels){
+  const text = (labels && labels.accGuest) || 'Sign in with Telegram';
+  return isAuthed ? null : text;
+}
 function syncAuthName(){ // имя для «ты в таблице как …»
   try{ const u=tg && tg.initDataUnsafe && tg.initDataUnsafe.user; if(u && u.first_name) return String(u.first_name); }catch(e){}
   const w=syncWebAuth(); if(w) return String(w.first_name||'Игрок');
@@ -30,6 +34,12 @@ function syncAuthName(){ // имя для «ты в таблице как …»
 function tgWidgetMount(el){
   if(!el || typeof document==='undefined') return false;
   el.innerHTML=''; el.classList.remove('wgOff');
+  const host=location.hostname;
+  if(location.protocol==='file:' || host==='localhost' || host==='127.0.0.1' || host==='[::1]'){
+    el.classList.add('wgOff');
+    window.__tgWgSilent=1;
+    return false;
+  }
   const s=document.createElement('script');
   s.src='https://telegram.org/js/telegram-widget.js?22';
   s.async=true;

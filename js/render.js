@@ -10,7 +10,9 @@ const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hol
 function qThr(){ // пороги авто-качества: под тир GPU и под частоту экрана (v1.12.0) — на 120 Гц считаем по-честному; v1.35.0 — чуть мягче вверх, чтобы не гонять уровень туда-сюда
   const t=gfxTier(), hz=Store.get('dispHz',60);
   if (hz>=100) return {dn:Math.round(hz*.45), up:Math.round(hz*.85)};
-  return {dn:t===1?36:40, up:55};
+  if (t>=2) return {dn:38, up:54};
+  if (t===1) return {dn:36, up:50};
+  return {dn:32, up:45};
 }
 /* v1.284.22 «Качели качества» (партия 49). Владелец: «графика прыгает». Боевая телеметрия
    подтвердила числом: сигнал fps_drop приходит с его телефона на КАЖДОЙ версии подряд —
@@ -32,6 +34,15 @@ function qualityTick(dt){
     const f = Q._n/Math.max(Q._acc,.001);
     Q.fps = lerp(Q.fps, f, .6);
     Q._acc=0; Q._n=0; Q._t=0;
+    const applyLevelChange = (nextLevel, signal) => {
+      const prev = Q.level;
+      if (nextLevel === prev) return false;
+      Q.level = nextLevel;
+      Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
+      if (typeof signal === 'number') Q._ceil = signal;
+      Store.set('gfxLv',Q.level); Store.set('gfxCeil', Q._ceil); gfxCap(); resize();
+      return true;
+    };
     if (Q._hold>0){
       // v1.282.1 «Аварийный выход»: карантин был всегда ровно 8с независимо от тяжести —
       // тройной обвал (60→20 fps, настоящий троттлинг) спускался по ступеням МЕДЛЕННО:
@@ -41,9 +52,9 @@ function qualityTick(dt){
       // (заметно ниже dn) пробивает карантин раньше срока.
       const {dn:dnEarly}=qThr();
       if (Q.fps < dnEarly*.6 && Q.level>0){
-        Q._ceil = Q.level; Q.level--; Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
-        Store.set('gfxLv',Q.level); Store.set('gfxCeil',Q._ceil); gfxCap(); resize(); // v1.284.22: потолок переживает перезапуск — см. запись у qualityTick
-        if(typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+'');
+        Q._ceil = Q.level;
+        const changed = applyLevelChange(Q.level-1, Q._ceil);
+        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+'');
         return;
       }
       Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; // карантин после смены уровня: небо не дёргается
@@ -51,15 +62,27 @@ function qualityTick(dt){
     const {dn,up}=qThr(), cap=gfxUltraOk()?3:2; // v1.7.0: среднему тиру красоту бережём до последнего; v1.12.0: флагману доступна «Ультра»
     const ceil = Q._ceil>=0 ? Math.min(cap,Q._ceil-1) : cap; // v1.35.0: уровень, с которого упали, авто не штурмует, пока устройство не докажет стабильность
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
-      Q._ceil = Q.level; Q.level--; Q._dn=0; Q._up=0; Q._prove=0; Q._hold=8;
-      Store.set('gfxLv',Q.level); Store.set('gfxCeil',Q._ceil); gfxCap(); resize(); // v1.284.22
-      if(typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+''); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
-    else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
+      Q._ceil = Q.level;
+      const changed = applyLevelChange(Q.level-1, Q._ceil);
+      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+''); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
+    else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ const old = Q.level; Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); if (old !== Q.level) resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; Store.set('gfxCeil',-1); } } // v1.284.22: устройство доказало запас — забываем потолок и в хранилище тоже, иначе он держал бы уровень внизу вечно // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }
   }
 }
 const DEBUG_FPS = /[?&#]debug/.test(location.href);
+const frameProfile={bg:0,stars:0,sky:0,field:0,fx:0,n:0,last:0};
+function profileReport(){
+  if(!DEBUG_FPS || frameProfile.n<30) return;
+  const now=performance.now();
+  if(now-frameProfile.last<250) return;
+  const n=frameProfile.n, el=$('fpsPill');
+  if(el){
+    el.dataset.profile='1';
+    el.textContent=Q.fps.toFixed(0)+' fps | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' ms';
+  }
+  frameProfile.bg=0; frameProfile.stars=0; frameProfile.sky=0; frameProfile.field=0; frameProfile.fx=0; frameProfile.n=0; frameProfile.last=now;
+}
 /* v1.282.15: сколько прошло с прошлой ОТРИСОВКИ. Нужен тому немногому внутри draw(),
    что действительно движется само (параллакс фона): фикс-степ живёт в update(), а draw
    зовётся с разной частотой — 60 в небе, 30 на оверлеях, 4 на замершей паузе. */
@@ -317,6 +340,7 @@ function partCol(prefix, a){
   return v;
 }
 const STREAK_COL=['rgba(255,247,228,.9)','rgba(186,230,255,.9)','rgba(218,230,255,.9)'];
+const SGN2=[-1,1]; // двуполюсные циклы без аллокации массива в кадре
 const gradCache={}; let gradN=0;
 function gradPut(k,g){ if(gradN>400){ for(const q in gradCache) delete gradCache[q]; gradN=0; } gradCache[k]=g; gradN++; return g; }
 let nebCache={h:-1,a:null,b:null};
@@ -361,11 +385,29 @@ function nebulaSprite(hue){ // двухтональная: яркое ядро �
   x.fillStyle=g; x.fillRect(0,0,200,200);
   return c;
 }
-function drawNebulas(h1,h2,tN){
+let lowPowerMemo={t:0,v:false};
+function isLowPowerDevice(frameNow){
+  const t=(typeof frameNow==='number')?frameNow:performance.now();
+  if(t-lowPowerMemo.t>1500 || lowPowerMemo.t===0){
+    lowPowerMemo.t=t;
+    lowPowerMemo.v = gfxTier()<=0 || !!(typeof isAndroidGo==='function' && isAndroidGo());
+  }
+  return lowPowerMemo.v;
+}
+function drawNebulas(h1,h2,tN,lowPower){
   if(Q.level===0) return; // на слабых устройствах пропускаем
+  if(typeof lowPower!=='boolean') lowPower=isLowPowerDevice();
+  if(lowPower && Q.level<=1){ return; } // минимальный бюджет: у слабых и средних уровней не тратим кадр на тяжёлый фон.
   const hq1=Math.round(S.hueShift/NF_HUE_STEP); // v1.282.15: тот же грубый квант — иначе два спрайта 200×200 пеклись каждые 833мс
   if(nebCache.h!==hq1){
     nebCache={h:hq1,a:nebulaSprite(h1+40),b:nebulaSprite(h2+60)};
+  }
+  if(lowPower){
+    // Бюджетное железо: убираем тяжёлую туманность и звёздные слои, оставляя только минимум фона.
+    ctx.globalAlpha=.18;
+    ctx.drawImage(nebCache.a, W*.15, H*.25, W*.7, H*.55);
+    ctx.globalAlpha=1;
+    return;
   }
   if(Q.level>=2){ // HD/Ультра: богатое поле туманностей + живые дрейфующие пятна поверх
     ctx.drawImage(nebulaField(h1,h2),0,0,W,H);
@@ -390,27 +432,39 @@ function drawNebulas(h1,h2,tN){
 
 /* ================= DRAW ================= */
 function drawFx(hq,sh){ // частицы + попапы: и в игре, и поверх оверлеев (конфетти рекорда)
+  if(!particles.length && !popups.length) return;
+  const lowFx = isLowPowerDevice() || (Q.mode==='auto' && Q.fps<48);
+  const maxDraw = !lowFx ? particles.length : (Q.fps<40 ? 90 : 140);
+  let drawn = 0;
   if(hq) ctx.globalCompositeOperation='lighter';
-  const aurSp=starDot('w');
-  for (const p of particles){
+  let aurSp=null;
+  for (let pi=particles.length-1;pi>=0;pi--){
+    if(drawn>=maxDraw) break;
+    const p=particles[pi];
+    if(!inView(p.x,p.y,12,12)) continue;
     ctx.globalAlpha = clamp(p.life,0,1);
     if(hq && p.fx==='aurora'){ // звёздный след Авроры — крошечные мерцающие звёздочки
+      if(!aurSp) aurSp=starDot('w');
       const s=p.size*3.4;
       ctx.drawImage(aurSp,p.x-s/2,p.y-s/2,s,s);
+      drawn++;
       continue;
     }
     ctx.fillStyle = partCol(p.color, p.life*.9);
     ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
+    drawn++;
   }
   ctx.globalAlpha=1;
   if(hq) ctx.globalCompositeOperation='source-over';
   ctx.textAlign='center'; ctx.font='500 15px -apple-system,"Segoe UI",Roboto,sans-serif';
   for (const p of popups){
-    ctx.globalAlpha=clamp(p.life,0,1);
+    if(!inView(p.x,p.y,140,42)) continue;
+    const life=clamp(p.life,0,1);
+    ctx.globalAlpha=life;
     ctx.fillStyle=p.color;
     if(sh){ ctx.save(); ctx.translate(p.x,p.y); ctx.scale(1.12,1.12); // v1.66.0: ореол попапа — прозрачный дубль крупнее
-      ctx.globalAlpha=clamp(p.life,0,1)*.35; ctx.fillText(p.txt,0,0); ctx.restore();
-      ctx.globalAlpha=clamp(p.life,0,1); }
+      ctx.globalAlpha=life*.35; ctx.fillText(p.txt,0,0); ctx.restore();
+      ctx.globalAlpha=life; }
     ctx.fillText(p.txt,p.x,p.y);
   }
   ctx.globalAlpha=1;
@@ -459,6 +513,10 @@ function drawGlyph(ctx,kind,col){
   ctx.restore();
 }
 
+function inView(x,y,mx,my){
+  return x>=-mx && x<=W+mx && y>=-my && y<=H+my;
+}
+
 /* v1.66.0 «Лёгкий кадр»: цвета бонусов — константы модуля (раньше объект собирался заново
    на каждый бонус в каждом кадре); кольца — готовые строки, лениво после загрузки game.js */
 const POW_COLORS={shield:'#7fd8ff',magnet:'#c58fff',slowmo:'#8fff9f',life:'#ffa1d9',dash:'#a9bcff',nova:'#fff0a8'}; // v1.105.0: жизнь — розовая, вне красной семьи тревоги (мина/ловец): «лови» больше не читается как «бойся»
@@ -469,49 +527,46 @@ function powRing(){
   return POW_RING;
 }
 function draw(){
+  const nowMs=performance.now();
+  const nowS=nowMs/1000;
+  const profileOn=DEBUG_FPS;
+  let profileMark=profileOn?nowMs:0;
   const shk = RM?0:S.shake; // v1.99.2 «Бережное небо»: при системном флаге экран не трясём
   const shx = shk>0?rand(-6,6)*shk:0, shy = shk>0?rand(-6,6)*shk:0;
   ctx.save(); ctx.translate(shx,shy);
 
   const h1 = 232+S.hueShift*.3, h2 = 200+S.hueShift*.3;
   ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
-  drawNebulas(h1,h2,performance.now()/1000);
+  const lowPower = isLowPowerDevice(nowMs);
+  drawNebulas(h1,h2,nowS,lowPower);
+  if(profileOn){ frameProfile.bg+=performance.now()-profileMark; profileMark=performance.now(); }
 
   const sh = Q.level>=1, hq = Q.level>=2, uq = Q.level>=3; // sh — свечение, hq — полная графика, uq — ультра
 
   // параллакс-звёзды (на hq — мягкие тонированные точки + мерцание + блики)
-  const twT = hq ? performance.now()/380 : 0;
-  const nStars = uq ? bgStars.length : Math.min(90,bgStars.length); // «Ультра» — более густое звёздное поле
-  // v1.280.0 «Скоростные полосы»: переключаемый эффект (Настройки → Игра и экран) — на скорости
-  // точки вытягиваются в короткие штрихи. Включён по умолчанию, отдельно от самого тира графики:
-  // тир решает МОЖЕТ ли устройство, переключатель — ХОЧЕТ ли игрок. Q0 не участвует (sh=false там).
-  /* v1.282.15: полосы только когда мир действительно летит. S.speed обнуляется лишь в
-     startGame, поэтому на экране итогов он застывал около 8 — и фон стоял застывшим
-     «гиперпространственным» смазом из полос до 49 пикселей, которые никуда не движутся.
-     Плюс это самый «моушенный» эффект в игре, а системное «уменьшить движение» его
-     не касалось вовсе. */
-  const streaksMoving = S.running && !S.paused && !S.dying && S.timeScale>.5;
-  const streaksOn = (typeof SPEED_STREAKS==='undefined' || SPEED_STREAKS) && sh && !RM && streaksMoving && S.speed>0;
+  const twT = hq ? nowMs/380 : 0;
+  let nStars = lowPower ? Math.min(48,bgStars.length) : (uq ? bgStars.length : Math.min(90,bgStars.length)); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
+  if(Q.mode==='auto'){ // при просадках FPS режем только декоративный фон, не трогая геймплей
+    if(Q.fps<40) nStars=Math.max(28,Math.floor(nStars*.5));
+    else if(Q.fps<48) nStars=Math.max(36,Math.floor(nStars*.7));
+  }
+  // Скоростные полосы полностью удалены из игры. Рендер фонового неба теперь работает
+  // только как обычное движение точек/света без дополнительного флага и без лишних линий.
+  if(!hq) ctx.fillStyle='#cfe0ff';
   for (let si=0;si<nStars;si++){ const s=bgStars[si];
     s.y += .024*frameDt*S.speed*S.timeScale*(1+s.z); // v1.282.15: по времени, а не по кадру. Единственная симуляция внутри draw() — на дисплее 120 Гц фон летел ВДВОЕ быстрее препятствий, параллакс выворачивался наизнанку, а на замершей паузе почти стоял (0.0004×60 = 0.024)
     if (s.y>1) s.y-=1;
     ctx.globalAlpha = .25+s.z*.55 + (hq ? Math.sin(twT+s.x*40)*(uq?.16:.12) : 0);
     const sx=s.x*W, sy=s.y*H;
-    if(streaksOn){
-      const len=(2+s.s*1.6)*(1+S.speed*.55)*(1+s.z*.5); // длина штриха — от скорости и глубины звезды
-      const hh=(s.x*6.13+s.z*3.7)%1; // те же тона, что starDot()
-      ctx.strokeStyle=STREAK_COL[hh<.16?0:hh<.38?1:2]; ctx.lineWidth=s.s;
-      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy-len); ctx.stroke();
-    } else if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
+    if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
       const hh=(s.x*6.13+s.z*3.7)%1;
       const sp=starDot(hh<.16?'w':hh<.38?'c':'b');
       const sz=s.s*(s.z>0.82?(uq?5.2:4.6):(uq?3.8:3.4));
       ctx.drawImage(sp,sx-sz/2,sy-sz/2,sz,sz);
     } else {
-      ctx.fillStyle='#cfe0ff';
       ctx.fillRect(sx, sy, s.s, s.s);
     }
-    if (hq && s.z>0.82 && !streaksOn){ // крестовидный блик у самых ярких звёзд — не сочетается с вытянутым штрихом
+    if (hq && s.z>0.82){ // крестовидный блик у самых ярких звёзд — без дополнительных полос и режима скорости
       const fl=1.4+Math.sin(twT*1.3+s.x*40)*.7;
       ctx.strokeStyle='rgba(220,235,255,.3)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(sx-3*fl,sy); ctx.lineTo(sx+3*fl,sy);
@@ -519,15 +574,22 @@ function draw(){
     }
   }
   ctx.globalAlpha=1;
+  if(profileOn){ frameProfile.stars+=performance.now()-profileMark; profileMark=performance.now(); }
 
-  planetSky(performance.now()/1000); // v1.100.0 «Планетарий»: метеор, маяк, созвездие, станция, отметины пути
+  planetSky(nowS); // v1.100.0 «Планетарий»: метеор, маяк, созвездие, станция, отметины пути
+  if(profileOn){ frameProfile.sky+=performance.now()-profileMark; profileMark=performance.now(); }
 
   // Экраны поверх (меню, итоги, настройки, ангар): спокойный космос — без поля,
   // но с эффектами (конфетти рекорда). Поле — только в игре и на паузе (под диммером)
-  if (screenName!=='game' && screenName!=='pause'){ drawFx(hq,sh); ctx.restore(); return; }
+  if (screenName!=='game' && screenName!=='pause'){
+    drawFx(hq,sh);
+    if(profileOn){ frameProfile.fx+=performance.now()-profileMark; frameProfile.n++; profileReport(); }
+    ctx.restore(); return;
+  }
 
   // звёзды (монеты): спрайт-свечение вместо shadowBlur — мягче и дешевле
   for (const s of stars){
+    if(!inView(s.x,s.y,32,32)) continue;
     const glow = 6+Math.sin(s.ph)*3;
     ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.ph*.3);
     ctx.globalAlpha=.55+Math.sin(s.ph)*.18; ctx.drawImage(starGlow(),-15,-15,30,30); ctx.globalAlpha=1; // v1.37.0: спрайт-ауреола всем ступеням — дешевле shadowBlur
@@ -550,6 +612,7 @@ function draw(){
   // бонусы: ауреола по цвету + пульсирующее внешнее кольцо (hq)
   const PR=powRing(); // v1.66.0: готовые строки цветов — не собираем объекты в каждом кадре
   for (const p of powerups){
+    if(!inView(p.x,p.y,32,36)) continue;
     ctx.save(); ctx.translate(p.x, p.y+Math.sin(p.ph)*3);
     const col=POW_COLORS[p.kind]; // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу
     ctx.globalAlpha=.85; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
@@ -570,6 +633,9 @@ function draw(){
 
   // препятствия
   for (const o of obstacles){
+    const ovx=(o.kind==='gate')?(o.gap/2+o.r+28):((o.w&&o.h)?(o.w*.6+22):(o.r+22));
+    const ovy=(o.w&&o.h)?(o.h*.6+22):(o.r+22);
+    if(!inView(o.x,o.y,ovx,ovy)) continue;
     ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot);
     if (o.kind==='debris'){ // семья обломков (v1.105.0 «Свет и дым»): один смысл «рукотворный
       // мусор», четыре лица; габарит o.w×o.h священен — читаемость столкновения не меняется
@@ -617,6 +683,7 @@ function draw(){
       }
     } else if (o.kind==='mine' || o.kind==='seeker'){
       const col = o.kind==='seeker' ? '#ffa53a' : '#ff5f6d'; // ловец — янтарный
+      const colBase = hexToRgba(col);
       const pl=1+Math.sin(o.pulse)*.12;
       ctx.scale(pl,pl);
       ctx.globalAlpha=sh?1:.8; ctx.drawImage(powGlow(col),-o.r-12,-o.r-12,(o.r+12)*2,(o.r+12)*2); ctx.globalAlpha=1; // v1.66.0: опасность светится спрайтом на всех ступенях — shadowBlur ушёл
@@ -628,12 +695,12 @@ function draw(){
       ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
       ctx.globalAlpha=1;
       if(sh){ // внутреннее кольцо — детализация корпуса (v1.37.0: со средней)
-        ctx.strokeStyle=partCol(hexToRgba(col),.35); ctx.lineWidth=1;
+        ctx.strokeStyle=partCol(colBase,.35); ctx.lineWidth=1;
         ctx.beginPath(); ctx.arc(0,0,o.r*.55,0,6.283); ctx.stroke();
       }
       if(uq){ // ультра: вращающийся пунктир — телеграф опасности
-        ctx.strokeStyle=partCol(hexToRgba(col),.55); ctx.lineWidth=1.2;
-        ctx.setLineDash([5,7]); ctx.lineDashOffset=-performance.now()/40;
+        ctx.strokeStyle=partCol(colBase,.55); ctx.lineWidth=1.2;
+        ctx.setLineDash([5,7]); ctx.lineDashOffset=-nowMs/40;
         ctx.beginPath(); ctx.arc(0,0,o.r+7,0,6.283); ctx.stroke(); ctx.setLineDash([]);
       }
       for(let i=0;i<6;i++){ const a=i/6*6.283;
@@ -708,7 +775,7 @@ function draw(){
       if(uq){ // ультра: аддитивное кольцо вокруг ядра
         ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.5;
         ctx.strokeStyle='#ffe9c0'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.arc(0,0,o.r+3+Math.sin(performance.now()/300)*1.5,0,6.283); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0,o.r+3+Math.sin(nowMs/300)*1.5,0,6.283); ctx.stroke();
         ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
       }
       ctx.globalAlpha=.9; ctx.drawImage(powGlow('#ffd28f'),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: тёплая ауреола ядра всем ступеням
@@ -721,17 +788,17 @@ function draw(){
         ctx.strokeStyle='rgba(159,232,255,.22)'; ctx.lineWidth=6;
         ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
         ctx.globalAlpha=.55;
-        for (const sgn of [-1,1]) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-o.r-6,-o.r-6,(o.r+6)*2,(o.r+6)*2);
+        for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-o.r-6,-o.r-6,(o.r+6)*2,(o.r+6)*2);
         ctx.globalAlpha=1; }
       if(sh && !o.passed){ // бегущая энергия по лучу (v1.37.0: со средней)
-        ctx.setLineDash([7,7]); ctx.lineDashOffset=-performance.now()/28;
+        ctx.setLineDash([7,7]); ctx.lineDashOffset=-nowMs/28;
       }
       ctx.strokeStyle=o.passed?'rgba(159,232,255,.25)':'rgba(159,232,255,.8)';
       ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
       if(sh) ctx.setLineDash([]);
       ctx.fillStyle='#3d5a80';
-      for (const sgn of [-1,1]){
+      for (const sgn of SGN2){
         ctx.beginPath(); ctx.arc(sgn*g2,0,o.r,0,6.283); ctx.fill();
         ctx.strokeStyle='#9fe8ff'; ctx.lineWidth=2; ctx.stroke();
         if(sh){ // внутреннее кольцо пилона (v1.37.0: со средней)
@@ -777,6 +844,8 @@ function draw(){
     ctx.restore();
   }
 
+  if(profileOn){ frameProfile.field+=performance.now()-profileMark; profileMark=performance.now(); }
+
   // v1.105.0 «Свет и дым»: «бегущая кромка света» на камнях снята (суд глаза: белая дуга
   // читалась как царапина); тон камней — лёд/железо — остаётся, он даёт разнообразие без крика
 
@@ -788,7 +857,11 @@ function draw(){
     ctx.globalCompositeOperation='lighter';
     ctx.globalAlpha=k*.9;
     const g=powGlow('#8fd0ff');
-    for (const o of obstacles){ const r=o.r*3.2; ctx.drawImage(g,o.x-r,o.y-r,r*2,r*2); }
+    for (const o of obstacles){
+      const r=o.r*3.2;
+      if(!inView(o.x,o.y,r,r)) continue;
+      ctx.drawImage(g,o.x-r,o.y-r,r*2,r*2);
+    }
     ctx.restore();
     ctx.fillStyle='rgba(110,160,255,'+(k*.14).toFixed(3)+')';
     ctx.fillRect(0,0,W,H);
@@ -826,16 +899,17 @@ function draw(){
 
   drawMorse(); // морзянка: позывной в шлейфе (v1.53.0)
 
-  drawPlane(sh);
-  planetPlaneFx(performance.now()/1000); // v1.100.0 «Планетарий»: вспышка крыла при крене + искры звезды
+  drawPlane(sh,nowMs);
+  planetPlaneFx(nowS); // v1.100.0 «Планетарий»: вспышка крыла при крене + искры звезды
 
   drawFx(hq,sh); // частицы + попапы (общий блок, в оверлеях тоже)
+  if(profileOn){ frameProfile.fx+=performance.now()-profileMark; frameProfile.n++; profileReport(); }
 
   // аура Пули — огненное свечение за самолётиком (v1.40.0, логика v1.19.0; v1.41.0: все ступени — низкой спрайт, ультре шире)
   if (S.dash>0){
     ctx.save();
     if(sh) ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=.5+Math.sin(performance.now()/(uq?90:110))*.2;
+    ctx.globalAlpha=.5+Math.sin(nowMs/(uq?90:110))*.2;
     const ar=uq?39:29;
     ctx.drawImage(powGlow('#a9bcff'),plane.x-ar,plane.y-ar,ar*2,ar*2); // v1.43.1: плазма, не янтарь
     ctx.restore();
@@ -843,16 +917,17 @@ function draw(){
 
   // кольцо щита
   if (S.shield>0){
+    const shPulse=.4+Math.sin(nowMs/150)*.2;
     ctx.save(); ctx.translate(plane.x,plane.y);
-    ctx.strokeStyle=`rgba(127,216,255,${.4+Math.sin(performance.now()/150)*.2})`;
+    ctx.strokeStyle=`rgba(127,216,255,${shPulse})`;
     ctx.lineWidth=2;
     if(sh){ ctx.strokeStyle='rgba(127,216,255,.18)'; ctx.lineWidth=7; // v1.66.0: ореол щита — широкий мягкий дубль
       ctx.beginPath(); ctx.arc(0,0,30,0,6.283); ctx.stroke();
-      ctx.strokeStyle=`rgba(127,216,255,${.4+Math.sin(performance.now()/150)*.2})`; ctx.lineWidth=2; }
+      ctx.strokeStyle=`rgba(127,216,255,${shPulse})`; ctx.lineWidth=2; }
     ctx.beginPath(); ctx.arc(0,0,30,0,6.283); ctx.stroke();
     if(hq){ // внешнее кольцо вращается
       ctx.strokeStyle='rgba(127,216,255,.35)'; ctx.lineWidth=1.5;
-      ctx.setLineDash([5,8]); ctx.lineDashOffset=performance.now()/35;
+      ctx.setLineDash([5,8]); ctx.lineDashOffset=nowMs/35;
       ctx.beginPath(); ctx.arc(0,0,37,0,6.283); ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -884,7 +959,10 @@ function draw(){
 
   if (DEBUG_FPS){
     const el=$('fpsPill');
-    if(el){ el.style.display='block'; el.textContent = Q.fps.toFixed(0)+' fps · Q'+Q.level+' · p'+particles.length; }
+    if(el){
+      el.style.display='block';
+      if(!el.dataset.profile) el.textContent = Q.fps.toFixed(0)+' fps · Q'+Q.level+' · p'+particles.length;
+    }
   }
 }
 
@@ -958,11 +1036,12 @@ function drawMorse(){
     morseGlyphs(ghostMorseBuf, ghostMorseElems, ghostMorsePat.length, f=>morseCol('rgba(190,220,255,', ghostA*(0.5+2*f)));
 }
 
-function drawPlane(sh){
+function drawPlane(sh,nowMs){
   const p=plane, skin=SKINS[S.skin]||SKINS[0], hq=Q.level>=2, uq=Q.level>=3; // v1.37.0: ультра-штрихи
   const fx=skin.fx||'';
+  nowMs=typeof nowMs==='number'?nowMs:performance.now();
   // Призрак: полупрозрачность с дыханием (hq) — себя терять нельзя, минимум .65
-  const ghostA=(fx==='ghost'&&hq)? .65+.1*Math.sin(performance.now()/300) : 1;
+  const ghostA=(fx==='ghost'&&hq)? .65+.1*Math.sin(nowMs/300) : 1;
   if(fx==='ghost'&&hq){ drawEchoTrail(skin);
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
   ctx.save(); ctx.translate(p.x,p.y);
@@ -976,7 +1055,7 @@ function drawPlane(sh){
   }
   if(hq){ // конус светится и дышит
     ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=(RM?.9:(.75+.25*Math.sin(performance.now()/90)))*(S.invuln>0?.35:1); // v1.282.15: и пульсация под бережным небом замирает
+    ctx.globalAlpha=(RM?.9:(.75+.25*Math.sin(nowMs/90)))*(S.invuln>0?.35:1); // v1.282.15: и пульсация под бережным небом замирает
   }
   ctx.fillStyle=coneGrad;
   ctx.beginPath(); ctx.moveTo(-6,10); ctx.lineTo(6,10);
@@ -986,7 +1065,7 @@ function drawPlane(sh){
 
   if(hq){ // аура двигателя: тёплое аддитивное свечение кормы, дышит с огоньком
     ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=(.30+.12*Math.sin(performance.now()/70))*(S.invuln>0?.4:1)*ghostA*planetEngineK(); // v1.100.0 «Планетарий»: корма разгорается со скоростью
+    ctx.globalAlpha=(.30+.12*Math.sin(nowMs/70))*(S.invuln>0?.4:1)*ghostA*planetEngineK(); // v1.100.0 «Планетарий»: корма разгорается со скоростью
     ctx.drawImage(trailGlow(skin),-17,0,34,34);
     ctx.globalCompositeOperation='source-over';
     ctx.globalAlpha=(S.invuln>0&&invulnDim()?(RM?.6:.35):1)*ghostA; // v1.282.15: то же
@@ -1005,9 +1084,9 @@ function drawPlane(sh){
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14); ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.75)';
     ctx.beginPath(); ctx.ellipse(-3,-12,2.6,5,.25,0,6.283); ctx.fill();
-    ctx.globalAlpha=.6+.4*Math.sin(performance.now()/70);
+    ctx.globalAlpha=.6+.4*Math.sin(nowMs/70);
     ctx.fillStyle=skin.trail+'.95)';
-    const er=fx==='plasma'? 3.4+1.6*Math.sin(performance.now()/60) : (uq?3.2:2.6); // у Плазмы — живой огонь; ультра — жарче
+    const er=fx==='plasma'? 3.4+1.6*Math.sin(nowMs/60) : (uq?3.2:2.6); // у Плазмы — живой огонь; ультра — жарче
     ctx.beginPath(); ctx.arc(0,11,er,0,6.283); ctx.fill();
     ctx.globalAlpha=ghostA;
   }
@@ -1016,21 +1095,21 @@ function drawPlane(sh){
     ctx.beginPath(); ctx.moveTo(2,-18); ctx.lineTo(13,11); ctx.stroke();
   }
   if(hq && fx==='plasma'){ // Плазма: живой перелив корпуса оранж→синий
-    const ph=performance.now()/180;
+    const ph=nowMs/180;
     ctx.globalAlpha=(.14+.08*Math.sin(ph))*ghostA;
     ctx.fillStyle=PLASMA_HUES[Math.max(4,Math.min(32,Math.round(18+14*Math.sin(ph*.7))))]; // v1.66.0: готовая строка
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
     ctx.globalAlpha=ghostA;
   }
   if(hq && fx==='neon'){ // Неон: контур корпуса пульсирует и плывёт по спектру
-    const hue=(performance.now()*.06)%360|0;
+    const hue=(nowMs*.06)%360|0;
     ctx.strokeStyle=NEON_HUES[hue]+(.9*ghostA)+')'; ctx.lineWidth=1.7; // v1.66.0: готовая строка оттенка
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.stroke();
   }
   if(hq && fx==='chrome'){ // Хром: бегущий блик-полоса по корпусу (дешёвый sheen)
     ctx.save();
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.clip();
-    const sx=-34+((performance.now()*.05)%68);
+    const sx=-34+((nowMs*.05)%68);
     ctx.drawImage(sheenSprite(),sx-9,-26,18,48); // v1.66.0: спрайт-полоса вместо градиента в кадре
     ctx.restore();
   }
