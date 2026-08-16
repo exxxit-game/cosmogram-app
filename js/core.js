@@ -25,7 +25,7 @@
 
 /* ---------- Telegram WebApp (Блок 1) ---------- */
 const tgWebApp = window.Telegram && window.Telegram.WebApp;
-const tg = tgWebApp && (tgWebApp.initData || window.TelegramWebviewProxy) ? tgWebApp : null;
+const tg = tgWebApp && tgWebApp.initData ? tgWebApp : null;
 
 /* v1.284.14 «Мост не глотает» — ЯДРО, правка по прямому решению владельца (14.08).
    Мост оборачивает КАЖДЫЙ вызов нашего колбэка в собственный try/catch и молчит
@@ -1580,6 +1580,7 @@ try{ ctx.imageSmoothingQuality='low'; }catch(e){}
    том же языке цвета, что и небо. sRGB-краски в P3-холсте звучат ровно как раньше. */
 function ctx2d(c, opt){ try{ return c.getContext('2d', Object.assign({}, P3?{colorSpace:'display-p3'}:null, opt||null)); }catch(e){ return c.getContext('2d'); } }
 let W=0, H=0, DPR=1, dprCap=2, SC=1, capPx=2560, SC_MIN=0.5;
+let canvasContextLost=false;
 let stableH=0; // v1.284.6: последняя высота вьюпорта БЕЗ клавиатуры — см. resize(), страж 131 // SC — «Метр неба» (v1.99.0): цена одного логического пикселя в css-пикселях; capPx — «Потолок листа» (v1.99.1): длинная сторона холста в настоящих пикселях; SC_MIN — «Пол листа» (v1.108.1): ниже — не рисуем нерабочую крошку, честно просим больше места
 /* ---------- Тир устройства (v1.7.0 «Точная настройка»): почти персональный профиль ---------- */
 function gpuRenderer(){ // точное имя GPU через WebGL (незаметно для игрока; null — если скрыто браузером)
@@ -1666,23 +1667,23 @@ function dispProbe(done){ // паспорт экрана (v1.12.0): частот
       Store.set('dispHz', hz); if (done) done(hz); } }
   requestAnimationFrame(fr);
 }
-function gfxCap(){ // HD-резолюция по тиру: ручные режимы без изменений; авто — флагман до 3x, слабый 1.5x экономия
+function gfxCap(){ // мобильный потолок DPR: чёткость ограничена, чтобы не платить памятью и нагревом
   const raw=window.devicePixelRatio||1;
   const m=Store.get('gfx','auto');
   const lowMem = (typeof navigator!=='undefined' && typeof navigator.deviceMemory==='number' && navigator.deviceMemory<=2)
     || isAndroidGo();
-  if(m==='low') dprCap=1.5;
-  else if(m==='med') dprCap=2;
-  else if(m==='high') dprCap=3;
-  else if(m==='ultra' && gfxUltraOk()) dprCap=Math.min(raw,3.5);
+  if(m==='low') dprCap=1.25;
+  else if(m==='med') dprCap=1.75;
+  else if(m==='high') dprCap=2.25;
+  else if(m==='ultra' && gfxUltraOk()) dprCap=Math.min(raw,2.5);
   else{
     const t=gfxTier(), lv=(typeof Q!=='undefined')?Q.level:2;
     // v1.282.3: раньше только Q.level>=3 (Ультра) снижал разрешение у тира 2+ — любое понижение
     // до Q2/Q1/Q0 (авто-качество честно реагирует на низкий fps, включая временный троттлинг
     // у настоящих флагманов, не только неверно определённые устройства) не трогало холст вообще,
     // 3x оставался всегда. Теперь разрешение спускается по той же лестнице, что и сами эффекты.
-    dprCap = t>=2 ? (lv>=3?Math.min(raw,3.5):lv===2?3:lv===1?2:1.5)
-      : t===0 ? (isAndroidGo()?1:1.5) : ((raw>=2.5&&(navigator.hardwareConcurrency||4)>=8)?3:2);
+    dprCap = t>=2 ? (lv>=3?Math.min(raw,2.5):lv===2?2:lv===1?1.5:1.25)
+      : t===0 ? (isAndroidGo()?1:1.25) : ((raw>=2.5&&(navigator.hardwareConcurrency||4)>=8)?2:1.75);
     if(lowMem && dprCap>1.5) dprCap=1.5;
   }
 }
@@ -1788,9 +1789,11 @@ window.addEventListener('orientationchange', ()=>setTimeout(resize,150));
 try{
   canvas.addEventListener('contextlost', (e)=>{
     e.preventDefault();
+    canvasContextLost=true;
     if (typeof S!=='undefined' && S && S.running && !S.paused && typeof pauseGame==='function') pauseGame();
   });
   canvas.addEventListener('contextrestored', ()=>{
+    canvasContextLost=false;
     if (typeof gfxInvalidate==='function') gfxInvalidate();
     resize();
     if (typeof drawKick==='function') drawKick();

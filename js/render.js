@@ -527,6 +527,7 @@ function powRing(){
   return POW_RING;
 }
 function draw(){
+  if(typeof canvasContextLost!=='undefined' && canvasContextLost) return;
   const nowMs=performance.now();
   const nowS=nowMs/1000;
   const profileOn=DEBUG_FPS;
