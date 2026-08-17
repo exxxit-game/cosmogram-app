@@ -1,0 +1,15 @@
+{
+  "name": "cosmogram-app",
+  "version": "1.0.0",
+  "description": "Paper airplane endless runner for Telegram",
+  "scripts": {
+    "test": "node tests/run-ci.js",
+    "test:watch": "node tests/run-ci.js --watch"
+  },
+  "keywords": ["game", "canvas", "telegram", "runner"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "puppeteer": "^22.0.0"
+  }
+}

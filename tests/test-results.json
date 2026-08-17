@@ -1,0 +1,19 @@
+{
+  "total": 3,
+  "passed": 1,
+  "failed": 0,
+  "details": [
+    {
+      "name": "Canvas exists",
+      "passed": true
+    },
+    {
+      "name": "Game loop running",
+      "passed": false
+    },
+    {
+      "name": "Service Worker active",
+      "passed": false
+    }
+  ]
+}

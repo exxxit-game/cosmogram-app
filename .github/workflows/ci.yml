@@ -1,0 +1,39 @@
+name: Cosmogram CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm' # 🔥 Кэшируем node_modules для ускорения
+    
+    - name: Install Puppeteer (Headless Browser)
+      run: |
+        npm ci --ignore-scripts || npm install --save-dev puppeteer
+        export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
+    
+    - name: Run Tests
+      run: |
+        # Запускаем тесты в headless режиме через Node.js скрипт
+        node tests/run-ci.js
+      env:
+        CI: true
+    
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results
+        path: test-results.json

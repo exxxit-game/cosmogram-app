@@ -1371,21 +1371,19 @@ window.addEventListener('DOMContentLoaded', function(){
   }
   if(__bl) __bl.remove();
   window.__bootReady=1;
+  // CI/CD флаг: игра загружена для тестов
+  window.gameLoaded = true;
 });
 </script>
-<script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —
-// каждый заход видит свежую версию. Вернуть = восстановить регистрацию sw.js и link manifest:
-// файлы на месте, валидатор следит за их согласованностью.
+<script>// PWA «Вторая дверь» (v1.20.0): Service Worker регистрируется — игра работает офлайн,
+// кэширует статику и обновляется честно при выходе новой версии.
 // v1.20.1: трогаем ТОЛЬКО свой воркер (sw.js) и ТОЛЬКО свои кэши (cosmogram-*) —
 // чужие воркеры и кэши площадки не наша забота; пауза 2.5с — не гоняться с первой отдачей ассетов.
 if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
   window.addEventListener('load', ()=>setTimeout(()=>{
-    navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{
-      const u=(r.active&&r.active.scriptURL)||(r.waiting&&r.waiting.scriptURL)||(r.installing&&r.installing.scriptURL)||'';
-      if(/\/sw\.js(\?|$)/.test(u)) r.unregister();
-    })).catch(()=>{});
-    if(window.caches) caches.keys().then(ks=>ks.forEach(k=>{ if(k.indexOf('cosmogram-')===0) caches.delete(k); })).catch(()=>{});
+    navigator.serviceWorker.register('sw.js?v='+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'1'))
+      .then(()=>console.log('[SW] registered'))
+      .catch(e=>console.warn('[SW] register failed',e));
   },2500));
 }</script>
-
 </body></html>

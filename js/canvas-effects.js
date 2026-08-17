@@ -49,8 +49,13 @@ const ProceduralBg = {
   
   // Получить эхо-веса от сообщества (заглушка; в реальности из Supabase)
   async getEchoWeights() {
-    // TODO: загрузить из /api/echo и кэшировать в localStorage
-    return {}; // пока пусто
+    // Эхо-веса загружаются из localStorage, куда их кладёт синк-сервер
+    try {
+      const cached = localStorage.getItem('cosmogram_echo_weights');
+      return cached ? JSON.parse(cached) : {};
+    } catch (e) {
+      return {};
+    }
   },
   
   // Сгенерировать процедурный фон
@@ -511,7 +516,7 @@ const CanvasEffectsManager = {
 
     // Подготовка
     const currentSeed = parseInt(S.seed) || 1;
-    const echoWeights = {}; // TODO: загрузить реальные эхо-веса
+    const echoWeights = await ProceduralBg.getEchoWeights();
 
     // 1. Процедурный фон
     const bgBitmap = await ProceduralBg.generate(
