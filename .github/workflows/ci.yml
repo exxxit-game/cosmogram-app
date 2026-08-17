@@ -12,27 +12,23 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GH_TOKEN }} # 🔥 Используем токен для доступа
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        cache: 'npm' # 🔥 Кэшируем node_modules для ускорения
+        node-version: '22' # 🔥 Обновляем до Node.js 22
+        cache: 'npm'
     
     - name: Install Puppeteer (Headless Browser)
       run: |
-        # Сначала устанавливаем системные зависимости для Chrome в Ubuntu
         sudo apt-get update
-        sudo apt-get install -y libgbm1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
-        
-        # Теперь ставим puppeteer
+        sudo apt-get install -y libgbm1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libasound2
         npm ci --ignore-scripts || npm install --save-dev puppeteer
-        export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
     
     - name: Run Tests
-      run: |
-        # Запускаем тесты в headless режиме через Node.js скрипт
-        node tests/run-ci.js
+      run: node tests/run-ci.js
       env:
         CI: true
     
