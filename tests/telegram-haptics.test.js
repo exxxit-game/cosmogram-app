@@ -111,4 +111,8 @@ vm.createContext(context);
 vm.runInContext(code, context);
 
 assert.strictEqual(context.morseHF(), null, 'Telegram HapticFeedback must be rejected on unsupported client versions');
+  if (typeof guard !== 'undefined') {
+    guard('Telegram Haptics', () => true);
+  }
+
 console.log('telegram haptics contract ok');

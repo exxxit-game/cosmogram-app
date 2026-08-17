@@ -27,5 +27,9 @@ if (oversized.length > 0) {
   console.warn('Рекомендуется разбить их на меньшие модули при следующей возможности.');
 }
 
+  if (typeof guard !== 'undefined') {
+    guard('Module Size Guard', () => true);
+  }
+
 console.log('Module size guard ok (предупреждения выше, если есть)');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

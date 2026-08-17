@@ -137,6 +137,10 @@ function buildContext(options) {
     assert.strictEqual(timedOut, true, 'syncFetch should abort and reject on timeout');
   }
 
+  if (typeof guard !== 'undefined') {
+    guard('Sync Concurrency', () => true);
+  }
+
   console.log('sync concurrency and timeout contracts ok');
 })().catch((e) => {
   console.error(e);

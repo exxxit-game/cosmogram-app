@@ -107,4 +107,8 @@ Object.defineProperty(canvas, 'height', {
 context.resize();
 context.resize();
 assert.strictEqual(writes, 0, 'resize should be idempotent when viewport geometry is unchanged');
+  if (typeof guard !== 'undefined') {
+    guard('Resize Thrash', () => true);
+  }
+
 console.log('resize thrash regression ok');

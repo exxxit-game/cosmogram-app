@@ -43,5 +43,9 @@ if (potentialIssues.length > 20) {
   console.log(`Найдено ${potentialIssues.length} мест с потенциальными магическими числами (в пределах нормы)`);
 }
 
+  if (typeof guard !== 'undefined') {
+    guard('Magic Numbers Guard', () => true);
+  }
+
 console.log('Magic numbers guard ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

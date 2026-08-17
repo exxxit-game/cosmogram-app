@@ -67,5 +67,9 @@ vm.createContext(context);
 vm.runInContext(code, context);
 
 assert.strictEqual(context.bbVerdict(), context.L.bbVLiar, 'a condemned liar channel must fail the gyro verdict');
+  if (typeof guard !== 'undefined') {
+    guard('Blackbox Verdict', () => true);
+  }
+
 console.log('blackbox verdict liar contract ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

@@ -19,5 +19,9 @@ assert.strictEqual(hasFallback, true, 'Должен быть fallback на docum
 const offscreenCount = (code.match(/new\s+OffscreenCanvas/g) || []).length;
 assert.strictEqual(offscreenCount >= 2, true, 'Должно быть как минимум 2 использования OffscreenCanvas');
 
+  if (typeof guard !== 'undefined') {
+    guard('Offscreen Canvas Fallback', () => true);
+  }
+
 console.log('OffscreenCanvas fallback guard ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

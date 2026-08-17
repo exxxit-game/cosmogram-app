@@ -14,4 +14,8 @@ assert.strictEqual(ghostAccessStateForAuth(false, { accGuest: 'Войди чер
 assert.strictEqual(ghostAccessStateForAuth(true, { accGuest: 'Войди через Telegram' }), null);
 assert.strictEqual(ghostAccessStateForAuth(false, {}), 'Sign in with Telegram');
 
+  if (typeof guard !== 'undefined') {
+    guard('Ghost Access', () => true);
+  }
+
 console.log('ghost access gating ok');

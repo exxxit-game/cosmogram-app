@@ -27,4 +27,8 @@ vm.runInContext(code, context);
 const thr = context.qThr();
 assert.strictEqual(thr.dn, 38, 'high-end tier should degrade gently');
 assert.strictEqual(thr.up, 54, 'high-end tier should recover only after enough headroom');
+  if (typeof guard !== 'undefined') {
+    guard('Render Quality', () => true);
+  }
+
 console.log('render auto-quality thresholds ok');

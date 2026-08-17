@@ -21,6 +21,11 @@ jobs:
     
     - name: Install Puppeteer (Headless Browser)
       run: |
+        # Сначала устанавливаем системные зависимости для Chrome в Ubuntu
+        sudo apt-get update
+        sudo apt-get install -y libgbm1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libgtk-3-0 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
+        
+        # Теперь ставим puppeteer
         npm ci --ignore-scripts || npm install --save-dev puppeteer
         export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false
     
@@ -32,8 +37,9 @@ jobs:
         CI: true
     
     - name: Upload Test Results
+      if: always()
       uses: actions/upload-artifact@v4
-      if: failure()
       with:
         name: test-results
         path: test-results.json
+        retention-days: 7

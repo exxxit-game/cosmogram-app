@@ -25,5 +25,9 @@ if (foundTodos.length > 0) {
   assert.fail(`Найдены незавершенные комментарии:\n${details}`);
 }
 
+  if (typeof guard !== 'undefined') {
+    guard('No Todo Comments', () => true);
+  }
+
 console.log('No TODO comments guard ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

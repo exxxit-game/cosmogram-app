@@ -90,4 +90,8 @@ if (listeners.pointerdown) listeners.pointerdown();
 nowValue = 200;
 context.haptic('light');
 assert.ok(vibrateCalls >= 1, 'after a user gesture, the vibrate fallback may be used');
+  if (typeof guard !== 'undefined') {
+    guard('Vibrate Gesture Guard', () => true);
+  }
+
 console.log('vibrate gesture guard ok');

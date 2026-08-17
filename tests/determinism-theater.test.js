@@ -28,5 +28,9 @@ const bbCode = fs.readFileSync(path.join(__dirname, '../js/blackbox.js'), 'utf8'
 const hasTapeRecording = /tape|events|record/.test(bbCode.toLowerCase());
 assert.strictEqual(hasTapeRecording, true, 'BlackBox должен записывать ленту событий');
 
+  if (typeof guard !== 'undefined') {
+    guard('Determinism Theater', () => true);
+  }
+
 console.log('Determinism & theater guard ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

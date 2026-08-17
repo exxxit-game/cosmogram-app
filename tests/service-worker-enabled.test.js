@@ -29,5 +29,12 @@ assert.strictEqual(hasInstall, true, 'SW должен иметь обработ�
 assert.strictEqual(hasActivate, true, 'SW должен иметь обработчик activate');
 assert.strictEqual(hasFetch, true, 'SW должен иметь обработчик fetch');
 
-console.log('Service Worker enabled guard ok');
-process.exit(0);
+// Для браузерного запуска через guards.js
+if (typeof guard !== 'undefined') {
+  guard('Service Worker enabled', () => {
+    return hasRegister && !hasUnregister && swExists && hasInstall && hasActivate && hasFetch;
+  });
+} else {
+  console.log('Service Worker enabled guard ok');
+  process.exit(0);
+}

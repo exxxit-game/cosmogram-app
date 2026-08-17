@@ -82,4 +82,8 @@ assert.ok(Array.isArray(listeners.touchstart) && listeners.touchstart.some(l => 
   'at least one touchstart listener must stay active on Android so the steering gesture is low-latency');
 assert.ok(Array.isArray(listeners.touchmove) && listeners.touchmove.some(l => l.options && l.options.passive === false),
   'touchmove must remain active so the browser does not steal the scroll/steering gesture and the drag is processed immediately');
+  if (typeof guard !== 'undefined') {
+    guard('Input Latency', () => true);
+  }
+
 console.log('input latency guard ok');

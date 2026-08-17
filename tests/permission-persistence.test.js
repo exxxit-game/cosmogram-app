@@ -66,5 +66,9 @@ assert.strictEqual(typeof context.tiltPermissionGranted, 'function', 'permission
 assert.strictEqual(context.tiltPermissionGranted(), false, 'no permission grant should be false');
 store.set('tiltPermission', 1);
 assert.strictEqual(context.tiltPermissionGranted(), true, 'stored permission grant should be true');
+  if (typeof guard !== 'undefined') {
+    guard('Permission Persistence', () => true);
+  }
+
 console.log('permission persistence contract ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);

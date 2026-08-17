@@ -91,4 +91,8 @@ assert.ok(context.S.smooth >= 0.5 && context.S.smooth <= 1, 'smoothness should s
 context.hitPlane('rock');
 assert.ok(context.S.smooth < 1, 'collision should reduce smoothness immediately');
 assert.ok(context.S.smooth < 0.95, 'impact should noticeably depress the smoothness meter');
+  if (typeof guard !== 'undefined') {
+    guard('Smoothness', () => true);
+  }
+
 console.log('smoothness regression ok');

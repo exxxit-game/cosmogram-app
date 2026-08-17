@@ -19,5 +19,9 @@ assert.strictEqual(hasTryCatch, true, 'Должна быть обработка 
 const hasAwaitCall = /await\s+ProceduralBg\.getEchoWeights\s*\(\s*\)/.test(code);
 assert.strictEqual(hasAwaitCall, true, 'render должен вызывать getEchoWeights с await');
 
+  if (typeof guard !== 'undefined') {
+    guard('Echo Weights Storage', () => true);
+  }
+
 console.log('Echo weights storage guard ok');
-process.exit(0);
+if (typeof guard === 'undefined') process.exit(0);
