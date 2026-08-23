@@ -416,17 +416,20 @@ function isLowPowerDevice(frameNow){
   return lowPowerMemo.v;
 }
 function drawNebulas(h1,h2,tN,lowPower){
-  if(Q.level===0) return; // на слабых устройствах пропускаем
   if(typeof lowPower!=='boolean') lowPower=isLowPowerDevice();
-  if(lowPower && Q.level<=1){ return; } // минимальный бюджет: у слабых и средних уровней не тратим кадр на тяжёлый фон.
   const hq1=Math.round(S.hueShift/NF_HUE_STEP); // v1.282.15: тот же грубый квант — иначе два спрайта 200×200 пеклись каждые 833мс
   if(nebCache.h!==hq1){
     nebCache={h:hq1,a:nebulaSprite(h1+40),b:nebulaSprite(h2+60)};
   }
-  if(lowPower){
-    // Бюджетное железо: убираем тяжёлую туманность и звёздные слои, оставляя только минимум фона.
+  if(lowPower || Q.level===0){
+    /* 22.08.2026 «Дно тоже летит вперёд»: раньше пятно стояло по неподвижным координатам
+       (W*.15, H*.25 — константы), пока весь остальной мир дрейфует — жалоба владельца,
+       «на экране идёт движение вперёд, а она статическая, это противоречие». Цена дрейфа
+       та же, что у статичной позиции (тот же один drawImage, другое число на входе) —
+       чиним бесплатно. Заодно: Q.level===0 раньше не получал НИ ОДНОГО пятна тумана,
+       строже, чем сама метка lowPower — теперь дно получает то же, что и слабое железо. */
     ctx.globalAlpha=.18;
-    ctx.drawImage(nebCache.a, W*.15, H*.25, W*.7, H*.55);
+    ctx.drawImage(nebCache.a, W*.15+Math.sin(tN*.04)*30, H*.25+Math.cos(tN*.03)*20, W*.7, H*.55);
     ctx.globalAlpha=1;
     return;
   }
@@ -595,7 +598,9 @@ function draw(){
   ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
   const lowPower = isLowPowerDevice(nowMs);
   drawNebulas(h1,h2,nowS,lowPower);
-  if(fieldL()>0 && screenName==='game' && S.running && !S.paused) ctx.drawImage(corridorEdgeSprite(),0,0,W,H); // 22.08.2026: screenName==='game' не менялся на паузе/«ещё раз» — уточнено до реального полёта, как у qualityTick()
+  // 22.08.2026: линии коридора убраны из игрового вида целиком — владелец не просил менять сам вид полёта,
+  // просили только видимость края на широких экранах МЕНЮ/пауз, а не поверх активного полёта. Решение отменено.
+  // corridorEdgeSprite() оставлена в файле неиспользуемой — вдруг понадобится в другом виде, но НЕ здесь.
   if(profileOn){ frameProfile.bg+=performance.now()-profileMark; profileMark=performance.now(); }
 
   const sh = Q.level>=1, hq = Q.level>=2, uq = Q.level>=3; // sh — свечение, hq — полная графика, uq — ультра
