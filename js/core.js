@@ -1825,7 +1825,7 @@ function corridorEdgesGeometry(){
   }
   const l=document.getElementById('corrEdgeL'), r=document.getElementById('corrEdgeR');
   if (l && r){
-    const leftPx=Math.round(fl*SC-14), rightPx=Math.round((fl+fw)*SC-14);
+    const leftPx=Math.round(fl*SC-13), rightPx=Math.round((fl+fw)*SC-13); // половина ширины .corrEdge (26px)
     l.style.left=leftPx+'px'; r.style.left=rightPx+'px';
   }
   if (!wide && typeof corridorEdgesSync==='function') corridorEdgesSync(); // скрытие — сразу, без ожидания таймера

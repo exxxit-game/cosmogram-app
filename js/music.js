@@ -117,10 +117,22 @@ const music = (()=>{
   const MIX={menuPad:.075, menuBell:.12, drone:.07, quint:.05, tension:.04,
              pulse:.085, pulseT:.105, arp:.07, stingD:.12, stingR:.11, stingPad:.06};
 
+  /* 22.08.2026 «Слои прорастают, а не переключаются»: пульс и арпеджио включались жёстким
+     порогом волны (wave>=3, wave>=5) — щелчок, не нарастание, и для среднего забега (34.4с
+     по боевым данным) арпеджио почти никогда не успевало включиться вовсе (порог требовал
+     ~60+с полёта). Приём из исследования build-up в эмбиенте: непрерывный параметр 0..1,
+     слой прорастает из тишины, не появляется по клику. waveRamp(wave,start,full) — линейное
+     нарастание от 0 на wave<=start до 1 на wave>=full. */
+  function waveRamp(wave,start,full){
+    if(wave<=start) return 0;
+    if(wave>=full) return 1;
+    return (wave-start)/(full-start);
+  }
   function gameLayers(){ // желаемые слои прямо сейчас: волна и жизни могли смениться между тактами
     const wave=(typeof S!=='undefined')?(S.mission||1):1;
     const lives=(typeof S!=='undefined')?(S.lives==null?3:S.lives):3;
-    return {pulse:wave>=3, arp:wave>=5, tension:lives===1};
+    // пульс прорастает волны 1→3, арпеджио — волны 1→4 (было жёстко на wave>=5, среднему забегу не хватало времени)
+    return {pulseAmt:waveRamp(wave,1,3), arpAmt:waveRamp(wave,1,4), tension:lives===1};
   }
   function scheduleBar(ac,t){
     if(theme==='menu'){
@@ -137,15 +149,15 @@ const music = (()=>{
       padVoice(ac,t,midi(root),GAME_BAR+1.5,MIX.drone); // дрон — слышен на телефоне
       padVoice(ac,t,midi(root+7),GAME_BAR+1.5,MIX.quint); // квинта — шире пространство
       if(ly.tension) padVoice(ac,t,midi(root+13),GAME_BAR+1.5,MIX.tension); // тревожный полутон над корнем
-      if(ly.pulse) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,ly.tension?MIX.pulseT:MIX.pulse);
-      if(ly.arp && !ly.tension){ // риффотека: один мотив на весь такт (v1.415.2, приём Riffology), не блуждание нота за нотой
+      if(ly.pulseAmt>0) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,(ly.tension?MIX.pulseT:MIX.pulse)*ly.pulseAmt); // громкость сама прорастает — не щелчок вкл/выкл
+      if(ly.arpAmt>0 && !ly.tension){ // риффотека: один мотив на весь такт (v1.415.2, приём Riffology), не блуждание нота за нотой; громкость прорастает вместе с волной (v1.456.1)
         const motif=ARP_MOTIFS[(Math.random()*ARP_MOTIFS.length)|0]; // «динамически взвешенный случайный выбор» из библиотеки
         const baseIx=Math.max(0,PENTA.indexOf(walk)); // продолжаем от того, где закончился прошлый такт — без скачка регистра
         let lastPitch=walk;
         for(let b=0;b<8;b++){
           const ix=Math.max(0,Math.min(PENTA.length-1,baseIx+motif[b]));
           lastPitch=PENTA[ix];
-          note(ac,t+b*BEAT/2,midi(lastPitch),.5,MIX.arp,'triangle');
+          note(ac,t+b*BEAT/2,midi(lastPitch),.5,MIX.arp*ly.arpAmt,'triangle');
         }
         walk=lastPitch; // следующий такт продолжит с этой ноты — мотивы связаны, не рвутся
       }
@@ -156,13 +168,13 @@ const music = (()=>{
   function tick(){
     if(!theme||!mg) return;
     const ac=AC; if(!ac) return;
-    layerState = theme==='game' ? gameLayers() : {pulse:false,arp:false,tension:false};
+    layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false};
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой, начинаем с чистого такта (v1.20.0)
     while(nextBar < ac.currentTime + .9){
       if(pendingTheme){ // граница такта — самый момент переключиться, не обрывая уже идущий
         theme=pendingTheme; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0;
         fadeTo(MG[theme]||MG_GAME,1.0);
-        layerState = theme==='game' ? gameLayers() : {pulse:false,arp:false,tension:false};
+        layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false};
       }
       nextBar += scheduleBar(ac, nextBar);
     }
