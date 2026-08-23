@@ -166,7 +166,12 @@ button, input, select, textarea { text-transform:inherit; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
-#settingsScreen, #achScreen, #hangarScreen { pointer-events:auto; }
+#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen { pointer-events:auto; }
+/* 23.08.2026: виджет входа Telegram (#webJoinWidget) — вставленный извне <iframe>, у него
+   нет класса .btn, только .tgWidget (тот не трогает pointer-events). Обычные кнопки
+   экрана итогов работали через свой .btn, а виджет наследовал pointer-events:none от
+   базового .overlay — был ВИДЕН, но не нажимался (владелец: проверил на ноутбуке и
+   телефоне, тот же виджет на #achScreen уже работал — там экран был в списке). */
 /* v1.65.0 «Спойлеры»: заголовок группы — сам кнопка-карточка; жмёшь — раскрывается её панель,
    остальные складываются (аккордеон): на экране всегда всё помещается */
 .setGrp { width:min(92%,380px); margin:2px 0 10px; padding:13px 40px 13px 16px; text-align:left;
@@ -874,9 +879,26 @@ button, input, select, textarea { text-transform:inherit; }
 #webJoinTxt { color:var(--muted); font-size:13px; line-height:1.5; padding:0 26px; margin-bottom:6px; }
 
 /* ---------- Второй вход: Discord (v1.52.0) ---------- */
-.dcBtn { margin:6px auto 0; display:block; }
+/* 23.08.2026: кнопка выглядела как обычная серая кнопка игры — рядом с фирменной синей
+   пилюлей Telegram читалась как «недоделанная». Даём Discord тоже настоящий фирменный
+   вид: их официальный цвет («блёрпл» #5865F2) и форма-пилюля, той же высоты и того же
+   скругления, что и виджет Telegram рядом — не подгоняем один под другой по цвету
+   (у каждого сервиса свой), но уравниваем по опрятности и весу на экране. */
+.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
+  justify-content:center; background:#5865F2; color:#fff; border:none;
+  border-radius:20px; padding:10px 20px; font-weight:600; }
+.dcBtn:active { background:#4752C4; } /* тёмный оттенок блёрпла — тот же приём, что у нажатия обычных кнопок */
+.dcBtn .ic { width:18px; height:18px; stroke-width:1.8; }
+/* 23.08.2026: третий вход — Google. Официальный стиль Google для кнопок входа — белый
+   фон с тонкой серой рамкой (не сплошной цвет, как у Discord/Telegram) — их брендбук
+   именно так и требует. Тот же формат-пилюля и вес на экране, что у соседей. */
+.gBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
+  justify-content:center; background:#fff; color:#3c4043; border:1px solid #dadce0;
+  border-radius:20px; padding:10px 20px; font-weight:600; }
+.gBtn:active { background:#f1f3f4; }
+.gBtn .ic { width:18px; height:18px; }
 .pvTag { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; vertical-align:2px; }
-#dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty { display:none; }
+#dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty, #gWidget:empty, #gJoinWidget:empty { display:none; }
 
 /* Морзянка (v1.53.0): поле позывного */
 .csInput{width:100%;box-sizing:border-box;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(140,170,255,.28);background:rgba(10,16,34,.6);color:#eaf0ff;font:500 14px/1.2 inherit;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none}
@@ -964,8 +986,17 @@ button, input, select, textarea { text-transform:inherit; }
 <symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
+<symbol id="i-discord" viewBox="0 0 24 24"><path d="M6 8.5C6 6 8 4 12 4s6 2 6 4.5v6c0 3-3 5.5-6 5.5s-6-2.5-6-5.5z"></path><circle cx="9.2" cy="12" r="1.3"></circle><circle cx="14.8" cy="12" r="1.3"></circle></symbol>
+<!-- 23.08.2026: значок Google — четыре сектора круга фирменными цветами, координаты (12,2)(22,12)(12,22)(2,12) проверены численно.
+     Inline style="fill:...", не голый атрибут fill= — иначе общий .ic{fill:none} (монохромные линейные иконки) перекрасит секторы в ничто. -->
+<symbol id="i-google" viewBox="0 0 24 24">
+  <path style="fill:#4285F4" d="M12 12 L12 2 A10 10 0 0 1 22 12 Z"></path>
+  <path style="fill:#34A853" d="M12 12 L22 12 A10 10 0 0 1 12 22 Z"></path>
+  <path style="fill:#FBBC05" d="M12 12 L12 22 A10 10 0 0 1 2 12 Z"></path>
+  <path style="fill:#EA4335" d="M12 12 L2 12 A10 10 0 0 1 12 2 Z"></path>
+</symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.469.0"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.470.0"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1131,6 +1162,7 @@ button, input, select, textarea { text-transform:inherit; }
     <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
     <div id="accWidget" class="tgWidget"></div>
     <div id="dcWidget"></div>
+    <div id="gWidget"></div>
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
   </div>
   <div class="setPanel">
@@ -1326,6 +1358,7 @@ button, input, select, textarea { text-transform:inherit; }
     <div id="webJoinTxt"></div>
     <div id="webJoinWidget" class="tgWidget"></div>
     <div id="dcJoinWidget"></div>
+    <div id="gJoinWidget"></div>
   </div>
   <button class="btn pri" id="retryBtn">Ещё раз?</button>
   <button class="btn ghost hidden" id="watchBtn">Смотреть полёт</button>
@@ -1359,23 +1392,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.469.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.469.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.469.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.469.0"></script>
-<script defer src="js/game.js?v=1.469.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.469.0"></script>
-<script defer src="js/sync.js?v=1.469.0"></script>
-<script defer src="js/render.js?v=1.469.0"></script>
-<script defer src="js/planetarium.js?v=1.469.0"></script>
-<script defer src="js/goldstar.js?v=1.469.0"></script>
-<script defer src="js/music.js?v=1.469.0"></script>
-<script defer src="js/gyro.js?v=1.469.0"></script>
-<script defer src="js/forge.js?v=1.469.0"></script>
-<script defer src="js/adaptive.js?v=1.469.0"></script>
-<script defer src="js/card.js?v=1.469.0"></script>
-<script defer src="js/star.js?v=1.469.0"></script>
-<script defer src="js/ui.js?v=1.469.0"></script>
+<script defer src="js/core.js?v=1.470.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.470.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.470.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.470.0"></script>
+<script defer src="js/game.js?v=1.470.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.470.0"></script>
+<script defer src="js/sync.js?v=1.470.0"></script>
+<script defer src="js/render.js?v=1.470.0"></script>
+<script defer src="js/planetarium.js?v=1.470.0"></script>
+<script defer src="js/goldstar.js?v=1.470.0"></script>
+<script defer src="js/music.js?v=1.470.0"></script>
+<script defer src="js/gyro.js?v=1.470.0"></script>
+<script defer src="js/forge.js?v=1.470.0"></script>
+<script defer src="js/adaptive.js?v=1.470.0"></script>
+<script defer src="js/card.js?v=1.470.0"></script>
+<script defer src="js/star.js?v=1.470.0"></script>
+<script defer src="js/ui.js?v=1.470.0"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
