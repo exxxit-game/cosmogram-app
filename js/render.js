@@ -4,6 +4,11 @@
    главный цикл (fixed timestep, рендер независимый).
    Зависит от core.js, game.js.
    ============================================================ */
+/* Глоссарий коротких глобалов (см. также core.js) — переименование отклонено 22.08.2026:
+     Q  — профиль адаптивного качества графики, объявлен чуть ниже: level (0=low 1=med
+          2=high 3=ultra), fps, mode ('auto' или ручной выбор игрока), служебные счётчики
+          автоподстройки (_acc/_n/_t/_up/_dn/_hold/_ceil/_prove).
+     S  — центральное состояние забега (game.js). AC — AudioContext (core.js). */
 
 /* ---------- Авто-качество (Блок 3/10): shadowBlur — главный мобильный тормоз ---------- */
 const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hold:0, _ceil:-1, _prove:0 }; // 0=low 1=med 2=high 3=ultra; mode — настройка игрока
@@ -54,7 +59,7 @@ function qualityTick(dt){
       if (Q.fps < dnEarly*.6 && Q.level>0){
         Q._ceil = Q.level;
         const changed = applyLevelChange(Q.level-1, Q._ceil);
-        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+'');
+        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+' '+frameProfileSnapshot());
         return;
       }
       Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; // карантин после смены уровня: небо не дёргается
@@ -64,7 +69,7 @@ function qualityTick(dt){
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
       Q._ceil = Q.level;
       const changed = applyLevelChange(Q.level-1, Q._ceil);
-      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+''); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
+      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+' '+frameProfileSnapshot()); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
     else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ const old = Q.level; Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); if (old !== Q.level) resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; Store.set('gfxCeil',-1); } } // v1.284.22: устройство доказало запас — забываем потолок и в хранилище тоже, иначе он держал бы уровень внизу вечно // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }
@@ -72,11 +77,26 @@ function qualityTick(dt){
 }
 const DEBUG_FPS = /[?&#]debug/.test(location.href);
 const frameProfile={bg:0,stars:0,sky:0,field:0,fx:0,n:0,last:0};
+/* 22.08.2026 «Профиль летит в почту»: сводка по секциям (bg/stars/sky/field/fx) раньше
+   считалась ТОЛЬКО при ?debug в адресной строке — у обычного игрока эти пять
+   performance.now() не выполнялись вовсе, и в момент реальной просадки на слабом
+   устройстве узнать, что именно ест кадр, было нечем: один тестовый телефон в руках
+   разработчика — не представительная выборка. Сам расчёт (пять вызовов performance.now()
+   на кадр, дёшево) теперь идёт всегда; под DEBUG_FPS остаётся только видимый на экране
+   оверлей fpsPill. Снимок коротким текстом уезжает вместе с fps_drop/fps_drop_severe —
+   тем же путём, что уже возит cal_storm разбор по источникам. */
+function frameProfileSnapshot(){
+  if(frameProfile.n<30) return '';
+  const n=frameProfile.n;
+  return 'bg:'+(frameProfile.bg/n).toFixed(1)+' st:'+(frameProfile.stars/n).toFixed(1)+
+    ' sk:'+(frameProfile.sky/n).toFixed(1)+' fl:'+(frameProfile.field/n).toFixed(1)+
+    ' fx:'+(frameProfile.fx/n).toFixed(1);
+}
 function profileReport(){
-  if(!DEBUG_FPS || frameProfile.n<30) return;
+  if(frameProfile.n<30) return;
   const now=performance.now();
   if(now-frameProfile.last<250) return;
-  const n=frameProfile.n, el=$('fpsPill');
+  const n=frameProfile.n, el=DEBUG_FPS?$('fpsPill'):null;
   if(el){
     el.dataset.profile='1';
     el.textContent=Q.fps.toFixed(0)+' fps | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' ms';
@@ -358,6 +378,7 @@ function gfxInvalidate(){
   coneGrad=null;
   starGlowSprite=null;
   vignCache={w:-1,ht:-1,d:-1,s:-1,c:null};
+  corrCache={w:-1,ht:-1,d:-1,s:-1,fl:-1,fw:-1,c:null};
   nfCache={w:-1,ht:-1,h:-1,d:-1,s:-1,c:null}; // холст тоже отпускаем: старый битмап после потери контекста пуст
   planeGradCache={skin:-1,g:null};
   nebCache={h:-1,a:null,b:null};
@@ -526,12 +547,46 @@ function powRing(){
     POW_RING[k]=[hexToRgba(POW_COLORS[k])+'.38)', hexToRgba(POW_COLORS[k])+'.5)']; }
   return POW_RING;
 }
+let corrCache={w:-1,ht:-1,d:-1,s:-1,fl:-1,fw:-1,c:null};
+/* 22.08.2026 «Видимый край неба»: жалоба владельца — на ноутбуке/широком экране коридор
+   («коридор чести», fieldL()..fieldL()+fieldW(), фиксирован в 390 мер ради честности сида
+   между устройствами) окружён мёртвой зоной без единого визуального намёка на границу.
+   Самолётик просто перестаёт двигаться дальше — невидимая стена. render.js ни разу не
+   обращался к fieldL()/fieldW() раньше. Лекарство — мягкая светящаяся линия точно по краю
+   коридора + едва заметное затемнение мёртвой зоны снаружи: граница читается с полёта
+   (Хартия, суд №2), но не выглядит агрессивной стеной, чуждой космическому духу игры.
+   Тот же проверенный приём кэширования, что vignetteSprite — px=skyPx(), не голый DPR,
+   иначе повтор бага №15 (мыльные спрайты на нестандартном масштабе). */
+function corridorEdgeSprite(){
+  const fl=fieldL(), fw=fieldW();
+  if(corrCache.w!==W||corrCache.ht!==H||corrCache.d!==DPR||corrCache.s!==SC||corrCache.fl!==fl||corrCache.fw!==fw){
+    const px=skyPx();
+    const cw=Math.round(W*px), chh=Math.round(H*px);
+    let c=corrCache.c;
+    if(c && (c.width!==cw || c.height!==chh)){ c.width=0; c.height=0; c=null; }
+    if(!c){ c=document.createElement('canvas'); c.width=cw; c.height=chh; }
+    const x=ctx2d(c);
+    x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,cw,chh);
+    if(fl>0){ // мёртвая зона есть только когда экран шире коридора
+      x.setTransform(px,0,0,px,0,0);
+      x.fillStyle='rgba(2,4,14,.3)'; // едва заметное затемнение снаружи — не чернота, лёгкая тень
+      x.fillRect(0,0,fl,H); x.fillRect(fl+fw,0,W-fl-fw,H);
+      for(const edge of [fl, fl+fw]){
+        const g=x.createLinearGradient(edge-14,0,edge+14,0);
+        g.addColorStop(0,'rgba(159,232,255,0)'); g.addColorStop(.5,'rgba(159,232,255,.22)'); g.addColorStop(1,'rgba(159,232,255,0)');
+        x.fillStyle=g; x.fillRect(edge-14,0,28,H);
+      }
+    }
+    corrCache={w:W,ht:H,d:DPR,s:SC,fl,fw,c};
+  }
+  return corrCache.c;
+}
 function draw(){
   if(typeof canvasContextLost!=='undefined' && canvasContextLost) return;
   const nowMs=performance.now();
   const nowS=nowMs/1000;
-  const profileOn=DEBUG_FPS;
-  let profileMark=profileOn?nowMs:0;
+  const profileOn=true; // 22.08.2026: замер всегда включён — экран (fpsPill) по-прежнему только под ?debug, см. profileReport()
+  let profileMark=nowMs;
   const shk = RM?0:S.shake; // v1.99.2 «Бережное небо»: при системном флаге экран не трясём
   const shx = shk>0?rand(-6,6)*shk:0, shy = shk>0?rand(-6,6)*shk:0;
   ctx.save(); ctx.translate(shx,shy);
@@ -540,6 +595,7 @@ function draw(){
   ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
   const lowPower = isLowPowerDevice(nowMs);
   drawNebulas(h1,h2,nowS,lowPower);
+  if(fieldL()>0) ctx.drawImage(corridorEdgeSprite(),0,0,W,H); // 22.08.2026 «Видимый край неба»: на всех тирах — это граница поля, не украшение
   if(profileOn){ frameProfile.bg+=performance.now()-profileMark; profileMark=performance.now(); }
 
   const sh = Q.level>=1, hq = Q.level>=2, uq = Q.level>=3; // sh — свечение, hq — полная графика, uq — ультра
@@ -824,6 +880,14 @@ function draw(){
           i?pth.lineTo(x,y):pth.moveTo(x,y); });
         pth.closePath(); o._path=pth;
       }
+      /* 22.08.2026 «Шип митра»: у ctx.stroke() умолчание браузера — lineJoin='miter', острый
+         стык. Силуэт камня — случайный семиугольник (makeRockVerts(7), радиус вершин
+         .7–1.15 от центра) — при неудачном сочетании соседних вершин угол между рёбрами
+         острый, и митр выпирает шипом далеко за пределы линии. Жалоба владельца «белые
+         полосы по краям метеорита», подтверждено крупным снимком — светлый клин ровно в
+         одной вершине, не по всему контуру. round — стандартное лекарство от шипов на
+         произвольной геометрии, дешевле проверки углов вручную. */
+      ctx.lineJoin='round';
       ctx.fill(o._path); ctx.stroke(o._path);
       ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
       if(sh){ // объём: блик сверху-слева + светлый кратер (v1.37.0: со средней)
@@ -912,14 +976,14 @@ function draw(){
     if(sh) ctx.globalCompositeOperation='lighter';
     ctx.globalAlpha=.5+Math.sin(nowMs/(uq?90:110))*.2;
     const ar=uq?39:29;
-    ctx.drawImage(powGlow('#a9bcff'),plane.x-ar,plane.y-ar,ar*2,ar*2); // v1.43.1: плазма, не янтарь
+    ctx.drawImage(powGlow('#a9bcff'),renderPlaneX-ar,renderPlaneY-ar,ar*2,ar*2); // v1.43.1: плазма, не янтарь
     ctx.restore();
   }
 
   // кольцо щита
   if (S.shield>0){
     const shPulse=.4+Math.sin(nowMs/150)*.2;
-    ctx.save(); ctx.translate(plane.x,plane.y);
+    ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
     ctx.strokeStyle=`rgba(127,216,255,${shPulse})`;
     ctx.lineWidth=2;
     if(sh){ ctx.strokeStyle='rgba(127,216,255,.18)'; ctx.lineWidth=7; // v1.66.0: ореол щита — широкий мягкий дубль
@@ -1045,7 +1109,7 @@ function drawPlane(sh,nowMs){
   const ghostA=(fx==='ghost'&&hq)? .65+.1*Math.sin(nowMs/300) : 1;
   if(fx==='ghost'&&hq){ drawEchoTrail(skin);
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
-  ctx.save(); ctx.translate(p.x,p.y);
+  ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
   if (S.invuln>0 && S.invuln<1e8 && invulnDim()) ctx.globalAlpha=(RM?.6:.35)*ghostA; // v1.94.0: театральное бессмертие (1e9) — без мигания, спектакль идёт ровно
   else if(ghostA<1) ctx.globalAlpha=ghostA;
 
@@ -1122,9 +1186,30 @@ function drawPlane(sh,nowMs){
 /* ================= LOOP (Блок 3: fixed timestep 60 Гц) ================= */
 const STEP=1/60;
 let acc=0, lastTime=0, rafId=0, menuDrawT=0, loopScr='', pauseT0=0, drawForce=false;
+/* 22.08.2026 «Дёрганье на 120Гц»: при фиксированном шаге 1/60 рендер рисовал позицию
+   последнего тика физики — на дисплеях 120Гц между двумя тиками физики укладывается два
+   кадра рендера, и на нечётном кадре самолётик не двигался вовсе (микро-дёрганье). Лекарство —
+   линейная интерполяция между прошлым и текущим тиком по остатку акк-я (alpha=acc/STEP);
+   физику НЕ трогает — plane.x/plane.y как были целыми числами шага, так и остались,
+   интерполяция только для трёх мест ВИЗУАЛЬНОГО рисования самолётика (сам корпус, кольцо
+   щита, аура Пули — их обязательно интерполировать ВМЕСТЕ, иначе щит визуально уедет от
+   корпуса). След призрака (echoBuf) и редкие кольца вспышки рекорда — по-прежнему от
+   настоящей физической позиции: одному нужен подлинный путь, другому точность не важна. */
+function interpPos(prev,cur,alpha){ return prev+(cur-prev)*alpha; }
+let prevPlaneX=0, prevPlaneY=0, renderPlaneX=0, renderPlaneY=0;
 function drawKick(){ drawForce=true; } // внешнее событие (resize) — кадр вне очереди, но БЕЗ сброса часов сна (v1.66.2)
 function loop(t){
   rafId=requestAnimationFrame(loop);
+  /* v1.400.3 «Не рисуем в пустоту»: боевой крэш (InvalidStateError, drawImage, render.js —
+     «canvas element with a width or height of 0»). Корень — не в resize() (он и так честно
+     отказывается при cssW<=0||cssH<=0), а в том, что на части Android-клиентов Telegram
+     window.innerWidth/innerHeight в момент первого прохода скрипта сами ещё нулевые, и ни
+     один resize() ещё не успел отработать, пока requestAnimationFrame уже крутит кадры.
+     nebulaField() при W===0/H===0 создаёт офскрин-холст 0×0 и тут же отдаёт его в drawImage —
+     падение. Ждём тихо: rAF уже перезаписан выше, следующий кадр проверит снова; как только
+     где-то снаружи (уже существующий слушатель window resize, viewportChanged и т.д.)
+     отработает настоящий resize(), геометрия появится и рисование продолжится само. */
+  if (W<=0 || H<=0) return;
   let dt=(t-lastTime)/1000; lastTime=t;
   if(typeof pollGamepad==='function') pollGamepad(); // v1.99.4 «Штурвал»: опрос каждый кадр — руль и кнопки на любом экране
   if(dt>0.25)dt=0.25; if(dt<0)dt=0;
@@ -1137,12 +1222,16 @@ function loop(t){
   if (screenName==='game' && S.running && !S.paused) qualityTick(dt);
   else { Q._acc=0; Q._n=0; Q._t=0; }
   if (S.running && !S.paused){
+    prevPlaneX=plane.x; prevPlaneY=plane.y; // снимок ДО шагов физики этого кадра
     acc+=dt;
     let n=0;
     while(acc>=STEP && n<4){ update(STEP); acc-=STEP; n++; if(!S.running||S.paused){acc=0;break;} } // v1.99.2 «Бережное небо»: пауза доехала — кадр не докручиваем, время не отскакивает
     if(n===4) acc=0;
+    const ia=Math.min(1,Math.max(0,acc/STEP));
+    renderPlaneX=interpPos(prevPlaneX,plane.x,ia); renderPlaneY=interpPos(prevPlaneY,plane.y,ia);
   } else {
     updateFx(dt); // частицы и попапы догорают на паузе и оверлеях (конфетти рекорда живёт)
+    renderPlaneX=plane.x; renderPlaneY=plane.y; // не в полёте — рисуем как есть, интерполировать нечего
   }
   // v1.66.2 «Спящая пауза»: в игре — полная частота; оверлеи (меню/настройки/итоги) — ~30 fps;
   // пауза: 2 с догорания частиц на ~30 fps, дальше ~4 fps — замороженному полю больше не нужно,

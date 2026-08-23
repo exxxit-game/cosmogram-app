@@ -2,7 +2,10 @@
    Пэды меню, адаптивный полёт (слои по волне/жизням), коды смерти/рекорда.
    Цепочка: голоса → musicGain → [dry + ConvolverNode(генерированный импульс)] → out.
    Уважает MUTED (общий звук) и MUSIC_ON (своя настройка 'music').
-   Не трогает sfx: у музыки своя ветка громкости. */
+   Не трогает sfx: у музыки своя ветка громкости.
+   Глоссарий коротких глобалов (см. core.js) — переименование отклонено 22.08.2026:
+     AC — AudioContext (core.js). S — состояние забега (game.js): здесь читается S.mission/
+     S.lives/S.running/S.speed/S.slowmo/S.skin для слоёв музыки и профиля звука двигателя. */
 let MUSIC_ON = true; // boot: Store 'music'
 
 const music = (()=>{
@@ -37,10 +40,21 @@ const music = (()=>{
     if(pn){ node.connect(pn); pn.connect(mg); } else { node.connect(mg); }
   }
   function impulse(ac,dur,decay){ // «космический хвост»: шум с экспоненциальным затуханием
+    /* 22.08.2026: сырой белый шум как импульсная характеристика реверба звучит буквально
+       шипением — конволюция размазывает весь спектр шума под каждую ноту эмбиента (жалоба
+       владельца: OPPO A78 через Telegram, «эмбиент шипит»). Сглаживаем однополюсным lowpass
+       ПЕРЕД амплитудной огибающей: настоящий реверб — не белый, а тёплый затухающий хвост.
+       smooth=0.18 — заметное потепление, но не «утопленный» гул: страж reverb-impulse-guard
+       проверяет сглаженность объективно, не на слух. */
     const rate=ac.sampleRate, len=Math.floor(rate*dur);
     const buf=ac.createBuffer(2,len,rate);
+    const smooth=.18;
     for(let ch=0;ch<2;ch++){ const d=buf.getChannelData(ch);
-      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay); }
+      let prev=0;
+      for(let i=0;i<len;i++){
+        prev += smooth*((Math.random()*2-1)-prev);
+        d[i]=prev*Math.pow(1-i/len,decay);
+      } }
     return buf;
   }
   function ensureChain(){

@@ -37,6 +37,7 @@ const BB=(()=>{
   function text(){
     const Ln=['Cosmogram v'+GAME_VERSION+' blackbox · '+tape.length+' events'];
     try{ Ln.push('verdict: '+bbVerdict()); }catch(e){}
+    try{ Ln.push('audio: '+audioVerdict()); }catch(e){}
     try{ if(typeof diagReport==='function') Ln.push(diagReport()); }catch(e){}
     Ln.push('--- tape ---');
     for(const e of tape) Ln.push('['+e.t+'] '+e.ev+(e.d?': '+e.d:''));
@@ -74,5 +75,23 @@ function bbVerdict(){
     if(zm && Math.abs(zm[0]-input.baseG)>25) return L.bbVSkew+' '+Math.round(input.baseG)+'° → '+Math.round(zm[0])+'°';
     if(!input.useGyro) return L.bbVStale;
     return L.bbVOk;
+  }catch(e){ return 'n/a'; }
+}
+
+/* 22.08.2026 «Тот же приём, что и у руля» — вердикт звуковой цепи.
+   Первое сломанное звено, сверху вниз: звук выключен? музыка выключена?
+   контекст создан? не закрыт браузером? не спит? время в контексте реально
+   идёт (не тихая заморозка после фона — WebKit-баг, AUDIO-SYSTEM.md §4.1)?
+   тема выбрана? Как и у руля — одна фраза, без гадания по обрывкам. */
+function audioVerdict(){
+  try{
+    if(typeof MUTED!=='undefined' && MUTED) return L.audioVMuted;
+    if(typeof MUSIC_ON!=='undefined' && !MUSIC_ON) return L.audioVOff;
+    if(typeof AC==='undefined' || !AC) return L.audioVNoCtx;
+    if(AC.state==='closed') return L.audioVClosed;
+    if(AC.state==='suspended' || AC.state==='interrupted') return L.audioVSuspended+' ('+AC.state+')';
+    if(typeof acStalled!=='undefined' && acStalled) return L.audioVStalled;
+    if(typeof music==='undefined' || !music._theme()) return L.audioVNoTheme;
+    return L.audioVOk;
   }catch(e){ return 'n/a'; }
 }
