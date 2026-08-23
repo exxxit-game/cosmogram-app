@@ -9,6 +9,15 @@
    лёгкие карты стали бы фермой звёзд. Честно — как разведка Пакта.
    Зависит от core.js ($, Store, L, clamp, toast, tg), ui.js (setScreen).
    ============================================================ */
+/* 23.08.2026: свой локальный wireOn — forge.js грузится РАНЬШЕ ui.js (и раньше card.js,
+   где есть такой же свой хелпер) — общий wireOn() из ui.js ещё не объявлен в момент
+   выполнения кода верхнего уровня этого файла (низ файла — привязка кнопок сразу
+   при загрузке). Тот же приём, свой экземпляр под порядок загрузки. */
+function wireOnLocal(id, ev, fn){
+  const el=$(id);
+  if(el){ el.addEventListener(ev, fn); }
+  else if(typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
 
 /* ---------- Схема конфига и кодек ---------- */
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
@@ -206,17 +215,19 @@ function forgeSkyBuild(el){
 /* ---------- Экран: наполнение и события ---------- */
 function forgeFill(){ // подписи + состояние виджетов по текущему языку (вызывается из applyLang)
   if(typeof L==='undefined'||!L.forgeTitle) return;
-  $('forgeTitle').textContent=L.forgeTitle;
-  $('modeForge').innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
-  $('forgeName').placeholder=L.forgeNamePh;
-  $('forgeDenLbl').textContent=L.forgeDen; $('forgeSpdLbl').textContent=L.forgeSpd;
-  $('forgeHeatLbl').textContent=L.forgeHeat; // v1.85.0
-  $('forgeGrpHard').textContent=L.forgeGrpHard; $('forgeGrpEn').textContent=L.forgeGrpEn; $('forgeGrpMood').textContent=L.forgeGrpMood;
-  $('forgeEnLbl').textContent=L.forgeEn; $('forgeLenLbl').textContent=L.forgeLen;
-  $('forgeLivesLbl').textContent=L.forgeLives; $('forgeWaveLbl').textContent=L.forgeWave;
-  $('forgeBonusLbl').textContent=L.forgeBonus; $('forgeSkyLbl').textContent=L.forgeSky; $('forgeFogLbl').textContent=L.forgeFog;
-  $('forgeCodeLbl').textContent=L.forgeCodeLbl;
-  $('forgePlay').textContent=L.start; $('forgeBack').textContent=L.back; // v1.87.0: «Поделиться» переехала в итоги трассы
+  /* 23.08.2026: тот же класс защиты, что и в ui.js/ach.js — раньше каждая строка читала
+     $(id) напрямую, отсутствие любого одного элемента (устаревший кэш index.html) обрывало
+     бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
+     одинаковых строк с одинаковой проверкой. */
+  const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],
+    ['forgeHeatLbl',L.forgeHeat],['forgeGrpHard',L.forgeGrpHard],['forgeGrpEn',L.forgeGrpEn],
+    ['forgeGrpMood',L.forgeGrpMood],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
+    ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeBonusLbl',L.forgeBonus],
+    ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
+    ['forgePlay',L.start],['forgeBack',L.back]]; // v1.87.0: «Поделиться» переехала в итоги трассы
+  for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
+  const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
+  const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
   const pre=$('forgePresets');
   if(pre && pre.children.length!==FORGE_PRESETS.length){
@@ -279,7 +290,9 @@ function forgeFill(){ // подписи + состояние виджетов п
   const fb=$('forgeFineBtn');
   if(fb){ fb.textContent=L.forgeFine;
     if(!fb._bound){ fb._bound=1; fb.addEventListener('click',function(){
-      const hid=$('forgeFine').classList.toggle('hidden');
+      const ff=$('forgeFine');
+      const hid = ff ? !ff.classList.contains('hidden') : true; // новое состояние — считаем сами, не полагаемся на return classList.toggle()
+      if(ff) ff.classList.toggle('hidden', hid);
       fb.classList.toggle('open',!hid); sfx.click(); haptic('light'); }); } }
   forgeSyncWidgets();
 }
@@ -289,9 +302,9 @@ function forgeSyncWidgets(){ // конфиг → виджеты
      выхода всех виджетов: игрок набирал «Ад Пилота», трогал любой чип — и имя молча
      возвращалось к прежнему. Пишем в поле только когда курсор не в нём. */
   const nmEl=$('forgeName'); if(nmEl && document.activeElement!==nmEl) nmEl.value=forgeCfg.n;
-  $('forgeDen').value=forgeCfg.d; $('forgeDenV').textContent=forgeCfg.d;
-  $('forgeSpd').value=forgeCfg.s; $('forgeSpdV').textContent=forgeCfg.s;
-  const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); $('forgeHeatV').textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
+  const denEl=$('forgeDen'), denVEl=$('forgeDenV'); if(denEl) denEl.value=forgeCfg.d; if(denVEl) denVEl.textContent=forgeCfg.d;
+  const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.textContent=forgeCfg.s;
+  const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
   ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeSkyRow'].forEach(function(id){
@@ -306,8 +319,10 @@ function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeC
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
-  forgeCfg.n=sanitizeTrackName($('forgeName').value);
-  forgeCfg.d=+$('forgeDen').value; forgeCfg.s=+$('forgeSpd').value;
+  const nmEl=$('forgeName'), dEl=$('forgeDen'), sEl=$('forgeSpd');
+  if(nmEl) forgeCfg.n=sanitizeTrackName(nmEl.value);
+  if(dEl) forgeCfg.d=+dEl.value;
+  if(sEl) forgeCfg.s=+sEl.value;
   forgeCfg=forgeSanitize(forgeCfg);
   return forgeCfg;
 }
@@ -337,9 +352,10 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   haptic('success');
 }
 function forgeLoadCode(){
-  const cfg=forgeDecode($('forgeCode').value);
+  const codeEl=$('forgeCode');
+  const cfg=forgeDecode(codeEl?codeEl.value:'');
   if(!cfg){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
-  forgeCfg=cfg; forgeSyncWidgets(); $('forgeCode').value='';
+  forgeCfg=cfg; forgeSyncWidgets(); if(codeEl) codeEl.value='';
   /* v1.282.13: трасса гостя должна пережить выход из Кузницы. Раньше чужая карта жила
      только в памяти, а forgeOpen при следующем входе перечитывает forgeLast из хранилища —
      и молча заменял её на прошлую свою, хотя тост «трасса гостя» игрок уже видел.
@@ -366,16 +382,18 @@ function forgeBoot(){ // true = есть трасса друга: этот за�
 /* ---------- Финиш трассы: цифры забега, но ничего не пишется (не в зачёт) ---------- */
 function mapOver(sc){
   const distM=Math.floor(S.dist);
-  $('myRank').textContent=''; $('newRecord').innerHTML=''; $('toRecord').textContent=''; $('toLoc').textContent=''; $('duelRes').innerHTML='';
+  ['myRank','toRecord','toLoc'].forEach(function(id){ const el=$(id); if(el) el.textContent=''; });
+  ['newRecord','duelRes'].forEach(function(id){ const el=$(id); if(el) el.innerHTML=''; });
   /* v1.282.14: гасим и то, что ставит только gameOver. Своя трасса — не в зачёт, но экран
      итогов у неё общий с обычным забегом, и на нём оставались висеть виджеты предыдущего:
      «✨ В статус» (награда за рекорд — её можно было надеть по итогам незачётного забега),
      «★ Знак дня», статистика дня и мёртвая кнопка трибуны. */
   ['goldChip','dayStats','tribuneBtn','statusBtn'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
-  $('finalScore').textContent=sc;
+  const fsEl=$('finalScore'); if(fsEl) fsEl.textContent=sc;
   const statCell=function(v,l){ return '<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>'; };
   const winPill=S.mapWin?'<span class="miniPill">'+ic('trophy')+L.forgeWin+'</span>':'';
-  $('stats').innerHTML='<div class="statGrid rise" style="animation-delay:120ms">'+
+  const statsEl=$('stats');
+  if(statsEl) statsEl.innerHTML='<div class="statGrid rise" style="animation-delay:120ms">'+
     statCell(S.mission,L.missionLbl)+statCell(distM+' '+(L.unitM||'м'),L.dist)+
     statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+'</div>'+
     '<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill runMode">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
@@ -383,24 +401,26 @@ function mapOver(sc){
   if (typeof cardCapture==='function') cardCapture(sc,{win:!!S.mapWin}); // v1.73.0: карточка и для своей трассы — с именем автора
   const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
   tryOnRevert(); music.sting(S.mapWin?'record':'death'); music.stop(2); engine.stop();
-  $('stats').classList.add('hidden'); $('runPass').classList.add('hidden'); $('overDetailsBtn').classList.remove('open');
+  ['stats','runPass'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
+  const odbEl=$('overDetailsBtn'); if(odbEl) odbEl.classList.remove('open');
   setScreen('over');
-  const f=$('flash'); f.style.transition='none'; f.style.opacity=.7;
-  requestAnimationFrame(function(){ f.style.transition='opacity .5s'; f.style.opacity=0; });
+  const f=$('flash');
+  if(f){ f.style.transition='none'; f.style.opacity=.7;
+    requestAnimationFrame(function(){ f.style.transition='opacity .5s'; f.style.opacity=0; }); }
 }
 
 /* ---------- Привязка событий ---------- */
-$('forgePlay').addEventListener('click', forgePlay);
-$('forgeLoad').addEventListener('click', forgeLoadCode);
-$('forgeBack').addEventListener('click', function(){ sfx.click(); setScreen('modes'); });
+wireOnLocal('forgePlay', 'click', forgePlay);
+wireOnLocal('forgeLoad', 'click', forgeLoadCode);
+wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); });
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
    меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой
    другой виджет, пресет, смена языка) возвращал слайдер на старое значение: правка автора
    молча пропадала, а живое мини-небо на неё вообще не отзывалось. Здесь намеренно НЕ зовём
    forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
-$('forgeDen').addEventListener('input', function(){ forgeCfg.d=+this.value; $('forgeDenV').textContent=this.value; forgeSkyKick(); });
-$('forgeSpd').addEventListener('input', function(){ forgeCfg.s=+this.value; $('forgeSpdV').textContent=this.value; forgeSkyKick(); });
-$('forgeCode').addEventListener('keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
+wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.textContent=this.value; forgeSkyKick(); });
+wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.textContent=this.value; forgeSkyKick(); });
+wireOnLocal('forgeCode', 'keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
-$('forgeName').addEventListener('input', function(){ forgeCfg.n=this.value; });
+wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; });

@@ -290,10 +290,10 @@ function syncGhostGet(pid, cat){ // чужой трек: {ok,track,skin,best,nam
     return r.json().catch(()=>null);
   }).catch(()=>null);
 }
-function syncGhostShare(share){ // приватность: выкл — сервер удаляет мои треки сразу
-  if(!syncAvailable()) return Promise.resolve(false);
-  return syncPost(Object.assign({action:'ghost_share', share:!!share}, syncAuth())).then(r=>r.ok).catch(()=>false);
-}
+/* 23.08.2026: syncGhostShare() убрана — тумблер приватности призрака отменён 22.08.2026
+   («Призрак — улика, не украшение»), сервер теперь принимает старое действие лишь как
+   пустышку для совместимости со старыми кэшами — новый код его больше не вызывает.
+   Единственный вызов жил в устаревшем черновике ui_backup_before_ghost_fix.js, тоже убран. */
 
 /* ---------- v1.100.1 «Трибуна чемпиона»: прыжки дня и спектакль лучшего ----------
    Отдельная комната на сервере (cosmogram-daily): таблица рекордов её не касается.

@@ -7,6 +7,15 @@
    Ноль инфраструктуры, текстовый шеринг не тронут.
    Зависит от core.js ($, L, fmtN), ui.js (setScreen, S).
    ============================================================ */
+/* 23.08.2026: свой локальный wireOn — card.js грузится РАНЬШЕ ui.js (порядок в sw.js),
+   значит общий wireOn() из ui.js ещё не объявлен в момент выполнения кода верхнего
+   уровня этого файла (низ файла — привязка кнопок сразу при загрузке). Тот же приём,
+   что и wireOn() в ui.js, но свой, без зависимости от порядка загрузки. */
+function wireOnLocal(id, ev, fn){
+  const el=$(id);
+  if(el){ el.addEventListener(ev, fn); }
+  else if(typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
 
 const cardData={ sc:0, rec:false, win:false, mode:'classic', mission:1, dist:0, stars:0, combo:0, custom:'' };
 const cardImg=new Image(); let cardImgOk=false;
@@ -85,14 +94,14 @@ function cardOpen(){
 }
 function cardFill(){ // подписи по языку (вызывается из applyLang)
   if(typeof L==='undefined'||!L.cardTitle) return;
-  $('cardTitle').textContent=L.cardTitle;
-  $('cardHint').textContent=L.cardHint;
-  $('cardBtn').textContent=L.cardBtn;
-  if(L.cardChat) $('cardChat').textContent=L.cardChat;
-  if(L.cardStory) $('cardStory').textContent=L.cardStory;
-  if(L.cardSave) $('cardSave').textContent=L.cardSave;
-  if(L.cardShare) $('cardShare').textContent=L.cardShare;
-  $('cardBack').textContent=L.back;
+  const t1=$('cardTitle'); if(t1) t1.textContent=L.cardTitle;
+  const t2=$('cardHint'); if(t2) t2.textContent=L.cardHint;
+  const t3=$('cardBtn'); if(t3) t3.textContent=L.cardBtn;
+  if(L.cardChat){ const t4=$('cardChat'); if(t4) t4.textContent=L.cardChat; }
+  if(L.cardStory){ const t5=$('cardStory'); if(t5) t5.textContent=L.cardStory; }
+  if(L.cardSave){ const t6=$('cardSave'); if(t6) t6.textContent=L.cardSave; }
+  if(L.cardShare){ const t7=$('cardShare'); if(t7) t7.textContent=L.cardShare; }
+  const t8=$('cardBack'); if(t8) t8.textContent=L.back;
 }
 /* v1.96.0 «Одна дверь», шаг Б «Сохранить карточку»: PNG уходит файлом —
    в Telegram 8.0+ через tg.downloadFile, вне него — якорем download. Скриншот больше не обязателен. */
@@ -157,11 +166,11 @@ function cardShare(){
   if(S.mode==='custom' && typeof mapShare==='function'){ sfx.click(); mapShare(); return; }
   shareScore();
 }
-$('cardBtn').addEventListener('click',cardOpen);
-$('cardChat').addEventListener('click',cardSend);
-$('cardStory').addEventListener('click',cardStory);
-$('cardSave').addEventListener('click',cardSave);
-$('cardShare').addEventListener('click',cardShare);
-$('cardBack').addEventListener('click',function(){ sfx.click(); setScreen('over'); });
+wireOnLocal('cardBtn','click',cardOpen);
+wireOnLocal('cardChat','click',cardSend);
+wireOnLocal('cardStory','click',cardStory);
+wireOnLocal('cardSave','click',cardSave);
+wireOnLocal('cardShare','click',cardShare);
+wireOnLocal('cardBack','click',function(){ sfx.click(); setScreen('over'); });
 cardChatGate(); // при загрузке: среда уже известна
 cardStoryGate(); // и сторис-дверь при загрузке

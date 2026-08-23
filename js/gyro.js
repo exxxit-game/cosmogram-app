@@ -59,7 +59,7 @@ function gyroOfferShow(){
      ровно…» уже ПОСЛЕ согласия (строка ниже по файлу), то есть при повторном показе игрок
      видел ответ на вопрос, которого ему не задали. Страж 124. */
   const bd=$('tutBeatB'); if (bd) bd.textContent=(L&&L.tutGyroBody)||'';
-  $('tutBeat').classList.remove('hidden');
+  const tBeat=$('tutBeat'); if (tBeat) tBeat.classList.remove('hidden');
   haptic('light');
 }
 
@@ -73,7 +73,7 @@ function gyroBeatStop(){ if(gyroBeatIv){ clearInterval(gyroBeatIv); gyroBeatIv=0
 function gyroAct2(ok){ // выбор сделан — полёт продолжается с того же места
   gyroBeatStop(); // выбор сделан — часовой больше не нужен, чей бы ни был выбор
   GYRO.live=false;
-  $('tutBeat').classList.add('hidden');
+  const tBeat2=$('tutBeat'); if (tBeat2) tBeat2.classList.add('hidden');
   S.paused=false; S.pausing=0; grantGrace(.35); // «Склейка»: плавный разгон — v1.108.1: через общий лимит
   if (ok){
     Store.set('gyroUnlocked',1); // замок открывается ровно в свой момент — «Полёт без рук»
@@ -107,7 +107,7 @@ async function gyroBeatGyro(){
   }
   if (typeof gyroKick==='function') gyroKick(); // будим мост Telegram (идемпотентно)
   calReset(false,undefined,'gyro-unlock'); // свежий стабильный ноль под спокойную позу
-  $('tutBeatB').textContent=L.calWait; // «Держи телефон ровно…»
+  const tBeatB2=$('tutBeatB'); if (tBeatB2) tBeatB2.textContent=L.calWait; // «Держи телефон ровно…»
   const t0=performance.now();
   gyroBeatStop();
   gyroBeatIv=setInterval(()=>{

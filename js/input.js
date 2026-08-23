@@ -541,7 +541,18 @@ function gyroTgFailed(e){ // мост ответил отказом: экскл�
 }
 if (TG_ORIENT){
   try {
-    tg.onEvent('deviceOrientationChanged', function(){ onTgOrient(this); });
+    tg.onEvent('deviceOrientationChanged', function(){
+      /* 23.08.2026: боевой отчёт — «мост deviceOrientationChanged: Cannot read
+         properties of undefined (reading 'indexOf')». Прослежена вся цепочка вызовов
+         от onTgOrient до BEACON.signal — ни одного .indexOf() нигде в нашем коде.
+         Похоже на баг самого моста Telegram (вендорный скрипт), не нашего кода —
+         корень не починить, но раньше try/catch ловил только МОМЕНТ РЕГИСТРАЦИИ
+         обработчика, не каждый его вызов: если мост сам бросает исключение при
+         срабатывании события, оно улетало необработанным. Теперь — тихо, в «Почту
+         неба», без прерывания игры. */
+      try{ onTgOrient(this); }
+      catch(err){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('tg_orient_crash', String(err&&err.message||err).slice(0,60)); }
+    });
     tg.onEvent('deviceOrientationFailed', gyroTgFailed);
     gyroKick();
   } catch(err){}

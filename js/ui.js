@@ -25,6 +25,31 @@ function wireOn(id, ev, fn){
   if (el){ el.addEventListener(ev, fn); }
   else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
 }
+/* 23.08.2026 «Тот же замок для текста»: applyLang() держала ~70 прямых $('id').textContent=
+   без проверки — тот же класс краша, что wireOn() уже закрыл для 51 обработчика (v1.400.3).
+   Один отсутствующий элемент обрывал ВСЮ функцию перевода на середине — остальные строки
+   после места падения не выполнялись. setText/setAttr — тот же приём, для двух других форм
+   обращения (applyLang() их использует; setScreen() — отдельным заходом позже). */
+function setText(id, val){
+  const el = $(id);
+  if (el){ el.textContent = val; }
+  else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
+function setAttr(id, attr, val){
+  const el = $(id);
+  if (el){ el.setAttribute(attr, val); }
+  else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
+function toggleCls(id, cls, val){
+  const el = $(id);
+  if (el){ el.classList.toggle(cls, val); }
+  else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
+function setHTML(id, val){
+  const el = $(id);
+  if (el){ el.innerHTML = val; }
+  else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
 function hideMain(){ // v1.62.0: синяя MainButton дублировала экранные кнопки — всегда прячем
   if(tg&&tg.MainButton){ try{ tg.MainButton.hide(); }catch(e){} }
 }
@@ -73,33 +98,33 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 // (невидимая подушка-след под ней); где родной кнопки нет — наша видна всегда
 function pauseGhostSync(){
   const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
-  $('pauseBtn').classList.toggle('ghost', nativeBack);
+  toggleCls('pauseBtn','ghost', nativeBack);
 }
 pauseGhostSync();
 function setScreen(name){
   if(name==='menu' && typeof runMode!=='undefined' && runMode!=='classic') runMode='classic'; // v1.92.1 «Дом — это классика»: вышел в меню — сессия любой дисциплины закрыта, большая кнопка всегда ведёт домой
   screenName=name;
-  $('startScreen').classList.toggle('hidden', name!=='menu');
-  $('pauseScreen').classList.toggle('hidden', name!=='pause');
-  $('hangarScreen').classList.toggle('hidden', name!=='hangar');
-  $('achScreen').classList.toggle('hidden', name!=='ach');
-  $('settingsScreen').classList.toggle('hidden', name!=='settings');
-  $('diagScreen').classList.toggle('hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
-  $('modesScreen').classList.toggle('hidden', name!=='modes');
-  $('forgeScreen').classList.toggle('hidden', name!=='forge'); // v1.68.0: конструктор трассы
+  toggleCls('startScreen','hidden', name!=='menu');
+  toggleCls('pauseScreen','hidden', name!=='pause');
+  toggleCls('hangarScreen','hidden', name!=='hangar');
+  toggleCls('achScreen','hidden', name!=='ach');
+  toggleCls('settingsScreen','hidden', name!=='settings');
+  toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
+  toggleCls('modesScreen','hidden', name!=='modes');
+  toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
   // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
   // БЕСКОНЕЧНО до конца всей сессии, даже часы спустя, соревнуясь за кадр с настоящей игрой.
   if(name!=='forge' && typeof _fSkyRun!=='undefined' && _fSkyRun) _fSkyRun=false;
-  $('cardScreen').classList.toggle('hidden', name!=='card'); // v1.73.0: карточка для скриншота
-  $('gameOverScreen').classList.toggle('hidden', name!=='over');
+  toggleCls('cardScreen','hidden', name!=='card'); // v1.73.0: карточка для скриншота
+  toggleCls('gameOverScreen','hidden', name!=='over');
   const inGame = (name==='game'||name==='pause');
   document.body.classList.toggle('flying', inGame); // v1.108.1: зум/жесты блокируются только тут, не везде
-  $('hud').classList.toggle('hidden', name!=='game');
-  $('topHud').classList.toggle('hidden', !inGame); // v1.46.0: верхняя панель одним рядом
-  $('telemHud').classList.toggle('hidden', !inGame); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
-  $('pauseBtn').classList.toggle('hidden', name!=='game');
-  $('dim').classList.toggle('on', name==='pause');
+  toggleCls('hud','hidden', name!=='game');
+  toggleCls('topHud','hidden', !inGame); // v1.46.0: верхняя панель одним рядом
+  toggleCls('telemHud','hidden', !inGame); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
+  toggleCls('pauseBtn','hidden', name!=='game');
+  toggleCls('dim','on', name==='pause');
   setBack(name!=='menu');
   // v1.280.0: та же видимость, что у собственной кнопки настроек экрана — Меню и Пауза, нигде больше
   if (tg && tg.SettingsButton && tgv('6.10')){
@@ -137,7 +162,7 @@ window.addEventListener('pointerdown', function tgImmKick(){ // полный э�
   window.removeEventListener('pointerdown', tgImmKick);
 });
 function modesFill(){ // подписи + отметка выбранного режима
-  $('modesTitle').textContent=L.modes;
+  setText('modesTitle',L.modes);
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
   const tk=trackDayKey(); // v1.282.20: дверь дня — по общему времени, как и сама трасса
   /* v1.282.20: печать дня ставится в СПИСОК отыгранных дней, а не в одну запись.
@@ -145,9 +170,11 @@ function modesFill(){ // подписи + отметка выбранного р
      перезаписалась завтрашней датой, вернул назад — дверь снова открыта, и так сколько
      угодно раз. Список помнит все дни (храним последние 10), поэтому возврат упирается
      в уже стоящую печать. */
-  const dr=Store.get('dailyRun',null), dl=!!(dr&&dr.d===tk&&dr.done)||dailyDoneHas(tk); // v1.93 «Одна попытка»: дверь закрыта до полуночи — с тёплой табличкой
-  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dr.s|0):L.modeDailyD+' · '+tk.slice(8)+'.'+tk.slice(5,7)+' · '+L.dailyOnce);
-  $('modeDaily').classList.toggle('locked',dl);
+  const dr=Store.get('dailyRun',null), usedN=(dr&&dr.d===tk)?(dr.n||0):dailyDoneGet(tk); // 23.08.2026 «5 попыток»: счётчик восстанавливается из журнала, если dailyRun не за сегодня (сброс хранилища)
+  const dl = usedN>=5;
+  const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
+  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(8)+'.'+tk.slice(5,7)+' · '+(usedN>0?L.dailyLeft(5-usedN):L.dailyOnce));
+  toggleCls('modeDaily','locked',dl);
   put('modeBullet',L.bullet,L.modeBulletD); // v1.45.0 «Для Про»: Классика — на большой кнопке «Начать полёт», здесь только дисциплины
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
   const fl=Store.get('forgeLast',null); // v1.90.0: дверь помнит гостя — трасса ждёт за ней по имени (как последний курс в Course World)
@@ -224,7 +251,11 @@ function startGame(saved){
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
   S.dailyDay = runMode==='theater' ? theaterDay : (runMode==='daily' ? (saved&&saved.dailyDay ? saved.dailyDay : trackDayKey()) : ''); // v1.282.20: день соревнования общий // v1.93 «Одна попытка»: прыжок принадлежит дню взлёта — даже через полночь; v1.94.0: театр помнит день спектакля
-  if (runMode==='daily' && !saved){ Store.set('dailyRun',{d:S.dailyDay,fly:1}); dailyDoneMark(S.dailyDay); } // v1.282.20: попытка сгорает на ВЗЛЁТЕ — раньше жёсткое убийство процесса возвращало свежую // взлёт = попытка; печать дня поставлена
+  if (runMode==='daily' && !saved){ // 23.08.2026 «5 попыток»: счётчик +1 на взлёте — та же защита от читерства, что была у одной попытки, порог просто выше
+    const dr0=Store.get('dailyRun',null), curN=(dr0&&dr0.d===S.dailyDay)?(dr0.n||0):dailyDoneGet(S.dailyDay); // после сброса хранилища — восстанавливаем счётчик из журнала, не начинаем с нуля
+    const nextN=curN+1;
+    Store.set('dailyRun',{d:S.dailyDay,n:nextN}); dailyDoneMark(S.dailyDay,nextN);
+  } // попытка сгорает на ВЗЛЁТЕ — раньше жёсткое убийство процесса возвращало свежую
   if (runMode==='custom' && typeof forgeCfgGet==='function'){ // Своя трасса: конфиг автора на борт (v1.68.0, v1.69.0 — полная палуба)
     const fc=forgeCfgGet();
     const am=(typeof Adaptive!=='undefined')?Adaptive.mult():{d:1,s:1}; // v1.108.1 «Мозг неба»: множитель поверх авторских настроек, не вместо них
@@ -294,7 +325,7 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  $('modeHud').classList.toggle('hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='custom'||runMode==='theater')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён)
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='custom'||runMode==='theater')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён)
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
   sfx.launch(SKINS[S.skin]||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
   music.start('game'); // адаптивный полёт: дрон сразу, слои — по волнам/жизням
@@ -333,7 +364,7 @@ function gameOver(){
     // и Мозг неба записывал прошедшему трассу +1 забег и +1 «причину смерти», подкручивая
     // сложность под препятствие, о которое игрок не разбивался.
     if (!S.mapWin && typeof Adaptive!=='undefined') Adaptive.onDeath(S.time, S.lastHitKind); // v1.108.1 «Мозг неба»: тот же момент, что уже шлёт анонимную телеметрию — здесь только локально, для подстройки
-    theaterTrack=null; $('watchBtn').classList.add('hidden'); mapOver(sc); return;
+    theaterTrack=null; toggleCls('watchBtn','hidden',true); mapOver(sc); return;
   }
   const mode=controlMode(); // категория управления: gyro / touch / keys
   const cat=S.bullet?'bullet':mode; // v1.280.0: категория забега для всего, что касается призраков — Bullet не выражается через controlMode()
@@ -368,9 +399,9 @@ function gameOver(){
   if(distM===42)Stats.e42=1; if(sc>9000)Stats.e9000=1; if(sc===1337)Stats.e1337=1; // пасхалки
   saveStats();
   Store.del('savedRun');
-  $('myRank').textContent=''; // ранг прошлого забега не течёт в этот
+  setText('myRank',''); // ранг прошлого забега не течёт в этот
   webJoinFill(); // гость видит мостик: «войди — и полёт в общей таблице» (v1.51.0)
-  $('finalScore').textContent=sc; // синхронно финал — для мгновенного отображения и тестов
+  setText('finalScore',sc); // синхронно финал — для мгновенного отображения и тестов
   const sg=++scoreCountGen, fsEl=$('finalScore'), t0=performance.now(); // count-up 0→sc за 0.8s
   requestAnimationFrame(function tick(now){
     if(sg!==scoreCountGen || screenName!=='over') return; // устаревший цикл молчит
@@ -390,24 +421,24 @@ function gameOver(){
     if (sc>prevDlSc){ Store.set('dailyBest',{d:dd,s:sc});
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
   }
-  if (S.mode==='daily'){ const dd0=S.dailyDay||trackDayKey(); Store.set('dailyRun',{d:dd0,s:sc,done:1}); dailyDoneMark(dd0); runMode='classic'; } // v1.282.20: печать и в журнал дней // v1.93 «Одна попытка»: попытка сгорела — сессия закрыта, «Ещё раз?» — уже тренировка классикой
+  if (S.mode==='daily'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic
   if (ghostBeatNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ghost')+' '+L.ghostBeat(ghostName,sc,ghostBest)+'</span>');
   // v1.108.1 «Пасхалки заговорили»: e42/e9000/e1337 взводились в Stats и молчали — теперь есть момент
   if (distM===42) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg42+'</span>');
   if (sc>9000) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg9000+'</span>');
   if (sc===1337) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg1337+'</span>');
-  $('newRecord').innerHTML = recChips.join('');
+  setHTML('newRecord', recChips.join(''));
   /* v1.282.14: возвращаем блоки, которые мог спрятать финиш своей трассы. mapOver гасит
      #stats и #runPass, а снимал этот hidden кто-то — никто: во всём проекте нет ни одного
      remove('hidden') для них. После одного забега по своей трассе «Подробности полёта» на
      всех последующих обычных итогах оставались без сетки и паспорта до перезагрузки
      страницы — притом что gameOver честно писал в них innerHTML. */
-  $('stats').classList.remove('hidden'); $('runPass').classList.remove('hidden');
+  toggleCls('stats','hidden',false); toggleCls('runPass','hidden',false);
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
-  $('toRecord').textContent = (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''; // мотивация: сколько не хватило
+  setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
   const nl=(typeof achNextLoc==='function')?achNextLoc():null; // космическая шкала: «До Луны: 200 м»
-  $('toLoc').textContent = nl ? L.toLoc(aT(nl).n, fmtN(nl.need-Stats.totalDist)) : '';
+  setText('toLoc', nl ? L.toLoc(aT(nl).n, fmtN(nl.need-Stats.totalDist)) : '');
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
@@ -513,20 +544,20 @@ function ghostUpload(category, track, skin, best, seed){
     const win = duelWinNow;
     if (win){
       Stats.duelsWon=(Stats.duelsWon||0)+1; saveStats();
-      $('duelRes').innerHTML='<span class="duelWin">'+L.duelWin(dl.name,dl.best)+'</span>';
+      setHTML('duelRes', '<span class="duelWin">'+L.duelWin(dl.name,dl.best)+'</span>');
       duelSet(null); // вызов закрыт победой
       if (typeof achCheck==='function') achCheck(); // «Победитель дуэли»
     } else {
-      $('duelRes').innerHTML='<span class="duelLose">'+L.duelLose(dl.name,dl.best)+'</span>';
+      setHTML('duelRes', '<span class="duelLose">'+L.duelLose(dl.name,dl.best)+'</span>');
     }
     haptic(win?'success':'light');
-  } else $('duelRes').innerHTML='';
-  $('duelBtn').classList.remove('hidden'); // «Вызов» виден всегда: вне Telegram тап объяснит, как его включить
+  } else setHTML('duelRes', '');
+  toggleCls('duelBtn','hidden',false); // «Вызов» виден всегда: вне Telegram тап объяснит, как его включить
   if (typeof starStatusGate==='function') starStatusGate(isRecord||isDistRecord); // v1.98.0 «Звезда-статус»: рекорд → искра в статус (Premium, мост 8.0)
   // статы забега — сетка 2×2 метрик; под ней плашки: режим забега + рекорды категорий
   const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
   const bestPill=(icn,v)=>'<span class="miniPill">'+ic(icn)+'<b>'+v+'</b></span>';
-  $('stats').innerHTML =
+  setHTML('stats',
     '<div class="statGrid rise" style="animation-delay:120ms">'+
       statCell(S.mission,L.missionLbl)+statCell(distM+' '+(L.unitM||'м'),L.dist)+
       statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+
@@ -539,23 +570,23 @@ function ghostUpload(category, track, skin, best, seed){
       bestPill('keys',saneNumber(Store.get('bestKeys',0),0))+
       bestPill('timer',saneNumber(Store.get('bestBullet',0),0))+
       bestPill('ruler',saneNumber(Store.get('bestDist',0),0)+' '+(L.unitM||'м'))+
-    '</div>';
+    '</div>');
   runPassFill(); // паспорт забега (v1.42.0)
   tryOnRevert(); // примерка: забег окончен — возвращаем свой скин (нет «ЕЩЁ РАЗ» с чужим)
   music.sting(isRecord?'record':'death'); // кода: фанфары рекорда или три ноты вниз
   music.stop(2); // музыка полёта уходит, кода звучит поверх тишины
   engine.stop();
   // v1.11.0 «Ни одной лишней механики»: гостей больше нет — gfxHint вычеркнут (v1.27.0), совет стоит один
-  $('overMore').classList.add('hidden'); $('overDetailsBtn').classList.remove('open'); // v1.84.0: спойлер каждый финиш свёрнут
+  toggleCls('overMore','hidden',true); toggleCls('overDetailsBtn','open',false); // v1.84.0: спойлер каждый финиш свёрнут
   theaterTrack = (S.mode==='daily' && rec.length>=20)
     ? { xs:rec.map(r=>r[0]/91), ys:rec.map(r=>r[1]/91), ds:rec.map(r=>r[2]) }
     : null; // v1.94.0 «Театр призраков» Т1: билет снимается со свежего финиша — потом лента может уйти под новый забег
   if (theaterTrack) theaterDay=S.dailyDay||trackDayKey();
   theaterChamp=null; champTrack=null; theaterRecord=false; // v1.100.1: свежий финиш — сцена снова твоя, гость уходит за кулисы до нового зова. v1.284.4: и признак «повтор рекорда» гаснет, иначе следующий спектакль дня остался бы без золотой звезды
-  $('watchBtn').classList.toggle('hidden', !theaterTrack); // «Смотреть полёт» — только с билетом: честный забег дня с живой лентой
-  $('tribuneBtn').classList.toggle('hidden', !theaterTrack || typeof syncDailyChampion!=='function' || !syncAvailable()); // «Трибуна чемпиона» — рядом с билетом: день завершён, можно смотреть мастера
-  $('goldChip').classList.toggle('hidden', !(S.mode==='daily' && S.goldStar)); // v1.100.2: знак дня сияет рядом с рекордными плашками
-  $('dayStats').classList.add('hidden'); // счётчик звезды прилетит асинхронно — экран не ждёт
+  toggleCls('watchBtn','hidden', !theaterTrack); // «Смотреть полёт» — только с билетом: честный забег дня с живой лентой
+  toggleCls('tribuneBtn','hidden', !theaterTrack || typeof syncDailyChampion!=='function' || !syncAvailable()); // «Трибуна чемпиона» — рядом с билетом: день завершён, можно смотреть мастера
+  toggleCls('goldChip','hidden', !(S.mode==='daily' && S.goldStar)); // v1.100.2: знак дня сияет рядом с рекордными плашками
+  toggleCls('dayStats','hidden',true); // счётчик звезды прилетит асинхронно — экран не ждёт
   if (S.mode==='daily' && typeof syncDailyStats==='function' && syncAvailable())
     (genS=>syncDailyStats(S.dailyDay||trackDayKey()).then(st=>{ // «сегодня её взяли N из M» — чувство живого мира без гонки
       if (!runSame(genS)) return; // v1.282.20: счётчик звезды дня не зажигается на итогах классики
@@ -580,26 +611,38 @@ function resumeGame(){
   engine.duck(false);
   setScreen('game'); sfx.go(); // v1.87.0: и здесь — тихо, без баннера
 }
-/* v1.282.20: журнал отыгранных дней — защита «одной попытки» от смены часового пояса. */
-function dailyDoneList(){ return saneArray(Store.get('dailyDone',[]),[]).filter(x=>typeof x==='string'); }
-function dailyDoneHas(d){ return dailyDoneList().indexOf(d)>=0; }
-function dailyDoneMark(d){
-  if(!d || dailyDoneHas(d)) return;
-  Store.set('dailyDone', dailyDoneList().concat(d).slice(-10)); // десяти дней хватает: назад дальше не отмотать незаметно
+/* v1.282.20/23.08.2026: журнал отыгранных дней — защита «пяти попыток» от смены часового
+   пояса и от сброса локального хранилища. Раньше хранил просто список дней (одна попытка =
+   один факт «играл»/«не играл»). Теперь трасса дня разрешает 5 попыток — журнал обязан
+   помнить ЧИСЛО, не только факт, иначе сброс хранилища посреди дня возвращает свежие 5
+   попыток заново. Старые записи-строки (версия «одна попытка», уже стоят у части игроков)
+   мигрируют в {d,n:5} — трактуются как полностью использованные, чтобы никому не подарить
+   лишние попытки задним числом при обновлении игры. */
+function dailyDoneList(){
+  const raw = saneArray(Store.get('dailyDone',[]),[]);
+  return raw.map(x => typeof x==='string' ? {d:x,n:5} : (x && typeof x.d==='string' && typeof x.n==='number') ? x : null).filter(Boolean);
+}
+function dailyDoneHas(d){ return dailyDoneList().some(x=>x.d===d); }
+function dailyDoneGet(d){ const e=dailyDoneList().find(x=>x.d===d); return e ? e.n : 0; }
+function dailyDoneMark(d, n){
+  if(!d) return;
+  const list = dailyDoneList().filter(x=>x.d!==d);
+  list.push({d, n});
+  Store.set('dailyDone', list.slice(-10)); // десяти дней хватает: назад дальше не отмотать незаметно
 }
 function toMenu(){
   if(S.running){
     if (runMode==='theater'){ endTheater(); return; } // v1.94.0: «Меню» из театра — тихий занавес обратно на итоги, не в дом
-    if (S.mode==='daily'){ // v1.93 «Одна попытка»: сошёл с трамплина — прыжок засчитан как есть, тихо, без экрана итогов
+    if (S.mode==='daily'){ // 23.08.2026 «5 попыток»: сошёл с трамплина — прыжок засчитан как есть, тихо, без экрана итогов
       const sc=Math.floor(S.score*(0.5+S.smooth*0.5)), dd=S.dailyDay||trackDayKey();
       const prevDl=Store.get('dailyBest',null);
       if (sc>0 && sc>((prevDl&&prevDl.d===dd)?prevDl.s:0)) Store.set('dailyBest',{d:dd,s:sc});
-      Store.set('dailyRun',{d:dd,s:sc,done:1}); dailyDoneMark(dd); runMode='classic';
+      runMode='classic'; // счётчик попыток уже увеличен на взлёте — здесь только режим и лучший счёт
       /* v1.282.13: и автосейв дня сгорает вместе с попыткой. Дверь в меню запирается
-         (modesFill видит dailyRun.done), но bootFly() эту дверь обходил: при следующем
+         счётчиком n>=5 (modesFill), но bootFly() эту дверь обходил: при следующем
          запуске он читал уцелевший savedRun и возвращал игрока в тот же прыжок с
-         сохранённым прогрессом, а финиш переписывал dailyBest. «Одна попытка»
-         обходилась простым перезапуском приложения. */
+         сохранённым прогрессом, а финиш переписывал dailyBest — попытка не сгорала
+         по-настоящему. Стирание savedRun здесь — та же защита, что и раньше. */
       Store.del('savedRun');
     }
     S.running=false; S.paused=false; S.dying=0; S.pausing=0; releaseAwake();
@@ -863,7 +906,7 @@ function angarBuyFill(){
               : (L.hangarBuy+' — '+ic('star4','i-s4')+Math.round(sk.price));
   b.classList.toggle('ghost', nadet);   // надетый борт — кнопка гаснет: делать нечего
   b.classList.toggle('pri', !nadet);
-  $('angarWalletN').textContent = Math.round(S.wallet);
+  setText('angarWalletN', Math.round(S.wallet));
 }
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый борт)
 let angarBuilt = false;    // жетоны построены — второй раз не строим
@@ -1003,7 +1046,7 @@ function duelBanner(){ // плашка вызова в меню + планка �
     else{
       b.innerHTML='<span class="duelTxt">'+L.duelBar(d.name, d.best)+'</span><button class="duelX" id="duelX">'+ic('x')+'</button>';
       b.classList.remove('hidden');
-      $('duelX').addEventListener('click', ()=>{ duelSet(null); haptic('light'); toast(L.duelOff,'rgba(255,159,176,.5)'); });
+      wireOn('duelX', 'click', ()=>{ duelSet(null); haptic('light'); toast(L.duelOff,'rgba(255,159,176,.5)'); });
     }
   }
   const h=$('duelHud');
@@ -1125,8 +1168,8 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 [['modeDaily','daily'],['modeBullet','bullet'],['modeSpeedrun','speedrun']].forEach(function(pair){
-  $(pair[0]).addEventListener('click', ()=>{
-    if (pair[1]==='daily'){ const dr=Store.get('dailyRun',null); if ((dr&&dr.d===trackDayKey()&&dr.done)||dailyDoneHas(trackDayKey())){ haptic('light'); return; } } // v1.282.20: сверяемся и с журналом дней // v1.93: дверь закрыта до завтра — табличка на ней всё говорит
+  wireOn(pair[0], 'click', ()=>{
+    if (pair[1]==='daily'){ const tk2=trackDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===tk2)?(dr.n||0):dailyDoneGet(tk2); if (usedN2>=5){ haptic('light'); return; } } // 23.08.2026 «5 попыток»: сверяемся со счётчиком, восстановленным из журнала
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
@@ -1291,7 +1334,7 @@ function diagBuild(){
 wireOn('diagMoreBtn', 'click', ()=>{ // тот же спойлер, что «Ещё» в настройках
   const b=$('diagMoreBox'); b.classList.toggle('hidden');
   const open=!b.classList.contains('hidden');
-  $('diagMoreBtn').classList.toggle('open', open);
+  toggleCls('diagMoreBtn','open', open);
   if (open){ try{ $('diagMoreBtn').scrollIntoView({block:'nearest'}); }catch(e){} }
   haptic('light'); sfx.click();
 });
@@ -1332,7 +1375,7 @@ function diagReport(){
 wireOn('diagVibroBtn', 'click', ()=>{ // v1.60.0: длинный сильный сигнал + честный диагноз канала
   sfx.click();
   const ch=typeof vibroChannel==='function'?vibroChannel():0;
-  $('diagVibroStat').textContent = ch===2?L.vibChTg : ch===1?L.vibChWeb : L.vibChNone;
+  setText('diagVibroStat', ch===2?L.vibChTg : ch===1?L.vibChWeb : L.vibChNone);
   const hf=morseHF();
   if (hf){ try{ hf.notificationOccurred('error'); }catch(e){}
     [0,260,520].forEach(t=>setTimeout(()=>{ try{ hf.impactOccurred('heavy'); }catch(e){} },t)); }
@@ -1375,7 +1418,7 @@ wireOn('diagSupportBtn', 'click', ()=>{
 });
 wireOn('moreBtn', 'click', ()=>{ // редкое — калибровка, позывной, диагностика, «Об игре» (v1.63.0)
   const b=$('moreBox'); b.classList.toggle('hidden'); const open=!b.classList.contains('hidden');
-  $('moreBtn').classList.toggle('open', open);
+  toggleCls('moreBtn','open', open);
   if (open){ try{ $('moreBtn').scrollIntoView({block:'nearest'}); }catch(e){} }
   haptic('light'); sfx.click();
 });
@@ -1396,8 +1439,9 @@ SET_GRPS.forEach(([gId,pId])=>{
   });
 });
 wireOn('aboutBtn', 'click', ()=>{
-  $('aboutBox').classList.toggle('hidden');
-  $('aboutBtn').classList.toggle('open', !$('aboutBox').classList.contains('hidden')); haptic('light');
+  const aboutBoxWasHidden = (()=>{ const e=$('aboutBox'); return e ? e.classList.contains('hidden') : true; })();
+  toggleCls('aboutBox','hidden', !aboutBoxWasHidden);
+  toggleCls('aboutBtn','open', aboutBoxWasHidden); haptic('light');
 });
 function vibroLabel(){ rowSw('setVibroBtn', VIBRO); setWellFill(); }
 wireOn('setVibroBtn', 'click', ()=>{
@@ -1411,8 +1455,8 @@ wireOn('setGfxBtn', 'click', ()=>{
   Store.set('gfx',Q.mode); gfxCap(); resize(); // HD-резолюция следует за режимом
   gfxLabel(); haptic('light'); sfx.click();
 });
-function aboutFill(){ $('aboutBox').innerHTML='Cosmogram · v'+GAME_VERSION+'<br/>'+L.channel+': '+
-  CHANNEL_URL.replace('https://',''); } // aboutTags вычеркнуты (v1.27.0)
+function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION+'<br/>'+L.channel+': '+
+  CHANNEL_URL.replace('https://','')); } // aboutTags вычеркнуты (v1.27.0)
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
@@ -1456,7 +1500,7 @@ wireOn('tiltBtn', 'click', ()=>{
   try{
     DeviceOrientationEvent.requestPermission().then(r=>{
       if(r==='granted'){
-        $('tiltBtn').classList.add('hidden');
+        toggleCls('tiltBtn','hidden',true);
         toast(L.tiltOn,'rgba(143,255,159,.5)'); haptic('success');
       } else toast(L.noTilt,'rgba(255,159,176,.5)');
     }).catch(()=>toast(L.noTilt,'rgba(255,159,176,.5)'));
@@ -1471,8 +1515,10 @@ wireOn('setSensBtn', 'click', ()=>{
   Store.set('sens',input.sens); sensLabel(); haptic('light'); sfx.click();
 });
 wireOn('overDetailsBtn', 'click', ()=>{ // спойлер «Подробности полёта»: мотивация, ранг, паспорт и сетка — по желанию (v1.44.0; v1.84.0 — вся вторая сцена)
-  const hid=$('overMore').classList.toggle('hidden');
-  $('overDetailsBtn').classList.toggle('open',!hid); sfx.click(); haptic('light'); });
+  const om=$('overMore');
+  const hid = om ? !om.classList.contains('hidden') : true; // новое состояние после переключения — считаем сами, не полагаемся на return classList.toggle()
+  toggleCls('overMore','hidden', hid);
+  toggleCls('overDetailsBtn','open',!hid); sfx.click(); haptic('light'); });
 wireOn('hangarBtn', 'click', ()=>{ renderHangar(); setScreen('hangar'); sfx.click(); });
 wireOn('hangarBackBtn', 'click', toMenu);
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
@@ -1483,8 +1529,8 @@ wireOn('achBackBtn', 'click', closeAch);
 /* Вкладка «🌍 Топ»: честная таблица (модуль sync.js) */
 let topCat='touch';
 function achTabSel(mine){
-  $('tabMine').classList.toggle('sel',mine); $('tabTop').classList.toggle('sel',!mine);
-  $('achMineWrap').classList.toggle('hidden',!mine); $('achTopWrap').classList.toggle('hidden',mine);
+  toggleCls('tabMine','sel',mine); toggleCls('tabTop','sel',!mine);
+  toggleCls('achMineWrap','hidden',!mine); toggleCls('achTopWrap','hidden',mine);
   if(!mine) renderTop();
 }
 wireOn('tabMine', 'click',()=>{ achTabSel(true); sfx.click(); });
@@ -1522,7 +1568,7 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
     const w=$('webJoinWidget');
     if (w && !w.firstChild) tgWidgetMount(w);
     const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0); }
-  else { $('webJoinWidget').innerHTML=''; const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; }
+  else { setHTML('webJoinWidget',''); const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; }
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
   accFill(); webJoinFill();
@@ -1584,8 +1630,8 @@ function renderTop(){
         } else wb.classList.add('hidden');
       }
       if (jn){
-        $('topJoinTitle').textContent = L.topJoinTitle;
-        $('topJoinSub').textContent   = L.topJoinSub;
+        setText('topJoinTitle', L.topJoinTitle);
+        setText('topJoinSub', L.topJoinSub);
         jn.classList.remove('hidden');
       }
     }
@@ -1726,68 +1772,68 @@ function applyLang(){
      строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
      core.js — ядро, и вычищать из него пять языков ради четырёх мёртвых строк дороже,
      чем оставить. Записано в долги. */
-  $('startBtn').textContent=L.start;
+  setText('startBtn',L.start);
   /* 13.08.2026: тексты «тесно» зависят от ориентации — их раздаёт tooNarrowText(),
      иначе смена языка возвращала бы совет «поверните экран» лежащему набок телефону. */
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
-  $('modesBtn').textContent=L.modes; $('modesBack').textContent=L.modesBack; modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
+  setText('modesBtn',L.modes); setText('modesBack',L.modesBack); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
-  $('hangarBtn').textContent=L.hangar;
-  $('inviteBtn').textContent=L.invite;
-  $('duelBtn').textContent=L.duelBtn;
-  $('settingsBtn').textContent=L.settings;
-  $('channelBtn').textContent=L.channel;
-  $('homeBtn').textContent=L.home;
-  $('pauseTitle').textContent=L.pause;
-  $('pauseBtn').setAttribute('aria-label',L.ariaPause); // v1.47.1: скринридер говорит на языке игрока — метка из словаря, не из разметки
-  $('resumeBtn').textContent=L.resume;
-  $('pauseSettingsBtn').textContent=L.settings;
-  $('settingsTitle').textContent=L.settingsTitle;
-  $('setCalibTxt').textContent=L.calib; // v1.103.0: текст отдельно от диода — локализация лампу не стирает
-  $('aboutBtn').textContent=L.aboutBtn; aboutFill();
-  $('accOutBtn').textContent=L.accOut; // v1.51.0: вход в общую таблицу — на языке игрока
+  setText('hangarBtn',L.hangar);
+  setText('inviteBtn',L.invite);
+  setText('duelBtn',L.duelBtn);
+  setText('settingsBtn',L.settings);
+  setText('channelBtn',L.channel);
+  setText('homeBtn',L.home);
+  setText('pauseTitle',L.pause);
+  setAttr('pauseBtn','aria-label',L.ariaPause); // v1.47.1: скринридер говорит на языке игрока — метка из словаря, не из разметки
+  setText('resumeBtn',L.resume);
+  setText('pauseSettingsBtn',L.settings);
+  setText('settingsTitle',L.settingsTitle);
+  setText('setCalibTxt',L.calib); // v1.103.0: текст отдельно от диода — локализация лампу не стирает
+  setText('aboutBtn',L.aboutBtn); aboutFill();
+  setText('accOutBtn',L.accOut); // v1.51.0: вход в общую таблицу — на языке игрока
   if(screenName==='settings') accFill(); if(screenName==='over') webJoinFill(); // виджет монтируется лениво — только на открытом экране
-  $('settingsBackBtn').textContent=L.back;
-  $('restartBtn').textContent=L.restart;
-  $('pauseMenuBtn').textContent=L.menu;
-  $('hangarTitle').textContent=L.hangar;
-  $('brandSub').textContent=L.brandSub;          // 13.08.2026: обещание игры — на языке игрока
-  $('angarWalletLbl').textContent=L.walletYours; // 13.08.2026: подпись кошелька под кнопкой покупки
+  setText('settingsBackBtn',L.back);
+  setText('restartBtn',L.restart);
+  setText('pauseMenuBtn',L.menu);
+  setText('hangarTitle',L.hangar);
+  setText('brandSub',L.brandSub);          // 13.08.2026: обещание игры — на языке игрока
+  setText('angarWalletLbl',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
-  $('hangarBackBtn').textContent=L.menu;
-  $('retryBtn').textContent=L.retry;
-  $('watchBtn').textContent=L.watchFlight;
-  $('tribuneBtn').textContent=L.tribune; // v1.100.1 «Трибуна чемпиона» — на языке игрока
-  $('goldChip').textContent=L.goldChip; // v1.100.2 «Золотая звезда дня» — на языке игрока
-  $('overDetailsBtn').textContent=L.overDetails;
-  $('statusBtn').textContent=L.statusStar; // v1.98.0 «Звезда-статус» — на языке игрока
+  setText('hangarBackBtn',L.menu);
+  setText('retryBtn',L.retry);
+  setText('watchBtn',L.watchFlight);
+  setText('tribuneBtn',L.tribune); // v1.100.1 «Трибуна чемпиона» — на языке игрока
+  setText('goldChip',L.goldChip); // v1.100.2 «Золотая звезда дня» — на языке игрока
+  setText('overDetailsBtn',L.overDetails);
+  setText('statusBtn',L.statusStar); // v1.98.0 «Звезда-статус» — на языке игрока
   // заголовок «РАЗБИЛСЯ!» убран (v1.27.0): никто не разбивается — экран поражения добрый и компактный
-  $('menuBtn').textContent=L.menu;
-  $('scoreLbl').textContent=L.scoreLbl;
-  $('distCap').textContent=L.distLbl;
-  $('smoothCap').textContent=L.smoothLbl;
-  $('tiltBtn').textContent=L.tiltAllow;
-  $('gyroUnlockBtn').textContent=L.gyroUnlockBtn; refreshGyroLock(); // замок гироскопа: кнопка открытия — только пока заперт
-  $('achTitle').textContent=L.achTitle;
-  $('achBtnTxt').textContent=L.achTitle;
-  $('achBackBtn').textContent=L.back;
-  $('tabMine').textContent=L.mineTab; $('tabTop').textContent=L.topTab;
-  $('diagBtn').textContent=L.diagBtn;
-  $('diagTitle').textContent=L.diagBtn; $('diagBackBtn').textContent=L.back; // v1.66.3: экран сервисного центра
-  $('csCap').textContent=L.csCap; // v1.66.3: подпись позывного в «Профиле»
-  $('diagMoreBtn').textContent=L.moreLbl; // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
-  $('diagSupportBtn').textContent=L.diagSupportBtn;
+  setText('menuBtn',L.menu);
+  setText('scoreLbl',L.scoreLbl);
+  setText('distCap',L.distLbl);
+  setText('smoothCap',L.smoothLbl);
+  setText('tiltBtn',L.tiltAllow);
+  setText('gyroUnlockBtn',L.gyroUnlockBtn); refreshGyroLock(); // замок гироскопа: кнопка открытия — только пока заперт
+  setText('achTitle',L.achTitle);
+  setText('achBtnTxt',L.achTitle);
+  setText('achBackBtn',L.back);
+  setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
+  setText('diagBtn',L.diagBtn);
+  setText('diagTitle',L.diagBtn); setText('diagBackBtn',L.back); // v1.66.3: экран сервисного центра
+  setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
+  setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
+  setText('diagSupportBtn',L.diagSupportBtn);
   gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
-  $('moreBtn').textContent=L.moreLbl;
+  setText('moreBtn',L.moreLbl);
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
-  $('diagVibroBtn').textContent=L.diagVibro;
+  setText('diagVibroBtn',L.diagVibro);
 }
 /* баланс сетки 2 колонки: нечётная последняя видимая кнопка растягивается на всю ширину (v1.34.0) */
 function gridBalance(row){ if(!row) return;
@@ -1871,9 +1917,11 @@ Store.init(()=>{
   // addToHomeScreen (API 8.0+)
   if (tgv('8.0') && tg.addToHomeScreen){
     const hb=$('homeBtn');
-    hb.addEventListener('click', ()=>{ try{ tg.addToHomeScreen(); }catch(e){} });
-    try{ tg.checkHomeScreenStatus(st=>{ if(st!=='added'){ hb.classList.remove('hidden'); gridBalance($('menuRow')); } }); }
-    catch(e){ hb.classList.remove('hidden'); gridBalance($('menuRow')); }
+    if (hb){
+      hb.addEventListener('click', ()=>{ try{ tg.addToHomeScreen(); }catch(e){} });
+      try{ tg.checkHomeScreenStatus(st=>{ if(st!=='added'){ hb.classList.remove('hidden'); gridBalance($('menuRow')); } }); }
+      catch(e){ hb.classList.remove('hidden'); gridBalance($('menuRow')); }
+    } else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', 'homeBtn'); }
   }
   applyLang();
   refreshMenu();

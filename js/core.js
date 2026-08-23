@@ -211,7 +211,7 @@ const I18N = {
     // v1.70.0: Пакт и «Без ударов» удалены — их ручки переехали в конструктор «Своя трасса»
     srGoal:'Цель', srFinish:'Финиш!', srNewBest:'Новый рекорд времени',
     modeDaily:'Трасса дня', modeDailyD:'Одна трасса на всех игроков — поставь рекорд дня', dlNewBest:'Новый рекорд трассы дня',
-    dailyOnce:'одна попытка', dailyLocked:(s)=>'Сегодня ты уже прыгнул · твой полёт: '+s+' · новая трасса завтра',
+    dailyOnce:'5 попыток', dailyLeft:(n)=>'осталось '+n, dailyLocked:(s)=>'Сегодня ты уже прыгнул · твой полёт: '+s+' · новая трасса завтра',
     modeForge:'Своя трасса', modeForgeD:'Конструктор забега: собери и поделись кодом', // v1.68.0
     forgeTitle:'Своя трасса', forgeNamePh:'Название трассы', forgeDefName:'Трасса пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина трассы', forgeInf:'∞',
@@ -326,7 +326,7 @@ const I18N = {
     csCap:'Позывной — звучит в морзянке и виброэфире',
     diagVibro:'Проверка виброэфира', vibChTg:'Канал: Telegram API — импульсы отчётливые', vibChWeb:'Канал: только системная вибрация — предел веба', vibChNone:'Вибрация недоступна — проверь настройки телефона',
     again:'ЕЩЁ РАЗ?', // подпись над своей тенью и имя строки настроек: текст один — ключ один
-    ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Призрак недоступен: владелец скрыл трек',
+    ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Небо этого полёта не сохранилось',
     topWatch:'Смотреть этот полёт', topWatchNoSky:'Небо того полёта не сохранилось — показать нечего',
     ghostWith:(n)=>'Призрак '+(n||'игрока')+' — рядом с тобой',
     ghostBeat:(n,sc,b)=>'Призрак '+escapeHtml(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
@@ -349,7 +349,7 @@ const I18N = {
     // v1.70.0: Pact and Hitless removed — their knobs moved into the Custom track builder
     srGoal:'Goal', srFinish:'Finish!', srNewBest:'New time record',
     modeDaily:'Track of the day', modeDailyD:'One track for every player — set the day record', dlNewBest:'New track of the day record',
-    dailyOnce:'one attempt', dailyLocked:(s)=>'You already jumped today · your flight: '+s+' · new track tomorrow',
+    dailyOnce:'5 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'You already jumped today · your flight: '+s+' · new track tomorrow',
     modeForge:'Custom track', modeForgeD:'Run builder: tune it and share the code', // v1.68.0
     forgeTitle:'Custom track', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
@@ -456,7 +456,7 @@ const I18N = {
     csCap:'Callsign — sounds in morse trail and haptic air',
     diagVibro:'Haptic morse test', vibChTg:'Channel: Telegram API — crisp impulses', vibChWeb:'Channel: system vibration only — web limit', vibChNone:'No vibration — check phone settings',
     again:'AGAIN?',
-    ghostGo:'Fly with this record’s ghost', ghostNone:'Ghost unavailable: the owner hid the track',
+    ghostGo:'Fly with this record’s ghost', ghostNone:'This flight’s sky wasn’t saved',
     topWatch:'Watch this flight', topWatchNoSky:'That flight’s sky wasn’t saved — nothing to show',
     ghostWith:(n)=>(n||'Player')+'’s ghost flies with you',
     ghostBeat:(n,sc,b)=>'Ghost of '+escapeHtml(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
@@ -478,7 +478,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     srGoal:'Meta', srFinish:'¡Meta!', srNewBest:'Nuevo récord de tiempo',
     modeDaily:'Pista del día', modeDailyD:'Una pista para todos los jugadores — marca el récord del día',
-    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'un intento',
+    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'5 intentos', dailyLeft:(n)=>n+' restantes',
     dailyLocked:(s)=>'Hoy ya saltaste · tu vuelo: '+s+' · pista nueva mañana',
     modeForge:'Pista propia', modeForgeD:'Constructor de vuelo: arma y comparte el código',
     forgeTitle:'Pista propia', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
@@ -605,7 +605,7 @@ const I18N = {
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
     topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
     again:'¿OTRA VEZ?',
-    ghostNone:'Fantasma no disponible: el dueño ocultó la pista',
+    ghostNone:'El cielo de ese vuelo no se guardó',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jugador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
   },
@@ -626,7 +626,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     srGoal:'Meta', srFinish:'Chegada!', srNewBest:'Novo recorde de tempo',
     modeDaily:'Pista do dia', modeDailyD:'Uma pista para todos os jogadores — bata o recorde do dia',
-    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'uma tentativa',
+    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+' restantes',
     dailyLocked:(s)=>'Hoje você já voou · seu voo: '+s+' · pista nova amanhã',
     modeForge:'Pista própria', modeForgeD:'Construtor de voo: monte e compartilhe o código',
     forgeTitle:'Pista própria', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
@@ -753,7 +753,7 @@ const I18N = {
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
     topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
     again:'DE NOVO?',
-    ghostNone:'Fantasma indisponível: o dono escondeu a pista',
+    ghostNone:'O céu daquele voo não foi guardado',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jogador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
   },
@@ -774,7 +774,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
     modeDaily:'Trace du jour', modeDailyD:'Une trace pour tous les joueurs — décroche le record du jour', dlNewBest:'Nouveau record de la Trace du jour',
-    dailyOnce:'un seul essai', dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
+    dailyOnce:'5 tentatives', dailyLeft:(n)=>n+' restants', dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
     modeForge:'Trace personnalisée', modeForgeD:'Créateur de trace : règle-la et partage le code',
     forgeTitle:'Trace personnalisée', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
@@ -881,7 +881,7 @@ const I18N = {
     csCap:'Indicatif — résonne dans la traînée morse et l\u2019air haptique',
     diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
     again:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
-    ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Fantôme indisponible : le propriétaire a caché la trace',
+    ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Le ciel de ce vol n’a pas été enregistré',
     topWatch:'Regarder ce vol', topWatchNoSky:'Le ciel de ce vol n’a pas été enregistré — rien à montrer',
     ghostWith:(n)=>'Le fantôme de '+(n||'Joueur')+' vole avec toi',
     ghostBeat:(n,sc,b)=>'Fantôme de '+escapeHtml(n||'joueur')+' battu : '+fmtN(sc)+' contre '+fmtN(b)
@@ -1095,7 +1095,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.460.0'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.468.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1452,6 +1452,16 @@ function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная з�
   r.setProperty('--js-sat', top+'px');
   r.setProperty('--js-sat-real', realTop+'px');   // 13.08.2026: измеренное, а не назначенное
   r.setProperty('--js-sab', bot+'px');
+  requestAnimationFrame(syncScoreHudGap); // 23.08.2026: --sat только что могла поменяться — ждём кадр, чтобы scorePack успел перекомпоноваться, прежде чем мерить его реальный низ
+}
+function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один зазор, не две формулы»: #topHud садится
+  // ровно в 8px (то же число, что уже у #pausePack между своими частями) от РЕАЛЬНОГО
+  // нижнего края #scorePack — не от отдельной формулы через --sat, которая могла разъехаться
+  // с формулой scorePack (жалоба владельца, подтверждена измерением в пикселях, 22-23.08.2026).
+  const sp=document.getElementById('scorePack');
+  if(!sp) return;
+  const rect=sp.getBoundingClientRect();
+  document.documentElement.style.setProperty('--topHudTop', Math.round(rect.bottom+8)+'px');
 }
 // v1.102.1 «Ровная земля»: событийный замер — шквал Telegram (полный экран, вьюпорт, инсеты
 // сыплются пачкой) слипается в ОДИН замер после 350мс тишины; прямые вызовы остаются мгновенными
@@ -1806,6 +1816,7 @@ function resize(){
   ctx.setTransform(DPR*SC,0,0,DPR*SC,0,0); // меры неба → пиксели экрана одним поворотом линейки
   if (typeof drawKick==='function') drawKick(); // v1.66.2: спящая пауза/меню — свежий кадр сразу после пересчёта
   if (typeof corridorEdgesGeometry==='function') corridorEdgesGeometry(); // v1.415.2: рамка коридора — геометрия из core.js, видимость из render.js
+  requestAnimationFrame(syncScoreHudGap); // 23.08.2026: ширина окна меняет размер шрифта счёта (vw) — та же перепроверка зазора, что и при смене --sat
 }
 /* 22.08.2026 «Рамка коридора без мигания»: жалоба владельца — в Telegram линии коридора
    (тогда ещё рисовались внутри canvas) мелькали и пропадали. Причина — window.innerWidth в

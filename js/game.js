@@ -159,6 +159,26 @@ function spawnObstacle(){
   const d = difficulty(), m = S.mission, kindWave=m+(S.dist>=120?1:0)+(S.dist>=300?1:0), fl = fieldL(), fw = fieldW();
   const x = fl + mapRand(30, fw-30);
   const vy = S.speed * mapRand(.9,1.25);
+  /* 23.08.2026 «Заряженная пара» (владелец): два ловца, между ними нить — 1.3с честного
+     нарастания (видно, что будет удар, не угадайка), потом короткий разряд. Опасна не
+     точка, а полоса вдоль отрезка между ловцами шириной 10px (запас поверх стандартных
+     6px — нить менее очевидная угроза, чем твёрдый силуэт).
+     ВРЕМЕННЫЙ ПОРОГ: S.mission>=8 — для проверки механики прямо сейчас, до того как
+     весь биом 2 (переход, «Первый рубеж пройден», семь новых волн) будет построен.
+     Когда биом 2 появится как отдельная система — этот порог заменяется на вход в биом. */
+  if (S.mission>=8 && obstacles.length<MAXOB-1 && mapRand(0,1)<.05){
+    const px1=fl+mapRand(60,fw*.4), px2=fl+fw*.6+mapRand(0,fw*.4-60);
+    const o1=poolOb.take(), o2=poolOb.take();
+    for (const oo of [o1,o2]){
+      oo.kind='seeker'; oo.nm=false; oo._tint=null; oo._path=null; oo._tg=null; oo._tgk=undefined; oo.rot=0;
+      oo.y=-50; oo.r=17; oo.vy=vy*.75; oo.vx=0; oo.vr=.1; oo.pulse=0;
+      oo.paired=true; oo.beamPhase='charge'; oo.beamT=0;
+    }
+    o1.x=px1; o2.x=px2;
+    o1.pairMate=o2; o2.pairMate=o1; o1.pairLead=true; o2.pairLead=false;
+    obstacles.push(o1); obstacles.push(o2);
+    return .5; // пара занимает много места — следующий спавн чуть позже
+  }
   // веса видов эталона (возврат v1.30.0): каждая волна — событие, новый вид в поле
   const w = [ ['rock',42], ['debris',28], ['drift', kindWave>=2?14:0], ['mine',10],
               ['sat', kindWave>=3?8:0], ['comet', kindWave>=4?6:0], ['seeker', kindWave>=5?6:0], ['gate', kindWave>=6?5:0] ];
@@ -187,6 +207,7 @@ function spawnObstacle(){
   // ключ _tgk сторожит содержимое и потому беда латентна — но gfxInvalidate() при потере контекста
   // обходит только живой массив obstacles, а лежащие в пуле объекты выносят обратно градиент МЁРТВОГО
   // контекста. Правило простое: что бы модуль ни повесил на объект, из пула он выходит чистым. Страж 109
+  o._blikR=null; // 23.08.2026: и безопасный радиус блика (render.js) — тот же класс, четвёртое поле подряд
   o.rot=mapRand(0,6.28);
   if (kind==='rock'){ // астероид
     o.x=x; o.y=-50; o.r=mapRand(16,34+d*16); o.vy=vy; o.vx=mapRand(-.4,.4)*d;
@@ -657,6 +678,28 @@ function update(dt){
     if (o.kind==='seeker'){ // ловец: наведение вдвое сильнее мины
       o.pulse+=dt*5*paceFactor;
       o.vx = lerp(o.vx, clamp((plane.x-o.x)*.012,-1.8,1.8), .04*paceFactor);
+    }
+    if (o.kind==='seeker' && o.paired){
+      /* 23.08.2026 «Заряженная пара»: партнёр проверяется на живость перед каждым чтением —
+         если он уничтожен/вылетел, ссылка сама себя обезвреживает (падаем в обычное
+         поведение одиночного ловца), не полагаемся на ручную чистку в местах удаления. */
+      if (o.pairMate && obstacles.indexOf(o.pairMate)===-1){ o.pairMate=null; o.paired=false; }
+      else if (o.pairMate && o.pairLead){ // цикл считает только «ведущий» — оба узнают исход через pairMate
+        o.beamT += dt*paceFactor;
+        if (o.beamPhase==='charge'){ if (o.beamT>=1.3){ o.beamPhase='strike'; o.beamT=0; } }
+        else { if (o.beamT>=.15){ o.beamPhase='charge'; o.beamT=0; } } // сама вспышка — короткая
+        o.pairMate.beamPhase=o.beamPhase; o.pairMate.beamT=o.beamT;
+        if (o.beamPhase==='strike' && S.invuln<=0){ // зона поражения — полоса 10px вдоль отрезка, не линия без толщины
+          const x1=o.x,y1=o.y,x2=o.pairMate.x,y2=o.pairMate.y;
+          const dx=x2-x1, dy=y2-y1, lenSq=dx*dx+dy*dy;
+          const t=lenSq>0?clamp(((plane.x-x1)*dx+(plane.y-y1)*dy)/lenSq,0,1):0;
+          const cx=x1+t*dx, cy=y1+t*dy, ddx=plane.x-cx, ddy=plane.y-cy;
+          if (ddx*ddx+ddy*ddy < (5+plane.r)*(5+plane.r)){
+            if (S.shield>0){ S.shield=0; burst(plane.x,plane.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff'); }
+            else { hitPlane('beam'); }
+          }
+        }
+      }
     }
     if (o.kind==='gate' && o.breathe){ // 22.08.2026 «Затягивающиеся ворота»: проход дышит — тот же приём, что у спутника выше
       o.ph += dt*1.9*paceFactor; // ~3.3с на полный вдох-выдох — успеваешь прочитать ритм, не угадать

@@ -850,13 +850,13 @@ function draw(){
       ctx.strokeStyle=o._tg; ctx.lineWidth=o.r*1.6; ctx.lineCap='round';
       ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(tx,ty); ctx.stroke();
       if(sh) ctx.globalCompositeOperation='source-over';
-      if(uq){ // ультра: аддитивное кольцо вокруг ядра
-        ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.5;
-        ctx.strokeStyle='#ffe9c0'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.arc(0,0,o.r+3+Math.sin(nowMs/300)*1.5,0,6.283); ctx.stroke();
-        ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
-      }
-      ctx.globalAlpha=.9; ctx.drawImage(powGlow('#ffd28f'),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: тёплая ауреола ядра всем ступеням
+      /* 23.08.2026 «Ауреола вместо кольца»: отдельное жёсткое кольцо на Ультра (тонкая
+         чёткая обводка) не сливалось с остальным мягким свечением кометы — разной природы
+         (линия против градиента), владелец: «выглядит отдельно». Убрано целиком. Вместо
+         нового элемента — усилена существующая ауреола: крупнее и ярче именно на Ультра,
+         без пульса и новых частей, богатство даёт то же самое свечение, не добавка. */
+      const auraSize = uq ? 52 : 40, auraAlpha = uq ? 1 : .9;
+      ctx.globalAlpha=auraAlpha; ctx.drawImage(powGlow('#ffd28f'),-auraSize/2,-auraSize/2,auraSize,auraSize); ctx.globalAlpha=1; // v1.37.0: тёплая ауреола ядра всем ступеням
       // v1.66.0: shadowBlur ядра убран — ауреола выше уже даёт свечение
       ctx.fillStyle='#fff3d8'; ctx.beginPath(); ctx.arc(0,0,o.r,0,6.283); ctx.fill();
       ctx.fillStyle='#ffcf8f'; ctx.beginPath(); ctx.arc(-o.r*.2,-o.r*.2,o.r*.45,0,6.283); ctx.fill();
@@ -905,6 +905,17 @@ function draw(){
         o.verts.forEach((v,i)=>{ const x=Math.cos(v.a)*v.r*o.r, y=Math.sin(v.a)*v.r*o.r;
           i?pth.lineTo(x,y):pth.moveTo(x,y); });
         pth.closePath(); o._path=pth;
+        /* 23.08.2026 «Блик без обрывов»: раньше дуга блика опиралась на фиксированный
+           радиус o.r*.9 — а силуэт камня (случайный семиугольник, радиус вершин .7-1.15
+           от o.r) у части камней УЖЕ, чем 90% на отдельных вершинах. Обрезка (ctx.clip)
+           срезала дугу там, где контур уже неё — один блик разваливался на несколько
+           огрызков (жалоба владельца, дважды). Теперь радиус — минимум по РЕАЛЬНЫМ
+           вершинам ЭТОГО камня, с запасом .85: хорда между соседними вершинами (прямая
+           линия) провисает ещё уже, чем сама вершина, запас держит дугу гарантированно
+           внутри на любом угле. Кэшируется вместе с силуэтом — не считаем заново в кадре. */
+        let minVertR=o.verts[0].r;
+        for(const v of o.verts) if(v.r<minVertR) minVertR=v.r;
+        o._blikR = o.r*minVertR*.85;
       }
       /* 22.08.2026 «Шип митра»: у ctx.stroke() умолчание браузера — lineJoin='miter', острый
          стык. Силуэт камня — случайный семиугольник (makeRockVerts(7), радиус вершин
@@ -918,13 +929,13 @@ function draw(){
       ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
       if(sh){ // объём: блик сверху-слева + светлый кратер (v1.37.0: со средней)
         ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o.r*.9,-2.7,-1.2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0,o._blikR,-2.7,-1.2); ctx.stroke();
         ctx.fillStyle='rgba(255,255,255,.07)';
         ctx.beginPath(); ctx.arc(o.r*.3,o.r*.25,o.r*.22,0,6.283); ctx.fill();
       }
       if(uq){ // ультра: глубже рельеф — теневая дуга и второй кратер
         ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o.r*.85,.4,1.8); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0,o._blikR,.4,1.8); ctx.stroke(); // 23.08.2026: тот же безопасный радиус, что у блика — тот же корень бага (обрезка по неровному силуэту)
         ctx.fillStyle='rgba(0,0,0,.15)';
         ctx.beginPath(); ctx.arc(o.r*.15,-o.r*.35,o.r*.16,0,6.283); ctx.fill();
       }
@@ -939,6 +950,25 @@ function draw(){
 
   // v1.105.0 «Свет и дым»: «бегущая кромка света» на камнях снята (суд глаза: белая дуга
   // читалась как царапина); тон камней — лёд/железо — остаётся, он даёт разнообразие без крика
+
+  /* 23.08.2026 «Заряженная пара»: нить рисуется отдельным проходом в мировых координатах —
+     она соединяет ДВЕ разные позиции, локальный translate одного объекта для неё не годится.
+     Партнёр проверяется на живость тем же приёмом, что и в физике (game.js) — не рисуем
+     нить к чужому переиспользованному объекту, если партнёр уже уничтожен/вылетел. */
+  for (const o of obstacles){
+    if (o.kind!=='seeker' || !o.paired || !o.pairLead) continue;
+    if (!o.pairMate || obstacles.indexOf(o.pairMate)===-1) continue;
+    const mate=o.pairMate;
+    if(!inView((o.x+mate.x)/2,(o.y+mate.y)/2, Math.abs(o.x-mate.x)/2+40, Math.abs(o.y-mate.y)/2+40)) continue;
+    const charging = o.beamPhase==='charge';
+    const a = charging ? .15+.55*(o.beamT/1.3) : 1; // нарастание видно честно — не угадайка
+    ctx.save();
+    ctx.strokeStyle = charging ? 'rgba(255,165,58,'+a.toFixed(3)+')' : 'rgba(255,220,150,.95)';
+    ctx.lineWidth = charging ? 2+3*(o.beamT/1.3) : 10; // толщина сама растёт к разряду, на ударе — честная зона поражения видна как есть
+    if(!charging){ ctx.globalCompositeOperation='lighter'; }
+    ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(mate.x,mate.y); ctx.stroke();
+    ctx.restore();
+  }
 
   // Bullet Time: мир замедлен — холодные гало вокруг препятствий + лёгкая вуаль.
   // Вместо shadowBlur — кэш-спрайт powGlow: тот же motion-glow без нагрузки на слабые устройства

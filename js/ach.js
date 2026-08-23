@@ -117,29 +117,38 @@ function achClaimShow(){
   const q=achQueue(); if(!q.length){ achClaimHide(); return; }
   const a=ACH.find(x=>x.id===q[0]);
   if(!a){ Store.set('achQ',q.slice(1)); achQShow(); achClaimShow(); return; } // мусор в кармане — выкинуть
+  const md=$('claimMedal'), elCls=$('claimCls'), elName=$('claimName'), elDesc=$('claimDesc'),
+    elRw=$('claimRw'), elQ=$('claimQ'), elBtn=$('claimBtn'), elBurst=$('claimBurst'), elScreen=$('claimScreen');
+  /* 23.08.2026: тот же приём, что wireOn() в ui.js — один общий вход для всех элементов
+     экрана награды. Раньше каждая строка читала $(id) напрямую: отсутствие любого одного
+     (устаревший кэш index.html) обрывало бы заполнение на середине, часть карточки
+     осталась бы от прошлой награды. Теперь — тихий выход с сигналом, ничего не рисуем наполовину. */
+  if(!md||!elCls||!elName||!elDesc||!elRw||!elQ||!elBtn||!elBurst||!elScreen){
+    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','claimScreen');
+    return;
+  }
   claimOpen=true;
   const tier=achTier(a), tt=aT(a);
-  const md=$('claimMedal');
   md.className='claimMedal '+tier;
   md.innerHTML=ic('trophy'); // линейный трофей вместо эмодзи; класс медали — по награде
-  $('claimCls').textContent = tier==='mGold'?L.achClsG:(tier==='mSilver'?L.achClsS:L.achClsB);
-  $('claimName').textContent=tt.n;
-  $('claimDesc').textContent=tt.d;
-  $('claimRw').innerHTML='+'+a.rw+ic('star4','i-s4');
+  elCls.textContent = tier==='mGold'?L.achClsG:(tier==='mSilver'?L.achClsS:L.achClsB);
+  elName.textContent=tt.n;
+  elDesc.textContent=tt.d;
+  elRw.innerHTML='+'+a.rw+ic('star4','i-s4');
   claimPos++;
-  $('claimQ').textContent=claimPos+' / '+claimTotal;
-  $('claimBtn').textContent = q.length>1 ? L.achClaim : L.achDone;
+  elQ.textContent=claimPos+' / '+claimTotal;
+  elBtn.textContent = q.length>1 ? L.achClaim : L.achDone;
   // звёздный веер вокруг медали (DOM-частицы — виден поверх любого экрана)
-  const br=$('claimBurst'); br.innerHTML='';
+  elBurst.innerHTML='';
   for(let i=0;i<10;i++){
     const st=document.createElement('i');
     const ang=(i/10)*6.283, dist=70+Math.random()*46;
     st.style.setProperty('--dx',(Math.cos(ang)*dist).toFixed(0)+'px');
     st.style.setProperty('--dy',(Math.sin(ang)*dist).toFixed(0)+'px');
     st.style.animationDelay=(Math.random()*0.12)+'s';
-    br.appendChild(st);
+    elBurst.appendChild(st);
   }
-  $('claimScreen').classList.remove('hidden');
+  elScreen.classList.remove('hidden');
   haptic('success'); sfx.ach(); // колокольчик; золото — двойной
   if(tier==='mGold') setTimeout(()=>{ if(claimOpen) sfx.ach(); },160);
 }
@@ -156,7 +165,7 @@ function achClaimTake(){
     if(achQueue().length) achClaimShow(); else achClaimHide();
   });
 }
-function achClaimHide(){ claimOpen=false; $('claimScreen').classList.add('hidden'); }
+function achClaimHide(){ claimOpen=false; const s=$('claimScreen'); if(s) s.classList.add('hidden'); }
 if(typeof $==='function' && $('claimBtn')) $('claimBtn').addEventListener('click', achClaimTake);
 
 /* Забрать конкретную награду прямо из списка достижений (быстрый путь) */
@@ -192,11 +201,16 @@ function favMode(){
 }
 function renderAch(){
   const un=achUnlockedSet(), q=achQueue();
+  const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList');
+  if(!elStats||!elProg||!elProgFill||!elList){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
+    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','achStats');
+    return;
+  }
   // статистика — ряд метрик с крупными числами; режимы — плашки с иконками
   const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
   const gN=Stats.gGames||0, tN=Stats.tGames||0, bN=Stats.bGames||0, kN=Stats.kGames||0;
   const favIc=(bN>=gN&&bN>=tN&&bN>=kN)?'timer':((kN>=gN&&kN>=tN)?'keys':(gN>=tN?'phone':'hand'));
-  $('achStats').innerHTML =
+  elStats.innerHTML =
     '<div class="statGrid stats4">'+
       statCell(fmtN(Stats.games||0),L.statFlights)+
       statCell(fmtN(Stats.totalDist||0),L.statDist)+
@@ -214,8 +228,8 @@ function renderAch(){
       '<span class="miniPill">'+ic('keys')+'<b>'+fmtN(kN)+'</b></span>'+
       '<span class="miniPill">'+ic('timer')+'<b>'+fmtN(bN)+'</b></span>'+
     '</div>';
-  $('achProg').innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
-  $('achProgFill').style.width = (un.length/ACH.length*100)+'%';
+  elProg.innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
+  elProgFill.style.width = (un.length/ACH.length*100)+'%';
   let h='', hI=0; // hI — счётчик каскадной задержки строк (+60ms, потолок 600ms)
   for(const cid of CATS){
     const items=ACH.filter(a=>a.cat===cid); if(!items.length) continue;
@@ -233,5 +247,5 @@ function renderAch(){
         (got?(pend?'<span class="achRw pendBtn" data-claim="'+a.id+'">'+L.achClaim+' +'+a.rw+ic('star4','i-s4')+'</span>':'<span class="achRw">+'+a.rw+ic('star4','i-s4')+'</span>'):side)+'</div>';
     }
   }
-  $('achList').innerHTML=h;
+  elList.innerHTML=h;
 }
