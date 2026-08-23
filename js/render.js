@@ -263,16 +263,26 @@ const NF_HUE_STEP=60; // единиц hueShift на одну пересборк�
 let nfCache={w:-1,ht:-1,h:-1,d:-1,s:-1,c:null};
 let nfSeed=0;         // узор трассы: ставится один раз за забег, от оттенка не зависит
 function nebulaReseed(){ nfSeed=((Math.floor(Math.random()*4294967296))>>>0)||1; nfCache.h=-1; }
+const NF_MARGIN=.14; // запас на панораму — доля от размера текстуры с каждой стороны (22.08.2026)
+function nfPanOffset(tN,marginW,marginH){ // 22.08.2026 «Небо тоже плывёт»: главная текстура стояла на месте почти весь забег —
+  // одно зерно на весь полёт, пересборка раз в ~50с меняла только оттенок, не форму. Владелец
+  // подтвердил на разных устройствах: «туман не двигается, такой же как был». Медленная
+  // панорама внутри запаса, две независимые (несинхронные) синусоиды — не дёргается, не
+  // закольцовывается заметно за один забег (период в сотни секунд).
+  return { x: marginW*(0.5+0.5*Math.sin(tN*.012)), y: marginH*(0.5+0.5*Math.cos(tN*.009)) };
+}
 function nebulaField(h1,h2){
   const hq=Math.round(S.hueShift/NF_HUE_STEP);
   if(nfCache.w===W&&nfCache.ht===H&&nfCache.h===hq&&nfCache.d===DPR&&nfCache.s===SC) return nfCache.c;
   const px=skyPx(); // v1.282.20: настоящие пиксели экрана, а не меры неба
-  const cw=Math.round(W*px), chh=Math.round(H*px);
+  const baseCw=Math.round(W*px), baseChh=Math.round(H*px);
+  const marginPxX=Math.round(baseCw*NF_MARGIN), marginPxY=Math.round(baseChh*NF_MARGIN);
+  const cw=baseCw+marginPxX*2, chh=baseChh+marginPxY*2; // холст шире экрана — есть куда панорамировать
   let c=nfCache.c;
   if(!c || c.width!==cw || c.height!==chh){ c=document.createElement('canvas'); c.width=cw; c.height=chh; }
   const x=ctx2d(c);
   x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,cw,chh); // переиспользуем холст — чистим, а не выбрасываем
-  x.setTransform(px,0,0,px,0,0);
+  x.setTransform(px,0,0,px,marginPxX,marginPxY); // начало координат сдвинуто — контент кладём на увеличенное поле, не на старое
   let seed=(nfSeed||1);
   const R=()=>{ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; };
   const blob=(bx,by,r,hue,li,a,sq)=>{
@@ -283,33 +293,35 @@ function nebulaField(h1,h2){
     g.addColorStop(1,'hsla('+hue+',75%,'+li+'%,0)');
     x.fillStyle=g; x.beginPath(); x.arc(0,0,r,0,6.283); x.fill(); x.restore();
   };
-  const m=Math.max(W,H);
+  const fldW=W*(1+2*NF_MARGIN), fldH=H*(1+2*NF_MARGIN); // увеличенное поле — пятна расставляются на нём, не на старом W/H, иначе край панорамы пуст
+  const m=Math.max(fldW,fldH);
   // холодная база — глубина в цвете волны
-  blob(W*(.1+R()*.25), H*(.15+R()*.2), m*.45, h1+30, 42, .30, .8);
-  blob(W*(.7+R()*.25), H*(.5+R()*.25), m*.4, h2+50, 40, .26, .85);
+  blob(fldW*(.1+R()*.25), fldH*(.15+R()*.2), m*.45, h1+30, 42, .30, .8);
+  blob(fldW*(.7+R()*.25), fldH*(.5+R()*.25), m*.4, h2+50, 40, .26, .85);
   // тёплые пурпурные волокна — акцент как на эталонном макете
-  blob(W*(.2+R()*.5), H*(.55+R()*.3), m*.36, h1+300, 55, .20, .55);
-  blob(W*(.5+R()*.4), H*(.1+R()*.25), m*.3, h1+285, 52, .15, .6);
+  blob(fldW*(.2+R()*.5), fldH*(.55+R()*.3), m*.36, h1+300, 55, .20, .55);
+  blob(fldW*(.5+R()*.4), fldH*(.1+R()*.25), m*.3, h1+285, 52, .15, .6);
   // бирюзовые разводы
-  blob(W*(.02+R()*.3), H*(.6+R()*.3), m*.32, h2+150, 50, .18, .7);
+  blob(fldW*(.02+R()*.3), fldH*(.6+R()*.3), m*.32, h2+150, 50, .18, .7);
   // млечная полоса по диагонали — глубина и направление взгляда
-  const x0=W*.05, y0=H*.82, x1=W*.95, y1=H*.12;
+  const x0=fldW*.05, y0=fldH*.82, x1=fldW*.95, y1=fldH*.12;
   for(let i=0;i<9;i++){
     const t=i/8;
-    blob(lerp(x0,x1,t)+(R()-.5)*W*.08, lerp(y0,y1,t)+(R()-.5)*H*.06, m*.17, h1+40, 68, .07, .5);
+    blob(lerp(x0,x1,t)+(R()-.5)*fldW*.08, lerp(y0,y1,t)+(R()-.5)*fldH*.06, m*.17, h1+40, 68, .07, .5);
   }
   // звёздная пыль: сотни мелких точек, гуще у полосы; маскирует бандинг градиента
   for(let i=0;i<240;i++){
     const t=R(), near=R()<.6;
-    const sx=near? lerp(x0,x1,t)+(R()-.5)*W*.32 : R()*W;
-    const sy=near? lerp(y0,y1,t)+(R()-.5)*H*.24 : R()*H;
+    const sx=near? lerp(x0,x1,t)+(R()-.5)*fldW*.32 : R()*fldW;
+    const sy=near? lerp(y0,y1,t)+(R()-.5)*fldH*.24 : R()*fldH;
     x.globalAlpha=.04+R()*.2;
     x.fillStyle=R()<.8?'#dfe9ff':'#ffe9c8';
     const sz=.4+R()*1.1;
     x.fillRect(sx,sy,sz,sz);
   }
   x.globalAlpha=1;
-  nfCache={w:W,ht:H,h:Math.round(S.hueShift/NF_HUE_STEP),d:DPR,s:SC,c:c};
+  c.marginPxX=marginPxX; c.marginPxY=marginPxY; c.baseCw=baseCw; c.baseChh=baseChh; // на САМ canvas — функция возвращает его, не nfCache
+  nfCache={w:W,ht:H,h:hq,d:DPR,s:SC,c:c};
   return c;
 }
 let planeGradCache={skin:-1,g:null}; // градиент корпуса по скину
@@ -434,7 +446,9 @@ function drawNebulas(h1,h2,tN,lowPower){
     return;
   }
   if(Q.level>=2){ // HD/Ультра: богатое поле туманностей + живые дрейфующие пятна поверх
-    ctx.drawImage(nebulaField(h1,h2),0,0,W,H);
+    const nf=nebulaField(h1,h2);
+    const pan=nfPanOffset(tN, nf.marginPxX||0, nf.marginPxY||0);
+    ctx.drawImage(nf, pan.x, pan.y, nf.baseCw||W, nf.baseChh||H, 0,0,W,H); // окно-кроп из увеличенного поля — сама текстура плывёт, не только пятна поверх
     ctx.globalAlpha=.09;
     ctx.drawImage(nebCache.a, W*.2+Math.sin(tN*.05)*40-W*.28, H*.3-W*.28, W*.56, W*.56);
     ctx.globalAlpha=.08;
@@ -615,11 +629,14 @@ function draw(){
   // Скоростные полосы полностью удалены из игры. Рендер фонового неба теперь работает
   // только как обычное движение точек/света без дополнительного флага и без лишних линий.
   if(!hq) ctx.fillStyle='#cfe0ff';
+  const STAR_HUD_DEADZONE=(screenName==='game'||screenName==='pause') ? H*.2 : -1; // 22.08.2026: владелец несколько раз принимал обычное мерцание звезды под HUD за баг — раздражает, убрано по прямой просьбе; на меню HUD нет, звёзды остаются везде (-1 никогда не сработает, sy всегда ≥0)
   for (let si=0;si<nStars;si++){ const s=bgStars[si];
     s.y += .024*frameDt*S.speed*S.timeScale*(1+s.z); // v1.282.15: по времени, а не по кадру. Единственная симуляция внутри draw() — на дисплее 120 Гц фон летел ВДВОЕ быстрее препятствий, параллакс выворачивался наизнанку, а на замершей паузе почти стоял (0.0004×60 = 0.024)
     if (s.y>1) s.y-=1;
+    const sy=s.y*H;
+    if (sy<STAR_HUD_DEADZONE) continue; // симуляция честно продолжается (строка выше уже отработала) — пропускаем только сам рисунок
     ctx.globalAlpha = .25+s.z*.55 + (hq ? Math.sin(twT+s.x*40)*(uq?.16:.12) : 0);
-    const sx=s.x*W, sy=s.y*H;
+    const sx=s.x*W;
     if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
       const hh=(s.x*6.13+s.z*3.7)%1;
       const sp=starDot(hh<.16?'w':hh<.38?'c':'b');
