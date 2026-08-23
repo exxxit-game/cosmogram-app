@@ -1203,6 +1203,19 @@ let acc=0, lastTime=0, rafId=0, menuDrawT=0, loopScr='', pauseT0=0, drawForce=fa
 function interpPos(prev,cur,alpha){ return prev+(cur-prev)*alpha; }
 let prevPlaneX=0, prevPlaneY=0, renderPlaneX=0, renderPlaneY=0;
 function drawKick(){ drawForce=true; } // внешнее событие (resize) — кадр вне очереди, но БЕЗ сброса часов сна (v1.66.2)
+let corrShown=false;
+function corridorEdgesSync(inGameNow){
+  if (typeof inGameNow!=='boolean'){
+    // вызов без параметра (из core.js, по таймеру дребезга/скрытию) — сами смотрим на игровое состояние
+    inGameNow = (typeof screenName!=='undefined' && screenName==='game' && typeof S!=='undefined' && S && S.running && !S.paused);
+  }
+  const wantShow = inGameNow && (typeof corrWideOk!=='undefined' && corrWideOk);
+  if (wantShow===corrShown) return; // не трогаем DOM, если ничего не изменилось — дёшево на каждый кадр
+  corrShown=wantShow;
+  const l=document.getElementById('corrEdgeL'), r=document.getElementById('corrEdgeR');
+  if(l) l.classList.toggle('show', wantShow);
+  if(r) r.classList.toggle('show', wantShow);
+}
 function loop(t){
   rafId=requestAnimationFrame(loop);
   /* v1.400.3 «Не рисуем в пустоту»: боевой крэш (InvalidStateError, drawImage, render.js —
@@ -1224,8 +1237,10 @@ function loop(t){
      уверенно лезло вверх по ступеням и снимало «потолок-памятку» (тот самый, что бережёт
      уровень, с которого мы упали). Постоял в меню полминуты — и следующий полёт начинается
      с заикания, пока лестница заново не спустится. На чужих экранах метрику замораживаем. */
-  if (screenName==='game' && S.running && !S.paused) qualityTick(dt);
+  const inGameNow = screenName==='game' && S.running && !S.paused;
+  if (inGameNow) qualityTick(dt);
   else { Q._acc=0; Q._n=0; Q._t=0; }
+  corridorEdgesSync(inGameNow); // v1.415.2: рамка коридора — то же игровое состояние, мгновенно, без задержки дребезга (та живёт только у геометрии в core.js)
   if (S.running && !S.paused){
     prevPlaneX=plane.x; prevPlaneY=plane.y; // снимок ДО шагов физики этого кадра
     acc+=dt;

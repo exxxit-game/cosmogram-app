@@ -623,6 +623,22 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   // последнего настоящего забега (или нули, если такого забега в этой сессии ещё не было),
   // будто это твой результат. Прячем кнопку именно для этого захода на итоги.
   const cb=$('cardBtn'); if(cb) cb.classList.add('hidden');
+  /* 22.08.2026 «Театр не выдаёт чужой результат за свой»: раньше чистился только cardBtn,
+     а finalScore/newRecord/stats/runPass/myRank/duelRes/toRecord/toLoc/goldChip/dayStats/
+     statusBtn оставались от ПРЕДЫДУЩЕГО настоящего забега — зритель спектакля видел цифры,
+     будто это его полёт. Тот же приём, что уже применён к cardBtn: явно чистим/прячем,
+     не оставляем как есть. Найдено в ПЛАН-1.284.2.md. */
+  const fsEl=$('finalScore'); if(fsEl) fsEl.textContent='';
+  const nr=$('newRecord'); if(nr) nr.innerHTML='';
+  const st=$('stats'); if(st){ st.innerHTML=''; st.classList.add('hidden'); }
+  const rp=$('runPass'); if(rp) rp.classList.add('hidden');
+  const mr=$('myRank'); if(mr) mr.textContent='';
+  const dr=$('duelRes'); if(dr) dr.innerHTML='';
+  const tr=$('toRecord'); if(tr) tr.textContent='';
+  const tl=$('toLoc'); if(tl) tl.textContent='';
+  const gc=$('goldChip'); if(gc) gc.classList.add('hidden');
+  const ds=$('dayStats'); if(ds){ ds.textContent=''; ds.classList.add('hidden'); }
+  const sb=$('statusBtn'); if(sb) sb.classList.add('hidden');
   setScreen('over');
 }
 
@@ -1021,7 +1037,7 @@ function duelBoot(){ // deep-link ?startapp=duel_<pid>: забрать план�
         } else apply();
       }
       else duelBanner();
-    });
+    }).catch(()=>{ duelBanner(); }); // 22.08.2026: сбой сети — баннер вызова просто не покажется, не всплывать необработанным отказом
     return true; // v1.6.0: вызов ждёт баннера — этот запуск единственный начинается с меню
   }catch(e){ duelBanner(); return false; }
 }
@@ -1104,7 +1120,7 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
     champTrack=g; theaterDay=day; // гость занимает свой моток — твой билет «Смотреть полёт» остаётся нетронутым
     theaterChamp={ name:r.champion.name||'', skin:r.champion.skin|0 };
     runMode='theater'; startGame();
-  });
+  }).catch(()=>{ toast(L.tribuneNone,'rgba(191,232,255,.45)'); }); // 22.08.2026: сбой сети — та же честная тишина, что и «мастер ещё не показал полёт»
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
@@ -1587,7 +1603,7 @@ function renderTop(){
          вторая — «смотреть» (увидеть полёт целиком, как трибуну чемпиона). До этой партии
          рекорд был числом в таблице: посмотреть его было нельзя ни одним способом. Страж 126. */
       ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
-  });
+  }).catch(()=>{ if(screenName==='ach' && topCat===askCat) list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; }); // 22.08.2026: сбой сети — честное сообщение вместо зависшего «Загрузка…»
 }
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
    Учимся тактике и манёврам рекордсмена + живая витрина скинов (его самолётик виден в полёте). */
@@ -1655,7 +1671,7 @@ wireOn('topList', 'click', e=>{
     foreignFrom='top';
     toast(L.ghostWith(d.name||''),'rgba(191,232,255,.45)');
     startGame(); // призрак подхватится в ghostLoad — окно онбординга его не трогает
-  });
+  }).catch(()=>{ if(runSame(gen) && screenName==='ach') b.innerHTML=ic('ghost'); }); // 22.08.2026: сбой сети — кнопка не виснет на «…» вечно
 });
 
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */

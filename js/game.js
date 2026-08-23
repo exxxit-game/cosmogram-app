@@ -220,12 +220,25 @@ function spawnObstacle(){
 function makeRockVerts(n){
   const v=[]; for(let i=0;i<n;i++){ const a=i/n*6.283; v.push({a,r:mapRand(.7,1.15)}); } return v;
 }
-function spawnStar(fx){ // fx — необязательная точная координата (учебная звёздная тропа)
+function spawnStar(){
   const s=poolStar.take();
-  s.x=(typeof fx==='number')?clamp(fx,30,W-30):fieldL()+mapRand(40,fieldW()-40); s.y=-30; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
+  s.x=fieldL()+mapRand(40,fieldW()-40); s.y=-30; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
   stars.push(s);
 }
 function powGap(){ return lerp(12,7,difficulty()) * mapRand(.85,1.2); } // v1.36.0 «Щедрое небо»: темп следует за сложностью — чем горячее небо, тем чаще подмога
+/* 22.08.2026 «Честный коридор для бонуса»: жалоба владельца — бонус мог оказаться внутри
+   или за широким препятствием, «еле-еле видно край». Корень: spawnPowerup() и spawnObstacle()
+   всегда были полностью независимы — каждый ставил свою x наугад, без единой сверки.
+   powerupSpotFree() проверяет только препятствия, ещё не прошедшие нижнюю треть поля
+   (y < H*.5) — те, что уже почти внизу, никак не пересекутся со свежим бонусом сверху. */
+function powerupSpotFree(x,obs,fieldH){
+  for(const o of obs){
+    if(o.y > fieldH*.5) continue;
+    const gap=(o.w?o.w/2:o.r)+24;
+    if(Math.abs(x-o.x) < gap) return false;
+  }
+  return true;
+}
 function spawnPowerup(forceKind){ // forceKind — урок III «Ловец бонусов»: бонус по расписанию
   // слот спавна один (пауза ~10-14с на старте, ~6-8с на пике) — новые бонусы делят его со старыми, поле не переполняется
   const kinds=['shield','magnet','slowmo','life','dash','nova']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая
@@ -237,7 +250,9 @@ function spawnPowerup(forceKind){ // forceKind — урок III «Ловец б�
   if (kind==='life' && S.lives>=lifeCap) kind='shield'; // v1.46.0: жизнь — только раненым. Страж абсолютный: даже принудительный спавн не выдаст жизнь при полном корпусе
   if (kind==='nova' && S.time<45) kind='shield'; // слот сверхновой сохраняется, но ранняя награда остаётся безопасной
   const p=poolPow.take();
-  p.x=fieldL()+mapRand(50,fieldW()-50); p.y=-30; p.r=14; p.vy=S.speed; p.kind=kind; p.ph=0;
+  let px=fieldL()+mapRand(50,fieldW()-50);
+  for(let tries=0; tries<5 && !powerupSpotFree(px,obstacles,fieldH()); tries++) px=fieldL()+mapRand(50,fieldW()-50); // v1.415.2: до пяти попыток найти свободный коридор; на пятой — используем как есть, щедрое небо важнее идеала
+  p.x=px; p.y=-30; p.r=14; p.vy=S.speed; p.kind=kind; p.ph=0;
   powerups.push(p);
 }
 
@@ -287,7 +302,7 @@ function smoothStep(){
   }
   prevTiltX=input.tiltX; prevTiltY=input.tiltY;
   if (jerk>1) S.smooth=clamp(S.smooth-.03*Math.min(jerk,2.5), .5, 1); // резкий рывок — падение
-  else S.smooth=clamp(S.smooth+(jerk<0?.002:.004), .5, 1); // плавное ведение — рост
+  else S.smooth=clamp(S.smooth+(jerk<0?.0012:.0025), .5, 1); // 22.08.2026: рост замедлен вдвое (было .002/.004) — индикатор реагирует на обычное пилотирование, не только на грубые ошибки
 }
 let lastSmoothShown=-1;
 function updateSmoothHud(){
@@ -295,7 +310,7 @@ function updateSmoothHud(){
   if (v===lastSmoothShown) return; lastSmoothShown=v;
   const el=elSmoothFill; if(!el) return;
   el.style.transform='scaleX('+Math.max(0,(S.smooth-.5)*2)+')'; // v1.66.0: compositor-only
-  el.style.background = S.smooth>.85?'#8fff9f':S.smooth>.65?'#ffd76a':'#ff9f8f';
+  el.style.background = S.smooth>.92?'#8fff9f':S.smooth>.75?'#ffd76a':'#ff9f8f'; // 22.08.2026: пороги сужены (было .85/.65) — «пустая механика» больше не пустая
 }
 
 /* ---------- Личный призрак: запись траектории рекордного забега ---------- */
@@ -664,7 +679,7 @@ function update(dt){
         if (fullRisk()){ // Б1: монеты — только за настоящий риск
           const pts=Math.round(25*(1+Math.min(S.combo,10)*.3));
           S.score+=pts;
-          showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#8fd0ff');
+          showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
         if (S.bullet) S.bt=.5; // Bullet Time: триггер замедления (ворота)
       }
@@ -673,7 +688,7 @@ function update(dt){
         if (Math.abs(plane.x-o.x) < o.gap/2-plane.r-6){
           const pts=Math.round(150*(1+Math.min(S.combo,10)*.3));
           S.score+=pts;
-          showPopup(L.gate+' +'+pts, o.x, plane.y-50, '#9fe8ff');
+          showPopup(L.gate+' +'+pts, o.x, plane.y-50, '#5eead4'); // 22.08.2026: насыщенная бирюза — холоднее и щита, и слоумо
           sfx.gate(); haptic('medium');
         }
       }
@@ -703,7 +718,7 @@ function update(dt){
         if (fullRisk()){ // Б1: под бонусом — честь и свист, монет нет
           const pts=Math.round(25*(1+Math.min(S.combo,10)*.3))*(o.kind==='comet'?2:1); // комета: двойной бонус
           S.score+=pts;
-          showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#8fd0ff');
+          showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
         if (S.bullet) S.bt=.5; // Bullet Time: триггер замедления
       }

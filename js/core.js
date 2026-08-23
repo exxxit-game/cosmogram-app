@@ -1095,7 +1095,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.415.1'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.456.0'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1805,6 +1805,30 @@ function resize(){
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
   ctx.setTransform(DPR*SC,0,0,DPR*SC,0,0); // меры неба → пиксели экрана одним поворотом линейки
   if (typeof drawKick==='function') drawKick(); // v1.66.2: спящая пауза/меню — свежий кадр сразу после пересчёта
+  if (typeof corridorEdgesGeometry==='function') corridorEdgesGeometry(); // v1.415.2: рамка коридора — геометрия из core.js, видимость из render.js
+}
+/* 22.08.2026 «Рамка коридора без мигания»: жалоба владельца — в Telegram линии коридора
+   (тогда ещё рисовались внутри canvas) мелькали и пропадали. Причина — window.innerWidth в
+   первые кадры после запуска в Telegram WebView часто врёт, устаканивается через 1-2 события
+   resize уже после того, как страница успела отрисоваться на неверном значении. В браузере
+   такого скачка нет — там держалось ровно. Лекарство — не мгновенно показывать рамку по
+   первому же «экран широкий», а подождать короткую паузу стабильности; скрывать, наоборот,
+   можно сразу — ложноположительное появление хуже, чем on-tick задержка перед первым показом. */
+let corrWideT=0, corrWideOk=false;
+function corridorEdgesGeometry(){
+  if (typeof fieldL!=='function' || typeof fieldW!=='function') return; // game.js мог ещё не загрузиться
+  const fl=fieldL(), fw=fieldW();
+  const wide = fl>0;
+  if (!wide){ corrWideOk=false; if(corrWideT) clearTimeout(corrWideT); corrWideT=0; }
+  else if (!corrWideOk && !corrWideT){
+    corrWideT=setTimeout(()=>{ corrWideT=0; corrWideOk=true; if(typeof corridorEdgesSync==='function') corridorEdgesSync(); }, 400);
+  }
+  const l=document.getElementById('corrEdgeL'), r=document.getElementById('corrEdgeR');
+  if (l && r){
+    const leftPx=Math.round(fl*SC-14), rightPx=Math.round((fl+fw)*SC-14);
+    l.style.left=leftPx+'px'; r.style.left=rightPx+'px';
+  }
+  if (!wide && typeof corridorEdgesSync==='function') corridorEdgesSync(); // скрытие — сразу, без ожидания таймера
 }
 // v1.282.12: resize() физически меняет canvas.width — по спецификации Canvas это стирает
 // весь буфер немедленно. Событие 'resize' окна может сыпаться десятками раз в секунду при

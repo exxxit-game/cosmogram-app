@@ -10,7 +10,7 @@ let MUSIC_ON = true; // boot: Store 'music'
 
 const music = (()=>{
   let mg=null, conv=null, wet=null;      // master gain + реверб-ветка
-  let theme=null, ducked=false;          // 'menu' | 'game' | null
+  let theme=null, ducked=false, pendingTheme=null;          // 'menu' | 'game' | null; pendingTheme — ждёт границы такта (22.08.2026)
   let timer=null, nextBar=0, chordIx=0, walk=76;
   let layerState={pulse:false, arp:false, tension:false};
   /* v1.282.26 (партия 24): «плывущий центр» — корень дрона медленно ходит по соседним ступеням
@@ -99,6 +99,17 @@ const music = (()=>{
   const MENU_CHORDS=[[57,64,69,72,76],[53,60,65,69,72],[55,62,67,71,74],[52,59,64,67,71]];
   const MENU_BAR=7, GAME_BAR=3, BEAT=.75;
   const PENTA=[69,72,74,76,79,81,84];
+  /* 22.08.2026 «Риффотека» (приём Ballblazer «Riffology», 1984, Питер Лэнгстон): арпеджио
+     раньше было чистым случайным блужданием по ступеням на каждую долю — ни одной узнаваемой
+     формы, только шум по гамме. Riffology не импровизирует с нуля каждую ноту — она «делает
+     динамически взвешенный случайный выбор» готовой фразы из библиотеки. Три коротких
+     мотива (смещения ступеней от текущей опорной, восемь долей на такт — та же сетка,
+     что и раньше): выбирается ОДИН на весь такт, не блуждание нота за нотой. */
+  const ARP_MOTIFS=[
+    [0,1,2,1,2,3,2,1], // волна: вверх и обратно
+    [0,2,0,2,1,3,1,0], // качели: прыжок через ступень
+    [0,1,0,2,1,3,2,0]  // трель с редким взлётом
+  ];
   const MG_MENU=.9, MG_GAME=.9; // целевая громкость мастер-шины (v1.48.0 «Микс»: кровать музыки слышна под эффектами)
   const MG={menu:MG_MENU, game:MG_GAME};
   /* Микс-стол голосов (v1.48.0): прежняя кровать (~.05 на выходе) тонула под пиками эффектов (.15–.3) —
@@ -127,13 +138,16 @@ const music = (()=>{
       padVoice(ac,t,midi(root+7),GAME_BAR+1.5,MIX.quint); // квинта — шире пространство
       if(ly.tension) padVoice(ac,t,midi(root+13),GAME_BAR+1.5,MIX.tension); // тревожный полутон над корнем
       if(ly.pulse) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,ly.tension?MIX.pulseT:MIX.pulse);
-      if(ly.arp && !ly.tension){ // арпеджио: случайная прогулка по пентатонике
+      if(ly.arp && !ly.tension){ // риффотека: один мотив на весь такт (v1.415.2, приём Riffology), не блуждание нота за нотой
+        const motif=ARP_MOTIFS[(Math.random()*ARP_MOTIFS.length)|0]; // «динамически взвешенный случайный выбор» из библиотеки
+        const baseIx=Math.max(0,PENTA.indexOf(walk)); // продолжаем от того, где закончился прошлый такт — без скачка регистра
+        let lastPitch=walk;
         for(let b=0;b<8;b++){
-          if(Math.random()<.55){
-            walk=PENTA[Math.max(0,Math.min(PENTA.length-1,PENTA.indexOf(walk)+((Math.random()*3)|0)-1))]||76;
-            note(ac,t+b*BEAT/2,midi(walk),.5,MIX.arp,'triangle');
-          }
+          const ix=Math.max(0,Math.min(PENTA.length-1,baseIx+motif[b]));
+          lastPitch=PENTA[ix];
+          note(ac,t+b*BEAT/2,midi(lastPitch),.5,MIX.arp,'triangle');
         }
+        walk=lastPitch; // следующий такт продолжит с этой ноты — мотивы связаны, не рвутся
       }
       return GAME_BAR;
     }
@@ -144,7 +158,14 @@ const music = (()=>{
     const ac=AC; if(!ac) return;
     layerState = theme==='game' ? gameLayers() : {pulse:false,arp:false,tension:false};
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой, начинаем с чистого такта (v1.20.0)
-    while(nextBar < ac.currentTime + .9) nextBar += scheduleBar(ac, nextBar);
+    while(nextBar < ac.currentTime + .9){
+      if(pendingTheme){ // граница такта — самый момент переключиться, не обрывая уже идущий
+        theme=pendingTheme; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0;
+        fadeTo(MG[theme]||MG_GAME,1.0);
+        layerState = theme==='game' ? gameLayers() : {pulse:false,arp:false,tension:false};
+      }
+      nextBar += scheduleBar(ac, nextBar);
+    }
   }
   function fadeTo(v,sec){
     if(!mg||!AC) return;
@@ -154,8 +175,8 @@ const music = (()=>{
   }
   return {
     start(th){
-      if(MUTED||!MUSIC_ON){ theme=null; return; }
-      const ac=ensureChain(); if(!ac){ theme=null; return; }
+      if(MUTED||!MUSIC_ON){ theme=null; pendingTheme=null; return; }
+      const ac=ensureChain(); if(!ac){ theme=null; pendingTheme=null; return; }
       /* v1.282.14: приглушение снимаем ДО раннего выхода. Флаг ducked жил дольше причины:
          пауза ставила его, а «Заново» звало start('game') с той же темой — ранний выход,
          гейн так и оставался на трети, и весь новый забег музыка играла вполголоса.
@@ -164,14 +185,23 @@ const music = (()=>{
          целился в base*0.3 и ронял музыку до конца забега. У двигателя такая строка есть
          с самого начала (engine.start ставит ducked=false) — у музыки не было. */
       ducked=false;
-      if(theme===th){ if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
-      theme=th; chordIx=0; walk=76; droneRootIx=0; nextBar=ac.currentTime+.08;
-      fadeTo(MG[th]||MG_GAME,1.6);
-      if(!timer) timer=setInterval(tick,200);
-      tick();
+      if(theme===th){ pendingTheme=null; if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
+      if(!theme){ // ничего не играло — начинать сразу, ждать нечего, приём такта не нужен
+        theme=th; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0; nextBar=ac.currentTime+.08;
+        fadeTo(MG[th]||MG_GAME,1.6);
+        if(!timer) timer=setInterval(tick,200);
+        tick();
+        return;
+      }
+      /* 22.08.2026 «Переход по такту, не по клику» (приём iMUSE): раньше тема менялась
+         мгновенно — chordIx/walk/droneRootIx сбрасывались посреди уже звучащей фразы,
+         такт обрывался на любом месте. Теперь смена откладывается: уже идущий такт
+         доигрывает естественно (его ноты уже запланированы в Web Audio, никто их не трогает),
+         а переключение случается в tick(), прямо перед планированием СЛЕДУЮЩЕГО такта. */
+      pendingTheme=th;
     },
     stop(fade){
-      theme=null; ducked=false; // v1.282.14: флаг не переживает остановку темы
+      theme=null; pendingTheme=null; ducked=false; // v1.282.14: флаг не переживает остановку темы
       if(mg&&AC) fadeTo(0,fade||1.2);
       if(timer){ clearInterval(timer); timer=null; }
     },
