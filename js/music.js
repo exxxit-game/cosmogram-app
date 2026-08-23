@@ -70,6 +70,30 @@ const music = (()=>{
     }
     return ac;
   }
+  let hardCurveCache=null;
+  function hardCurve(){ // 22.08.2026: жёсткое индустриальное искажение (стиль Daft Punk, владелец) —
+    // насыщающий tanh с крутым множителем, не мягкий линейный клип. Общая на кик и риф арпеджио,
+    // НЕ на пэды/дрон/колокольчики меню — им искажение чуждо, эмбиент должен остаться чистым.
+    if(hardCurveCache) return hardCurveCache;
+    const n=256, curve=new Float32Array(n);
+    for(let i=0;i<n;i++){ const x=i*2/n-1; curve[i]=Math.tanh(x*6)*.9; }
+    hardCurveCache=curve;
+    return curve;
+  }
+  function kickDrum(ac,t,vol){ // 22.08.2026: барабанный кик (не путать с music.kick() — тот сайдчейн-дак от удара)
+    // синтез 808-стиль: синус с падающим питчем + жёсткое искажение — центр, без панорамы (моно-динамик телефона)
+    const osc=ac.createOscillator(); osc.type='sine';
+    osc.frequency.setValueAtTime(150,t);
+    osc.frequency.exponentialRampToValueAtTime(45,t+.09);
+    const g=ac.createGain();
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+.006);
+    g.gain.exponentialRampToValueAtTime(.001,t+.26);
+    const shaper=ac.createWaveShaper(); shaper.curve=hardCurve(); shaper.oversample='2x';
+    osc.connect(g); g.connect(shaper); shaper.connect(mg); // напрямую в mg — кик держим по центру, не через toMix (без случайной панорамы)
+    osc.start(t); osc.stop(t+.3);
+    stats.kicks++;
+  }
   function padVoice(ac,t,f,dur,vol){ // мягкий пэд: два расстроенных треугольника + фильтр
     const g=ac.createGain();
     g.gain.setValueAtTime(0,t);
@@ -83,13 +107,16 @@ const music = (()=>{
     }
     flt.connect(g); toMix(g,ac); stats.pads++;
   }
-  function note(ac,t,f,dur,vol,type){ // колокольчик/пульс/арпеджио
+  function note(ac,t,f,dur,vol,type,distort){ // колокольчик/пульс/арпеджио; distort — только риф (22.08.2026, стиль Daft Punk)
     const o=ac.createOscillator(); o.type=type||'sine'; o.frequency.value=jitterFreq(f);
     const g=ac.createGain();
     g.gain.setValueAtTime(0,t);
     g.gain.linearRampToValueAtTime(vol,t+.02);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-    o.connect(g); toMix(g,ac); o.start(t); o.stop(t+dur+.05); stats.notes++;
+    o.connect(g);
+    if(distort){ const shaper=ac.createWaveShaper(); shaper.curve=hardCurve(); shaper.oversample='2x'; g.connect(shaper); toMix(shaper,ac); }
+    else toMix(g,ac);
+    o.start(t); o.stop(t+dur+.05); stats.notes++;
   }
 
   /* Темы: меню — медленные аккорды Am→F→G→Em с редкими колокольчиками;
@@ -97,7 +124,7 @@ const music = (()=>{
      Регистр поднят на октаву: динамики телефонов не воспроизводят 110–160 Гц —
      музыка должна звучать именно на телефоне, а не в наушниках студии. */
   const MENU_CHORDS=[[57,64,69,72,76],[53,60,65,69,72],[55,62,67,71,74],[52,59,64,67,71]];
-  const MENU_BAR=7, GAME_BAR=3, BEAT=.75;
+  const MENU_BAR=7, BEAT=60/124, GAME_BAR=BEAT*4; // 22.08.2026: 124 BPM (владелец, стиль Daft Punk) — такт честные 4 доли, не произвольные 3с
   const PENTA=[69,72,74,76,79,81,84];
   /* 22.08.2026 «Риффотека» (приём Ballblazer «Riffology», 1984, Питер Лэнгстон): арпеджио
      раньше было чистым случайным блужданием по ступеням на каждую долю — ни одной узнаваемой
@@ -115,7 +142,7 @@ const music = (()=>{
   /* Микс-стол голосов (v1.48.0): прежняя кровать (~.05 на выходе) тонула под пиками эффектов (.15–.3) —
      поднято ~×2.5, чтобы музыку было слышно всегда, а эффекты больше не кричат */
   const MIX={menuPad:.075, menuBell:.12, drone:.07, quint:.05, tension:.04,
-             pulse:.085, pulseT:.105, arp:.07, stingD:.12, stingR:.11, stingPad:.06};
+             pulse:.085, pulseT:.105, arp:.07, stingD:.12, stingR:.11, stingPad:.06, kick:.13}; // kick — якорь ритма, заметнее пульса (22.08.2026)
 
   /* 22.08.2026 «Слои прорастают, а не переключаются»: пульс и арпеджио включались жёстким
      порогом волны (wave>=3, wave>=5) — щелчок, не нарастание, и для среднего забега (34.4с
@@ -128,11 +155,23 @@ const music = (()=>{
     if(wave>=full) return 1;
     return (wave-start)/(full-start);
   }
+  /* 22.08.2026 «Прилив кика» (владелец): не по целой волне скачком (щёлкнет на границе),
+     а по непрерывной дистанции — тот же дух, что и pulseAmt/arpAmt. Два полных прилива-отлива
+     на пути к волне 7 (0..3900м, период 1950м), дальше — кик свободный (1.0) до конца.
+     Чистая функция цели; фактическая громкость сглаживается лерпом в kickAmtSmooth ниже,
+     чтобы переход на границе волны 7 не рвался щелчком, даже если цель скакнула. */
+  function kickTideTarget(dist,mission){
+    if(mission>=7) return 1;
+    return .35 + .65*(.5-.5*Math.cos(dist/975*Math.PI));
+  }
+  let kickAmtSmooth=0;
   function gameLayers(){ // желаемые слои прямо сейчас: волна и жизни могли смениться между тактами
     const wave=(typeof S!=='undefined')?(S.mission||1):1;
     const lives=(typeof S!=='undefined')?(S.lives==null?3:S.lives):3;
+    const dist=(typeof S!=='undefined')?(S.dist||0):0;
+    kickAmtSmooth = lerp(kickAmtSmooth, kickTideTarget(dist,wave), .12); // сглаживание — цель может скакнуть на границе волны 7, факт не должен
     // пульс прорастает волны 1→3, арпеджио — волны 1→4 (было жёстко на wave>=5, среднему забегу не хватало времени)
-    return {pulseAmt:waveRamp(wave,1,3), arpAmt:waveRamp(wave,1,4), tension:lives===1};
+    return {pulseAmt:waveRamp(wave,1,3), arpAmt:waveRamp(wave,1,4), tension:lives===1, kickAmt:kickAmtSmooth};
   }
   function scheduleBar(ac,t){
     if(theme==='menu'){
@@ -150,6 +189,7 @@ const music = (()=>{
       padVoice(ac,t,midi(root+7),GAME_BAR+1.5,MIX.quint); // квинта — шире пространство
       if(ly.tension) padVoice(ac,t,midi(root+13),GAME_BAR+1.5,MIX.tension); // тревожный полутон над корнем
       if(ly.pulseAmt>0) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,(ly.tension?MIX.pulseT:MIX.pulse)*ly.pulseAmt); // громкость сама прорастает — не щелчок вкл/выкл
+      if(ly.kickAmt>0.02) for(let b=0;b<4;b++) kickDrum(ac,t+b*BEAT,MIX.kick*ly.kickAmt); // 22.08.2026: four-on-the-floor — приливная интенсивность (0.02 порог — не тратить голоса на почти неслышимое)
       if(ly.arpAmt>0 && !ly.tension){ // риффотека: один мотив на весь такт (v1.415.2, приём Riffology), не блуждание нота за нотой; громкость прорастает вместе с волной (v1.456.1)
         const motif=ARP_MOTIFS[(Math.random()*ARP_MOTIFS.length)|0]; // «динамически взвешенный случайный выбор» из библиотеки
         const baseIx=Math.max(0,PENTA.indexOf(walk)); // продолжаем от того, где закончился прошлый такт — без скачка регистра
@@ -157,7 +197,7 @@ const music = (()=>{
         for(let b=0;b<8;b++){
           const ix=Math.max(0,Math.min(PENTA.length-1,baseIx+motif[b]));
           lastPitch=PENTA[ix];
-          note(ac,t+b*BEAT/2,midi(lastPitch),.5,MIX.arp*ly.arpAmt,'triangle');
+          note(ac,t+b*BEAT/2,midi(lastPitch),.5,MIX.arp*ly.arpAmt,'triangle',true); // distort=true — жёсткий риф, стиль Daft Punk (владелец, 22.08.2026)
         }
         walk=lastPitch; // следующий такт продолжит с этой ноты — мотивы связаны, не рвутся
       }
@@ -168,13 +208,13 @@ const music = (()=>{
   function tick(){
     if(!theme||!mg) return;
     const ac=AC; if(!ac) return;
-    layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false};
+    layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false,kickAmt:0};
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой, начинаем с чистого такта (v1.20.0)
     while(nextBar < ac.currentTime + .9){
       if(pendingTheme){ // граница такта — самый момент переключиться, не обрывая уже идущий
         theme=pendingTheme; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0;
         fadeTo(MG[theme]||MG_GAME,1.0);
-        layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false};
+        layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false,kickAmt:0};
       }
       nextBar += scheduleBar(ac, nextBar);
     }
