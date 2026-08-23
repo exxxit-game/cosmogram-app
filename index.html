@@ -320,9 +320,15 @@ button, input, select, textarea { text-transform:inherit; }
   font-variant-numeric:tabular-nums; /* v1.76.0 */
   text-shadow:0 0 10px rgba(255,200,80,.6), 0 1px 3px rgba(6,10,30,.7);
   display:flex; align-items:center; gap:4px; }
-#topHud { position:fixed; top:max(72px, calc(14px + var(--sat))); height:auto; left:12px; right:12px; z-index:12;
-  /* v1.101.0 «Чистое небо»: левая колонна и жизни опущены ниже пилюль Telegram — больше не задевают
-     ни «Назад», ни окошки ⌄ ⋮, даже когда клиент врёт про инсет */
+#topHud { position:fixed; top:max(72px, calc(14px + var(--sat))); height:auto; left:50%; transform:translateX(-50%); width:min(calc(100% - 24px), 430px); z-index:12;
+  /* 22.08.2026 «Собрать HUD к коридору»: было left:12px;right:12px; — прибито к краям ОКНА,
+     не коридора. На телефоне окно ≈ ширина коридора (390 мер), разницы не видно; на широком
+     экране ноутбука/браузера (жалоба владельца, скриншоты не через Telegram Desktop, а
+     напрямую в браузере) пауза и жизни разъезжались на всю ширину окна, счёт оставался
+     у коридора — впечатление «разметка съехала». min(100%-24px, 430px) + центрирование:
+     на мобильном ширина упирается в 100%-24px — те же 12px с каждой стороны, что и раньше,
+     раскладка не меняется; на широком — ограничивается 430px (коридор 390 + запас) и
+     центрируется, обнимая коридор вплотную, как и всё остальное небо. */
   display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
 #pausePack { display:flex; flex-direction:column; align-items:center; gap:8px; margin-left:20px; margin-top:-26px; pointer-events:none; } /* v1.101.0: пауза над звёздами, одной осью под «Назад»; v1.102.0: призрак залегает в мёртвую зону родной пилюли (её тапы ловит сам Telegram), звёзды поднимаются вплотную под «Назад» — счётчик больше не висит в пустом небе */
 #pauseBtn { width:42px; height:42px; border-radius:50%; flex:none; /* v1.101.0: прибор кабины — своё стекло, своё кольцо */
@@ -858,7 +864,7 @@ button, input, select, textarea { text-transform:inherit; }
   #scorePack { top:2px !important; height:36px !important; } /* v1.102.0: вагон — верхний ряд рамки; !important сильнее островных плёнок */
   #score { font-size:clamp(20px,7vh,28px) !important; }
   #scoreLbl { display:none; } /* в альбомной высоты нет — число само заголовок */
-  #topHud { top:42px; height:36px; left:8px; right:8px; }
+  #topHud { top:42px; height:36px; left:50%; right:auto; transform:translateX(-50%); width:min(calc(100% - 16px), 430px); }
   #pausePack { flex-direction:row; margin-left:0; margin-top:0; gap:9px; } /* в альбомной — горизонтальный кластер, призрак без подъёма */
   #pauseBtn { width:34px; height:34px; }
   #pauseBtn .ic { width:14px; height:14px; }
