@@ -595,7 +595,7 @@ function draw(){
   ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
   const lowPower = isLowPowerDevice(nowMs);
   drawNebulas(h1,h2,nowS,lowPower);
-  if(fieldL()>0) ctx.drawImage(corridorEdgeSprite(),0,0,W,H); // 22.08.2026 «Видимый край неба»: на всех тирах — это граница поля, не украшение
+  if(fieldL()>0 && screenName==='game') ctx.drawImage(corridorEdgeSprite(),0,0,W,H); // 22.08.2026: было видно на любом меню (draw() не смотрит на экран) — граница осмысленна только в полёте
   if(profileOn){ frameProfile.bg+=performance.now()-profileMark; profileMark=performance.now(); }
 
   const sh = Q.level>=1, hq = Q.level>=2, uq = Q.level>=3; // sh — свечение, hq — полная графика, uq — ультра
