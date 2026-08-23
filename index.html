@@ -348,10 +348,26 @@ button, input, select, textarea { text-transform:inherit; }
    в первые кадры) и решение владельца: на широких экранах рамка во время полёта — не баг,
    а недостающая разметка поля; мигание — баг. DOM-слой стабильнее (CSS-переход сглаживает
    любой резкий скачок геометрии), left/width выставляются из core.js. */
-.corrEdge { position:fixed; top:0; bottom:0; width:28px; pointer-events:none; z-index:5;
-  opacity:0; transition:opacity .35s ease;
-  background:linear-gradient(90deg, rgba(159,232,255,0), rgba(159,232,255,.22), rgba(159,232,255,0)); }
+.corrEdge { position:fixed; top:0; bottom:0; width:26px; pointer-events:none; z-index:5;
+  opacity:0; transition:opacity .35s ease; overflow:hidden; }
 .corrEdge.show { opacity:1; }
+/* 22.08.2026 «Не забор, а полоса звёзд»: плоский линейный градиент читался как стена —
+   жалоба владельца. Заменён узором мелких точек-звёзд (тот же дух, что и bgStars в
+   render.js), двумя копиями со сдвигом по позиции и времени мерцания — совпадение по
+   фазе выдало бы механический, неживой дребезг вместо естественного мигания. */
+.corrEdge::before, .corrEdge::after { content:''; position:absolute; left:0; right:0; top:-48px; bottom:-48px;
+  background-repeat:repeat-y; background-size:100% 96px;
+  background-image:
+    radial-gradient(circle 1.4px at 30% 6%, rgba(230,242,255,.9), transparent 60%),
+    radial-gradient(circle 1px at 70% 18%, rgba(159,232,255,.75), transparent 60%),
+    radial-gradient(circle 1.2px at 45% 34%, rgba(230,242,255,.85), transparent 60%),
+    radial-gradient(circle 1px at 20% 50%, rgba(159,232,255,.6), transparent 60%),
+    radial-gradient(circle 1.6px at 60% 66%, rgba(230,242,255,.95), transparent 60%),
+    radial-gradient(circle 1px at 35% 82%, rgba(159,232,255,.7), transparent 60%),
+    radial-gradient(circle 1.3px at 65% 96%, rgba(230,242,255,.8), transparent 60%);
+  animation: corrTwinkle 4s ease-in-out infinite; }
+.corrEdge::after { background-position:0 48px; animation-delay:1.7s; opacity:.6; }
+@keyframes corrTwinkle { 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
 .pill { background:rgba(16,24,54,.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(140,170,255,.18); border-radius:12px; padding:5px 12px;
   font-size:11px; color:#bcd2ff; white-space:nowrap; }
