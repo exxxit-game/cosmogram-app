@@ -862,11 +862,16 @@ function draw(){
       ctx.fillStyle='#ffcf8f'; ctx.beginPath(); ctx.arc(-o.r*.2,-o.r*.2,o.r*.45,0,6.283); ctx.fill();
     } else if (o.kind==='gate'){ // ворота: два пилона + луч между ними
       const g2=o.gap/2;
+      /* 22.08.2026 «Затягивающиеся ворота»: чем уже текущий просвет — тем крупнее выглядят
+         пилоны (иллюзия приближения). Только отрисовка: масштаб — ЛОКАЛЬНАЯ переменная,
+         o.r не меняется нигде — хитбокс столкновения (js/game.js) остаётся честным. */
+      const pylonScale = o.breathe ? (1 + (1 - clamp((o.gap-(o.gapMid-o.gapAmp))/(o.gapAmp*2),0,1))*.32) : 1;
+      const pr = o.r*pylonScale;
       if(sh){ // v1.66.0: свечение ворот — широкий полупрозрачный дубль луча + спрайты пилонов вместо shadowBlur
         ctx.strokeStyle='rgba(159,232,255,.22)'; ctx.lineWidth=6;
         ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
         ctx.globalAlpha=.55;
-        for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-o.r-6,-o.r-6,(o.r+6)*2,(o.r+6)*2);
+        for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-pr-6,-pr-6,(pr+6)*2,(pr+6)*2);
         ctx.globalAlpha=1; }
       if(sh && !o.passed){ // бегущая энергия по лучу (v1.37.0: со средней)
         ctx.setLineDash([7,7]); ctx.lineDashOffset=-nowMs/28;
@@ -877,11 +882,11 @@ function draw(){
       if(sh) ctx.setLineDash([]);
       ctx.fillStyle='#3d5a80';
       for (const sgn of SGN2){
-        ctx.beginPath(); ctx.arc(sgn*g2,0,o.r,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(sgn*g2,0,pr,0,6.283); ctx.fill();
         ctx.strokeStyle='#9fe8ff'; ctx.lineWidth=2; ctx.stroke();
         if(sh){ // внутреннее кольцо пилона (v1.37.0: со средней)
           ctx.strokeStyle='rgba(159,232,255,.35)'; ctx.lineWidth=1;
-          ctx.beginPath(); ctx.arc(sgn*g2,0,o.r*.55,0,6.283); ctx.stroke();
+          ctx.beginPath(); ctx.arc(sgn*g2,0,pr*.55,0,6.283); ctx.stroke();
         }
         ctx.fillStyle='#9fe8ff'; ctx.beginPath(); ctx.arc(sgn*g2,0,3,0,6.283); ctx.fill();
         ctx.fillStyle='#3d5a80';

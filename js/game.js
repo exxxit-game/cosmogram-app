@@ -211,7 +211,19 @@ function spawnObstacle(){
     o.x=x; o.y=-50; o.r=17; o.vy=vy*.75; o.vx=0; o.vr=.1; o.pulse=0;
   } else { // ворота (волна 6+): два пилона, узкий проход = бонус
     o.x=fl+mapRand(110,fw-110); o.y=-60; o.r=15; o.vy=vy*.8; o.vx=0; o.vr=0; o.rot=0;
-    o.gap=mapRand(95,125); o.passed=false;
+    /* 22.08.2026 «Затягивающиеся ворота»: с волны 7 (после нее «визуальное разнообразие
+       по видам» кончается — новых силуэтов больше нет) проход начинает дышать — картинка
+       и реальная сложность совпадают (вариант 2, решение владельца): чем ближе выглядят
+       пилоны, тем уже настоящий просвет. breathe=false у всех ворот до волны 7 — без
+       изменений, тот же честный статичный силуэт, что и был. */
+    o.breathe = S.mission>=7;
+    if (o.breathe){
+      o.gapMid=mapRand(95,125); o.gapAmp=mapRand(15,25); o.ph=mapRand(0,6.28);
+      o.gap=o.gapMid+o.gapAmp*Math.sin(o.ph);
+    } else {
+      o.gap=mapRand(95,125);
+    }
+    o.passed=false;
     extraGap = .4; // ворота занимают много места — следующий спавн чуть позже
   }
   obstacles.push(o);
@@ -645,6 +657,10 @@ function update(dt){
     if (o.kind==='seeker'){ // ловец: наведение вдвое сильнее мины
       o.pulse+=dt*5*paceFactor;
       o.vx = lerp(o.vx, clamp((plane.x-o.x)*.012,-1.8,1.8), .04*paceFactor);
+    }
+    if (o.kind==='gate' && o.breathe){ // 22.08.2026 «Затягивающиеся ворота»: проход дышит — тот же приём, что у спутника выше
+      o.ph += dt*1.9*paceFactor; // ~3.3с на полный вдох-выдох — успеваешь прочитать ритм, не угадать
+      o.gap = o.gapMid + o.gapAmp*Math.sin(o.ph);
     }
     if (o.y>H+80){ killIdx(obstacles,i,poolOb); continue; }
     if (o.kind==='gate'){ // ворота: два пилона, проход между ними — бонус
