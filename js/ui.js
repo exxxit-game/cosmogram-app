@@ -1546,15 +1546,15 @@ document.querySelectorAll('.topCat').forEach(b=>b.addEventListener('click',()=>{
 function accFill(){ // настройки: статус входа + виджет (гость) / «Выйти» (веб-сессия)
   const st=$('accStatus'), wg=$('accWidget'), out=$('accOutBtn');
   if(!st || typeof syncAvailable!=='function') return;
-  const dw=$('dcWidget');
+  const dw=$('dcWidget'), gw=$('gWidget');
   if (syncAvailable()){
     st.textContent=L.accIn(typeof syncAuthName==='function'?(syncAuthName()||''):'');
-    wg.innerHTML=''; if(dw) dw.innerHTML='';
+    wg.innerHTML=''; if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
     out.classList.toggle('hidden', !!syncInitData()); // из мини-аппа «выходить» нечего — ты дома
   } else {
     st.textContent=L.accGuest;
     out.classList.add('hidden');
-    if(!syncInitData()){ tgWidgetMount(wg); if(dw) dcMount(dw); } else { wg.innerHTML=''; if(dw) dw.innerHTML=''; }
+    if(!syncInitData()){ tgWidgetMount(wg); if(dw) dcMount(dw); if(gw) gMount(gw); } else { wg.innerHTML=''; if(dw) dw.innerHTML=''; if(gw) gw.innerHTML=''; }
   }
 }
 function webJoinFill(){ // экран итогов: гостю — приглашение и кнопка входа, вошедшему — чисто
@@ -1567,8 +1567,9 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
   if (guest){ $('webJoinTxt').textContent=L.webJoin;
     const w=$('webJoinWidget');
     if (w && !w.firstChild) tgWidgetMount(w);
-    const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0); }
-  else { setHTML('webJoinWidget',''); const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; }
+    const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0);
+    const gj0=$('gJoinWidget'); if (gj0 && !gj0.firstChild) gMount(gj0); }
+  else { setHTML('webJoinWidget',''); const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
   accFill(); webJoinFill();
@@ -1576,7 +1577,7 @@ function syncAuthChanged(){ // зовёт sync.js после входа видж
   if(typeof syncDailyFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncDailyFlush().catch(()=>{});
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
 }
-wireOn('accOutBtn', 'click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
+wireOn('accOutBtn', 'click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); Store.del('gAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
 
 /* Свой рекорд в этой категории — тот, что лежит на устройстве. Нужен гостю: сервер про него
    не знает и знать не может, а «ты был бы 9-м из 15» — единственное, что превращает чужую

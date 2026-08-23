@@ -17,7 +17,8 @@ const TG_BOT_USERNAME='realcosmogrambot'; // Login Widget: вход из бра�
 function syncInitData(){ return (tg && tg.initData) || null; } // подпись есть только внутри Telegram
 function syncWebAuth(){ const w=Store.get('tgWebAuth',null); return (w && w.id && w.hash) ? w : null; } // веб-сессия виджета (живёт ~неделю, потом вход в один тап)
 function syncDcAuth(){ const w=Store.get('dcAuth',null); return (w && w.sess) ? w : null; } // сессия Discord: HMAC-подпись нашего сервера (v1.52.0 «Второй вход»)
-function syncAuth(){ const d=syncInitData(); if(d) return {initData:d}; const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; return null; }
+function syncGAuth(){ const w=Store.get('gAuth',null); return (w && w.sess) ? w : null; } // 23.08.2026: сессия Google — тот же приём, что у Discord
+function syncAuth(){ const d=syncInitData(); if(d) return {initData:d}; const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; const g=syncGAuth(); if(g) return {gAuth:g}; return null; }
 function syncAvailable(){ return !!syncAuth(); }
 function ghostAccessStateForAuth(isAuthed, labels){
   const text = (labels && labels.accGuest) || 'Sign in with Telegram';
@@ -26,7 +27,8 @@ function ghostAccessStateForAuth(isAuthed, labels){
 function syncAuthName(){ // имя для «ты в таблице как …»
   try{ const u=tg && tg.initDataUnsafe && tg.initDataUnsafe.user; if(u && u.first_name) return String(u.first_name); }catch(e){}
   const w=syncWebAuth(); if(w) return String(w.first_name||'Игрок');
-  const c=syncDcAuth(); return c ? String(c.name||'Игрок') : null;
+  const c=syncDcAuth(); if(c) return String(c.name||'Игрок');
+  const g=syncGAuth(); return g ? String(g.name||'Игрок') : null;
 }
 
 /* Кнопка входа Telegram (только браузер): виджет сам рисует себя в контейнере.
@@ -85,7 +87,7 @@ function dcMount(el){
   syncDcClientId().then(cid=>{
     if(!cid || !el.isConnected) return;
     const b=document.createElement('button');
-    b.className='btn ghost small dcBtn'; b.type='button'; b.textContent=L.dcLogin;
+    b.className='btn ghost small dcBtn'; b.type='button'; b.innerHTML=ic('discord')+L.dcLogin;
     b.addEventListener('click',()=>dcGo(cid));
     el.appendChild(b);
   });
@@ -99,9 +101,39 @@ function dcGo(cid){ // уходим на Discord и вернёмся с ?code=
   // весь её последующий прогресс уходит на чужой аккаунт. state — разовый ярлык этого
   // конкретного похода: сверяем на возврате, чужой code без нашего ярлыка молча игнорируем.
   const state=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now();
-  try{ sessionStorage.setItem('dcState',state); }catch(e){}
+  try{ sessionStorage.setItem('oauthState', JSON.stringify({state, provider:'dc'})); }catch(e){} // 23.08.2026: провайдер идёт вместе со state — возврат должен знать, чей это код
   location.href='https://discord.com/oauth2/authorize?client_id='+cid+'&response_type=code'+
     '&redirect_uri='+encodeURIComponent(ru)+'&scope=identify&state='+encodeURIComponent(state);
+}
+/* ---------- Третий вход: Google (23.08.2026) ----------
+   Тот же протокол OAuth2, тот же порядок, что у Discord — тот же риск подмены,
+   та же защита (state). Единственная разница — свой адрес авторизации и свой scope. */
+let _gCid=undefined; // undefined — ещё не спрашивали; null — не настроено
+function syncGClientId(){
+  if(_gCid!==undefined) return Promise.resolve(_gCid);
+  return syncPost({action:'public_config'})
+    .then(r=>{ if(!r.ok){ if(r.status>=500) throw 0; return null; } return r.json().catch(()=>null); })
+    .then(d=>{ _gCid=(d && d.ok && d.google_client_id) || null; return _gCid; })
+    .catch(()=>null);
+}
+function gMount(el){
+  if(!el || typeof document==='undefined') return;
+  el.innerHTML='';
+  syncGClientId().then(cid=>{
+    if(!cid || !el.isConnected) return;
+    const b=document.createElement('button');
+    b.className='btn ghost small gBtn'; b.type='button'; b.innerHTML=ic('google')+L.gLogin;
+    b.addEventListener('click',()=>gGo(cid));
+    el.appendChild(b);
+  });
+}
+function gGo(cid){ // уходим на Google и вернёмся с ?code=
+  if(typeof sfx==='function') sfx.click();
+  const ru=location.origin+location.pathname;
+  const state=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now();
+  try{ sessionStorage.setItem('oauthState', JSON.stringify({state, provider:'gg'})); }catch(e){}
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?client_id='+cid+'&response_type=code'+
+    '&redirect_uri='+encodeURIComponent(ru)+'&scope='+encodeURIComponent('openid profile')+'&state='+encodeURIComponent(state);
 }
 function syncDiscordCode(code, ru){ // возврат из Discord: код → сессия → мостик гостя
   return syncPost({action:'discord_login', code:code, redirect_uri:ru}).then(r=>r.ok?r.json():null).then(d=>{
@@ -113,15 +145,26 @@ function syncDiscordCode(code, ru){ // возврат из Discord: код → �
     }
   }).catch(()=>{});
 }
-(function syncBootDiscord(){
+function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google — тот же путь, что у Discord
+  return syncPost({action:'google_login', code:code, redirect_uri:ru}).then(r=>r.ok?r.json():null).then(d=>{
+    if(d && d.ok && d.gAuth){
+      Store.set('gAuth',d.gAuth);
+      Store.set('syncQ',[]);
+      syncSubmit(syncLocalScores());
+      if(typeof syncAuthChanged==='function') syncAuthChanged();
+    }
+  }).catch(()=>{});
+}
+(function syncBootOAuth(){ // 23.08.2026: было syncBootDiscord — обобщено на любого OAuth2-гостя (Discord, Google, ...)
   try{
     const q=new URLSearchParams(location.search), code=q.get('code'), state=q.get('state');
     if(!code) return;
     const ru=location.origin+location.pathname;
     history.replaceState(null,'',ru); // код вычеркнут из адресной строки сразу
-    let expected=null; try{ expected=sessionStorage.getItem('dcState'); sessionStorage.removeItem('dcState'); }catch(e){}
-    if(!expected || state!==expected) return; // v1.282.8: чужой code без нашего ярлыка — не наш поход, молчим
-    syncDiscordCode(code, ru);
+    let saved=null; try{ saved=JSON.parse(sessionStorage.getItem('oauthState')||'null'); sessionStorage.removeItem('oauthState'); }catch(e){}
+    if(!saved || !saved.state || state!==saved.state) return; // v1.282.8: чужой code без нашего ярлыка — не наш поход, молчим
+    if(saved.provider==='dc') syncDiscordCode(code, ru);
+    else if(saved.provider==='gg') syncGoogleCode(code, ru);
   }catch(e){}
 })();
 

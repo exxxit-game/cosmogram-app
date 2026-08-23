@@ -318,7 +318,7 @@ const I18N = {
     webJoin:'Войди через Telegram — этот полёт встанет в общую таблицу',
     accGuest:'Общая таблица одна на всех — войди через Telegram',
     accIn:n=>n?('Ты в общей таблице как '+n):'Ты в общей таблице', accOut:'Выйти',
-    dcLogin:'Войти через Discord',
+    dcLogin:'Войти через Discord', gLogin:'Войти через Google',
     setMorse:'Морзянка', csDefault:'Пилот',
     setMorseHap:'Виброэфир',
     setGrpSound:'Звук и эфир', setGrpGame:'Игра и экран', setGrpProf:'Профиль', moreLbl:'Ещё',
@@ -448,7 +448,7 @@ const I18N = {
     webJoin:'Sign in with Telegram — this flight joins the shared leaderboard',
     accGuest:'One leaderboard for everyone — sign in with Telegram',
     accIn:n=>n?('You are on the leaderboard as '+n):'You are on the leaderboard', accOut:'Sign out',
-    dcLogin:'Sign in with Discord',
+    dcLogin:'Sign in with Discord', gLogin:'Sign in with Google',
     setMorse:'Morse trail', csDefault:'Pilot',
     setMorseHap:'Haptic morse',
     setGrpSound:'Sound & air', setGrpGame:'Game & screen', setGrpProf:'Profile', moreLbl:'More',
@@ -593,7 +593,7 @@ const I18N = {
     webJoin:'Inicia sesión con Telegram — este vuelo se sumará a la tabla común',
     accGuest:'Una tabla para todos — inicia sesión con Telegram',
     accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
-    accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord',
+    accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord', gLogin:'Iniciar sesión con Google',
     setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
     setGrpSound:'Sonido y aire', setGrpGame:'Juego y pantalla', setGrpProf:'Perfil',
     moreLbl:'Más',
@@ -741,7 +741,7 @@ const I18N = {
     webJoin:'Entre com o Telegram — este voo entra na tabela geral',
     accGuest:'Uma tabela para todos — entre com o Telegram',
     accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
-    accOut:'Sair', dcLogin:'Entrar com Discord',
+    accOut:'Sair', dcLogin:'Entrar com Discord', gLogin:'Entrar com Google',
     setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
     setGrpSound:'Som e ar', setGrpGame:'Jogo e tela', setGrpProf:'Perfil',
     moreLbl:'Mais',
@@ -873,7 +873,7 @@ const I18N = {
     webJoin:'Connecte-toi avec Telegram — ce vol rejoint le classement partagé',
     accGuest:'Un classement pour tous — connecte-toi avec Telegram',
     accIn:n=>n?('Tu es sur le classement sous le nom '+n):'Tu es sur le classement', accOut:'Se déconnecter',
-    dcLogin:'Connecte-toi avec Discord',
+    dcLogin:'Connecte-toi avec Discord', gLogin:'Connecte-toi avec Google',
     setMorse:'Traînée morse', csDefault:'Pilote',
     setMorseHap:'Morse haptique',
     setGrpSound:'Son et air', setGrpGame:'Jeu et écran', setGrpProf:'Profil', moreLbl:'Plus',
@@ -1095,7 +1095,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.469.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.470.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
