@@ -1095,7 +1095,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.468.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.469.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1661,6 +1661,15 @@ function gfxTierByGpu(g){ // карта рынка GPU → тир 0/1/2 (сла�
   if(/immortalis|xclipse|mali-gx/.test(g)) return 2; // топы ARM/Samsung/Dimensity 9500
   const mg=g.match(/mali-g(\d{2,3})/); if(mg){ const n=+mg[1]; return n>=710?2:(n>=76?1:0); } // G710+ флагман, G76-G615 средний, G57/G52/G72 и ниже — слабый
   if(/powervr|sgx|mali-4|mali-t|maleoon/.test(g)) return 0;
+  /* 23.08.2026: картотека знала только мобильные чипы — любой настольный GPU (ноутбук,
+     десктоп) давал null и всегда уходил в запасной путь по ядрам/памяти, где Firefox
+     терял Ультра навсегда (см. ниже). Дискретные Nvidia/AMD — тир 2: даже бюджетная
+     видеокарта последнего десятилетия несравнимо мощнее любого мобильного чипа для
+     простого 2D-канваса этой игры. Intel — тир 1: встроенная графика бывает и старой
+     слабой (HD), и новой приличной (Iris Xe), безопасная середина без гадания по модели. */
+  if(/nvidia|geforce|quadro|rtx|gtx/.test(g)) return 2;
+  if(/radeon|\bamd\b/.test(g)) return 2;
+  if(/intel/.test(g)) return 1;
   return null; // неизвестный чип — решают ядра и память
 }
 /* v1.282.20 «Телеграм сам говорит, какое это железо».
@@ -1686,8 +1695,15 @@ function gfxTier(){ // лучшее, что можем дать именно э�
   if(pc) t=(pc==='LOW'?0:pc==='AVERAGE'?1:2); // слово самого клиента Telegram — сильнее любой эвристики
   if(t===null) t=gfxTierByGpu(gpuRenderer());
   if(t===null){
-    const cores=navigator.hardwareConcurrency||4, mem=navigator.deviceMemory||4;
-    t=(cores>=8&&mem>=6)?2:(cores>=6?1:0);
+    /* 23.08.2026: navigator.deviceMemory — Chrome-only API, в Firefox не существует вовсе
+       (не «мало памяти», а именно «браузер не говорит»). Раньше ||4 тихо превращал
+       «не знаю» в конкретное число 4 — ниже порога Ультра (mem>=6) навсегда, сколько бы
+       ядер ни было у машины. Теперь: память РЕАЛЬНО известна — решаем как раньше; память
+       неизвестна — решаем по одним ядрам, порог для тира 1 мягче (нет второго свидетеля). */
+    const cores=navigator.hardwareConcurrency||4;
+    const memKnown = typeof navigator.deviceMemory==='number';
+    if(memKnown){ const mem=navigator.deviceMemory; t=(cores>=8&&mem>=6)?2:(cores>=6?1:0); }
+    else { t=(cores>=8)?2:(cores>=4?1:0); }
   }
   Store.set('gfxTier',t); Store.set('gfxTierV',GFX_TIER_LOGIC_V);
   return t;
