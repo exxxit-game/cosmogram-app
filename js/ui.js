@@ -4,9 +4,27 @@
    системные события, привязка кнопок, загрузка.
    Зависит от всех модулей выше.
    ============================================================ */
+/* Глоссарий коротких глобалов (см. также core.js) — переименование отклонено 22.08.2026:
+     S — состояние забега (game.js), Q — качество графики (render.js), AC — AudioContext (core.js). */
 
 /* ---------- Экраны + нативные кнопки Telegram (Блок 4) ---------- */
 let screenName='menu'; // menu | game | pause | over | hangar (не "screen" — конфликт с window.screen)
+
+/* v1.400.3 «Замок держит дверь»: боевой крэш v1.284.22 (Uncaught TypeError:
+   Cannot read properties of null (reading 'addEventListener'), ui.js:1133,
+   вердикт «замок закрыт — не пройден «Полёт без рук»»). Раньше 51 привязка
+   кнопок шла напрямую $('id').addEventListener(...) без проверки: один
+   отсутствующий в DOM элемент (устаревший закэшированный index.html при
+   новом ui.js, недогрузившаяся разметка) ронял весь boot-скрипт целиком —
+   ни один обработчик после места падения не навешивался, startLoop() в
+   хвосте файла не вызывался, игра не взлетала вовсе. Один общий вход:
+   элемент есть — вешаем как раньше; элемента нет — тихо пропускаем и
+   сигналим в «Почту неба», чтобы пропажа была видна, а не убивала игру. */
+function wireOn(id, ev, fn){
+  const el = $(id);
+  if (el){ el.addEventListener(ev, fn); }
+  else if (typeof BEACON!=='undefined' && BEACON.signal){ BEACON.signal('dom_missing', id); }
+}
 function hideMain(){ // v1.62.0: синяя MainButton дублировала экранные кнопки — всегда прячем
   if(tg&&tg.MainButton){ try{ tg.MainButton.hide(); }catch(e){} }
 }
@@ -446,16 +464,32 @@ function gameOver(){
      а не украшение: пока результат заявлен в общей таблице, его должно быть можно посмотреть
      и воспроизвести. Скрывший призрака по-прежнему невидим чужим (сервер спрашивает
      share_ghost при выдаче) — но улика существует. Страж 128. */
-  if (isRecord && trackForGhost && typeof syncGhostUp==='function')
-    afterSubmit.then(()=>syncGhostUp({category:cat, track:trackForGhost, skin:ghSkin, best:sc, seed:ghSeed}));
+function ghostUpload(category, track, skin, best, seed){
+  /* v1.400.4 «Лента не тонет молча»: syncGhostUp() в sync.js честно возвращает true/false
+     по ответу сервера (r.ok — включая отказ 403 unverified, когда best разошёлся с тем,
+     что реально осело в scores после серверных ограничителей). Но раньше этот результат
+     никто не читал: afterSubmit.then(()=>syncGhostUp(...)) без .then(ok=>...) и без .catch.
+     Неудачная загрузка пропадала бесследно — рекорд навсегда оставался без ленты до
+     следующего личного рекорда в этой категории. В боевой базе на 12.08.2026: 30 из 35
+     рекордов без ленты вообще. Теперь неудача видна — и в самописце, и в «Почте неба». */
+  if (typeof syncGhostUp!=='function') return Promise.resolve();
+  return syncGhostUp({category, track, skin, best, seed}).then(ok=>{
+    if (ok) return;
+    if (typeof BB!=='undefined' && BB.log) BB.log('ghost','upload failed: '+category);
+    if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('ghost_fail', category);
+  });
+}
+  if (isRecord && trackForGhost)
+    afterSubmit.then(()=>ghostUpload(cat, trackForGhost, ghSkin, sc, ghSeed));
   // v1.280.0 «Хартия»: дистанция — тоже честная категория с призраком, отдельно от того, каким способом её пролетели
-  if (isDistRecord && trackForGhost && typeof syncGhostUp==='function')
-    afterSubmit.then(()=>syncGhostUp({category:'dist', track:trackForGhost, skin:ghSkin, best:distM, seed:ghSeed}));
-  // v1.100.1 «Трибуна чемпиона»: прыжок дня уходит в зал — результат всегда, лента (коридорные координаты) — если призраки не скрыты
+  if (isDistRecord && trackForGhost)
+    afterSubmit.then(()=>ghostUpload('dist', trackForGhost, ghSkin, distM, ghSeed));
+  // v1.100.1 «Трибуна чемпиона»: прыжок дня уходит в зал — результат всегда, лента (коридорные координаты) едет тоже всегда
+  // (22.08.2026: скрыть её больше нельзя — тот же принцип «улика, не украшение», что и у обычных призраков)
   if (S.mode==='daily' && sc>0 && !S.wasRestored && rec.length>=20 && // v1.282.20: восстановленный прыжок дня в зал не идёт
     typeof syncDailySubmit==='function' && typeof ghostPackDaily==='function')
     syncDailySubmit({ day:S.dailyDay||trackDayKey(), score:sc, skin:S.skin, star:!!S.goldStar,
-      track: Store.get('shareGhost',1) ? ghostPackDaily() : undefined });
+      track: ghostPackDaily() });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
     const rankCat=cat; // v1.280.0: та же категория, что и везде — раньше здесь отдельно повторялась своя логика, включая пропущенную ветку keys
@@ -1003,6 +1037,7 @@ function audioKeep(){
      музыкой, но включёнными звуками не получал ни жестового пробуждения, ни двухсекундной
      самопроверки — то есть после звонка на iPhone у него молчали и звуки тоже. */
   audio(); // создание/пробуждение контекста — в жесте надёжнее всего
+  if (typeof audioSample==='function') audioSample(); // 22.08.2026: тот же тик — замер «время идёт?» для audioVerdict()
   if (MUTED || !MUSIC_ON) return;
   if (S.running) music.start('game');
   else if (screenName==='menu') music.start('menu');
@@ -1045,13 +1080,13 @@ if (tg && tg.onEvent){
 }
 
 /* ---------- Привязка кнопок ---------- */
-$('startBtn').addEventListener('click', runStart); // в выбранной дисциплине (v1.42.0)
-$('retryBtn').addEventListener('click', retryRun);
-$('watchBtn').addEventListener('click', ()=>{ // v1.94.0 «Театр призраков» Т1: смотрим свой прыжок дня на том самом небе
+wireOn('startBtn', 'click', runStart); // в выбранной дисциплине (v1.42.0)
+wireOn('retryBtn', 'click', retryRun);
+wireOn('watchBtn', 'click', ()=>{ // v1.94.0 «Театр призраков» Т1: смотрим свой прыжок дня на том самом небе
   if (!theaterTrack || screenName!=='over'){ haptic('light'); return; } // билет снят на финише забега дня — без него дверь не открывается
   theaterChamp=null; runMode='theater'; startGame(); haptic('light');
 });
-$('tribuneBtn').addEventListener('click', ()=>{ // v1.100.1 «Трибуна чемпиона»: спектакль — так сегодня летел лучший (только после твоей посадки, дверь сторожит сервер)
+wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпиона»: спектакль — так сегодня летел лучший (только после твоей посадки, дверь сторожит сервер)
   if (!theaterTrack || screenName!=='over'){ haptic('light'); return; } // тот же билет: день должен быть завершён
   haptic('light');
   const day=S.dailyDay||trackDayKey(); // v1.282.20: трибуна спрашивает чемпиона того же дня, что и трасса
@@ -1071,8 +1106,8 @@ $('tribuneBtn').addEventListener('click', ()=>{ // v1.100.1 «Трибуна ч�
     runMode='theater'; startGame();
   });
 });
-$('modesBtn').addEventListener('click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
-$('modesBack').addEventListener('click', ()=>{ sfx.click(); setScreen('menu'); });
+wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
+wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 [['modeDaily','daily'],['modeBullet','bullet'],['modeSpeedrun','speedrun']].forEach(function(pair){
   $(pair[0]).addEventListener('click', ()=>{
     if (pair[1]==='daily'){ const dr=Store.get('dailyRun',null); if ((dr&&dr.d===trackDayKey()&&dr.done)||dailyDoneHas(trackDayKey())){ haptic('light'); return; } } // v1.282.20: сверяемся и с журналом дней // v1.93: дверь закрыта до завтра — табличка на ней всё говорит
@@ -1080,15 +1115,15 @@ $('modesBack').addEventListener('click', ()=>{ sfx.click(); setScreen('menu'); }
 });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
-$('modeForge').addEventListener('click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы
-$('menuBtn').addEventListener('click', toMenu);
-$('pauseBtn').addEventListener('click', pauseGame);
-$('resumeBtn').addEventListener('click', resumeGame);
-$('restartBtn').addEventListener('click', ()=>{ if(runMode==='daily'&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами
-$('pauseMenuBtn').addEventListener('click', toMenu);
-$('settingsBtn').addEventListener('click', ()=>openSettings('menu'));
-$('pauseSettingsBtn').addEventListener('click', ()=>openSettings('pause'));
-$('settingsBackBtn').addEventListener('click', closeSettings);
+wireOn('modeForge', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы
+wireOn('menuBtn', 'click', toMenu);
+wireOn('pauseBtn', 'click', pauseGame);
+wireOn('resumeBtn', 'click', resumeGame);
+wireOn('restartBtn', 'click', ()=>{ if(runMode==='daily'&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами
+wireOn('pauseMenuBtn', 'click', toMenu);
+wireOn('settingsBtn', 'click', ()=>openSettings('menu'));
+wireOn('pauseSettingsBtn', 'click', ()=>openSettings('pause'));
+wireOn('settingsBackBtn', 'click', closeSettings);
 /* v1.103.0 «Тихий нуль»: лампочка-диод дыхания компасов на строке калибровки.
    Зелёный — оба дышат; янтарь — один спит или молчит (наклон рулит, запаса нет);
    красный — датчик молчит, руль только пальцем. Пульс — раз в секунду и только
@@ -1102,8 +1137,8 @@ function calLampUpdate(){
   l.dataset.state=st;
   l.title=(st==='green'?L.lampGreen:(st==='amber'?L.lampAmber:L.lampRed));
 }
-$('setCalibBtn').addEventListener('click', calibrateTilt);
-$('setSoundBtn').addEventListener('click', ()=>{
+wireOn('setCalibBtn', 'click', calibrateTilt);
+wireOn('setSoundBtn', 'click', ()=>{
   MUTED=!MUTED; Store.set('muted',MUTED?1:0); soundLabel(); haptic('light'); if(!MUTED) sfx.click();
   if(MUTED){ music.stop(.3); engine.stop(); } // звук выключен — молчит всё
   else { if(MUSIC_ON) music.start(screenName==='game'?'game':'menu'); if(S.running&&!S.paused) engine.start(); }
@@ -1131,13 +1166,13 @@ function canvasFilterSync(){ // v1.280.0: класс на самом canvas — 
   cv.classList.toggle('hc', CONTRAST);
   cv.classList.toggle('cb', COLORBLIND);
 }
-$('setContrastBtn').addEventListener('click', ()=>{
+wireOn('setContrastBtn', 'click', ()=>{
   CONTRAST=!CONTRAST; Store.set('contrast',CONTRAST?1:0); contrastLabel(); canvasFilterSync(); haptic('light'); sfx.click();
 });
-$('setColorblindBtn').addEventListener('click', ()=>{
+wireOn('setColorblindBtn', 'click', ()=>{
   COLORBLIND=!COLORBLIND; Store.set('colorblind',COLORBLIND?1:0); colorblindLabel(); canvasFilterSync(); haptic('light'); sfx.click();
 });
-$('setGyroBtn').addEventListener('click', ()=>{
+wireOn('setGyroBtn', 'click', ()=>{
   const budet = !((typeof gyroRul==='function') ? gyroRul() : true);
   Store.set('gyroOn', budet?1:0);
   /* Выключили посреди живого забега — руль обязан отпуститься сейчас, а не на следующем
@@ -1146,24 +1181,24 @@ $('setGyroBtn').addEventListener('click', ()=>{
   if(!budet && typeof input!=='undefined'){ input.tiltX=0; input.tiltY=0; input.useGyro=false; }
   gyroRowLabel(); haptic('light'); sfx.click();
 });
-$('setMusicBtn').addEventListener('click', ()=>{
+wireOn('setMusicBtn', 'click', ()=>{
   MUSIC_ON=!MUSIC_ON; Store.set('music',MUSIC_ON?1:0); musicLabel(); haptic('light'); sfx.click();
   if(!MUSIC_ON) music.stop(.3);
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
-$('setLangBtn').addEventListener('click', ()=>{
+wireOn('setLangBtn', 'click', ()=>{
   const order=['auto','ru','en','es','pt','fr']; // v1.108.1: добавляются языки по мере перевода
   langPref=order[(order.indexOf(langPref)+1)%order.length];
   Store.set('lang',langPref); applyLangPref(); applyLang(); refreshMenu(); langLabel(); sfx.click();
 });
-$('diagBtn').addEventListener('click', ()=>{ // v1.66.3: сервисный центр — отдельный экран, не спойлер
+wireOn('diagBtn', 'click', ()=>{ // v1.66.3: сервисный центр — отдельный экран, не спойлер
   setScreen('diag'); diagLastT=0; diagBuild(); gyroStatus(); // свежие галочки и строка датчика на входе
   /* 13.08.2026: спойлер закрываем на каждом входе. Иначе один раз открытое «Ещё» остаётся
      открытым навсегда, и экран возвращается к тому самому отчёту, от которого мы уходим. */
   { const b=$('diagMoreBox'); if(b){ b.classList.add('hidden'); $('diagMoreBtn').classList.remove('open'); } }
   haptic('light'); sfx.click();
 });
-$('diagBackBtn').addEventListener('click', ()=>{ setScreen('settings'); sfx.click(); });
+wireOn('diagBackBtn', 'click', ()=>{ setScreen('settings'); sfx.click(); });
 // --- «Сервисный центр» (v1.5.3): игра сама ставит диагноз и предлагает лекарство из готовых инструментов ---
 function diagRows(){
   const R=[]; const now=performance.now();
@@ -1237,7 +1272,7 @@ function diagBuild(){
   const rare=$('diagListRare');
   if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
 }
-$('diagMoreBtn').addEventListener('click', ()=>{ // тот же спойлер, что «Ещё» в настройках
+wireOn('diagMoreBtn', 'click', ()=>{ // тот же спойлер, что «Ещё» в настройках
   const b=$('diagMoreBox'); b.classList.toggle('hidden');
   const open=!b.classList.contains('hidden');
   $('diagMoreBtn').classList.toggle('open', open);
@@ -1278,7 +1313,7 @@ function diagReport(){
   Ln.push('lang: '+LANG);
   return Ln.join('\n');
 }
-$('diagVibroBtn').addEventListener('click', ()=>{ // v1.60.0: длинный сильный сигнал + честный диагноз канала
+wireOn('diagVibroBtn', 'click', ()=>{ // v1.60.0: длинный сильный сигнал + честный диагноз канала
   sfx.click();
   const ch=typeof vibroChannel==='function'?vibroChannel():0;
   $('diagVibroStat').textContent = ch===2?L.vibChTg : ch===1?L.vibChWeb : L.vibChNone;
@@ -1317,12 +1352,12 @@ $('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
   setTimeout(()=>skazat(false), 1200); // молчащий буфер: обещание не может висеть без ответа
 });
 
-$('diagSupportBtn').addEventListener('click', ()=>{
+wireOn('diagSupportBtn', 'click', ()=>{
   sfx.click(); haptic('light');
   try{ if (typeof tg!=='undefined'&&tg&&tg.openTelegramLink) tg.openTelegramLink(SUPPORT_URL); else window.open(SUPPORT_URL,'_blank'); }
   catch(e){ try{ window.open(SUPPORT_URL,'_blank'); }catch(e2){} }
 });
-$('moreBtn').addEventListener('click', ()=>{ // редкое — калибровка, позывной, диагностика, «Об игре» (v1.63.0)
+wireOn('moreBtn', 'click', ()=>{ // редкое — калибровка, позывной, диагностика, «Об игре» (v1.63.0)
   const b=$('moreBox'); b.classList.toggle('hidden'); const open=!b.classList.contains('hidden');
   $('moreBtn').classList.toggle('open', open);
   if (open){ try{ $('moreBtn').scrollIntoView({block:'nearest'}); }catch(e){} }
@@ -1344,18 +1379,18 @@ SET_GRPS.forEach(([gId,pId])=>{
     haptic('light'); sfx.click();
   });
 });
-$('aboutBtn').addEventListener('click', ()=>{
+wireOn('aboutBtn', 'click', ()=>{
   $('aboutBox').classList.toggle('hidden');
   $('aboutBtn').classList.toggle('open', !$('aboutBox').classList.contains('hidden')); haptic('light');
 });
 function vibroLabel(){ rowSw('setVibroBtn', VIBRO); setWellFill(); }
-$('setVibroBtn').addEventListener('click', ()=>{
+wireOn('setVibroBtn', 'click', ()=>{
   VIBRO=!VIBRO; Store.set('vibro',VIBRO?1:0); vibroLabel(); if(VIBRO) haptic('medium');
 });
 function gfxModes(){ return ['auto','low','med','high'].concat(gfxUltraOk()?['ultra']:[]); } // v1.35.0: четыре честных ступени; «Ультра» в цикле только у флагманов
 function gfxLabel(){ rowV('setGfxBtn',
   (Q.mode==='auto'?L.gfxAuto:(Q.mode==='low'?L.gfxLow:(Q.mode==='med'?L.gfxMed:(Q.mode==='ultra'&&gfxUltraOk()?L.gfxUltra:L.gfxHigh))))); setWellFill(); }
-$('setGfxBtn').addEventListener('click', ()=>{
+wireOn('setGfxBtn', 'click', ()=>{
   const ms=gfxModes(); Q.mode=ms[(ms.indexOf(Q.mode)+1)%ms.length];
   Store.set('gfx',Q.mode); gfxCap(); resize(); // HD-резолюция следует за режимом
   gfxLabel(); haptic('light'); sfx.click();
@@ -1366,7 +1401,7 @@ function aboutFill(){ $('aboutBox').innerHTML='Cosmogram · v'+GAME_VERSION+'<br
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
   const o=$('setGyroOffBtn'); if(o){ o.classList.toggle('hidden', !has || !gyroUnlocked()); rowSw('setGyroOffBtn', gyroUnlocked()); } } // v1.106.0 «Штурман по желанию»: ряд-выключатель виден только при открытом замке
-$('gyroUnlockBtn').addEventListener('click', async ()=>{ // открытие «Полёта без рук» из настроек — тем же ритуалом: разрешение + «держи ровно»
+wireOn('gyroUnlockBtn', 'click', async ()=>{ // открытие «Полёта без рук» из настроек — тем же ритуалом: разрешение + «держи ровно»
   audio(); sfx.click();
   if (NEEDS_TILT_PERMISSION){ let r=''; try{ r=await DeviceOrientationEvent.requestPermission(); }catch(e){ r=''; }
     if (r!=='granted'){ toast(L.noTilt,'rgba(255,159,176,.5)'); return; } }
@@ -1376,7 +1411,7 @@ $('gyroUnlockBtn').addEventListener('click', async ()=>{ // открытие «�
   if (typeof calibrateTilt==='function') calibrateTilt(); else toast(L.gyroUnlockedOk,'rgba(143,255,159,.5)');
   haptic('success');
 });
-$('setGyroOffBtn').addEventListener('click', ()=>{ // v1.106.0 «Штурман по желанию»: запереть замок обратно — штурвал пальцу; рекорды гироскопа священны, не трогаем
+wireOn('setGyroOffBtn', 'click', ()=>{ // v1.106.0 «Штурман по желанию»: запереть замок обратно — штурвал пальцу; рекорды гироскопа священны, не трогаем
   Store.set('gyroUnlocked',0);
   if (typeof calReset==='function') calReset(false,true,'gyro-lock'); // при переоткрытии ноль найдём заново — только из настоящей тишины (закон v1.100.3)
   refreshGyroLock();
@@ -1388,19 +1423,19 @@ $('setGyroOffBtn').addEventListener('click', ()=>{ // v1.106.0 «Штурман 
    противоположное тому, что игрок видит. Пока он не трогал тумблер, состояние 'auto':
    первые три забега тень есть, дальше нет, и переключатель честно это отражает сам. */
 function againLabel(){ rowSw('setAgainBtn', typeof ghostActive==='function' ? ghostActive() : true); }
-$('setAgainBtn').addEventListener('click', ()=>{
+wireOn('setAgainBtn', 'click', ()=>{
   const bylo = (typeof ghostActive==='function') ? ghostActive() : true;
   Store.set('ghostAgain', bylo ? 0 : 1);
   againLabel();
   haptic('light'); sfx.click();
 });
-$('setBeaconBtn').addEventListener('click', ()=>{ // v1.107.0 «Почта неба»: честный выключатель — выкл значит молчание (даже очередь не копится)
+wireOn('setBeaconBtn', 'click', ()=>{ // v1.107.0 «Почта неба»: честный выключатель — выкл значит молчание (даже очередь не копится)
   const on = Store.get('beaconOn',1)===1 ? 0 : 1;
   Store.set('beaconOn',on);
   rowSw('setBeaconBtn', on===1);
   haptic('light'); sfx.click();
 });
-$('tiltBtn').addEventListener('click', ()=>{
+wireOn('tiltBtn', 'click', ()=>{
   audio();
   try{
     DeviceOrientationEvent.requestPermission().then(r=>{
@@ -1414,21 +1449,21 @@ $('tiltBtn').addEventListener('click', ()=>{
 // чувствительность гироскопа (планшеты: меньший угол наклона для поворота)
 const SENS_STEPS=[0.75,1,1.25,1.5];
 function sensLabel(){ rowV('setSensBtn','×'+input.sens); setWellFill(); }
-$('setSensBtn').addEventListener('click', ()=>{
+wireOn('setSensBtn', 'click', ()=>{
   const i=SENS_STEPS.indexOf(input.sens);
   input.sens=SENS_STEPS[(i+1)%SENS_STEPS.length];
   Store.set('sens',input.sens); sensLabel(); haptic('light'); sfx.click();
 });
-$('overDetailsBtn').addEventListener('click', ()=>{ // спойлер «Подробности полёта»: мотивация, ранг, паспорт и сетка — по желанию (v1.44.0; v1.84.0 — вся вторая сцена)
+wireOn('overDetailsBtn', 'click', ()=>{ // спойлер «Подробности полёта»: мотивация, ранг, паспорт и сетка — по желанию (v1.44.0; v1.84.0 — вся вторая сцена)
   const hid=$('overMore').classList.toggle('hidden');
   $('overDetailsBtn').classList.toggle('open',!hid); sfx.click(); haptic('light'); });
-$('hangarBtn').addEventListener('click', ()=>{ renderHangar(); setScreen('hangar'); sfx.click(); });
-$('hangarBackBtn').addEventListener('click', toMenu);
+wireOn('hangarBtn', 'click', ()=>{ renderHangar(); setScreen('hangar'); sfx.click(); });
+wireOn('hangarBackBtn', 'click', toMenu);
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
 function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }
 function closeAch(){ toMenu(); }
-$('achBtn').addEventListener('click', openAch);
-$('achBackBtn').addEventListener('click', closeAch);
+wireOn('achBtn', 'click', openAch);
+wireOn('achBackBtn', 'click', closeAch);
 /* Вкладка «🌍 Топ»: честная таблица (модуль sync.js) */
 let topCat='touch';
 function achTabSel(mine){
@@ -1436,8 +1471,8 @@ function achTabSel(mine){
   $('achMineWrap').classList.toggle('hidden',!mine); $('achTopWrap').classList.toggle('hidden',mine);
   if(!mine) renderTop();
 }
-$('tabMine').addEventListener('click',()=>{ achTabSel(true); sfx.click(); });
-$('tabTop').addEventListener('click',()=>{ achTabSel(false); sfx.click(); });
+wireOn('tabMine', 'click',()=>{ achTabSel(true); sfx.click(); });
+wireOn('tabTop', 'click',()=>{ achTabSel(false); sfx.click(); });
 document.querySelectorAll('.topCat').forEach(b=>b.addEventListener('click',()=>{
   topCat=b.dataset.cat;
   document.querySelectorAll('.topCat').forEach(x=>x.classList.toggle('sel',x===b));
@@ -1479,7 +1514,7 @@ function syncAuthChanged(){ // зовёт sync.js после входа видж
   if(typeof syncDailyFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncDailyFlush().catch(()=>{});
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
 }
-$('accOutBtn').addEventListener('click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
+wireOn('accOutBtn', 'click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
 
 /* Свой рекорд в этой категории — тот, что лежит на устройстве. Нужен гостю: сервер про него
    не знает и знать не может, а «ты был бы 9-м из 15» — единственное, что превращает чужую
@@ -1582,7 +1617,7 @@ function ghostTakeForeign(){ const f=foreignGhost; foreignGhost=null; return f; 
    cx=true: лента пишется в долях ЭКРАНА (ghostRec: plane.x/W), а коридор чести — 390 мер
    по центру. На телефоне W=390 и это одно и то же, на широком экране — нет: без коридорной
    укладки чужой полёт ушёл бы за стены. Тот же приём, что у Трибуны чемпиона. */
-$('topList').addEventListener('click', e=>{
+wireOn('topList', 'click', e=>{
   const b=e.target.closest('.topWatch'); if(!b) return;
   const pid=Math.floor(Number(b.dataset.wt));
   if(!pid || typeof syncGhostGet!=='function' || b._busy) return;
@@ -1602,7 +1637,7 @@ $('topList').addEventListener('click', e=>{
     runMode='theater'; startGame();
   }).catch(()=>{ b._busy=0; b.innerHTML=ic('play'); });
 });
-$('topList').addEventListener('click', e=>{
+wireOn('topList', 'click', e=>{
   const b=e.target.closest('.topGh'); if(!b) return;
   const pid=Math.floor(Number(b.dataset.gh));
   if(!pid || typeof syncGhostGet!=='function') return;
@@ -1623,8 +1658,6 @@ $('topList').addEventListener('click', e=>{
   });
 });
 
-/* Приватность призрака: Делюсь — трек летит в топ; Скрыт — сервер стирает мои треки */
-function ghostShareLabel(){ rowSw('setGhostBtn', Store.get('shareGhost',1)); }
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */
 function morseLabel(){ rowSw('setMorseBtn', typeof morseOn==='function'&&morseOn()); setWellFill(); }
 function morseHapLabel(){ rowSw('setMorseHapBtn', typeof morseHapOn==='function'&&morseHapOn()); setWellFill(); }
@@ -1646,15 +1679,9 @@ if (csInput) csInput.addEventListener('change', ()=>{ // позывной: бе�
   csInput.placeholder=myCallsign(); haptic('light'); setWellFill(); // v1.91.0: позывной сразу звучит в шёпоте профиля
 });
 function csFill(){ if(!csInput) return; csInput.value=Store.get('callsign',''); csInput.placeholder=typeof myCallsign==='function'?myCallsign():''; }
-$('setGhostBtn').addEventListener('click', ()=>{
-  const v=Store.get('shareGhost',1)?0:1; Store.set('shareGhost',v);
-  if (typeof syncGhostShare==='function') syncGhostShare(!!v); // выкл — сервер удаляет мои призраки сразу
-  ghostShareLabel(); haptic('light'); sfx.click();
-});
-
 // v1.96.0 «Одна дверь»: кнопка «Поделиться» с итогов ушла — текстовая дверь живёт внутри карточки (cardShare, card.js).
 // Особая вода своей трассы (mapShare) переехала туда же.
-$('duelBtn').addEventListener('click', ()=>{ // вызвать друга: deep-link, планку друг получит с сервера
+wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, планку друг получит с сервера
   const pid=(typeof syncMyId==='function')?syncMyId():null;
   if(!pid){ toast(L.duelTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; } // вне мини-аппа нет верифицированной личности
   haptic('success'); sfx.click();
@@ -1668,12 +1695,12 @@ $('duelBtn').addEventListener('click', ()=>{ // вызвать друга: deep-
   if(tg&&tg.openTelegramLink){ try{ tg.openTelegramLink(url); sent(); return; }catch(e){} }
   const w=window.open(url,'_blank'); if(w) sent();
 });
-$('inviteBtn').addEventListener('click', shareScore);
+wireOn('inviteBtn', 'click', shareScore);
 function openChannel(){ // сообщество: нативно в Telegram, иначе новая вкладка
   try{ if(tg && tg.openTelegramLink){ tg.openTelegramLink(CHANNEL_URL); return; } }catch(e){}
   try{ window.open(CHANNEL_URL,'_blank'); }catch(e){}
 }
-$('channelBtn').addEventListener('click', openChannel); // v1.84.0: на сцене итогов канал не кричит — он дома, в меню
+wireOn('channelBtn', 'click', openChannel); // v1.84.0: на сцене итогов канал не кричит — он дома, в меню
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
@@ -1735,7 +1762,7 @@ function applyLang(){
   $('csCap').textContent=L.csCap; // v1.66.3: подпись позывного в «Профиле»
   $('diagMoreBtn').textContent=L.moreLbl; // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   $('diagSupportBtn').textContent=L.diagSupportBtn;
-  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); ghostShareLabel(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
@@ -1743,7 +1770,7 @@ function applyLang(){
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
-   ['setGhostBtn','setGhost'],['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
+   ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   $('diagVibroBtn').textContent=L.diagVibro;
 }
 /* баланс сетки 2 колонки: нечётная последняя видимая кнопка растягивается на всю ширину (v1.34.0) */

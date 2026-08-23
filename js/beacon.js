@@ -48,12 +48,13 @@ const BEACON=(()=>{
     }catch(e){ return ''; }
   }
   function postcard(kind,msg){
-    let verdict='', tail='';
+    let verdict='', tail='', audioV='';
     try{ verdict=bbVerdict(); }catch(e){}
+    try{ audioV=audioVerdict(); }catch(e){}
     try{ tail=BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     return { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
-      msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, tail:tail,
+      msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, audio:audioV, tail:tail,
       ua:(navigator.userAgent||'').slice(0,200), anon:anon(), ts:Date.now() };
   }
   /* v1.282.13: отправка с поводком и честным чтением ответа.

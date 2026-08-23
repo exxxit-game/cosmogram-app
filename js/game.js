@@ -3,6 +3,12 @@
    GAME: состояние, пулы (с капами), спавн, логика, коллизии, HUD.
    Зависит от core.js и input.js.
    ============================================================ */
+/* Глоссарий коротких глобалов (см. также core.js) — переименование отклонено 22.08.2026:
+     S  — центральное состояние забега, объявлено ниже. Ключевые поля: running/paused,
+          score/combo/comboMax, speed/dist, lives/shield/magnet/slowmo/dash, timeScale,
+          mode ('classic'|...), skin/hueShift, gyroSec/manSec. Полный список — в самом
+          объявлении const S={...} чуть ниже.
+     Q  — профиль качества графики (render.js). AC — AudioContext (core.js). */
 
 /* ---------- Кэш DOM-ссылок (не дёргаем getElementById в тиках) ---------- */
 const elScore=$('score'), elCombo=$('combo'), elLivesC=$('livesCanvas'),
@@ -439,6 +445,19 @@ function ghostStep(){ // призрак идёт по своей траекто�
 function fullRisk(){ return S.slowmo<=0 && S.bt<=0 && S.dash<=0 && S.shield<=0; }
 
 /* ================= UPDATE (fixed step 1/60) ================= */
+/* 22.08.2026 «Впритык только когда честно мимо»: жалоба владельца — «впритык»
+   засчитывался, когда препятствие само же тебя ударило мгновение спустя. Корень —
+   проверка была чисто дистанционной: объект на прямом сближении проходит кольцо
+   «впритык» на пути К игроку, а не мимо него, и через 1-2 тика (16-32мс) входит в
+   радиус удара — тот же объект. Лекарство (исследование near-miss паттернов,
+   closing-velocity gate): считать «впритык» только когда объект уже ОТДАЛЯЕТСЯ —
+   dot(dr,dv) >= 0, где dr — вектор от игрока к объекту, dv — относительная скорость.
+   Отрицательный dot = сближение (объект летит НА игрока, впритык рано); неотрицательный
+   = момент сближения уже пройден, объект уходит — честный грейз. */
+function isReceding(dx,dy,dvx,dvy,pvx,pvy){
+  const rvx=dvx-pvx, rvy=dvy-pvy;
+  return (dx*rvx + dy*rvy) >= 0;
+}
 function update(dt){
   input.useGyro = gyroUnlocked() && performance.now()-input._t<600; // сторож + замок: гироскоп рулит только после «Полёта без рук», молчащий датчик не держит старый наклон
   let ts = S.slowmo>0 ? .45 : 1;
@@ -619,7 +638,7 @@ function update(dt){
       for (const sgn of [-1,1]){
         const px=o.x+sgn*o.gap/2, gdx=px-plane.x, gdy=o.y-plane.y, gd2=gdx*gdx+gdy*gdy;
         if (gd2<pr*pr) ghit=true;
-        else if (!o.nm && gd2<(pr+24)*(pr+24)) gnm=true;
+        else if (!o.nm && gd2<(pr+24)*(pr+24) && isReceding(gdx,gdy,o.vx||0,o.vy,plane.vx,plane.vy)) gnm=true;
       }
       if (S.invuln<=0 && ghit){
         if (S.dash>0){ // Таран: ворота разбиваются об самолётик (v1.40.0, логика v1.19.0)
@@ -677,7 +696,7 @@ function update(dt){
           killIdx(obstacles,i,poolOb);
           if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':'+S.lastHitKind); startDying(); return; } // v1.108.1: волна+причина, анонимно — балансовая телеметрия
         }
-      } else if (!o.nm && d2 < (rr+24)*(rr+24)){ // near miss: пролетел вплотную
+      } else if (!o.nm && d2 < (rr+24)*(rr+24) && isReceding(dx,dy,o.vx||0,o.vy,plane.vx,plane.vy)){ // near miss: пролетел вплотную и уже уходит — не летит на таран
         o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1;
         sfx.nearMiss(); // свист пролёта
         haptic('light');

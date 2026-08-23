@@ -3,6 +3,15 @@
    CORE: Telegram init, утилиты, i18n, хранилище, звук, тактиль,
    wake lock, канвас/вьюпорт, тосты. Не зависит от других модулей.
    ============================================================ */
+/* Глоссарий коротких глобалов (22.08.2026): переименование отклонено — риск 638+ правок
+   в защищённых файлах ядра не оправдан ради одной лишь читаемости. Вместо этого — расшифровка
+   здесь и в шапках других файлов, где эти имена используются.
+     AC — AudioContext (объявлен ниже, в этом файле). Создаётся/возобновляется строго по
+          жесту игрока; может быть null, 'closed', 'suspended', 'interrupted', 'running'.
+     S  — центральное состояние забега (running, paused, score, combo, speed, dist, lives,
+          shield/magnet/slowmo/dash, timeScale, skin...). Объявлено в game.js.
+     Q  — профиль адаптивного качества графики (level 0-3, fps, mode, служебные счётчики
+          автоподстройки). Объявлено в render.js. */
 
 /* v1.109.2 «Подпись не едет в чужие руки», партия 16 — второй заход.
    Telegram кладёт tgWebAppData (user, auth_date, HASH — верительную грамоту игрока)
@@ -270,6 +279,9 @@ const I18N = {
     bbVNoZero:'ноль не принят — калибровка не завершилась', bbVSkew:'ноль перекошен:',
     bbVStale:'пакеты датчика старше 0.6с — руль спит', bbVOk:'цепь цела — гироскоп рулит',
     bbVStorm:'канал штормит — штурвал переходит к тихому',
+    audioVMuted:'звук выключен настройкой', audioVOff:'музыка выключена настройкой', audioVNoCtx:'аудио-контекст не создан',
+    audioVClosed:'аудио-контекст закрыт браузером', audioVSuspended:'аудио-контекст не проснулся:', audioVStalled:'контекст жив, но время не идёт — тихая заморозка',
+    audioVNoTheme:'тема не выбрана — музыка не запущена', audioVOk:'цепь цела — музыка играет',
     diagWorld:'Мир неба:', diagSheet:'Лист холста:', diagMotion:'Бережный режим:', diagInk:'Чернила:', diagOn:'вкл', diagOff:'выкл',
     diagZeroIdle:'Нуль появится сам на первых секундах полёта',
     diagFpsOk:'Кадры в норме:', diagFpsLow:'Мало кадров:', diagFixGfx:'Снизить графику',
@@ -313,7 +325,6 @@ const I18N = {
     setWellAll:'Всё звучит', setWellSome:'Кое-что приглушено', setWellNone:'Тишина', // v1.91.0: шёпот самочувствия групп
     csCap:'Позывной — звучит в морзянке и виброэфире',
     diagVibro:'Проверка виброэфира', vibChTg:'Канал: Telegram API — импульсы отчётливые', vibChWeb:'Канал: только системная вибрация — предел веба', vibChNone:'Вибрация недоступна — проверь настройки телефона',
-    setGhost:'Призрак',
     again:'ЕЩЁ РАЗ?', // подпись над своей тенью и имя строки настроек: текст один — ключ один
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Призрак недоступен: владелец скрыл трек',
     topWatch:'Смотреть этот полёт', topWatchNoSky:'Небо того полёта не сохранилось — показать нечего',
@@ -401,6 +412,9 @@ const I18N = {
     bbVNoZero:'zero not set — calibration never finished', bbVSkew:'zero is skewed:',
     bbVStale:'sensor packets older than 0.6s — rudder asleep', bbVOk:'chain intact — gyro is steering',
     bbVStorm:'channel is storming — wheel goes to the calm one',
+    audioVMuted:'sound muted by setting', audioVOff:'music turned off by setting', audioVNoCtx:'audio context not created',
+    audioVClosed:'audio context closed by browser', audioVSuspended:'audio context did not wake up:', audioVStalled:'context alive, but time is not moving — silent freeze',
+    audioVNoTheme:'no theme selected — music not started', audioVOk:'chain intact — music is playing',
     diagWorld:'Sky world:', diagSheet:'Canvas sheet:', diagMotion:'Gentle motion:', diagInk:'Inks:', diagOn:'on', diagOff:'off',
     diagZeroIdle:'Zero sets itself in the first flight seconds',
     diagFpsOk:'FPS ok:', diagFpsLow:'Low FPS:', diagFixGfx:'Lower graphics',
@@ -441,7 +455,6 @@ const I18N = {
     setWellAll:'All sounding', setWellSome:'Partly muted', setWellNone:'Silence', // v1.91.0: group wellness whispers
     csCap:'Callsign — sounds in morse trail and haptic air',
     diagVibro:'Haptic morse test', vibChTg:'Channel: Telegram API — crisp impulses', vibChWeb:'Channel: system vibration only — web limit', vibChNone:'No vibration — check phone settings',
-    setGhost:'Ghost',
     again:'AGAIN?',
     ghostGo:'Fly with this record’s ghost', ghostNone:'Ghost unavailable: the owner hid the track',
     topWatch:'Watch this flight', topWatchNoSky:'That flight’s sky wasn’t saved — nothing to show',
@@ -535,6 +548,9 @@ const I18N = {
     bbVStale:'paquetes del sensor con más de 0.6s — el mando duerme',
     bbVOk:'cadena intacta — el giroscopio controla',
     bbVStorm:'el canal está en tormenta — el mando pasa al tranquilo',
+    audioVMuted:'sonido silenciado por ajuste', audioVOff:'música desactivada por ajuste', audioVNoCtx:'contexto de audio no creado',
+    audioVClosed:'contexto de audio cerrado por el navegador', audioVSuspended:'el contexto de audio no despertó:', audioVStalled:'contexto vivo, pero el tiempo no avanza — congelación silenciosa',
+    audioVNoTheme:'sin tema seleccionado — música no iniciada', audioVOk:'cadena intacta — la música suena',
     diagWorld:'Mundo del cielo:', diagSheet:'Hoja del lienzo:', diagMotion:'Modo suave:', diagInk:'Tintas:',
     diagOn:'activado', diagOff:'desactivado',
     diagZeroIdle:'El cero se fija solo en los primeros segundos de vuelo',
@@ -587,7 +603,7 @@ const I18N = {
     vibChTg:'Canal: API de Telegram — pulsos nítidos',
     vibChWeb:'Canal: solo vibración del sistema — límite de la web',
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
-    setGhost:'Fantasma', topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
+    topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
     again:'¿OTRA VEZ?',
     ghostNone:'Fantasma no disponible: el dueño ocultó la pista',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
@@ -680,6 +696,9 @@ const I18N = {
     bbVStale:'pacotes do sensor com mais de 0.6s — o comando dorme',
     bbVOk:'cadeia intacta — o giroscópio está no comando',
     bbVStorm:'o canal está em tempestade — o comando passa para o calmo',
+    audioVMuted:'som silenciado pela configuração', audioVOff:'música desativada pela configuração', audioVNoCtx:'contexto de áudio não criado',
+    audioVClosed:'contexto de áudio fechado pelo navegador', audioVSuspended:'o contexto de áudio não acordou:', audioVStalled:'contexto vivo, mas o tempo não avança — congelamento silencioso',
+    audioVNoTheme:'nenhum tema selecionado — música não iniciada', audioVOk:'cadeia intacta — a música está tocando',
     diagWorld:'Mundo do céu:', diagSheet:'Folha da tela:', diagMotion:'Modo suave:', diagInk:'Tintas:',
     diagOn:'ligado', diagOff:'desligado',
     diagZeroIdle:'O zero se ajusta sozinho nos primeiros segundos de voo',
@@ -732,7 +751,7 @@ const I18N = {
     vibChTg:'Canal: API do Telegram — pulsos nítidos',
     vibChWeb:'Canal: só vibração do sistema — limite da web',
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
-    setGhost:'Fantasma', topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
+    topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
     again:'DE NOVO?',
     ghostNone:'Fantasma indisponível: o dono escondeu a pista',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
@@ -818,6 +837,9 @@ const I18N = {
     bbVNoZero:'zéro non réglé — calibration jamais terminée', bbVSkew:'le zéro est faussé :',
     bbVStale:'paquets du capteur vieux de plus de 0,6s — gouvernail endormi', bbVOk:'chaîne intacte — le gyroscope pilote',
     bbVStorm:'le canal est en tempête — le volant passe au canal calme',
+    audioVMuted:'son coupé par le réglage', audioVOff:'musique désactivée par le réglage', audioVNoCtx:'contexte audio non créé',
+    audioVClosed:'contexte audio fermé par le navigateur', audioVSuspended:'le contexte audio ne s’est pas réveillé :', audioVStalled:'contexte vivant, mais le temps n’avance pas — gel silencieux',
+    audioVNoTheme:'aucun thème sélectionné — musique non démarrée', audioVOk:'chaîne intacte — la musique joue',
     diagWorld:'Monde du ciel :', diagSheet:'Feuille du canevas :', diagMotion:'Mouvement doux :', diagInk:'Encres :', diagOn:'activé', diagOff:'désactivé',
     diagZeroIdle:'Le zéro se règle seul dans les premières secondes du vol',
     diagFpsOk:'FPS ok :', diagFpsLow:'FPS faible :', diagFixGfx:'Baisser les graphismes',
@@ -858,7 +880,6 @@ const I18N = {
     setWellAll:'Tout sonore', setWellSome:'Partiellement muet', setWellNone:'Silence',
     csCap:'Indicatif — résonne dans la traînée morse et l\u2019air haptique',
     diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
-    setGhost:'Fantôme',
     again:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
     ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Fantôme indisponible : le propriétaire a caché la trace',
     topWatch:'Regarder ce vol', topWatchNoSky:'Le ciel de ce vol n’a pas été enregistré — rien à montrer',
@@ -1041,6 +1062,22 @@ function saneArray(v,def){ return Array.isArray(v)?v:def; }
 
 /* ---------- Звук (Блок 5, WebAudio-синтез — форматы не нужны) ---------- */
 let AC=null;
+/* 22.08.2026 «Тихая заморозка»: WebKit-баг из AUDIO-SYSTEM.md §4.1 — после возврата
+   из фона AudioContext.state продолжает честно врать 'running', а currentTime почти
+   не растёт. Ни одной ошибки при этом не бросается — window.onerror тут бессилен,
+   бесполезно и просто спросить state. Единственный способ поймать — сравнить два
+   замера currentTime во времени. Новый таймер не заводим: цепляемся к уже
+   существующему 6-секундному тику audioKeep() (js/ui.js). */
+let acPrevT=0, acPrevAt=0, acStalled=false;
+function audioSample(){
+  if(!AC || AC.state!=='running') return;
+  const nowAt=performance.now();
+  if(acPrevAt>0){
+    const wallDelta=(nowAt-acPrevAt)/1000, ctxDelta=AC.currentTime-acPrevT;
+    acStalled = wallDelta>1 && ctxDelta < wallDelta*0.3; // время в контексте идёт заметно медленнее настенных часов
+  }
+  acPrevT=AC.currentTime; acPrevAt=nowAt;
+}
 function audio(){ // создавать/возобновлять строго по жесту
   /* v1.282.20: пятое состояние — 'closed'. iOS-WebView вправе закрыть контекст под давлением
      памяти. Тогда AC истинный, значит новый не создаётся никогда, а resume() на закрытом
@@ -1058,7 +1095,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.400.2'; // «Об игре» в настройках — при репортах багов спрашивать её
+const GAME_VERSION='1.415.1'; // «Об игре» в настройках — при репортах багов спрашивать её
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
