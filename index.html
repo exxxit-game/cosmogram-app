@@ -973,7 +973,7 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 12 L2 12 A10 10 0 0 1 12 2 Z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.472.0"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.472.1"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1369,23 +1369,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.472.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.472.0"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.472.0"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.472.0"></script>
-<script defer src="js/game.js?v=1.472.0" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.472.0"></script>
-<script defer src="js/sync.js?v=1.472.0"></script>
-<script defer src="js/render.js?v=1.472.0"></script>
-<script defer src="js/planetarium.js?v=1.472.0"></script>
-<script defer src="js/goldstar.js?v=1.472.0"></script>
-<script defer src="js/music.js?v=1.472.0"></script>
-<script defer src="js/gyro.js?v=1.472.0"></script>
-<script defer src="js/forge.js?v=1.472.0"></script>
-<script defer src="js/adaptive.js?v=1.472.0"></script>
-<script defer src="js/card.js?v=1.472.0"></script>
-<script defer src="js/star.js?v=1.472.0"></script>
-<script defer src="js/ui.js?v=1.472.0"></script>
+<script defer src="js/core.js?v=1.472.1" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.472.1"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.472.1"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.472.1"></script>
+<script defer src="js/game.js?v=1.472.1" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.472.1"></script>
+<script defer src="js/sync.js?v=1.472.1"></script>
+<script defer src="js/render.js?v=1.472.1"></script>
+<script defer src="js/planetarium.js?v=1.472.1"></script>
+<script defer src="js/goldstar.js?v=1.472.1"></script>
+<script defer src="js/music.js?v=1.472.1"></script>
+<script defer src="js/gyro.js?v=1.472.1"></script>
+<script defer src="js/forge.js?v=1.472.1"></script>
+<script defer src="js/adaptive.js?v=1.472.1"></script>
+<script defer src="js/card.js?v=1.472.1"></script>
+<script defer src="js/star.js?v=1.472.1"></script>
+<script defer src="js/ui.js?v=1.472.1"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
@@ -1423,7 +1423,9 @@ window.addEventListener('DOMContentLoaded', function(){
     return;
   }
   if(__bl) __bl.remove();
-  window.__bootReady=1;
+  // v1.472.1: window.__bootReady=1 убран — write-only маяк без единого читателя во всём
+  // проекте (KNOWN-BUGS.md, подтверждено 24.08.2026). Спиннер убирается строкой выше
+  // (__bl.remove()) независимо от этого флага — поведение не меняется.
 });
 </script>
 <script>// PWA выключен до поры (v1.20.0): старые воркеры снимаются, кэши чистятся —
