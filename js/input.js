@@ -526,8 +526,9 @@ function gyroStatusTick(){ // v1.66.1: DOM-диагностика — тольк
   const now=performance.now(); if (now-gyroHudT<300) return; gyroHudT=now;
   gyroStatus();
 }
+let tgOrientUnsupported=false; // 23.08.2026: мост уже сказал «не поддерживается» в этой сессии — пробовать снова бессмысленно
 function gyroKick(){ // идемпотентный перезапуск моста: клиенты Telegram нередко глушат датчик до первого жеста — пинаем при каждом старте забега
-  if (!TG_ORIENT) return false;
+  if (!TG_ORIENT || tgOrientUnsupported) return false; // UNSUPPORTED — платформенный факт, не временная заминка; попытка навсегда останется тщетной
   try { TG_ORIENT.start({refresh_rate:60}); return true; }
   catch(err){ gyroLastErr=('kick:'+String(err&&err.message||err)).slice(0,48); gyroStatus(); return false; }
 }
@@ -535,6 +536,14 @@ function gyroTgFailed(e){ // мост ответил отказом: экскл�
   tgOrientLive=false;
   const r=(e && (e.error||e.message)) || (typeof e==='string'?e:'');
   gyroLastErr=('fail'+(r?':'+r:'')).slice(0,48);
+  /* 23.08.2026: найдено разбором «Почты неба» — у игрока, где мост структурно не
+     поддерживает ориентацию, tgPkt (пожизненный счётчик пакетов) никогда не станет
+     больше нуля, и gyroKick() пытался снова при КАЖДОМ взлёте, до конца игровой жизни
+     этого человека (43 повтора за 7 дней у одного из 21 игрока). Не ломает игру
+     (тач-управление работает штатно), но бессмысленный повтор навсегда — лишний вызов
+     моста. UNSUPPORTED — единственная причина, что запоминаем: она платформенная,
+     не может «передумать» в отличие от отказа разрешения (NEEDS_TILT_PERMISSION). */
+  if (String(r)==='UNSUPPORTED') tgOrientUnsupported=true;
   if(typeof BB!=='undefined') BB.log('tgfail',gyroLastErr); // v1.99.7 «Чёрный ящик»: отказ моста — на ленту
   if (NEEDS_TILT_PERMISSION){ const b=$('tiltBtn'); if(b){ b.classList.remove('hidden'); tiltBtnGone=false; } } // v1.66.1: кнопка снова видна — пакетам позволено её скрыть
   gyroStatus();

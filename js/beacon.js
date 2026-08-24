@@ -47,11 +47,15 @@ const BEACON=(()=>{
       return 'fps:'+fps+' lvl:'+lvl+' tier:'+tier;
     }catch(e){ return ''; }
   }
-  function postcard(kind,msg){
+  function postcard(kind,msg,stack){
     let verdict='', tail='', audioV='';
     try{ verdict=bbVerdict(); }catch(e){}
     try{ audioV=audioVerdict(); }catch(e){}
-    try{ tail=BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
+    /* 23.08.2026: стек вызовов — бесплатно от браузера через e.error.stack, но раньше
+       не читался вовсе, ловилось только сообщение+файл:строка:столбец. Кладём стек
+       ПЕРЕД хвостом чёрного ящика в уже существующем поле tail (лимит 3000 символов
+       на сервере — щедрый, схему БД трогать не пришлось), с явной подписью. */
+    try{ tail=(stack?('стек:\n'+String(stack).slice(0,1200)+'\n---\n'):'')+BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     return { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
       msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, audio:audioV, tail:tail,
@@ -161,12 +165,12 @@ const BEACON=(()=>{
      из текста. fps меняется каждую секунду, значит одна и та же ошибка давала
      десятки разных ключей: закон «одна ошибка — одно письмо за сессию» не работал,
      а сервер считал почти каждое письмо новым типом и слал разработчику «🆕 Новый тип». */
-  function drop(kind,msg,ctx){ if(!on()||sealed()) return; // выкл значит выкл: ни писем, ни очереди; печать — то же молчание
+  function drop(kind,msg,ctx,stack){ if(!on()||sealed()) return; // выкл значит выкл: ни писем, ни очереди; печать — то же молчание
     const key=kind+'|'+String(msg==null?'':msg).slice(0,60);
     if(seen.has(key)) return; seen.add(key); // дедуп: одна ошибка — одно письмо за сессию
     if(kind==='error') errCount++; // v1.108.1: слой 3 считает именно падения, не сигналы-симптомы
     const text=(ctx?'['+ctx+'] ':'')+String(msg==null?'':msg);
-    const q=queue(); q.push(postcard(kind,text));
+    const q=queue(); q.push(postcard(kind,text,stack));
     Store.set('beaconQ',q.slice(-10)); // очередь — не архив: десять последних
     razbudit(); // v1.284.19: не «отправить сейчас», а «прийти, когда дверь откроется» — см. окно вежливости выше
   }
@@ -192,7 +196,14 @@ const BEACON=(()=>{
     const dur=Math.round((Date.now()-sessStart)/1000);
     const pc=postcard('session', perfCtx()+' dur:'+dur+' err:'+errCount);
     try{
-      const blob=new Blob([JSON.stringify(pc)],{type:'application/json'});
+      /* 23.08.2026: раньше здесь стоял тип application/json — не «простой» CORS-тип,
+         значит требовался preflight (OPTIONS) перед самой отправкой. Весь смысл sendBeacon — долететь
+         в момент закрытия страницы; два прохода туда-обратно не всегда успевают,
+         особенно в мобильных WebView. 'text/plain' — «простой» тип, preflight не
+         нужен вовсе. Сервер разбирает тело как JSON независимо от заголовка
+         (req.json()), для него ничего не меняется. Задокументировано в KNOWN-BUGS.md
+         («sessionBeacon не долетает») — лекарство было названо, но не применено. */
+      const blob=new Blob([JSON.stringify(pc)],{type:'text/plain'});
       navigator.sendBeacon(URL, blob);
     }catch(e){}
   }
@@ -202,9 +213,14 @@ const BEACON=(()=>{
   if(typeof window!=='undefined'){
     window.addEventListener('error',e=>{ if(e&&e.message){
       const loc=e.filename?(String(e.filename).split('/').pop()+':'+e.lineno+':'+e.colno):'';
-      drop('error',(loc?loc+' ':'')+e.message, perfCtx());
+      const stack=(e.error && e.error.stack) ? String(e.error.stack) : '';
+      drop('error',(loc?loc+' ':'')+e.message, perfCtx(), stack);
     } });
-    window.addEventListener('unhandledrejection',e=>drop('error','promise: '+String(e&&e.reason), perfCtx()));
+    window.addEventListener('unhandledrejection',e=>{
+      const reason=e && e.reason;
+      const stack=(reason instanceof Error && reason.stack) ? String(reason.stack) : '';
+      drop('error','promise: '+String(reason), perfCtx(), stack);
+    });
   }
   if(typeof window!=='undefined' && typeof Store!=='undefined'){
     setTimeout(()=>razbudit(),4000); // доотправка очереди прошлой сессии — как syncFlush; v1.284.19: через окно вежливости, а не напролом
