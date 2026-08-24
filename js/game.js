@@ -378,7 +378,12 @@ function ghostActive(){
   if (s === 0 || s === '0') return false;
   return (typeof Stats !== 'undefined' && Stats ? saneNumber(Stats.games, 0) : 0) < AGAIN_RUNS;
 }
-function ghostOff(){ ghost=null; ghostOn=false; ghostTagT=0; ghostFade=0; ghostA=0; ghostMorseBuf=[]; ghostMorseArc=0; }
+// v1.472.1: ghostOff() убрана — ноль вызовов во всём проекте (KNOWN-BUGS.md,
+// подтверждено 24.08.2026), и не эквивалентна ни одному из трёх реальных мест сброса
+// тени: не знает про поля мести (ghostForeign/ghostSkin/ghostName/ghostPid/ghostBest/
+// ghostCat), а её вызов в тике полёта (ghostStep) нарушил бы Zero-GC (аллокация
+// ghostMorseBuf=[] каждый кадр). Сами три места не тронуты — расхождение между ними
+// осознанное, разобрано отдельно.
 
 /* ---------- Морзянка (v1.53.0): шлейф пишет позывной ----------
    morseRec кладёт точку каждый кадр с накопленной дугой пути — рендер режет её
