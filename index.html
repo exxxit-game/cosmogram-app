@@ -861,18 +861,24 @@ button, input, select, textarea { text-transform:inherit; }
    вид: их официальный цвет («блёрпл» #5865F2) и форма-пилюля, той же высоты и того же
    скругления, что и виджет Telegram рядом — не подгоняем один под другой по цвету
    (у каждого сервиса свой), но уравниваем по опрятности и весу на экране. */
-.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
+/* 24.08.2026 «Специфичность съела бренд»: кнопка получает 4 класса — btn ghost small dcBtn.
+   .btn.ghost (два класса в селекторе) всегда сильнее .dcBtn (один класс) по правилам CSS,
+   независимо от того, что .dcBtn написан ниже в файле — специфичность считается раньше
+   порядка. Фирменный блёрпл Discord и белая кнопка Google физически не могли применяться
+   с самого первого дня. Решение — поднять .dcBtn/.gBtn до .btn.dcBtn/.btn.gBtn: та же
+   специфичность (два класса), что у .btn.ghost, и они ниже в файле — побеждают по порядку. */
+.btn.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
   justify-content:center; background:#5865F2; color:#fff; border:none;
   border-radius:20px; padding:10px 20px; font-weight:600; }
-.dcBtn:active { background:#4752C4; } /* тёмный оттенок блёрпла — тот же приём, что у нажатия обычных кнопок */
+.btn.dcBtn:active { background:#4752C4; } /* тёмный оттенок блёрпла — тот же приём, что у нажатия обычных кнопок */
 .dcBtn .ic { width:18px; height:18px; stroke-width:1.8; }
 /* 23.08.2026: третий вход — Google. Официальный стиль Google для кнопок входа — белый
    фон с тонкой серой рамкой (не сплошной цвет, как у Discord/Telegram) — их брендбук
    именно так и требует. Тот же формат-пилюля и вес на экране, что у соседей. */
-.gBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
+.btn.gBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:8px;
   justify-content:center; background:#fff; color:#3c4043; border:1px solid #dadce0;
   border-radius:20px; padding:10px 20px; font-weight:600; }
-.gBtn:active { background:#f1f3f4; }
+.btn.gBtn:active { background:#f1f3f4; }
 .gBtn .ic { width:18px; height:18px; }
 .pvTag { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; vertical-align:2px; }
 #dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty, #gWidget:empty, #gJoinWidget:empty { display:none; }
