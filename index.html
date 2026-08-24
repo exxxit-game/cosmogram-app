@@ -639,8 +639,11 @@ button, input, select, textarea { text-transform:inherit; }
   opacity:0; transition:opacity .2s, transform .2s; }
 #toast.show { opacity:1; transform:translate(-50%,0) scale(1); }
 
-#fpsPill { position:fixed; bottom:calc(10px + var(--sab)); left:10px; z-index:30;
-  pointer-events:none; display:none; /* только в отладке (?debug) */ }
+#fpsPill { position:fixed; bottom:calc(10px + var(--sab)); left:10px; right:10px; z-index:30;
+  pointer-events:none; display:none; /* только в отладке (?debug) */
+  white-space:normal; word-break:break-word; line-height:1.4; } /* 24.08.2026: перенос строки —
+  диагностическая строка длиннее узкого экрана, .pill запрещает перенос глобально для всех
+  пилюль HUD; переопределяем только здесь, точечно, не трогая остальные пилюли */
 
 /* Карман наград: золотой бейдж-счётчик на кнопке достижений */
 #achBtn{ position:relative; }
