@@ -1079,6 +1079,19 @@ function audioSample(){
   }
   acPrevT=AC.currentTime; acPrevAt=nowAt;
 }
+/* v1.474.0 «Тихое зависание»: research 24.08.2026 нашёл в самой спецификации Web Audio API
+   (webaudio.github.io/web-audio-api, шаг 6 алгоритма resume()) — если контексту «не разрешено
+   запуститься» (заблокирован автополитикой), promise просто копится во внутреннем списке
+   ожидающих и НЕ отклоняется вовсе. Ни resolve, ни reject — до тех пор, пока не придёт
+   настоящий пользовательский жест, разрешающий запуск. Значит .catch() ниже структурно
+   слеп именно к этому сценарию — самому вероятному объяснению «33 секунды забега, ни
+   единого звука, 0 сигналов audio_resume_fail за 10 дней» (см. комментарий ниже про
+   24.08.2026). Единственный надёжный способ поймать зависший resume() — не ждать отказа,
+   а мерить время: если контекст не 'running' дольше разумного порога — это и есть сигнал,
+   независимо от того, отклонился ли когда-нибудь сам promise. */
+let audioNeverResumedReported=false;
+let audioSuspendedSinceAt=0;
+const AUDIO_NEVER_RESUMED_MS=3000;
 function audio(){ // создавать/возобновлять строго по жесту
   /* v1.282.20: пятое состояние — 'closed'. iOS-WebView вправе закрыть контекст под давлением
      памяти. Тогда AC истинный, значит новый не создаётся никогда, а resume() на закрытом
@@ -1097,17 +1110,30 @@ function audio(){ // создавать/возобновлять строго п
      на конкретном устройстве, до сих пор нечем увидеть: 0 сигналов про звук за 10 дней в
      базе. Один раз за сессию — тихий сигнал с настоящей причиной отказа браузера, не смена
      поведения игры, только видимость. */
-  if(AC && (AC.state==='suspended' || AC.state==='interrupted')) AC.resume().catch(e=>{
-    if (!audioResumeFailReported) {
-      audioResumeFailReported = true;
-      try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('audio_resume_fail', String((e&&e.name)||e||'?').slice(0,60)); }catch(_){}
+  if(AC && (AC.state==='suspended' || AC.state==='interrupted')){
+    if(!audioSuspendedSinceAt) audioSuspendedSinceAt=performance.now(); // v1.474.0: начало текущей серии «не running»
+    AC.resume().catch(e=>{
+      if (!audioResumeFailReported) {
+        audioResumeFailReported = true;
+        try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('audio_resume_fail', String((e&&e.name)||e||'?').slice(0,60)); }catch(_){}
+      }
+    });
+    /* v1.474.0: явный отказ (audio_resume_fail) уже объясняет причину — второй сигнал
+       про то же самое зависание был бы шумом, не новым знанием. Шлём только когда
+       .catch() выше молчал ТАК ДОЛГО, что молчание — само по себе и есть ответ. */
+    if (audioSuspendedSinceAt && (performance.now()-audioSuspendedSinceAt)>AUDIO_NEVER_RESUMED_MS
+        && !audioNeverResumedReported && !audioResumeFailReported){
+      audioNeverResumedReported=true;
+      try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('audio_never_resumed', AC.state); }catch(_){}
     }
-  });
+  } else if (AC && AC.state==='running'){
+    audioSuspendedSinceAt=0; // v1.474.0: серия закончилась честно — следующее зависание (например, после нового звонка) должно уметь отчитаться заново
+  }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.472.1'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.474.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'

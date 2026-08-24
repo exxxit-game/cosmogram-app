@@ -233,6 +233,35 @@ const BEACON=(()=>{
      gfx_fix (нажал «Снизить графику» — кадры болели), liar (суд нашёл лжеца —
      датчик врёт), cal_storm (калибруется без конца — ноль не держится) */
   function signal(kind,msg){ drop('signal',kind+(msg?': '+msg:'')); }
+  /* v1.473.0 «Зонд Кино полёта»: одноразовая (за сессию) проверка возможностей WebCodecs
+     на реальном устройстве — не строит видео, только спрашивает браузер «сможешь ли ты?»
+     через isConfigSupported() и отправляет ответ телеметрией. Причина: research 24.08.2026
+     показал, что аппаратный H.264-энкодер на Android официально надёжен только с
+     Chrome/WebView 130.0.6703.0+, и именно на «Дне» (Redmi 9A/10A, Galaxy A03s)
+     MediaCodec документированно отказывается создавать энкодер на нестандартных
+     разрешениях — а программного отката для H.264 на Android у Chromium нет вовсе.
+     Прежде чем строить сам пайплайн «Кино полёта», нужны числа с реального парка
+     устройств, а не с телефонов друзей. */
+  async function webcodecsProbe(){
+    if (typeof VideoEncoder==='undefined' || !on() || sealed()) return; // честное молчание — старый браузер или зонд/телеметрия выключены
+    const targets=[[720,1280],[1080,1920]]; // ровно два разрешения, про которые договорились — не больше
+    const prefs=['prefer-hardware','prefer-software'];
+    const parts=[];
+    for (const [w,h] of targets){
+      for (const pref of prefs){
+        let ok=0;
+        try{
+          const cfg={ codec:'avc1.42001E', width:w, height:h, bitrate:2_000_000, framerate:30, hardwareAcceleration:pref };
+          const r=await VideoEncoder.isConfigSupported(cfg);
+          ok=(r && r.supported)?1:0;
+        }catch(e){ ok=0; } // отказ конфигурации — тоже честный результат, не ошибка зонда
+        parts.push(w+'x'+h+':'+(pref==='prefer-hardware'?'hw':'sw')+'='+ok);
+      }
+    }
+    const pc=(typeof tgPerfClass==='function')?(tgPerfClass()||'?'):'?';
+    const tgv=(typeof tg!=='undefined' && tg && tg.version)||'?';
+    signal('webcodecs_probe', (parts.join(' ')+' pc='+pc+' tgv='+tgv).slice(0,140));
+  }
   // v1.109.0: источник сброса (orientation/flip/manual) — без этого cal_storm нельзя
   // разобрать по корню; несколько разных дорог в calReset() дают один и тот же симптом.
   // v1.109.3 (партия 21): взлёт — честный сброс, не дребезг; при пороге ×5 за сессию
@@ -298,6 +327,6 @@ const BEACON=(()=>{
      оборачивает каждый наш колбэк в свой try/catch, поэтому до window.onerror такие
      ошибки не доходят — доложить о них может только тот, кто их поймал. */
   function err(msg){ drop('error', String(msg==null?'':msg), perfCtx()); }
-  return { signal, err, calTick, days, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+  return { signal, err, calTick, days, webcodecsProbe, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
 if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

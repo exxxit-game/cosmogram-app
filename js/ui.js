@@ -166,13 +166,7 @@ function runStart(){
   finally{ setTimeout(()=>{ runStartBusy=false; },350); }
 } // «ЛЕТЕТЬ» — в выбранной дисциплине; короткий lock защищает от двойного тапа
 window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0)
-  // v1.472.1: typeof-страховка — редкий iOS-race при холодной загрузке новой версии
-  // (defer не гарантировал порядок на WKWebView, ui.js обогнал game.js) оставлял S
-  // необъявленным; игрок тапал по замершему экрану «Игра не смогла взлететь» и получал
-  // вторую, эхо-ReferenceError поверх первой (beacons id 861/862, 24.08.2026). Саму
-  // гонку это не лечит (см. окно __gameUp в index.html — оно уже ловит сам сбой взлёта),
-  // только не даёт обработчику падать второй раз при живом первом крахе.
-  if (typeof S!=='undefined' && S.running && typeof tgImmersion==='function') tgImmersion(true);
+  if (S.running && typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
 });
 function modesFill(){ // подписи + отметка выбранного режима
@@ -783,12 +777,6 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
   const eff=langPref==='auto'?base:langPref;
   langEff=eff;
   L = I18N[eff];
-  // v1.472.1: <html lang> раньше не трогался вообще — оставался жёстко "ru" из index.html
-  // всегда. Скринридер у игрока, переключившего интерфейс на другой язык, продолжал читать
-  // текст по русским правилам произношения (KNOWN-BUGS.md, подтверждено 24.08.2026). eff уже
-  // содержит готовое значение ('ru'|'en'|'es'|'pt'|'fr') — тот же признак, что чуть ниже уходит
-  // в выбор манифеста, здесь просто применяется и к самому документу.
-  document.documentElement.lang = eff;
   // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
   // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
   // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.
@@ -1934,6 +1922,7 @@ Store.init(()=>{
     Q._ceil = saneNumber(Store.get('gfxCeil',-1),-1); } // v1.284.22: потолок-памятка поднимается вместе с уровнем — иначе игра каждый запуск заново штурмует то, что уже не потянула // v1.7.0/v1.12.0: выученный уровень; флагману — сразу «Ультра», просадка сама отучит
   gfxCap(); resize(); // применяем сохранённый режим к резолюции (в т.ч. HD на флагманах) — теперь с верным Q.level уже на месте
   dispProbe(); // паспорт экрана: герцовка и охват — авто-качество считает по-честному
+  if (typeof BEACON!=='undefined' && BEACON.webcodecsProbe) BEACON.webcodecsProbe(); // v1.473.0: зонд «Кино полёта» — только спрашивает, ничего не строит
   const lp=Store.get('lang','auto');
   langPref = SUPPORTED_LANGS.includes(lp)?lp:'auto';
   applyLangPref();
