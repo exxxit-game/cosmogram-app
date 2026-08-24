@@ -511,7 +511,7 @@ button, input, select, textarea { text-transform:inherit; }
 #gameOverScreen:not(.hidden), #hangarScreen:not(.hidden), #achScreen:not(.hidden)
   { animation:scrIn .3s cubic-bezier(.22,1,.36,1); }
 @keyframes riseIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
-.achIt, .shipItem, .topIt, .rise { animation:riseIn .35s cubic-bezier(.22,1,.36,1) both; }
+.achIt, .topIt, .rise { animation:riseIn .35s cubic-bezier(.22,1,.36,1) both; }
 
 /* ---- Настройки: строки-тумблеры с тонкими разделителями ---- */
 .setPanel { width:min(92%,380px); pointer-events:auto; background:rgba(22,38,56,.55);
@@ -611,26 +611,10 @@ button, input, select, textarea { text-transform:inherit; }
 #angarWallet b { color:#eaf2ff; font-weight:600; letter-spacing:.04em; }
 #angarWallet .ic { width:13px; height:13px; color:var(--gold-hi); }
 
-/* ---- Ангар: карточки-строки с жёсткими колонками ---- */
+/* 24.08.2026: блок «Ангар: карточки-строки с жёсткими колонками» убран целиком —
+   .shipItem/.shipPv/#shipList не присваивались ни в одном JS-файле (проверено:
+   ui.js, game.js, forge.js, card.js), остаток старой вёрстки Ангара. */
 #hangarScreen .statusBar { margin:2px 0 16px; min-height:0; }
-#shipList { width:100%; display:flex; flex-direction:column; align-items:center; }
-.shipItem { pointer-events:auto; display:flex; flex-wrap:wrap; align-items:center; gap:10px; width:min(92%,420px);
-  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:var(--r-card);
-  padding:6px 12px 6px 10px; margin:4px 0; cursor:pointer; transition:border-color .2s, background .2s; }
-.shipItem.sel { border-color:var(--line-gold); background:rgba(201,164,92,.10); }
-.shipPv { width:40px; height:30px; flex:none; } /* v1.50.0: компакт — ангар влезает без драки за пиксели */
-.shipItem .nm { flex:1 1 70px; min-width:0; color:var(--ink); font-size:14px; text-align:left;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } /* v1.44.0: имя не выталкивает кнопки за край */
-.shipItem .pr { flex:none; text-align:right; color:var(--gold-hi);
-  font-family:var(--font-disp); font-weight:400; font-size:15px; letter-spacing:.03em; }
-.shipItem .own { flex:none; min-width:0; display:inline-flex; align-items:center; justify-content:center;
-  gap:.4em; font-family:var(--font-disp); font-weight:400; font-size:11.5px; letter-spacing:.1em;
-  color:#101b2e; background:linear-gradient(180deg,var(--gold-hi),var(--gold));
-  border-radius:8px; padding:5px 10px; }
-.shipItem .own .ic { width:1.1em; height:1.1em; }
-.shipItem .own.isOwn { background:none; color:var(--ok); }
-.shipItem .fxTag { color:var(--gold-hi); font-size:11px; } /* метка фирменной фишки у ярких/легендарных */
-/* v1.282.20: стили кнопки «Примерка» убраны вместе с фичей */
 
 /* ---- Служебные слои ---- */
 #vignette { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:0;
@@ -847,13 +831,6 @@ button, input, select, textarea { text-transform:inherit; }
   text-shadow:0 0 10px rgba(140,190,255,.3);
   box-shadow:0 0 22px rgba(90,140,230,.10), inset 0 0 14px rgba(120,170,255,.05); }
 
-/* ---- ряды ангара — стекло неба; выбранный корабль — яркое стекло, не золото (v1.34.0) ---- */
-.shipItem { background:rgba(10,18,36,.5); border-color:rgba(160,210,255,.16); }
-.shipItem.sel { border-color:rgba(190,225,255,.45); background:rgba(120,170,255,.08);
-  box-shadow:0 0 18px rgba(120,170,255,.10), inset 0 0 12px rgba(120,170,255,.04); }
-.shipItem .own { background:none; border:1px solid rgba(190,225,255,.45); color:#eaf2ff; }
-.shipItem .own.isOwn { border-color:transparent; }
-
 /* ---- карточки итогов — то же стекло, что кнопки паузы ---- */
 .statCell { background:rgba(10,18,36,.5); border-color:rgba(160,210,255,.16); }
 
@@ -951,7 +928,7 @@ button, input, select, textarea { text-transform:inherit; }
    как номер, выгравированный на кубке. Файл шрифта тот же — меняется только регистр;
    кнопки и обычный текст сознательно остаются строчными (читаемость, «без крика»). */
 .screenTitle,#finalScore,.recChip,.statCell b,.achRw,.achPr,.topN,.topSc,
-.shipItem .pr,.shipItem .own,.achBadge,.claimName,.claimRw,#myRank,
+.achBadge,.claimName,.claimRw,#myRank,
 #duelBanner,#duelHud,#modeHud,#runPass .passPill,#duelRes .duelWin { text-transform:uppercase; }
 </style>
 <!-- v1.108.0 «Имена неба»: чужой шильдик sdk-seed снят — небо переехало на собственный хостинг,
