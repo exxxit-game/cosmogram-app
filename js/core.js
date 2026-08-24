@@ -315,8 +315,8 @@ const I18N = {
     topWouldBe:(s,r,t)=>'Твои '+s+' — это '+r+'-е место из '+t,
     topJoinTitle:'Хочешь встать в таблицу?',
     topJoinSub:'Войди — и твой рекорд появится здесь под твоим именем',
-    webJoin:'Войди через Telegram — этот полёт встанет в общую таблицу',
-    accGuest:'Общая таблица одна на всех — войди через Telegram',
+    webJoin:'Войдите, чтобы ваш полёт попал в таблицу рекордов',
+    accGuest:'Общая таблица одна на всех — войдите',
     accIn:n=>n?('Ты в общей таблице как '+n):'Ты в общей таблице', accOut:'Выйти',
     dcLogin:'Войти через Discord', gLogin:'Войти через Google',
     setMorse:'Морзянка', csDefault:'Пилот',
@@ -445,8 +445,8 @@ const I18N = {
     topWouldBe:(s,r,t)=>'Your '+s+' would be #'+r+' of '+t,
     topJoinTitle:'Want to be on the board?',
     topJoinSub:'Sign in — your record will appear here under your name',
-    webJoin:'Sign in with Telegram — this flight joins the shared leaderboard',
-    accGuest:'One leaderboard for everyone — sign in with Telegram',
+    webJoin:'Sign in, and your flight joins the leaderboard',
+    accGuest:'One leaderboard for everyone — sign in',
     accIn:n=>n?('You are on the leaderboard as '+n):'You are on the leaderboard', accOut:'Sign out',
     dcLogin:'Sign in with Discord', gLogin:'Sign in with Google',
     setMorse:'Morse trail', csDefault:'Pilot',
@@ -590,8 +590,8 @@ const I18N = {
     topWouldBe:(s,r,t)=>'Tus '+s+' serían el puesto '+r+' de '+t,
     topJoinTitle:'¿Quieres estar en la tabla?',
     topJoinSub:'Inicia sesión — tu récord aparecerá aquí con tu nombre',
-    webJoin:'Inicia sesión con Telegram — este vuelo se sumará a la tabla común',
-    accGuest:'Una tabla para todos — inicia sesión con Telegram',
+    webJoin:'Inicia sesión para que tu vuelo entre en la tabla',
+    accGuest:'Una tabla para todos — inicia sesión',
     accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
     accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord', gLogin:'Iniciar sesión con Google',
     setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
@@ -738,8 +738,8 @@ const I18N = {
     topWouldBe:(s,r,t)=>'Seus '+s+' seriam o '+r+'º de '+t,
     topJoinTitle:'Quer entrar na tabela?',
     topJoinSub:'Entre — seu recorde aparecerá aqui com seu nome',
-    webJoin:'Entre com o Telegram — este voo entra na tabela geral',
-    accGuest:'Uma tabela para todos — entre com o Telegram',
+    webJoin:'Entre, e este voo entra na tabela geral',
+    accGuest:'Uma tabela para todos — entre',
     accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
     accOut:'Sair', dcLogin:'Entrar com Discord', gLogin:'Entrar com Google',
     setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
@@ -870,8 +870,8 @@ const I18N = {
     topWouldBe:(s,r,t)=>'Tes '+s+' seraient '+r+'e sur '+t,
     topJoinTitle:'Envie d\u2019être au classement ?',
     topJoinSub:'Connecte-toi — ton record apparaîtra ici à ton nom',
-    webJoin:'Connecte-toi avec Telegram — ce vol rejoint le classement partagé',
-    accGuest:'Un classement pour tous — connecte-toi avec Telegram',
+    webJoin:'Connecte-toi et ce vol rejoint le classement',
+    accGuest:'Un classement pour tous — connecte-toi',
     accIn:n=>n?('Tu es sur le classement sous le nom '+n):'Tu es sur le classement', accOut:'Se déconnecter',
     dcLogin:'Connecte-toi avec Discord', gLogin:'Connecte-toi avec Google',
     setMorse:'Traînée morse', csDefault:'Pilote',
@@ -1133,7 +1133,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.474.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
