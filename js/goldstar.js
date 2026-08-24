@@ -77,6 +77,37 @@ const GOLD=(()=>{
   }
   function gsRing(a){ const q=Math.round(a*40); return gsRingC[q]||(gsRingC[q]='rgba(255,214,120,'+(q/40).toFixed(3)+')'); }
   function gsNeedle(a){ const q=Math.round(a*40); return gsNeedC[q]||(gsNeedC[q]='rgba(255,232,170,'+(q/40).toFixed(3)+')'); }
+
+  /* 24.08.2026 «Свечение — не расходник»: ctx.shadowBlur пересчитывался браузером В КАЖДОМ
+     кадре, пока звезда дня в небе — прямое нарушение абсолютного запрета проекта (тень
+     разрешена только в предрендеренных спрайтах). Объект здесь один, не поток из десятков
+     камней — но правило абсолютное по принципу, не по объёму: тень остаётся тенью, даже
+     если объект один. Тот же приём кэширования, что уже применён к gsGrad/staGrad в этом
+     же файле — только вместо одного градиента кэшируется вся звезда целиком, со свечением,
+     уже запечённым внутрь. Тень считается ОДИН РАЗ при рождении спрайта; дальше — только
+     drawImage(). Радиус звезды на деле всегда 13 (star.r в reset() — константа), но кэш
+     всё равно ключуется по r, как и gsGrad — тот же приём на случай, если радиус когда-нибудь
+     станет переменным. */
+  const gsCoreC={};
+  function gsCoreSprite(r){
+    const key=Math.round(r);
+    let c=gsCoreC[key];
+    if(!c){
+      const blur=r*1.5, pad=Math.ceil(r+blur*2.2), size=pad*2; // запас под мягкий край тени, не только под тело звезды
+      c=document.createElement('canvas'); c.width=c.height=size;
+      const x=ctx2d(c);
+      x.translate(pad,pad);
+      x.beginPath();
+      for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rr=i%2? r*.45 : r;
+        const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
+        i? x.lineTo(px,py) : x.moveTo(px,py); }
+      x.closePath();
+      x.shadowColor='rgba(255,200,90,.9)'; x.shadowBlur=blur;
+      x.fillStyle=gsGrad('core'+key); x.fill();
+      gsCoreC[key]=c;
+    }
+    return c;
+  }
   function draw(){
     const tN=performance.now()/1000-t0;
     const pulse=RM? .85 : .75+.25*Math.sin(tN*2.4);
@@ -123,13 +154,17 @@ const GOLD=(()=>{
         ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*.75, Math.sin(a)*r*.75);
         ctx.lineTo(Math.cos(a)*L, Math.sin(a)*L); ctx.stroke(); }
     }
-    ctx.beginPath(); // тело: пять лучей, белое сердце в золоте
-    for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rr=i%2? r*.45 : r;
-      const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
-      i? ctx.lineTo(px,py) : ctx.moveTo(px,py); }
-    ctx.closePath();
-    if (Q.level>0){ ctx.shadowColor='rgba(255,200,90,.9)'; ctx.shadowBlur=r*1.5; }
-    ctx.fillStyle=gsGrad('core'+Math.round(r)); ctx.fill();
+    if (Q.level>0){ // тело со свечением — готовый спрайт, тень уже запечена внутрь
+      const spr=gsCoreSprite(r), half=spr.width/2;
+      ctx.drawImage(spr, -half, -half, spr.width, spr.width);
+    } else { // Q0: тот же прежний путь — тело без тени, дёшево, без изменений
+      ctx.beginPath(); // тело: пять лучей, белое сердце в золоте
+      for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, rr=i%2? r*.45 : r;
+        const px=Math.cos(a)*rr, py=Math.sin(a)*rr;
+        i? ctx.lineTo(px,py) : ctx.moveTo(px,py); }
+      ctx.closePath();
+      ctx.fillStyle=gsGrad('core'+Math.round(r)); ctx.fill();
+    }
     ctx.restore();
   }
 
@@ -137,13 +172,13 @@ const GOLD=(()=>{
      у станции (см. planetarium.js) — gsG кэширует градиенты «один раз навсегда», а
      gfxInvalidate() про него не знал. После потери GPU-контекста звезда дня рисовалась бы
      мёртвыми градиентами до перезагрузки страницы. */
-  function gfxReset(){ for(const k in gsG) delete gsG[k]; }
+  function gfxReset(){ for(const k in gsG) delete gsG[k]; for(const k in gsCoreC) delete gsCoreC[k]; }
   return { reset, tick, draw,
     _state:()=>({ day, frac, spawned, star:!!star,
       x:star?Math.round(star.x):-1, y:star?Math.round(star.y):-1, caught, flash:catchT>0 }),
     _poke:()=>{ S.dist=Math.max(S.dist,GOLD_DIST-LOOKAHEAD_M-2); }, // страж: пригнать миг появления
     _catch:()=>{ if(star){ plane.x=star.x; plane.y=star.y; } },  // страж: поднести самолётик к звезде
-    _gradCount:()=>Object.keys(gsG).length, _gfxReset:gfxReset };
+    _gradCount:()=>Object.keys(gsG).length, _spriteCount:()=>Object.keys(gsCoreC).length, _gfxReset:gfxReset };
 })();
 const goldReset=()=>GOLD.reset();   // мосты — как у Планетария: без try/catch, ошибки летят в самописец
 const goldTick=(dt)=>GOLD.tick(dt);
