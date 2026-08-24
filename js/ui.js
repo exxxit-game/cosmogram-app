@@ -104,6 +104,14 @@ pauseGhostSync();
 function setScreen(name){
   if(name==='menu' && typeof runMode!=='undefined' && runMode!=='classic') runMode='classic'; // v1.92.1 «Дом — это классика»: вышел в меню — сессия любой дисциплины закрыта, большая кнопка всегда ведёт домой
   screenName=name;
+  /* 24.08.2026: рамка коридора (#corrEdgeL/#corrEdgeR) раньше перепроверялась ТОЛЬКО из
+     resize() в core.js — то есть только когда меняется размер окна. На статичном рабочем
+     столе (окно не двигали) переход меню→полёт никогда не запускал перепроверку: рамка
+     задумана только на широком экране ВО ВРЕМЯ полёта, но правильное условие ни разу не
+     доходило до DOM, и рамка не показывалась вообще (владелец: «в обычном браузере рамку
+     не видно»). setScreen — единственное место, через которое проходят все переходы
+     меню/пауза/полёт/итоги, поэтому один вызов здесь закрывает все случаи разом. */
+  if (typeof corridorEdgesSync==='function') corridorEdgesSync();
   toggleCls('startScreen','hidden', name!=='menu');
   toggleCls('pauseScreen','hidden', name!=='pause');
   toggleCls('hangarScreen','hidden', name!=='hangar');
