@@ -779,6 +779,7 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
   const eff=langPref==='auto'?base:langPref;
   langEff=eff;
   L = I18N[eff];
+  document.documentElement.lang=eff; // KNOWN-BUGS.md: скринридер иначе всегда читает по русским правилам произношения
   // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
   // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
   // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.

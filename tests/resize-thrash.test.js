@@ -80,6 +80,7 @@ const context = {
   tgInsetsSync(){},
   tgFullscreenFailed(){},
   tooNarrowText(){},
+  syncScoreHudGap(){}, // 23.08.2026: resize() зовёт её через rAF (core.js) — определена вне вырезанного куска, как и соседи выше
   tgApp: () => null,
   queueMicrotask,
   console,

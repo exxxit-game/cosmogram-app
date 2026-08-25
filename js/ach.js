@@ -43,7 +43,7 @@ const ACH=[
     ru:{n:'Первый скин',d:'Купил свой первый скин в Ангаре.'}, en:{n:'First Skin',d:'Bought your first skin in the Hangar.'},
     es:{n:'Primera piel',d:'Compraste tu primera piel en el Hangar.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin no Hangar.'},
     fr:{n:'Première skin',d:'Tu as acheté ta première skin dans le Hangar.'}},
-  {id:'h2', cat:'hangar', ic:'👑', need:9, rw:50, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
+  {id:'h2', cat:'hangar', ic:'👑', need:9, rw:400, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
     ru:{n:'Вся коллекция',d:'Собрал все скины Ангара.'}, en:{n:'Full Collection',d:'Collected every skin in the Hangar.'},
     es:{n:'Colección completa',d:'Reuniste todas las pieles del Hangar.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins do Hangar.'},
     fr:{n:'Collection complète',d:'Tu as réuni toutes les skins du Hangar.'}}, // need=9: SKINS.length сегодня — обновить вместе, если добавите скин
