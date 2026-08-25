@@ -233,6 +233,26 @@ const BEACON=(()=>{
      gfx_fix (нажал «Снизить графику» — кадры болели), liar (суд нашёл лжеца —
      датчик врёт), cal_storm (калибруется без конца — ноль не держится) */
   function signal(kind,msg){ drop('signal',kind+(msg?': '+msg:'')); }
+  /* 24.08.2026 «Браузер предупреждал, а мы не слушали»: ReportingObserver ловит
+     deprecation (используем API, который движок скоро уберёт) и intervention
+     (движок САМ отключил что-то у нас на странице ради безопасности/производительности —
+     тише, чем падение, но именно такая тишина потом становится «необъяснимым» багом).
+     Раньше API был Chromium-only и на iOS бесполезен; с версии Safari 26.4 (март 2026)
+     он вошёл в Baseline «Newly available» — теперь ловит на обеих платформах разом.
+     Зовём тем же signal(), что и остальные симптомы: kind='report' сервер НЕ уведомляет
+     (cosmogram-beacon/index.ts слушает только error/signal) — письмо ушло бы в базу
+     молча, а весь смысл в обратном. buffered:true — не теряем то, что случилось
+     до того, как этот код успел подписаться. */
+  if(typeof window!=='undefined' && typeof ReportingObserver!=='undefined'){
+    try{
+      new ReportingObserver((reports)=>{
+        for(const r of reports){
+          const b=r.body||{};
+          signal('report', String(r.type||'?')+' '+String(b.id||'').slice(0,40)+': '+String(b.message||'').slice(0,100));
+        }
+      }, {types:['deprecation','intervention'], buffered:true}).observe();
+    }catch(e){}
+  }
   /* v1.473.0 «Зонд Кино полёта»: одноразовая (за сессию) проверка возможностей WebCodecs
      на реальном устройстве — не строит видео, только спрашивает браузер «сможешь ли ты?»
      через isConfigSupported() и отправляет ответ телеметрией. Причина: research 24.08.2026
