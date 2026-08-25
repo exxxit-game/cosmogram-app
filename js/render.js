@@ -76,7 +76,7 @@ function qualityTick(dt){
   }
 }
 const DEBUG_FPS = /[?&#]debug/.test(location.href);
-const frameProfile={bg:0,stars:0,sky:0,field:0,fx:0,n:0,last:0};
+const frameProfile={bg:0,stars:0,sky:0,field:0,fx:0,update:0,n:0,last:0};
 /* 22.08.2026 «Профиль летит в почту»: сводка по секциям (bg/stars/sky/field/fx) раньше
    считалась ТОЛЬКО при ?debug в адресной строке — у обычного игрока эти пять
    performance.now() не выполнялись вовсе, и в момент реальной просадки на слабом
@@ -90,7 +90,7 @@ function frameProfileSnapshot(){
   const n=frameProfile.n;
   return 'bg:'+(frameProfile.bg/n).toFixed(1)+' st:'+(frameProfile.stars/n).toFixed(1)+
     ' sk:'+(frameProfile.sky/n).toFixed(1)+' fl:'+(frameProfile.field/n).toFixed(1)+
-    ' fx:'+(frameProfile.fx/n).toFixed(1);
+    ' fx:'+(frameProfile.fx/n).toFixed(1)+' upd:'+(frameProfile.update/n).toFixed(1); // 24.08.2026: физика ни разу не измерялась — единственное непокрытое место в бюджете кадра
 }
 function profileReport(){
   if(frameProfile.n<30) return;
@@ -99,9 +99,9 @@ function profileReport(){
   const n=frameProfile.n, el=DEBUG_FPS?$('fpsPill'):null;
   if(el){
     el.dataset.profile='1';
-    el.textContent=Q.fps.toFixed(0)+' fps | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' ms';
+    el.textContent=Q.fps.toFixed(0)+' fps | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' | upd '+(frameProfile.update/n).toFixed(1)+' ms';
   }
-  frameProfile.bg=0; frameProfile.stars=0; frameProfile.sky=0; frameProfile.field=0; frameProfile.fx=0; frameProfile.n=0; frameProfile.last=now;
+  frameProfile.bg=0; frameProfile.stars=0; frameProfile.sky=0; frameProfile.field=0; frameProfile.fx=0; frameProfile.update=0; frameProfile.n=0; frameProfile.last=now;
 }
 /* v1.282.15: сколько прошло с прошлой ОТРИСОВКИ. Нужен тому немногому внутри draw(),
    что действительно движется само (параллакс фона): фикс-степ живёт в update(), а draw
@@ -1319,7 +1319,9 @@ function loop(t){
     prevPlaneX=plane.x; prevPlaneY=plane.y; // снимок ДО шагов физики этого кадра
     acc+=dt;
     let n=0;
+    const updT0=performance.now(); // 24.08.2026: draw() измерен весь (bg/stars/sky/field/fx), а update() — ни разу; тот же дешёвый приём, что и у остальных пяти секций
     while(acc>=STEP && n<4){ update(STEP); acc-=STEP; n++; if(!S.running||S.paused){acc=0;break;} } // v1.99.2 «Бережное небо»: пауза доехала — кадр не докручиваем, время не отскакивает
+    frameProfile.update+=performance.now()-updT0;
     if(n===4) acc=0;
     const ia=Math.min(1,Math.max(0,acc/STEP));
     renderPlaneX=interpPos(prevPlaneX,plane.x,ia); renderPlaneY=interpPos(prevPlaneY,plane.y,ia);
