@@ -639,7 +639,9 @@ function dailyDoneList(){
   const raw = saneArray(Store.get('dailyDone',[]),[]);
   return raw.map(x => typeof x==='string' ? {d:x,n:5} : (x && typeof x.d==='string' && typeof x.n==='number') ? x : null).filter(Boolean);
 }
-function dailyDoneHas(d){ return dailyDoneList().some(x=>x.d===d); }
+// 24.08.2026: dailyDoneHas(d) убрана — ни разу не вызывалась нигде в коде. Была булевым
+// «сыграл/не сыграл» до системы «5 попыток»; заменена dailyDoneGet(d), который вернулся
+// счётчиком, а не флагом, и используется во всех трёх местах, где раньше стояла эта пара.
 function dailyDoneGet(d){ const e=dailyDoneList().find(x=>x.d===d); return e ? e.n : 0; }
 function dailyDoneMark(d, n){
   if(!d) return;

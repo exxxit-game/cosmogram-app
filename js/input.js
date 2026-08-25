@@ -32,7 +32,8 @@ const input = { tiltX:0, tiltY:0, useGyro:false, touchX:null, touchY:null, byMou
   _t:0, // время последнего пакета датчика — сторож «датчик замолчал»
   sens: PLATFORM==='android' ? 1.05 : 1 };
 let lastGamma=null, lastBeta=null, lastAlpha=null;
-function tiltPermissionGranted(){ return Store.get('tiltPermission',0)===1; }
+// 24.08.2026: tiltPermissionGranted() убрана — ни разу не вызывалась нигде в коде,
+// проверка Store.get('tiltPermission',0)===1 везде идёт прямо на месте, без этой обёртки.
 
 /* Стабильная автокалибровка (v1.4.5→v1.4.6). Ноль принимаем из неподвижной
    позы: 3 подряд пакета в пределах 4° (≈50мс на 60Гц — раньше, чем игрок
