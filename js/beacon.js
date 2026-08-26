@@ -264,23 +264,42 @@ const BEACON=(()=>{
      устройств, а не с телефонов друзей. */
   async function webcodecsProbe(){
     if (typeof VideoEncoder==='undefined' || !on() || sealed()) return; // честное молчание — старый браузер или зонд/телеметрия выключены
-    const targets=[[720,1280],[1080,1920]]; // ровно два разрешения, про которые договорились — не больше
+    const targets=[[720,1280,'720p'],[1080,1920,'1080p']]; // числа — для VideoEncoder, метка — для письма (короче)
     const prefs=['prefer-hardware','prefer-software'];
+    /* 26.08.2026: зонд проверял только H.264 — живые данные (6 устройств, 0 из 26 проб)
+       показали отказ и на hw, и на sw, при этом WebView на тех же устройствах уже выше
+       версии, которая по прежнему предположению должна была всё решить (151.x против
+       порога 130.0.6703.0+) — значит дело не в версии браузера. Добавлены VP8/VP9/AV1:
+       у них другая лицензионная история (VP8 вовсе без патентных отчислений), шанс найти
+       рабочий путь там, где H.264 недоступен. HEVC не проверяем — Chromium не отдаёт его
+       кодировщик через веб ни на одной известной платформе, письма на это не тратим. */
+    const codecs=[
+      {id:'h264', str:'avc1.42001E'},
+      {id:'vp8',  str:'vp8'},
+      {id:'vp9',  str:'vp09.00.10.08'},
+      {id:'av1',  str:'av01.0.04M.08'},
+    ];
     const parts=[];
-    for (const [w,h] of targets){
-      for (const pref of prefs){
-        let ok=0;
-        try{
-          const cfg={ codec:'avc1.42001E', width:w, height:h, bitrate:2_000_000, framerate:30, hardwareAcceleration:pref };
-          const r=await VideoEncoder.isConfigSupported(cfg);
-          ok=(r && r.supported)?1:0;
-        }catch(e){ ok=0; } // отказ конфигурации — тоже честный результат, не ошибка зонда
-        parts.push(w+'x'+h+':'+(pref==='prefer-hardware'?'hw':'sw')+'='+ok);
+    for (const [w,h,label] of targets){
+      for (const codec of codecs){
+        for (const pref of prefs){
+          let ok=0;
+          try{
+            const cfg={ codec:codec.str, width:w, height:h, bitrate:2_000_000, framerate:30, hardwareAcceleration:pref };
+            const r=await VideoEncoder.isConfigSupported(cfg);
+            ok=(r && r.supported)?1:0;
+          }catch(e){ ok=0; } // отказ конфигурации — тоже честный результат, не ошибка зонда
+          parts.push(label+':'+codec.id+':'+(pref==='prefer-hardware'?'hw':'sw')+'='+ok);
+        }
       }
     }
     const pc=(typeof tgPerfClass==='function')?(tgPerfClass()||'?'):'?';
     const tgv=(typeof tg!=='undefined' && tg && tg.version)||'?';
-    signal('webcodecs_probe', (parts.join(' ')+' pc='+pc+' tgv='+tgv).slice(0,140));
+    /* 16 сочетаний вместо 4 — а postcard() (ниже по файлу) режет ЛЮБОЕ msg до 300 символов,
+       свой общий предел на все письма, его не трогаем. Короткие метки 720p/1080p вместо
+       WxH держат итог у 271 символа с pc=/tgv= в хвосте (проверено численно) — тратить
+       здесь предел больше 280 бессмысленно, всё равно обрежет postcard(). */
+    signal('webcodecs_probe', (parts.join(' ')+' pc='+pc+' tgv='+tgv).slice(0,280));
   }
   // v1.109.0: источник сброса (orientation/flip/manual) — без этого cal_storm нельзя
   // разобрать по корню; несколько разных дорог в calReset() дают один и тот же симптом.
