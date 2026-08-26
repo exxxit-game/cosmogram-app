@@ -746,10 +746,12 @@ function draw(){
   // бонусы: ауреола по цвету + пульсирующее внешнее кольцо (hq)
   const PR=powRing(); // v1.66.0: готовые строки цветов — не собираем объекты в каждом кадре
   for (const p of powerups){
+    const pFadeA=REAL_STAR_HUD_DEADZONE<0 ? 1 : clamp((p.y-REAL_STAR_HUD_DEADZONE)/STAR_FADE_BAND,0,1); // тот же приём и те же числа, что у звёзд строками выше — владелец 26.08.2026 нашёл тот же резкий хлопок появления и у бонусов
+    if(pFadeA<=0) continue; // всё ещё рано, до дорогой отрисовки — бонус падает и остаётся собираемым как обычно
     if(!inView(p.x,p.y,32,36)) continue;
     ctx.save(); ctx.translate(p.x, p.y+Math.sin(p.ph)*3);
     const col=POW_COLORS[p.kind]; // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу
-    ctx.globalAlpha=.85; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
+    ctx.globalAlpha=.85*pFadeA; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=pFadeA; // v1.37.0: ауреола всем ступеням — кэш-спрайт
     ctx.fillStyle='rgba(255,255,255,.12)';
     ctx.beginPath(); ctx.arc(0,0,p.r+3,0,6.283); ctx.fill();
     ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
