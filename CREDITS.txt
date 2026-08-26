@@ -1,12 +1,24 @@
-COSMOGRAM — CREDITS
-===================
+COSMOGRAM — CREDITS & LICENSES
+==============================
 Game Design & Development: @exxxit-game
+Project Repository: https://github.com
 
-LICENSES﻿
-========﻿
-Code (js/, tests/, app/): (c) 2026 @exxxit-game — GNU GPL v2.0 (LICENSE)﻿
-Assets, graphics, sounds, texts: (c) 2026 @exxxit-game — CC BY-NC-SA 4.0 (ASSETS-LICENSE)﻿
-Font Exo 2 (fonts/): SIL Open Font License 1.1 (fonts/OFL.txt)﻿
-Trademarks (Cosmogram, Морзянка, Суд компасов, Метр неба, Протокол seed):﻿
-  (c) 2026 @exxxit-game — all rights reserved (TRADEMARK.md)﻿
-© 2026 @exxxit-game. Все права защищены.
+LICENSES
+========
+* Source Code (js/, tests/, app/): 
+  (c) 2026 @exxxit-game — GNU GPL v2.0 (see LICENSE)
+
+* Game Assets (graphics, interface, sounds, texts, lore): 
+  (c) 2026 @exxxit-game — CC BY-NC-SA 4.0 (see ASSETS-LICENSE)
+
+* Font Exo 2 (fonts/): 
+  Distributed under SIL Open Font License 1.1 (see fonts/OFL.txt)
+
+TRADEMARKS & BRAND
+==================
+* Project Name "Cosmogram", official logos, visual identity, plot lore, 
+  and poetic universe ("Небо помнит" and other version titles):
+  (c) 2026 @exxxit-game — All rights reserved (see TRADEMARK.md)
+
+----------------------------------------------------------------------
+© 2026 @exxxit-game. Некоторые права защищены (GPL v2.0 / CC BY-NC-SA 4.0).
