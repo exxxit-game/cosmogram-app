@@ -61,6 +61,21 @@ function tgWidgetMount(el){
   // саму кнопку по таймауту больше не нужно — .tgWidget:empty уже прячет её, пока внутри
   // пусто, и сама открывает её, стоит iframe появиться, в любую секунду, без верхней границы.
   setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe')){ window.__tgWgSilent=1; } },5000);
+  // 26.08.2026: подгонка кнопок Discord/Google под размер этой самой кнопки шла вслепую —
+  // cross-origin запрещает читать что-либо ВНУТРИ iframe (та же защита, что не даёт сайту
+  // подсмотреть форму входа банка в чужом iframe), но собственный прямоугольник iframe
+  // (his own box, не содержимое) — это наш DOM, читать можно. Раз в сессию, только когда
+  // печать лаборатории снята (isLabEnv()=false — с живого владельца, не с моих тестов),
+  // одна короткая открытка с настоящим размером. Дедуп в drop() и так не даст спамить.
+  let tgSizeTries=0;
+  const tgSizePoll=setInterval(()=>{
+    const ifr=el.querySelector('iframe');
+    if(ifr){
+      clearInterval(tgSizePoll);
+      const r=ifr.getBoundingClientRect();
+      if(r.width>0 && typeof BEACON!=='undefined') BEACON.signal('tg_widget_px', Math.round(r.width)+'x'+Math.round(r.height));
+    } else if(++tgSizeTries>40){ clearInterval(tgSizePoll); } // 40×150мс=6с — чуть дольше таймаута тишины выше
+  },150);
   return true;
 }
 window.onTelegramAuth=function(u){ // ответ виджета — уже подписан Telegram, сервер проверит HMAC
