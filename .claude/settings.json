@@ -34,6 +34,12 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/protect-core.sh" }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/version-guard.sh" }
+        ]
       }
     ]
   }
