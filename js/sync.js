@@ -51,9 +51,16 @@ function tgWidgetMount(el){
   s.setAttribute('data-onauth','onTelegramAuth(user)');
   el.appendChild(s);
   // v1.84.0 «Финал в полголоса»: домен не привязан (/setdomain) — виджет пишет игроку сырой
-  // «Bot domain invalid». Это не для сцены: если за 5с кнопка-iframe не родилась — тишина,
-  // а в сервисный центр уходит тихая строка диагностики.
-  setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe')){ el.classList.add('wgOff'); window.__tgWgSilent=1; } },5000);
+  // «Bot domain invalid». Это не для сцены: если за 5с кнопка-iframe не родилась — в сервисный
+  // центр уходит тихая строка диагностики (жалоба владельца: «иногда две кнопки вместо трёх»).
+  // 26.08.2026: el.classList.add('wgOff') здесь же и ПРЯТАЛ кнопку — .wgOff{display:none
+  // !important} перевешивает даже :not(:empty), так что если скрипт telegram.org был не сломан,
+  // а просто медленный (мобильная сеть — ровно жалоба владельца), и iframe всё же прилетал
+  // на 6-й/8-й секунде, кнопка оставалась скрытой НАВСЕГДА тем же !important — виджет
+  // работал, а игрок его никогда не видел. Диагностика (телеметрия) остаётся; прятать
+  // саму кнопку по таймауту больше не нужно — .tgWidget:empty уже прячет её, пока внутри
+  // пусто, и сама открывает её, стоит iframe появиться, в любую секунду, без верхней границы.
+  setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe')){ window.__tgWgSilent=1; } },5000);
   return true;
 }
 window.onTelegramAuth=function(u){ // ответ виджета — уже подписан Telegram, сервер проверит HMAC
