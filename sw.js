@@ -5,7 +5,7 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.477.15';
+const V = '1.477.16';
 const CACHE = 'cosmogram-v' + V;
 const JS_FILES = [
   'core','blackbox','beacon','input','game','ach','sync','render','planetarium',
@@ -21,7 +21,7 @@ const SHELL = [
      текст лицензии рядом со шрифтом), поэтому и строка возвращается сюда. Страж 29 проверяет
      каждый путь этого списка на самом деле, а не на слово. */
   'fonts/exo2-cyrillic.woff2', 'fonts/exo2-latin.woff2', 'fonts/OFL.txt', // v1.46.0: Exo 2 вместо Russo One
-  'fonts/roboto500-cyrillic.woff2', 'fonts/roboto500-latin.woff2', 'fonts/OFL-Roboto.txt', // 26.08.2026: кнопки входа — своя копия Roboto
+  'fonts/roboto400-cyrillic.woff2', 'fonts/roboto400-latin.woff2', 'fonts/OFL-Roboto.txt', // 26.08.2026: кнопки входа — своя копия Roboto (400, не 500 — Regular)
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png',
   'icons/icon-maskable-512.png', 'icons/favicon-32.png', 'icons/og-image.png'
 ];
