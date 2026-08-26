@@ -1,24 +1,22 @@
 COSMOGRAM — CREDITS & LICENSES
 ==============================
 Game Design & Development: @exxxit-game
-Project Repository: https://github.com
+Project Repository: https://github.com/exxxit-game/cosmogram-app
 
 LICENSES
 ========
-* Source Code (js/, tests/, app/): 
-  (c) 2026 @exxxit-game — GNU GPL v2.0 (see LICENSE)
+* Game (source code, assets, interface, sounds, texts, lore):
+  (c) 2026 @exxxit-game — custom license, see LICENSE
+  (not open source: free for personal use, study and non-commercial mods only)
 
-* Game Assets (graphics, interface, sounds, texts, lore): 
-  (c) 2026 @exxxit-game — CC BY-NC-SA 4.0 (see ASSETS-LICENSE)
-
-* Font Exo 2 (fonts/): 
+* Font Exo 2 (fonts/):
   Distributed under SIL Open Font License 1.1 (see fonts/OFL.txt)
 
 TRADEMARKS & BRAND
 ==================
-* Project Name "Cosmogram", official logos, visual identity, plot lore, 
+* Project Name "Cosmogram", official logos, visual identity, plot lore,
   and poetic universe ("Небо помнит" and other version titles):
   (c) 2026 @exxxit-game — All rights reserved (see TRADEMARK.md)
 
 ----------------------------------------------------------------------
-© 2026 @exxxit-game. Некоторые права защищены (GPL v2.0 / CC BY-NC-SA 4.0).
+© 2026 @exxxit-game. Все права защищены (кроме шрифта Exo 2 — SIL OFL 1.1).
