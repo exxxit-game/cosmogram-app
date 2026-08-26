@@ -1133,14 +1133,19 @@ button, input, select, textarea { text-transform:inherit; }
     <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
     <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
-    <div class="setRow" id="setGhostsBtn" role="button" tabindex="0"><span class="setK">Показывать призраков</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setLangBtn" role="button" tabindex="0"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
     <!-- 22.08.2026: строка «Призрак» (setGhostBtn, делиться своим призраком) снята —
          скрыть призрак от чужих больше нельзя (решение владельца, «улика, не украшение»),
          тумблер вёл в никуда. Кто ищет данные для улучшения игры — см. «Помогать экипажу
          отчётами и статистикой» ниже (setBeaconBtn), это оно и есть.
          «ЕЩЁ РАЗ?» — своя тень первых трёх забегов, к призракам отношения не имеет.
-         Подпись строки берётся из словаря в applyLang, как и у соседей. -->
+         Подпись строки берётся из словаря в applyLang, как и у соседей.
+         26.08.2026: соседняя строка «Показывать призраков» (setGhostsBtn, другой id — с S)
+         тоже снята. Долг с 17.08.2026 (.knowledge/ARTICLES «Итоговый аудит...»): в разметке
+         была, обработчика клика не было НИКОГДА — жалоба владельца «кнопка не нажимается,
+         больше нет что выключать» подтверждена вживую. Своего состояния в Store у неё не
+         было — то, что она обещала, уже честно делает ghostAgain/ghostActive() через
+         «ЕЩЁ РАЗ?» строкой выше, а не пустое место рядом. -->
     <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setK">ЕЩЁ РАЗ?</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
   </div>
   <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
