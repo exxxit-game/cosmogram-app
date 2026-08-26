@@ -99,7 +99,13 @@ function profileReport(){
   const n=frameProfile.n, el=DEBUG_FPS?$('fpsPill'):null;
   if(el){
     el.dataset.profile='1';
-    el.textContent=Q.fps.toFixed(0)+' fps | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' | upd '+(frameProfile.update/n).toFixed(1)+' ms';
+    // 26.08.2026: владелец разбирал этот же замер по кадрам с Samsung A3 (самое слабое
+    // устройство с гироскопом, что нашлось) — 6мс наших фаз при 27мс бюджете кадра на 37fps,
+    // а какой уровень качества (Q.level) автокачество выбрало на этом устройстве, строка не
+    // говорила вовсе. Без этого нельзя было понять, легла ли автокачество на дно или ещё
+    // есть куда снижать. Добавлена та же цифра, что уже есть в соседнем, более коротком
+    // debug-выводе (строка ниже, el.dataset.profile ещё не выставлен).
+    el.textContent=Q.fps.toFixed(0)+' fps | Q'+Q.level+' | bg '+(frameProfile.bg/n).toFixed(1)+' | stars '+(frameProfile.stars/n).toFixed(1)+' | sky '+(frameProfile.sky/n).toFixed(1)+' | field '+(frameProfile.field/n).toFixed(1)+' | fx '+(frameProfile.fx/n).toFixed(1)+' | upd '+(frameProfile.update/n).toFixed(1)+' ms';
   }
   frameProfile.bg=0; frameProfile.stars=0; frameProfile.sky=0; frameProfile.field=0; frameProfile.fx=0; frameProfile.update=0; frameProfile.n=0; frameProfile.last=now;
 }
@@ -982,6 +988,22 @@ function draw(){
         let minVertR=o.verts[0].r;
         for(const v of o.verts) if(v.r<minVertR) minVertR=v.r;
         o._blikR = o.r*minVertR*.85;
+        /* 26.08.2026 «Не штамп»: блик, тень и оба кратера сидели на ЖЁСТКО зашитых углах/
+           координатах — у каждого камня в игре было идентичное «лицо» поверх случайного
+           контура. Владелец разглядел это как «две дуги, будто скобки ( )» — не баг (дуги
+           математически не выходят за силуэт, 200к+600к прогонов проверено численно
+           заранее), а штамп: одно и то же на каждом камне бросается в глаза, когда камней
+           несколько в кадре. Теперь угол блика/тени и положение обоих кратеров случайны на
+           каждый камень — но каждое пятно кладётся внутри уже доказанного безопасного круга
+           радиуса o._blikR (|центр| + свой_радиус ≤ o._blikR), так что гарантия «не вылезает
+           за контур» наследуется от уже проверенной формулы, а не строится заново на глаз. */
+        const mkSpot=(rMin,rMax)=>{ const r=mapRand(rMin,rMax)*o.r;
+          const budget=Math.max(0,o._blikR-r), d=mapRand(0,budget), a=mapRand(0,6.283);
+          return { x:Math.cos(a)*d, y:Math.sin(a)*d, r }; };
+        const hiA=mapRand(0,6.283), hiSpan=mapRand(1.1,1.8);
+        const shA=hiA+Math.PI+mapRand(-.5,.5), shSpan=mapRand(1.0,1.6); // тень примерно напротив блика — свет с одной стороны, не с двух разных
+        o._decor={ hiA0:hiA, hiA1:hiA+hiSpan, shA0:shA, shA1:shA+shSpan,
+          light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) };
       }
       /* 22.08.2026 «Шип митра»: у ctx.stroke() умолчание браузера — lineJoin='miter', острый
          стык. Силуэт камня — случайный семиугольник (makeRockVerts(7), радиус вершин
@@ -993,20 +1015,21 @@ function draw(){
       ctx.lineJoin='round';
       ctx.fill(o._path); ctx.stroke(o._path);
       ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
+      const dc=o._decor;
       if(sh){ // объём: блик сверху-слева + светлый кратер (v1.37.0: со средней)
         ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o._blikR,-2.7,-1.2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0,0,o._blikR,dc.hiA0,dc.hiA1); ctx.stroke();
         ctx.fillStyle='rgba(255,255,255,.07)';
-        ctx.beginPath(); ctx.arc(o.r*.3,o.r*.25,o.r*.22,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(dc.light.x,dc.light.y,dc.light.r,0,6.283); ctx.fill();
       }
       if(uq){ // ультра: глубже рельеф — теневая дуга и второй кратер
         ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o._blikR,.4,1.8); ctx.stroke(); // 23.08.2026: тот же безопасный радиус, что у блика — тот же корень бага (обрезка по неровному силуэту)
+        ctx.beginPath(); ctx.arc(0,0,o._blikR,dc.shA0,dc.shA1); ctx.stroke();
         ctx.fillStyle='rgba(0,0,0,.15)';
-        ctx.beginPath(); ctx.arc(o.r*.15,-o.r*.35,o.r*.16,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(dc.darkSmall.x,dc.darkSmall.y,dc.darkSmall.r,0,6.283); ctx.fill();
       }
       ctx.fillStyle='rgba(0,0,0,.22)';
-      ctx.beginPath(); ctx.arc(-o.r*.25,-o.r*.2,o.r*.3,0,6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(dc.darkBig.x,dc.darkBig.y,dc.darkBig.r,0,6.283); ctx.fill();
       ctx.restore();
     }
     ctx.restore();
