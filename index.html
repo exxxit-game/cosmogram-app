@@ -919,26 +919,33 @@ button, input, select, textarea { text-transform:inherit; }
    общее слово «Войти через» у Telegram короче по ширине, чем у Discord/Google — не
    мельче (не размер буквы), а плотнее. normal (0) был уже минимумом обычного трекинга;
    отрицательное значение — то же самое, что у многих компактных кнопочных надписей. */
-.btn.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:7px;
-  justify-content:center; background:#5865F2; color:#fff; border:none;
-  border-radius:999px; padding:6px 16px; font-weight:400; font-size:13px; text-transform:none; letter-spacing:-.01em;
-  font-family:'Roboto Btn',var(--font-ui); }
+/* 26.08.2026, продолжение: «разных размеров» — не только ширина текста (letter-spacing
+   выше), а и сама высота кнопки. Между делом иконку Google подняли до 18px (следующий
+   блок правок про жёлтую дольку) — и кнопка НЕЗАМЕТНО выросла по высоте вместе с ней
+   (32px против 27px у Discord: flex тянется под самый высокий свой элемент). Гонялся за
+   шириной весь час, а асимметрия была в высоте — нашёл только когда владелец спросил
+   напрямую «ты увеличил иконку гугл и кнопка больше стала?». Симметрия важнее: владелец
+   выбрал вернуть обе иконки к 15px, а не носить разную высоту ради чуть более чёткой
+   жёлтой дольки. height:28px — явный, не выведенный из padding, чтобы будущая правка
+   иконки так же тихо не потянула высоту за собой ещё раз. Ширина — измерена вживую как
+   минимум одной строки без переноса при этих отступах (white-space:nowrap — иначе текст
+   переносится ВНУТРИ flex-ячейки независимо от неё самой), и выровнена между кнопками —
+   не «похоже на Telegram» (его нам не измерить, чужой iframe), а хотя бы друг на друга. */
+.btn.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; justify-content:center; gap:7px;
+  background:#5865F2; color:#fff; border:none; white-space:nowrap;
+  border-radius:999px; height:28px; width:170px; padding:0 14px; font-weight:400; font-size:13px;
+  text-transform:none; letter-spacing:-.01em; font-family:'Roboto Btn',var(--font-ui); }
 .btn.dcBtn:active { background:#4752C4; } /* тёмный оттенок блёрпла — тот же приём, что у нажатия обычных кнопок */
-.dcBtn .ic { width:15px; height:15px; }
+.dcBtn .ic { width:15px; height:15px; flex:none; }
 /* 23.08.2026: третий вход — Google. Официальный стиль Google для кнопок входа — белый
    фон с тонкой серой рамкой (не сплошной цвет, как у Discord/Telegram) — их брендбук
    именно так и требует. Тот же формат-пилюля и вес на экране, что у соседей. */
-.btn.gBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:7px;
-  justify-content:center; background:#fff; color:#3c4043; border:1px solid #dadce0;
-  border-radius:999px; padding:6px 16px; font-weight:400; font-size:13px; text-transform:none; letter-spacing:-.01em;
-  font-family:'Roboto Btn',var(--font-ui); }
+.btn.gBtn { margin:6px auto 0; display:flex !important; align-items:center; justify-content:center; gap:7px;
+  background:#fff; color:#3c4043; border:1px solid #dadce0; white-space:nowrap;
+  border-radius:999px; height:28px; width:170px; padding:0 14px; font-weight:400; font-size:13px;
+  text-transform:none; letter-spacing:-.01em; font-family:'Roboto Btn',var(--font-ui); }
 .btn.gBtn:active { background:#f1f3f4; }
-/* 26.08.2026: владелец увидел «сломанную симметрию, жёлтого почти нет» — цвета и форма
-   сверены заново на увеличенном рендере, совпадают с настоящим логотипом Google один в
-   один (жёлтая долька и там объективно самая тонкая деталь). На 15px, как у Discord,
-   именно она тает в сглаживании — не ошибка красок, а слишком мелкий размер для четырёх
-   секторов. Google крупнее Discord (простой силуэт не так чувствителен к размеру). */
-.gBtn .ic { width:18px; height:18px; }
+.gBtn .ic { width:15px; height:15px; flex:none; }
 .pvTag { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; vertical-align:2px; }
 #dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty, #gWidget:empty, #gJoinWidget:empty { display:none; }
 
@@ -1049,7 +1056,7 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.17"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.18"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1450,23 +1457,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.17" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.17"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.17"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.17"></script>
-<script defer src="js/game.js?v=1.477.17" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.17"></script>
-<script defer src="js/sync.js?v=1.477.17"></script>
-<script defer src="js/render.js?v=1.477.17"></script>
-<script defer src="js/planetarium.js?v=1.477.17"></script>
-<script defer src="js/goldstar.js?v=1.477.17"></script>
-<script defer src="js/music.js?v=1.477.17"></script>
-<script defer src="js/gyro.js?v=1.477.17"></script>
-<script defer src="js/forge.js?v=1.477.17"></script>
-<script defer src="js/adaptive.js?v=1.477.17"></script>
-<script defer src="js/card.js?v=1.477.17"></script>
-<script defer src="js/star.js?v=1.477.17"></script>
-<script defer src="js/ui.js?v=1.477.17"></script>
+<script defer src="js/core.js?v=1.477.18" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.18"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.18"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.18"></script>
+<script defer src="js/game.js?v=1.477.18" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.18"></script>
+<script defer src="js/sync.js?v=1.477.18"></script>
+<script defer src="js/render.js?v=1.477.18"></script>
+<script defer src="js/planetarium.js?v=1.477.18"></script>
+<script defer src="js/goldstar.js?v=1.477.18"></script>
+<script defer src="js/music.js?v=1.477.18"></script>
+<script defer src="js/gyro.js?v=1.477.18"></script>
+<script defer src="js/forge.js?v=1.477.18"></script>
+<script defer src="js/adaptive.js?v=1.477.18"></script>
+<script defer src="js/card.js?v=1.477.18"></script>
+<script defer src="js/star.js?v=1.477.18"></script>
+<script defer src="js/ui.js?v=1.477.18"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
