@@ -1075,9 +1075,23 @@ function audioSample(){
   const nowAt=performance.now();
   if(acPrevAt>0){
     const wallDelta=(nowAt-acPrevAt)/1000, ctxDelta=AC.currentTime-acPrevT;
+    const wasStalled=acStalled;
     acStalled = wallDelta>1 && ctxDelta < wallDelta*0.3; // время в контексте идёт заметно медленнее настенных часов
+    if(acStalled && !wasStalled) audioRecoverStall(); // 26.08.2026: раньше только сообщали диагноз (audioVStalled) и ждали — часы контекста, однажды замерев, сами не отходят, ждать нечего
   }
   acPrevT=AC.currentTime; acPrevAt=nowAt;
+}
+/* 26.08.2026: «тихая заморозка» неизлечима внутри того же AudioContext (сам баг — в часах
+   браузера, не в нашем коде) — единственное лекарство таким же приёмом, что уже был для
+   state==='closed' (v1.282.20): бросить труп, дать audio() создать новый. mg/conv/wet в
+   music.js (ensureChain) и g/src в engine (engine.start, тот же файл) держат ссылку на
+   старый контекст — они сами замечают несовпадение (mg.context!==ac) и пересобираются на
+   следующем тике audioKeep() (js/ui.js, каждые 6с), сами узлы здесь, в core.js, не трогаем. */
+function audioRecoverStall(){
+  try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('audio_stall_recover', AC.state); }catch(_){}
+  try{ AC.close(); }catch(e){}
+  AC=null; NOISE_BUF=null; acPrevT=0; acPrevAt=0; acStalled=false;
+  audioSuspendedSinceAt=0; audioResumeFailReported=false; audioNeverResumedReported=false; // новый контекст — новая попытка, старые «уже сообщили» не должны душить сигнал о новой поломке
 }
 /* v1.474.0 «Тихое зависание»: research 24.08.2026 нашёл в самой спецификации Web Audio API
    (webaudio.github.io/web-audio-api, шаг 6 алгоритма resume()) — если контексту «не разрешено
@@ -1133,7 +1147,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.7'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.8'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'

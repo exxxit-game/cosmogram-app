@@ -60,6 +60,13 @@ const music = (()=>{
   function ensureChain(){
     if(MUTED||!MUSIC_ON) return null;
     const ac=audio(); if(!ac) return null;
+    if(mg && mg.context!==ac){ // 26.08.2026: старые узлы держали ссылку на контекст, который умер и
+      // был пересоздан (закрытие браузером / восстановление после «тихой заморозки», core.js
+      // audioSample()) — connect() между разными AudioContext не работает, музыка молчала бы
+      // до перезагрузки страницы, хотя новый контекст рядом жив и здоров
+      mg=null; conv=null; wet=null; theme=null; pendingTheme=null;
+      if(timer){ clearInterval(timer); timer=null; }
+    }
     if(!mg){
       mg=ac.createGain(); mg.gain.value=0;
       conv=ac.createConvolver(); conv.buffer=impulse(ac,2.8,2.2);
@@ -334,8 +341,11 @@ const engine=(()=>{
   }
   return {
     start(){
-      if(MUTED||on) return;
+      if(MUTED) return;
       const ac=audio(); if(!ac) return;
+      if(on && g && g.context!==ac) on=false; // 26.08.2026: та же беда, что у music-цепи выше —
+        // флаг «уже играю» пережил смерть контекста, шелест молчал бы до конца полёта
+      if(on) return;
       stopNodes();
       src=ac.createBufferSource(); src.buffer=noiseBuf(ac); src.loop=true;
       flt=ac.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=500; flt.Q.value=.5;
