@@ -718,15 +718,19 @@ function draw(){
   }
 
   // звёзды (монеты): спрайт-свечение вместо shadowBlur — мягче и дешевле
-  const REAL_STAR_HUD_DEADZONE=(screenName==='game'||screenName==='pause') ? H*.2 : -1; // 22.08.2026: видео-доказательство владельца — настоящий бонус, не декорация, попадал в зону HUD в первые секунды забега; физика/собираемость не меняются, только отрисовка ждёт, пока звезда сама не упадёт ниже
-  const STAR_FADE_BAND=H*.04; // 26.08.2026: жёсткий обрыв «невидимо → видимо» на границе дал резкий хлопок появления; растягиваем на 4% высоты экрана
+  /* 26.08.2026: владелец сфотографировал место появления звезды на своём телефоне и красной
+     линией отметил границу — она легла ровно на REAL_STAR_HUD_DEADZONE+STAR_FADE_BAND (20%+4%
+     высоты экрана). Дедзона не пряталась под HUD — она НЕ РИСОВАЛА звезду вовсе (continue
+     ниже), а полоса плавного появления шириной 4% экрана пролетается на игровой скорости
+     примерно за 90мс — короче, чем человек различает как «плавно». Фикс от 22-26.08.2026
+     не убрал резкое появление, а лишь закрепил его кодом на том же месте, где оно и было.
+     Убрано целиком: звёзды и бонусы теперь рисуются по тому же правилу, что и препятствия
+     (inView() и ничего больше) — ровно то, что владелец назвал «эталоном». */
   for (const s of stars){
-    const fadeA=REAL_STAR_HUD_DEADZONE<0 ? 1 : clamp((s.y-REAL_STAR_HUD_DEADZONE)/STAR_FADE_BAND,0,1); // 0 под HUD, плавно к 1 чуть ниже границы
-    if(fadeA<=0) continue; // всё ещё рано, до дорогой отрисовки — звезда падает и остаётся собираемой как обычно
     if(!inView(s.x,s.y,32,32)) continue;
     const glow = 6+Math.sin(s.ph)*3;
     ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.ph*.3);
-    ctx.globalAlpha=(.55+Math.sin(s.ph)*.18)*fadeA; ctx.drawImage(starGlow(),-15,-15,30,30); ctx.globalAlpha=fadeA; // v1.37.0: спрайт-ауреола всем ступеням — дешевле shadowBlur
+    ctx.globalAlpha=.55+Math.sin(s.ph)*.18; ctx.drawImage(starGlow(),-15,-15,30,30); ctx.globalAlpha=1; // v1.37.0: спрайт-ауреола всем ступеням — дешевле shadowBlur
     ctx.fillStyle=juicy('#ffe9a8','color(display-p3 1 .93 .62)'); // v1.99.3 «Сочные чернила»: тело звезды — сочное золото флагману
     ctx.beginPath();
     for(let i=0;i<8;i++){ const a=i/8*6.283, r=i%2?4:9+glow*.3;
@@ -746,12 +750,10 @@ function draw(){
   // бонусы: ауреола по цвету + пульсирующее внешнее кольцо (hq)
   const PR=powRing(); // v1.66.0: готовые строки цветов — не собираем объекты в каждом кадре
   for (const p of powerups){
-    const pFadeA=REAL_STAR_HUD_DEADZONE<0 ? 1 : clamp((p.y-REAL_STAR_HUD_DEADZONE)/STAR_FADE_BAND,0,1); // тот же приём и те же числа, что у звёзд строками выше — владелец 26.08.2026 нашёл тот же резкий хлопок появления и у бонусов
-    if(pFadeA<=0) continue; // всё ещё рано, до дорогой отрисовки — бонус падает и остаётся собираемым как обычно
     if(!inView(p.x,p.y,32,36)) continue;
     ctx.save(); ctx.translate(p.x, p.y+Math.sin(p.ph)*3);
     const col=POW_COLORS[p.kind]; // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу
-    ctx.globalAlpha=.85*pFadeA; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=pFadeA; // v1.37.0: ауреола всем ступеням — кэш-спрайт
+    ctx.globalAlpha=.85; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
     ctx.fillStyle='rgba(255,255,255,.12)';
     ctx.beginPath(); ctx.arc(0,0,p.r+3,0,6.283); ctx.fill();
     ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
