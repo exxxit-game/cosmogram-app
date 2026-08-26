@@ -100,6 +100,19 @@ canvas{display:block}
 @font-face { font-family:'Exo 2'; font-style:normal; font-weight:400; font-display:swap;
   src:url('fonts/exo2-latin.woff2') format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+/* 26.08.2026: буквы «ч»/«р» у Discord/Google смотрелись другим шрифтом рядом с виджетом
+   Telegram — тот, скорее всего, настоящий Roboto (веб-шрифт Google), а у нас на Windows
+   подставлялся системный Segoe UI (та же строка --font-ui, что и везде в игре). Кириллица
+   у этих двух гарнитур рисуется по-разному. Своя копия Roboto 500, тот же приём, что у
+   Exo 2 (свой файл, никакого CDN) — цвета/веса CSS до Telegram (чужой iframe) не
+   дотягиваются, а свой шрифт можно тащить целиком. Файлы и лицензия (OFL 1.1, Roboto с
+   2021 года тоже под ней, не Apache) — с оригинального google/fonts, не «похожий шрифт». */
+@font-face { font-family:'Roboto Btn'; font-style:normal; font-weight:500; font-display:swap;
+  src:url('fonts/roboto500-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family:'Roboto Btn'; font-style:normal; font-weight:500; font-display:swap;
+  src:url('fonts/roboto500-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 
 :root {
   /* v1.59.0 «Подушка»: безопасная зона = максимум из env (браузер), TG-переменных (мини-апп 8.0+)
@@ -892,10 +905,13 @@ button, input, select, textarea { text-transform:inherit; }
    утоньшения — общий .btn задаёт разрядку букв .04em игре в целом, у виджета
    Telegram её нет, снова тот же чужой iframe. Третий пункт того же списка:
    заглавные, толщина, теперь разрядка — не подгонка Telegram под нас, а нас под
-   него, раз до Telegram дотянуться нельзя физически. */
+   него, раз до Telegram дотянуться нельзя физически.
+   font-family: 'Roboto Btn' (тем же вечером) — владелец разглядел конкретно буквы «ч»/«р»,
+   это уже не вес и не разрядка, а другая гарнитура. Своя копия Roboto, объявление выше. */
 .btn.dcBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:7px;
   justify-content:center; background:#5865F2; color:#fff; border:none;
-  border-radius:999px; padding:6px 16px; font-weight:500; font-size:13px; text-transform:none; letter-spacing:normal; }
+  border-radius:999px; padding:6px 16px; font-weight:500; font-size:13px; text-transform:none; letter-spacing:normal;
+  font-family:'Roboto Btn',var(--font-ui); }
 .btn.dcBtn:active { background:#4752C4; } /* тёмный оттенок блёрпла — тот же приём, что у нажатия обычных кнопок */
 .dcBtn .ic { width:15px; height:15px; }
 /* 23.08.2026: третий вход — Google. Официальный стиль Google для кнопок входа — белый
@@ -903,7 +919,8 @@ button, input, select, textarea { text-transform:inherit; }
    именно так и требует. Тот же формат-пилюля и вес на экране, что у соседей. */
 .btn.gBtn { margin:6px auto 0; display:flex !important; align-items:center; gap:7px;
   justify-content:center; background:#fff; color:#3c4043; border:1px solid #dadce0;
-  border-radius:999px; padding:6px 16px; font-weight:500; font-size:13px; text-transform:none; letter-spacing:normal; }
+  border-radius:999px; padding:6px 16px; font-weight:500; font-size:13px; text-transform:none; letter-spacing:normal;
+  font-family:'Roboto Btn',var(--font-ui); }
 .btn.gBtn:active { background:#f1f3f4; }
 .gBtn .ic { width:15px; height:15px; }
 .pvTag { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; vertical-align:2px; }
@@ -1016,7 +1033,7 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.14"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.15"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1417,23 +1434,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.14" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.14"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.14"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.14"></script>
-<script defer src="js/game.js?v=1.477.14" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.14"></script>
-<script defer src="js/sync.js?v=1.477.14"></script>
-<script defer src="js/render.js?v=1.477.14"></script>
-<script defer src="js/planetarium.js?v=1.477.14"></script>
-<script defer src="js/goldstar.js?v=1.477.14"></script>
-<script defer src="js/music.js?v=1.477.14"></script>
-<script defer src="js/gyro.js?v=1.477.14"></script>
-<script defer src="js/forge.js?v=1.477.14"></script>
-<script defer src="js/adaptive.js?v=1.477.14"></script>
-<script defer src="js/card.js?v=1.477.14"></script>
-<script defer src="js/star.js?v=1.477.14"></script>
-<script defer src="js/ui.js?v=1.477.14"></script>
+<script defer src="js/core.js?v=1.477.15" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.15"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.15"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.15"></script>
+<script defer src="js/game.js?v=1.477.15" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.15"></script>
+<script defer src="js/sync.js?v=1.477.15"></script>
+<script defer src="js/render.js?v=1.477.15"></script>
+<script defer src="js/planetarium.js?v=1.477.15"></script>
+<script defer src="js/goldstar.js?v=1.477.15"></script>
+<script defer src="js/music.js?v=1.477.15"></script>
+<script defer src="js/gyro.js?v=1.477.15"></script>
+<script defer src="js/forge.js?v=1.477.15"></script>
+<script defer src="js/adaptive.js?v=1.477.15"></script>
+<script defer src="js/card.js?v=1.477.15"></script>
+<script defer src="js/star.js?v=1.477.15"></script>
+<script defer src="js/ui.js?v=1.477.15"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
