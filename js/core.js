@@ -1077,7 +1077,10 @@ function audioSample(){
     const wallDelta=(nowAt-acPrevAt)/1000, ctxDelta=AC.currentTime-acPrevT;
     const wasStalled=acStalled;
     acStalled = wallDelta>1 && ctxDelta < wallDelta*0.3; // время в контексте идёт заметно медленнее настенных часов
-    if(acStalled && !wasStalled) audioRecoverStall(); // 26.08.2026: раньше только сообщали диагноз (audioVStalled) и ждали — часы контекста, однажды замерев, сами не отходят, ждать нечего
+    if(acStalled && !wasStalled){
+      audioRecoverStall(); // 26.08.2026: раньше только сообщали диагноз (audioVStalled) и ждали — часы контекста, однажды замерев, сами не отходят, ждать нечего
+      return; // 26.08.2026: audioRecoverStall() обнуляет AC внутри себя — строка ниже читала AC.currentTime уже у null и падала Uncaught TypeError на каждом тике audioKeep(), молча убивая звук насовсем (баг в самом фиксе, найден по логу телефона + Supabase)
+    }
   }
   acPrevT=AC.currentTime; acPrevAt=nowAt;
 }
