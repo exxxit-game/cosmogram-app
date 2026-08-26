@@ -270,7 +270,12 @@ function makeRockVerts(n){
 }
 function spawnStar(){
   const s=poolStar.take();
-  s.x=fieldL()+mapRand(40,fieldW()-40); s.y=-30; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
+  /* 26.08.2026: было y=-30 — в 1.5-2 раза меньше разгона, чем у препятствий (y=-40..-60),
+     подтверждено живым замером спавна. Меньше пути до края поля — звезда въезжала в кадр
+     заметно резче своего маленького размера, читалось как «появилась из ниоткуда». Поднято
+     до -50, как у большинства препятствий (rock/mine/drift/seeker), владелец подтвердил
+     это же число. */
+  s.x=fieldL()+mapRand(40,fieldW()-40); s.y=-50; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
   stars.push(s);
 }
 function powGap(){ return lerp(12,7,difficulty()) * mapRand(.85,1.2); } // v1.36.0 «Щедрое небо»: темп следует за сложностью — чем горячее небо, тем чаще подмога
@@ -300,7 +305,9 @@ function spawnPowerup(forceKind){ // forceKind — урок III «Ловец б�
   const p=poolPow.take();
   let px=fieldL()+mapRand(50,fieldW()-50);
   for(let tries=0; tries<5 && !powerupSpotFree(px,obstacles,fieldH()); tries++) px=fieldL()+mapRand(50,fieldW()-50); // v1.415.2: до пяти попыток найти свободный коридор; на пятой — используем как есть, щедрое небо важнее идеала
-  p.x=px; p.y=-30; p.r=14; p.vy=S.speed; p.kind=kind; p.ph=0;
+  // 26.08.2026: y=-30 -> -50, тот же фикс и то же обоснование, что у spawnStar() выше —
+  // разгон сравнялся с большинством препятствий, живым замером подтверждено (владелец).
+  p.x=px; p.y=-50; p.r=14; p.vy=S.speed; p.kind=kind; p.ph=0;
   powerups.push(p);
 }
 
