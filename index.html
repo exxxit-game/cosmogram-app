@@ -327,14 +327,23 @@ button, input, select, textarea { text-transform:inherit; }
 #score { font-size:clamp(30px,7.8vw,42px); line-height:1; font-weight:600; letter-spacing:.02em;
   font-variant-numeric:tabular-nums;
   color:#eaf2ff; text-shadow:0 0 18px rgba(110,160,255,.75), 0 2px 6px rgba(6,10,30,.6); }
-#telemHud { position:fixed; top:max(60px, calc(2px + var(--sat))); /* v1.105.0: хребет вплотную под колонной вагона */ left:0; right:0; z-index:12;
+/* 26.08.2026: тот же приём, что у #topHud (var(--topHudTop, ...) ниже) — «я много раз это
+   чинил ранее и там до сих пор дыра». Формула через --sat жила отдельно от scorePack и
+   могла с ним разъехаться на любую величину; JS (syncScoreHudGap, core.js) теперь меряет
+   РЕАЛЬНЫЙ нижний край scorePack и держит зазор в те же 8px, что и у #topHud. Старая
+   формула остаётся запасным значением на первый кадр, пока JS ещё не отмерил. */
+#telemHud { position:fixed; top:var(--telemHudTop, max(60px, calc(2px + var(--sat)))); left:0; right:0; z-index:12;
   display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; pointer-events:none; } /* одна ось, комбо — последний пункт хребта */
 /* Остров: железная чёлка занимает середину полосы — счёт живёт колонной под рамкой,
    но зазоры подтянуты и число умерено (слово игрока: громоздко) */
 .island #scorePack { top:max(56px, var(--sat)); } /* v1.105.0: колонна — теперь язык всех небес, остров лишь держит своё место */
 .island #scoreLbl { font-size:11px; letter-spacing:.3em; }
 .island #score { font-size:clamp(38px,10.2vw,50px); }
-.island #telemHud { top:calc(max(56px, var(--sat)) + 76px); gap:4px; }
+/* 26.08.2026: свой top для острова убран — та же дыра «формула разошлась с реальным низом
+   счёта» держалась и здесь отдельной строкой; var(--telemHudTop) из базового правила выше
+   уже учитывает остров (JS меряет реальный scorePack, какой бы он ни был на этом устройстве),
+   как #topHud уже давно ни одной island-строки для top не носит. */
+.island #telemHud { gap:4px; }
 .island #hud { padding-top:max(206px, calc(150px + var(--sat))); }
 .island #hudShade { height:calc(215px + var(--sat)); }
 #starsTelem { font-size:17px; font-weight:600; color:#ffd76a; letter-spacing:.05em;
@@ -1056,7 +1065,7 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.18"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.19"></script><!-- мост: под затравкой, раньше core.js -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1457,23 +1466,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.18" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.18"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.18"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.18"></script>
-<script defer src="js/game.js?v=1.477.18" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.18"></script>
-<script defer src="js/sync.js?v=1.477.18"></script>
-<script defer src="js/render.js?v=1.477.18"></script>
-<script defer src="js/planetarium.js?v=1.477.18"></script>
-<script defer src="js/goldstar.js?v=1.477.18"></script>
-<script defer src="js/music.js?v=1.477.18"></script>
-<script defer src="js/gyro.js?v=1.477.18"></script>
-<script defer src="js/forge.js?v=1.477.18"></script>
-<script defer src="js/adaptive.js?v=1.477.18"></script>
-<script defer src="js/card.js?v=1.477.18"></script>
-<script defer src="js/star.js?v=1.477.18"></script>
-<script defer src="js/ui.js?v=1.477.18"></script>
+<script defer src="js/core.js?v=1.477.19" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.19"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.19"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.19"></script>
+<script defer src="js/game.js?v=1.477.19" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.19"></script>
+<script defer src="js/sync.js?v=1.477.19"></script>
+<script defer src="js/render.js?v=1.477.19"></script>
+<script defer src="js/planetarium.js?v=1.477.19"></script>
+<script defer src="js/goldstar.js?v=1.477.19"></script>
+<script defer src="js/music.js?v=1.477.19"></script>
+<script defer src="js/gyro.js?v=1.477.19"></script>
+<script defer src="js/forge.js?v=1.477.19"></script>
+<script defer src="js/adaptive.js?v=1.477.19"></script>
+<script defer src="js/card.js?v=1.477.19"></script>
+<script defer src="js/star.js?v=1.477.19"></script>
+<script defer src="js/ui.js?v=1.477.19"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

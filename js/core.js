@@ -1150,7 +1150,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.18'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.19'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1513,10 +1513,16 @@ function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один заз�
   // ровно в 8px (то же число, что уже у #pausePack между своими частями) от РЕАЛЬНОГО
   // нижнего края #scorePack — не от отдельной формулы через --sat, которая могла разъехаться
   // с формулой scorePack (жалоба владельца, подтверждена измерением в пикселях, 22-23.08.2026).
+  // 26.08.2026: та же дыра держалась и во ВТОРОЙ строке HUD — #telemHud (Расстояние/Плавность,
+  // «я много раз это чинил ранее и там до сих пор дыра») — эта правка её ни разу не касалась,
+  // формула #telemHud так и осталась отдельной от scorePack. Измерено вживую: зазор до #topHud
+  // держал честные 8px, до #telemHud тем временем гулял до 32px. Тот же приём, то же число.
   const sp=document.getElementById('scorePack');
   if(!sp) return;
   const rect=sp.getBoundingClientRect();
-  document.documentElement.style.setProperty('--topHudTop', Math.round(rect.bottom+8)+'px');
+  const gapPx = Math.round(rect.bottom+8)+'px';
+  document.documentElement.style.setProperty('--topHudTop', gapPx);
+  document.documentElement.style.setProperty('--telemHudTop', gapPx);
 }
 // v1.102.1 «Ровная земля»: событийный замер — шквал Telegram (полный экран, вьюпорт, инсеты
 // сыплются пачкой) слипается в ОДИН замер после 350мс тишины; прямые вызовы остаются мгновенными
