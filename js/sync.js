@@ -281,9 +281,14 @@ function syncFlush(extra){
   }
   function drainExtra(){ Store.set('syncExtraQ',syncExtraQueue().filter(x=>x!==sentExtra)); }
   const p=syncPost(Object.assign({action:'submit'}, syncAuth(), {scores:batch, lang:(typeof langEff!=='undefined'?langEff:'ru')}, sentExtra)).then(r=>{
-    if(r.ok || r.status===401 || r.status===400){ // принято (или отказ навсегда) — вычитаем доставленное
+    /* 27.08.2026 «Replay-защита записи рекорда»: 409 значит «этот же nonce уже обработан» —
+       то есть более ранняя попытка ЭТОГО ЖЕ забега (см. runNonce в ui.js) уже долетела и
+       была принята сервером, а её ответ до нас просто не дошёл (сеть оборвалась после того,
+       как сервер записал, но раньше, чем клиент получил 200). Для очереди это тот же исход,
+       что и honest ok — переотправлять больше нечего, а не «ошибка, попробуй ещё раз». */
+    if(r.ok || r.status===401 || r.status===400 || r.status===409){ // принято (или отказ навсегда) — вычитаем доставленное
       drain();
-      if(r.ok || r.status===400) drainExtra();
+      if(r.ok || r.status===400 || r.status===409) drainExtra();
     } else if(r.status===429){ drain(); } // extra остаётся: уведомление повторится после антифлуда
     // 5xx / сеть — оставляем в очереди до следующего gameOver
     /* v1.282.20: раньше отправка резолвилась пустотой — звавшему нечего было узнать об

@@ -483,13 +483,21 @@ function gameOver(){
   const runPass = { cat:cat, score:sc, dist:distM, sec:Math.round(S.time),
                     seed:S.seed, mode:S.mode, restored:S.wasRestored?1:0,
                     v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?') };
+  /* 27.08.2026 «Replay-защита записи рекорда» (S5, шаг 3 из трёх запрошенных владельцем):
+     одна строка на ЭТОТ забег, не на одну попытку отправки — генерируется здесь один раз
+     и едет внутри syncExtra, а значит переживает сетевые ретраи того же забега (см. пометку
+     v1.282.14 у syncFlush в sync.js: занятую линию не подменяем, становимся в очередь —
+     тот же объект с тем же nonce уйдёт повторно, если первая попытка не долетела). Сервер
+     (cosmogram-sync) гасит nonce атомарно при первом успехе — второй раз тот же не пройдёт. */
+  const runNonce = (()=>{ try{ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+    return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2); })();
   /* v1.282.20 «Дневник борта»: посадка пишет строку дня. Счётное — всегда, поведенческое
      (режим, способ управления, от чего погиб) — внутри dayAdd только при разрешённых отчётах. */
   if (typeof dayAdd==='function') dayAdd({ score:sc, dist:distM, sec:Math.round(S.time),
     stars:S.starsCollected, mode:(S.mode||runMode||'classic'), ctl:cat,
     death:(S.mapWin?'win':(S.lastHitKind||'?')), day:S.dayKey }); // day: тот же день, что и на взлёте (см. startGame) — не читаем часы заново
   const submitP = (typeof syncSubmit==='function')
-    ? syncSubmit(syncLocalScores(), Object.assign({run:runPass,
+    ? syncSubmit(syncLocalScores(), Object.assign({run:runPass, nonce:runNonce,
         profile:(typeof playerProfile==='function'?playerProfile():null),
         days:(typeof daysToSend==='function'?daysToSend():null)}, syncExtra)) // честная таблица: локальные рекорды + паспорт забега + дневник → сервер (тихо)
     : null;
