@@ -585,34 +585,51 @@ function fillGlyphPath(x,kind){
       x.quadraticCurveTo(5,4.8,0,7.2); x.quadraticCurveTo(-5,4.8,-5,0.4);
       x.lineTo(-5,-4.6); x.closePath(); break;
     case 'slowmo': x.arc(0,0,5.6,0,6.283); break; // циферблат — стрелки вырезаем тёмным
-    case 'dash': for(const dx of [-6.4,-2.2,2]){ // Таран: три жирных шеврона вперёд — ты снаряд
-      x.moveTo(dx,-4.6); x.lineTo(dx+3.6,0); x.lineTo(dx,4.6); x.lineTo(dx+1.9,4.6);
-      x.lineTo(dx+5.5,0); x.lineTo(dx+1.9,-4.6); x.closePath(); } break;
-    case 'nova': // Сверхновая: восьмилучевая звезда-вспышка
-      for(let i=0;i<16;i++){ const a=i/16*6.283, rad=i%2?2.2:6.6;
+    case 'dash': { const k=1.15; // 27.08.2026 «Симметрия силуэтов»: было — три тонких шеврона
+      // («ты снаряд», см. старый коммент); жалоба владельца — таран читается хуже жизни и
+      // щита. Разбор: дело не в толщине линий, а в том, что щит/замедление/магнит — сплошные
+      // фигуры без внутренних пустот, а три раздельных шеврона — дырявые по конструкции.
+      // Сплошной клин-«остриё» и площадью больше (13.5%→17.8% от круга бонуса, вровень со
+      // щитом, посчитано численно шнурком/растровой заливкой), и по смыслу ближе к слову
+      // «Таран» — старые шевроны читались как «перемотка/скорость», не как «пробиваю».
+      x.moveTo(-6*k,-5*k); x.lineTo(2*k,-5*k); x.lineTo(6.6*k,0);
+      x.lineTo(2*k,5*k); x.lineTo(-6*k,5*k); x.lineTo(-2*k,0); x.closePath(); } break;
+    case 'nova': { const k=1.5; // Сверхновая: та же восьмилучевая звезда, крупнее целиком.
+      // 27.08.2026: при проверке площади всех шести силуэтов оказалась самой тонкой из всех
+      // (7.2% — тоньше даже старого тарана), хотя владелец её не называл — подтянута туда же.
+      for(let i=0;i<16;i++){ const a=i/16*6.283, rad=(i%2?2.2:6.6)*k;
         i?x.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):x.moveTo(Math.cos(a)*rad,Math.sin(a)*rad); }
-      x.closePath(); break;
+      x.closePath(); } break;
   }
 }
-function drawGlyph(ctx,kind,col){
+function drawGlyph(ctx,kind){
   ctx.save();
-  // v1.282.20: геометрия у значка постоянная, меняется только цвет — кэш по цвету
-  const gk='gly'+col; let g=gradCache[gk];
+  /* 27.08.2026 «Симметрия силуэтов»: раньше силуэт красился в тот же col, что и фон-ауреола
+     (полупрозрачная, силуэт на ней читался). Теперь под силуэтом плотный цветной диск-жетон
+     (см. powTokenGrad ниже) — силуэт того же col утонул бы в диске того же оттенка, нулевой
+     контраст. Тёмная заливка вместо этого держит контраст на любом из шести цветов; двух
+     тёмных тонов (не шести) — жизни отдельно тёплый тёмно-бордовый (её диск розовый, тёмно-
+     синий на нём смотрелся мутно), остальным пяти — один тёмно-синий. Кэш по тёмному тону,
+     не по col — было 6 записей кэша, стало 2. */
+  const dcol = kind==='life' ? '#5a1633' : '#0c1430';
+  const gk='glyD'+dcol; let g=gradCache[gk];
   if(!g){ g=ctx.createLinearGradient(0,-7,0,7); // свет сверху, как у всего мира
-    g.addColorStop(0,'#ffffff'); g.addColorStop(.25,col); g.addColorStop(1,col); gradPut(gk,g); }
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.3,dcol); g.addColorStop(1,dcol); gradPut(gk,g); }
   if(kind==='magnet'){ // подкова — жирной дугой с круглыми концами
     ctx.strokeStyle=g; ctx.lineWidth=4.6; ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(-4.4,4.8); ctx.lineTo(-4.4,-0.8);
     ctx.arc(0,-0.8,4.4,Math.PI,0); ctx.lineTo(4.4,4.8); ctx.stroke();
-  } else if(kind==='life'){ // крест — два бруска (составной контур rr не строим: rr зовёт beginPath)
+  } else if(kind==='life'){ // крест — два бруска, крупнее целиком: 9.6%→17.6% площади
+    // значка (посчитано численно, вровень со щитом) — владелец заметил, что «жирнее линию»
+    // недостаточно, у щита/замедления/магнита нет внутренних пустот, а у тонкого креста есть
     ctx.fillStyle=g;
-    rr(ctx,-1.7,-5.2,3.4,10.4,1.2); ctx.fill();
-    rr(ctx,-5.2,-1.7,10.4,3.4,1.2); ctx.fill();
+    rr(ctx,-2.6,-6.5,5.2,13,1.6); ctx.fill();
+    rr(ctx,-6.5,-2.6,13,5.2,1.6); ctx.fill();
   } else {
     fillGlyphPath(ctx,kind); ctx.fillStyle=g; ctx.fill();
   }
-  if(kind==='slowmo'){ // стрелки — тёмный вырез
-    ctx.strokeStyle='rgba(8,14,34,.85)'; ctx.lineWidth=2.2; ctx.lineCap='round';
+  if(kind==='slowmo'){ // стрелки — светлый вырез (циферблат теперь тёмный, был светлый)
+    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=2.2; ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(0,-3.1); ctx.lineTo(0,0); ctx.lineTo(2.6,1.6); ctx.stroke();
   }
   ctx.restore();
@@ -630,6 +647,15 @@ function powRing(){
   if(!POW_RING){ POW_RING={}; for(const k in POW_COLORS)
     POW_RING[k]=[hexToRgba(POW_COLORS[k])+'.38)', hexToRgba(POW_COLORS[k])+'.5)']; }
   return POW_RING;
+}
+/* 27.08.2026 «Симметрия силуэтов»: значок-жетон (владелец выбрал это из трёх показанных
+   направлений на artifact-мокапе, плюс искра из другого направления). Диск того же
+   принципа, что и градиент силуэта чуть выше — кэш по цвету, не пересобирается в кадре. */
+function powTokenGrad(ctx,col){
+  const gk='powTok'+col; let g=gradCache[gk];
+  if(!g){ g=ctx.createRadialGradient(-3,-4,1,0,0,16); // свет сверху-слева, тот же приём, что у остальных дисков игры
+    g.addColorStop(0,hexToRgba(col)+'.92)'); g.addColorStop(1,hexToRgba(col)+'.58)'); gradPut(gk,g); }
+  return g;
 }
 let corrCache={w:-1,ht:-1,d:-1,s:-1,fl:-1,fw:-1,c:null};
 /* 22.08.2026 «Видимый край неба»: жалоба владельца — на ноутбуке/широком экране коридор
@@ -775,26 +801,37 @@ function draw(){
   }
   goldDraw(); // v1.100.2 «Золотая звезда дня»: снич над монетным россыпью — маяк, ореол, вспышка поимки
 
-  // бонусы: ауреола по цвету + пульсирующее внешнее кольцо (hq)
+  /* бонусы: значок-жетон — 27.08.2026 «Симметрия силуэтов» (владелец). Раньше —
+     ауреола по цвету + полупрозрачный круг + цветной обвод + пульсирующее/пунктирное кольцо.
+     Показан artifact-мокап с тремя направлениями и численной проверкой площади силуэтов —
+     владелец выбрал направление «В» (плотный цветной диск под силуэтом вместо полупрозрачного
+     круга — контрастнее на пёстром фоне) плюс летающую искру из направления «А». Заодно
+     подтянута площадь силуэта у жизни (9.6%→17.6%), тарана (форма сменилась на «остриё»,
+     8.5%→17.8%) и сверхновой (7.2%→16.2%, владелец её не называл — нашлась при численной
+     проверке остальных) — вровень со щитом/замедлением/магнитом (16-19%), см. правки в
+     fillGlyphPath/drawGlyph выше. Мокап: .knowledge/ не хранит скриншоты — обсуждение в
+     диалоге с владельцем 27.08.2026. */
   const PR=powRing(); // v1.66.0: готовые строки цветов — не собираем объекты в каждом кадре
   for (const p of powerups){
     if(!inView(p.x,p.y,32,36)) continue;
     ctx.save(); ctx.translate(p.x, p.y+Math.sin(p.ph)*3);
     const col=POW_COLORS[p.kind]; // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу
-    ctx.globalAlpha=.85; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
-    ctx.fillStyle='rgba(255,255,255,.12)';
-    ctx.beginPath(); ctx.arc(0,0,p.r+3,0,6.283); ctx.fill();
-    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.globalAlpha=.7; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
+    ctx.fillStyle=powTokenGrad(ctx,col);
+    ctx.beginPath(); ctx.arc(0,0,p.r+2,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(6,10,22,.5)'; ctx.lineWidth=1.4; ctx.stroke(); // тёмный ободок — отделяет диск от пёстрого фона
     if(sh){ // внешнее кольцо дышит (v1.37.0: со средней ступени)
       ctx.strokeStyle=PR[p.kind][0]; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.arc(0,0,p.r+8+Math.sin(p.ph*1.3)*2,0,6.283); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0,p.r+9+Math.sin(p.ph*1.3)*2,0,6.283); ctx.stroke();
     }
-    if(uq){ // ультра: встречное пунктирное кольцо
-      ctx.strokeStyle=PR[p.kind][1]; ctx.lineWidth=1;
-      ctx.setLineDash([4,6]); ctx.lineDashOffset=p.ph*8;
-      ctx.beginPath(); ctx.arc(0,0,p.r+13,0,6.283); ctx.stroke(); ctx.setLineDash([]);
+    if(uq){ // ультра: летающая искра по орбите вокруг жетона (вместо старого пунктирного кольца)
+      const sa=p.ph*1.6, sr=p.r+16;
+      ctx.globalAlpha=.6+Math.sin(p.ph*2)*.3;
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath(); ctx.arc(Math.cos(sa)*sr,Math.sin(sa)*sr,1.6,0,6.283); ctx.fill();
+      ctx.globalAlpha=1;
     }
-    drawGlyph(ctx,p.kind,col); ctx.restore(); // v1.105.0: силуэт знает свой цвет сам
+    drawGlyph(ctx,p.kind); ctx.restore(); // 27.08.2026: силуэт сам решает тёмный тон по kind, не по col
   }
 
   // препятствия

@@ -866,7 +866,11 @@ const ANGAR_PV_SHAG = 33;    // ~30 кадров в секунду, а не 60
 
 function angarPvDraw(t){
   const cv=$('angarPv'); if(!cv) return;
-  const sk = SKINS[S.skin]||SKINS[0];
+  /* 27.08.2026: было SKINS[S.skin] — превью показывало НАДЕТЫЙ борт, а не тот, что игрок
+     только что тронул в сетке. angarBuyFill() (кнопка «Купить») рядом уже честно смотрит
+     на angarSel («на какой жетон смотрит игрок», см. коммент у объявления) — жалоба
+     владельца «выбираешь скин, а в окне его не видно» ровно про это рассогласование. */
+  const sk = SKINS[angarSel]||SKINS[0];
   const W=380, H=190, d=(window.devicePixelRatio||1);
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
   const x=cv.getContext('2d'); if(!x) return;
@@ -943,8 +947,20 @@ function angarBuyFill(){
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый борт)
 let angarBuilt = false;    // жетоны построены — второй раз не строим
 
+let angarTabsBuilt = false;
 function renderHangar(){
   angarSel = S.skin;
+  /* 27.08.2026 «Кнопка не ложится на контент»: #angarTabs раньше был мёртвой заготовкой
+     (CSS был, разметка стояла с class="hidden", ни одного обращения из ui.js). Сейчас
+     подключаем механически — одна вкладка «Цвет» = нынешняя сетка скинов, переключать
+     пока нечего. Точка расширения для будущих категорий (Декали/Аура и т.д.) — отдельным
+     заходом, когда владелец решит, с какой начинать. */
+  if(!angarTabsBuilt){
+    const tabs=$('angarTabs');
+    if(tabs) tabs.innerHTML='<button class="angarTab sel" id="angarTabColor"></button>';
+    angarTabsBuilt=true;
+  }
+  const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
     grid.innerHTML='';
@@ -976,9 +992,13 @@ function angarPick(id){
   SKINS.forEach((sk,i)=>{ const el=grid.children[i];
     if(el) el.classList.toggle('sel', sk.id===angarSel); });
   angarBuyFill(); angarPvWake();
-  // небо показывает выбранный жетон, даже если борт ещё не надет
-  const sk=SKINS[angarSel]||SKINS[0]; const nast=S.skin; S.skin=sk.id;
-  angarPvDraw(performance.now()); S.skin=nast;
+  /* 27.08.2026: было — временно подменить S.skin, нарисовать один кадр, вернуть обратно.
+     Не спасало: angarPvDraw() сам читал S.skin, поэтому уже СЛЕДУЮЩИЙ кадр анимационного
+     цикла (angarPvStart(), 30 раз в секунду) перерисовывал обратно на надетый борт —
+     эффект костыля держался один кадр и на глаз не был виден. Теперь angarPvDraw() сам
+     смотрит на angarSel, костыль не нужен — небо показывает выбранный жетон постоянно,
+     не только на один кадр, даже если борт ещё не надет. */
+  angarPvDraw(performance.now());
 }
 function angarAct(){ // одна кнопка: надеть, если своё; купить, если чужое
   const sk=SKINS[angarSel]||SKINS[0];

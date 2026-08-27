@@ -178,8 +178,35 @@ button, input, select, textarea { text-transform:inherit; }
      сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
      экране — шестую часть высоты, отданную ни за что, на КАЖДОМ экране меню.
      Защиту оставляем, украшение снимаем. */
-  padding-top:calc(10px + var(--sat-menu)); padding-bottom:24px; overflow-y:auto; }
+  padding-top:calc(10px + var(--sat-menu)); }
+/* Настройки: «Назад» — обычная строка в конце последней панели, в потоке документа
+   (так и было задумано с самого начала, см. коммент «Назад в потоке» у разметки) —
+   поэтому весь экран целиком остаётся одной прокручиваемой лентой, как раньше. */
+#settingsScreen { padding-bottom:24px; overflow-y:auto; }
+/* 27.08.2026 «Кнопка не ложится на контент»: у Ангара и Достижений раньше весь экран
+   был одной прокручиваемой лентой, а «Меню»/«Назад» — sticky-элементом внутри неё,
+   с зазором из подобранных чисел (96px экрану + 56px ленте). Число держало ровно те
+   вьюпорты, что проверял страж 130 — на более тесном (например, Telegram не в
+   fullscreen — шапка мессенджера отъедает высоту) снова не хватало, тем же классом
+   бага в третий раз (было дважды: 13.08.2026, v1.284.6 — оба раза тем же способом,
+   числом под конкретный замер). Владелец прислал скрины: «Меню» легло на скин
+   «Неон», «Назад» — на карточку «Пилот» и на строку лидерборда — три независимых
+   экрана одной болезнью. Числом больше не чиним — структурой: прокручивается не
+   весь .overlay, а только .scrBody внутри него; кнопка — обычный элемент колонки
+   ПОСЛЕ скролл-зоны, не sticky. Физически не может лечь на список ни при какой
+   высоте окна — не нужно новое число под каждый следующий вьюпорт. */
+#hangarScreen, #achScreen { overflow-y:hidden; }
+.scrBody { flex:1 1 auto; min-height:0; width:100%; overflow-y:auto;
+  display:flex; flex-direction:column; align-items:center; padding-bottom:16px; }
 #settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+.scrBody>* { flex-shrink:0; }
+/* 27.08.2026: без этой строки правило выше (#hangarScreen>*, специфичность по ID) перебивало
+   бы flex-shrink:1 из .scrBody (специфичность по классу ниже) — ЖИВОЙ проверкой в браузере
+   поймано: сетка скинов не помещалась, .scrBody не сжимался под остаток высоты, а
+   #hangarScreen (overflow-y:hidden) молча обрезал лишнее — часть сетки становилась
+   недостижимой, а не прокручиваемой. Страж 130 такое не ловит (видит только геометрию
+   видимого, не обрезанное). Явный селектор той же ID-специфичности возвращает сжатие. */
+#hangarScreen>.scrBody, #achScreen>.scrBody { flex-shrink:1; }
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
 #settingsScreen, #achScreen, #hangarScreen, #gameOverScreen { pointer-events:auto; }
@@ -203,25 +230,13 @@ button, input, select, textarea { text-transform:inherit; }
 .setGrp.open { margin-bottom:0; border-radius:var(--r-card) var(--r-card) 0 0;
   border-bottom-color:transparent; }
 .setGrp + .setPanel { margin:0 0 10px; border-top:none; border-radius:0 0 var(--r-card) var(--r-card); }
-.stickyBack { position:sticky; bottom:10px; z-index:3; /* v1.50.0: «Назад» всегда на виду — не прячется за край, сколько бы ни было строк */
-  background:rgba(14,22,48,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+/* 27.08.2026: .stickyBack была position:sticky с зазором из подобранных чисел —
+   см. развёрнутый разбор у .scrBody выше. У Ангара/Достижений кнопка теперь просто
+   обычный элемент колонки экрана (см. HTML — вне .scrBody), sticky-стилей не носит,
+   этот класс на них больше не влияет на позицию. У Настроек (единственный экран, где
+   «Назад» и правда был не sticky, «в потоке») класс этот не применялся никогда. */
+.stickyBack { background:rgba(14,22,48,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   box-shadow:0 -6px 18px rgba(6,10,24,.55); }
-/* v1.284.6: замысел липкой кнопки верный, но у ленты не было запаса снизу — и кнопка
-   лежала ПОВЕРХ последних строк. На снимках владельца «МЕНЮ» закрывало скин «Неон»,
-   «НАЗАД» — восьмую строку таблицы; даже с починенной прокруткой нижняя строка так и
-   осталась бы под ней.
-   Запас — padding-bottom у прокручиваемого экрана, и он подобран ЗАМЕРОМ, а не на глаз.
-   Проверено по очереди: margin-top и margin-bottom на самой липкой кнопке высоту прокрутки
-   не увеличивают вовсе (замер: elOver как был 297, так и остался — маржин липкого элемента
-   в расчёт не идёт). padding-bottom работает, но не весь: из 64 px до прокрутки доехало 40,
-   и последней строке не хватило четырёх пикселей. 96 px закрывают запас с очевидным
-   излишком; проверяется стражем на двух вьюпортах, а не глазами. Страж 130. */
-#hangarScreen, #achScreen, #settingsScreen { padding-bottom:96px; }
-/* И запас внутри самих лент: последняя строка живёт в своей обёртке, а кнопка — сосед
-   обёртки, а не строки. Поэтому запаса на экране мало: строка переполняет обёртку и
-   доходит до кнопки. Замер: строка 470..530, кнопка 526..573 — перекрытие ровно 4 px.
-   Запас кладём туда, где живёт строка. */
-#achList, #topList, #angarGrid { padding-bottom:56px; }
 
 /* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
 #startScreen { justify-content:space-between;
@@ -1367,13 +1382,12 @@ button, input, select, textarea { text-transform:inherit; }
        нужно только каталог. Страж 112 сторожит, что кнопка в первом экране. -->
   <button class="btn pri" id="angarBuy">Выбрать</button>
   <div id="angarWallet"><svg class="ic" aria-hidden="true"><use href="#i-star4"></use></svg><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
-  <div id="angarTabs" class="hidden"></div>
-  <div id="angarGrid"></div>
-  <!-- 13.08.2026: «Меню» — липкая кнопка, она всегда висит у нижнего края и содержимое
-       проезжает ПОД ней. Раньше под списком строк это было незаметно, а над сеткой жетонов
-       она накрывала средний жетон нижнего ряда. Пустая полоса даёт последнему ряду место,
-       чтобы прокрутиться выше кнопки. -->
-  <div style="height:72px"></div>
+  <!-- 27.08.2026: заголовок/превью/кнопка/кошелёк выше — вне ленты, не скроллятся вместе
+       с каталогом. Внутри .scrBody — вкладки (пока одна, «Цвет») и сетка жетонов. -->
+  <div class="scrBody">
+    <div id="angarTabs"></div>
+    <div id="angarGrid"></div>
+  </div>
   <button class="btn ghost stickyBack" id="hangarBackBtn">Меню</button>
 </div>
 
@@ -1384,34 +1398,38 @@ button, input, select, textarea { text-transform:inherit; }
     <button class="achTab sel" id="tabMine">Мои</button>
     <button class="achTab" id="tabTop">Топ</button>
   </div>
-  <div id="achMineWrap">
-    <div id="achStats"></div>
-    <div id="achProgWrap">
-      <span class="metric" id="achProg"></span>
-      <div id="achProgBar"><i id="achProgFill"></i></div>
+  <!-- 27.08.2026: заголовок/вкладки Мои-Топ выше — вне ленты. Внутри .scrBody — то, что
+     реально длинное и прокручивается (список достижений или таблица лидеров). -->
+  <div class="scrBody">
+    <div id="achMineWrap">
+      <div id="achStats"></div>
+      <div id="achProgWrap">
+        <span class="metric" id="achProg"></span>
+        <div id="achProgBar"><i id="achProgFill"></i></div>
+      </div>
+      <div id="achList"></div>
     </div>
-    <div id="achList"></div>
-  </div>
-  <div id="achTopWrap" class="hidden">
-    <div id="topCats">
-      <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
-      <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
-      <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg></button>
-      <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
-      <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
+    <div id="achTopWrap" class="hidden">
+      <div id="topCats">
+        <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
+        <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
+        <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg></button>
+        <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
+        <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
+      </div>
+      <div id="topMe"></div>
+      <div id="topList"></div>
+      <!-- 13.08.2026 «Витрина, а не клуб»: приглашение стоит ПОД таблицей. Раньше на его месте
+           была сама таблица — точнее, отказ вместо неё, и гость читал «войди» вместо пятнадцати
+           живых строк. Теперь он сначала видит, куда его зовут, и только потом — приглашение. -->
+      <div id="topWouldBe" class="hidden"></div>
+      <div id="topJoin" class="hidden">
+        <div id="topJoinTitle"></div>
+        <div id="topJoinSub"></div>
+      </div>
+      <div id="topLogin" class="tgWidget hidden"></div>
+      <div id="dcLogin" class="hidden"></div>
     </div>
-    <div id="topMe"></div>
-    <div id="topList"></div>
-    <!-- 13.08.2026 «Витрина, а не клуб»: приглашение стоит ПОД таблицей. Раньше на его месте
-         была сама таблица — точнее, отказ вместо неё, и гость читал «войди» вместо пятнадцати
-         живых строк. Теперь он сначала видит, куда его зовут, и только потом — приглашение. -->
-    <div id="topWouldBe" class="hidden"></div>
-    <div id="topJoin" class="hidden">
-      <div id="topJoinTitle"></div>
-      <div id="topJoinSub"></div>
-    </div>
-    <div id="topLogin" class="tgWidget hidden"></div>
-    <div id="dcLogin" class="hidden"></div>
   </div>
   <button class="btn ghost stickyBack" id="achBackBtn">Назад</button>
 </div>
