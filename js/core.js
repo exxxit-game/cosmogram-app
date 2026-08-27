@@ -452,7 +452,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.26'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.27'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1266,5 +1266,13 @@ if (tg && tg.onEvent){ try{ tg.onEvent('viewportChanged', ()=>{ if(tg.isExpanded
      флаг к правде: ALREADY_FULLSCREEN — единственный отказ, означающий «уже да». */
   try{ tg.onEvent('fullscreenFailed', tgFullscreenFailed); }catch(e){}
   ['safeAreaChanged','contentSafeAreaChanged'].forEach(ev=>{ try{ tg.onEvent(ev, tgInsetsSoon); }catch(e){} }); } // v1.102.1: поздняя правда Telegram приходит через тишину
+/* v1.477.27 «Погружение навсегда»: раньше tgImmersion(true) звался только из startGame() —
+   полный экран, замок поворота и защита от свайпа-закрытия жили ровно на время забега и
+   гасли в меню (tgImmersion(false) при выходе). Владелец явно попросил держать все три
+   постоянно, включая меню. requestFullscreen обычно требует жеста игрока — на голой
+   загрузке страницы он может не сработать; events ниже (fullscreenChanged/fullscreenFailed)
+   уже подписаны выше и разберутся с ответом Telegram как обычно, а первый тап где угодно
+   (не только во время полёта — см. tgImmKick в ui.js) даёт жест и повторяет попытку. */
+if (typeof tgImmersion==='function') tgImmersion(true);
 if (document.body) tgInsetsSync(); else window.addEventListener('DOMContentLoaded', tgInsetsSync); // первый замер подушки (v1.59.0)
 gfxCap(); resize();

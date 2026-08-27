@@ -165,8 +165,8 @@ function runStart(){
   try{ runMode==='bullet'?startBullet():startGame(); }
   finally{ setTimeout(()=>{ runStartBusy=false; },350); }
 } // «ЛЕТЕТЬ» — в выбранной дисциплине; короткий lock защищает от двойного тапа
-window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0)
-  if (S.running && typeof tgImmersion==='function') tgImmersion(true);
+window.addEventListener('pointerdown', function tgImmKick(){ // полный экран просит жест — первый тап добирает, если автостарт не смог (v1.58.0; v1.477.27: не только во время полёта — погружение теперь живёт и в меню)
+  if (typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
 });
 function modesFill(){ // подписи + отметка выбранного режима
@@ -369,7 +369,6 @@ function gameOver(){
   releaseAwake();
   if(typeof BB!=='undefined') BB.log('landing','score '+Math.floor(S.score)+' · '+S.mode); // v1.99.7 «Чёрный ящик»
   if (typeof playSecFlush==='function') playSecFlush(); // v1.66.1: секунды неба — в хранилище разом, не по одной
-  if (typeof tgImmersion==='function') tgImmersion(false); // забег кончился — защита от свайпа больше не нужна (v1.58.0)
   const sc=Math.floor(S.score*(0.5+S.smooth*0.5)); // Smooth Flight: итог × плавность (0.75..1.0)
   if (S.mode==='custom' && typeof mapOver==='function'){ // Своя трасса: не в зачёт — иначе лёгкие карты стали бы фермой звёзд (v1.68.0); v1.94.0: театр здесь не ставится — занавес опущен
     /* v1.282.13: автосейв обязан сгореть ЗДЕСЬ. Ранний выход стоит выше общего
@@ -679,7 +678,6 @@ function toMenu(){
     S.running=false; S.paused=false; S.dying=0; S.pausing=0; releaseAwake();
     if(typeof BB!=='undefined') BB.log('landing','menu exit · score '+Math.floor(S.score)); // v1.99.8: добровольный уход — тоже посадка на ленте
   }
-  if (typeof tgImmersion==='function') tgImmersion(false); // в меню — без защиты закрытия (v1.58.0)
   tryOnRevert(); // бросил примерочный забег — примерка закончилась
   refreshMenu();
   setScreen('menu');
@@ -688,7 +686,6 @@ function toMenu(){
 }
 function endTheater(){ // v1.94.0 «Театр призраков» Т1: занавес — спектакль кончился, возвращаемся на итоги; книги и касса не тронуты
   S.running=false; S.paused=false; S.dying=0; S.pausing=0; releaseAwake();
-  if (typeof tgImmersion==='function') tgImmersion(false);
   runMode='classic'; // сессия снова чиста — дом просыпается классикой
   music.stop(1); engine.stop();
   // v1.282.10: карточка для скриншота не вызывается для Театра (cardCapture зовётся только из
