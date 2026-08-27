@@ -723,7 +723,12 @@ function draw(){
   // ничего не отвлекает взгляд. S.time растёт только пока реально тикает update() — теперь
   // мерцание останавливается вместе со всем остальным миром. Тот же час, что у nfPanOffset.
   const twT = hq ? S.time/.38 : 0;
-  let nStars = lowPower ? Math.min(48,bgStars.length) : (uq ? bgStars.length : Math.min(90,bgStars.length)); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
+  /* 27.08.2026: потолки 48/90 были голым числом, не плотностью — на широком экране (мир
+     шире эталонных 390 мер, см. initBg() в game.js) тот же потолок давал видимо более
+     пустое небо даже на средней/слабой ступени графики, раз пул под ним (bgStars) вырос,
+     а потолок — нет. Тот же коэффициент W/390, что и там, не новое число из воздуха. */
+  const wScale = Math.max(1, W/390);
+  let nStars = lowPower ? Math.min(Math.round(48*wScale),bgStars.length) : (uq ? bgStars.length : Math.min(Math.round(90*wScale),bgStars.length)); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
   if(Q.mode==='auto'){ // при просадках FPS режем только декоративный фон, не трогая геймплей
     if(Q.fps<40) nStars=Math.max(28,Math.floor(nStars*.5));
     else if(Q.fps<48) nStars=Math.max(36,Math.floor(nStars*.7));

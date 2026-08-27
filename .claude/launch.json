@@ -5,7 +5,8 @@
       "name": "cosmogram-static",
       "runtimeExecutable": "node",
       "runtimeArgs": ["C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-cosmogram-app/5cffc789-3068-4e53-afb5-1f4f19728112/scratchpad/static-server.js", "C:/Users/admin/Documents/GitHub/cosmogram-app"],
-      "port": 8934
+      "port": 8934,
+      "autoPort": true
     }
   ]
 }

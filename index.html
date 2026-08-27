@@ -127,6 +127,14 @@ canvas{display:block}
      чтобы заголовок не лип к самой кромке даже там, где перекрытия нет вовсе. */
   --sat-menu:max(8px, env(safe-area-inset-top), var(--tg-safe-area-inset-top,0px), var(--tg-content-safe-area-inset-top,0px), var(--js-sat-real,0px));
   --sab:max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom,0px), var(--tg-content-safe-area-inset-bottom,0px), var(--js-sab,0px));
+  /* 27.08.2026 «Жизни за родными кнопками»: владелец — на его устройстве (Android, Telegram
+     не в fullscreen НИКОГДА, подтверждено) жизни в правом углу HUD прячутся под родными
+     «⌄»/«⋮» Telegram. --sat выше уже решает ровно ту же задачу для ВЕРХНЕГО перекрытия
+     (тот же max() из тех же источников), только для top — правая сторона никогда не
+     читалась, хотя мост Telegram её тоже прокидывает (js/vendor/telegram-web-app.js:592,
+     тот же --tg-content-safe-area-inset-* префикс). core.js трогать не пришлось — это те
+     же готовые CSS-переменные моста, просто раньше не использованные. */
+  --sar:max(env(safe-area-inset-right), var(--tg-safe-area-inset-right,0px), var(--tg-content-safe-area-inset-right,0px));
   --bg-0:#0b1626;            /* глубина космоса — база */
   --bg-1:#0f1f3d;            /* панели */
   --bg-2:#162638;            /* приподнятые карточки */
@@ -383,7 +391,15 @@ button, input, select, textarea { text-transform:inherit; }
      раскладка не меняется; на широком — ограничивается 430px (коридор 390 + запас) и
      центрируется, обнимая коридор вплотную, как и всё остальное небо. */
   display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
-#pausePack { display:flex; flex-direction:column; align-items:center; gap:8px; margin-left:20px; margin-top:-26px; pointer-events:none; } /* v1.101.0: пауза над звёздами, одной осью под «Назад»; v1.102.0: призрак залегает в мёртвую зону родной пилюли (её тапы ловит сам Telegram), звёзды поднимаются вплотную под «Назад» — счётчик больше не висит в пустом небе */
+/* 27.08.2026 «Симметрия HUD» — откат. Пробовали flex-direction:row (пауза и звёзды в один
+   ряд, по образцу реальных игр и уже готовой альбомной раскладки в этом же файле) — на
+   макете выглядело сбалансированнее, но на реальном устройстве владельца звёзды сдвинулись
+   в зону, которую перекрывает родной интерфейс Telegram (не fullscreen). Раз макет не мог
+   этого показать (сверка с Telegram нужна на самом устройстве, не на глаз) — возвращаем
+   исходную колонку: пауза над звёздами, как было. v1.101.0: пауза над звёздами, одной осью
+   под «Назад»; v1.102.0: призрак залегает в мёртвую зону родной пилюли (её тапы ловит сам
+   Telegram), звёзды поднимаются вплотную под «Назад» — счётчик больше не висит в пустом небе. */
+#pausePack { display:flex; flex-direction:column; align-items:center; gap:8px; margin-left:20px; margin-top:-26px; pointer-events:none; }
 #pauseBtn { width:42px; height:42px; border-radius:50%; flex:none; /* v1.101.0: прибор кабины — своё стекло, своё кольцо */
   background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -395,7 +411,7 @@ button, input, select, textarea { text-transform:inherit; }
 #pauseBtn:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
 #pauseBtn .ic { width:17px; height:17px; stroke-width:2.6;
   filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
-#livesCanvas { width:66px; height:24px; } /* свечение рисует сам canvas — только живым жизням */
+#livesCanvas { width:66px; height:24px; margin-right:var(--sar,0px); } /* свечение рисует сам canvas — только живым жизням; 27.08.2026: правый запас под родные кнопки Telegram, см. --sar выше — 0px, если Telegram ничего не сообщил (обычный браузер, PWA, fullscreen) */
 /* 22.08.2026 «Рамка коридора — DOM, не canvas»: то же место, что раньше рисовало это внутри
    render.js. Причина переезда — мигание конкретно в Telegram (нестабильный window.innerWidth
    в первые кадры) и решение владельца: на широких экранах рамка во время полёта — не баг,
@@ -617,7 +633,15 @@ button, input, select, textarea { text-transform:inherit; }
    а со шлейфами и свечениями вариантов станет вдвое больше. Страж 112.
    ============================================================ */
 /* Небо превью — та же карточка, что все панели игры */
-#angarSky { width:min(92%,380px); height:190px; margin:2px 0 12px; position:relative; overflow:hidden;
+/* 27.08.2026: было 190px — владелец на видео со своего устройства: окно превью «перекрывает
+   всё», сетку скинов внизу почти не видно («минимум действий, просто цвет отображается»).
+   190px — самый большой из фиксированных кусков экрана (замер на 393×786: небо 190+12,
+   кнопка 50+10, кошелёк 16+22, вкладки 33+12 — небо одно больше половины). Корабль с
+   аурой умещается и в 130px (проверено по формулам angarShip: аура ±57.6/+44.8 от центра
+   при H=130 — 17..120, глубоко внутри бокса; следовая дымка чуть тоньше запаса, но угасает
+   градиентом задолго до края, не обрезается на глаз). js/ui.js: H в angarPvDraw держим
+   в паре с этим числом — иначе канвас растянется/сплющится вместе с CSS-боксом. */
+#angarSky { width:min(92%,380px); height:130px; margin:2px 0 12px; position:relative; overflow:hidden;
   border:1px solid var(--line); border-radius:var(--r-card);
   background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
   box-shadow:inset 0 0 40px rgba(80,130,220,.10); }

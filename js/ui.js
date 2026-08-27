@@ -871,7 +871,7 @@ function angarPvDraw(t){
      на angarSel («на какой жетон смотрит игрок», см. коммент у объявления) — жалоба
      владельца «выбираешь скин, а в окне его не видно» ровно про это рассогласование. */
   const sk = SKINS[angarSel]||SKINS[0];
-  const W=380, H=190, d=(window.devicePixelRatio||1);
+  const W=380, H=130, d=(window.devicePixelRatio||1); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
   const x=cv.getContext('2d'); if(!x) return;
   x.setTransform(cv.width/W,0,0,cv.width/W,0,0);
