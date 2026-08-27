@@ -775,9 +775,9 @@ function tooNarrowText(nabok){
 }
 function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная зона в CSS-переменные --js-sat/--js-sab
   const r=document.documentElement && document.documentElement.style; if(!r) return;
-  let top=0, bot=0;
+  let top=0, bot=0, right=0;
   const t=tgApp();
-  try{ const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c){ top=+c.top||0; bot=+c.bottom||0; } }catch(e){}
+  try{ const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c){ top=+c.top||0; bot=+c.bottom||0; right=+c.right||0; } }catch(e){}
   if (!top && satProbe()<1 && ('ontouchstart' in window)) top=28; // мобильный WebView с мёртвым env: статус-бар всё равно есть
   /* 13.08.2026 «Подушка не для меню». Дальше идут две ступени, которые НЕ измеряют
      перекрытие, а назначают его: 96 мер, потому что под столько свёрстан верхний HUD.
@@ -793,6 +793,16 @@ function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная з�
   // от просьбы на десятки миллисекунд, и в этот зазор экран итогов рисовался криво.
   const cgFs=(cgImm!==null ? cgImm : !!(t&&t.isFullscreen));
   if (t && !cgFs && ('ontouchstart' in window) && top<64) top=96;
+  /* 27.08.2026 «Жизни за родными кнопками», часть 2: --sar (index.html) читает те же
+     мостовые переменные Telegram (--tg-content-safe-area-inset-right), что и --sat читает
+     для верха — но на реальном устройстве владельца (Android, не fullscreen) правый
+     инсет пришёл нулём, тем же «мёртвым нулём», что уже документирован для верхнего
+     ЗДЕСЬ ЖЕ (satProbe комментарий выше). Жизни в правом углу HUD остались под «⌄»/«⋮».
+     Честно: 44px — НЕ измеренное число (в отличие от «96» выше, подобранного владельцем
+     ранее по разбору жалоб) — это оценка по стандартному минимальному размеру касания
+     Android (48dp), округлённая под один значок. Требует подтверждения на реальном
+     устройстве владельца — если этого не хватит или будет с запасом, число перепроверить. */
+  if (t && !cgFs && ('ontouchstart' in window) && right<24) right=44;
   // v1.102.1: дрожь ≤ 24px игнорируется — маржа HUD её перекрывает, а прыжок виден всегда
   // (поздний честный инсет на загрузке: 96 → 76 больше не двигает землю)
   if (satNow>=0 && Math.abs(top-satNow)<=24) top=satNow;
@@ -816,6 +826,7 @@ function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная з�
   r.setProperty('--js-sat', top+'px');
   r.setProperty('--js-sat-real', realTop+'px');   // 13.08.2026: измеренное, а не назначенное
   r.setProperty('--js-sab', bot+'px');
+  r.setProperty('--js-sar', right+'px');
   requestAnimationFrame(syncScoreHudGap); // 23.08.2026: --sat только что могла поменяться — ждём кадр, чтобы scorePack успел перекомпоноваться, прежде чем мерить его реальный низ
 }
 function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один зазор, не две формулы»: #topHud садится

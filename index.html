@@ -134,7 +134,11 @@ canvas{display:block}
      читалась, хотя мост Telegram её тоже прокидывает (js/vendor/telegram-web-app.js:592,
      тот же --tg-content-safe-area-inset-* префикс). core.js трогать не пришлось — это те
      же готовые CSS-переменные моста, просто раньше не использованные. */
-  --sar:max(env(safe-area-inset-right), var(--tg-safe-area-inset-right,0px), var(--tg-content-safe-area-inset-right,0px));
+  /* 27.08.2026, позже тем же днём: мостовые переменные Telegram выше отдали ноль на реальном
+     устройстве владельца (Android, тот же класс «мёртвого нуля», что уже документирован у
+     --sat) — жизни всё ещё под «⌄»/«⋮». Добавлен --js-sar — тот же приём страховки, что уже
+     есть у --js-sat: JS-подсчитанный запасной пол в core.js/tgInsetsSync(), не только мост. */
+  --sar:max(env(safe-area-inset-right), var(--tg-safe-area-inset-right,0px), var(--tg-content-safe-area-inset-right,0px), var(--js-sar,0px));
   --bg-0:#0b1626;            /* глубина космоса — база */
   --bg-1:#0f1f3d;            /* панели */
   --bg-2:#162638;            /* приподнятые карточки */
