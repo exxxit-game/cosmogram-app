@@ -354,18 +354,20 @@ function nebulaField(h1,h2){
     const t=i/8;
     blob(lerp(x0,x1,t)+(R()-.5)*fldW*.08, lerp(y0,y1,t)+(R()-.5)*fldH*.06, m*.17, h1+40, 68, .07, .5);
   }
-  // звёздная пыль: сотни мелких точек, гуще у полосы; маскирует бандинг градиента
+  /* звёздная пыль: сотни мелких точек, гуще у полосы; маскирует бандинг градиента.
+     27.08.2026 «Живой фон» (владелец: «звёзды в туманности не мигают, а стоят»): раньше
+     пеклись прямо сюда, в статичную текстуру — яркость каждой точки замирала до следующей
+     пересборки поля (раз в ~50с полёта, NF_HUE_STEP). Теперь здесь только ПОЗИЦИИ (тот же
+     сид R(), тот же узор пыли — не меняем расстановку, только рисуем иначе); саму яркость
+     каждый кадр считает drawNebulas() синусом, тем же приёмом, что уже есть у bgStars. */
+  const dust=[];
   for(let i=0;i<240;i++){
     const t=R(), near=R()<.6;
     const sx=near? lerp(x0,x1,t)+(R()-.5)*fldW*.32 : R()*fldW;
     const sy=near? lerp(y0,y1,t)+(R()-.5)*fldH*.24 : R()*fldH;
-    x.globalAlpha=.04+R()*.2;
-    x.fillStyle=R()<.8?'#dfe9ff':'#ffe9c8';
-    const sz=.4+R()*1.1;
-    x.fillRect(sx,sy,sz,sz);
+    dust.push({x:sx, y:sy, base:.04+R()*.2, warm:R()>=.8, sz:.4+R()*1.1, ph:R()*6.283});
   }
-  x.globalAlpha=1;
-  c.marginPxX=marginPxX; c.marginPxY=marginPxY; c.baseCw=baseCw; c.baseChh=baseChh; // на САМ canvas — функция возвращает его, не nfCache
+  c.marginPxX=marginPxX; c.marginPxY=marginPxY; c.baseCw=baseCw; c.baseChh=baseChh; c.dust=dust; // на САМ canvas — функция возвращает его, не nfCache
   nfCache={w:W,ht:H,h:hq,d:DPR,s:SC,c:c};
   return c;
 }
@@ -509,6 +511,23 @@ function drawNebulas(h1,h2,tN,lowPower){
     const nf=nebulaField(h1,h2);
     const pan=nfPanOffset(tN, nf.marginPxX||0, nf.marginPxY||0);
     ctx.drawImage(nf, pan.x, pan.y, nf.baseCw||W, nf.baseChh||H, 0,0,W,H); // окно-кроп из увеличенного поля — сама текстура плывёт, не только пятна поверх
+    /* 27.08.2026 «Живой фон»: пыль хранится в nf.dust (позиции — nebulaField(), см. коммент
+       там) — здесь только яркость, каждый кадр, синусом с личной фазой точки (d.ph), тем же
+       приёмом, что уже мерцают bgStars. Экранная позиция — тот же crop-перевод, что и у
+       самой текстуры строкой выше (pan.x/pan.y, marginPx*), поэтому пыль движется вместе
+       с туманностью, не отдельно от неё. */
+    if(nf.dust){
+      const px=skyPx();
+      const offX=((nf.marginPxX||0)-pan.x)/px, offY=((nf.marginPxY||0)-pan.y)/px;
+      for(let i=0;i<nf.dust.length;i++){
+        const d=nf.dust[i];
+        const dx=d.x+offX, dy=d.y+offY;
+        if(dx<-4||dx>W+4||dy<-4||dy>H+4) continue;
+        ctx.globalAlpha=d.base*(.55+.45*Math.sin(tN/.38+d.ph));
+        ctx.fillStyle=d.warm?'#ffe9c8':'#dfe9ff';
+        ctx.fillRect(dx,dy,d.sz,d.sz);
+      }
+    }
     ctx.globalAlpha=.09;
     ctx.drawImage(nebCache.a, W*.2+Math.sin(tN*.05)*40-W*.28, H*.3-W*.28, W*.56, W*.56);
     ctx.globalAlpha=.08;
