@@ -35,9 +35,20 @@ const music = (()=>{
     if (typeof ac.createStereoPanner!=='function') return null;
     const p=ac.createStereoPanner(); p.pan.value=v; return p;
   }
-  function toMix(node,ac){ // подключить голос к музыкальной шине, по возможности через случайную панораму
+  /* 27.08.2026 «Оба вместе не звучат» (владелец): кик и риф-арпеджио раньше уходили в тот же
+     2.8-секундный реверб-хвост, что и медленные пэды/дрон (реверб слался ОДИН РАЗ, из mg
+     целиком — см. ensureChain ниже, было mg.connect(conv)). Резкий искажённый удар через
+     реверб, рассчитанный на медленный эмбиент, размывается в кашу — классическая причина,
+     почему ритмичный слой и спокойный эмбиент не дружат при смешивании. Реверб-посыл
+     перенесён СЮДА, на уровень отдельного голоса (sendWet, по умолчанию true — пэды/
+     колокольчики/пульс не потеряли ничего) — риф вызывает toMix(...,false) ниже, кик и так
+     не ходил через toMix, при новой схеме автоматически остался сухим. */
+  function toMix(node,ac,sendWet){ // подключить голос к музыкальной шине, по возможности через случайную панораму
     const pn=panNode(ac,jitterPan());
-    if(pn){ node.connect(pn); pn.connect(mg); } else { node.connect(mg); }
+    const tap=pn||node;
+    if(pn) node.connect(pn);
+    tap.connect(mg);
+    if(sendWet!==false) tap.connect(conv);
   }
   function impulse(ac,dur,decay){ // «космический хвост»: шум с экспоненциальным затуханием
     /* 22.08.2026: сырой белый шум как импульсная характеристика реверба звучит буквально
@@ -73,7 +84,10 @@ const music = (()=>{
       wet=ac.createGain(); wet.gain.value=.55;
       const dry=ac.createGain(); dry.gain.value=.85;
       mg.connect(dry); dry.connect(ac.destination);
-      mg.connect(conv); conv.connect(wet); wet.connect(ac.destination);
+      // 27.08.2026: было mg.connect(conv) — реверб слался ОДНИМ куском на весь микс сразу,
+      // кик/риф размывались в том же хвосте, что и пэды (см. пометку у toMix выше). Теперь
+      // conv питается ИЗ ГОЛОСОВ напрямую (toMix), не из mg — эта строка убрана насовсем.
+      conv.connect(wet); wet.connect(ac.destination);
     }
     return ac;
   }
@@ -125,7 +139,7 @@ const music = (()=>{
     g.gain.linearRampToValueAtTime(vol,t+.02);
     g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.connect(g);
-    if(distort){ const shaper=ac.createWaveShaper(); shaper.curve=hardCurve(); shaper.oversample='2x'; g.connect(shaper); toMix(shaper,ac); }
+    if(distort){ const shaper=ac.createWaveShaper(); shaper.curve=hardCurve(); shaper.oversample='2x'; g.connect(shaper); toMix(shaper,ac,false); } // 27.08.2026: риф — без реверба (см. пометку у toMix)
     else toMix(g,ac);
     o.start(t); o.stop(t+dur+.05); stats.notes++;
   }
