@@ -1349,18 +1349,8 @@ function diagRows(){
   R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb'), rare:true});
   if (window.__tgWgSilent) R.push({st:'warn', txt:L.diagWgSilent}); // v1.84.0: виджет входа промолчал — сцена чиста, здесь честно
   if (HAS_GYRO && !gyroUnlocked()) R.push({st:'info', txt:L.diagLocked});
-  /* 28.08.2026 «Живой замер вниз» — разворот (см. cycleSadDbg, core.js): первая попытка
-     толкала жизни вправо, владелец на устройстве — это столкнуло их с «Расстояние»/
-     «Плавность» по центру. Кнопка Telegram перекрывает жизни сверху вниз, не сбоку.
-     Жмёт «Ещё», сразу видит эффект, называет первое число, где жизни выходят из-под
-     кнопки целиком — зашиваю его и убираю кнопку, тем же приёмом, что и плотность звёзд. */
-  if (typeof cycleSadDbg==='function'){
-    const px=(typeof sadDbgOverride==='number')?sadDbgOverride:0;
-    R.push({st:'info', txt:'Отступ жизней вниз: '+px+'px', fix:'Ещё', act:diagCycleSad, rare:true});
-  }
   return R;
 }
-function diagCycleSad(){ if(typeof cycleSadDbg==='function') cycleSadDbg(); diagLastT=0; diagRefresh(); haptic('light'); }
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }

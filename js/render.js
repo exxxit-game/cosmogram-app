@@ -1219,7 +1219,7 @@ function draw(){
       if (tag){
         ctx.save(); ctx.globalAlpha=clamp(ghostTagT,0,1)*.85;
         ctx.fillStyle=gCol; ctx.textAlign='center'; ctx.textBaseline='bottom';
-        ctx.font='500 12px -apple-system,"Segoe UI",Roboto,sans-serif';
+        ctx.font='500 12px "Exo 2",-apple-system,"Segoe UI",Roboto,sans-serif'; // 28.08.2026: один шрифт на всю игру
         ctx.fillText(String(tag).toUpperCase(), ghostX, ghostY-30);
         ctx.restore();
       }

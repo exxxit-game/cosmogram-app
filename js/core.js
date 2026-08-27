@@ -452,7 +452,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.33'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.34'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -765,20 +765,9 @@ function satProbe(){ // честный замер env(safe-area-inset-top): на
 let cgImm=null; // оптимистичное погружение: что МЫ попросили у Telegram (true=полный экран) — раньше его событий
 let satNow=-1;  // действующая подушка: от неё меряем дрожь
 let satTimer=0; // таймер тишины для событийных замеров
-/* 28.08.2026 «Живой замер вниз» — разворот. Первая попытка (cycleSarDbg, вправо, --sar на
-   #livesCanvas) была не по той оси: владелец на реальном устройстве — жизни сдвинулись вбок
-   и столкнулись с «Расстояние»/«Плавность» по центру, а кнопка Telegram перекрывает их
-   СВЕРХУ ВНИЗ, не сбоку. Правильная ось — вниз, margin-top на #livesCanvas (index.html, --sad).
-   Число снова не измерено — та же кнопка в Сервисном центре, что и была, только другая ось. */
-let sadDbgOverride=null;
-function cycleSadDbg(){
-  const steps=[24,44,70,100];
-  const i=steps.indexOf(sadDbgOverride);
-  sadDbgOverride=steps[(i+1)%steps.length];
-  const r=document.documentElement && document.documentElement.style;
-  if(r) r.setProperty('--sad', sadDbgOverride+'px');
-  return sadDbgOverride;
-}
+// 28.08.2026 «Живой замер вниз», итог: владелец измерил на реальном устройстве — 24px вниз
+// хватает, чтобы жизни вышли из-под кнопки Telegram «⌄ ⋮» целиком. Зашито в index.html
+// (#livesCanvas margin-top), временная кнопка в Сервисном центре (cycleSadDbg) снята.
 /* Текст окна «тесно»: лежит ли телефон набок. Вынесено отдельно, потому что зовут двое —
    resize() при каждом замере и applyLang() при смене языка; иначе одно затирало другое. */
 function tooNarrowText(nabok){
@@ -843,18 +832,30 @@ function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная з�
   r.setProperty('--js-sar', right+'px');
   requestAnimationFrame(syncScoreHudGap); // 23.08.2026: --sat только что могла поменяться — ждём кадр, чтобы scorePack успел перекомпоноваться, прежде чем мерить его реальный низ
 }
+/* 28.08.2026 «Зазор ждёт шрифт»: syncScoreHudGap() перезапускается при смене --sat и при
+   изменении ширины окна (см. оба места её вызова) — но НЕ при подгрузке самого файла Exo 2
+   (fonts/exo2-*.woff2, сетевой запрос, font-display:swap). Если игра успевает измерить
+   #scorePack ДО того, как шрифт доехал (медленная сеть, холодный кэш — ровно то, что чаще
+   у настоящего игрока, чем на локальной раздаче), число застревает по запасному системному
+   шрифту, а не по Exo 2 — небольшая, но настоящая щель. document.fonts.ready — штатный
+   промис браузера, срабатывает ровно раз, как только все объявленные @font-face готовы. */
+if (typeof document!=='undefined' && document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{ requestAnimationFrame(syncScoreHudGap); }).catch(()=>{});
+}
 function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один зазор, не две формулы»: #topHud садится
-  // ровно в 8px (то же число, что уже у #pausePack между своими частями) от РЕАЛЬНОГО
-  // нижнего края #scorePack — не от отдельной формулы через --sat, которая могла разъехаться
-  // с формулой scorePack (жалоба владельца, подтверждена измерением в пикселях, 22-23.08.2026).
+  // от РЕАЛЬНОГО нижнего края #scorePack — не от отдельной формулы через --sat, которая
+  // могла разъехаться с формулой scorePack (жалоба владельца, подтверждена измерением в
+  // пикселях, 22-23.08.2026).
   // 26.08.2026: та же дыра держалась и во ВТОРОЙ строке HUD — #telemHud (Расстояние/Плавность,
   // «я много раз это чинил ранее и там до сих пор дыра») — эта правка её ни разу не касалась,
-  // формула #telemHud так и осталась отдельной от scorePack. Измерено вживую: зазор до #topHud
-  // держал честные 8px, до #telemHud тем временем гулял до 32px. Тот же приём, то же число.
+  // формула #telemHud так и осталась отдельной от scorePack. Тот же приём, то же число.
+  // 28.08.2026: было +8 — владелец на реальном устройстве всё ещё видел заметную щель между
+  // счётом и «Расстояние», просил ближе. +2 — тот же минимальный зазор, что уже держит
+  // «СЧЁТ» вплотную к числу над ним (#scorePack, gap:2px) — не слипается, но заметно теснее.
   const sp=document.getElementById('scorePack');
   if(!sp) return;
   const rect=sp.getBoundingClientRect();
-  const gapPx = Math.round(rect.bottom+8)+'px';
+  const gapPx = Math.round(rect.bottom+2)+'px';
   document.documentElement.style.setProperty('--topHudTop', gapPx);
   document.documentElement.style.setProperty('--telemHudTop', gapPx);
 }
