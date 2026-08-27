@@ -301,6 +301,47 @@ const BEACON=(()=>{
        здесь предел больше 280 бессмысленно, всё равно обрежет postcard(). */
     signal('webcodecs_probe', (parts.join(' ')+' pc='+pc+' tgv='+tgv).slice(0,280));
   }
+  /* 27.08.2026 «Паспорт слабого борта»: разбор самого слабого из найденных сенсорных
+     телефонов (Samsung A032F) шёл вслепую — у нас были только жалобы на кадр, ни одной
+     цифры о том, ЧТО именно на этом железе узкое место: экран рисуется крупнее, чем
+     тянет чип (высокий DPR), самих ядер/памяти мало, или дело не в мощности вовсе,
+     а в НЕРОВНОЙ доставке кадров (просадки, не средняя скорость). Один разовый зонд
+     за сессию, свой независимый цикл requestAnimationFrame (не трогает Q/render.js —
+     тяжёлая работа ЧУЖОГО кадра всё равно отодвигает наш тик, значит дребезг настоящий).
+     Зовётся из момента взлёта (startGame), а не из меню: там нагрузка близка к нулю
+     и ничего не покажет. profiled — чтобы не гонять 2.5с цикл на каждый повторный забег. */
+  let profiled=false, lastProfile=''; // lastProfile: та же строка, что ушла в телеметрию, но живёт локально —
+  // «Скопировать самописец» в сервисном центре её тоже показывает (см. blackbox.js text()),
+  // так что паспорт борта виден сразу на экране владельца, не только в письме на почту неба.
+  async function deviceProfileProbe(){
+    if(profiled || !on() || sealed()) return; profiled=true;
+    try{
+      const dpr=window.devicePixelRatio||1;
+      const effDpr=(typeof DPR!=='undefined')?DPR:'?';
+      const capV=(typeof dprCap!=='undefined')?dprCap:'?';
+      const cvsW=(typeof canvas!=='undefined'&&canvas)?canvas.width:'?';
+      const cvsH=(typeof canvas!=='undefined'&&canvas)?canvas.height:'?';
+      const hc=(typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||'?';
+      const mem=(typeof navigator!=='undefined'&&navigator.deviceMemory)||'?';
+      const lvl=(typeof Q!=='undefined')?Q.level:'?';
+      const mode=(typeof Q!=='undefined')?Q.mode:'?';
+      const tier=(typeof gfxTier==='function')?gfxTier():'?';
+      const deltas=await new Promise(resolve=>{
+        const arr=[]; let last=performance.now(); const stop=last+2500;
+        function tick(now){ arr.push(now-last); last=now;
+          if(now<stop && arr.length<300) requestAnimationFrame(tick); else resolve(arr); }
+        requestAnimationFrame(tick);
+      });
+      deltas.shift(); deltas.sort((a,b)=>a-b); // первый замер после промиса не показателен
+      const p50=deltas[Math.floor(deltas.length*0.5)]||0;
+      const p95=deltas[Math.floor(deltas.length*0.95)]||0;
+      const max=deltas[deltas.length-1]||0;
+      lastProfile='dpr:'+dpr+'/'+effDpr+'(cap'+capV+') cvs:'+cvsW+'x'+cvsH+
+        ' cpu:'+hc+' mem:'+mem+' tier:'+tier+' Q:'+lvl+'/'+mode+
+        ' frame p50:'+p50.toFixed(0)+'ms p95:'+p95.toFixed(0)+'ms max:'+max.toFixed(0)+'ms';
+      signal('device_profile', lastProfile);
+    }catch(e){}
+  }
   // v1.109.0: источник сброса (orientation/flip/manual) — без этого cal_storm нельзя
   // разобрать по корню; несколько разных дорог в calReset() дают один и тот же симптом.
   // v1.109.3 (партия 21): взлёт — честный сброс, не дребезг; при пороге ×5 за сессию
@@ -366,6 +407,6 @@ const BEACON=(()=>{
      оборачивает каждый наш колбэк в свой try/catch, поэтому до window.onerror такие
      ошибки не доходят — доложить о них может только тот, кто их поймал. */
   function err(msg){ drop('error', String(msg==null?'':msg), perfCtx()); }
-  return { signal, err, calTick, days, webcodecsProbe, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+  return { signal, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
 if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

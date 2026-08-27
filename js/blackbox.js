@@ -39,6 +39,9 @@ const BB=(()=>{
     try{ Ln.push('verdict: '+bbVerdict()); }catch(e){}
     try{ Ln.push('audio: '+audioVerdict()); }catch(e){}
     try{ if(typeof diagReport==='function') Ln.push(diagReport()); }catch(e){}
+    // 27.08.2026: паспорт слабого борта (BEACON.deviceProfileProbe) — та же строка, что летит
+    // телеметрией, но здесь видна сразу на экране, без ожидания письма на почту неба.
+    try{ if(typeof BEACON!=='undefined' && BEACON.profileText && BEACON.profileText()) Ln.push('device: '+BEACON.profileText()); }catch(e){}
     Ln.push('--- tape ---');
     for(const e of tape) Ln.push('['+e.t+'] '+e.ev+(e.d?': '+e.d:''));
     return Ln.join('\n');
