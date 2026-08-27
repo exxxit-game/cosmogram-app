@@ -452,7 +452,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.29'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.31'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -765,18 +765,19 @@ function satProbe(){ // честный замер env(safe-area-inset-top): на
 let cgImm=null; // оптимистичное погружение: что МЫ попросили у Telegram (true=полный экран) — раньше его событий
 let satNow=-1;  // действующая подушка: от неё меряем дрожь
 let satTimer=0; // таймер тишины для событийных замеров
-/* 28.08.2026 «Живой замер вправо» (временно, тем же приёмом, что и плотность звёзд):
-   44px справа от жизней (см. tgInsetsSync ниже) — неизмеренная оценка, владелец на
-   реальном устройстве подтвердил, что кнопка Telegram всё ещё перекрывает жизни. Вместо
-   ещё одной догадки вслепую — кнопка в Сервисном центре (ui.js, cycleSarDbg) крутит
-   готовые ступени, владелец сам находит первую, где жизни выходят из-под кнопки целиком. */
-let sarDbgOverride=null;
-function cycleSarDbg(){
-  const steps=[44,70,100,140];
-  const i=steps.indexOf(sarDbgOverride);
-  sarDbgOverride=steps[(i+1)%steps.length];
-  tgInsetsSync();
-  return sarDbgOverride;
+/* 28.08.2026 «Живой замер вниз» — разворот. Первая попытка (cycleSarDbg, вправо, --sar на
+   #livesCanvas) была не по той оси: владелец на реальном устройстве — жизни сдвинулись вбок
+   и столкнулись с «Расстояние»/«Плавность» по центру, а кнопка Telegram перекрывает их
+   СВЕРХУ ВНИЗ, не сбоку. Правильная ось — вниз, margin-top на #livesCanvas (index.html, --sad).
+   Число снова не измерено — та же кнопка в Сервисном центре, что и была, только другая ось. */
+let sadDbgOverride=null;
+function cycleSadDbg(){
+  const steps=[24,44,70,100];
+  const i=steps.indexOf(sadDbgOverride);
+  sadDbgOverride=steps[(i+1)%steps.length];
+  const r=document.documentElement && document.documentElement.style;
+  if(r) r.setProperty('--sad', sadDbgOverride+'px');
+  return sadDbgOverride;
 }
 /* Текст окна «тесно»: лежит ли телефон набок. Вынесено отдельно, потому что зовут двое —
    resize() при каждом замере и applyLang() при смене языка; иначе одно затирало другое. */
@@ -816,7 +817,6 @@ function tgInsetsSync(){ // v1.59.0 «Подушка»: безопасная з�
      Android (48dp), округлённая под один значок. Требует подтверждения на реальном
      устройстве владельца — если этого не хватит или будет с запасом, число перепроверить. */
   if (t && !cgFs && ('ontouchstart' in window) && right<24) right=44;
-  if (sarDbgOverride!=null) right=sarDbgOverride; // временный живой замер, см. комментарий у объявления выше
   // v1.102.1: дрожь ≤ 24px игнорируется — маржа HUD её перекрывает, а прыжок виден всегда
   // (поздний честный инсет на загрузке: 96 → 76 больше не двигает землю)
   if (satNow>=0 && Math.abs(top-satNow)<=24) top=satNow;
