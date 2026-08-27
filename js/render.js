@@ -554,15 +554,22 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
   }
   ctx.globalAlpha=1;
   if(hq) ctx.globalCompositeOperation='source-over';
+  /* 27.08.2026: попап («Впритык», «Щит», «Ворота» и т.д.) владелец разглядел как «просто
+     текст». Пробовали сменить шрифт на фирменный Exo 2 — владелец вернул системный
+     (решение владельца, шрифт не трогаем). Осталась только тёмная обводка — читаемость
+     на любом фоне неба, не только на тёмном; вес обводки уменьшен вдвое (было 3, владелец —
+     «сильно жирный»). */
   ctx.textAlign='center'; ctx.font='500 15px -apple-system,"Segoe UI",Roboto,sans-serif';
+  ctx.lineJoin='round';
   for (const p of popups){
     if(!inView(p.x,p.y,140,42)) continue;
     const life=clamp(p.life,0,1);
     ctx.globalAlpha=life;
-    ctx.fillStyle=p.color;
     if(sh){ ctx.save(); ctx.translate(p.x,p.y); ctx.scale(1.12,1.12); // v1.66.0: ореол попапа — прозрачный дубль крупнее
-      ctx.globalAlpha=life*.35; ctx.fillText(p.txt,0,0); ctx.restore();
+      ctx.globalAlpha=life*.35; ctx.fillStyle=p.color; ctx.fillText(p.txt,0,0); ctx.restore();
       ctx.globalAlpha=life; }
+    ctx.lineWidth=1.5; ctx.strokeStyle='rgba(10,14,28,.55)'; ctx.strokeText(p.txt,p.x,p.y);
+    ctx.fillStyle=p.color;
     ctx.fillText(p.txt,p.x,p.y);
   }
   ctx.globalAlpha=1;
@@ -829,6 +836,17 @@ function draw(){
         ctx.moveTo(10,-hh+2); ctx.lineTo(10,hh-2); ctx.stroke();
         if(sh){ ctx.drawImage(powGlow('#ffe2b0'),hw-14,-5,10,10);
           ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-9,0,1.4,0,6.283); ctx.fill(); }
+      } else if(sk===4){ // иллюминатор: панель с круглым окном (27.08.2026, владелец: больше лиц обломкам)
+        rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
+        ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
+        const lr=Math.min(hh,hw)*.62;
+        const lk='dbl'+Math.round(lr*4)/4; let lg=gradCache[lk];
+        if(!lg){ lg=ctx.createRadialGradient(-lr*.3,-lr*.3,lr*.1,0,0,lr);
+          lg.addColorStop(0,'#eef2fa'); lg.addColorStop(1,'#8b98b5'); gradPut(lk,lg); }
+        ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.fill();
+        ctx.strokeStyle='rgba(20,28,52,.4)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.stroke();
       } else { // панель: скруглённый металл, шов и заклёпки
         rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
         ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2; // кромка света — линия, не полоса
@@ -1009,10 +1027,15 @@ function draw(){
         const mkSpot=(rMin,rMax)=>{ const r=mapRand(rMin,rMax)*o.r;
           const budget=Math.max(0,o._blikR-r), d=mapRand(0,budget), a=mapRand(0,6.283);
           return { x:Math.cos(a)*d, y:Math.sin(a)*d, r }; };
-        const hiA=mapRand(0,6.283), hiSpan=mapRand(1.1,1.8);
-        const shA=hiA+Math.PI+mapRand(-.5,.5), shSpan=mapRand(1.0,1.6); // тень примерно напротив блика — свет с одной стороны, не с двух разных
-        o._decor={ hiA0:hiA, hiA1:hiA+hiSpan, shA0:shA, shA1:shA+shSpan,
-          light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) };
+        /* 27.08.2026 «Дуг больше нет», окончательный заход. Первые попытки (полоса-исключение,
+           потом короткая дуга, потом дуга→новое пятно ПОВЕРХ старых кратеров) не годились:
+           последняя завела лишние пятна рядом со старыми — «пятно на пятне», грязное скопление
+           кружков в одном месте. Решение: НЕ добавлять новые пятна вместо дуг — просто убрать
+           дуги (ctx.arc+.stroke) совсем, оставить ровно те три кратера, что уже были
+           (light/darkSmall/darkBig, mkSpot()/o._blikR без изменений) — это ЕДИНСТВЕННЫЙ
+           источник тени/объёма камня теперь. Дуг не рисуем нигде — у закрашенного круга нет
+           формы скобки. Тон/цвет/заметность камня не менялись ни разу за все три захода. */
+        o._decor={ light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) };
       }
       /* 22.08.2026 «Шип митра»: у ctx.stroke() умолчание браузера — lineJoin='miter', острый
          стык. Силуэт камня — случайный семиугольник (makeRockVerts(7), радиус вершин
@@ -1025,20 +1048,26 @@ function draw(){
       ctx.fill(o._path); ctx.stroke(o._path);
       ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
       const dc=o._decor;
-      if(sh){ // объём: блик сверху-слева + светлый кратер (v1.37.0: со средней)
-        ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o._blikR,dc.hiA0,dc.hiA1); ctx.stroke();
-        ctx.fillStyle='rgba(255,255,255,.07)';
-        ctx.beginPath(); ctx.arc(dc.light.x,dc.light.y,dc.light.r,0,6.283); ctx.fill();
-      }
-      if(uq){ // ультра: глубже рельеф — теневая дуга и второй кратер
-        ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(0,0,o._blikR,dc.shA0,dc.shA1); ctx.stroke();
-        ctx.fillStyle='rgba(0,0,0,.15)';
-        ctx.beginPath(); ctx.arc(dc.darkSmall.x,dc.darkSmall.y,dc.darkSmall.r,0,6.283); ctx.fill();
-      }
-      ctx.fillStyle='rgba(0,0,0,.22)';
-      ctx.beginPath(); ctx.arc(dc.darkBig.x,dc.darkBig.y,dc.darkBig.r,0,6.283); ctx.fill();
+      /* 27.08.2026 «Дуг больше нет»: см. пометку у построения o._decor выше. Дуги
+         (ctx.arc(...).stroke()) убраны без замены — никакого нового пятна вместо них,
+         чтобы не класть кружок поверх уже существующего кратера в том же месте. Осталось
+         ровно три кратера, что были: light/darkSmall/darkBig. Одно правило для ВСЕХ камней
+         (rock и drift) — дуг не должно остаться нигде в файле.
+         Второй заход (владелец: «красивее, чтобы и на каждом уровне графики отлично»):
+         жёсткий край плоской заливки (ctx.arc+fill одним тоном) сменён на мягкий —
+         тот же кэшированный спрайт powGlow(), что уже используется у метеора/станции/
+         значков (никакого нового кэша, никакого градиента в кадре). powGlow держит центр
+         на альфе .55, поэтому globalAlpha здесь — старая целевая альфа делённая на .55
+         (.07→.13, .15→.27, .22→.40), чтобы пик яркости пятна остался тем же, что и у
+         плоской заливки раньше — меняется только мягкость края, не заметность. Цвета
+         те же нейтральные белый/чёрный, никакой новой смысловой палитры. */
+      if(sh) { ctx.globalAlpha=.13;
+        ctx.drawImage(powGlow('#ffffff'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2); }
+      if(uq) { ctx.globalAlpha=.27;
+        ctx.drawImage(powGlow('#000000'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2); }
+      ctx.globalAlpha=.40;
+      ctx.drawImage(powGlow('#000000'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
+      ctx.globalAlpha=1;
       ctx.restore();
     }
     ctx.restore();

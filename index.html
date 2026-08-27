@@ -322,9 +322,9 @@ button, input, select, textarea { text-transform:inherit; }
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
   /* v1.105.0 «Свет и дым»: подпись СЧЁТ строго НАД числом на всех небесах (как давно на «острове»),
      число умерено — хребет подтягивается вплотную, пустоты между ними нет */
-#scoreLbl { font-size:11px; letter-spacing:.24em; font-weight:600;
+#scoreLbl { font-family:var(--font-disp); font-size:11px; letter-spacing:.24em; font-weight:400;
   color:rgba(188,210,255,.55); text-shadow:0 0 8px rgba(110,160,255,.35); }
-#score { font-size:clamp(30px,7.8vw,42px); line-height:1; font-weight:600; letter-spacing:.02em;
+#score { font-family:var(--font-disp); font-size:clamp(30px,7.8vw,42px); line-height:1; font-weight:400; letter-spacing:.02em;
   font-variant-numeric:tabular-nums;
   color:#eaf2ff; text-shadow:0 0 18px rgba(110,160,255,.75), 0 2px 6px rgba(6,10,30,.6); }
 /* 26.08.2026: тот же приём, что у #topHud (var(--topHudTop, ...) ниже) — «я много раз это
@@ -422,11 +422,11 @@ button, input, select, textarea { text-transform:inherit; }
 #combo { margin-top:0; font-size:20px; color:#ffd76a; height:24px;
   font-variant-numeric:tabular-nums; /* v1.76.0 */
   text-shadow:0 0 14px rgba(255,200,80,.8), 0 1px 3px rgba(6,10,30,.7); opacity:0; transition:opacity .3s; }
-#distHud { margin-top:0; font-size:15px; letter-spacing:.08em; color:rgba(188,210,255,.75);
+#distHud { font-family:var(--font-disp); margin-top:0; font-size:15px; letter-spacing:.08em; color:rgba(188,210,255,.75);
   font-variant-numeric:tabular-nums; /* v1.76.0: метры бегут — строка не дышит */
   text-shadow:0 0 10px rgba(110,160,255,.4), 0 1px 3px rgba(6,10,30,.7); }
-#distHud b { color:#bcd2ff; font-weight:600; }
-.pillCap { font-size:10px; letter-spacing:.18em; opacity:.7; font-weight:600; }
+#distHud b { color:#bcd2ff; font-weight:400; }
+.pillCap { font-family:var(--font-disp); font-size:10px; letter-spacing:.18em; opacity:.7; font-weight:400; }
 #telemHud .pillCap { font-size:12.5px; } /* v1.105.0: подпись расстояния поднялась к числу — баланс, а не спор кеглей */
 #smoothCap { color:rgba(188,210,255,.4); }
 #smoothBar { margin-top:0; width:122px; height:8px; border-radius:4px; flex:none;

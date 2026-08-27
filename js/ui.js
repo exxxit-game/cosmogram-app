@@ -430,9 +430,11 @@ function gameOver(){
   });
   // рекорды — золотые плашки в ряд с иконками категорий (не строки текста)
   const recChips=[];
-  if (isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':(mode==='keys'?'keys':'hand')))+
+  /* 27.08.2026: иконки категории/линейки на этих двух плашках убраны — владелец, «иконки
+     там лишние»: подпись (РЕКОРД КАСАНИЯ/ДИСТАНЦИИ) сама по себе понятна без картинки. */
+  if (isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+
     (S.bullet?L.recordBullet:(mode==='gyro'?L.recordGyro:(mode==='keys'?L.recordKeys:L.recordTouch)))+'</span>');
-  if (isDistRecord) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ruler')+L.recordDist+'</span>');
+  if (isDistRecord) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+L.recordDist+'</span>');
   if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
     const dd=S.dailyDay||trackDayKey();
