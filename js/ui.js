@@ -310,7 +310,8 @@ function startGame(saved){
   if (typeof planetReset==='function') planetReset();
   if (typeof morseDayCheck==='function') morseDayCheck(); // виброэфир: первый полёт дня (v1.54.0) // v1.87.0: призрак рекорда со старта убран — мотиваций хватает без тени
   if (typeof streakDayCheck==='function') streakDayCheck(); // v1.108.1: серия дней — тот же момент, тот же принцип
-  if (typeof dayMark==='function') dayMark(); // v1.282.20 «Дневник борта»: день засчитывается на взлёте — забег может не долететь до отправки, день был
+  S.dayKey = todayKey(); // 27.08.2026: день ВЗЛЁТА, читаем часы один раз — посадка (dayAdd) использует его же, а не читает часы заново
+  if (typeof dayMark==='function') dayMark(S.dayKey); // v1.282.20 «Дневник борта»: день засчитывается на взлёте — забег может не долететь до отправки, день был
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: на сцене — твоя лента дня; теней нет, зритель смотрит сам самолётик
     ghost=(theaterChamp&&champTrack)?champTrack:theaterTrack; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0; ghostTagT=0; ghostForeign=false; ghostName='';
     if (theaterChamp){ ghostForeign=true; ghostName=theaterChamp.name; ghostSkin=theaterChamp.skin; } // v1.100.1 «Трибуна чемпиона»: гость назван по имени и одет в свой скин
@@ -486,7 +487,7 @@ function gameOver(){
      (режим, способ управления, от чего погиб) — внутри dayAdd только при разрешённых отчётах. */
   if (typeof dayAdd==='function') dayAdd({ score:sc, dist:distM, sec:Math.round(S.time),
     stars:S.starsCollected, mode:(S.mode||runMode||'classic'), ctl:cat,
-    death:(S.mapWin?'win':(S.lastHitKind||'?')) });
+    death:(S.mapWin?'win':(S.lastHitKind||'?')), day:S.dayKey }); // day: тот же день, что и на взлёте (см. startGame) — не читаем часы заново
   const submitP = (typeof syncSubmit==='function')
     ? syncSubmit(syncLocalScores(), Object.assign({run:runPass,
         profile:(typeof playerProfile==='function'?playerProfile():null),

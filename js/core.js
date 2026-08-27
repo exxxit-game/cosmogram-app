@@ -452,7 +452,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.24'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.25'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -651,8 +651,15 @@ function dayJournalSave(j){
   while(keys.length>DAYS_KEEP) delete j[keys.shift()];
   Store.set('dayJournal', j);
 }
-function dayMark(){ // взлёт: день начался, даже если забег не долетит до отправки
-  const j=dayJournal(); dayRow(j,todayKey()); dayJournalSave(j);
+function dayMark(k){ // взлёт: день начался, даже если забег не долетит до отправки
+  // 27.08.2026: k — день взлёта (S.dayKey из ui.js), если дан. Раньше здесь и в dayAdd()
+  // ниже todayKey() читался НЕЗАВИСИМО в двух разных, разнесённых по времени местах —
+  // взлёт сразу, посадка спустя весь забег. Игрок, взлетевший за секунду до местной
+  // полуночи, получал взлёт в журнале одного дня, а очки с посадки утекали в следующий:
+  // первый день навсегда оставался пустым (runs:0), второй получал забег, которого не
+  // начинал. Страж 142 (cosmogram-crew) поймал это на подменённых часах. Лечится тем же
+  // приёмом, что уже есть у Трассы дня (S.dailyDay) — день читается один раз, на взлёте.
+  const j=dayJournal(); dayRow(j,k||todayKey()); dayJournalSave(j);
 }
 /* Посадка. Счётные поля (забеги, счёт, метры, секунды, звёзды) — факты аккаунта, они
    едут всегда. Поведенческие (чем играл, от чего погиб) пишутся только при включённом
@@ -660,7 +667,7 @@ function dayMark(){ // взлёт: день начался, даже если з
    а не его собственный результат. Выключил — их просто нет ни в журнале, ни в базе. */
 function dayAdd(o){
   try{
-    const j=dayJournal(), r=dayRow(j,todayKey());
+    const j=dayJournal(), r=dayRow(j,o.day||todayKey()); // o.day — день ВЗЛЁТА (S.dayKey), не повторное чтение часов на посадке; см. dayMark() выше
     r.runs++;
     r.best=Math.max(r.best, saneNumber(o.score,0));
     r.dist+=saneNumber(o.dist,0);
