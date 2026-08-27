@@ -1349,8 +1349,18 @@ function diagRows(){
   R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb'), rare:true});
   if (window.__tgWgSilent) R.push({st:'warn', txt:L.diagWgSilent}); // v1.84.0: виджет входа промолчал — сцена чиста, здесь честно
   if (HAS_GYRO && !gyroUnlocked()) R.push({st:'info', txt:L.diagLocked});
+  /* 28.08.2026 «Живой замер плотности» (временно): владелец сравнивает плотность фоновых
+     звёзд прямо на своём устройстве вместо гадания по одной правке за раз — жмёт «Ещё»,
+     видит эффект во время полёта, называет номер, после чего кнопка убирается вместе с
+     cycleStarDensityDbg() (render.js). rare — техническая строка, под спойлер, как всё
+     остальное здесь. */
+  if (typeof cycleStarDensityDbg==='function'){
+    const mul=(typeof starDensityDbgMul==='number')?starDensityDbgMul:1;
+    R.push({st:'info', txt:'Плотность фона: '+Math.round(mul*100)+'%', fix:'Ещё', act:diagCycleStarDensity, rare:true});
+  }
   return R;
 }
+function diagCycleStarDensity(){ if(typeof cycleStarDensityDbg==='function') cycleStarDensityDbg(); diagLastT=0; diagRefresh(); haptic('light'); }
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }

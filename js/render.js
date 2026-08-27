@@ -743,6 +743,22 @@ function corridorEdgeSprite(){
   }
   return corrCache.c;
 }
+/* 28.08.2026 «Живой замер плотности» (временно, для подбора числа фоновых звёзд с владель-
+   цем без гадания по одной правке за раз): starDensityDbgMul крутится кнопкой в Сервисном
+   центре (ui.js, diagRows/cycleStarDensityDbg) — 1/1.5/2 по кругу, 1 — как было всегда.
+   Пул bgStars (game.js, initBg()) рассчитан на эталонную плотность при текущей ширине;
+   ensureStarPool лениво достраивает его той же формулой звезды (x/y/z/s), когда множитель
+   просит больше, чем есть — initBg() не трогаем, он не должен знать про эту кнопку. */
+let starDensityDbgMul=1;
+function ensureStarPool(minLen){
+  while (bgStars.length<minLen) bgStars.push({x:Math.random(),y:Math.random(),z:rand(.2,1),s:rand(.5,1.8)});
+}
+function cycleStarDensityDbg(){
+  starDensityDbgMul = starDensityDbgMul>=2 ? 1 : (starDensityDbgMul<1.5 ? 1.5 : 2);
+  const ref=390, scale=Math.max(1, W/ref);
+  ensureStarPool(Math.round(140*scale*2)); // с запасом на весь диапазон кнопки сразу, один раз
+  return starDensityDbgMul;
+}
 function draw(){
   if(typeof canvasContextLost!=='undefined' && canvasContextLost) return;
   const nowMs=performance.now();
@@ -785,7 +801,12 @@ function draw(){
      пустое небо даже на средней/слабой ступени графики, раз пул под ним (bgStars) вырос,
      а потолок — нет. Тот же коэффициент W/390, что и там, не новое число из воздуха. */
   const wScale = Math.max(1, W/390);
-  let nStars = lowPower ? Math.min(Math.round(48*wScale),bgStars.length) : (uq ? bgStars.length : Math.min(Math.round(90*wScale),bgStars.length)); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
+  /* 28.08.2026: раньше «ультра» рисовала ровно bgStars.length (что на практике и есть
+     140*wScale — initBg() строит пул той же формулой), а 48/90 — отдельные числа для двух
+     других ступеней. Свели все три к одному эталону referStars, чтобы starDensityDbgMul
+     (см. cycleStarDensityDbg выше) одинаково умножал плотность на любой ступени графики. */
+  const referStars = lowPower ? 48*wScale : (uq ? 140*wScale : 90*wScale);
+  let nStars = Math.min(Math.round(referStars*starDensityDbgMul), bgStars.length); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
   if(Q.mode==='auto'){ // при просадках FPS режем только декоративный фон, не трогая геймплей
     if(Q.fps<40) nStars=Math.max(28,Math.floor(nStars*.5));
     else if(Q.fps<48) nStars=Math.max(36,Math.floor(nStars*.7));
@@ -793,10 +814,19 @@ function draw(){
   // Скоростные полосы полностью удалены из игры. Рендер фонового неба теперь работает
   // только как обычное движение точек/света без дополнительного флага и без лишних линий.
   if(!hq) ctx.fillStyle='#cfe0ff';
+  /* 28.08.2026 «Глубина мерцания»: амплитуда/скорость мерцания зависели только от ступени
+     графики — дальняя и ближняя звезда мигали одинаково, разной была только база (globalAlpha
+     ниже уже читает s.z как расстояние). Владелец попросил ощутимее почувствовать разное
+     расстояние. zt нормирует s.z (диапазон .2–1 из initBg(), game.js) в 0..1: дальние (zt→0)
+     мерцают быстрее и мельче (freqMul>1, ampMul<1) — мелкое дрожание; ближние (zt→1) —
+     медленнее и глубже (freqMul<1, ampMul>1) — крупная пульсация. ampTier — прежний потолок
+     амплитуды по ступени (uq .16 / hq .12 / дно .09), не новая шкала, ampMul крутится вокруг него. */
+  const ampTier = uq?.16:(hq?.12:.09);
   for (let si=0;si<nStars;si++){ const s=bgStars[si];
     s.y += .024*frameDt*S.speed*S.timeScale*(1+s.z); // v1.282.15: по времени, а не по кадру. Единственная симуляция внутри draw() — на дисплее 120 Гц фон летел ВДВОЕ быстрее препятствий, параллакс выворачивался наизнанку, а на замершей паузе почти стоял (0.0004×60 = 0.024)
     if (s.y>1) s.y-=1;
-    ctx.globalAlpha = .25+s.z*.55 + Math.sin(twT+s.x*40)*(uq?.16:(hq?.12:.09)); // 27.08.2026: было 0 на не-hq — плоский квадратик без глянца спрайта чуть тише, .09 вместо .12/.16
+    const zt=(s.z-.2)/.8, freqMul=1.6-.8*zt, ampMul=.55+.7*zt;
+    ctx.globalAlpha = .25+s.z*.55 + Math.sin(twT*freqMul+s.x*40)*(ampTier*ampMul); // 27.08.2026: было 0 на не-hq — плоский квадратик без глянца спрайта чуть тише, .09 вместо .12/.16
     const sx=s.x*W, sy=s.y*H;
     if(hq){ // оттенок стабилен на звезду: хешируем по x и z (y ползёт!)
       const hh=(s.x*6.13+s.z*3.7)%1;
@@ -807,7 +837,7 @@ function draw(){
       ctx.fillRect(sx, sy, s.s, s.s);
     }
     if (hq && s.z>0.82){ // крестовидный блик у самых ярких звёзд — без дополнительных полос и режима скорости
-      const fl=1.4+Math.sin(twT*1.3+s.x*40)*.7;
+      const fl=1.4+Math.sin(twT*1.3*freqMul+s.x*40)*.7; // 28.08.2026: тот же freqMul глубины — блик у ближних звёзд пульсирует медленнее, не отдельным ритмом
       ctx.strokeStyle='rgba(220,235,255,.3)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(sx-3*fl,sy); ctx.lineTo(sx+3*fl,sy);
       ctx.moveTo(sx,sy-3*fl); ctx.lineTo(sx,sy+3*fl); ctx.stroke();
@@ -1091,7 +1121,6 @@ function draw(){
       }
     } else {
       ctx.fillStyle=planetRockTint(o); // v1.100.0 «Планетарий»: тон камня — база, лёд или железо (мина остаётся красной)
-      ctx.strokeStyle='rgba(200,215,240,.35)'; ctx.lineWidth=1.5;
       /* Силуэт чеканится ОДИН РАЗ на объект и живёт в нём. Форма не меняется никогда:
          o.verts и o.r ставятся при спавне и за жизнь объекта не мутируют — а считалась
          она заново в каждом кадре, семь пар Math.cos/sin на камень, около шести тысяч
@@ -1136,15 +1165,11 @@ function draw(){
            формы скобки. Тон/цвет/заметность камня не менялись ни разу за все три захода. */
         o._decor={ light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) };
       }
-      /* 22.08.2026 «Шип митра»: у ctx.stroke() умолчание браузера — lineJoin='miter', острый
-         стык. Силуэт камня — случайный семиугольник (makeRockVerts(7), радиус вершин
-         .7–1.15 от центра) — при неудачном сочетании соседних вершин угол между рёбрами
-         острый, и митр выпирает шипом далеко за пределы линии. Жалоба владельца «белые
-         полосы по краям метеорита», подтверждено крупным снимком — светлый клин ровно в
-         одной вершине, не по всему контуру. round — стандартное лекарство от шипов на
-         произвольной геометрии, дешевле проверки углов вручную. */
-      ctx.lineJoin='round';
-      ctx.fill(o._path); ctx.stroke(o._path);
+      /* 28.08.2026 «Без контура»: обводка силуэта (rgba(200,215,240,.35), 1.5px, lineJoin
+         'round' от митр-шипа 22.08.2026) снята целиком — владелец на свежем снимке увидел
+         её как «белый контур по краю» у метеорита. Заливка + кратеры остаются единственным
+         источником формы, обводки нигде на камне больше нет. */
+      ctx.fill(o._path);
       ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
       const dc=o._decor;
       /* 27.08.2026 «Дуг больше нет»: см. пометку у построения o._decor выше. Дуги
