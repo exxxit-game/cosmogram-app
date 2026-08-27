@@ -5,10 +5,11 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.477.22';
+const V = '1.477.23';
 const CACHE = 'cosmogram-v' + V;
+// 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 const JS_FILES = [
-  'core','blackbox','beacon','input','game','ach','sync','render','planetarium',
+  'i18n','core','blackbox','beacon','input','game','ach','sync','render','planetarium',
   'goldstar','music','gyro','forge','adaptive','card','star','ui','vendor/telegram-web-app'
 ];
 const SHELL = [
