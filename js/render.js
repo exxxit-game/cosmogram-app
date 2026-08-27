@@ -11,7 +11,15 @@
      S  — центральное состояние забега (game.js). AC — AudioContext (core.js). */
 
 /* ---------- Авто-качество (Блок 3/10): shadowBlur — главный мобильный тормоз ---------- */
-const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hold:0, _ceil:-1, _prove:0 }; // 0=low 1=med 2=high 3=ultra; mode — настройка игрока
+const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hold:0, _ceil:-1, _prove:0, _elapsed:0, _baseFps:null }; // 0=low 1=med 2=high 3=ultra; mode — настройка игрока
+/* v1.477.26 «Разогрев отличим от слабого» (найдено 27.08.2026, веб-исследование про тепловой
+   троттлинг): fps_drop/fps_drop_severe раньше несли только текущий Q.fps — по нему нельзя было
+   отличить «телефон слабый с самого начала» от «телефон разогрелся и просел». Решение владельца:
+   мерить средний FPS первых 60 секунд забега как ориентир (Q._baseFps, снимается один раз за
+   сессию — Q не пересоздаётся между рестартами — и дальше не сдвигается), дальше нести в сигнале
+   отношение текущего Q.fps к этому ориентиру. Геймплей (темп/сложность) НЕ меняет — это только
+   диагностика, чтобы решить дальнейший шаг по живым данным, а не гадать. Страж 143. */
+function qBaseInfo(){ return Q._baseFps ? ' base'+Math.round(Q._baseFps)+' ratio'+(Q.fps/Q._baseFps).toFixed(2) : ' base?'; }
 function qThr(){ // пороги авто-качества: под тир GPU и под частоту экрана (v1.12.0) — на 120 Гц считаем по-честному; v1.35.0 — чуть мягче вверх, чтобы не гонять уровень туда-сюда
   const t=gfxTier(), hz=Store.get('dispHz',60);
   if (hz>=100) return {dn:Math.round(hz*.45), up:Math.round(hz*.85)};
@@ -34,11 +42,12 @@ function qThr(){ // пороги авто-качества: под тир GPU и
    устройство докажет стабильность. Половина памяти не работает: помнить надо оба числа. */
 function qualityTick(dt){
   if (Q.mode!=='auto'){ Q.level = Q.mode==='low'?0:(Q.mode==='med'?1:(Q.mode==='ultra'&&gfxUltraOk()?3:2)); return; } // ручной режим — без авто-метрики
-  Q._acc+=dt; Q._n++; Q._t+=dt;
+  Q._acc+=dt; Q._n++; Q._t+=dt; Q._elapsed+=dt;
   if(Q._t>=1){
     const f = Q._n/Math.max(Q._acc,.001);
     Q.fps = lerp(Q.fps, f, .6);
     Q._acc=0; Q._n=0; Q._t=0;
+    if (Q._baseFps===null && Q._elapsed>=60) Q._baseFps = Q.fps;
     const applyLevelChange = (nextLevel, signal) => {
       const prev = Q.level;
       if (nextLevel === prev) return false;
@@ -59,7 +68,7 @@ function qualityTick(dt){
       if (Q.fps < dnEarly*.6 && Q.level>0){
         Q._ceil = Q.level;
         const changed = applyLevelChange(Q.level-1, Q._ceil);
-        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+' '+frameProfileSnapshot());
+        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo());
         return;
       }
       Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; // карантин после смены уровня: небо не дёргается
@@ -69,7 +78,7 @@ function qualityTick(dt){
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
       Q._ceil = Q.level;
       const changed = applyLevelChange(Q.level-1, Q._ceil);
-      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+' '+frameProfileSnapshot()); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
+      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo()); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
     else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ const old = Q.level; Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); if (old !== Q.level) resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; Store.set('gfxCeil',-1); } } // v1.284.22: устройство доказало запас — забываем потолок и в хранилище тоже, иначе он держал бы уровень внизу вечно // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }

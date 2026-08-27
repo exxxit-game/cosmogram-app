@@ -30,6 +30,7 @@ AI-WORKFLOW → INDEX → KNOWN-BUGS + ERROR-CATALOG → STYLE-GUIDE → PERFORM
 | PERFORMANCE.md | Бюджет 16.666 мс, Zero-GC, правила 2.11–2.23, Masterclass | ДОМ рендера/производительности |
 | PATTERNS.md | withTrack, Swap-and-Pop, пулы, Суд компасов, батчинг маяков | ДОМ паттернов |
 | CANVAS-2D.md | Памятка Canvas | указатель → PERFORMANCE |
+| STEERING-PHYSICS.md | Reynolds steering (seek/arrive) + пружина Гука — справочная математика, не код | ДОМ формул для «Груз/Фал» и «Ньютон» |
 
 ---
 
