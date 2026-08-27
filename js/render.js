@@ -549,11 +549,21 @@ function drawNebulas(h1,h2,tN,lowPower){
     if(nf.dust){
       const px=skyPx();
       const offX=((nf.marginPxX||0)-pan.x)/px, offY=((nf.marginPxY||0)-pan.y)/px;
+      /* 28.08.2026 «Пыль дышит, а не мигает»: было base*(.55+.45*sin(...)) — от 10% до 100%
+         пика на КАЖДОЙ пылинке, вчетверо резче, чем колебание у bgStars (там база стоит
+         твёрдо на .25+z*.55, синус только чуть шатает вершину). Рядом с уже более спокойным
+         мерцанием звёзд (см. правку глубины выше) туманность на этом фоне читалась отдельным
+         сигналом — «глупо мигает». Поднимаем пол до 78% пика (колебание втрое мельче, тот же
+         характер, что у звёзд) и замедляем цикл (было /.38 — темп звёзд, теперь /.6 — туман-
+         ность крупнее и глуше, ей идёт медленнее). dfreq по sz — тот же приём, что freqMul
+         у bgStars: крупная (ближе) пылинка пульсирует медленнее, мелкая — чуть быстрее, врозь
+         друг с другом, без общего ритма, который бы бросался в глаза. */
       for(let i=0;i<nf.dust.length;i++){
         const d=nf.dust[i];
         const dx=d.x+offX, dy=d.y+offY;
         if(dx<-4||dx>W+4||dy<-4||dy>H+4) continue;
-        ctx.globalAlpha=d.base*(.55+.45*Math.sin(tN/.38+d.ph));
+        const dfreq=1.3-.5*((d.sz-.4)/1.1);
+        ctx.globalAlpha=d.base*(.78+.22*Math.sin(tN/.6*dfreq+d.ph));
         ctx.fillStyle=d.warm?'#ffe9c8':'#dfe9ff';
         ctx.fillRect(dx,dy,d.sz,d.sz);
       }
@@ -743,22 +753,6 @@ function corridorEdgeSprite(){
   }
   return corrCache.c;
 }
-/* 28.08.2026 «Живой замер плотности» (временно, для подбора числа фоновых звёзд с владель-
-   цем без гадания по одной правке за раз): starDensityDbgMul крутится кнопкой в Сервисном
-   центре (ui.js, diagRows/cycleStarDensityDbg) — 1/1.5/2 по кругу, 1 — как было всегда.
-   Пул bgStars (game.js, initBg()) рассчитан на эталонную плотность при текущей ширине;
-   ensureStarPool лениво достраивает его той же формулой звезды (x/y/z/s), когда множитель
-   просит больше, чем есть — initBg() не трогаем, он не должен знать про эту кнопку. */
-let starDensityDbgMul=1;
-function ensureStarPool(minLen){
-  while (bgStars.length<minLen) bgStars.push({x:Math.random(),y:Math.random(),z:rand(.2,1),s:rand(.5,1.8)});
-}
-function cycleStarDensityDbg(){
-  starDensityDbgMul = starDensityDbgMul>=2 ? 1 : (starDensityDbgMul<1.5 ? 1.5 : 2);
-  const ref=390, scale=Math.max(1, W/ref);
-  ensureStarPool(Math.round(140*scale*2)); // с запасом на весь диапазон кнопки сразу, один раз
-  return starDensityDbgMul;
-}
 function draw(){
   if(typeof canvasContextLost!=='undefined' && canvasContextLost) return;
   const nowMs=performance.now();
@@ -801,12 +795,11 @@ function draw(){
      пустое небо даже на средней/слабой ступени графики, раз пул под ним (bgStars) вырос,
      а потолок — нет. Тот же коэффициент W/390, что и там, не новое число из воздуха. */
   const wScale = Math.max(1, W/390);
-  /* 28.08.2026: раньше «ультра» рисовала ровно bgStars.length (что на практике и есть
-     140*wScale — initBg() строит пул той же формулой), а 48/90 — отдельные числа для двух
-     других ступеней. Свели все три к одному эталону referStars, чтобы starDensityDbgMul
-     (см. cycleStarDensityDbg выше) одинаково умножал плотность на любой ступени графики. */
-  const referStars = lowPower ? 48*wScale : (uq ? 140*wScale : 90*wScale);
-  let nStars = Math.min(Math.round(referStars*starDensityDbgMul), bgStars.length); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
+  /* 28.08.2026 «Живой замер плотности», итог: было 48/90/140 (эталон при ширине 390) — влад-
+     елец сравнил 100/150/200% на своём устройстве через временную кнопку в Сервисном центре
+     (снята вместе с cycleStarDensityDbg) и выбрал 200%. Пул bgStars (game.js: initBg())
+     уже вырос до 280*scale, «ультра» по-прежнему рисует его целиком — bgStars.length. */
+  let nStars = lowPower ? Math.min(Math.round(96*wScale),bgStars.length) : (uq ? bgStars.length : Math.min(Math.round(180*wScale),bgStars.length)); // На слабых телефонах убираем лишние тысячи вычислений на бэкграунде
   if(Q.mode==='auto'){ // при просадках FPS режем только декоративный фон, не трогая геймплей
     if(Q.fps<40) nStars=Math.max(28,Math.floor(nStars*.5));
     else if(Q.fps<48) nStars=Math.max(36,Math.floor(nStars*.7));
