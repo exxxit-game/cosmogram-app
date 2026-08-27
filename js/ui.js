@@ -1349,8 +1349,18 @@ function diagRows(){
   R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb'), rare:true});
   if (window.__tgWgSilent) R.push({st:'warn', txt:L.diagWgSilent}); // v1.84.0: виджет входа промолчал — сцена чиста, здесь честно
   if (HAS_GYRO && !gyroUnlocked()) R.push({st:'info', txt:L.diagLocked});
+  /* 28.08.2026 «Живой замер вправо» (временно): владелец видит на телефоне, что кнопка
+     Telegram «⌄ ⋮» перекрывает жизни справа сильнее, чем неизмеренные 44px (core.js).
+     Жмёт «Ещё», сразу видит эффект (tgInsetsSync() перестраивает --js-sar), называет
+     первое число, где жизни выходят из-под кнопки целиком — зашиваю его и убираю кнопку,
+     тем же приёмом, что уже сработал с плотностью звёзд. */
+  if (typeof cycleSarDbg==='function'){
+    const px=(typeof sarDbgOverride==='number')?sarDbgOverride:44;
+    R.push({st:'info', txt:'Отступ жизней справа: '+px+'px', fix:'Ещё', act:diagCycleSar, rare:true});
+  }
   return R;
 }
+function diagCycleSar(){ if(typeof cycleSarDbg==='function') cycleSarDbg(); diagLastT=0; diagRefresh(); haptic('light'); }
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
