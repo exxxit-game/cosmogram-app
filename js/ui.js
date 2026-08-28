@@ -1923,6 +1923,8 @@ Store.init(()=>{
   S.wallet = saneNumber(Store.get('wallet',0),0);
   S.ownedSkins = saneArray(Store.get('ownedSkins',[0]),[0]);
   S.skin = saneNumber(Store.get('skin',0),0);
+  S.ownedDecals = saneArray(Store.get('ownedDecals',[0]),[0]);
+  S.decal = saneNumber(Store.get('decal',0),0);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);
