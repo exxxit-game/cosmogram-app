@@ -571,11 +571,13 @@ button, input, select, textarea { text-transform:inherit; }
   background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:12px; }
 .topIt.me { background:rgba(120,170,255,.08); border-color:rgba(190,225,255,.35); }
 .topN { width:30px; height:30px; flex:none; display:inline-flex; align-items:center; justify-content:center;
-  color:var(--muted); font-family:var(--font-disp); font-weight:400; font-size:13px; border-radius:50%; }
+  color:var(--muted); font-family:var(--font-disp); font-weight:700; font-size:13px; border-radius:50%; } /* 28.08.2026: было 400 — владелец, «цифры тонкие» */
 .topN.m1 { background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#101b2e;
   box-shadow:0 0 12px rgba(240,192,64,.35); }
-.topN.m2 { background:linear-gradient(180deg,#cfd6e4,#98a3b8); color:#101b2e; }
-.topN.m3 { background:linear-gradient(180deg,#d99a5b,#a8642c); color:#101b2e; }
+.topN.m2 { background:linear-gradient(180deg,#cfd6e4,#98a3b8); color:#101b2e;
+  box-shadow:0 0 12px rgba(180,195,220,.35); } /* 28.08.2026: было без свечения — «тусклый цвет» рядом с золотом */
+.topN.m3 { background:linear-gradient(180deg,#d99a5b,#a8642c); color:#101b2e;
+  box-shadow:0 0 12px rgba(200,130,70,.35); } /* 28.08.2026: то же самое для бронзы */
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
@@ -1094,20 +1096,51 @@ button, input, select, textarea { text-transform:inherit; }
 <!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
-<symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7"></circle><path d="M12 10v3.5l2.6 1.8M9.5 2.5h5"></path></symbol>
+<!-- 28.08.2026 «Иконки топа рекордов»: владелец — иконки категорий (тач/наклон/клавиатура/
+     таймер/дистанция) выглядели типовыми, не в духе игры. Хронометр — тот же циферблат, что
+     был, плюс коронка сверху (это ХОДИКИ, не просто круг) и две диагональные засечки по бокам —
+     эффект скорости, тот же язык, что уже есть у гироскопа (i-gyro) ниже. -->
+<symbol id="i-timer" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" stroke="#c9a45c"></path><circle cx="12" cy="14" r="7.5" stroke="#9fe8ff"></circle><path d="M12 10.2V14l2.8 2" stroke="#f0c040"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" stroke="#9fe8ff"></path></symbol>
 <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"></path></symbol>
-<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z"></path></symbol><!-- v1.284.4: дверь «смотреть полёт» у чужого рекорда -->
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z" fill="#f0c040" stroke="none"></path></symbol><!-- v1.284.4: дверь «смотреть полёт» у чужого рекорда; 28.08.2026: залит золотом по просьбе владельца -->
 <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></symbol>
 <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v4.5a5 5 0 0 1-10 0z"></path><path d="M7 5.5H4a3 3 0 0 0 3.2 4.4M17 5.5h3a3 3 0 0 1-3.2 4.4M12 13.5v3.5M8.5 21h7M10 17h4"></path></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></symbol>
-<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3.5 17.5 17.5 3.5l3 3L6.5 20.5z"></path><path d="M8.5 15.5l1.6 1.6M11.5 12.5l1.6 1.6M14.5 9.5l1.6 1.6"></path></symbol>
-<symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11.5V5.8a1.6 1.6 0 0 1 3.2 0v4.7"></path><path d="M12.2 10.5 16 11.2a2 2 0 0 1 1.6 2.4l-.9 3.8a4.2 4.2 0 0 1-4.1 3.1h-1.8a4.2 4.2 0 0 1-3.3-1.7L5.6 15a1.5 1.5 0 0 1 2.3-1.9l1.1 1.4"></path></symbol>
-<symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"></rect><path d="M11 18.5h2"></path></symbol>
+<!-- 28.08.2026: отдельный значок для «подтверждённый рекорд» (topVf) — золотой значок-медаль,
+     владелец выбрал из превью. Новый символ, не правка i-check: тот же i-check ещё используется
+     в ангаре (owned-скин) и в другом месте — трогать его форму там не просили. -->
+<symbol id="i-checkbadge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#f0c040"></circle><path d="M7.8 12.3l3 3 5.6-6.2" fill="none" stroke="#2c3e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
+<!-- «Дистанция» была буквальной линейкой — офисный предмет рядом с космосом. Теперь —
+     пунктирная траектория от точки старта к стрелке, тот же смысл (сколько пройдено),
+     но язык полёта, а не измерительного инструмента. -->
+<symbol id="i-ruler" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="#f0c040" stroke="none"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" stroke="#9fe8ff"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" stroke="#c9a45c"></path></symbol>
+<!-- «Тач», итог: рука на глаз не получалась ни разу — читалась то кашей, то неприличным
+     жестом. Владелец сам нашёл образец (отпечаток пальца) и настоял на настоящем источнике,
+     не перерисовке. Контур — Google Material Symbols «fingerprint» (свободная лицензия,
+     official google/material-design-icons на GitHub), скачан и вставлен БЕЗ единой правки
+     формы — свой viewBox (0 -960 960 960, как отдаёт сам источник), только заливка
+     перекрашена в цвет игры. Тот же приём, что уже применялся к шрифтам (Exo 2/Roboto —
+     настоящий файл с оригинального источника, не перерисовка по памяти). -->
+<!-- 28.08.2026: владелец — отпечаток вплотную к краю, соседи (клавиатура и т.д.) с полями,
+     разный размер на глаз при одинаковом боксе 19×19. Сжато до 75% и отцентровано той же
+     арифметикой, что уже показана в превью — форма контура не тронута ни на один пиксель. -->
+<symbol id="i-hand" viewBox="0 -960 960 960"><g transform="translate(120,-120) scale(.75)"><path fill="#9fe8ff" d="M481-781q106 0 200 45.5T838-604q7 9 4.5 16t-8.5 12q-6 5-14 4.5t-14-8.5q-55-78-141.5-119.5T481-741q-97 0-182 41.5T158-580q-6 9-14 10t-14-4q-7-5-8.5-12.5T126-602q62-85 155.5-132T481-781Zm0 94q135 0 232 90t97 223q0 50-35.5 83.5T688-257q-51 0-87.5-33.5T564-374q0-33-24.5-55.5T481-452q-34 0-58.5 22.5T398-374q0 97 57.5 162T604-121q9 3 12 10t1 15q-2 7-8 12t-15 3q-104-26-170-103.5T358-374q0-50 36-84t87-34q51 0 87 34t36 84q0 33 25 55.5t59 22.5q34 0 58-22.5t24-55.5q0-116-85-195t-203-79q-118 0-203 79t-85 194q0 24 4.5 60t21.5 84q3 9-.5 16T208-205q-8 3-15.5-.5T182-217q-15-39-21.5-77.5T154-374q0-133 96.5-223T481-687Zm0-192q64 0 125 15.5T724-819q9 5 10.5 12t-1.5 14q-3 7-10 11t-17-1q-53-27-109.5-41.5T481-839q-58 0-114 13.5T260-783q-8 5-16 2.5T232-791q-4-8-2-14.5t10-11.5q56-30 117-46t124-16Zm0 289q93 0 160 62.5T708-374q0 9-5.5 14.5T688-354q-8 0-14-5.5t-6-14.5q0-75-55.5-125.5T481-550q-76 0-130.5 50.5T296-374q0 81 28 137.5T406-123q6 6 6 14t-6 14q-6 6-14 6t-14-6q-59-62-90.5-126.5T256-374q0-91 66-153.5T481-590Zm-1 196q9 0 14.5 6t5.5 14q0 75 54 123t126 48q6 0 17-1t23-3q9-2 15.5 2.5T744-191q2 8-3 14t-13 8q-18 5-31.5 5.5t-16.5.5q-89 0-154.5-60T460-374q0-8 5.5-14t14.5-6Z"></path></g></symbol>
+<!-- «Наклон»: две прежние попытки (лёгкий/сильный наклон телефона со стрелкой) владелец не
+     узнал. Прислал образец — настоящий физический гироскоп (кольца вокруг шара на подставке),
+     выбрал его сам из пары образцов. Два кольца-эллипса под углом друг к другу + шар, цвета
+     игры (золото/лёд), подставку опустил — на 19px она бы слиплась в пятно. -->
+<symbol id="i-phone" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="5" fill="none" stroke="#9fe8ff" stroke-width="1.5" transform="rotate(-25 12 12)"></ellipse><ellipse cx="12" cy="12" rx="9" ry="5" fill="none" stroke="#c9a45c" stroke-width="1.5" transform="rotate(25 12 12)"></ellipse><circle cx="12" cy="12" r="3.6" fill="#f0c040" stroke="#2c3e50" stroke-width="0.6"></circle></symbol>
 <symbol id="i-gyro" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"></path><path d="M21 3.5V8h-4.5"></path><path d="M12 8.5 15 12l-3 3.5L9 12z"></path></symbol>
-<symbol id="i-keys" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"></rect><path d="M5.5 10h1M9 10h1M12.5 10h1M16 10h1M5.5 13.5h1M9 13.5h1M12.5 13.5h1M16 13.5h1M8 17h8"></path></symbol>
+<!-- «Клавиатура» — форма прежняя (менять узнаваемую клавиатуру некуда), только клавиши
+     чуть крупнее и ровнее расставлены — та же правка, что у остальных: не рисунок ради
+     рисунка, а честная опрятность. -->
+<symbol id="i-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.8" stroke="#9fe8ff"></rect><path d="M6 10h1.2M9.5 10h1.2M13 10h1.2M16.5 10h1.2M6 13.5h1.2M9.5 13.5h1.2M13 13.5h1.2M16.5 13.5h1.2" stroke="#9fe8ff"></path><path d="M8 16.3h8" stroke="#c9a45c"></path></symbol>
 <symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
-<symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5.5 20.5v-9a6.5 6.5 0 0 1 13 0v9l-2.7-2-2.3 2-1.5-1.6-1.5 1.6-2.3-2z"></path><path d="M9.7 10.8h.01M14.3 10.8h.01"></path></symbol>
+<!-- Силуэт призрака — узнаваемая часть игры, не трогаю форму. Добавлен только лёгкий след
+     слева (две короткие чёрточки) — призрак «гонится», а не стоит на месте, тот же смысл,
+     что и у кнопки рядом («Смотреть полёт»). -->
+<symbol id="i-ghost" viewBox="0 0 24 24"><path d="M6 20v-8.2a6 6 0 0 1 12 0V20l-2.5-1.9-2.1 1.9-1.4-1.5-1.4 1.5-2.1-1.9z" fill="#f0c040" stroke="#2c3e50" stroke-width="1"></path><path d="M9.6 10.6h.01M14.4 10.6h.01" stroke="#2c3e50"></path><path d="M2.5 13.5h1.4M2 16h1.8" stroke="#9fe8ff"></path></symbol>
 <!-- 26.08.2026: значок Discord был нарисован приблизительно (blob + два кружка-глаза),
      жалоба владельца «у дискорда самая странная» — справедливая, это не их логотип.
      Ниже — официальный контур («Clyde»), координаты сверены с Simple Icons (MIT,
@@ -1129,8 +1162,8 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.34"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/i18n.js?v=1.477.34"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.41"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/i18n.js?v=1.477.41"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1534,23 +1567,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.34" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.34"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.34"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.34"></script>
-<script defer src="js/game.js?v=1.477.34" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.34"></script>
-<script defer src="js/sync.js?v=1.477.34"></script>
-<script defer src="js/render.js?v=1.477.34"></script>
-<script defer src="js/planetarium.js?v=1.477.34"></script>
-<script defer src="js/goldstar.js?v=1.477.34"></script>
-<script defer src="js/music.js?v=1.477.34"></script>
-<script defer src="js/gyro.js?v=1.477.34"></script>
-<script defer src="js/forge.js?v=1.477.34"></script>
-<script defer src="js/adaptive.js?v=1.477.34"></script>
-<script defer src="js/card.js?v=1.477.34"></script>
-<script defer src="js/star.js?v=1.477.34"></script>
-<script defer src="js/ui.js?v=1.477.34"></script>
+<script defer src="js/core.js?v=1.477.41" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.41"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.41"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.41"></script>
+<script defer src="js/game.js?v=1.477.41" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.41"></script>
+<script defer src="js/sync.js?v=1.477.41"></script>
+<script defer src="js/render.js?v=1.477.41"></script>
+<script defer src="js/planetarium.js?v=1.477.41"></script>
+<script defer src="js/goldstar.js?v=1.477.41"></script>
+<script defer src="js/music.js?v=1.477.41"></script>
+<script defer src="js/gyro.js?v=1.477.41"></script>
+<script defer src="js/forge.js?v=1.477.41"></script>
+<script defer src="js/adaptive.js?v=1.477.41"></script>
+<script defer src="js/card.js?v=1.477.41"></script>
+<script defer src="js/star.js?v=1.477.41"></script>
+<script defer src="js/ui.js?v=1.477.41"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

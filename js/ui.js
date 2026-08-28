@@ -1693,12 +1693,16 @@ function renderTop(){
       '<span class="topNm">'+escapeHtml(r.name)+(r.provider&&r.provider!=='tg'?' <b class="pvTag">'+escapeHtml(r.provider)+'</b>':'')+(r.username?' <i>@'+escapeHtml(r.username)+'</i>':'')+'</span>'+
       '<span class="topSc">'+fmtN(r.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')+'</span>'+
       // v1.282.20: сервер отдаёт verified — рекорд объяснён паспортом забега, а не чтением хранилища
-      (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('check')+'</span>':'')+
-      ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topGh" data-gh="'+(Math.floor(Number(r.pid))||0)+'" data-best="'+Math.floor(Number(r.best)||0)+'" title="'+L.ghostGo+'">'+ic('ghost')+'</button>':'')+
+      (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('checkbadge')+'</span>':'')+
+      /* 28.08.2026: было ограничено askCat==='gyro'||askCat==='touch' — владелец заметил, что
+         у клавиатуры/bullet/дистанции нет ни призрака, ни «смотреть», хотя запись и сервер
+         (GHOST_CATS в cosmogram-sync) поддерживают все пять категорий с v1.280.0 — кнопки
+         просто забыли открыть тогда же. Ограничение снято, категория больше не проверяется. */
+      (!r.me&&r.pid?'<button class="topGh" data-gh="'+(Math.floor(Number(r.pid))||0)+'" data-best="'+Math.floor(Number(r.best)||0)+'" title="'+L.ghostGo+'">'+ic('ghost')+'</button>':'')+
       /* v1.284.4: у рекорда появилась вторая дверь. Первая — «лететь рядом» (учиться манёврам),
          вторая — «смотреть» (увидеть полёт целиком, как трибуну чемпиона). До этой партии
          рекорд был числом в таблице: посмотреть его было нельзя ни одним способом. Страж 126. */
-      ((askCat==='gyro'||askCat==='touch')&&!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
+      (!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
   }).catch(()=>{ if(screenName==='ach' && topCat===askCat) list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; }); // 22.08.2026: сбой сети — честное сообщение вместо зависшего «Загрузка…»
 }
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
