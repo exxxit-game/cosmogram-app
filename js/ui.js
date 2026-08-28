@@ -1569,12 +1569,12 @@ wireOn('overDetailsBtn', 'click', ()=>{ // спойлер «Подробност
   toggleCls('overMore','hidden', hid);
   toggleCls('overDetailsBtn','open',!hid); sfx.click(); haptic('light'); });
 wireOn('hangarBtn', 'click', ()=>{ renderHangar(); setScreen('hangar'); sfx.click(); });
-wireOn('hangarBackBtn', 'click', toMenu);
+wireOn('hangarBackBtn', 'click', toMenu); // 28.08.2026: вернулась — экран был без единой видимой кнопки назад вне Telegram
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
 function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }
 function closeAch(){ toMenu(); }
 wireOn('achBtn', 'click', openAch);
-wireOn('achBackBtn', 'click', closeAch);
+wireOn('achBackBtn', 'click', closeAch); // 28.08.2026: вернулась, см. коммент у hangarBackBtn
 /* Вкладка «🌍 Топ»: честная таблица (модуль sync.js) */
 let topCat='touch';
 function achTabSel(mine){
@@ -1830,7 +1830,7 @@ function applyLang(){
   /* 13.08.2026: тексты «тесно» зависят от ориентации — их раздаёт tooNarrowText(),
      иначе смена языка возвращала бы совет «поверните экран» лежащему набок телефону. */
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
-  setText('modesBtn',L.modes); setText('modesBack',L.modesBack); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
+  setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   setText('hangarBtn',L.hangar);
@@ -1848,14 +1848,12 @@ function applyLang(){
   setText('aboutBtn',L.aboutBtn); aboutFill();
   setText('accOutBtn',L.accOut); // v1.51.0: вход в общую таблицу — на языке игрока
   if(screenName==='settings') accFill(); if(screenName==='over') webJoinFill(); // виджет монтируется лениво — только на открытом экране
-  setText('settingsBackBtn',L.back);
   setText('restartBtn',L.restart);
   setText('pauseMenuBtn',L.menu);
   setText('hangarTitle',L.hangar);
   setText('brandSub',L.brandSub);          // 13.08.2026: обещание игры — на языке игрока
   setText('angarWalletLbl',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
-  setText('hangarBackBtn',L.menu);
   setText('retryBtn',L.retry);
   setText('watchBtn',L.watchFlight);
   setText('tribuneBtn',L.tribune); // v1.100.1 «Трибуна чемпиона» — на языке игрока
@@ -1871,7 +1869,6 @@ function applyLang(){
   setText('gyroUnlockBtn',L.gyroUnlockBtn); refreshGyroLock(); // замок гироскопа: кнопка открытия — только пока заперт
   setText('achTitle',L.achTitle);
   setText('achBtnTxt',L.achTitle);
-  setText('achBackBtn',L.back);
   setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); setText('diagBackBtn',L.back); // v1.66.3: экран сервисного центра

@@ -42,14 +42,14 @@ const I18N = {
     modeSpeedrun:'Спидран', modeSpeedrunD:'10 000 очков на время — чистый хронометраж',
     // v1.70.0: Пакт и «Без ударов» удалены — их ручки переехали в конструктор «Своя трасса»
     srGoal:'Цель', srFinish:'Финиш!', srNewBest:'Новый рекорд времени',
-    modeDaily:'Трасса дня', modeDailyD:'Одна трасса на всех игроков — поставь рекорд дня', dlNewBest:'Новый рекорд трассы дня',
-    dailyOnce:'5 попыток', dailyLeft:(n)=>'осталось '+n, dailyLocked:(s)=>'Сегодня ты уже прыгнул · твой полёт: '+s+' · новая трасса завтра',
-    modeForge:'Своя трасса', modeForgeD:'Конструктор забега: собери и поделись кодом', // v1.68.0
-    forgeTitle:'Своя трасса', forgeNamePh:'Название трассы', forgeDefName:'Трасса пилота',
-    forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина трассы', forgeInf:'∞',
-    forgeCodeLbl:'Трасса друга — вставь код или ссылку',
+    modeDaily:'Небо дня', modeDailyD:'Одно небо на всех игроков — поставь рекорд дня', dlNewBest:'Новый рекорд неба дня',
+    dailyOnce:'5 попыток', dailyLeft:(n)=>'осталось '+n, dailyLocked:(s)=>'Сегодня ты уже прыгнул · твой полёт: '+s+' · новое небо завтра',
+    modeForge:'Своё небо', modeForgeD:'Конструктор забега: собери и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо» по просьбе владельца
+    forgeTitle:'Своё небо', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
+    forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
+    forgeCodeLbl:'Небо друга — вставь код или ссылку',
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
-    forgeGuest:'Трасса друга загружена — жми «Лететь»', forgeShareTxt:'Лети на мою трассу «%s» в Cosmogram!',
+    forgeGuest:'Небо друга загружено — жми «Лететь»', forgeShareTxt:'Лети в моё небо «%s» в Cosmogram!',
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', forgeGrpEn:'Состав', forgeGrpMood:'Настроение', // v1.69.0
