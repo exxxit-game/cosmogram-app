@@ -860,6 +860,15 @@ function angarShip(x, sk, s, bolshoy){
     x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();
   }
+  /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
+     render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
+     выше, отдельно пересчитывать не нужно. */
+  if(S.decal){ const dc=DECALS[S.decal];
+    if(dc && dc.ch){
+      x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
+      x.fillText(dc.ch,-5.3,-0.7);
+    }
+  }
   x.restore();
 }
 
