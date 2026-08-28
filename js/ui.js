@@ -136,7 +136,9 @@ function setScreen(name){
   toggleCls('telemHud','hidden', name!=='game'); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
   toggleCls('livesCanvas','hidden', name!=='game');
   toggleCls('pauseBtn','hidden', name!=='game');
-  toggleCls('dim','on', name==='pause');
+  // 28.08.2026: #dim (72% черноты, z-index:9) — настоящая вуаль паузы, найдена только сейчас;
+  // #pauseScreen.background была обнулена раньше, но темноту всё это время давал этот, другой
+  // слой. Владелец: «ровно как в игре» — больше не включаем его на паузе.
   setBack(name!=='menu');
   // v1.280.0: та же видимость, что у собственной кнопки настроек экрана — Меню и Пауза, нигде больше
   if (tg && tg.SettingsButton && tgv('6.10')){
