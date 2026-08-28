@@ -5,12 +5,12 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.477.61';
+const V = '1.477.63';
 const CACHE = 'cosmogram-v' + V;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 const JS_FILES = [
   'i18n','core','blackbox','beacon','input','game','ach','sync','render','planetarium',
-  'goldstar','music','gyro','forge','adaptive','card','star','ui','vendor/telegram-web-app'
+  'goldstar','music','gyro','forge','adaptive','card','star','cinema','ui','vendor/telegram-web-app'
 ];
 const SHELL = [
   './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше

@@ -100,8 +100,6 @@ function cardFill(){ // подписи по языку (вызывается и�
   if(L.cardChat){ const t4=$('cardChat'); if(t4) t4.textContent=L.cardChat; }
   if(L.cardStory){ const t5=$('cardStory'); if(t5) t5.textContent=L.cardStory; }
   if(L.cardSave){ const t6=$('cardSave'); if(t6) t6.textContent=L.cardSave; }
-  if(L.cardShare){ const t7=$('cardShare'); if(t7) t7.textContent=L.cardShare; }
-  const t8=$('cardBack'); if(t8) t8.textContent=L.back;
 }
 /* v1.96.0 «Одна дверь», шаг Б «Сохранить карточку»: PNG уходит файлом —
    в Telegram 8.0+ через tg.downloadFile, вне него — якорем download. Скриншот больше не обязателен. */
@@ -134,7 +132,10 @@ async function cardSend(){
     const r=await syncFetch(SYNC_URL,{action:'share_card',initData:tg.initData,png,caption});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
-    tg.shareMessage(ans.id,function(ok){ if(ok){ haptic('success'); } });
+    tg.shareMessage(ans.id,function(ok){
+      if(ok){ haptic('success'); }
+      else { if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); } // 28.08.2026: раньше отказ (ok=false) был полной тишиной — владелец: «в чат не работает»
+    });
     sfx.click();
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
@@ -160,17 +161,10 @@ async function cardStory(){
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
 }
-/* v1.96.0 «Одна дверь», шаг В: тихая текстовая дверь живёт внутри карточки.
-   Особая вода: на своей трассе шлём саму трассу (mapShare) — восторг заразителен сразу полётом. */
-function cardShare(){
-  if(S.mode==='custom' && typeof mapShare==='function'){ sfx.click(); mapShare(); return; }
-  shareScore();
-}
 wireOnLocal('cardBtn','click',cardOpen);
 wireOnLocal('cardChat','click',cardSend);
 wireOnLocal('cardStory','click',cardStory);
 wireOnLocal('cardSave','click',cardSave);
-wireOnLocal('cardShare','click',cardShare);
 wireOnLocal('cardBack','click',function(){ sfx.click(); setScreen('over'); });
 cardChatGate(); // при загрузке: среда уже известна
 cardStoryGate(); // и сторис-дверь при загрузке
