@@ -935,32 +935,34 @@ function starJewelHtml(cls){ return '<canvas class="starJewelSm'+(cls?' '+cls:''
 function starJewelWake(){
   document.querySelectorAll('.starJewelSm').forEach(c=>{ if(!c._drawn && typeof drawStarJewel==='function'){ c._drawn=1; drawStarJewel(c); } });
 }
-/* Подпись под жетоном и кнопка покупки — единственное, что меняется при выборе. */
+/* 28.08.2026 «Один общий, не франкенштейн»: отдельная строка-кнопка под небом снята —
+   владелец увидел её как чужеродную деталь и лишнее место. Действие (надеть/купить)
+   теперь живёт прямо в карточке жетона, на который сейчас смотрит игрок (angarSel),
+   теми же .btn.pri.small токенами, что и везде в игре — не своя выдуманная кнопка.
+   Тап по жетону по-прежнему только выбирает его для просмотра (страж 45, беда
+   v1.282.20 — случайный тап не должен тратить звёзды); кнопка внутри — отдельный,
+   осознанный тап поверх неё. */
 function angarItemFill(el, sk){
   const owned = S.ownedSkins.includes(sk.id);
-  const sel   = S.skin===sk.id;
-  el.classList.toggle('sel', sel);
+  const worn  = S.skin===sk.id;
+  el.classList.toggle('sel', worn);
   const nm=el.querySelector('.nm'), pr=el.querySelector('.pr');
   if(nm) nm.textContent = L.skinNames[sk.name];
   if(pr){
     pr.classList.toggle('own', owned);
-    pr.innerHTML = owned ? (sel?L.owned:ic('check'))
-                         : starJewelHtml()+Math.round(sk.price);
+    if(worn){
+      pr.innerHTML = L.owned;
+    } else if(angarSel===sk.id){
+      pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
+        (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(sk.price)))+'</button>';
+    } else {
+      pr.innerHTML = owned ? ic('check') : starJewelHtml()+Math.round(sk.price);
+    }
   }
 }
 function angarBuyFill(){
-  const sk = SKINS[angarSel]||SKINS[0];
-  const owned = S.ownedSkins.includes(sk.id);
-  const nadet = owned && S.skin===sk.id;
-  const b=$('angarBuy'); if(!b) return;
-  // 28.08.2026: на уже надетом скине кнопка не гаснет «ghost» — пропадает совсем.
-  // Жетон и так говорит «Выбран»; вторая, бездействующая копия того же факта на
-  // отдельной кнопке ниже — лишнее место, которое владелец попросил вернуть.
-  b.classList.toggle('hidden', nadet);
-  if (!nadet){
-    b.innerHTML = owned ? L.hangarWear : (L.hangarBuy+' — '+starJewelHtml()+Math.round(sk.price));
-    b.classList.add('pri'); b.classList.remove('ghost');
-  }
+  const grid=$('angarGrid');
+  if(grid) SKINS.forEach((sk,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, sk); });
   setText('angarWalletN', Math.round(S.wallet));
   starJewelWake();
 }
@@ -998,8 +1000,7 @@ function renderHangar(){
     });
     angarBuilt = true;
   }
-  SKINS.forEach((sk,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, sk); });
-  angarBuyFill();
+  angarBuyFill(); // 28.08.2026: сама теперь обходит все жетоны (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
 
@@ -1041,7 +1042,13 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
   }
 }
-if(typeof $==='function' && $('angarBuy')) $('angarBuy').addEventListener('click', angarAct);
+// 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
+// вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком:
+// e.stopPropagation() — иначе тап по кнопке всплыл бы до .angarIt и дошёл до angarPick()
+// (там он и так безвреден, ранний выход при angarSel===id, но лучше не полагаться на это).
+if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
+  if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
+});
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
 /* ---------- Шаринг (Блок 9) ---------- */
