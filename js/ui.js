@@ -317,6 +317,7 @@ function startGame(saved){
   if (typeof morseDayCheck==='function') morseDayCheck(); // виброэфир: первый полёт дня (v1.54.0) // v1.87.0: призрак рекорда со старта убран — мотиваций хватает без тени
   if (typeof streakDayCheck==='function') streakDayCheck(); // v1.108.1: серия дней — тот же момент, тот же принцип
   if (typeof welcomeDayCheck==='function' && welcomeDayCheck() && typeof welcomeShow==='function') welcomeShow(); // 28.08.2026: «Добро пожаловать» — раз в день, тем же моментом
+  if (!saved && typeof cinemaFirstFlightStart==='function'){ const gc=document.getElementById('game'); if(gc) cinemaFirstFlightStart(gc); } // 28.08.2026: «Кино полёта» — только самый первый полёт, не восстановленный автосейвом
   S.dayKey = todayKey(); // 27.08.2026: день ВЗЛЁТА, читаем часы один раз — посадка (dayAdd) использует его же, а не читает часы заново
   if (typeof dayMark==='function') dayMark(S.dayKey); // v1.282.20 «Дневник борта»: день засчитывается на взлёте — забег может не долететь до отправки, день был
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: на сцене — твоя лента дня; теней нет, зритель смотрит сам самолётик
@@ -366,6 +367,7 @@ function startBullet(){ // отдельный режим: каждый near-miss
 }
 function retryRun(){ runMode==='bullet'?startBullet():startGame(); } // «ЕЩЁ РАЗ» — в той же дисциплине (v1.42.0)
 function gameOver(){
+  if (typeof cinemaFirstFlightStop==='function') cinemaFirstFlightStop(); // 28.08.2026: стоп до любого раннего return ниже — первый полёт всегда должен сохраниться, каким бы ни оказался финиш
   /* v1.282.13: страховка кассы. В театре единственный выход — endTheater(); если сюда
      всё-таки попали (лента пропала, неуязвимость не встала), нельзя пускать зрителя по
      полному тракту посадки: он запишет статистику смертей, near-miss-очки уйдут в рекорд
@@ -739,6 +741,7 @@ function refreshMenu(){
      мы закрыли и её. Страж 110. */
   gridBalance($('menuRow')); // v1.45.0: «Продолжить полёт» убран — перезапуск сам возвращает в небо (bootFly), в сессии есть пауза // «Единая палуба»: сетка меню без одиноких половинок
   if (typeof duelBanner==='function') duelBanner(); // дуэль: плашка вызова в меню
+  if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // 28.08.2026: «Первое воспоминание» — карточка появляется, если запись есть
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -923,6 +926,15 @@ function angarPvWake(){ // касание будит уснувшее превь
   if(!angarPvRaf) angarPvStart();
 }
 
+/* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4
+   (просто контур) — владелец: «пустое подобие» той золотой искры с гранью и свечением,
+   что игрок видит в полёте (drawStarJewel, game.js — своя кисть с v1.95.1). Не рисуем
+   copy — зовём ту же самую функцию на новом канвасе, тем же приёмом «нарисовать один раз,
+   когда канвas реально появился в DOM», что уже применён к #starJewel в game.js. */
+function starJewelHtml(cls){ return '<canvas class="starJewelSm'+(cls?' '+cls:'')+'" width="32" height="32" aria-hidden="true"></canvas>'; }
+function starJewelWake(){
+  document.querySelectorAll('.starJewelSm').forEach(c=>{ if(!c._drawn && typeof drawStarJewel==='function'){ c._drawn=1; drawStarJewel(c); } });
+}
 /* Подпись под жетоном и кнопка покупки — единственное, что меняется при выборе. */
 function angarItemFill(el, sk){
   const owned = S.ownedSkins.includes(sk.id);
@@ -933,7 +945,7 @@ function angarItemFill(el, sk){
   if(pr){
     pr.classList.toggle('own', owned);
     pr.innerHTML = owned ? (sel?L.owned:ic('check'))
-                         : ic('star4','i-s4')+Math.round(sk.price);
+                         : starJewelHtml()+Math.round(sk.price);
   }
 }
 function angarBuyFill(){
@@ -941,12 +953,16 @@ function angarBuyFill(){
   const owned = S.ownedSkins.includes(sk.id);
   const nadet = owned && S.skin===sk.id;
   const b=$('angarBuy'); if(!b) return;
-  b.innerHTML = nadet ? L.hangarWorn
-              : owned ? L.hangarWear
-              : (L.hangarBuy+' — '+ic('star4','i-s4')+Math.round(sk.price));
-  b.classList.toggle('ghost', nadet);   // надетый борт — кнопка гаснет: делать нечего
-  b.classList.toggle('pri', !nadet);
+  // 28.08.2026: на уже надетом скине кнопка не гаснет «ghost» — пропадает совсем.
+  // Жетон и так говорит «Выбран»; вторая, бездействующая копия того же факта на
+  // отдельной кнопке ниже — лишнее место, которое владелец попросил вернуть.
+  b.classList.toggle('hidden', nadet);
+  if (!nadet){
+    b.innerHTML = owned ? L.hangarWear : (L.hangarBuy+' — '+starJewelHtml()+Math.round(sk.price));
+    b.classList.add('pri'); b.classList.remove('ghost');
+  }
   setText('angarWalletN', Math.round(S.wallet));
+  starJewelWake();
 }
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый борт)
 let angarBuilt = false;    // жетоны построены — второй раз не строим
@@ -1833,6 +1849,7 @@ function applyLang(){
   setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
+  if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
   setText('hangarBtn',L.hangar);
   setText('inviteBtn',L.invite);
   setText('duelBtn',L.duelBtn);

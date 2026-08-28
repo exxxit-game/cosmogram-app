@@ -1,10 +1,11 @@
 'use strict';
 /* ============================================================
-   CINEMA (модуль, шаг 1 из плана «Кино полёта» — см. владелец,
-   28.08.2026, и .knowledge/FLIGHT-CINEMA-ARCHITECTURE.md):
-   только подбор рабочего видеокодека. Ничего не рендерит, не
-   трогает игру и не вызывается пока ниоткуда — следующий шаг
-   подключит сюда запись живого канваса через VideoEncoder.
+   CINEMA (модуль «Кино полёта» — см. владелец, 28.08.2026, и
+   .knowledge/FLIGHT-CINEMA-ARCHITECTURE.md). Шаг 1 — подбор
+   кодека. Шаг 2 — сама запись живого канваса в mp4 через
+   VideoEncoder + вендоренный упаковщик (js/vendor/mp4-muxer.min.js,
+   Vanilagy/mp4-muxer, MIT). Пока не вызывается ниоткуда из игры —
+   следующий шаг подключит автозапись первого полёта.
 
    Порядок и сами кодеки — по живым пробам webcodecsProbe()
    (js/beacon.js) из таблицы beacons (проверено 28.08.2026, 110
@@ -13,16 +14,16 @@
              но 100% на iOS (3 из 3 проб, hw и sw) — пробуем первым,
              дёшево для платформ, где он есть.
      VP9   — программно ~72% Android, 90% Win32, 100% iOS.
-     VP8   — те же ~72%/90%/100% — как запасной вариант к VP9.
-     AV1 не пробуем: 63% Android, ниже соседей, третьего запасного
-     кодека сверх VP8/VP9 сейчас смысла нет.
+   VP8 из списка убран 28.08.2026: mp4-muxer (см. build/mp4-muxer.d.ts,
+   VideoOptions.codec) принимает только 'avc'|'hevc'|'vp9'|'av1' —
+   контейнер MP4 не может нести VP8 вообще, он не стандартный кодек
+   для этого контейнера. AV1 не пробуем: 63% Android, ниже соседей.
    Примерно у 28% проверенных Android-устройств не собрался НИ ОДИН
    кодек — на них pickVideoCodec() честно вернёт null, а не подменит
    отказ подделкой. */
 const CINEMA_CODECS=[
-  {id:'h264', str:'avc1.42001E'},
-  {id:'vp9',  str:'vp09.00.10.08'},
-  {id:'vp8',  str:'vp8'},
+  {id:'h264', str:'avc1.42001E', mux:'avc'},
+  {id:'vp9',  str:'vp09.00.10.08', mux:'vp9'},
 ];
 async function pickVideoCodec(w, h){
   w = w||1080; h = h||1920;
@@ -31,8 +32,188 @@ async function pickVideoCodec(w, h){
     const cfg={ codec:codec.str, width:w, height:h, bitrate:2_000_000, framerate:30, hardwareAcceleration:'no-preference' };
     try{
       const r = await VideoEncoder.isConfigSupported(cfg);
-      if (r && r.supported) return { id:codec.id, config:cfg };
+      if (r && r.supported) return { id:codec.id, mux:codec.mux, config:cfg };
     }catch(e){} // отказ этого кодека — пробуем следующий по списку, не ошибка модуля
   }
   return null; // ни один кодек не собрался — честный отказ, дальше решает вызывающий код
 }
+
+/* ---------- Шаг 2: сама запись ----------
+   Кадры берутся прямо с канваса игры через VideoFrame(canvas, {timestamp}) —
+   без captureStream()/MediaStreamTrackProcessor (у того капризная поддержка
+   между браузерами). Кодируется и упаковывается ПОТОКОВО, кадр за кадром —
+   сырые кадры не копятся в памяти (см. разбор цены с владельцем 28.08.2026 и
+   AI-DECISION-REGISTRY A9/«Frame-Key Caching» — тот же класс ошибки, которого
+   избегаем: 1080×1920 RGBA кадр — 8.3МБ, на 1800 кадрах (60с×30fps) это уже
+   ~15ГБ, если копить сырыми). Итоговый файл — тот порядок, что в конфиге
+   (bitrate 2 Мбит/с) — около 15МБ на минуту. */
+let _cinemaRec=null;
+async function cinemaStart(canvas){
+  if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
+  if (!canvas || !canvas.width || !canvas.height) return false;
+  const picked = await pickVideoCodec(canvas.width, canvas.height);
+  if (!picked) return false; // честный отказ — на этом устройстве нет рабочего кодека
+
+  const target = new Mp4Muxer.ArrayBufferTarget();
+  let muxer;
+  try{
+    muxer = new Mp4Muxer.Muxer({
+      target,
+      video: { codec: picked.mux, width: canvas.width, height: canvas.height, frameRate: 30 },
+      fastStart: 'in-memory',
+      firstTimestampBehavior: 'offset', // кадры идут от performance.now() — не с нуля, см. описание опции в d.ts
+    });
+  }catch(e){ return false; }
+
+  const encoder = new VideoEncoder({
+    output: (chunk, meta) => { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} },
+    error: (e) => { if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_enc_err', String((e&&e.message)||e)); },
+  });
+  try{ encoder.configure(picked.config); }catch(e){ return false; }
+
+  const frameMs = 1000/30;
+  const t0 = performance.now();
+  const grab = () => {
+    if (!_cinemaRec) return;
+    try{
+      const frame = new VideoFrame(canvas, { timestamp: Math.round((performance.now()-t0)*1000) });
+      encoder.encode(frame);
+      frame.close();
+    }catch(e){} // один пропущенный кадр не должен уронить всю запись
+  };
+  _cinemaRec = { encoder, muxer, target, timer: setInterval(grab, frameMs) };
+  return true;
+}
+async function cinemaStop(){
+  if (!_cinemaRec) return null;
+  const { encoder, muxer, target, timer } = _cinemaRec;
+  clearInterval(timer);
+  _cinemaRec = null;
+  try{
+    await encoder.flush();
+    encoder.close();
+    muxer.finalize();
+  }catch(e){ return null; }
+  return new Blob([target.buffer], { type: 'video/mp4' });
+}
+function cinemaActive(){ return !!_cinemaRec; }
+
+/* ---------- Хранение «первого воспоминания» ----------
+   Готовое видео — это Blob в несколько МБ (см. разбор с владельцем: минута ≈ 15МБ
+   при 2 Мбит/с) — localStorage хранит только строки и обычно ограничен единицами
+   МБ, base64 внутри него раздул бы файл ещё на треть и уткнулся в квоту на первом
+   же ролике. IndexedDB — штатное хранилище браузера под бинарные файлы, ровно для
+   этого случая, без сторонних библиотек. */
+const CINEMA_DB='cosmogram-cinema', CINEMA_STORE='clips', CINEMA_FIRST_KEY='first';
+function cinemaDb(){
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB==='undefined'){ reject(new Error('no_idb')); return; }
+    const r = indexedDB.open(CINEMA_DB, 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore(CINEMA_STORE); };
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+async function cinemaSaveFirst(blob){
+  try{
+    const db = await cinemaDb();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readwrite');
+      tx.objectStore(CINEMA_STORE).put(blob, CINEMA_FIRST_KEY);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    db.close();
+    return true;
+  }catch(e){ return false; }
+}
+async function cinemaLoadFirst(){
+  try{
+    const db = await cinemaDb();
+    const blob = await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readonly');
+      const req = tx.objectStore(CINEMA_STORE).get(CINEMA_FIRST_KEY);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => rej(req.error);
+    });
+    db.close();
+    return blob;
+  }catch(e){ return null; }
+}
+async function cinemaDeleteFirst(){
+  try{
+    const db = await cinemaDb();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readwrite');
+      tx.objectStore(CINEMA_STORE).delete(CINEMA_FIRST_KEY);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    db.close();
+    Store.set('cinemaFirstDone', 0); // 28.08.2026: удалил — можно, чтобы записалось заново на следующем полёте
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- Жизненный цикл: взлёт → посадка ----------
+   Только самый первый полёт на этом устройстве — не спрашивая, «святое воспоминание»
+   (решение владельца 28.08.2026). Любой следующий полёт эту запись не трогает —
+   ручной способ записывать ещё что-то, помимо первого раза, обсуждается отдельно,
+   здесь не реализован. */
+function cinemaFirstFlightStart(canvas){
+  if (Store.get('cinemaFirstDone', 0)) return; // уже было — не пишем второй раз поверх
+  cinemaStart(canvas); // намеренно без await — взлёт не должен ждать подбор кодека
+}
+async function cinemaFirstFlightStop(){
+  if (!cinemaActive()) return; // либо не первый полёт, либо кодек не нашёлся на старте — тихо, без ошибки
+  const blob = await cinemaStop();
+  Store.set('cinemaFirstDone', 1); // помечаем «было» независимо от успеха — вторая попытка не начнётся молча поверх первой
+  if (blob) await cinemaSaveFirst(blob);
+  if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // карточка на главном — без ожидания следующего захода в меню
+}
+
+/* ---------- Карточка на главном экране + плеер ----------
+   28.08.2026. Своя, независимая от setScreen() накладка (тот же приём, что у
+   achClaimShow/Hide в ach.js) — открытие/закрытие плеера не меняет текущий
+   экран под собой. Блоб-ссылка (URL.createObjectURL) держится, пока карточка
+   жива — отзывается перед выдачей новой, чтобы не копить объекты в памяти
+   вкладки при многократных сменах языка/возвратах в меню. */
+let _ffUrl=null;
+async function firstFlightRefresh(){
+  const card=$('firstFlightCard'); if(!card) return;
+  const blob = await cinemaLoadFirst();
+  if (!blob){ card.classList.add('hidden'); return; }
+  if (_ffUrl) URL.revokeObjectURL(_ffUrl);
+  _ffUrl = URL.createObjectURL(blob);
+  const thumb=$('firstFlightThumb'); if(thumb) thumb.src=_ffUrl;
+  card.classList.remove('hidden');
+}
+function firstFlightFill(){
+  if (typeof L==='undefined' || !L.ffcTitle) return;
+  const t=$('ffcTitle'); if(t) t.textContent=L.ffcTitle;
+  const s=$('ffcSub'); if(s) s.textContent=L.ffcSub;
+  const d=$('firstFlightDel'); if(d) d.setAttribute('aria-label', L.ffcDel);
+  const c=$('firstFlightClose'); if(c) c.setAttribute('aria-label', L.ffcClose);
+}
+function firstFlightOpen(){
+  const url=$('firstFlightThumb') && $('firstFlightThumb').src; if(!url) return;
+  const v=$('firstFlightVideo'); if(!v) return;
+  v.src=url; v.currentTime=0;
+  const p=$('firstFlightPlayer'); if(p) p.classList.remove('hidden');
+  v.play().catch(()=>{}); // автовоспроизведение может быть отклонено — плеер всё равно открыт, кнопка play доступна
+  if (typeof sfx!=='undefined' && sfx.click) sfx.click();
+}
+function firstFlightClosePlayer(){
+  const v=$('firstFlightVideo'); if(v){ v.pause(); }
+  const p=$('firstFlightPlayer'); if(p) p.classList.add('hidden');
+}
+function firstFlightDelete(){
+  const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof firstFlightRefresh==='function') firstFlightRefresh(); }); };
+  const msg=(typeof L!=='undefined' && L.ffcDelConfirm)||'Delete this video forever?';
+  if (typeof tg!=='undefined' && tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); }); }
+  else if (typeof confirm==='function'){ if(confirm(msg)) go(); }
+  else go(); // нет способа спросить — тот же честный компромисс, что у duelReplaceQ выше в ui.js
+}
+(function firstFlightWire(){ // грузится раньше ui.js — свои обработчики без общего wireOn()
+  const card=$('firstFlightCard'); if(card) card.addEventListener('click', firstFlightOpen);
+  const del=$('firstFlightDel'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
+  const close=$('firstFlightClose'); if(close) close.addEventListener('click', firstFlightClosePlayer);
+})();

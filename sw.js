@@ -5,12 +5,12 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.477.63';
+const V = '1.477.68';
 const CACHE = 'cosmogram-v' + V;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 const JS_FILES = [
   'i18n','core','blackbox','beacon','input','game','ach','sync','render','planetarium',
-  'goldstar','music','gyro','forge','adaptive','card','star','cinema','ui','vendor/telegram-web-app'
+  'goldstar','music','gyro','forge','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min'
 ];
 const SHELL = [
   './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше
@@ -23,6 +23,7 @@ const SHELL = [
      каждый путь этого списка на самом деле, а не на слово. */
   'fonts/exo2-cyrillic.woff2', 'fonts/exo2-latin.woff2', 'fonts/OFL.txt', // v1.46.0: Exo 2 вместо Russo One
   'fonts/roboto400-cyrillic.woff2', 'fonts/roboto400-latin.woff2', 'fonts/OFL-Roboto.txt', // 26.08.2026: кнопки входа — своя копия Roboto (400, не 500 — Regular)
+  'js/vendor/mp4-muxer-license/LICENSE', // 28.08.2026: MIT-текст рядом с вендором, тот же приём, что у шрифтов
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png',
   'icons/icon-maskable-512.png', 'icons/favicon-32.png', 'icons/og-image.png'
 ];
