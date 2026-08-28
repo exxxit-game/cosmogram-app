@@ -452,7 +452,7 @@ function audio(){ // создавать/возобновлять строго п
 }
 const CHANNEL_URL='https://t.me/cosmogram_public'; // паблик сообщества: новости, ошибки, предложения
 const SUPPORT_URL='https://t.me/cosmogram_public'; // поддержка из «Сервисного центра»: пока паблик; личку владельца — когда даст @username
-const GAME_VERSION='1.477.46'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.477.59'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -601,6 +601,24 @@ function morseDayCheck(){ // первый полёт дня: «проверил 
   Store.set('morseDay',k);
   hapticMorse(myCallsign());
   return true;
+}
+/* 28.08.2026 «Добро пожаловать»: раньше баннер был у КАЖДОГО забега и стал лишним
+   (v1.87.0, см. коммент у sfx.launch в ui.js) — убрали совсем. Владелец нашёл старый
+   скриншот и попросил вернуть, но не на каждый полёт, а один раз в день, тем же
+   приёмом, что у морзянки выше: тихая дневная проверка + собственный ключ в Store. */
+let welcomeTimer=null;
+function welcomeDayCheck(){
+  const k=todayKey();
+  if (Store.get('welcomeDay','')===k) return false;
+  Store.set('welcomeDay',k);
+  return true;
+}
+function welcomeShow(){
+  const e=$('welcomeMsg'); if(!e) return;
+  e.textContent=L.welcomeMsg;
+  e.classList.add('show');
+  clearTimeout(welcomeTimer);
+  welcomeTimer=setTimeout(()=>e.classList.remove('show'), 2400);
 }
 function streakDayCheck(){ // v1.108.1 «Серия дней»: sfx.streak() существовал с самого начала («тёплый огонёк
   // серии дней») — самой серии не было, звук ждал механику. Тот же принцип, что у морзянки: тихая

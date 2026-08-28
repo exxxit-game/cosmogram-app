@@ -194,14 +194,14 @@ button, input, select, textarea { text-transform:inherit; }
   justify-content:center; z-index:10; pointer-events:none; }
 /* читаемость экранов поверх живого фона: затемнение без blur (дорого на слабых).
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
-#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #modesScreen {
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #modesScreen, #diagScreen {
   background:rgba(6,10,24,.45); }
 /* v1.282.13: предупреждение о тесном экране — выше всех окон. Раньше у него был общий
    .overlay z-index:10 и никакого фона, а экраны идут ниже в разметке и с вуалью — при
    равном слое меню рисовалось поверх. Момент, когда предупреждение нужнее всего (игрок
    тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
 #tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
-#settingsScreen, #achScreen, #hangarScreen, #forgeScreen { justify-content:flex-start;
+#settingsScreen, #achScreen, #hangarScreen, #forgeScreen, #diagScreen { justify-content:flex-start;
   /* 13.08.2026 «Подушка не для меню». var(--sat) — это защита от чужой шапки: внутри
      Telegram она перекрывает верх экрана, и под неё нельзя писать. А вот лишние 48px
      сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
@@ -224,10 +224,10 @@ button, input, select, textarea { text-transform:inherit; }
    весь .overlay, а только .scrBody внутри него; кнопка — обычный элемент колонки
    ПОСЛЕ скролл-зоны, не sticky. Физически не может лечь на список ни при какой
    высоте окна — не нужно новое число под каждый следующий вьюпорт. */
-#hangarScreen, #achScreen, #forgeScreen { overflow-y:hidden; }
+#hangarScreen, #achScreen, #forgeScreen, #diagScreen { overflow-y:hidden; }
 .scrBody { flex:1 1 auto; min-height:0; width:100%; overflow-y:auto;
   display:flex; flex-direction:column; align-items:center; padding-bottom:16px; }
-#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>*, #diagScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 .scrBody>* { flex-shrink:0; }
 /* 27.08.2026: без этой строки правило выше (#hangarScreen>*, специфичность по ID) перебивало
    бы flex-shrink:1 из .scrBody (специфичность по классу ниже) — ЖИВОЙ проверкой в браузере
@@ -235,10 +235,10 @@ button, input, select, textarea { text-transform:inherit; }
    #hangarScreen (overflow-y:hidden) молча обрезал лишнее — часть сетки становилась
    недостижимой, а не прокручиваемой. Страж 130 такое не ловит (видит только геометрию
    видимого, не обрезанное). Явный селектор той же ID-специфичности возвращает сжатие. */
-#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody { flex-shrink:1; }
+#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody, #diagScreen>.scrBody { flex-shrink:1; }
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
-#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen { pointer-events:auto; }
+#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen, #diagScreen { pointer-events:auto; }
 /* 23.08.2026: виджет входа Telegram (#webJoinWidget) — вставленный извне <iframe>, у него
    нет класса .btn, только .tgWidget (тот не трогает pointer-events). Обычные кнопки
    экрана итогов работали через свой .btn, а виджет наследовал pointer-events:none от
@@ -445,6 +445,15 @@ button, input, select, textarea { text-transform:inherit; }
   cursor:pointer; pointer-events:auto; z-index:2; transition:transform .12s, box-shadow .2s; }
 .menuBack:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
 .menuBack .ic { width:13px; height:13px; stroke-width:2.6; filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
+/* 28.08.2026 «Планета с кольцом»: космический вид круглых кнопок (владелец выбрал вариант «Д» из
+   восьми макетов, показанных до правки, — см. AI-DECISION-REGISTRY). То же кольцо, что у иконки
+   гироскопа (i-phone, две наклонные дуги) — теперь узнаваемый почерк круглых кнопок игры, не
+   только одной иконки. Кольцо шире круга — «крылья» торчат по бокам, середина едва проступает
+   через полупрозрачное стекло, как и было в макете. */
+#pauseBtn::before, .menuBack::before { content:''; position:absolute; top:50%; left:50%;
+  width:47px; height:17px; margin:0; border:1.5px solid rgba(200,225,255,.55); border-radius:50%;
+  transform:translate(-50%,-50%) rotate(-20deg); pointer-events:none; }
+#pauseBtn { position:relative; }
 #livesCanvas { width:66px; height:24px; margin-top:24px; } /* свечение рисует сам canvas — только живым жизням; 28.08.2026: было margin-right (--sar) — владелец на устройстве: сдвиг вбок сталкивал жизни с «Расстояние»/«Плавность» по центру, кнопка Telegram перекрывает СВЕРХУ ВНИЗ, не сбоку. 24px — измерено владельцем на реальном устройстве, живой замер (cycleSadDbg) снят */
 /* 22.08.2026 «Рамка коридора — DOM, не canvas»: то же место, что раньше рисовало это внутри
    render.js. Причина переезда — мигание конкретно в Telegram (нестабильный window.innerWidth
@@ -584,13 +593,21 @@ button, input, select, textarea { text-transform:inherit; }
   background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:12px; }
 .topIt.me { background:rgba(120,170,255,.08); border-color:rgba(190,225,255,.35); }
 .topN { width:30px; height:30px; flex:none; display:inline-flex; align-items:center; justify-content:center;
-  color:var(--muted); font-family:var(--font-disp); font-weight:700; font-size:13px; border-radius:50%; } /* 28.08.2026: было 400 — владелец, «цифры тонкие» */
+  color:var(--muted); font-family:var(--font-disp); font-weight:700; font-size:13px; border-radius:50%;
+  position:relative; } /* 28.08.2026: было 400 — владелец, «цифры тонкие»; position:relative — опора для кольца медали */
 .topN.m1 { background:linear-gradient(180deg,var(--gold-hi),var(--gold)); color:#101b2e;
   box-shadow:0 0 12px rgba(240,192,64,.35); }
 .topN.m2 { background:linear-gradient(180deg,#cfd6e4,#98a3b8); color:#101b2e;
   box-shadow:0 0 12px rgba(180,195,220,.35); } /* 28.08.2026: было без свечения — «тусклый цвет» рядом с золотом */
 .topN.m3 { background:linear-gradient(180deg,#d99a5b,#a8642c); color:#101b2e;
   box-shadow:0 0 12px rgba(200,130,70,.35); } /* 28.08.2026: то же самое для бронзы */
+/* 28.08.2026 «Планета с кольцом» на медалях топа (см. AI-DECISION-REGISTRY V1) — тот же
+   наклонный эллипс, что у круглых кнопок, тонированный под металл каждого места. */
+.topN.m1::before, .topN.m2::before, .topN.m3::before { content:''; position:absolute; top:50%; left:50%;
+  width:44px; height:16px; border-radius:50%; transform:translate(-50%,-50%) rotate(-20deg); pointer-events:none; }
+.topN.m1::before { border:1.5px solid rgba(255,235,180,.6); }
+.topN.m2::before { border:1.5px solid rgba(220,228,240,.55); }
+.topN.m3::before { border:1.5px solid rgba(230,180,130,.55); }
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
@@ -771,6 +788,14 @@ button, input, select, textarea { text-transform:inherit; }
 .claimMedal.mGold{ border:2px solid rgba(240,192,64,.9); box-shadow:0 0 34px rgba(240,192,64,.45), inset 0 0 18px rgba(240,192,64,.18); }
 .claimMedal.mSilver{ border:2px solid rgba(176,184,200,.8); box-shadow:0 0 26px rgba(176,184,200,.35), inset 0 0 16px rgba(176,184,200,.14); }
 .claimMedal.mBronze{ border:2px solid rgba(205,127,50,.8); box-shadow:0 0 22px rgba(205,127,50,.35), inset 0 0 14px rgba(205,127,50,.14); }
+/* 28.08.2026 «Планета с кольцом» — тот же мотив, что у .topN и у круглых кнопок (см. V1 в
+   AI-DECISION-REGISTRY): наклонный эллипс позади медали, тонированный под металл награды. */
+.claimMedal.mGold::before, .claimMedal.mSilver::before, .claimMedal.mBronze::before { content:'';
+  position:absolute; top:50%; left:50%; width:155px; height:44px; border-radius:50%;
+  transform:translate(-50%,-50%) rotate(-18deg); pointer-events:none; }
+.claimMedal.mGold::before { border:2px solid rgba(255,235,180,.55); }
+.claimMedal.mSilver::before { border:2px solid rgba(220,228,240,.5); }
+.claimMedal.mBronze::before { border:2px solid rgba(230,180,130,.5); }
 @keyframes medalPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.045); } }
 .claimMedal .ic { width:44px; height:44px; }
 .claimMedal.mGold .ic { color:var(--gold-hi); }
@@ -812,6 +837,12 @@ button, input, select, textarea { text-transform:inherit; }
   color:var(--gold-hi);font-family:var(--font-disp);font-size:13px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
 #modeHud{position:absolute;top:max(142px, calc(52px + var(--sat)));left:50%;transform:translateX(-50%);white-space:nowrap;
   color:#dce9ff;font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+/* 28.08.2026 «Добро пожаловать»: раз в день, не на каждый забег (см. welcomeDayCheck в core.js) */
+#welcomeMsg{position:absolute;top:36%;left:50%;transform:translate(-50%,-50%) scale(.94);white-space:nowrap;
+  color:#eaf3ff;font-family:var(--font-disp);font-weight:700;font-size:clamp(22px,7vw,32px);letter-spacing:.02em;
+  text-shadow:0 2px 16px rgba(0,0,0,.6), 0 0 20px rgba(160,210,255,.4);
+  opacity:0;pointer-events:none;transition:opacity .5s ease, transform .5s ease}
+#welcomeMsg.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .modeIt{display:flex;flex-direction:column;gap:2px;align-items:center}
 .modeIt.locked{opacity:.62} /* v1.93 «Одна попытка»: закрытая дверь дня — приглушена, табличка на ней всё говорит */
 .modeIt .modeName{font-size:15px}
@@ -903,6 +934,12 @@ button, input, select, textarea { text-transform:inherit; }
 .overlay{transition:opacity .3s ease}
 .overlay.hidden{display:flex !important; opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .3s ease, visibility 0s linear .3s}
+/* 28.08.2026 «Два назад»: .menuBack сидит в тех же координатах (top/left) на КАЖДОМ экране —
+   пока уходящий экран 300мс тает (opacity .3s, а visibility прячется только ПОСЛЕ, с задержкой),
+   его кнопка «назад» ещё видна и накладывается на кнопку уже показанного нового экрана. Владелец
+   поймал скриншотом на переходе в «Настройки» — два кружка «←» друг на друге. Круглая кнопка не
+   участвует в общем плавном угасании экрана — гаснет вместе с классом .hidden мгновенно. */
+.overlay.hidden .menuBack{ opacity:0 !important; visibility:hidden !important; transition:none !important; }
 
 /* ============ v1.5.3 «Сервисный центр»: спойлеры и диагностика ============ */
 .btn.spoiler::after{content:'▾';margin-left:auto;opacity:.5;font-size:12px}
@@ -915,7 +952,7 @@ button, input, select, textarea { text-transform:inherit; }
    Кожа игровая, эргономика — приложения: размеры и читаемость не тронуты. */
 
 /* ---- Пауза = замёрзшее небо (v1.34.0: созвездие и золотая звезда вычеркнуты — единая палуба) ---- */
-#pauseScreen { background:rgba(6,10,24,.38); }
+#pauseScreen { } /* 28.08.2026: вуаль убрана совсем — владелец: «окно выпадает из игры своей темнотой», пауза теперь ровно то же небо, что и в полёте, без затемнения */
 
 /* ---- Экран итогов: счёт — сверхновая над небом ---- */
 #finalScore { text-shadow:0 0 30px rgba(190,225,255,.6), 0 0 60px rgba(140,200,255,.3); }
@@ -1059,6 +1096,7 @@ button, input, select, textarea { text-transform:inherit; }
   #pausePack { flex-direction:row; margin-left:0; margin-top:0; gap:9px; } /* в альбомной — горизонтальный кластер, призрак без подъёма */
   #pauseBtn { width:28px; height:28px; } /* 28.08.2026: было 34px, следом за портретной правкой (32px) */
   #pauseBtn .ic { width:12px; height:12px; }
+  #pauseBtn::before { width:41px; height:15px; } /* кольцо планеты — та же пропорция, кнопка меньше */
   #livesCanvas { width:56px; height:20px; }
   #telemHud { top:42px !important; gap:2px; } /* хребет колонной под счётом; !important сильнее островной плёнки */
   #distHud { font-size:12px; }
@@ -1179,8 +1217,8 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.46"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/i18n.js?v=1.477.46"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.59"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/i18n.js?v=1.477.59"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1254,6 +1292,7 @@ button, input, select, textarea { text-transform:inherit; }
   <div id="scorePack"><div id="scoreLbl">Счёт</div><div id="score">0</div></div>
   <div id="duelHud" class="hidden"></div>
   <div id="modeHud" class="hidden"></div>
+  <div id="welcomeMsg"></div>
 </div>
 <div id="fpsPill" class="pill"></div>
 
@@ -1356,22 +1395,31 @@ button, input, select, textarea { text-transform:inherit; }
     <div id="gWidget"></div>
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
   </div>
+  <!-- 28.08.2026: «Ещё» прятала три ценные строки за спойлером, который сам ничего не
+       объяснял («Ещё» — не подпись, а заглушка). Владелец: «блокирует очень ценное».
+       Калибровка/почта экипажу/сервисный центр — теперь обычные строки без спойлера,
+       видны сразу. «Об игре» осталась за отдельным своим спойлером — она не настройка,
+       а справка, скрывать которую по умолчанию уместно. -->
   <div class="setPanel">
-    <div class="setRow solo spoiler" id="moreBtn" role="button" tabindex="0">Ещё</div>
-    <div id="moreBox" class="hidden">
-      <div class="setRow solo" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-      <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
-      <div class="setRow solo go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
-      <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
-      <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
-    </div>
+    <div class="setRow solo" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+    <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+    <div class="setRow solo go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
+  </div>
+  <div class="setPanel">
+    <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
+    <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
   </div>
 </div>
 
 <!-- СЕРВИСНЫЙ ЦЕНТР (v1.66.3): диагностика — отдельный экран ремонта, настройки больше не переполняются -->
 <div id="diagScreen" class="overlay hidden">
+  <!-- 28.08.2026: экран был без pointer-events:auto (unreachable — ни одна кнопка не нажималась
+       реальным тапом, только скриптом), без вуали, центрирован, а «Назад» — строка в конце
+       длинного списка (та же болезнь, что была у «Своё небо», см. разбор у .scrBody выше).
+       Переведён на общую схему: круглая кнопка сверху, шапка не скроллится, тело — в .scrBody. -->
+  <button class="menuBack" id="diagBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="diagTitle">Сервисный центр</div>
-  <div class="setPanel">
+  <div class="scrBody"><div class="setPanel">
     <!-- 13.08.2026 «Ответ, а не отчёт». Здесь шли подряд до четырнадцати строк в порядке
          написания кода: «штурвал не подключён — это нормально» выше, чем размер мира, а
          настоящая беда могла оказаться седьмой сверху. Теперь сверху только то, что
@@ -1406,10 +1454,7 @@ button, input, select, textarea { text-transform:inherit; }
                outline:none;-webkit-user-select:text;user-select:text;white-space:pre-wrap"></textarea>
       <button class="btn ghost" id="diagSupportBtn">Написать в поддержку</button>
     </div>
-  </div>
-  <div class="setPanel">
-    <div class="setRow solo" id="diagBackBtn" role="button" tabindex="0">Назад</div>
-  </div>
+  </div></div>
 </div>
 
 <!-- РЕЖИМЫ (v1.42.0): дисциплины под одной кнопкой -->
@@ -1593,23 +1638,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.46" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.46"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.46"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.46"></script>
-<script defer src="js/game.js?v=1.477.46" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.46"></script>
-<script defer src="js/sync.js?v=1.477.46"></script>
-<script defer src="js/render.js?v=1.477.46"></script>
-<script defer src="js/planetarium.js?v=1.477.46"></script>
-<script defer src="js/goldstar.js?v=1.477.46"></script>
-<script defer src="js/music.js?v=1.477.46"></script>
-<script defer src="js/gyro.js?v=1.477.46"></script>
-<script defer src="js/forge.js?v=1.477.46"></script>
-<script defer src="js/adaptive.js?v=1.477.46"></script>
-<script defer src="js/card.js?v=1.477.46"></script>
-<script defer src="js/star.js?v=1.477.46"></script>
-<script defer src="js/ui.js?v=1.477.46"></script>
+<script defer src="js/core.js?v=1.477.59" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.59"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.59"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.59"></script>
+<script defer src="js/game.js?v=1.477.59" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.59"></script>
+<script defer src="js/sync.js?v=1.477.59"></script>
+<script defer src="js/render.js?v=1.477.59"></script>
+<script defer src="js/planetarium.js?v=1.477.59"></script>
+<script defer src="js/goldstar.js?v=1.477.59"></script>
+<script defer src="js/music.js?v=1.477.59"></script>
+<script defer src="js/gyro.js?v=1.477.59"></script>
+<script defer src="js/forge.js?v=1.477.59"></script>
+<script defer src="js/adaptive.js?v=1.477.59"></script>
+<script defer src="js/card.js?v=1.477.59"></script>
+<script defer src="js/star.js?v=1.477.59"></script>
+<script defer src="js/ui.js?v=1.477.59"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

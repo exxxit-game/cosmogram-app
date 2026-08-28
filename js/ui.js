@@ -129,8 +129,12 @@ function setScreen(name){
   const inGame = (name==='game'||name==='pause');
   document.body.classList.toggle('flying', inGame); // v1.108.1: зум/жесты блокируются только тут, не везде
   toggleCls('hud','hidden', name!=='game');
-  toggleCls('topHud','hidden', !inGame); // v1.46.0: верхняя панель одним рядом
-  toggleCls('telemHud','hidden', !inGame); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
+  // 28.08.2026: на паузе владелец не хочет ни счёта собранных звёзд, ни расстояния/
+  // плавности/жизней — только замёрзшее небо (фоновые звёзды канвасa) под меню.
+  // Все HUD-накладки теперь гасятся одинаково — строго на 'game', как #hud/#pauseBtn.
+  toggleCls('topHud','hidden', name!=='game'); // v1.46.0: верхняя панель одним рядом
+  toggleCls('telemHud','hidden', name!=='game'); // v1.67.0: нативная шапка — телеметрия одной строкой под счётом
+  toggleCls('livesCanvas','hidden', name!=='game');
   toggleCls('pauseBtn','hidden', name!=='game');
   toggleCls('dim','on', name==='pause');
   setBack(name!=='menu');
@@ -310,6 +314,7 @@ function startGame(saved){
   if (typeof planetReset==='function') planetReset();
   if (typeof morseDayCheck==='function') morseDayCheck(); // виброэфир: первый полёт дня (v1.54.0) // v1.87.0: призрак рекорда со старта убран — мотиваций хватает без тени
   if (typeof streakDayCheck==='function') streakDayCheck(); // v1.108.1: серия дней — тот же момент, тот же принцип
+  if (typeof welcomeDayCheck==='function' && welcomeDayCheck() && typeof welcomeShow==='function') welcomeShow(); // 28.08.2026: «Добро пожаловать» — раз в день, тем же моментом
   S.dayKey = todayKey(); // 27.08.2026: день ВЗЛЁТА, читаем часы один раз — посадка (dayAdd) использует его же, а не читает часы заново
   if (typeof dayMark==='function') dayMark(S.dayKey); // v1.282.20 «Дневник борта»: день засчитывается на взлёте — забег может не долететь до отправки, день был
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: на сцене — твоя лента дня; теней нет, зритель смотрит сам самолётик
@@ -1465,12 +1470,6 @@ wireOn('diagSupportBtn', 'click', ()=>{
   try{ if (typeof tg!=='undefined'&&tg&&tg.openTelegramLink) tg.openTelegramLink(SUPPORT_URL); else window.open(SUPPORT_URL,'_blank'); }
   catch(e){ try{ window.open(SUPPORT_URL,'_blank'); }catch(e2){} }
 });
-wireOn('moreBtn', 'click', ()=>{ // редкое — калибровка, позывной, диагностика, «Об игре» (v1.63.0)
-  const b=$('moreBox'); b.classList.toggle('hidden'); const open=!b.classList.contains('hidden');
-  toggleCls('moreBtn','open', open);
-  if (open){ try{ $('moreBtn').scrollIntoView({block:'nearest'}); }catch(e){} }
-  haptic('light'); sfx.click();
-});
 // v1.65.0 «Спойлеры»: категории — аккордеон. Открыта всегда одна панель — ничего ни на что не налезает,
 // закрытый экран помещается целиком; экран скроллится как страховка + подскролл к открытой шапке
 const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpProf','accPanel']];
@@ -1504,8 +1503,7 @@ wireOn('setGfxBtn', 'click', ()=>{
   Store.set('gfx',Q.mode); gfxCap(); resize(); // HD-резолюция следует за режимом
   gfxLabel(); haptic('light'); sfx.click();
 });
-function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION+'<br/>'+L.channel+': '+
-  CHANNEL_URL.replace('https://','')); } // aboutTags вычеркнуты (v1.27.0)
+function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0)
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
@@ -1871,7 +1869,7 @@ function applyLang(){
   setText('achBtnTxt',L.achTitle);
   setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
   setText('diagBtn',L.diagBtn);
-  setText('diagTitle',L.diagBtn); setText('diagBackBtn',L.back); // v1.66.3: экран сервисного центра
+  setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   setText('diagSupportBtn',L.diagSupportBtn);
@@ -1879,7 +1877,6 @@ function applyLang(){
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
-  setText('moreBtn',L.moreLbl);
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
