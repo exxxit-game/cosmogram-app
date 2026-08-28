@@ -877,7 +877,11 @@ function angarPvDraw(t){
      только что тронул в сетке. angarBuyFill() (кнопка «Купить») рядом уже честно смотрит
      на angarSel («на какой жетон смотрит игрок», см. коммент у объявления) — жалоба
      владельца «выбираешь скин, а в окне его не видно» ровно про это рассогласование. */
-  const sk = SKINS[angarSel]||SKINS[0];
+  /* 28.08.2026: во вкладке «Цвет» показываем то, на что смотрит игрок (angarSel — живой
+     предпросмотр ещё не купленного скина); во вкладке «Декаль» angarSel указывает на
+     декаль (другой список), поэтому небо там всегда честно показывает НАДЕТЫЙ борт —
+     живого предпросмотра декали на корабле пока нет (отдельный заход, render.js). */
+  const sk = (angarCat==='color') ? (SKINS[angarSel]||SKINS[0]) : (SKINS[S.skin]||SKINS[0]);
   const W=380, H=130, d=(window.devicePixelRatio||1); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
   const x=cv.getContext('2d'); if(!x) return;
@@ -935,72 +939,151 @@ function starJewelHtml(cls){ return '<canvas class="starJewelSm'+(cls?' '+cls:''
 function starJewelWake(){
   document.querySelectorAll('.starJewelSm').forEach(c=>{ if(!c._drawn && typeof drawStarJewel==='function'){ c._drawn=1; drawStarJewel(c); } });
 }
+/* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга —
+   Цвет (было, поведение не меняется) и Декаль (новое, символ вместо канваса корабля).
+   След/Аура/Звук дописываются сюда же отдельным заходом, когда до них дойдёт очередь —
+   не копипастом всей секции ещё раз. */
+const ANGAR_CATS = {
+  color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
+  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' }
+};
+let angarCat = 'color';   // активная вкладка тюнинга
+let angarSubCat = '';     // активная подкатегория декалей (Космос/Зодиак/...), пусто до первого захода на вкладку
+/* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026):
+   подкатегории — из самих DECALS (поле cat), в порядке первого появления в массиве, без
+   «Нет» (id0, cat:'none' — это не подкатегория, а обычный бесплатный жетон). Одним проходом
+   по данным, а не отдельным вручную сверяемым списком — не разойдётся с составом DECALS. */
+const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+
 /* 28.08.2026 «Один общий, не франкенштейн»: отдельная строка-кнопка под небом снята —
    владелец увидел её как чужеродную деталь и лишнее место. Действие (надеть/купить)
    теперь живёт прямо в карточке жетона, на который сейчас смотрит игрок (angarSel),
    теми же .btn.pri.small токенами, что и везде в игре — не своя выдуманная кнопка.
    Тап по жетону по-прежнему только выбирает его для просмотра (страж 45, беда
    v1.282.20 — случайный тап не должен тратить звёзды); кнопка внутри — отдельный,
-   осознанный тап поверх неё. */
-function angarItemFill(el, sk){
-  const owned = S.ownedSkins.includes(sk.id);
-  const worn  = S.skin===sk.id;
+   осознанный тап поверх неё. Генерализовано на категорию (28.08.2026): та же логика,
+   что раньше умела только SKINS, теперь читает список/ключи из ANGAR_CATS[angarCat]. */
+function angarItemFill(el, item){
+  const cfg = ANGAR_CATS[angarCat];
+  const owned = S[cfg.ownedKey].includes(item.id);
+  const worn  = S[cfg.selKey]===item.id;
   el.classList.toggle('sel', worn);
   const nm=el.querySelector('.nm'), pr=el.querySelector('.pr');
-  if(nm) nm.textContent = L.skinNames[sk.name];
+  if(nm) nm.textContent = angarCat==='color' ? L.skinNames[item.name] : ''; // декали без подписи — эмодзи сам по себе понятен (владелец)
   if(pr){
     pr.classList.toggle('own', owned);
     if(worn){
       pr.innerHTML = L.owned;
-    } else if(angarSel===sk.id){
+    } else if(angarSel===item.id){
       pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
-        (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(sk.price)))+'</button>';
+        (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(item.price)))+'</button>';
     } else {
-      pr.innerHTML = owned ? ic('check') : starJewelHtml()+Math.round(sk.price);
+      pr.innerHTML = owned ? ic('check') : starJewelHtml()+Math.round(item.price);
     }
   }
 }
+function angarVisibleList(){ // список жетонов активной вкладки — у декалей ещё фильтр по подкатегории
+  const cfg = ANGAR_CATS[angarCat];
+  if(angarCat!=='decal') return cfg.list;
+  // «Нет» (id0, cat:'none') не входит ни в одну подкатегорию по построению — без этой
+  // строки плитка «снять декаль» была бы недостижима нигде в сетке. Держим её первой
+  // плиткой любой подкатегории, а не отдельной вкладкой/«Всё» (владелец: не кучей).
+  const none = cfg.list.find(d=>d.cat==='none');
+  const rest = cfg.list.filter(d=>d.cat===angarSubCat);
+  return none ? [none].concat(rest) : rest;
+}
 function angarBuyFill(){
   const grid=$('angarGrid');
-  if(grid) SKINS.forEach((sk,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, sk); });
+  if(grid){ angarVisibleList().forEach((item,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, item); }); }
   setText('angarWalletN', Math.round(S.wallet));
   starJewelWake();
 }
-let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый борт)
-let angarBuilt = false;    // жетоны построены — второй раз не строим
+let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый/выбранный элемент)
+let angarBuilt = false;    // жетоны построены — второй раз не строим (сбрасывается при смене вкладки/подкатегории)
 
 let angarTabsBuilt = false;
-function renderHangar(){
-  angarSel = S.skin;
-  /* 27.08.2026 «Кнопка не ложится на контент»: #angarTabs раньше был мёртвой заготовкой
-     (CSS был, разметка стояла с class="hidden", ни одного обращения из ui.js). Сейчас
-     подключаем механически — одна вкладка «Цвет» = нынешняя сетка скинов, переключать
-     пока нечего. Точка расширения для будущих категорий (Декали/Аура и т.д.) — отдельным
-     заходом, когда владелец решит, с какой начинать. */
-  if(!angarTabsBuilt){
-    const tabs=$('angarTabs');
-    if(tabs) tabs.innerHTML='<button class="angarTab sel" id="angarTabColor"></button>';
-    angarTabsBuilt=true;
+function angarBuildTabs(){
+  /* 27.08.2026 «Кнопка не ложится на контент»: #angarTabs раньше был мёртвой заготовкой,
+     потом (тем же заходом) — одной нерабочей вкладкой «Цвет». 28.08.2026: вторая вкладка
+     «Декаль» с реальным переключением; След/Аура/Звук — сюда же позже. */
+  if(angarTabsBuilt) return;
+  const tabs=$('angarTabs');
+  if(tabs){
+    tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
+                      '<button class="angarTab" id="angarTabDecal"></button>';
+    $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
+    $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
   }
-  const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
+  angarTabsBuilt=true;
+}
+function angarRenderTabsSel(){
+  const tc=$('angarTabColor'), td=$('angarTabDecal');
+  if(tc) tc.classList.toggle('sel', angarCat==='color');
+  if(td) td.classList.toggle('sel', angarCat==='decal');
+}
+function angarBuildSubTabs(){
+  const wrap=$('angarSubTabs'); if(!wrap) return;
+  wrap.classList.toggle('hidden', angarCat!=='decal');
+  if(angarCat!=='decal') return;
+  wrap.innerHTML='';
+  ANGAR_DECAL_CATS.forEach(cat=>{
+    const b=document.createElement('button');
+    b.className='angarSubTab'+(cat===angarSubCat?' sel':'');
+    b.dataset.cat=cat;
+    b.textContent = (L.decalCatNames && L.decalCatNames[cat]) || cat;
+    b.addEventListener('click',()=>angarSwitchSubCat(cat));
+    wrap.appendChild(b);
+  });
+}
+function angarSwitchCat(cat){
+  if(angarCat===cat) return;
+  angarCat=cat; angarBuilt=false; angarSel=S[ANGAR_CATS[cat].selKey];
+  if(cat==='decal' && !angarSubCat) angarSubCat=ANGAR_DECAL_CATS[0];
+  sfx.click(); haptic('light');
+  angarRenderTabsSel(); angarBuildSubTabs(); angarBuildGrid(); angarPvDraw(performance.now());
+}
+function angarSwitchSubCat(cat){
+  if(angarSubCat===cat) return;
+  angarSubCat=cat; angarBuilt=false; sfx.click(); haptic('light');
+  const wrap=$('angarSubTabs');
+  if(wrap) [...wrap.children].forEach(b=>b.classList.toggle('sel', b.dataset.cat===cat));
+  angarBuildGrid();
+}
+function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
     grid.innerHTML='';
-    SKINS.forEach(sk=>{
+    angarVisibleList().forEach(item=>{
       const el=document.createElement('div');
       el.className='angarIt';
-      el.innerHTML='<span class="dot"><canvas width="186" height="144"></canvas></span>'+
-                   '<span class="nm"></span><span class="pr"></span>';
-      const cv=el.querySelector('canvas');
-      const x=cv.getContext('2d');
-      x.setTransform(3,0,0,3,0,0); x.translate(31,26); // 62×48 мер при DPR 3
-      angarShip(x, sk, .92, false);
-      el.addEventListener('click',()=>{ angarPick(sk.id); });
+      if(angarCat==='color'){
+        el.innerHTML='<span class="dot"><canvas width="186" height="144"></canvas></span>'+
+                     '<span class="nm"></span><span class="pr"></span>';
+        const cv=el.querySelector('canvas');
+        const x=cv.getContext('2d');
+        x.setTransform(3,0,0,3,0,0); x.translate(31,26); // 62×48 мер при DPR 3
+        angarShip(x, item, .92, false);
+      } else {
+        el.innerHTML='<span class="ch"></span><span class="pr"></span>';
+        el.querySelector('.ch').textContent = item.ch;
+        el.setAttribute('aria-label', item.name); // без видимой подписи (эмодзи и так понятен) — имя остаётся для скринридера
+      }
+      el.addEventListener('click',()=>{ angarPick(item.id); });
       grid.appendChild(el);
     });
     angarBuilt = true;
   }
-  angarBuyFill(); // 28.08.2026: сама теперь обходит все жетоны (angarItemFill) — отдельный forEach здесь не нужен
+  angarBuyFill();
+}
+function renderHangar(){
+  angarBuildTabs();
+  angarSel = S[ANGAR_CATS[angarCat].selKey];
+  angarRenderTabsSel();
+  const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
+  const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
+  if(angarCat==='decal' && !angarSubCat) angarSubCat=ANGAR_DECAL_CATS[0];
+  angarBuildSubTabs();
+  angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
 
@@ -1010,33 +1093,35 @@ function angarPick(id){
   if(angarSel===id) return;
   angarSel=id; sfx.click(); haptic('light');
   const grid=$('angarGrid');
-  SKINS.forEach((sk,i)=>{ const el=grid.children[i];
-    if(el) el.classList.toggle('sel', sk.id===angarSel); });
+  angarVisibleList().forEach((item,i)=>{ const el=grid.children[i];
+    if(el) el.classList.toggle('sel', item.id===angarSel); });
   angarBuyFill(); angarPvWake();
   /* 27.08.2026: было — временно подменить S.skin, нарисовать один кадр, вернуть обратно.
      Не спасало: angarPvDraw() сам читал S.skin, поэтому уже СЛЕДУЮЩИЙ кадр анимационного
      цикла (angarPvStart(), 30 раз в секунду) перерисовывал обратно на надетый борт —
      эффект костыля держался один кадр и на глаз не был виден. Теперь angarPvDraw() сам
-     смотрит на angarSel, костыль не нужен — небо показывает выбранный жетон постоянно,
-     не только на один кадр, даже если борт ещё не надет. */
+     смотрит на angarSel/angarCat, костыль не нужен — небо показывает выбранный жетон
+     постоянно, не только на один кадр, даже если борт ещё не надет. */
   angarPvDraw(performance.now());
 }
-function angarAct(){ // одна кнопка: надеть, если своё; купить, если чужое
-  const sk=SKINS[angarSel]||SKINS[0];
-  const owned=S.ownedSkins.includes(sk.id);
+function angarAct(){ // одна кнопка: надеть, если своё; купить, если чужое — теперь по активной категории
+  const cfg = ANGAR_CATS[angarCat];
+  const item = cfg.list.find(it=>it.id===angarSel) || cfg.list[0];
+  const owned = S[cfg.ownedKey].includes(item.id);
+  const grid=$('angarGrid');
   if(owned){
-    if(S.skin===sk.id) return;
-    S.skin=sk.id; Store.set('skin',sk.id); sfx.click(); haptic('light');
-    SKINS.forEach((s2,i)=>{ const el=$('angarGrid').children[i]; if(el) angarItemFill(el,s2); });
-    angarBuyFill(); updateLives(); angarPvWake();
+    if(S[cfg.selKey]===item.id) return;
+    S[cfg.selKey]=item.id; Store.set(cfg.selKey,item.id); sfx.click(); haptic('light');
+    angarVisibleList().forEach((it2,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el,it2); });
+    angarBuyFill(); if(angarCat==='color') updateLives(); angarPvWake();
     return;
   }
-  if(S.wallet>=sk.price){
-    S.wallet-=sk.price; S.ownedSkins.push(sk.id); S.skin=sk.id;
-    Store.set('wallet',S.wallet); Store.set('ownedSkins',S.ownedSkins); Store.set('skin',sk.id);
+  if(S.wallet>=item.price){
+    S.wallet-=item.price; S[cfg.ownedKey].push(item.id); S[cfg.selKey]=item.id;
+    Store.set('wallet',S.wallet); Store.set(cfg.ownedKey,S[cfg.ownedKey]); Store.set(cfg.selKey,item.id);
     sfx.buy(); haptic('success');
-    SKINS.forEach((s2,i)=>{ const el=$('angarGrid').children[i]; if(el) angarItemFill(el,s2); });
-    angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
+    angarVisibleList().forEach((it2,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el,it2); });
+    angarBuyFill(); refreshMenu(); if(angarCat==='color') updateLives(); angarPvWake();
     if (typeof achCheck==='function') achCheck(); // достижения ангара (первый скин / вся коллекция)
   } else {
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
