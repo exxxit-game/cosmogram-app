@@ -224,7 +224,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeGrpMood',L.forgeGrpMood],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
-    ['forgePlay',L.start],['forgeBack',L.back]]; // v1.87.0: «Поделиться» переехала в итоги трассы
+    ['forgePlay',L.start]]; // v1.87.0: «Поделиться» переехала в итоги трассы; 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;

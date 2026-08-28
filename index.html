@@ -194,14 +194,14 @@ button, input, select, textarea { text-transform:inherit; }
   justify-content:center; z-index:10; pointer-events:none; }
 /* читаемость экранов поверх живого фона: затемнение без blur (дорого на слабых).
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
-#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen {
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #modesScreen {
   background:rgba(6,10,24,.45); }
 /* v1.282.13: предупреждение о тесном экране — выше всех окон. Раньше у него был общий
    .overlay z-index:10 и никакого фона, а экраны идут ниже в разметке и с вуалью — при
    равном слое меню рисовалось поверх. Момент, когда предупреждение нужнее всего (игрок
    тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
 #tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
-#settingsScreen, #achScreen, #hangarScreen { justify-content:flex-start;
+#settingsScreen, #achScreen, #hangarScreen, #forgeScreen { justify-content:flex-start;
   /* 13.08.2026 «Подушка не для меню». var(--sat) — это защита от чужой шапки: внутри
      Telegram она перекрывает верх экрана, и под неё нельзя писать. А вот лишние 48px
      сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
@@ -224,10 +224,10 @@ button, input, select, textarea { text-transform:inherit; }
    весь .overlay, а только .scrBody внутри него; кнопка — обычный элемент колонки
    ПОСЛЕ скролл-зоны, не sticky. Физически не может лечь на список ни при какой
    высоте окна — не нужно новое число под каждый следующий вьюпорт. */
-#hangarScreen, #achScreen { overflow-y:hidden; }
+#hangarScreen, #achScreen, #forgeScreen { overflow-y:hidden; }
 .scrBody { flex:1 1 auto; min-height:0; width:100%; overflow-y:auto;
   display:flex; flex-direction:column; align-items:center; padding-bottom:16px; }
-#settingsScreen>*, #achScreen>*, #hangarScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 .scrBody>* { flex-shrink:0; }
 /* 27.08.2026: без этой строки правило выше (#hangarScreen>*, специфичность по ID) перебивало
    бы flex-shrink:1 из .scrBody (специфичность по классу ниже) — ЖИВОЙ проверкой в браузере
@@ -235,10 +235,10 @@ button, input, select, textarea { text-transform:inherit; }
    #hangarScreen (overflow-y:hidden) молча обрезал лишнее — часть сетки становилась
    недостижимой, а не прокручиваемой. Страж 130 такое не ловит (видит только геометрию
    видимого, не обрезанное). Явный селектор той же ID-специфичности возвращает сжатие. */
-#hangarScreen>.scrBody, #achScreen>.scrBody { flex-shrink:1; }
+#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody { flex-shrink:1; }
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
-#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen { pointer-events:auto; }
+#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen { pointer-events:auto; }
 /* 23.08.2026: виджет входа Telegram (#webJoinWidget) — вставленный извне <iframe>, у него
    нет класса .btn, только .tgWidget (тот не трогает pointer-events). Обычные кнопки
    экрана итогов работали через свой .btn, а виджет наследовал pointer-events:none от
@@ -819,7 +819,6 @@ button, input, select, textarea { text-transform:inherit; }
 .modeIt.sel{border-color:rgba(190,225,255,.45);background:rgba(120,170,255,.08)} /* лёд «Единой палубы» — выбранная дисциплина */
 
 /* v1.68.0 «Своя трасса»: конструктор забега — ползунки, чипы преград, сегменты длины */
-.forgePanel{max-height:calc(100dvh - 150px);overflow-y:auto;scrollbar-width:none}
 .forgeName{width:100%;box-sizing:border-box;background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:12px;
   padding:10px 12px;color:#eaf2ff;font:inherit;font-size:14px;text-align:center;outline:none}
 .forgeName:focus{border-color:rgba(190,225,255,.45)}
@@ -1180,8 +1179,8 @@ button, input, select, textarea { text-transform:inherit; }
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.45"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/i18n.js?v=1.477.45"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.46"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/i18n.js?v=1.477.46"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1429,6 +1428,15 @@ button, input, select, textarea { text-transform:inherit; }
 <!-- КУЗНИЦА — v1.85.0 «Сначала небо»: сцена — живое небо, галерея, одна ручка «Жар»;
      все пятнадцать ручек целиком — за спойлером «Тонкая настройка» -->
 <div id="forgeScreen" class="overlay hidden">
+  <!-- 28.08.2026: «Назад» была последней строкой внутри спойлера «Тонкая настройка» —
+       чтобы её увидеть, нужно было открыть все 15 ручек и долистать до конца. Теперь
+       кругом сверху, как на Ангаре/Достижениях/Настройках/Режимах — всегда на месте.
+       Заодно экран получил ту же вуаль и ту же структуру «шапка не скроллится, длинная
+       часть скроллится сама» — раньше был единственным меню-экраном без них (см. разбор
+       .scrBody выше), отсюда наплыв элементов друг на друга и код, уезжающий за край
+       при открытой клавиатуре: центрированный .overlay с собственным overflow-y внутри
+       не умел прокрутить поле в видимую область. -->
+  <button class="menuBack" id="forgeBack" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="forgeTitle">Своё небо</div>
   <div class="setPanel forgePanel">
     <canvas id="forgePreview" width="640" height="220"></canvas>
@@ -1436,7 +1444,9 @@ button, input, select, textarea { text-transform:inherit; }
     <button class="btn pri forgeHeroBtn" id="forgePlay">Лететь</button>
     <div class="forgePresets" id="forgePresets"></div>
     <button class="btn ghost small spoiler" id="forgeFineBtn">Тонкая настройка</button>
-    <div id="forgeFine" class="hidden">
+  </div>
+  <div class="scrBody">
+    <div id="forgeFine" class="setPanel forgePanel hidden">
       <input class="forgeName" id="forgeName" maxlength="20" placeholder="Название неба" autocomplete="off">
       <div class="forgeGrpLbl" id="forgeGrpHard">Сложность</div>
       <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
@@ -1461,7 +1471,6 @@ button, input, select, textarea { text-transform:inherit; }
       <div class="forgeLblBlk" id="forgeCodeLbl">Трасса друга — вставь код или ссылку</div>
       <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" placeholder="CG1.…" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
     </div>
-    <button class="btn ghost small" id="forgeBack">Назад</button>
   </div>
 </div>
 
@@ -1584,23 +1593,23 @@ button, input, select, textarea { text-transform:inherit; }
   <button class="btn ghost" id="cardBack">Назад</button>
 </div>
 
-<script defer src="js/core.js?v=1.477.45" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.45"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.45"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.45"></script>
-<script defer src="js/game.js?v=1.477.45" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.45"></script>
-<script defer src="js/sync.js?v=1.477.45"></script>
-<script defer src="js/render.js?v=1.477.45"></script>
-<script defer src="js/planetarium.js?v=1.477.45"></script>
-<script defer src="js/goldstar.js?v=1.477.45"></script>
-<script defer src="js/music.js?v=1.477.45"></script>
-<script defer src="js/gyro.js?v=1.477.45"></script>
-<script defer src="js/forge.js?v=1.477.45"></script>
-<script defer src="js/adaptive.js?v=1.477.45"></script>
-<script defer src="js/card.js?v=1.477.45"></script>
-<script defer src="js/star.js?v=1.477.45"></script>
-<script defer src="js/ui.js?v=1.477.45"></script>
+<script defer src="js/core.js?v=1.477.46" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.46"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.46"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.46"></script>
+<script defer src="js/game.js?v=1.477.46" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.46"></script>
+<script defer src="js/sync.js?v=1.477.46"></script>
+<script defer src="js/render.js?v=1.477.46"></script>
+<script defer src="js/planetarium.js?v=1.477.46"></script>
+<script defer src="js/goldstar.js?v=1.477.46"></script>
+<script defer src="js/music.js?v=1.477.46"></script>
+<script defer src="js/gyro.js?v=1.477.46"></script>
+<script defer src="js/forge.js?v=1.477.46"></script>
+<script defer src="js/adaptive.js?v=1.477.46"></script>
+<script defer src="js/card.js?v=1.477.46"></script>
+<script defer src="js/star.js?v=1.477.46"></script>
+<script defer src="js/ui.js?v=1.477.46"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
