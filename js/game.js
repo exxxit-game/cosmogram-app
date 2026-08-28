@@ -49,6 +49,63 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'}, // Хром — нейтральная сталь
   {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,'}  // Призрак — ледяной циан (тон 185°, единственный!)
 ];
+/* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
+   декаль поверх корпуса. Каждая — готовый символ Unicode (эмодзи), не нарисована нами:
+   ноль художественной работы, ноль решений «что правильно» — то, что уже есть в стандарте.
+   Флаги стран сюда намеренно НЕ включены — там своя дыра (флаг-эмодзи не рисуется на
+   Windows, показывается голый код страны текстом), нужен отдельный вендоренный SVG-набор,
+   не эмодзи. Названия пока на русском — перевод на 5 языков отдельным следующим заходом
+   (владелец: не тащить контент и языки одним заходом, риск ошибок выше). Цена — по подгруппам
+   одним числом на всю подгруппу (не 63 отдельно подобранных числа): 80 — самые массовые
+   (космос/зодиак/погода/смайлики/растения/шахматы), 120 — животные, 150 — фазы Луны (сет из
+   восьми, дороже как коллекция), 350 — мифические существа и драгоценности/статус (владелец:
+   «редкие/статусные вещи»), 60 — музыка (дёшево, это ещё и значок категории «Звук»). */
+const DECALS=[
+  {id:0, name:'Нет', price:0, ch:'', cat:'none'},
+  // Космос
+  {id:1, name:'Ракета', price:80, ch:'🚀', cat:'space'}, {id:2, name:'Тарелка', price:80, ch:'🛸', cat:'space'},
+  {id:3, name:'Звезда', price:80, ch:'🌟', cat:'space'}, {id:4, name:'Комета', price:80, ch:'☄️', cat:'space'},
+  {id:5, name:'Сатурн', price:80, ch:'🪐', cat:'space'}, {id:6, name:'Полумесяц', price:80, ch:'🌙', cat:'space'},
+  {id:7, name:'Пришелец', price:80, ch:'👽', cat:'space'}, {id:8, name:'Искра', price:80, ch:'✨', cat:'space'},
+  // Зодиак
+  {id:9, name:'Овен', price:80, ch:'♈', cat:'zodiac'}, {id:10, name:'Телец', price:80, ch:'♉', cat:'zodiac'},
+  {id:11, name:'Близнецы', price:80, ch:'♊', cat:'zodiac'}, {id:12, name:'Рак', price:80, ch:'♋', cat:'zodiac'},
+  {id:13, name:'Лев', price:80, ch:'♌', cat:'zodiac'}, {id:14, name:'Дева', price:80, ch:'♍', cat:'zodiac'},
+  {id:15, name:'Весы', price:80, ch:'♎', cat:'zodiac'}, {id:16, name:'Скорпион', price:80, ch:'♏', cat:'zodiac'},
+  {id:17, name:'Стрелец', price:80, ch:'♐', cat:'zodiac'}, {id:18, name:'Козерог', price:80, ch:'♑', cat:'zodiac'},
+  {id:19, name:'Водолей', price:80, ch:'♒', cat:'zodiac'}, {id:20, name:'Рыбы', price:80, ch:'♓', cat:'zodiac'},
+  // Погода/стихии
+  {id:21, name:'Молния', price:80, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:80, ch:'🌈', cat:'weather'},
+  {id:23, name:'Снежинка', price:80, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:80, ch:'🌊', cat:'weather'},
+  {id:25, name:'Смерч', price:80, ch:'🌪️', cat:'weather'}, {id:26, name:'Солнце', price:80, ch:'☀️', cat:'weather'},
+  // Смайлики
+  {id:27, name:'Улыбка', price:80, ch:'😀', cat:'faces'}, {id:28, name:'Стиль', price:80, ch:'😎', cat:'faces'},
+  {id:29, name:'Огонь', price:80, ch:'🔥', cat:'faces'}, {id:30, name:'Сотка', price:80, ch:'💯', cat:'faces'},
+  {id:31, name:'Смех', price:80, ch:'😂', cat:'faces'}, {id:32, name:'Праздник', price:80, ch:'🥳', cat:'faces'},
+  // Растения/природа
+  {id:33, name:'Сакура', price:80, ch:'🌸', cat:'nature'}, {id:34, name:'Кактус', price:80, ch:'🌵', cat:'nature'},
+  {id:35, name:'Пальма', price:80, ch:'🌴', cat:'nature'}, {id:36, name:'Клевер', price:80, ch:'🍀', cat:'nature'},
+  // Шахматы/карты
+  {id:37, name:'Пешка', price:80, ch:'♟️', cat:'games'}, {id:38, name:'Конь', price:80, ch:'♞', cat:'games'},
+  {id:39, name:'Пики', price:80, ch:'♠️', cat:'games'}, {id:40, name:'Червы', price:80, ch:'♥️', cat:'games'},
+  // Животные
+  {id:41, name:'Орёл', price:120, ch:'🦅', cat:'animals'}, {id:42, name:'Волк', price:120, ch:'🐺', cat:'animals'},
+  {id:43, name:'Лев (зверь)', price:120, ch:'🦁', cat:'animals'}, {id:44, name:'Лиса', price:120, ch:'🦊', cat:'animals'},
+  // Фазы Луны (сет)
+  {id:45, name:'Новолуние', price:150, ch:'🌑', cat:'moon'}, {id:46, name:'Растущий серп', price:150, ch:'🌒', cat:'moon'},
+  {id:47, name:'Первая четверть', price:150, ch:'🌓', cat:'moon'}, {id:48, name:'Растущая Луна', price:150, ch:'🌔', cat:'moon'},
+  {id:49, name:'Полнолуние', price:150, ch:'🌕', cat:'moon'}, {id:50, name:'Убывающая Луна', price:150, ch:'🌖', cat:'moon'},
+  {id:51, name:'Последняя четверть', price:150, ch:'🌗', cat:'moon'}, {id:52, name:'Убывающий серп', price:150, ch:'🌘', cat:'moon'},
+  // Музыка (тот же значок ещё пригодится категории «Звук»)
+  {id:53, name:'Нота', price:60, ch:'🎵', cat:'music'}, {id:54, name:'Гитара', price:60, ch:'🎸', cat:'music'},
+  {id:55, name:'Наушники', price:60, ch:'🎧', cat:'music'},
+  // Мифические существа — редкое/статусное
+  {id:56, name:'Дракон', price:350, ch:'🐉', cat:'myth'}, {id:57, name:'Единорог', price:350, ch:'🦄', cat:'myth'},
+  {id:58, name:'Дракон (лицо)', price:350, ch:'🐲', cat:'myth'},
+  // Драгоценности/статус — редкое/статусное
+  {id:59, name:'Алмаз', price:350, ch:'💎', cat:'status'}, {id:60, name:'Корона', price:350, ch:'👑', cat:'status'},
+  {id:61, name:'Мешок звёзд', price:350, ch:'💰', cat:'status'},
+];
 const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
@@ -58,6 +115,7 @@ const S = {
   dying:0, dyingT:0, pausing:0, // «Склейка»: slow-mo занавес смерти / плавная остановка паузы
   smooth:1, // Smooth Flight: плавность пилотирования 0.5..1.0 → финальный множитель 0.75..1.0
   hueShift:0, skin:0, ownedSkins:[0],
+  decal:0, ownedDecals:[0], // 28.08.2026 «Тюнинг, шаг 1»: та же пара, что у skin/ownedSkins, отдельная независимая категория
   gyroSec:0, manSec:0 // секунды руления гироскопом / пальцем-мышью-клавишами
 };
 const plane = { x:0, y:0, vx:0, vy:0, bank:0, r:16 };

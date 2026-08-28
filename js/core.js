@@ -267,7 +267,7 @@ const Store = {
      Лимит облака — 4096 байт на ЗНАЧЕНИЕ, а не на весь список; каждый из добавленных
      ключей на порядки меньше. Тяжёлое (лента самописца, очередь писем) сюда по-прежнему
      не входит — см. правку v1.282.13. */
-  CLOUD_KEYS:['best','wallet','ownedSkins','skin','savedRun','stats','refBy',
+  CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedDecals','decal','savedRun','stats','refBy',
               'ach','achQ','callsign','gyroUnlocked','bestGyro','bestTouch','bestKeys','bestDist','bestBullet','srBest'],
   /* v1.282.13: переполнение больше не проходит молча. Всё хранилище — один ключ, поэтому
      отказ записи роняет разом рекорды, кошелёк и очереди, а прежний пустой catch делал
@@ -326,7 +326,7 @@ const Store = {
         continue;
       }
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
-      else if((k==='ownedSkins'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
       else this.mem[k]=nv;
     }
   },
@@ -337,7 +337,7 @@ const Store = {
       let nv; try{ nv=JSON.parse(v); }catch(e){ nv=v; }
       const cur=this.mem[k];
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv); // рекорд не крадём ни в одну сторону
-      else if(k==='ownedSkins' && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
+      else if((k==='ownedSkins'||k==='ownedDecals') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
       else if(k==='ach' && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // и открытые достижения тоже
       else this.mem[k]=nv;
     }
