@@ -1435,26 +1435,110 @@ function renderFlashPattern(c, style, p, col){
     case 'ring': ring(p,3.5,.5); break;
     case 'star': rays(7,8,38,2,0); break;
     case 'particles': dots(10,0); break;
-    case 'cross': rays(4,8,46,1.5,0); break;
-    case 'doublering': ring(p,3.5,.5); ring(clamp((p-.15)/.85,0,1),3.5,.5); break;
     case 'spiral': dots(10,p*2.5); break;
-    case 'shockwave': ring(p,12,2); break;
     case 'sphere': c.fillStyle=col((1-p)*(1-p)); c.beginPath(); c.arc(0,0,4+p*18,0,6.2832); c.fill(); break;
-    case 'eclipse': c.strokeStyle=col(1-p); c.lineWidth=3; c.beginPath(); c.arc(0,0,42-p*32,0,6.2832); c.stroke(); break;
-    case 'lightning':
-      c.strokeStyle=col(1-p); c.lineWidth=2;
-      for(let i=0;i<5;i++){
-        const ang=i*(6.2832/5), dx=Math.cos(ang), dy=Math.sin(ang), px=-dy, py=dx;
-        const r0=6, r1=6+p*32, jit=3+(i%3)*1.5;
-        const t1=r0+(r1-r0)/3, t2=r0+(r1-r0)*2/3;
-        c.beginPath();
-        c.moveTo(dx*r0,dy*r0);
-        c.lineTo(dx*t1+px*jit,dy*t1+py*jit);
-        c.lineTo(dx*t2-px*jit,dy*t2-py*jit);
-        c.lineTo(dx*r1,dy*r1);
-        c.stroke();
+    /* 29.08.2026 «14 разных, не 10 с дублями» — девять новых узоров, ни один не повторяет
+       ни старые пять выше, ни друг друга по силуэту (см. коммент над FLASHES в game.js). */
+    case 'comet': { // единственный несимметричный: хвост-полоса в одну сторону (за кормой), не кольцом вокруг
+      const n=8, tailLen=10+p*40;
+      for(let i=0;i<n;i++){
+        const t=i/(n-1), r=t*tailLen;
+        c.fillStyle=col((1-p)*(1-t*.75));
+        c.beginPath(); c.arc(0,r,(1-t)*4*(1-p*.3),0,6.2832); c.fill();
       }
       break;
+    }
+    case 'saturn': { // наклонный эллипс, не окружность
+      c.strokeStyle=col(1-p); c.lineWidth=2.5;
+      const rx=10+p*30;
+      c.save(); c.rotate(-.35);
+      c.beginPath(); c.ellipse(0,0,rx,rx*.35,0,0,6.2832); c.stroke();
+      c.restore();
+      break;
+    }
+    case 'shards': { // залитые треугольники-обломки, развёрнутые наружу
+      c.fillStyle=col(1-p);
+      const n=6;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n)+.3, r=6+p*32, sz=3.5*(1-p*.4);
+        c.save(); c.translate(Math.cos(ang)*r,Math.sin(ang)*r); c.rotate(ang);
+        c.beginPath(); c.moveTo(0,-sz); c.lineTo(sz*.6,sz); c.lineTo(-sz*.6,sz); c.closePath(); c.fill();
+        c.restore();
+      }
+      break;
+    }
+    case 'galaxy': { // несколько закрученных рукавов точек — не просто вращающиеся точки, как Вихрь
+      c.fillStyle=col(1-p);
+      const arms=3, perArm=5;
+      for(let a=0;a<arms;a++){
+        const armOff=a*(6.2832/arms);
+        for(let i=0;i<perArm;i++){
+          const t=i/(perArm-1), r=t*(8+p*30), ang=armOff+t*2.4+p*1.5;
+          c.beginPath(); c.arc(Math.cos(ang)*r,Math.sin(ang)*r,1.8,0,6.2832); c.fill();
+        }
+      }
+      break;
+    }
+    case 'snowflake': { // шесть лучей с боковыми ответвлениями — не просто прямые лучи
+      c.strokeStyle=col(1-p); c.lineWidth=1.8;
+      const len=8+p*30;
+      for(let i=0;i<6;i++){
+        const ang=i*(6.2832/6), dx=Math.cos(ang), dy=Math.sin(ang), px=-dy, py=dx;
+        c.beginPath(); c.moveTo(0,0); c.lineTo(dx*len,dy*len); c.stroke();
+        const bx=dx*len*.6, by=dy*len*.6, bl=len*.25;
+        c.beginPath(); c.moveTo(bx,by); c.lineTo(bx+px*bl,by+py*bl); c.stroke();
+        c.beginPath(); c.moveTo(bx,by); c.lineTo(bx-px*bl,by-py*bl); c.stroke();
+      }
+      break;
+    }
+    case 'flower': { // залитые лепестки-эллипсы, не прямые лучи
+      c.fillStyle=col((1-p)*.85);
+      const n=6;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n), r=6+p*26;
+        c.save(); c.translate(Math.cos(ang)*r*.5,Math.sin(ang)*r*.5); c.rotate(ang);
+        c.beginPath(); c.ellipse(0,0,r*.55,r*.22,0,0,6.2832); c.fill();
+        c.restore();
+      }
+      break;
+    }
+    case 'corona': { // залитое волнистое пятно, не дискретные лучи/кольцо
+      c.fillStyle=col((1-p)*.7);
+      const n=24, baseR=6+p*24;
+      c.beginPath();
+      for(let i=0;i<=n;i++){
+        const ang=i*(6.2832/n), r=baseR*(1+.28*Math.sin(ang*7));
+        const x=Math.cos(ang)*r, y=Math.sin(ang)*r;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.closePath(); c.fill();
+      break;
+    }
+    case 'wings': { // два крыла по бокам — единственная двусторонняя, не радиальная симметрия
+      c.fillStyle=col((1-p)*.8);
+      const len=8+p*30;
+      [-1,1].forEach(side=>{
+        c.beginPath(); c.moveTo(0,0);
+        c.quadraticCurveTo(side*len*.5,-len*.3, side*len,-len*.1);
+        c.quadraticCurveTo(side*len*.6,len*.15, 0,0);
+        c.fill();
+      });
+      break;
+    }
+    case 'honeycomb': { // маленькие шестиугольники по кругу — не окружности/точки
+      c.strokeStyle=col(1-p); c.lineWidth=1.5;
+      const n=6, hexR=3+p*3;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n), r=8+p*26, cx=Math.cos(ang)*r, cy=Math.sin(ang)*r;
+        c.beginPath();
+        for(let k=0;k<6;k++){
+          const a2=k*(6.2832/6), x=cx+Math.cos(a2)*hexR, y=cy+Math.sin(a2)*hexR;
+          if(k===0) c.moveTo(x,y); else c.lineTo(x,y);
+        }
+        c.closePath(); c.stroke();
+      }
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
