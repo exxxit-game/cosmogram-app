@@ -1375,8 +1375,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div class="grid2" id="menuRow">
       <button class="btn ghost" id="hangarBtn">Ангар</button>
       <button class="btn ghost" id="achBtn"><span id="achBtnTxt">Достижения</span><span class="achBadge hidden" id="achBadge"></span></button>
-      <button class="btn ghost" id="inviteBtn">Позвать друзей</button>
-      <button class="btn ghost" id="channelBtn">Наш канал</button>
+      <!-- 30.08.2026: «Позвать друзей» (shareScore) и «Наш канал» (паблик, где только владелец)
+           убраны по решению владельца — игра больше не только в Telegram, приглашение друзей
+           будет решено отдельно другим способом, а канал не приносил пользы. На их месте —
+           прямая связь с разработчиком, которой раньше вообще не было на главном экране. -->
+      <button class="btn ghost" id="feedbackBtn">Написать разработчику</button>
       <button class="btn ghost" id="settingsBtn">Настройки</button>
       <button class="btn ghost hidden" id="homeBtn">На экран «Домой»</button>
     </div>
@@ -1507,6 +1510,28 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
                outline:none;-webkit-user-select:text;user-select:text;white-space:pre-wrap"></textarea>
       <button class="btn ghost" id="diagSupportBtn">Написать в поддержку</button>
     </div>
+  </div></div>
+</div>
+
+<!-- НАПИСАТЬ РАЗРАБОТЧИКУ (30.08.2026): идея/вопрос/баг напрямую владельцу — через
+     cosmogram-beacon (action:'feedback') и бота, без стороннего паблик-канала. Тот же
+     экран открывают и кнопка на главном, и «Написать в поддержку» в Сервисном центре —
+     одна дверь вместо двух похожих. Пока только текст, без картинки (первый заход). -->
+<div id="feedbackScreen" class="overlay hidden">
+  <button class="menuBack" id="feedbackBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
+  <div class="screenTitle" id="feedbackTitle">Написать разработчику</div>
+  <div class="scrBody"><div class="setPanel">
+    <div class="hint" id="feedbackHint" style="position:static;padding:10px 16px 4px"></div>
+    <textarea id="feedbackText" rows="6" maxlength="1200"
+      style="width:calc(100% - 32px);margin:8px 16px 4px;font-size:14px;line-height:1.4;
+             background:rgba(10,16,40,.6);color:#eaf0ff;border:1px solid rgba(120,170,255,.25);
+             border-radius:10px;padding:10px 12px;text-transform:none;letter-spacing:normal;
+             outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+    <div id="feedbackCount" style="text-align:right;margin:0 16px 10px;font-size:11px;color:rgba(158,178,224,.6)"></div>
+    <div class="stack" style="margin:0 16px 14px">
+      <button class="btn pri" id="feedbackSendBtn">Отправить</button>
+    </div>
+    <div id="feedbackStatus" style="text-align:center;margin:0 16px 14px;font-size:13px;min-height:18px"></div>
   </div></div>
 </div>
 

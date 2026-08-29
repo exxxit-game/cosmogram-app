@@ -407,6 +407,30 @@ const BEACON=(()=>{
      оборачивает каждый наш колбэк в свой try/catch, поэтому до window.onerror такие
      ошибки не доходят — доложить о них может только тот, кто их поймал. */
   function err(msg){ drop('error', String(msg==null?'':msg), perfCtx()); }
-  return { signal, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+
+  /* 30.08.2026 «Написать разработчику»: прямая отправка, в обход очереди/окна вежливости
+     выше — те настроены под автоматическую телеметрию (дедуп по сессии, одно письмо в 21с),
+     а здесь игрок сам нажал «Отправить» и ждёт немедленного ответа, не окна ожидания.
+     Сервер отвечает {ok:true} либо {ok:false, reason}; UI (ui.js) сам решает, что показать. */
+  async function feedback(text){
+    if(sealed()) return {ok:false, reason:'sealed'};
+    const t=String(text==null?'':text).trim().slice(0,1200);
+    if(!t) return {ok:false, reason:'empty'};
+    let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
+    const ctl=(typeof AbortController==='function')?new AbortController():null;
+    const tmr=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },SEND_TIMEOUT):0;
+    try{
+      const r=await fetch(URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'feedback', text:t, anon:anon(),
+          v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf}),
+        signal:ctl?ctl.signal:undefined});
+      if(!r||!r.ok) return {ok:false, reason:'http'};
+      let body=null; try{ body=await r.json(); }catch(e){}
+      if(!body || body.ok!==true) return {ok:false, reason:(body&&body.reason)||'server'};
+      return {ok:true};
+    }catch(e){ return {ok:false, reason:'net'}; }
+    finally{ if(tmr) clearTimeout(tmr); }
+  }
+  return { signal, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, feedback, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
 if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

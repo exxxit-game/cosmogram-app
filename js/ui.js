@@ -118,6 +118,7 @@ function setScreen(name){
   toggleCls('achScreen','hidden', name!=='ach');
   toggleCls('settingsScreen','hidden', name!=='settings');
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
+  toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('modesScreen','hidden', name!=='modes');
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
@@ -1269,26 +1270,41 @@ if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('cli
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
-/* ---------- Шаринг (Блок 9) ---------- */
-function shareTextFor(){ // гиро-гордость: забег на гироскопе — другой текст шаринга
-  const b=Math.floor(S.best);
-  return (S.gyroSec>S.manSec && S.gyroSec>3 && L.shareTextGyro) ? L.shareTextGyro(b) : L.shareText(b);
+/* ---------- Написать разработчику (30.08.2026) ----------
+   30.08.2026: заменил «Позвать друзей» (shareScore) — приглашение друзей будет решено
+   отдельным способом позже, а прямой связи с владельцем раньше не было вообще. */
+let feedbackSending=false;
+let feedbackFrom='menu'; // куда вернуться: меню или сервисный центр — тот же приём, что у settingsFrom
+function openFeedback(from){
+  feedbackFrom=from||'menu'; setScreen('feedback'); sfx.click();
+  const status=$('feedbackStatus'); if(status) status.textContent='';
+  feedbackUpdateCount();
 }
-function shareScore(){
-  const text=shareTextFor();
-  const gameUrl='https://t.me/realcosmogrambot/app';
-  const url='https://t.me/share/url?url='+encodeURIComponent(gameUrl)+'&text='+encodeURIComponent(text); // v1.96.0: дверь ведёт в игру, а не в пустой домен
-  if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
-    try{ tg.openTelegramLink(url); return; }catch(e){}
+function closeFeedback(){ setScreen(feedbackFrom); sfx.click(); }
+function feedbackUpdateCount(){
+  const ta=$('feedbackText'); const c=$('feedbackCount');
+  if(!ta||!c) return;
+  c.textContent=(ta.value||'').length+' / 1200';
+}
+async function feedbackSend(){
+  if(feedbackSending) return;
+  const ta=$('feedbackText'); const status=$('feedbackStatus'); const btn=$('feedbackSendBtn');
+  const text=(ta&&ta.value||'').trim();
+  if(!text){ if(status&&L.feedbackEmpty) status.textContent=L.feedbackEmpty; return; }
+  feedbackSending=true;
+  if(btn) btn.disabled=true;
+  if(status) status.textContent=L.feedbackSending||'';
+  const res=await BEACON.feedback(text);
+  feedbackSending=false;
+  if(btn) btn.disabled=false;
+  if(!status) return;
+  if(res.ok){
+    status.textContent=L.feedbackSent||'';
+    if(ta) ta.value='';
+    feedbackUpdateCount();
+  } else {
+    status.textContent=(res.reason==='rate' ? L.feedbackRate : L.feedbackFail)||'';
   }
-  // v1.108.1 «Дверь пошире»: вне Telegram (веб-версия на GitHub Pages) раньше шли прямиком на
-  // Telegram-ссылку — честно работает, но принудительно сужает выбор до одного мессенджера.
-  // Системный лист ОС (WhatsApp/SMS/почта/что угодно) — то, чего здесь не хватало.
-  if(navigator.share){
-    navigator.share({text:text, url:gameUrl}).catch(()=>{}); // отмена/отказ — тихо, ничего не ломаем
-    return;
-  }
-  window.open(url,'_blank');
 }
 
 /* ---------- Дуэль (вызов друга): побей верифицированный рекорд дистанции ----------
@@ -1708,11 +1724,7 @@ $('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
   setTimeout(()=>skazat(false), 1200); // молчащий буфер: обещание не может висеть без ответа
 });
 
-wireOn('diagSupportBtn', 'click', ()=>{
-  sfx.click(); haptic('light');
-  try{ if (typeof tg!=='undefined'&&tg&&tg.openTelegramLink) tg.openTelegramLink(SUPPORT_URL); else window.open(SUPPORT_URL,'_blank'); }
-  catch(e){ try{ window.open(SUPPORT_URL,'_blank'); }catch(e2){} }
-});
+wireOn('diagSupportBtn', 'click', ()=>{ haptic('light'); openFeedback('diag'); });
 // v1.65.0 «Спойлеры»: категории — аккордеон. Открыта всегда одна панель — ничего ни на что не налезает,
 // закрытый экран помещается целиком; экран скроллится как страховка + подскролл к открытой шапке
 const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpProf','accPanel']];
@@ -2052,12 +2064,10 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
   if(tg&&tg.openTelegramLink){ try{ tg.openTelegramLink(url); sent(); return; }catch(e){} }
   const w=window.open(url,'_blank'); if(w) sent();
 });
-wireOn('inviteBtn', 'click', shareScore);
-function openChannel(){ // сообщество: нативно в Telegram, иначе новая вкладка
-  try{ if(tg && tg.openTelegramLink){ tg.openTelegramLink(CHANNEL_URL); return; } }catch(e){}
-  try{ window.open(CHANNEL_URL,'_blank'); }catch(e){}
-}
-wireOn('channelBtn', 'click', openChannel); // v1.84.0: на сцене итогов канал не кричит — он дома, в меню
+wireOn('feedbackBtn', 'click', ()=>openFeedback('menu'));
+wireOn('feedbackBackBtn', 'click', closeFeedback);
+wireOn('feedbackSendBtn', 'click', feedbackSend);
+wireOn('feedbackText', 'input', feedbackUpdateCount);
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
@@ -2076,11 +2086,14 @@ function applyLang(){
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
   setText('hangarBtn',L.hangar);
-  setText('inviteBtn',L.invite);
+  setText('feedbackBtn',L.feedbackBtn);
   setText('duelBtn',L.duelBtn);
   setText('settingsBtn',L.settings);
-  setText('channelBtn',L.channel);
   setText('homeBtn',L.home);
+  setText('feedbackTitle',L.feedbackTitle);
+  setText('feedbackHint',L.feedbackHint);
+  setAttr('feedbackText','placeholder',L.feedbackPlaceholder);
+  setText('feedbackSendBtn',L.feedbackSend);
   setText('pauseTitle',L.pause);
   setAttr('pauseBtn','aria-label',L.ariaPause); // v1.47.1: скринридер говорит на языке игрока — метка из словаря, не из разметки
   setText('resumeBtn',L.resume);
