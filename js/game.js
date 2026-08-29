@@ -100,8 +100,7 @@ const DECALS=[
   {id:126, name:'Подсолнух', price:100, ch:'🌻', cat:'nature'}, {id:127, name:'Клён', price:100, ch:'🍁', cat:'nature'},
   {id:182, name:'Гибискус', price:100, ch:'🌺', cat:'nature'}, {id:183, name:'Колос', price:100, ch:'🌾', cat:'nature'},
   // Шахматы/карты
-  {id:37, name:'Пешка', price:60, ch:'♟️', cat:'games'}, {id:38, name:'Конь', price:60, ch:'♞️', cat:'games'},
-  {id:39, name:'Пики', price:60, ch:'♠️', cat:'games'}, {id:40, name:'Червы', price:60, ch:'♥️', cat:'games'},
+  {id:37, name:'Пешка', price:60, ch:'♟️', cat:'games'}, {id:39, name:'Пики', price:60, ch:'♠️', cat:'games'}, {id:40, name:'Червы', price:60, ch:'♥️', cat:'games'},
   {id:74, name:'Бубны', price:60, ch:'♦️', cat:'games'}, {id:75, name:'Трефы', price:60, ch:'♣️', cat:'games'},
   {id:76, name:'Кости', price:60, ch:'🎲', cat:'games'}, {id:77, name:'Мишень', price:60, ch:'🎯', cat:'games'},
   {id:184, name:'Джокер', price:60, ch:'🃏', cat:'games'}, {id:185, name:'Слот-машина', price:60, ch:'🎰', cat:'games'},
