@@ -780,10 +780,7 @@ const DECALS=[
   {id:787, name:'Колесо', price:60, ch:'🛞', cat:'vehicles'},
   {id:788, name:'Спасательный круг', price:60, ch:'🛟', cat:'vehicles'},
   {id:789, name:'Антарктида', price:100, ch:'🇦🇶', cat:'flags'},
-  {id:790, name:'Западная Сахара', price:100, ch:'🇪🇭', cat:'flags'},
-  {id:791, name:'Палестина', price:100, ch:'🇵🇸', cat:'flags'},
   {id:792, name:'Ватикан', price:100, ch:'🇻🇦', cat:'flags'},
-  {id:793, name:'Косово', price:100, ch:'🇽🇰', cat:'flags'},
 ];
 /* 29.08.2026 «не тот эмодзи» (владелец, реальный баг на живом устройстве): DECALS[S.decal]
    было обращением по ПОЗИЦИИ в массиве, а S.decal хранит id — держалось только пока новые
