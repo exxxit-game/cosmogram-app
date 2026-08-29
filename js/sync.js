@@ -123,7 +123,11 @@ function dcGo(cid){ // уходим на Discord и вернёмся с ?code=
   // весь её последующий прогресс уходит на чужой аккаунт. state — разовый ярлык этого
   // конкретного похода: сверяем на возврате, чужой code без нашего ярлыка молча игнорируем.
   const state=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now();
-  try{ sessionStorage.setItem('oauthState', JSON.stringify({state, provider:'dc'})); }catch(e){} // 23.08.2026: провайдер идёт вместе со state — возврат должен знать, чей это код
+  /* 29.08.2026 «Google-вход молчал»: было sessionStorage — на реальном возврате с Google
+     (владелец, HAR-журнал сети подтвердил: ни одного запроса к cosmogram-sync после
+     возврата вообще не было) «бирка» похода не пережила переход. localStorage — тот же
+     приём, но переживает более широкий круг накопителей/партиций браузера. */
+  try{ localStorage.setItem('oauthState', JSON.stringify({state, provider:'dc'})); }catch(e){} // провайдер идёт вместе со state — возврат должен знать, чей это код
   location.href='https://discord.com/oauth2/authorize?client_id='+cid+'&response_type=code'+
     '&redirect_uri='+encodeURIComponent(ru)+'&scope=identify&state='+encodeURIComponent(state);
 }
@@ -153,9 +157,18 @@ function gGo(cid){ // уходим на Google и вернёмся с ?code=
   if(typeof sfx==='function') sfx.click();
   const ru=location.origin+location.pathname;
   const state=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now();
-  try{ sessionStorage.setItem('oauthState', JSON.stringify({state, provider:'gg'})); }catch(e){}
+  try{ localStorage.setItem('oauthState', JSON.stringify({state, provider:'gg'})); }catch(e){} // 29.08.2026: см. коммент у dcGo — та же смена sessionStorage→localStorage
   location.href='https://accounts.google.com/o/oauth2/v2/auth?client_id='+cid+'&response_type=code'+
     '&redirect_uri='+encodeURIComponent(ru)+'&scope='+encodeURIComponent('openid profile')+'&state='+encodeURIComponent(state);
+}
+/* 29.08.2026 «Тишина при сбое входа» (владелец: «выбрал аккаунт — ничего не произошло»):
+   раньше .catch(()=>{}) и молчаливый ранний return в syncBootOAuth ниже не оставляли
+   игроку ни следа — ни тоста, ни ошибки. Причину найти труднее, а исправить не удастся,
+   пока игрок вообще не знает, что что-то пошло не так. toast() — тот же приём, что уже
+   есть у «Не хватает звёзд»; L может быть ещё не готов в этот самый ранний момент
+   загрузки — оба обращения защищены проверкой typeof. */
+function syncAuthFail(){
+  if(typeof toast==='function' && typeof L!=='undefined' && L && L.authFailed) toast(L.authFailed,'rgba(255,159,176,.5)');
 }
 function syncDiscordCode(code, ru){ // возврат из Discord: код → сессия → мостик гостя
   return syncPost({action:'discord_login', code:code, redirect_uri:ru}).then(r=>r.ok?r.json():null).then(d=>{
@@ -164,8 +177,8 @@ function syncDiscordCode(code, ru){ // возврат из Discord: код → �
       Store.set('syncQ',[]);
       syncSubmit(syncLocalScores());
       if(typeof syncAuthChanged==='function') syncAuthChanged();
-    }
-  }).catch(()=>{});
+    } else syncAuthFail();
+  }).catch(syncAuthFail);
 }
 function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google — тот же путь, что у Discord
   return syncPost({action:'google_login', code:code, redirect_uri:ru}).then(r=>r.ok?r.json():null).then(d=>{
@@ -174,8 +187,8 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
       Store.set('syncQ',[]);
       syncSubmit(syncLocalScores());
       if(typeof syncAuthChanged==='function') syncAuthChanged();
-    }
-  }).catch(()=>{});
+    } else syncAuthFail();
+  }).catch(syncAuthFail);
 }
 (function syncBootOAuth(){ // 23.08.2026: было syncBootDiscord — обобщено на любого OAuth2-гостя (Discord, Google, ...)
   try{
@@ -183,11 +196,12 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
     if(!code) return;
     const ru=location.origin+location.pathname;
     history.replaceState(null,'',ru); // код вычеркнут из адресной строки сразу
-    let saved=null; try{ saved=JSON.parse(sessionStorage.getItem('oauthState')||'null'); sessionStorage.removeItem('oauthState'); }catch(e){}
-    if(!saved || !saved.state || state!==saved.state) return; // v1.282.8: чужой code без нашего ярлыка — не наш поход, молчим
+    // 29.08.2026: localStorage вместо sessionStorage — см. коммент у dcGo/gGo
+    let saved=null; try{ saved=JSON.parse(localStorage.getItem('oauthState')||'null'); localStorage.removeItem('oauthState'); }catch(e){}
+    if(!saved || !saved.state || state!==saved.state){ syncAuthFail(); return; } // v1.282.8: чужой code без нашего ярлыка — не наш поход
     if(saved.provider==='dc') syncDiscordCode(code, ru);
     else if(saved.provider==='gg') syncGoogleCode(code, ru);
-  }catch(e){}
+  }catch(e){ syncAuthFail(); }
 })();
 
 /* Очередь в Store: переживает закрытие приложения */

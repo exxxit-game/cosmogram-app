@@ -86,6 +86,7 @@ const I18N = {
     shield:'Щит', magnet:'Магнит', slowmo:'Замедление', life:'+Жизнь', dash:'Таран', nova:'Сверхновая', shieldDown:'Щит снят', nearMiss:'Впритык', gate:'Ворота',
     overDetails:'Подробности полёта',
     combo:'Комбо', notEnough:'Не хватает звёзд', owned:'Выбран', buy:ic('star4','i-s4'),
+    authFailed:'Вход не удался — попробуйте ещё раз',
     /* 13.08.2026 «Ангар-витрина»: слова экрана покупки. Кошелёк переехал под кнопку и
        получил подпись — голое число под кнопкой читалось как ещё одна цена. */
     hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
@@ -227,6 +228,7 @@ const I18N = {
     shield:'Shield', magnet:'Magnet', slowmo:'Slow-mo', life:'+Life', dash:'Ram', nova:'Supernova', shieldDown:'Shield down', nearMiss:'Close call', gate:'Gate',
     overDetails:'Flight details',
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
+    authFailed:'Sign-in failed — try again',
     hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
     brandSub:'One sky for everyone',
     calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
@@ -358,6 +360,7 @@ const I18N = {
     shieldDown:'Escudo caído', nearMiss:'Al límite', gate:'Puerta',
     overDetails:'Detalles del vuelo', combo:'Combo',
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
+    authFailed:'Error al iniciar sesión — inténtalo de nuevo',
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas',
     brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
     calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
@@ -509,6 +512,7 @@ const I18N = {
     shieldDown:'Escudo caído', nearMiss:'Por pouco', gate:'Portal',
     overDetails:'Detalhes do voo', combo:'Combo',
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
+    authFailed:'Falha no login — tente novamente',
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas',
     brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
     calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
@@ -661,6 +665,7 @@ const I18N = {
     shield:'Bouclier', magnet:'Aimant', slowmo:'Ralenti', life:'+Vie', dash:'Percussion', nova:'Supernova', shieldDown:'Bouclier tombé', nearMiss:'Frôlement', gate:'Portail',
     overDetails:'Détails du vol',
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
+    authFailed:'Échec de la connexion — réessayez',
     hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
     brandSub:'Un ciel pour tous',
     calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
