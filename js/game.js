@@ -70,12 +70,12 @@ const DECALS=[
   {id:62, name:'Спутник', price:60, ch:'🛰️', cat:'space'}, {id:63, name:'Падающая звезда', price:60, ch:'🌠', cat:'space'},
   {id:64, name:'Телескоп', price:60, ch:'🔭', cat:'space'}, {id:65, name:'Млечный Путь', price:60, ch:'🌌', cat:'space'},
   // Зодиак
-  {id:9, name:'Овен', price:180, ch:'♈', cat:'zodiac'}, {id:10, name:'Телец', price:180, ch:'♉', cat:'zodiac'},
-  {id:11, name:'Близнецы', price:180, ch:'♊', cat:'zodiac'}, {id:12, name:'Рак', price:180, ch:'♋', cat:'zodiac'},
-  {id:13, name:'Лев', price:180, ch:'♌', cat:'zodiac'}, {id:14, name:'Дева', price:180, ch:'♍', cat:'zodiac'},
-  {id:15, name:'Весы', price:180, ch:'♎', cat:'zodiac'}, {id:16, name:'Скорпион', price:180, ch:'♏', cat:'zodiac'},
-  {id:17, name:'Стрелец', price:180, ch:'♐', cat:'zodiac'}, {id:18, name:'Козерог', price:180, ch:'♑', cat:'zodiac'},
-  {id:19, name:'Водолей', price:180, ch:'♒', cat:'zodiac'}, {id:20, name:'Рыбы', price:180, ch:'♓', cat:'zodiac'},
+   
+   
+   
+   
+   
+   
   // Погода/стихии
   {id:21, name:'Молния', price:60, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:60, ch:'🌈', cat:'weather'},
   {id:23, name:'Снежинка', price:60, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:60, ch:'🌊', cat:'weather'},
@@ -147,7 +147,7 @@ const DECALS=[
   {id:113, name:'Кубок', price:300, ch:'🏆', cat:'status'}, {id:114, name:'Золото', price:300, ch:'🥇', cat:'status'},
   {id:115, name:'Кольцо', price:300, ch:'💍', cat:'status'}, {id:116, name:'Трезубец', price:300, ch:'🔱', cat:'status'},
   {id:117, name:'Медаль', price:300, ch:'🎖️', cat:'status'}, {id:118, name:'Лилия', price:300, ch:'⚜️', cat:'status'},
-  {id:193, name:'Серебро', price:300, ch:'🥈', cat:'status'}, {id:194, name:'Бронза', price:300, ch:'🥉', cat:'status'},
+   
   
   // 29.08.2026 «ещё больше разнообразия» (владелец) — семь новых категорий разом,
   // за пределами исходной темы «космос/зодиак/природа»: транспорт, еда, спорт, техника,
@@ -179,8 +179,8 @@ const DECALS=[
   {id:163, name:'Кроссовок', price:100, ch:'👟', cat:'fashion'}, {id:164, name:'Галстук', price:100, ch:'👔', cat:'fashion'},
   {id:165, name:'Помада', price:100, ch:'💄', cat:'fashion'}, {id:166, name:'Кепка', price:100, ch:'🧢', cat:'fashion'},
   // Символы — особенное/редкое
-  {id:167, name:'Инь-Ян', price:100, ch:'☯️', cat:'symbols'}, {id:168, name:'Атом', price:100, ch:'⚛️', cat:'symbols'},
-  {id:169, name:'Бесконечность', price:100, ch:'♾️', cat:'symbols'}, {id:170, name:'Внимание', price:100, ch:'⚠️', cat:'symbols'},
+   
+   {id:170, name:'Внимание', price:100, ch:'⚠️', cat:'symbols'},
   {id:171, name:'Радиация', price:100, ch:'☢️', cat:'symbols'}, {id:172, name:'Биоопасность', price:100, ch:'☣️', cat:'symbols'},
   {id:173, name:'Хрустальный шар', price:100, ch:'🔮', cat:'symbols'}, {id:174, name:'Компас', price:100, ch:'🧭', cat:'symbols'},
   // Ландшафт
@@ -216,7 +216,7 @@ const DECALS=[
   {id:223, name:'Бьющееся сердце', price:100, ch:'💓', cat:'hearts'},
   {id:224, name:'Кружащиеся сердца', price:100, ch:'💞', cat:'hearts'},
   {id:225, name:'Два сердца', price:100, ch:'💕', cat:'hearts'},
-  {id:226, name:'Сердце-украшение', price:100, ch:'💟', cat:'hearts'},
+  
   {id:227, name:'Сердце-восклицание', price:100, ch:'❣️', cat:'hearts'},
   {id:228, name:'Разбитое сердце', price:100, ch:'💔', cat:'hearts'},
   {id:229, name:'Красное сердце', price:100, ch:'❤️', cat:'hearts'},
@@ -354,8 +354,8 @@ const DECALS=[
   {id:361, name:'Глобус: Америка', price:60, ch:'🌎', cat:'landscape'},
   {id:362, name:'Глобус: Азия-Австралия', price:60, ch:'🌏', cat:'landscape'},
   {id:363, name:'Глобус с меридианами', price:60, ch:'🌐', cat:'landscape'},
-  {id:364, name:'Карта мира', price:60, ch:'🗺️', cat:'landscape'},
-  {id:365, name:'Карта Японии', price:60, ch:'🗾', cat:'landscape'},
+  
+  
   {id:366, name:'Гора (вектор эмодзи)', price:60, ch:'⛰️', cat:'landscape'},
   
   {id:368, name:'Фудзияма', price:60, ch:'🗻', cat:'landscape'},
@@ -480,7 +480,7 @@ const DECALS=[
   {id:487, name:'Снеговик без снега', price:60, ch:'⛄', cat:'weather'},
   {id:488, name:'Капля (эмодзи)', price:60, ch:'💧', cat:'weather'},
   {id:489, name:'Спортивная медаль', price:300, ch:'🏅', cat:'status'},
-  {id:490, name:'Змееносец', price:180, ch:'⛎', cat:'zodiac'},
+  
   {id:491, name:'Восторг', price:60, ch:'😃', cat:'faces'},
   {id:492, name:'Радость', price:60, ch:'😄', cat:'faces'},
   {id:493, name:'Сияние', price:60, ch:'😁', cat:'faces'},
