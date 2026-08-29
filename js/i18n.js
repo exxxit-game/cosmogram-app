@@ -129,7 +129,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться',
     tutGyroBody:'Телефон умеет быть штурвалом. Наклоняй — самолётик слушается. Передумаешь — вернёшь палец одним касанием.', tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
     missionLbl:'Волна', angarTabColor:'Цвет', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак'],
-    angarTabDecal:'Декаль', decalCatNames:{none:'Без украшений',space:'Космос',zodiac:'Зодиак',weather:'Погода',faces:'Смайлы',nature:'Природа',games:'Игры',animals:'Животные',moon:'Луна',music:'Музыка',myth:'Мифы',status:'Статус',vehicles:'Транспорт',food:'Еда',sport:'Спорт',tech:'Техника',fashion:'Мода',symbols:'Символы',landscape:'Ландшафт',holidays:'Праздники',landmarks:'Ориентиры',science:'Наука',flags:'Флаги',hearts:'Сердца',fx:'Эффекты',sealife:'Морские жители',bugs:'Насекомые'}, angarTabIcon:'Иконки', angarTabFlash:'Вспышка',
+    angarTabDecal:'Декаль', decalCatNames:{none:'Без украшений',space:'Космос',zodiac:'Зодиак',weather:'Погода',faces:'Смайлы',nature:'Природа',games:'Игры',animals:'Животные',moon:'Луна',music:'Музыка',myth:'Мифы',status:'Статус',vehicles:'Транспорт',food:'Еда',sport:'Спорт',tech:'Техника',fashion:'Мода',symbols:'Символы',landscape:'Ландшафт',holidays:'Праздники',landmarks:'Ориентиры',science:'Наука',flags:'Флаги',hearts:'Сердца',fx:'Эффекты',sealife:'Морские жители',bugs:'Насекомые',iBasic:'Основное',iSpace:'Космос',iStatus:'Статус',iElem:'Стихии',iTech:'Технологии',iSpecial:'Особенное',iSecrets:'Защита и тайны',iParty:'Праздник и подарки',iSea:'Море и берег',iNature:'Природа',iFlight:'Полёт',iSky:'Небо',iExplore:'Разведка и путь',iMagic:'Магия и цвет',iNight:'Ночь и тайна',iTime:'Время',iSignals:'Сигналы',iTools:'Инструменты',iAbstract:'Абстракция',iHomes:'Дома',iMind:'Разум и знание',iSound:'Звук',iVehicles:'Транспорт',iGames:'Игры',iAdventure:'Зима и приключения',iTravel:'Путешествия'}, angarTabIcon:'Иконки', angarTabFlash:'Вспышка',
     achTitle:'Достижения', achOf:'Открыто',
     achClsB:'Бронзовая награда', achClsS:'Серебряная награда', achClsG:'Золотая награда', achClaim:'Забрать', achDone:'Готово',
     statFlights:'Полётов', statDist:'Дистанция всего', statStars:'Звёзд всего', statCombo:'Лучшее комбо',
@@ -155,12 +155,13 @@ const I18N = {
     accIn:n=>n?('Ты в общей таблице как '+n):'Ты в общей таблице', accOut:'Выйти',
     dcLogin:'Войти через Discord', gLogin:'Войти через Google',
     setMorse:'Морзянка', csDefault:'Пилот',
-    setMorseHap:'Виброэфир',
+    setMorseHap:'Позывной вибрацией', // 29.08.2026 «семантика, не загадка»: было «Виброэфир» — придуманное слово без опоры на знакомое
     setGrpSound:'Звук и эфир', setGrpGame:'Игра и экран', setGrpProf:'Профиль', moreLbl:'Ещё',
     setWellAll:'Всё звучит', setWellSome:'Кое-что приглушено', setWellNone:'Тишина', // v1.91.0: шёпот самочувствия групп
     csCap:'Позывной — звучит в морзянке и виброэфире',
     diagVibro:'Проверка виброэфира', vibChTg:'Канал: Telegram API — импульсы отчётливые', vibChWeb:'Канал: только системная вибрация — предел веба', vibChNone:'Вибрация недоступна — проверь настройки телефона',
-    again:'ЕЩЁ РАЗ?', // подпись над своей тенью и имя строки настроек: текст один — ключ один
+    again:'Тень прошлой попытки', // 29.08.2026 «семантика, не загадка»: было «ЕЩЁ РАЗ?» — фраза с экрана «Игра окончена», пересаженная на переключатель без контекста
+    ghostTag:'ЕЩЁ РАЗ?', // тот же текст, что был у настройки раньше — но теперь только здесь, плавающая подпись над собственной тенью в полёте (render.js)
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Небо этого полёта не сохранилось',
     topWatch:'Смотреть этот полёт', topWatchNoSky:'Небо того полёта не сохранилось — показать нечего',
     ghostWith:(n)=>'Призрак '+(n||'игрока')+' — рядом с тобой',
@@ -265,7 +266,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me',
     tutGyroBody:'Your phone can be the yoke. Tilt it — the plane follows. Change your mind and one tap brings the finger back.', tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
     missionLbl:'Wave', angarTabColor:'Color', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost'],
-    angarTabDecal:'Decal', decalCatNames:{none:'No decal',space:'Space',zodiac:'Zodiac',weather:'Weather',faces:'Faces',nature:'Nature',games:'Games',animals:'Animals',moon:'Moon',music:'Music',myth:'Myth',status:'Status',vehicles:'Vehicles',food:'Food',sport:'Sport',tech:'Tech',fashion:'Fashion',symbols:'Symbols',landscape:'Landscape',holidays:'Holidays',landmarks:'Landmarks',science:'Science',flags:'Flags',hearts:'Hearts',fx:'Effects',sealife:'Sea life',bugs:'Bugs'}, angarTabIcon:'Icons', angarTabFlash:'Flash',
+    angarTabDecal:'Decal', decalCatNames:{none:'No decal',space:'Space',zodiac:'Zodiac',weather:'Weather',faces:'Faces',nature:'Nature',games:'Games',animals:'Animals',moon:'Moon',music:'Music',myth:'Myth',status:'Status',vehicles:'Vehicles',food:'Food',sport:'Sport',tech:'Tech',fashion:'Fashion',symbols:'Symbols',landscape:'Landscape',holidays:'Holidays',landmarks:'Landmarks',science:'Science',flags:'Flags',hearts:'Hearts',fx:'Effects',sealife:'Sea life',bugs:'Bugs',iBasic:'Basics',iSpace:'Space',iStatus:'Status',iElem:'Elements',iTech:'Technology',iSpecial:'Special',iSecrets:'Security & secrets',iParty:'Party & gifts',iSea:'Sea & shore',iNature:'Nature',iFlight:'Flight',iSky:'Sky',iExplore:'Explore',iMagic:'Magic & color',iNight:'Night & mystery',iTime:'Time',iSignals:'Signals',iTools:'Tools',iAbstract:'Abstract',iHomes:'Homes',iMind:'Mind & knowledge',iSound:'Sound',iVehicles:'Vehicles',iGames:'Games',iAdventure:'Winter & adventure',iTravel:'Travel'}, angarTabIcon:'Icons', angarTabFlash:'Flash',
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
     statFlights:'Flights', statDist:'Total distance', statStars:'Total stars', statCombo:'Best combo',
@@ -293,7 +294,8 @@ const I18N = {
     setWellAll:'All sounding', setWellSome:'Partly muted', setWellNone:'Silence', // v1.91.0: group wellness whispers
     csCap:'Callsign — sounds in morse trail and haptic air',
     diagVibro:'Haptic morse test', vibChTg:'Channel: Telegram API — crisp impulses', vibChWeb:'Channel: system vibration only — web limit', vibChNone:'No vibration — check phone settings',
-    again:'AGAIN?',
+    again:'Shadow of last run',
+    ghostTag:'AGAIN?',
     ghostGo:'Fly with this record’s ghost', ghostNone:'This flight’s sky wasn’t saved',
     topWatch:'Watch this flight', topWatchNoSky:'That flight’s sky wasn’t saved — nothing to show',
     ghostWith:(n)=>(n||'Player')+'’s ghost flies with you',
@@ -407,7 +409,7 @@ const I18N = {
     tutGyroBody:'El teléfono puede ser el timón. Inclínalo y el avión obedece. Si cambias de idea, un toque devuelve el dedo.', tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
     missionLbl:'Oleada', angarTabColor:'Color',
     skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
-    angarTabDecal:'Calcomanía', decalCatNames:{none:'Sin decoración',space:'Espacio',zodiac:'Zodíaco',weather:'Clima',faces:'Caras',nature:'Naturaleza',games:'Juegos',animals:'Animales',moon:'Luna',music:'Música',myth:'Mito',status:'Estatus',vehicles:'Vehículos',food:'Comida',sport:'Deporte',tech:'Tecnología',fashion:'Moda',symbols:'Símbolos',landscape:'Paisaje',holidays:'Fiestas',landmarks:'Monumentos',science:'Ciencia',flags:'Banderas',hearts:'Corazones',fx:'Efectos',sealife:'Vida marina',bugs:'Insectos'}, angarTabIcon:'Íconos', angarTabFlash:'Destello',
+    angarTabDecal:'Calcomanía', decalCatNames:{none:'Sin decoración',space:'Espacio',zodiac:'Zodíaco',weather:'Clima',faces:'Caras',nature:'Naturaleza',games:'Juegos',animals:'Animales',moon:'Luna',music:'Música',myth:'Mito',status:'Estatus',vehicles:'Vehículos',food:'Comida',sport:'Deporte',tech:'Tecnología',fashion:'Moda',symbols:'Símbolos',landscape:'Paisaje',holidays:'Fiestas',landmarks:'Monumentos',science:'Ciencia',flags:'Banderas',hearts:'Corazones',fx:'Efectos',sealife:'Vida marina',bugs:'Insectos',iBasic:'Básico',iSpace:'Espacio',iStatus:'Estatus',iElem:'Elementos',iTech:'Tecnología',iSpecial:'Especial',iSecrets:'Seguridad y secretos',iParty:'Fiesta y regalos',iSea:'Mar y costa',iNature:'Naturaleza',iFlight:'Vuelo',iSky:'Cielo',iExplore:'Explorar',iMagic:'Magia y color',iNight:'Noche y misterio',iTime:'Tiempo',iSignals:'Señales',iTools:'Herramientas',iAbstract:'Abstracto',iHomes:'Hogares',iMind:'Mente y saber',iSound:'Sonido',iVehicles:'Vehículos',iGames:'Juegos',iAdventure:'Invierno y aventura',iTravel:'Viajes'}, angarTabIcon:'Íconos', angarTabFlash:'Destello',
     achTitle:'Logros', achOf:'Desbloqueado',
     achClsB:'Premio de bronce', achClsS:'Premio de plata', achClsG:'Premio de oro',
     achClaim:'Reclamar', achDone:'Hecho',
@@ -435,7 +437,7 @@ const I18N = {
     accGuest:'Una tabla para todos — inicia sesión',
     accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
     accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord', gLogin:'Iniciar sesión con Google',
-    setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
+    setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Distintivo por vibración',
     setGrpSound:'Sonido y aire', setGrpGame:'Juego y pantalla', setGrpProf:'Perfil',
     moreLbl:'Más',
     setWellAll:'Todo suena', setWellSome:'Algo silenciado', setWellNone:'Silencio',
@@ -445,7 +447,8 @@ const I18N = {
     vibChWeb:'Canal: solo vibración del sistema — límite de la web',
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
     topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
-    again:'¿OTRA VEZ?',
+    again:'Sombra del intento anterior',
+    ghostTag:'¿OTRA VEZ?',
     ghostNone:'El cielo de ese vuelo no se guardó',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jugador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
@@ -558,7 +561,7 @@ const I18N = {
     tutGyroBody:'O telefone pode ser o leme. Incline-o e o avião obedece. Se mudar de ideia, um toque devolve o dedo.', tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
     missionLbl:'Onda', angarTabColor:'Cor',
     skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: то же — единственное расхождение типов во всём словаре
-    angarTabDecal:'Decalque', decalCatNames:{none:'Sem decoração',space:'Espaço',zodiac:'Zodíaco',weather:'Clima',faces:'Rostos',nature:'Natureza',games:'Jogos',animals:'Animais',moon:'Lua',music:'Música',myth:'Mito',status:'Status',vehicles:'Veículos',food:'Comida',sport:'Esporte',tech:'Tecnologia',fashion:'Moda',symbols:'Símbolos',landscape:'Paisagem',holidays:'Festas',landmarks:'Marcos',science:'Ciência',flags:'Bandeiras',hearts:'Corações',fx:'Efeitos',sealife:'Vida marinha',bugs:'Insetos'}, angarTabIcon:'Ícones', angarTabFlash:'Clarão',
+    angarTabDecal:'Decalque', decalCatNames:{none:'Sem decoração',space:'Espaço',zodiac:'Zodíaco',weather:'Clima',faces:'Rostos',nature:'Natureza',games:'Jogos',animals:'Animais',moon:'Lua',music:'Música',myth:'Mito',status:'Status',vehicles:'Veículos',food:'Comida',sport:'Esporte',tech:'Tecnologia',fashion:'Moda',symbols:'Símbolos',landscape:'Paisagem',holidays:'Festas',landmarks:'Marcos',science:'Ciência',flags:'Bandeiras',hearts:'Corações',fx:'Efeitos',sealife:'Vida marinha',bugs:'Insetos',iBasic:'Básico',iSpace:'Espaço',iStatus:'Status',iElem:'Elementos',iTech:'Tecnologia',iSpecial:'Especial',iSecrets:'Segurança e segredos',iParty:'Festa e presentes',iSea:'Mar e litoral',iNature:'Natureza',iFlight:'Voo',iSky:'Céu',iExplore:'Explorar',iMagic:'Magia e cor',iNight:'Noite e mistério',iTime:'Tempo',iSignals:'Sinais',iTools:'Ferramentas',iAbstract:'Abstrato',iHomes:'Casas',iMind:'Mente e saber',iSound:'Som',iVehicles:'Veículos',iGames:'Jogos',iAdventure:'Inverno e aventura',iTravel:'Viagens'}, angarTabIcon:'Ícones', angarTabFlash:'Clarão',
     achTitle:'Conquistas', achOf:'Desbloqueado',
     achClsB:'Prêmio de bronze', achClsS:'Prêmio de prata', achClsG:'Prêmio de ouro',
     achClaim:'Resgatar', achDone:'Concluído',
@@ -586,7 +589,7 @@ const I18N = {
     accGuest:'Uma tabela para todos — entre',
     accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
     accOut:'Sair', dcLogin:'Entrar com Discord', gLogin:'Entrar com Google',
-    setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Pulso vibrátil',
+    setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Codinome por vibração',
     setGrpSound:'Som e ar', setGrpGame:'Jogo e tela', setGrpProf:'Perfil',
     moreLbl:'Mais',
     setWellAll:'Tudo soando', setWellSome:'Algo abafado', setWellNone:'Silêncio',
@@ -596,7 +599,8 @@ const I18N = {
     vibChWeb:'Canal: só vibração do sistema — limite da web',
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
     topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
-    again:'DE NOVO?',
+    again:'Sombra da tentativa anterior',
+    ghostTag:'DE NOVO?',
     ghostNone:'O céu daquele voo não foi guardado',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jogador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
@@ -699,7 +703,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper',
     tutGyroBody:'Le téléphone peut être le manche. Incline-le, l\'avion suit. Si tu changes d\'avis, une touche rend le doigt.', tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
     missionLbl:'Vague', angarTabColor:'Couleur', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme'],
-    angarTabDecal:'Décalque', decalCatNames:{none:'Sans décoration',space:'Espace',zodiac:'Zodiaque',weather:'Météo',faces:'Visages',nature:'Nature',games:'Jeux',animals:'Animaux',moon:'Lune',music:'Musique',myth:'Mythe',status:'Statut',vehicles:'Véhicules',food:'Nourriture',sport:'Sport',tech:'Technologie',fashion:'Mode',symbols:'Symboles',landscape:'Paysage',holidays:'Fêtes',landmarks:'Monuments',science:'Science',flags:'Drapeaux',hearts:'Cœurs',fx:'Effets',sealife:'Vie marine',bugs:'Insectes'}, angarTabIcon:'Icônes', angarTabFlash:'Éclat',
+    angarTabDecal:'Décalque', decalCatNames:{none:'Sans décoration',space:'Espace',zodiac:'Zodiaque',weather:'Météo',faces:'Visages',nature:'Nature',games:'Jeux',animals:'Animaux',moon:'Lune',music:'Musique',myth:'Mythe',status:'Statut',vehicles:'Véhicules',food:'Nourriture',sport:'Sport',tech:'Technologie',fashion:'Mode',symbols:'Symboles',landscape:'Paysage',holidays:'Fêtes',landmarks:'Monuments',science:'Science',flags:'Drapeaux',hearts:'Cœurs',fx:'Effets',sealife:'Vie marine',bugs:'Insectes',iBasic:'Basique',iSpace:'Espace',iStatus:'Statut',iElem:'Éléments',iTech:'Technologie',iSpecial:'Spécial',iSecrets:'Sécurité et secrets',iParty:'Fête et cadeaux',iSea:'Mer et rivage',iNature:'Nature',iFlight:'Vol',iSky:'Ciel',iExplore:'Exploration',iMagic:'Magie et couleur',iNight:'Nuit et mystère',iTime:'Temps',iSignals:'Signaux',iTools:'Outils',iAbstract:'Abstrait',iHomes:'Maisons',iMind:'Esprit et savoir',iSound:'Son',iVehicles:'Véhicules',iGames:'Jeux',iAdventure:'Hiver et aventure',iTravel:'Voyages'}, angarTabIcon:'Icônes', angarTabFlash:'Éclat',
     achTitle:'Succès', achOf:'Débloqué',
     achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',
     statFlights:'Vols', statDist:'Distance totale', statStars:'Étoiles totales', statCombo:'Meilleur combo',
@@ -727,7 +731,8 @@ const I18N = {
     setWellAll:'Tout sonore', setWellSome:'Partiellement muet', setWellNone:'Silence',
     csCap:'Indicatif — résonne dans la traînée morse et l\u2019air haptique',
     diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
-    again:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
+    again:'Ombre de la dernière tentative',
+    ghostTag:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
     ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Le ciel de ce vol n’a pas été enregistré',
     topWatch:'Regarder ce vol', topWatchNoSky:'Le ciel de ce vol n’a pas été enregistré — rien à montrer',
     ghostWith:(n)=>'Le fantôme de '+(n||'Joueur')+' vole avec toi',

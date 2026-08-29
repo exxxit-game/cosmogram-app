@@ -1215,7 +1215,10 @@ function draw(){
        ни одной строки на чужом для игрока языке. Заглавные — как весь текст на канвасе
        (Каталог №31: canvas не слышит text-transform из CSS). */
     if (ghostTagT>0){
-      const tag = ghostForeign ? (ghostName||'') : ((typeof L!=='undefined' && L && L.again) ? L.again : '');
+      // 29.08.2026: был общий ключ L.again с настройками — один текст на два разных места
+      // означал, что смена подписи в Настройках молча меняла и эту плавающую надпись над
+      // собственной тенью в полёте. Разведено: ghostTag — только здесь, свой текст, свой тон.
+      const tag = ghostForeign ? (ghostName||'') : ((typeof L!=='undefined' && L && L.ghostTag) ? L.ghostTag : '');
       if (tag){
         ctx.save(); ctx.globalAlpha=clamp(ghostTagT,0,1)*.85;
         ctx.fillStyle=gCol; ctx.textAlign='center'; ctx.textBaseline='bottom';
@@ -1370,23 +1373,27 @@ function drawMorse(){
    зовётся и из полёта (ниже), и из превью ангара (ui.js:angarShip), чтобы два места не
    разошлись по геометрии. cx/cy — целевая точка в локальных координатах борта (для правой,
    тёмной sh.fold-панели это (5.3,-0.7) — зеркало декальной точки левой панели (-5.3,-0.7),
-   тот же треугольник (0,-22)/(0,6)/(16,14), тот же счёт центроида). Красим не в тон скина
-   (там, где это правая тёмная панель, тон скина = фон, иконка утонет), а светлым — двойной
+   тот же треугольник (0,-22)/(0,6)/(16,14), тот же счёт центроида). Красим не в sh.fold (та
+   же тень = тот же фон, иконка утонет), а в sh.glow — яркий акцентный цвет борта, свой у
+   каждого скина (тот же, что даёт аура корпуса и след), но всегда заметно светлее fold, на
+   котором стоит иконка — то есть иконка снова «под скин», как и была на левой панели, но
+   не сливается с тёмным фоном справа (владелец, 29.08.2026: «пропала возможность под цвет
+   скина подстраиваться» — вернул, только опорный цвет сменился с fold на glow). Двойной
    проход (широкий полупрозрачный ореол + чёткий силуэт) вместо ctx.shadowBlur: дёшево на
-   каждый кадр, не требует кэш-спрайта, как planeGlow(). Один и тот же светлый приём одинаково
-   читается на всех 9 скинов — их fold всегда заметно темнее чистого белого (см. живую сверку
-   на трёх скинах при добавлении). */
-function drawDecalSvg(c, dc, cx, cy){
+   каждый кадр, не требует кэш-спрайта, как planeGlow(). */
+function drawDecalSvg(c, dc, cx, cy, skin){
   const vb=dc.vb, s=9/Math.max(vb[2],vb[3]), path=new Path2D(dc.svg), vcx=vb[0]+vb[2]/2, vcy=vb[1]+vb[3]/2;
+  const base=(skin||SKINS[0]).glow.slice(0, (skin||SKINS[0]).glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что в drawLaunchFlash
+  const col=a=>base+Math.max(0,a).toFixed(2)+')';
   c.save();
   c.translate(cx,cy); c.scale(s,s); c.translate(-vcx,-vcy);
   c.save(); c.translate(vcx,vcy); c.scale(1.35,1.35); c.translate(-vcx,-vcy);
-  c.fillStyle='rgba(255,255,255,.3)'; c.fill(path);
+  c.fillStyle=col(.3); c.fill(path);
   c.restore();
-  c.fillStyle='rgba(255,255,255,.95)'; c.fill(path);
+  c.fillStyle=col(.95); c.fill(path);
   c.restore();
 }
-/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.flash,
+/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
    game.js). Держим на самом дешёвом таймере, какой уже есть: S.time — часы полёта, растут
    только пока update() реально тикает (пауза не портит), обнуляются на новый забег сами —
    отдельная метка времени старта не нужна. Окно — первые 0.45с, дальше функция не рисует
@@ -1450,7 +1457,7 @@ function renderFlashPattern(c, style, p, col){
       break;
   }
 }
-/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.flash,
+/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
    game.js). Держим на самом дешёвом таймере, какой уже есть: S.time — часы полёта, растут
    только пока update() реально тикает (пауза не портит), обнуляются на новый забег сами —
    отдельная метка времени старта не нужна. Окно — первые 0.45с, дальше функция не рисует
@@ -1459,8 +1466,10 @@ function renderFlashPattern(c, style, p, col){
    (дорого каждый кадр) — тот же класс дешёвого приёма, что уже проверен на decal-иконках
    (drawDecalSvg). */
 function drawLaunchFlash(){
-  if(!S.flash || S.time>=.45) return;
-  const fl=FLASHES_BY_ID.get(S.flash); if(!fl || fl.style==='none') return;
+  // 29.08.2026: было S.flash — уже занято золотой вспышкой подбора звезды (см. выше в этом
+  // файле, ~строка 1280), которая перетирала это значение каждый кадр. Переименовано.
+  if(!S.launchFx || S.time>=.45) return;
+  const fl=FLASHES_BY_ID.get(S.launchFx); if(!fl || fl.style==='none') return;
   const skin=SKINS[S.skin]||SKINS[0];
   const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что уже в drawPlane для ауры
   const col=a=>base+Math.max(0,a).toFixed(2)+')';
@@ -1566,7 +1575,7 @@ function drawPlane(sh,nowMs){
      центроид того же треугольника (0,-22)/(0,6)/(16,14): ((0+0+16)/3,(-22+6+14)/3) =
      (5.3,-0.7) — точное зеркало левой декальной точки, не на глаз. */
   if(S.icon){ const ic=ICONS_BY_ID.get(S.icon);
-    if(ic && ic.svg) drawDecalSvg(ctx, ic, 5.3, -0.7);
+    if(ic && ic.svg) drawDecalSvg(ctx, ic, 5.3, -0.7, skin);
   }
   ctx.strokeStyle='rgba(120,140,180,.5)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,6); ctx.stroke();
