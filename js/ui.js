@@ -1307,7 +1307,7 @@ async function feedbackSend(){
     if(ta) ta.value='';
     feedbackUpdateCount();
   } else {
-    status.textContent=(res.reason==='rate' ? L.feedbackRate : L.feedbackFail)||'';
+    status.textContent=(res.reason==='rate' ? L.feedbackRate : res.reason==='spam' ? L.feedbackSpam : L.feedbackFail)||'';
   }
 }
 

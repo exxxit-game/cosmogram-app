@@ -424,9 +424,14 @@ const BEACON=(()=>{
         body:JSON.stringify({action:'feedback', text:t, anon:anon(),
           v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf}),
         signal:ctl?ctl.signal:undefined});
-      if(!r||!r.ok) return {ok:false, reason:'http'};
+      if(!r) return {ok:false, reason:'http'};
+      /* 30.08.2026: сервер честно отвечает 400/429 С ТЕЛОМ {ok:false, reason:'rate'|'spam'|...} —
+         r.ok у fetch означает только «код 200-299», проверка ДО чтения тела топила reason
+         в общее 'http' на КАЖДОМ отказе сервера (лимитер, пустой текст, теперь мусор).
+         Тело читаем всегда, к статусу возвращаемся только если тело не разобрать вовсе. */
       let body=null; try{ body=await r.json(); }catch(e){}
-      if(!body || body.ok!==true) return {ok:false, reason:(body&&body.reason)||'server'};
+      if(!body) return {ok:false, reason:'http'};
+      if(body.ok!==true) return {ok:false, reason:body.reason||'server'};
       return {ok:true};
     }catch(e){ return {ok:false, reason:'net'}; }
     finally{ if(tmr) clearTimeout(tmr); }
