@@ -1002,7 +1002,11 @@ function angarItemFill(el, item){
   const worn  = S[cfg.selKey]===item.id;
   el.classList.toggle('sel', worn);
   const nm=el.querySelector('.nm'), pr=el.querySelector('.pr');
-  if(nm) nm.textContent = angarCat==='color' ? L.skinNames[item.name] : ''; // декали без подписи — эмодзи сам по себе понятен (владелец)
+  // декали/иконки/вспышки без подписи (эмодзи сам по себе понятен) — КРОМЕ «Нет» и
+  // гап-заполняющих избранных, у них .nm задан один раз при постройке плитки
+  // (angarBuildGrid) и не должен стираться на каждой перерисовке (29.08.2026, тот же
+  // баг, что уже чинили с .angarIt canvas — здесь про специфичность DOM, не CSS).
+  if(nm && angarCat==='color') nm.textContent = L.skinNames[item.name];
   if(pr){
     pr.classList.toggle('own', owned);
     if(worn){
@@ -1111,7 +1115,12 @@ function angarBuildGrid(){
         grid.appendChild(fhead);
         favHeadDone=true;
       }
-      if((angarCat==='decal'||angarCat==='icon') && !item.__favAny && item.cat && item.cat!==lastCat){
+      /* 29.08.2026 «нельзя без украшений + избранное в одной строке» (владелец, по
+         скриншоту): подзаголовок над «Нет» создавал видимость, что стоящие рядом
+         избранные жетоны (гап-заполнение пустых клеток) — тоже «без украшений», хотя
+         это полноценные украшения. Заголовок для cat:'none' больше не рисуется рядом —
+         подпись у самой плитки «Нет» ниже, точечно на ней одной. */
+      if((angarCat==='decal'||angarCat==='icon') && !item.__favAny && item.cat && item.cat!=='none' && item.cat!==lastCat){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
@@ -1132,7 +1141,10 @@ function angarBuildGrid(){
            анимации, там уже видна форма). Тот же renderFlashPattern, что и в полёте
            (render.js) — плитка не врёт о том, как это будет выглядеть на самом деле.
            Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span><span class="pr"></span>';
+        /* 29.08.2026: гап-заполняющим избранным (в строке «Нет», без своего заголовка)
+           нужна точечная пометка, чтобы не выглядеть обычным непроданным жетоном каталога. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span>'+
+          (item.__favAny && !item.__fav ? '<span class="nm">★</span>' : '')+'<span class="pr"></span>';
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
           const skin=SKINS[S.skin]||SKINS[0];
@@ -1143,7 +1155,12 @@ function angarBuildGrid(){
         }
         el.setAttribute('aria-label', item.name);
       } else {
-        el.innerHTML='<span class="ch"></span><span class="pr"></span>';
+        /* 29.08.2026: у «Нет» была подпись только через убранный сейчас заголовок строки —
+           переехала на саму плитку. У гап-заполняющих избранных (в той же строке, без
+           заголовка) — звёздочка, чтобы не путать с обычным непроданным жетоном каталога. */
+        const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '')
+                      : (item.__favAny && !item.__fav) ? '★' : '';
+        el.innerHTML='<span class="ch"></span>'+(nmText?'<span class="nm">'+nmText+'</span>':'')+'<span class="pr"></span>';
         const chEl=el.querySelector('.ch');
         if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
           chEl.innerHTML='<svg viewBox="'+item.vb.join(' ')+'" width="26" height="26"><path d="'+item.svg+'" fill="#eaf2ff"/></svg>';
