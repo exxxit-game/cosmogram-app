@@ -860,10 +860,18 @@ function angarShip(x, sk, s, bolshoy){
     x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();
   }
+  /* 29.08.2026 «живой предпросмотр на всех вкладках» (владелец): раньше здесь всегда
+     рисовался НАДЕТЫЙ декаль/иконка/вспышка, даже когда игрок листает каталог и смотрит
+     на что-то другое (angarSel) — окно врало «вот как это будет выглядеть», хотя честно
+     показывало вчерашний выбор. Теперь: на своей вкладке жетон, на который сейчас смотрит
+     игрок (angarSel), подменяет надетый — на всех остальных вкладках показывается то, что
+     реально надето, как и раньше. Тот же приём, что уже был только у Цвета. */
+  const pvDecal = angarCat==='decal' ? angarSel : S.decal;
+  const pvIcon  = angarCat==='icon'  ? angarSel : S.icon;
   /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
      render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
      выше, отдельно пересчитывать не нужно. */
-  if(S.decal){ const dc=DECALS_BY_ID.get(S.decal);
+  if(pvDecal){ const dc=DECALS_BY_ID.get(pvDecal);
     if(dc && dc.ch){
       x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
       x.fillText(dc.ch,-5.3,-0.7);
@@ -872,8 +880,24 @@ function angarShip(x, sk, s, bolshoy){
   // 29.08.2026 «правая сторона, отдельная категория»: иконка — свой слот (S.icon, ICONS),
   // рисуется всегда вместе с декалью выше, не вместо неё; drawDecalSvg — общая функция из
   // render.js (грузится раньше ui.js, см. sw.js JS_FILES), превью совпадает с полётом.
-  if(S.icon){ const ic=ICONS_BY_ID.get(S.icon);
+  if(pvIcon){ const ic=ICONS_BY_ID.get(pvIcon);
     if(ic && ic.svg) drawDecalSvg(x, ic, 5.3, -0.7, sk);
+  }
+  /* 29.08.2026 «показывать Вспышку тоже»: раньше окно предпросмотра вообще не знало о
+     вспышке — её было видно только первые 0.45с настоящего полёта. Здесь — тот же узор
+     (renderFlashPattern, общая с полётом и с плиткой каталога), зациклен по кругу (не
+     застывший кадр, как на плитке) — витрина живая, а на плитке достаточно одного кадра.
+     Только на большом борту (bolshoy) — на мелких квадратиках цвета вспышке не место. */
+  if(bolshoy){
+    const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
+    if(pvFlash){ const fl=FLASHES_BY_ID.get(pvFlash);
+      if(fl && fl.style && fl.style!=='none'){
+        const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
+        const col=a=>base+Math.max(0,a).toFixed(2)+')';
+        const p=(performance.now()%1600)/1600;
+        x.save(); x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
+      }
+    }
   }
   x.restore();
 }
@@ -893,9 +917,9 @@ function angarPvDraw(t){
      на angarSel («на какой жетон смотрит игрок», см. коммент у объявления) — жалоба
      владельца «выбираешь скин, а в окне его не видно» ровно про это рассогласование. */
   /* 28.08.2026: во вкладке «Цвет» показываем то, на что смотрит игрок (angarSel — живой
-     предпросмотр ещё не купленного скина); во вкладке «Декаль» angarSel указывает на
-     декаль (другой список), поэтому небо там всегда честно показывает НАДЕТЫЙ борт —
-     живого предпросмотра декали на корабле пока нет (отдельный заход, render.js). */
+     предпросмотр ещё не купленного скина). 29.08.2026: то же самое теперь и у Декали/
+     Иконок/Вспышки — angarShip() сама подменяет надетое на angarSel на своей активной
+     вкладке (см. её собственный комментарий) — здесь только скин, остальное уже внутри. */
   const sk = (angarCat==='color') ? (SKINS[angarSel]||SKINS[0]) : (SKINS[S.skin]||SKINS[0]);
   const W=380, H=130, d=(window.devicePixelRatio||1); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
