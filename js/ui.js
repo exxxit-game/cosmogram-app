@@ -2089,6 +2089,7 @@ function applyLang(){
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
+  setText('finalScoreLabel',L.finalScoreLabel);
   setText('hangarBtn',L.hangar);
   setText('feedbackBtn',L.feedbackBtn);
   setText('duelBtn',L.duelBtn);

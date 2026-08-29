@@ -546,6 +546,13 @@ button, input, select, textarea { text-transform:inherit; }
 /* ============ конец HUD ============ */
 
 /* ---- Итоги (база М1; раскладка-«герой» — модуль М3) ---- */
+/* 30.08.2026 (владелец): голая цифра на итогах ничего не объясняет сама по
+   себе — подпись сверху говорит, что это именно ЕГО результат. Тот же шрифт
+   и цвет, что у самой цифры (владелец: «должен быть такими же») — не мелкая
+   служебная пометка сбоку, а часть одной надписи, просто меньшего размера. */
+#finalScoreLabel { font-family:var(--font-disp); font-weight:700;
+  font-size:clamp(20px,5.5vw,28px); letter-spacing:.06em; color:var(--gold-hi);
+  text-shadow:0 0 16px rgba(240,192,64,.3); margin-bottom:2px; opacity:.85; }
 #finalScore { font-family:var(--font-disp); font-weight:400;
   font-size:clamp(56px,15vw,96px); line-height:1; color:var(--gold-hi);
   text-shadow:0 0 30px rgba(240,192,64,.35); margin-bottom:6px; }
@@ -1051,7 +1058,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .tgWidget { display:flex; justify-content:center; }
 .tgWidget:empty { display:none; }
 #webJoin { margin:2px 0 4px; text-align:center; }
-#webJoinTxt { color:var(--muted); font-size:13px; line-height:1.5; padding:0 26px; margin-bottom:6px; }
+/* 30.08.2026 (владелец): «войдите, чтобы рекорд попал в таблицу» — не мелкая
+   служебная строка, а зазывала на аккаунт (важная функция, направляет к
+   Discord/Google ниже). Раньше цвет --muted топил её среди обычного текста;
+   теперь золото и вес, как у #toRecord — тот же язык «важной строки на
+   итогах», что уже есть в игре, не новый приём. */
+#webJoinTxt { color:var(--gold-hi); font-size:15px; font-weight:600; line-height:1.4;
+  padding:0 26px; margin-bottom:8px; text-shadow:0 0 12px rgba(240,192,64,.25); }
 
 /* ---------- Второй вход: Discord (v1.52.0) ---------- */
 /* 23.08.2026: кнопка выглядела как обычная серая кнопка игры — рядом с фирменной синей
@@ -1689,6 +1702,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      Герой — счёт; тихая строка рекорда; большая «Ещё раз»; рядом тихая тройка действий.
      Всё второе (мотивация, ранг, паспорт, сетка статистики) — за спойлером «Подробности». -->
 <div id="gameOverScreen" class="overlay hidden">
+  <div id="finalScoreLabel"></div>
   <div id="finalScore">0</div>
   <div id="newRecord"></div>
   <div id="goldChip" class="hidden">★ Знак дня</div><!-- v1.100.2 «Золотая звезда дня»: снич пойман — честь, не очки -->
