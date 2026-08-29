@@ -872,7 +872,7 @@ function angarShip(x, sk, s, bolshoy){
      render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
      выше, отдельно пересчитывать не нужно. */
   if(pvDecal){ const dc=DECALS_BY_ID.get(pvDecal);
-    if(dc && dc.ch){
+    if(dc && dc.ch && emojiSupported(dc.ch)){ // 29.08.2026: не рисовать тофу на самом борту — см. angarVisibleList
       x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
       x.fillText(dc.ch,-5.3,-0.7);
     }
@@ -1049,6 +1049,28 @@ function angarItemFill(el, item){
     }
   }
 }
+/* 29.08.2026 «Не всем показывать одно и то же» (владелец): вместо ручного списка «эти эмодзи
+   убрать/оставить» — проверка прямо на устройстве игрока. Рисуем символ на скрытом канвасе
+   и сравниваем с кодом из приватной области Unicode (U+E000) — глифа под него нет ни в
+   одном шрифте нигде, это заведомо «пустой квадрат». Совпали пиксели с ним — значит и у
+   проверяемого символа тоже нет картинки на этом устройстве; несовпали — есть, неважно,
+   что именно нарисовано (не обязана быть «правильной» эмодзи-версией, просто не тофу).
+   Кэш на время сессии — рисовать по 24×24 канвасу на каждую перерисовку сетки не нужно. */
+const EMOJI_SUPPORT_CACHE = new Map();
+let _emojiProbeCv = null;
+function emojiSupported(ch){
+  if(!ch) return true;
+  if(EMOJI_SUPPORT_CACHE.has(ch)) return EMOJI_SUPPORT_CACHE.get(ch);
+  if(!_emojiProbeCv){ _emojiProbeCv=document.createElement('canvas'); _emojiProbeCv.width=_emojiProbeCv.height=24; }
+  const x=_emojiProbeCv.getContext('2d');
+  const draw=(s)=>{ x.clearRect(0,0,24,24); x.textBaseline='top'; x.font='20px sans-serif'; x.fillText(s,0,0); return x.getImageData(0,0,24,24).data; };
+  const blank=draw(''), real=draw(ch);
+  let same=true;
+  for(let i=0;i<real.length;i++){ if(real[i]!==blank[i]){ same=false; break; } }
+  const ok=!same;
+  EMOJI_SUPPORT_CACHE.set(ch, ok);
+  return ok;
+}
 function angarVisibleList(){ // список жетонов активной вкладки — у декалей это уже весь каталог разом
   const cfg = ANGAR_CATS[angarCat];
   if(angarCat==='color') return cfg.list;
@@ -1072,7 +1094,10 @@ function angarVisibleList(){ // список жетонов активной в�
     ? subCats.flatMap(cat=>cfg.list.filter(d=>d.cat===cat))
     : cfg.list.filter(d=>d.id!==0);
   const rest = restBase.filter(d=>freebieIds.indexOf(d.id)<0);
-  return none.concat(freebies, rest);
+  // 29.08.2026: у декалей ch — эмодзи-глиф, у иконок (icon) его нет вообще (там svg) —
+  // emojiSupported(undefined) сама возвращает true, фильтр для иконок безвреден и не нужен,
+  // но не мешает оставить его общим для обеих вкладок.
+  return none.concat(freebies, rest).filter(d=>emojiSupported(d.ch));
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
