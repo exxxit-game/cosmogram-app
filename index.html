@@ -351,6 +351,11 @@ button, input, select, textarea { text-transform:inherit; }
      ширину экрана, и текст прижимался к левому краю, налезая на круглую кнопку «Назад». */
   text-align:center; }
 .miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
+#feedbackCount { color:rgba(158,178,224,.6); }
+/* 30.08.2026: цвет раньше жил в inline style на самом элементе — тот побеждает любой
+   класс независимо от специфичности CSS. #feedbackCount.feedbackCountLow (ID+класс)
+   обгоняет одиночный #feedbackCount ровно так же надёжно, как раньше это делал inline. */
+#feedbackCount.feedbackCountLow { color:#ff9fb0; }
 .achTab .ic, .topCat .ic { width:1.15em; height:1.15em; vertical-align:-0.2em; margin-right:.35em; }
 .topCat .ic:only-child { margin-right:0; width:19px; height:19px; }
 
@@ -1533,12 +1538,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div class="screenTitle" id="feedbackTitle">Написать разработчику</div>
   <div class="scrBody"><div class="setPanel">
     <div class="hint" id="feedbackHint" style="position:static;padding:10px 16px 4px"></div>
-    <textarea id="feedbackText" rows="6" maxlength="1200"
+    <textarea id="feedbackText" rows="6" maxlength="4000"
       style="width:calc(100% - 32px);margin:8px 16px 4px;font-size:14px;line-height:1.4;
              background:rgba(10,16,40,.6);color:#eaf0ff;border:1px solid rgba(120,170,255,.25);
              border-radius:10px;padding:10px 12px;text-transform:none;letter-spacing:normal;
              outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
-    <div id="feedbackCount" style="text-align:right;margin:0 16px 10px;font-size:11px;color:rgba(158,178,224,.6)"></div>
+    <div id="feedbackCount" style="text-align:right;margin:0 16px 10px;font-size:11px"></div>
     <div class="stack" style="margin:0 16px 14px">
       <button class="btn pri" id="feedbackSendBtn">Отправить</button>
     </div>

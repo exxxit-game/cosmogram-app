@@ -414,7 +414,7 @@ const BEACON=(()=>{
      Сервер отвечает {ok:true} либо {ok:false, reason}; UI (ui.js) сам решает, что показать. */
   async function feedback(text){
     if(sealed()) return {ok:false, reason:'sealed'};
-    const t=String(text==null?'':text).trim().slice(0,1200);
+    const t=String(text==null?'':text).trim().slice(0,4000);
     if(!t) return {ok:false, reason:'empty'};
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     const ctl=(typeof AbortController==='function')?new AbortController():null;

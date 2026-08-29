@@ -1282,9 +1282,13 @@ function openFeedback(from){
 }
 function closeFeedback(){ setScreen(feedbackFrom); sfx.click(); }
 function feedbackUpdateCount(){
+  // 30.08.2026 (владелец): счётчик на убывание — «сколько ещё можно» нагляднее, чем
+  // «сколько уже набрано»; ноль сам по себе честно показывает игроку упор в потолок.
   const ta=$('feedbackText'); const c=$('feedbackCount');
   if(!ta||!c) return;
-  c.textContent=(ta.value||'').length+' / 1200';
+  const left=ta.maxLength-(ta.value||'').length;
+  c.textContent=L.feedbackLeft?L.feedbackLeft(left):left;
+  c.classList.toggle('feedbackCountLow', left<=0);
 }
 async function feedbackSend(){
   if(feedbackSending) return;
