@@ -966,10 +966,16 @@ function starJewelWake(){
    секции ещё раз. */
 const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
-  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal', favKey:'favDecal' },
-  icon:  { list:ICONS,  ownedKey:'ownedIcons',  selKey:'icon', favKey:'favIcon' },
-  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx', favKey:'favLaunchFx' } // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
+  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' },
+  icon:  { list:ICONS,  ownedKey:'ownedIcons',  selKey:'icon' },
+  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx' } // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
 };
+/* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
+   тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
+   владении (см. game.js: ownedDecals/ownedIcons/ownedLaunchFx, price:0 у самих записей).
+   Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
+   состав каталога, не действие игрока. */
+const ANGAR_FREEBIE = { decal:[1,2], icon:[1,2], flash:[1,2] };
 let angarCat = 'color';   // активная вкладка тюнинга
 /* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
    потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
@@ -1002,20 +1008,15 @@ function angarItemFill(el, item){
   const worn  = S[cfg.selKey]===item.id;
   el.classList.toggle('sel', worn);
   const nm=el.querySelector('.nm'), pr=el.querySelector('.pr');
-  // декали/иконки/вспышки без подписи (эмодзи сам по себе понятен) — КРОМЕ «Нет» и
-  // гап-заполняющих избранных, у них .nm задан один раз при постройке плитки
-  // (angarBuildGrid) и не должен стираться на каждой перерисовке (29.08.2026, тот же
-  // баг, что уже чинили с .angarIt canvas — здесь про специфичность DOM, не CSS).
+  // декали/иконки/вспышки без подписи (эмодзи сам по себе понятен) — КРОМЕ «Нет», у неё
+  // .nm задан один раз при постройке плитки (angarBuildGrid) и не должен стираться на
+  // каждой перерисовке (29.08.2026, тот же баг, что уже чинили с .angarIt canvas — здесь
+  // про специфичность DOM, не CSS).
   if(nm && angarCat==='color') nm.textContent = L.skinNames[item.name];
   if(pr){
     pr.classList.toggle('own', owned);
     if(worn){
-      /* 29.08.2026 «избранное — только через уже надетое»: звёздочка появляется ровно там,
-         где раньше было просто «ВЫБРАН», и только у категорий со своим favKey (цвет — нет,
-         у скина и так один слот, закреплять нечего). Тап — angarToggleFav ниже. */
-      const cfgFav = cfg.favKey;
-      const isFav = cfgFav && S[cfgFav].includes(item.id);
-      pr.innerHTML = L.owned + (cfgFav ? ' <button type="button" class="favBtn" data-id="'+item.id+'" aria-label="'+(isFav?L.favRemove:L.favAdd)+'">'+(isFav?'★':'☆')+'</button>' : '');
+      pr.innerHTML = L.owned;
     } else if(angarSel===item.id){
       pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
         (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(item.price)))+'</button>';
@@ -1033,29 +1034,21 @@ function angarVisibleList(){ // список жетонов активной в�
   // категорию по построению — держим её первой плиткой списка один раз, не по разу на
   // категорию (была именно эта жалоба владельца — «пустые места в декали»).
   const none = cfg.list.filter(d=>d.id===0);
-  /* 29.08.2026 «убрать пустоту избранным» (владелец, финальная версия после двух неверных
-     заходов): ОДИН список избранного (до ANGAR_FAV_MAX=5), одно поведение, одна подпись —
-     не два механизма. Разница между первыми ANGAR_FAV_GAP и остальными — только ГДЕ они
-     физически лежат в сетке, не что они такое: первые встают в ту же строку, что «Без
-     украшений» (та плитка + до 2 избранных = полная строка без пустых клеток — ради этого
-     всё и затевалось), остальные показываются заголовком «Избранное» ниже, тем же приёмом
-     подзаголовка, что у категорий. Клоны (не сами объекты — item.__fav метит копию, чтобы
-     angarBuildGrid не поставил заголовок над первыми ANGAR_FAV_GAP, только над «остальными»
-     — оригинал всё так же стоит на обычном месте ниже, избранное это ярлык-дубликат, не
-     перемещение). Работает во всех вкладках со своим favKey (у Цвета его нет). */
-  const favIds = cfg.favKey ? S[cfg.favKey] : [];
-  const favAll = favIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
-  // __favAny — на ВСЕХ избранных клонах, гасит подзаголовок категории (у них есть свой item.cat
-  // от оригинала, без этой метки первые ANGAR_FAV_GAP ошибочно запустили бы, например, «Космос»).
-  // __fav — только на «остальных» (index >= GAP), запускает подзаголовок «Избранное» один раз.
-  const favItems = favAll.map((d,i)=>Object.assign({},d,{__favAny:true}, i<ANGAR_FAV_GAP ? {} : {__fav:true}));
+  /* 29.08.2026 «2 бесплатных вместо Избранного» (владелец, после трёх неудачных заходов со
+     звёздочкой): пустые клетки рядом с «Без украшений» заполняют 2 фиксированных id
+     (ANGAR_FREEBIE) — не выбор игрока, не клон-дубликат. Просто эти два предмета показаны
+     сразу после «Нет», а из обычного места в своей категории убраны (freebieIds ниже),
+     чтобы не быть на экране дважды. */
+  const freebieIds = ANGAR_FREEBIE[angarCat] || [];
+  const freebies = freebieIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
   // 29.08.2026: иконки получили реальные категории (ANGAR_ICON_CATS) тем же приёмом, что
   // декали — вкладка «Вспышка» своих подкатегорий не имеет (10 штук, не нужны), остаётся плоской.
   const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS : angarCat==='icon' ? ANGAR_ICON_CATS : null;
-  const rest = subCats
+  const restBase = subCats
     ? subCats.flatMap(cat=>cfg.list.filter(d=>d.cat===cat))
     : cfg.list.filter(d=>d.id!==0);
-  return none.concat(favItems, rest);
+  const rest = restBase.filter(d=>freebieIds.indexOf(d.id)<0);
+  return none.concat(freebies, rest);
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
@@ -1106,21 +1099,15 @@ function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
     grid.innerHTML='';
-    let lastCat=null, favHeadDone=false; // 29.08.2026: подзаголовок вставляется перед первой плиткой новой категории
+    let lastCat=null; // 29.08.2026: подзаголовок вставляется перед первой плиткой новой категории
     angarVisibleList().forEach(item=>{
-      if(item.__fav && !favHeadDone){
-        const fhead=document.createElement('div');
-        fhead.className='angarCatHead';
-        fhead.textContent = L.favorites || 'Избранное';
-        grid.appendChild(fhead);
-        favHeadDone=true;
-      }
-      /* 29.08.2026 «нельзя без украшений + избранное в одной строке» (владелец, по
-         скриншоту): подзаголовок над «Нет» создавал видимость, что стоящие рядом
-         избранные жетоны (гап-заполнение пустых клеток) — тоже «без украшений», хотя
-         это полноценные украшения. Заголовок для cat:'none' больше не рисуется рядом —
-         подпись у самой плитки «Нет» ниже, точечно на ней одной. */
-      if((angarCat==='decal'||angarCat==='icon') && !item.__favAny && item.cat && item.cat!=='none' && item.cat!==lastCat){
+      /* 29.08.2026: подзаголовок для cat:'none' не рисуется рядом — подпись у самой плитки
+         «Нет» ниже, точечно на ней одной. Бесплатные (ANGAR_FREEBIE) тоже без заголовка —
+         у них есть свой item.cat от оригинала (например 'space'), без исключения заголовок
+         той категории ошибочно всплыл бы прямо над ними, а не над её настоящим первым
+         предметом дальше по списку. */
+      if((angarCat==='decal'||angarCat==='icon') && item.cat && item.cat!=='none' && item.cat!==lastCat
+         && (ANGAR_FREEBIE[angarCat]||[]).indexOf(item.id)<0){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
@@ -1141,10 +1128,7 @@ function angarBuildGrid(){
            анимации, там уже видна форма). Тот же renderFlashPattern, что и в полёте
            (render.js) — плитка не врёт о том, как это будет выглядеть на самом деле.
            Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре. */
-        /* 29.08.2026: гап-заполняющим избранным (в строке «Нет», без своего заголовка)
-           нужна точечная пометка, чтобы не выглядеть обычным непроданным жетоном каталога. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span>'+
-          (item.__favAny && !item.__fav ? '<span class="nm">★</span>' : '')+'<span class="pr"></span>';
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span><span class="pr"></span>';
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
           const skin=SKINS[S.skin]||SKINS[0];
@@ -1155,11 +1139,8 @@ function angarBuildGrid(){
         }
         el.setAttribute('aria-label', item.name);
       } else {
-        /* 29.08.2026: у «Нет» была подпись только через убранный сейчас заголовок строки —
-           переехала на саму плитку. У гап-заполняющих избранных (в той же строке, без
-           заголовка) — звёздочка, чтобы не путать с обычным непроданным жетоном каталога. */
-        const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '')
-                      : (item.__favAny && !item.__fav) ? '★' : '';
+        // 29.08.2026: у «Нет» была подпись только через убранный сейчас заголовок строки — переехала на саму плитку.
+        const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '') : '';
         el.innerHTML='<span class="ch"></span>'+(nmText?'<span class="nm">'+nmText+'</span>':'')+'<span class="pr"></span>';
         const chEl=el.querySelector('.ch');
         if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
@@ -1232,34 +1213,10 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
   }
 }
-/* 29.08.2026 «избранное — только через уже надетое»: закрепить/открепить можно только
-   то, что прямо сейчас надето (звёздочка рядом с «ВЫБРАН», см. angarItemFill). Максимум
-   ANGAR_FAV_MAX (5 — владелец: «убрать пустоту с экрана избранным») — новое сверх лимита
-   вытесняет самое старое (shift), без диалогов подтверждения. Всё это один список с одним
-   поведением (см. angarVisibleList) — ANGAR_FAV_GAP (2) из них физически заполняют пустые
-   клетки рядом с «Без украшений», остальные показаны заголовком «Избранное» ниже, но это
-   разница только в месте на сетке, не в логике. Перестраиваем сетку целиком (angarBuilt=false)
-   — состав «Избранное» меняет число плиток в начале списка, точечным обновлением тут не
-   обойтись, как в angarAct(). */
-const ANGAR_FAV_MAX = 5, ANGAR_FAV_GAP = 2; // GAP — сколько влезает в пустые клетки строки "Без украшений" (та плитка + GAP = 3, полная строка)
-function angarToggleFav(id){
-  const cfg = ANGAR_CATS[angarCat]; if(!cfg.favKey) return;
-  const arr = S[cfg.favKey];
-  const idx = arr.indexOf(id);
-  if(idx>=0) arr.splice(idx,1);
-  else { arr.push(id); if(arr.length>ANGAR_FAV_MAX) arr.shift(); }
-  Store.set(cfg.favKey, arr);
-  sfx.click(); haptic('light');
-  angarBuilt=false; angarBuildGrid();
-}
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
-// вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком:
-// e.stopPropagation() — иначе тап по кнопке всплыл бы до .angarIt и дошёл до angarPick()
-// (там он и так безвреден, ранний выход при angarSel===id, но лучше не полагаться на это).
+// вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
-  const favBtn=e.target.closest('.favBtn');
-  if(favBtn){ e.stopPropagation(); angarToggleFav(+favBtn.dataset.id); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
@@ -2135,15 +2092,15 @@ Store.init(()=>{
   S.wallet = saneNumber(Store.get('wallet',0),0);
   S.ownedSkins = saneArray(Store.get('ownedSkins',[0]),[0]);
   S.skin = saneNumber(Store.get('skin',0),0);
-  S.ownedDecals = saneArray(Store.get('ownedDecals',[0]),[0]);
+  // 29.08.2026 «2 бесплатных вместо Избранного»: id 1,2 из ANGAR_FREEBIE домешиваются в
+  // ownedX явным union — не только через дефолт Store.get (тот сработал бы лишь для
+  // игрока без вообще сохранённого массива, а не для уже игравших без этих двух id).
+  S.ownedDecals = Array.from(new Set(saneArray(Store.get('ownedDecals',[0]),[0]).concat(ANGAR_FREEBIE.decal)));
   S.decal = saneNumber(Store.get('decal',0),0);
-  S.ownedIcons = saneArray(Store.get('ownedIcons',[0]),[0]);
+  S.ownedIcons = Array.from(new Set(saneArray(Store.get('ownedIcons',[0]),[0]).concat(ANGAR_FREEBIE.icon)));
   S.icon = saneNumber(Store.get('icon',0),0);
-  S.ownedLaunchFx = saneArray(Store.get('ownedLaunchFx',[0]),[0]);
+  S.ownedLaunchFx = Array.from(new Set(saneArray(Store.get('ownedLaunchFx',[0]),[0]).concat(ANGAR_FREEBIE.flash)));
   S.launchFx = saneNumber(Store.get('launchFx',0),0); // 29.08.2026: было S.flash/Store-ключ 'flash' — переименовано, см. game.js
-  S.favDecal = saneArray(Store.get('favDecal',[]),[]);
-  S.favIcon = saneArray(Store.get('favIcon',[]),[]);
-  S.favLaunchFx = saneArray(Store.get('favLaunchFx',[]),[]);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);

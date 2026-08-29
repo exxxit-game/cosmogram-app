@@ -268,7 +268,7 @@ const Store = {
      ключей на порядки меньше. Тяжёлое (лента самописца, очередь писем) сюда по-прежнему
      не входит — см. правку v1.282.13. */
   CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedDecals','decal','ownedIcons','icon','ownedLaunchFx','launchFx',
-              'favDecal','favIcon','favLaunchFx','savedRun','stats','refBy',
+              'savedRun','stats','refBy',
               'ach','achQ','callsign','gyroUnlocked','bestGyro','bestTouch','bestKeys','bestDist','bestBullet','srBest'],
   /* v1.282.13: переполнение больше не проходит молча. Всё хранилище — один ключ, поэтому
      отказ записи роняет разом рекорды, кошелёк и очереди, а прежний пустой catch делал
