@@ -752,6 +752,7 @@ button, input, select, textarea { text-transform:inherit; }
 .angarIt .pr .ic { width:10px; height:10px; }
 canvas.starJewelSm { width:10px; height:10px; flex:none; vertical-align:-1px; } /* 28.08.2026: та же кисть, что у звёзд полёта — drawStarJewel(), не контур i-star4;
   селектор с тегом canvas — иначе .angarIt canvas{width:62px;height:48px} (превью корабля) специфичнее голого класса и растягивает звезду до размеров корабля */
+canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловушка специфичности, что у starJewelSm — плитка вспышки, тег canvas обязателен в селекторе */
 .angarIt .pr.own { color:var(--ok); }
 .angarIt.sel .dot, .angarIt.sel .ch { border-color:rgba(190,225,255,.55); background:rgba(120,170,255,.10);
   box-shadow:0 0 20px rgba(120,170,255,.16); }

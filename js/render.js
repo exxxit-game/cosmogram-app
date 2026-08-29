@@ -1229,6 +1229,7 @@ function draw(){
   drawMorse(); // морзянка: позывной в шлейфе (v1.53.0)
 
   drawPlane(sh,nowMs);
+  drawLaunchFlash(); // 29.08.2026: первые 0.45с забега — если куплена и надета
   planetPlaneFx(nowS); // v1.100.0 «Планетарий»: вспышка крыла при крене + искры звезды
 
   drawFx(hq,sh); // частицы + попапы (общий блок, в оверлеях тоже)
@@ -1365,6 +1366,109 @@ function drawMorse(){
     morseGlyphs(ghostMorseBuf, ghostMorseElems, ghostMorsePat.length, f=>morseCol('rgba(190,220,255,', ghostA*(0.5+2*f)));
 }
 
+/* 29.08.2026 «правая сторона, со светом»: общая точка для отрисовки вендоренной SVG-иконки —
+   зовётся и из полёта (ниже), и из превью ангара (ui.js:angarShip), чтобы два места не
+   разошлись по геометрии. cx/cy — целевая точка в локальных координатах борта (для правой,
+   тёмной sh.fold-панели это (5.3,-0.7) — зеркало декальной точки левой панели (-5.3,-0.7),
+   тот же треугольник (0,-22)/(0,6)/(16,14), тот же счёт центроида). Красим не в тон скина
+   (там, где это правая тёмная панель, тон скина = фон, иконка утонет), а светлым — двойной
+   проход (широкий полупрозрачный ореол + чёткий силуэт) вместо ctx.shadowBlur: дёшево на
+   каждый кадр, не требует кэш-спрайта, как planeGlow(). Один и тот же светлый приём одинаково
+   читается на всех 9 скинов — их fold всегда заметно темнее чистого белого (см. живую сверку
+   на трёх скинах при добавлении). */
+function drawDecalSvg(c, dc, cx, cy){
+  const vb=dc.vb, s=9/Math.max(vb[2],vb[3]), path=new Path2D(dc.svg), vcx=vb[0]+vb[2]/2, vcy=vb[1]+vb[3]/2;
+  c.save();
+  c.translate(cx,cy); c.scale(s,s); c.translate(-vcx,-vcy);
+  c.save(); c.translate(vcx,vcy); c.scale(1.35,1.35); c.translate(-vcx,-vcy);
+  c.fillStyle='rgba(255,255,255,.3)'; c.fill(path);
+  c.restore();
+  c.fillStyle='rgba(255,255,255,.95)'; c.fill(path);
+  c.restore();
+}
+/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.flash,
+   game.js). Держим на самом дешёвом таймере, какой уже есть: S.time — часы полёта, растут
+   только пока update() реально тикает (пауза не портит), обнуляются на новый забег сами —
+   отдельная метка времени старта не нужна. Окно — первые 0.45с, дальше функция не рисует
+   вообще (первая же проверка). Все узоры красятся в skin.glow (тот же цвет, что аура борта
+   и след) — самый очевидный «правильный» цвет для вспышки именно ЭТОГО борта, ничего
+   отдельно решать не пришлось. Десять style — десять простых формул r(p)/alpha(p) от
+   p=S.time/0.45 (0..1), без ctx.shadowBlur (дорого каждый кадр) — просто заливка/обводка
+   с растущим радиусом и падающей прозрачностью, тот же класс дешёвого приёма, что уже
+   проверен на decal-иконках (drawDecalSvg). */
+/* renderFlashPattern — сам узор, без привязки к S/ctx глобальным: принимает canvas-контекст
+   `c` (может быть и жетон в Ангаре, не только полётный ctx) и готовую функцию цвета `col`
+   (число альфы → строка rgba). Так драка полёта (drawLaunchFlash ниже) и честное превью
+   плитки в ui.js:angarBuildGrid() зовут ровно один и тот же код — жетон не врёт о том,
+   как это выглядит на самом деле. */
+function renderFlashPattern(c, style, p, col){
+  const ring=(rp,widthFrom,widthTo)=>{
+    if(rp<=0) return;
+    c.strokeStyle=col(1-rp); c.lineWidth=widthTo+(widthFrom-widthTo)*(1-rp);
+    c.beginPath(); c.arc(0,0,10+rp*34,0,6.2832); c.stroke();
+  };
+  const dots=(n,rot)=>{
+    c.fillStyle=col(1-p);
+    for(let i=0;i<n;i++){
+      const ang=i*(6.2832/n)+rot, r=6+p*28;
+      c.beginPath(); c.arc(Math.cos(ang)*r,Math.sin(ang)*r,2.2*(1-p*.6),0,6.2832); c.fill();
+    }
+  };
+  const rays=(n,len0,len1,lw,offset)=>{
+    c.strokeStyle=col(1-p); c.lineWidth=lw;
+    for(let i=0;i<n;i++){
+      const ang=i*(6.2832/n)+offset;
+      c.beginPath();
+      c.moveTo(Math.cos(ang)*len0,Math.sin(ang)*len0);
+      c.lineTo(Math.cos(ang)*(len0+p*(len1-len0)),Math.sin(ang)*(len0+p*(len1-len0)));
+      c.stroke();
+    }
+  };
+  switch(style){
+    case 'ring': ring(p,3.5,.5); break;
+    case 'star': rays(7,8,38,2,0); break;
+    case 'particles': dots(10,0); break;
+    case 'cross': rays(4,8,46,1.5,0); break;
+    case 'doublering': ring(p,3.5,.5); ring(clamp((p-.15)/.85,0,1),3.5,.5); break;
+    case 'spiral': dots(10,p*2.5); break;
+    case 'shockwave': ring(p,12,2); break;
+    case 'sphere': c.fillStyle=col((1-p)*(1-p)); c.beginPath(); c.arc(0,0,4+p*18,0,6.2832); c.fill(); break;
+    case 'eclipse': c.strokeStyle=col(1-p); c.lineWidth=3; c.beginPath(); c.arc(0,0,42-p*32,0,6.2832); c.stroke(); break;
+    case 'lightning':
+      c.strokeStyle=col(1-p); c.lineWidth=2;
+      for(let i=0;i<5;i++){
+        const ang=i*(6.2832/5), dx=Math.cos(ang), dy=Math.sin(ang), px=-dy, py=dx;
+        const r0=6, r1=6+p*32, jit=3+(i%3)*1.5;
+        const t1=r0+(r1-r0)/3, t2=r0+(r1-r0)*2/3;
+        c.beginPath();
+        c.moveTo(dx*r0,dy*r0);
+        c.lineTo(dx*t1+px*jit,dy*t1+py*jit);
+        c.lineTo(dx*t2-px*jit,dy*t2-py*jit);
+        c.lineTo(dx*r1,dy*r1);
+        c.stroke();
+      }
+      break;
+  }
+}
+/* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.flash,
+   game.js). Держим на самом дешёвом таймере, какой уже есть: S.time — часы полёта, растут
+   только пока update() реально тикает (пауза не портит), обнуляются на новый забег сами —
+   отдельная метка времени старта не нужна. Окно — первые 0.45с, дальше функция не рисует
+   вообще (первая же проверка). Красится в skin.glow (тот же цвет, что аура борта и след) —
+   самый очевидный «правильный» цвет для вспышки именно ЭТОГО борта. Без ctx.shadowBlur
+   (дорого каждый кадр) — тот же класс дешёвого приёма, что уже проверен на decal-иконках
+   (drawDecalSvg). */
+function drawLaunchFlash(){
+  if(!S.flash || S.time>=.45) return;
+  const fl=FLASHES_BY_ID.get(S.flash); if(!fl || fl.style==='none') return;
+  const skin=SKINS[S.skin]||SKINS[0];
+  const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что уже в drawPlane для ауры
+  const col=a=>base+Math.max(0,a).toFixed(2)+')';
+  const p=clamp(S.time/.45,0,1);
+  ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
+  renderFlashPattern(ctx, fl.style, p, col);
+  ctx.restore();
+}
 function drawPlane(sh,nowMs){
   const p=plane, skin=SKINS[S.skin]||SKINS[0], hq=Q.level>=2, uq=Q.level>=3; // v1.37.0: ультра-штрихи
   const fx=skin.fx||'';
@@ -1450,25 +1554,19 @@ function drawPlane(sh,nowMs){
      (центр в -5.3, сгиб на x=0 → запас ~5.3, эмодзи ~9px даёт запас ~0.8). Не гейтится по
      качеству — цвет корпуса тоже не гейтится, декаль такая же базовая часть облика.
      Владелец должен увидеть вживую и поправить размер/позицию по факту — не финал. */
-  if(S.decal){ const dc=DECALS[S.decal];
+  if(S.decal){ const dc=DECALS_BY_ID.get(S.decal);
     if(dc && dc.ch){
       ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='9px sans-serif';
       ctx.fillText(dc.ch,-5.3,-0.7);
-    } else if(dc && dc.svg){
-      /* 29.08.2026 «SVG-иконки»: вместо текстового глифа — вендоренный векторный путь
-         (Material Symbols, см. комментарий у DECALS в game.js). Тот же центр (-5.3,-0.7)
-         и тот же зрительный размер ~9px, что у эмодзи-декали — просто другой способ
-         нарисовать пятно там же. vb — viewBox иконки [minX,minY,width,height], путь
-         своим центром встаёт в декальную точку через translate+scale+translate. */
-      const vb=dc.vb, s=9/Math.max(vb[2],vb[3]);
-      ctx.save();
-      ctx.translate(-5.3,-0.7); ctx.scale(s,s); ctx.translate(-(vb[0]+vb[2]/2), -(vb[1]+vb[3]/2));
-      ctx.fillStyle=skin.fold; // 29.08.2026: красим под скин (владелец) — тон собственной тени
-      // корпуса, тот же оттенок, что у грани sh.fold; на body-панели это всегда читаемо
-      // (fold затемнён специально под тень, контраст с body есть у каждого скина).
-      ctx.fill(new Path2D(dc.svg));
-      ctx.restore();
     }
+  }
+  /* 29.08.2026 «отдельная категория, правая сторона»: иконка — независимый слот (S.icon,
+     ICONS в game.js), носится одновременно с декалью выше, не вместо неё. Правая половина
+     корпуса — та, что красит sh.fold (см. ctx.fillStyle=fold чуть выше по функции);
+     центроид того же треугольника (0,-22)/(0,6)/(16,14): ((0+0+16)/3,(-22+6+14)/3) =
+     (5.3,-0.7) — точное зеркало левой декальной точки, не на глаз. */
+  if(S.icon){ const ic=ICONS_BY_ID.get(S.icon);
+    if(ic && ic.svg) drawDecalSvg(ctx, ic, 5.3, -0.7);
   }
   ctx.strokeStyle='rgba(120,140,180,.5)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,6); ctx.stroke();

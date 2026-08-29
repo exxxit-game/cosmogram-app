@@ -863,19 +863,17 @@ function angarShip(x, sk, s, bolshoy){
   /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
      render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
      выше, отдельно пересчитывать не нужно. */
-  if(S.decal){ const dc=DECALS[S.decal];
+  if(S.decal){ const dc=DECALS_BY_ID.get(S.decal);
     if(dc && dc.ch){
       x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
       x.fillText(dc.ch,-5.3,-0.7);
-    } else if(dc && dc.svg){
-      // см. тот же приём в render.js:drawPlane() — превью должно совпадать с полётом
-      const vb=dc.vb, s=9/Math.max(vb[2],vb[3]);
-      x.save();
-      x.translate(-5.3,-0.7); x.scale(s,s); x.translate(-(vb[0]+vb[2]/2), -(vb[1]+vb[3]/2));
-      x.fillStyle=sk.fold; // см. тот же приём и его обоснование в render.js:drawPlane()
-      x.fill(new Path2D(dc.svg));
-      x.restore();
     }
+  }
+  // 29.08.2026 «правая сторона, отдельная категория»: иконка — свой слот (S.icon, ICONS),
+  // рисуется всегда вместе с декалью выше, не вместо неё; drawDecalSvg — общая функция из
+  // render.js (грузится раньше ui.js, см. sw.js JS_FILES), превью совпадает с полётом.
+  if(S.icon){ const ic=ICONS_BY_ID.get(S.icon);
+    if(ic && ic.svg) drawDecalSvg(x, ic, 5.3, -0.7);
   }
   x.restore();
 }
@@ -958,11 +956,18 @@ function starJewelWake(){
 }
 /* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга —
    Цвет (было, поведение не меняется) и Декаль (новое, символ вместо канваса корабля).
-   След/Аура/Звук дописываются сюда же отдельным заходом, когда до них дойдёт очередь —
-   не копипастом всей секции ещё раз. */
+   29.08.2026: третья — Иконки (ICONS, свой слот S.icon/ownedIcons) — не подкатегория
+   декали, а независимая вещь: садится на правую половину борта, носится одновременно
+   с декалью, не вместо неё (см. render.js). Четвёртая — Вспышка (FLASHES, S.flash/
+   ownedFlashes) — тоже независимая, но НЕ рисуется на самом борту постоянно, а
+   проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). След/Аура/
+   Звук — сюда же отдельным заходом, когда до них дойдёт очередь — не копипастом всей
+   секции ещё раз. */
 const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
-  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' }
+  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal', favKey:'favDecal' },
+  icon:  { list:ICONS,  ownedKey:'ownedIcons',  selKey:'icon', favKey:'favIcon' },
+  flash: { list:FLASHES, ownedKey:'ownedFlashes', selKey:'flash', favKey:'favFlash' }
 };
 let angarCat = 'color';   // активная вкладка тюнинга
 /* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
@@ -993,7 +998,12 @@ function angarItemFill(el, item){
   if(pr){
     pr.classList.toggle('own', owned);
     if(worn){
-      pr.innerHTML = L.owned;
+      /* 29.08.2026 «избранное — только через уже надетое»: звёздочка появляется ровно там,
+         где раньше было просто «ВЫБРАН», и только у категорий со своим favKey (цвет — нет,
+         у скина и так один слот, закреплять нечего). Тап — angarToggleFav ниже. */
+      const cfgFav = cfg.favKey;
+      const isFav = cfgFav && S[cfgFav].includes(item.id);
+      pr.innerHTML = L.owned + (cfgFav ? ' <button type="button" class="favBtn" data-id="'+item.id+'" aria-label="'+(isFav?L.favRemove:L.favAdd)+'">'+(isFav?'★':'☆')+'</button>' : '');
     } else if(angarSel===item.id){
       pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
         (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(item.price)))+'</button>';
@@ -1004,15 +1014,24 @@ function angarItemFill(el, item){
 }
 function angarVisibleList(){ // список жетонов активной вкладки — у декалей это уже весь каталог разом
   const cfg = ANGAR_CATS[angarCat];
-  if(angarCat!=='decal') return cfg.list;
+  if(angarCat==='color') return cfg.list;
   // 29.08.2026 «полный каталог, не кучей вкладок»: раньше фильтровали по одной активной
   // angarSubCat — теперь отдаём всё сразу, сгруппированное по категориям в том же порядке,
-  // что раньше был у ленты вкладок (ANGAR_DECAL_CATS). «Нет» (id0, cat:'none') не входит ни
-  // в одну категорию по построению — держим её первой плиткой списка один раз, не по разу
-  // на категорию (была именно эта жалоба владельца — «пустые места в декали»).
-  const none = cfg.list.filter(d=>d.cat==='none');
-  const rest = ANGAR_DECAL_CATS.flatMap(cat=>cfg.list.filter(d=>d.cat===cat));
-  return none.concat(rest);
+  // что раньше был у ленты вкладок (ANGAR_DECAL_CATS). «Нет» (id0) не входит ни в одну
+  // категорию по построению — держим её первой плиткой списка один раз, не по разу на
+  // категорию (была именно эта жалоба владельца — «пустые места в декали»).
+  const none = cfg.list.filter(d=>d.id===0);
+  /* 29.08.2026 «избранное — 2 места рядом с "Без украшений"»: клоны (не сами объекты —
+     item.__fav метит копию, чтобы angarBuildGrid поставил над ней подзаголовок «Избранное»
+     один раз, не трогая оригинал, который всё ещё стоит на своём обычном месте ниже —
+     избранное это ярлык-дубликат, не перемещение). Работает во всех вкладках со своим
+     favKey (у Цвета его нет — там и так один слот, закреплять нечего). */
+  const favIds = cfg.favKey ? S[cfg.favKey] : [];
+  const favItems = favIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean).map(d=>Object.assign({},d,{__fav:true}));
+  const rest = angarCat==='decal'
+    ? ANGAR_DECAL_CATS.flatMap(cat=>cfg.list.filter(d=>d.cat===cat))
+    : cfg.list.filter(d=>d.id!==0);
+  return none.concat(favItems, rest);
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
@@ -1029,21 +1048,29 @@ let angarTabsBuilt = false;
 function angarBuildTabs(){
   /* 27.08.2026 «Кнопка не ложится на контент»: #angarTabs раньше был мёртвой заготовкой,
      потом (тем же заходом) — одной нерабочей вкладкой «Цвет». 28.08.2026: вторая вкладка
-     «Декаль» с реальным переключением; След/Аура/Звук — сюда же позже. */
+     «Декаль» с реальным переключением. 29.08.2026: третья — «Иконки» (правая сторона
+     борта, носится вместе с декалью, не вместо), четвёртая — «Вспышка» (не на борту,
+     проигрывается на старте). След/Аура/Звук — сюда же позже. */
   if(angarTabsBuilt) return;
   const tabs=$('angarTabs');
   if(tabs){
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
-                      '<button class="angarTab" id="angarTabDecal"></button>';
+                      '<button class="angarTab" id="angarTabDecal"></button>'+
+                      '<button class="angarTab" id="angarTabIcon"></button>'+
+                      '<button class="angarTab" id="angarTabFlash"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
     $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
+    $('angarTabIcon').addEventListener('click',()=>angarSwitchCat('icon'));
+    $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
   }
   angarTabsBuilt=true;
 }
 function angarRenderTabsSel(){
-  const tc=$('angarTabColor'), td=$('angarTabDecal');
+  const tc=$('angarTabColor'), td=$('angarTabDecal'), ti=$('angarTabIcon'), tf=$('angarTabFlash');
   if(tc) tc.classList.toggle('sel', angarCat==='color');
   if(td) td.classList.toggle('sel', angarCat==='decal');
+  if(ti) ti.classList.toggle('sel', angarCat==='icon');
+  if(tf) tf.classList.toggle('sel', angarCat==='flash');
 }
 function angarSwitchCat(cat){
   if(angarCat===cat) return;
@@ -1055,9 +1082,16 @@ function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
     grid.innerHTML='';
-    let lastCat=null; // 29.08.2026: подзаголовок вставляется перед первой плиткой новой категории
+    let lastCat=null, favHeadDone=false; // 29.08.2026: подзаголовок вставляется перед первой плиткой новой категории
     angarVisibleList().forEach(item=>{
-      if(angarCat==='decal' && item.cat && item.cat!==lastCat){
+      if(item.__fav && !favHeadDone){
+        const fhead=document.createElement('div');
+        fhead.className='angarCatHead';
+        fhead.textContent = L.favorites || 'Избранное';
+        grid.appendChild(fhead);
+        favHeadDone=true;
+      }
+      if(angarCat==='decal' && !item.__fav && item.cat && item.cat!==lastCat){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
@@ -1073,6 +1107,21 @@ function angarBuildGrid(){
         const x=cv.getContext('2d');
         x.setTransform(3,0,0,3,0,0); x.translate(31,26); // 62×48 мер при DPR 3
         angarShip(x, item, .92, false);
+      } else if(angarCat==='flash'){
+        /* 29.08.2026: плитка вспышки — не глиф, а сам узор, заморожен на p=.55 (середина
+           анимации, там уже видна форма). Тот же renderFlashPattern, что и в полёте
+           (render.js) — плитка не врёт о том, как это будет выглядеть на самом деле.
+           Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span><span class="pr"></span>';
+        if(item.style && item.style!=='none'){
+          const x=el.querySelector('canvas').getContext('2d');
+          const skin=SKINS[S.skin]||SKINS[0];
+          const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
+          const col=a=>base+Math.max(0,a).toFixed(2)+')';
+          x.setTransform(2,0,0,2,26,26); x.scale(.28,.28);
+          renderFlashPattern(x, item.style, .55, col);
+        }
+        el.setAttribute('aria-label', item.name);
       } else {
         el.innerHTML='<span class="ch"></span><span class="pr"></span>';
         const chEl=el.querySelector('.ch');
@@ -1096,6 +1145,8 @@ function renderHangar(){
   angarRenderTabsSel();
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
+  const tabIcon=$('angarTabIcon'); if(tabIcon) tabIcon.textContent=L.angarTabIcon;
+  const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
@@ -1123,10 +1174,13 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
   const item = cfg.list.find(it=>it.id===angarSel) || cfg.list[0];
   const owned = S[cfg.ownedKey].includes(item.id);
   const grid=$('angarGrid');
+  // 29.08.2026: тот же приём, что в angarBuyFill()/angarPick() — .angarCatHead-подзаголовки
+  // в сетке декалей не плитки, индекс считаем только по .angarIt, иначе съедет.
+  const els=grid.querySelectorAll('.angarIt');
   if(owned){
     if(S[cfg.selKey]===item.id) return;
     S[cfg.selKey]=item.id; Store.set(cfg.selKey,item.id); sfx.click(); haptic('light');
-    angarVisibleList().forEach((it2,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el,it2); });
+    angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
     angarBuyFill(); if(angarCat==='color') updateLives(); angarPvWake();
     return;
   }
@@ -1134,12 +1188,27 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
     S.wallet-=item.price; S[cfg.ownedKey].push(item.id); S[cfg.selKey]=item.id;
     Store.set('wallet',S.wallet); Store.set(cfg.ownedKey,S[cfg.ownedKey]); Store.set(cfg.selKey,item.id);
     sfx.buy(); haptic('success');
-    angarVisibleList().forEach((it2,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el,it2); });
+    angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
     angarBuyFill(); refreshMenu(); if(angarCat==='color') updateLives(); angarPvWake();
     if (typeof achCheck==='function') achCheck(); // достижения ангара (первый скин / вся коллекция)
   } else {
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
   }
+}
+/* 29.08.2026 «избранное — только через уже надетое»: закрепить/открепить можно только
+   то, что прямо сейчас надето (звёздочка рядом с «ВЫБРАН», см. angarItemFill). Максимум
+   2 — новое сверх лимита вытесняет самое старое (shift), без диалогов подтверждения.
+   Перестраиваем сетку целиком (angarBuilt=false) — состав «Избранное» меняет число плиток
+   в начале списка, точечным обновлением тут не обойтись, как в angarAct(). */
+function angarToggleFav(id){
+  const cfg = ANGAR_CATS[angarCat]; if(!cfg.favKey) return;
+  const arr = S[cfg.favKey];
+  const idx = arr.indexOf(id);
+  if(idx>=0) arr.splice(idx,1);
+  else { arr.push(id); if(arr.length>2) arr.shift(); }
+  Store.set(cfg.favKey, arr);
+  sfx.click(); haptic('light');
+  angarBuilt=false; angarBuildGrid();
 }
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком:
@@ -1147,6 +1216,8 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
 // (там он и так безвреден, ранний выход при angarSel===id, но лучше не полагаться на это).
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
+  const favBtn=e.target.closest('.favBtn');
+  if(favBtn){ e.stopPropagation(); angarToggleFav(+favBtn.dataset.id); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
@@ -2024,6 +2095,13 @@ Store.init(()=>{
   S.skin = saneNumber(Store.get('skin',0),0);
   S.ownedDecals = saneArray(Store.get('ownedDecals',[0]),[0]);
   S.decal = saneNumber(Store.get('decal',0),0);
+  S.ownedIcons = saneArray(Store.get('ownedIcons',[0]),[0]);
+  S.icon = saneNumber(Store.get('icon',0),0);
+  S.ownedFlashes = saneArray(Store.get('ownedFlashes',[0]),[0]); // 29.08.2026: пропущено при первой правке — вспышка не переживала перезагрузку
+  S.flash = saneNumber(Store.get('flash',0),0);
+  S.favDecal = saneArray(Store.get('favDecal',[]),[]);
+  S.favIcon = saneArray(Store.get('favIcon',[]),[]);
+  S.favFlash = saneArray(Store.get('favFlash',[]),[]);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);
