@@ -80,8 +80,8 @@ const DECALS=[
   {id:21, name:'Молния', price:60, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:60, ch:'🌈', cat:'weather'},
   {id:23, name:'Снежинка', price:60, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:60, ch:'🌊', cat:'weather'},
   {id:25, name:'Смерч', price:60, ch:'🌪️', cat:'weather'}, {id:26, name:'Солнце', price:60, ch:'☀️', cat:'weather'},
-  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'}, {id:67, name:'Грозовая туча', price:60, ch:'🌩️', cat:'weather'},
-  {id:119, name:'Дождь', price:60, ch:'🌧️', cat:'weather'}, {id:120, name:'Гроза', price:60, ch:'⛈️', cat:'weather'},
+  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'}, 
+   
   {id:121, name:'Туман', price:60, ch:'🌫️', cat:'weather'},
   {id:181, name:'Термометр', price:60, ch:'🌡️', cat:'weather'},
   // Смайлики
@@ -144,9 +144,9 @@ const DECALS=[
   // Драгоценности/статус — редкое/статусное
   {id:59, name:'Алмаз', price:300, ch:'💎', cat:'status'}, {id:60, name:'Корона', price:300, ch:'👑', cat:'status'},
   {id:61, name:'Мешок звёзд', price:300, ch:'💰', cat:'status'},
-  {id:113, name:'Кубок', price:300, ch:'🏆', cat:'status'}, {id:114, name:'Золото', price:300, ch:'🥇', cat:'status'},
+  {id:113, name:'Кубок', price:300, ch:'🏆', cat:'status'}, 
   {id:115, name:'Кольцо', price:300, ch:'💍', cat:'status'}, {id:116, name:'Трезубец', price:300, ch:'🔱', cat:'status'},
-  {id:117, name:'Медаль', price:300, ch:'🎖️', cat:'status'}, {id:118, name:'Лилия', price:300, ch:'⚜️', cat:'status'},
+   {id:118, name:'Лилия', price:300, ch:'⚜️', cat:'status'},
    
   
   // 29.08.2026 «ещё больше разнообразия» (владелец) — семь новых категорий разом,
@@ -185,16 +185,16 @@ const DECALS=[
   {id:173, name:'Хрустальный шар', price:100, ch:'🔮', cat:'symbols'}, {id:174, name:'Компас', price:100, ch:'🧭', cat:'symbols'},
   // Ландшафт
   {id:175, name:'Вулкан', price:60, ch:'🌋', cat:'landscape'}, {id:176, name:'Гора', price:60, ch:'🏔️', cat:'landscape'},
-  {id:177, name:'Остров', price:60, ch:'🏝️', cat:'landscape'}, {id:178, name:'Рассвет', price:60, ch:'🌅', cat:'landscape'},
-  {id:179, name:'Закат', price:60, ch:'🌇', cat:'landscape'}, {id:180, name:'Пустыня', price:60, ch:'🏜️', cat:'landscape'},
+   
+   
   // Праздники
   {id:196, name:'Ёлка', price:100, ch:'🎄', cat:'holidays'}, {id:197, name:'Тыква', price:100, ch:'🎃', cat:'holidays'},
   {id:198, name:'Салют', price:100, ch:'🎆', cat:'holidays'}, {id:199, name:'Шарик', price:100, ch:'🎈', cat:'holidays'},
   {id:200, name:'Подарок', price:100, ch:'🎁', cat:'holidays'}, {id:201, name:'Свеча', price:100, ch:'🕯️', cat:'holidays'},
   // Ориентиры
-  {id:202, name:'Замок', price:180, ch:'🏰', cat:'landmarks'}, {id:203, name:'Статуя Свободы', price:180, ch:'🗽', cat:'landmarks'},
+   {id:203, name:'Статуя Свободы', price:180, ch:'🗽', cat:'landmarks'},
   {id:204, name:'Колесо обозрения', price:180, ch:'🎡', cat:'landmarks'}, {id:205, name:'Горки', price:180, ch:'🎢', cat:'landmarks'},
-  {id:206, name:'Мост', price:180, ch:'🌉', cat:'landmarks'}, {id:207, name:'Башня', price:180, ch:'🗼', cat:'landmarks'},
+   {id:207, name:'Башня', price:180, ch:'🗼', cat:'landmarks'},
   // Наука — особенное/редкое
   {id:208, name:'Пробирка', price:180, ch:'🧪', cat:'science'}, {id:209, name:'ДНК', price:180, ch:'🧬', cat:'science'},
   {id:210, name:'Микроскоп', price:180, ch:'🔬', cat:'science'}, {id:211, name:'Чашка Петри', price:180, ch:'🧫', cat:'science'},
@@ -208,7 +208,7 @@ const DECALS=[
   {id:213, name:'Россия', price:100, ch:'🇷🇺', cat:'flags'}, {id:214, name:'США', price:100, ch:'🇺🇸', cat:'flags'},
   {id:215, name:'Испания', price:100, ch:'🇪🇸', cat:'flags'}, {id:216, name:'Португалия', price:100, ch:'🇵🇹', cat:'flags'},
   {id:217, name:'Франция', price:100, ch:'🇫🇷', cat:'flags'},
-  {id:218, name:'Любовное письмо', price:100, ch:'💌', cat:'hearts'},
+  
   {id:219, name:'Сердце-стрела', price:100, ch:'💘', cat:'hearts'},
   {id:220, name:'Сердце с лентой', price:100, ch:'💝', cat:'hearts'},
   {id:221, name:'Искрящееся сердце', price:100, ch:'💖', cat:'hearts'},
@@ -360,39 +360,39 @@ const DECALS=[
   
   {id:368, name:'Фудзияма', price:60, ch:'🗻', cat:'landscape'},
   {id:369, name:'Кемпинг', price:60, ch:'🏕️', cat:'landscape'},
-  {id:370, name:'Пляж с зонтом', price:60, ch:'🏖️', cat:'landscape'},
-  {id:371, name:'Нацпарк', price:60, ch:'🏞️', cat:'landscape'},
-  {id:372, name:'Стадион', price:180, ch:'🏟️', cat:'landmarks'},
-  {id:373, name:'Классическое здание', price:180, ch:'🏛️', cat:'landmarks'},
-  {id:374, name:'Стройка (эмодзи)', price:180, ch:'🏗️', cat:'landmarks'},
-  {id:375, name:'Кирпич', price:180, ch:'🧱', cat:'landmarks'},
+  
+  
+  
+  
+  
+  
   
   
   {id:378, name:'Хижина (эмодзи)', price:180, ch:'🛖', cat:'landmarks'},
-  {id:379, name:'Дома', price:180, ch:'🏘️', cat:'landmarks'},
-  {id:380, name:'Заброшенный дом', price:180, ch:'🏚️', cat:'landmarks'},
-  {id:381, name:'Дом', price:180, ch:'🏠', cat:'landmarks'},
-  {id:382, name:'Дом с садом', price:180, ch:'🏡', cat:'landmarks'},
-  {id:383, name:'Офисное здание', price:180, ch:'🏢', cat:'landmarks'},
-  {id:384, name:'Японская почта', price:180, ch:'🏣', cat:'landmarks'},
-  {id:385, name:'Почта', price:180, ch:'🏤', cat:'landmarks'},
-  {id:386, name:'Больница', price:180, ch:'🏥', cat:'landmarks'},
-  {id:387, name:'Банк', price:180, ch:'🏦', cat:'landmarks'},
-  {id:388, name:'Отель', price:180, ch:'🏨', cat:'landmarks'},
-  {id:389, name:'Отель на час', price:180, ch:'🏩', cat:'landmarks'},
-  {id:390, name:'Магазин у дома', price:180, ch:'🏪', cat:'landmarks'},
-  {id:391, name:'Школа', price:180, ch:'🏫', cat:'landmarks'},
-  {id:392, name:'Универмаг', price:180, ch:'🏬', cat:'landmarks'},
-  {id:393, name:'Завод (эмодзи)', price:180, ch:'🏭', cat:'landmarks'},
-  {id:394, name:'Японский замок', price:180, ch:'🏯', cat:'landmarks'},
-  {id:395, name:'Свадьба', price:180, ch:'💒', cat:'landmarks'},
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   {id:396, name:'Фонтан', price:180, ch:'⛲', cat:'landmarks'},
   {id:397, name:'Палатка', price:180, ch:'⛺', cat:'landmarks'},
-  {id:398, name:'Туманно (эмодзи)', price:60, ch:'🌁', cat:'weather'},
-  {id:399, name:'Ночь со звёздами', price:60, ch:'🌃', cat:'weather'},
-  {id:400, name:'Городской пейзаж', price:180, ch:'🏙️', cat:'landmarks'},
-  {id:401, name:'Рассвет над горами', price:180, ch:'🌄', cat:'landmarks'},
-  {id:402, name:'Город в сумерках', price:60, ch:'🌆', cat:'weather'},
+  
+  
+  
+  
+  
   {id:403, name:'Горячие источники', price:180, ch:'♨️', cat:'landmarks'},
   {id:404, name:'Карусель', price:180, ch:'🎠', cat:'landmarks'},
   
@@ -442,7 +442,7 @@ const DECALS=[
   {id:449, name:'Мигалка', price:60, ch:'🚨', cat:'vehicles'},
   {id:450, name:'Светофор (гориз.)', price:60, ch:'🚥', cat:'vehicles'},
   {id:451, name:'Светофор', price:60, ch:'🚦', cat:'vehicles'},
-  {id:452, name:'Знак стоп', price:60, ch:'🛑', cat:'vehicles'},
+  
   {id:453, name:'Дорожные работы', price:60, ch:'🚧', cat:'vehicles'},
   
   {id:455, name:'Каноэ', price:60, ch:'🛶', cat:'vehicles'},
@@ -454,9 +454,9 @@ const DECALS=[
   {id:461, name:'Прилёт самолёта', price:60, ch:'🛬', cat:'vehicles'},
   
   {id:463, name:'Кресло салона', price:60, ch:'💺', cat:'vehicles'},
-  {id:464, name:'Подвесная дорога', price:60, ch:'🚟', cat:'vehicles'},
-  {id:465, name:'Горная канатка', price:60, ch:'🚠', cat:'vehicles'},
-  {id:466, name:'Канатный трамвай', price:60, ch:'🚡', cat:'vehicles'},
+  
+  
+  
   {id:467, name:'Колокольчик портье', price:180, ch:'🛎️', cat:'landmarks'},
   {id:468, name:'Чемодан', price:180, ch:'🧳', cat:'landmarks'},
   {id:469, name:'Новолуние с лицом', price:60, ch:'🌚', cat:'weather'},
@@ -465,21 +465,21 @@ const DECALS=[
   {id:472, name:'Полнолуние с лицом', price:60, ch:'🌝', cat:'weather'},
   {id:473, name:'Солнце с лицом', price:60, ch:'🌞', cat:'weather'},
   {id:474, name:'Звезда (эмодзи)', price:60, ch:'⭐', cat:'weather'},
-  {id:475, name:'Облако (эмодзи)', price:60, ch:'☁️', cat:'weather'},
-  {id:476, name:'Солнце за облаком', price:60, ch:'⛅', cat:'weather'},
-  {id:477, name:'Солнце за облачком', price:60, ch:'🌤️', cat:'weather'},
-  {id:478, name:'Солнце за тучей', price:60, ch:'🌥️', cat:'weather'},
-  {id:479, name:'Солнце за дождевой тучей', price:60, ch:'🌦️', cat:'weather'},
-  {id:480, name:'Туча со снегом', price:60, ch:'🌨️', cat:'weather'},
+  
+  
+  
+  
+  
+  
   {id:481, name:'Ветер с лицом', price:60, ch:'🌬️', cat:'weather'},
-  {id:482, name:'Закрытый зонт', price:60, ch:'🌂', cat:'weather'},
-  {id:483, name:'Зонт (эмодзи)', price:60, ch:'☂️', cat:'weather'},
-  {id:484, name:'Зонт под дождём', price:60, ch:'☔', cat:'weather'},
-  {id:485, name:'Пляжный зонт', price:60, ch:'⛱️', cat:'weather'},
+  
+  
+  
+  
   {id:486, name:'Снеговик', price:60, ch:'☃️', cat:'weather'},
   {id:487, name:'Снеговик без снега', price:60, ch:'⛄', cat:'weather'},
   {id:488, name:'Капля (эмодзи)', price:60, ch:'💧', cat:'weather'},
-  {id:489, name:'Спортивная медаль', price:300, ch:'🏅', cat:'status'},
+  
   
   {id:491, name:'Восторг', price:60, ch:'😃', cat:'faces'},
   {id:492, name:'Радость', price:60, ch:'😄', cat:'faces'},
@@ -700,12 +700,12 @@ const DECALS=[
   {id:707, name:'Камень', price:180, ch:'🪨', cat:'landmarks'},
   {id:708, name:'Дерево-брус', price:180, ch:'🪵', cat:'landmarks'},
   {id:709, name:'Парашют', price:60, ch:'🪂', cat:'vehicles'},
-  {id:710, name:'Церковь', price:180, ch:'⛪', cat:'landmarks'},
-  {id:711, name:'Мечеть', price:180, ch:'🕌', cat:'landmarks'},
-  {id:712, name:'Индуистский храм', price:180, ch:'🛕', cat:'landmarks'},
-  {id:713, name:'Синагога', price:180, ch:'🕍', cat:'landmarks'},
-  {id:714, name:'Синтоистское святилище', price:180, ch:'⛩️', cat:'landmarks'},
-  {id:715, name:'Кааба', price:180, ch:'🕋', cat:'landmarks'},
+  
+  
+  
+  
+  
+  
   {id:716, name:'Бенгальский огонь', price:180, ch:'🎇', cat:'holidays'},
   {id:717, name:'Петарда', price:180, ch:'🧨', cat:'holidays'},
   {id:718, name:'Хлопушка', price:180, ch:'🎉', cat:'holidays'},
