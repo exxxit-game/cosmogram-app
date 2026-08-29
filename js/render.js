@@ -1454,6 +1454,20 @@ function drawPlane(sh,nowMs){
     if(dc && dc.ch){
       ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='9px sans-serif';
       ctx.fillText(dc.ch,-5.3,-0.7);
+    } else if(dc && dc.svg){
+      /* 29.08.2026 «SVG-иконки»: вместо текстового глифа — вендоренный векторный путь
+         (Material Symbols, см. комментарий у DECALS в game.js). Тот же центр (-5.3,-0.7)
+         и тот же зрительный размер ~9px, что у эмодзи-декали — просто другой способ
+         нарисовать пятно там же. vb — viewBox иконки [minX,minY,width,height], путь
+         своим центром встаёт в декальную точку через translate+scale+translate. */
+      const vb=dc.vb, s=9/Math.max(vb[2],vb[3]);
+      ctx.save();
+      ctx.translate(-5.3,-0.7); ctx.scale(s,s); ctx.translate(-(vb[0]+vb[2]/2), -(vb[1]+vb[3]/2));
+      ctx.fillStyle=skin.fold; // 29.08.2026: красим под скин (владелец) — тон собственной тени
+      // корпуса, тот же оттенок, что у грани sh.fold; на body-панели это всегда читаемо
+      // (fold затемнён специально под тень, контраст с body есть у каждого скина).
+      ctx.fill(new Path2D(dc.svg));
+      ctx.restore();
     }
   }
   ctx.strokeStyle='rgba(120,140,180,.5)'; ctx.lineWidth=1;

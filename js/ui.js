@@ -867,6 +867,14 @@ function angarShip(x, sk, s, bolshoy){
     if(dc && dc.ch){
       x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
       x.fillText(dc.ch,-5.3,-0.7);
+    } else if(dc && dc.svg){
+      // см. тот же приём в render.js:drawPlane() — превью должно совпадать с полётом
+      const vb=dc.vb, s=9/Math.max(vb[2],vb[3]);
+      x.save();
+      x.translate(-5.3,-0.7); x.scale(s,s); x.translate(-(vb[0]+vb[2]/2), -(vb[1]+vb[3]/2));
+      x.fillStyle=sk.fold; // см. тот же приём и его обоснование в render.js:drawPlane()
+      x.fill(new Path2D(dc.svg));
+      x.restore();
     }
   }
   x.restore();
@@ -1067,7 +1075,12 @@ function angarBuildGrid(){
         angarShip(x, item, .92, false);
       } else {
         el.innerHTML='<span class="ch"></span><span class="pr"></span>';
-        el.querySelector('.ch').textContent = item.ch;
+        const chEl=el.querySelector('.ch');
+        if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
+          chEl.innerHTML='<svg viewBox="'+item.vb.join(' ')+'" width="26" height="26"><path d="'+item.svg+'" fill="#eaf2ff"/></svg>';
+        } else {
+          chEl.textContent = item.ch;
+        }
         el.setAttribute('aria-label', item.name); // без видимой подписи (эмодзи и так понятен) — имя остаётся для скринридера
       }
       el.addEventListener('click',()=>{ angarPick(item.id); });

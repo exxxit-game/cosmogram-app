@@ -67,6 +67,8 @@ const DECALS=[
   {id:3, name:'Звезда', price:80, ch:'🌟', cat:'space'}, {id:4, name:'Комета', price:80, ch:'☄️', cat:'space'},
   {id:5, name:'Сатурн', price:80, ch:'🪐', cat:'space'}, {id:6, name:'Полумесяц', price:80, ch:'🌙', cat:'space'},
   {id:7, name:'Пришелец', price:80, ch:'👽', cat:'space'}, {id:8, name:'Искра', price:80, ch:'✨', cat:'space'},
+  {id:62, name:'Спутник', price:80, ch:'🛰️', cat:'space'}, {id:63, name:'Падающая звезда', price:80, ch:'🌠', cat:'space'},
+  {id:64, name:'Телескоп', price:80, ch:'🔭', cat:'space'}, {id:65, name:'Млечный Путь', price:80, ch:'🌌', cat:'space'},
   // Зодиак
   {id:9, name:'Овен', price:80, ch:'♈', cat:'zodiac'}, {id:10, name:'Телец', price:80, ch:'♉', cat:'zodiac'},
   {id:11, name:'Близнецы', price:80, ch:'♊', cat:'zodiac'}, {id:12, name:'Рак', price:80, ch:'♋', cat:'zodiac'},
@@ -78,19 +80,50 @@ const DECALS=[
   {id:21, name:'Молния', price:80, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:80, ch:'🌈', cat:'weather'},
   {id:23, name:'Снежинка', price:80, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:80, ch:'🌊', cat:'weather'},
   {id:25, name:'Смерч', price:80, ch:'🌪️', cat:'weather'}, {id:26, name:'Солнце', price:80, ch:'☀️', cat:'weather'},
+  {id:66, name:'Циклон', price:80, ch:'🌀', cat:'weather'}, {id:67, name:'Грозовая туча', price:80, ch:'🌩️', cat:'weather'},
+  {id:119, name:'Дождь', price:80, ch:'🌧️', cat:'weather'}, {id:120, name:'Гроза', price:80, ch:'⛈️', cat:'weather'},
+  {id:121, name:'Туман', price:80, ch:'🌫️', cat:'weather'},
+  {id:181, name:'Термометр', price:80, ch:'🌡️', cat:'weather'},
   // Смайлики
   {id:27, name:'Улыбка', price:80, ch:'😀', cat:'faces'}, {id:28, name:'Стиль', price:80, ch:'😎', cat:'faces'},
   {id:29, name:'Огонь', price:80, ch:'🔥', cat:'faces'}, {id:30, name:'Сотка', price:80, ch:'💯', cat:'faces'},
   {id:31, name:'Смех', price:80, ch:'😂', cat:'faces'}, {id:32, name:'Праздник', price:80, ch:'🥳', cat:'faces'},
+  {id:68, name:'Взрыв мозга', price:80, ch:'🤯', cat:'faces'}, {id:69, name:'Озорство', price:80, ch:'😈', cat:'faces'},
+  {id:70, name:'Ниндзя', price:80, ch:'🥷', cat:'faces'},
+  {id:122, name:'Влюблён', price:80, ch:'😍', cat:'faces'}, {id:123, name:'В восторге', price:80, ch:'🤩', cat:'faces'},
+  {id:124, name:'Сон', price:80, ch:'😴', cat:'faces'}, {id:125, name:'Холод', price:80, ch:'🥶', cat:'faces'},
   // Растения/природа
   {id:33, name:'Сакура', price:80, ch:'🌸', cat:'nature'}, {id:34, name:'Кактус', price:80, ch:'🌵', cat:'nature'},
   {id:35, name:'Пальма', price:80, ch:'🌴', cat:'nature'}, {id:36, name:'Клевер', price:80, ch:'🍀', cat:'nature'},
+  {id:71, name:'Роза', price:80, ch:'🌹', cat:'nature'}, {id:72, name:'Гриб', price:80, ch:'🍄', cat:'nature'},
+  {id:73, name:'Лотос', price:80, ch:'🪷', cat:'nature'},
+  {id:126, name:'Подсолнух', price:80, ch:'🌻', cat:'nature'}, {id:127, name:'Клён', price:80, ch:'🍁', cat:'nature'},
+  {id:182, name:'Гибискус', price:80, ch:'🌺', cat:'nature'}, {id:183, name:'Колос', price:80, ch:'🌾', cat:'nature'},
   // Шахматы/карты
   {id:37, name:'Пешка', price:80, ch:'♟️', cat:'games'}, {id:38, name:'Конь', price:80, ch:'♞', cat:'games'},
   {id:39, name:'Пики', price:80, ch:'♠️', cat:'games'}, {id:40, name:'Червы', price:80, ch:'♥️', cat:'games'},
+  {id:74, name:'Бубны', price:80, ch:'♦️', cat:'games'}, {id:75, name:'Трефы', price:80, ch:'♣️', cat:'games'},
+  {id:76, name:'Кости', price:80, ch:'🎲', cat:'games'}, {id:77, name:'Мишень', price:80, ch:'🎯', cat:'games'},
+  {id:184, name:'Джокер', price:80, ch:'🃏', cat:'games'}, {id:185, name:'Слот-машина', price:80, ch:'🎰', cat:'games'},
   // Животные
   {id:41, name:'Орёл', price:120, ch:'🦅', cat:'animals'}, {id:42, name:'Волк', price:120, ch:'🐺', cat:'animals'},
   {id:43, name:'Лев (зверь)', price:120, ch:'🦁', cat:'animals'}, {id:44, name:'Лиса', price:120, ch:'🦊', cat:'animals'},
+  {id:78, name:'Тигр', price:120, ch:'🐯', cat:'animals'}, {id:79, name:'Акула', price:120, ch:'🦈', cat:'animals'},
+  {id:80, name:'Сова', price:120, ch:'🦉', cat:'animals'}, {id:81, name:'Медведь', price:120, ch:'🐻', cat:'animals'},
+  {id:82, name:'Панда', price:120, ch:'🐼', cat:'animals'}, {id:83, name:'Слон', price:120, ch:'🐘', cat:'animals'},
+  {id:84, name:'Носорог', price:120, ch:'🦏', cat:'animals'}, {id:85, name:'Жираф', price:120, ch:'🦒', cat:'animals'},
+  {id:86, name:'Зебра', price:120, ch:'🦓', cat:'animals'}, {id:87, name:'Олень', price:120, ch:'🦌', cat:'animals'},
+  {id:88, name:'Леопард', price:120, ch:'🐆', cat:'animals'}, {id:89, name:'Летучая мышь', price:120, ch:'🦇', cat:'animals'},
+  {id:90, name:'Крокодил', price:120, ch:'🐊', cat:'animals'}, {id:91, name:'Скорпион', price:120, ch:'🦂', cat:'animals'},
+  {id:92, name:'Паук', price:120, ch:'🕷️', cat:'animals'}, {id:93, name:'Ящерица', price:120, ch:'🦎', cat:'animals'},
+  {id:94, name:'Осьминог', price:120, ch:'🐙', cat:'animals'}, {id:95, name:'Кальмар', price:120, ch:'🦑', cat:'animals'},
+  {id:96, name:'Кит', price:120, ch:'🐋', cat:'animals'}, {id:97, name:'Дельфин', price:120, ch:'🐬', cat:'animals'},
+  {id:98, name:'Тираннозавр', price:120, ch:'🦖', cat:'animals'}, {id:99, name:'Динозавр', price:120, ch:'🦕', cat:'animals'},
+  {id:100, name:'Павлин', price:120, ch:'🦚', cat:'animals'}, {id:101, name:'Фламинго', price:120, ch:'🦩', cat:'animals'},
+  {id:102, name:'Пчела', price:120, ch:'🐝', cat:'animals'}, {id:103, name:'Бабочка', price:120, ch:'🦋', cat:'animals'},
+  {id:186, name:'Ленивец', price:120, ch:'🦥', cat:'animals'}, {id:187, name:'Ёж', price:120, ch:'🦔', cat:'animals'},
+  {id:188, name:'Черепаха', price:120, ch:'🐢', cat:'animals'}, {id:189, name:'Попугай', price:120, ch:'🦜', cat:'animals'},
+  {id:190, name:'Улитка', price:120, ch:'🐌', cat:'animals'},
   // Фазы Луны (сет)
   {id:45, name:'Новолуние', price:150, ch:'🌑', cat:'moon'}, {id:46, name:'Растущий серп', price:150, ch:'🌒', cat:'moon'},
   {id:47, name:'Первая четверть', price:150, ch:'🌓', cat:'moon'}, {id:48, name:'Растущая Луна', price:150, ch:'🌔', cat:'moon'},
@@ -99,12 +132,101 @@ const DECALS=[
   // Музыка (тот же значок ещё пригодится категории «Звук»)
   {id:53, name:'Нота', price:60, ch:'🎵', cat:'music'}, {id:54, name:'Гитара', price:60, ch:'🎸', cat:'music'},
   {id:55, name:'Наушники', price:60, ch:'🎧', cat:'music'},
+  {id:104, name:'Пианино', price:60, ch:'🎹', cat:'music'}, {id:105, name:'Барабан', price:60, ch:'🥁', cat:'music'},
+  {id:106, name:'Труба', price:60, ch:'🎺', cat:'music'}, {id:107, name:'Скрипка', price:60, ch:'🎻', cat:'music'},
+  {id:191, name:'Саксофон', price:60, ch:'🎷', cat:'music'},
   // Мифические существа — редкое/статусное
   {id:56, name:'Дракон', price:350, ch:'🐉', cat:'myth'}, {id:57, name:'Единорог', price:350, ch:'🦄', cat:'myth'},
   {id:58, name:'Дракон (лицо)', price:350, ch:'🐲', cat:'myth'},
+  {id:108, name:'Призрак', price:350, ch:'👻', cat:'myth'}, {id:109, name:'Джинн', price:350, ch:'🧞', cat:'myth'},
+  {id:110, name:'Русалка', price:350, ch:'🧜', cat:'myth'}, {id:111, name:'Демон', price:350, ch:'👹', cat:'myth'},
+  {id:112, name:'Тэнгу', price:350, ch:'👺', cat:'myth'},
+  {id:192, name:'Зомби', price:350, ch:'🧟', cat:'myth'},
   // Драгоценности/статус — редкое/статусное
   {id:59, name:'Алмаз', price:350, ch:'💎', cat:'status'}, {id:60, name:'Корона', price:350, ch:'👑', cat:'status'},
   {id:61, name:'Мешок звёзд', price:350, ch:'💰', cat:'status'},
+  {id:113, name:'Кубок', price:350, ch:'🏆', cat:'status'}, {id:114, name:'Золото', price:350, ch:'🥇', cat:'status'},
+  {id:115, name:'Кольцо', price:350, ch:'💍', cat:'status'}, {id:116, name:'Трезубец', price:350, ch:'🔱', cat:'status'},
+  {id:117, name:'Медаль', price:350, ch:'🎖️', cat:'status'}, {id:118, name:'Лилия', price:350, ch:'⚜️', cat:'status'},
+  {id:193, name:'Серебро', price:350, ch:'🥈', cat:'status'}, {id:194, name:'Бронза', price:350, ch:'🥉', cat:'status'},
+  {id:195, name:'Монета', price:350, ch:'🪙', cat:'status'},
+  // 29.08.2026 «ещё больше разнообразия» (владелец) — семь новых категорий разом,
+  // за пределами исходной темы «космос/зодиак/природа»: транспорт, еда, спорт, техника,
+  // мода, символы, ландшафт. Флаги стран и религиозные символы сознательно не берём —
+  // первые не рисуются на Windows (см. комментарий выше), вторые могут задеть.
+  // Транспорт
+  {id:128, name:'Машина', price:80, ch:'🚗', cat:'vehicles'}, {id:129, name:'Гонка', price:80, ch:'🏎️', cat:'vehicles'},
+  {id:130, name:'Вертолёт', price:80, ch:'🚁', cat:'vehicles'}, {id:131, name:'Яхта', price:80, ch:'⛵', cat:'vehicles'},
+  {id:132, name:'Самолёт', price:80, ch:'✈️', cat:'vehicles'}, {id:133, name:'Самолётик', price:80, ch:'🛩️', cat:'vehicles'},
+  {id:134, name:'Корабль', price:80, ch:'🚢', cat:'vehicles'}, {id:135, name:'Поезд', price:80, ch:'🚂', cat:'vehicles'},
+  {id:136, name:'Якорь', price:80, ch:'⚓', cat:'vehicles'},
+  // Еда
+  {id:137, name:'Пицца', price:80, ch:'🍕', cat:'food'}, {id:138, name:'Пончик', price:80, ch:'🍩', cat:'food'},
+  {id:139, name:'Мороженое', price:80, ch:'🍦', cat:'food'}, {id:140, name:'Арбуз', price:80, ch:'🍉', cat:'food'},
+  {id:141, name:'Бургер', price:80, ch:'🍔', cat:'food'}, {id:142, name:'Тако', price:80, ch:'🌮', cat:'food'},
+  {id:143, name:'Вишня', price:80, ch:'🍒', cat:'food'}, {id:144, name:'Шоколад', price:80, ch:'🍫', cat:'food'},
+  // Спорт
+  {id:145, name:'Футбол', price:80, ch:'⚽', cat:'sport'}, {id:146, name:'Баскетбол', price:80, ch:'🏀', cat:'sport'},
+  {id:147, name:'Боулинг', price:80, ch:'🎳', cat:'sport'}, {id:148, name:'Бокс', price:80, ch:'🥊', cat:'sport'},
+  {id:149, name:'Регби', price:80, ch:'🏈', cat:'sport'}, {id:150, name:'Теннис', price:80, ch:'🎾', cat:'sport'},
+  {id:151, name:'Волейбол', price:80, ch:'🏐', cat:'sport'}, {id:152, name:'Скейт', price:80, ch:'🛹', cat:'sport'},
+  // Техника
+  {id:153, name:'Ноутбук', price:80, ch:'💻', cat:'tech'}, {id:154, name:'Джойстик', price:80, ch:'🕹️', cat:'tech'},
+  {id:155, name:'Антенна', price:80, ch:'📡', cat:'tech'}, {id:156, name:'Батарея', price:80, ch:'🔋', cat:'tech'},
+  {id:157, name:'Камера', price:80, ch:'📷', cat:'tech'}, {id:158, name:'Лампочка', price:80, ch:'💡', cat:'tech'},
+  {id:159, name:'Магнит', price:80, ch:'🧲', cat:'tech'}, {id:160, name:'Шестерёнка', price:80, ch:'⚙️', cat:'tech'},
+  // Мода
+  {id:161, name:'Цилиндр', price:80, ch:'🎩', cat:'fashion'}, {id:162, name:'Очки', price:80, ch:'🕶️', cat:'fashion'},
+  {id:163, name:'Кроссовок', price:80, ch:'👟', cat:'fashion'}, {id:164, name:'Галстук', price:80, ch:'👔', cat:'fashion'},
+  {id:165, name:'Помада', price:80, ch:'💄', cat:'fashion'}, {id:166, name:'Кепка', price:80, ch:'🧢', cat:'fashion'},
+  // Символы — особенное/редкое
+  {id:167, name:'Инь-Ян', price:120, ch:'☯️', cat:'symbols'}, {id:168, name:'Атом', price:120, ch:'⚛️', cat:'symbols'},
+  {id:169, name:'Бесконечность', price:120, ch:'♾️', cat:'symbols'}, {id:170, name:'Внимание', price:120, ch:'⚠️', cat:'symbols'},
+  {id:171, name:'Радиация', price:120, ch:'☢️', cat:'symbols'}, {id:172, name:'Биоопасность', price:120, ch:'☣️', cat:'symbols'},
+  {id:173, name:'Хрустальный шар', price:120, ch:'🔮', cat:'symbols'}, {id:174, name:'Компас', price:120, ch:'🧭', cat:'symbols'},
+  // Ландшафт
+  {id:175, name:'Вулкан', price:80, ch:'🌋', cat:'landscape'}, {id:176, name:'Гора', price:80, ch:'🏔️', cat:'landscape'},
+  {id:177, name:'Остров', price:80, ch:'🏝️', cat:'landscape'}, {id:178, name:'Рассвет', price:80, ch:'🌅', cat:'landscape'},
+  {id:179, name:'Закат', price:80, ch:'🌇', cat:'landscape'}, {id:180, name:'Пустыня', price:80, ch:'🏜️', cat:'landscape'},
+  // Праздники
+  {id:196, name:'Ёлка', price:80, ch:'🎄', cat:'holidays'}, {id:197, name:'Тыква', price:80, ch:'🎃', cat:'holidays'},
+  {id:198, name:'Салют', price:80, ch:'🎆', cat:'holidays'}, {id:199, name:'Шарик', price:80, ch:'🎈', cat:'holidays'},
+  {id:200, name:'Подарок', price:80, ch:'🎁', cat:'holidays'}, {id:201, name:'Свеча', price:80, ch:'🕯️', cat:'holidays'},
+  // Ориентиры
+  {id:202, name:'Замок', price:80, ch:'🏰', cat:'landmarks'}, {id:203, name:'Статуя Свободы', price:80, ch:'🗽', cat:'landmarks'},
+  {id:204, name:'Колесо обозрения', price:80, ch:'🎡', cat:'landmarks'}, {id:205, name:'Горки', price:80, ch:'🎢', cat:'landmarks'},
+  {id:206, name:'Мост', price:80, ch:'🌉', cat:'landmarks'}, {id:207, name:'Башня', price:80, ch:'🗼', cat:'landmarks'},
+  // Наука — особенное/редкое
+  {id:208, name:'Пробирка', price:120, ch:'🧪', cat:'science'}, {id:209, name:'ДНК', price:120, ch:'🧬', cat:'science'},
+  {id:210, name:'Микроскоп', price:120, ch:'🔬', cat:'science'}, {id:211, name:'Чашка Петри', price:120, ch:'🧫', cat:'science'},
+  {id:212, name:'Перегонный куб', price:120, ch:'⚗️', cat:'science'},
+  /* 29.08.2026 «флаги стран нужно добавить, проверить» (владелец): раньше сознательно
+     не брали — флаг-эмодзи на части Windows-шрифтов рисуется двумя буквами в рамке
+     вместо картинки (regional indicator pair без лигатуры). Владелец попросил
+     тестовую партию, проверит на своём ноуте вживую перед остальными ~190 странами —
+     ровно та же дисциплина, что у любого визуального бага под конкретное устройство:
+     сначала доказательство с реального экрана, потом решение брать остальные или нет. */
+  {id:213, name:'Россия', price:80, ch:'🇷🇺', cat:'flags'}, {id:214, name:'США', price:80, ch:'🇺🇸', cat:'flags'},
+  {id:215, name:'Испания', price:80, ch:'🇪🇸', cat:'flags'}, {id:216, name:'Португалия', price:80, ch:'🇵🇹', cat:'flags'},
+  {id:217, name:'Франция', price:80, ch:'🇫🇷', cat:'flags'},
+  /* 29.08.2026 «SVG-иконки, посмотрю как работают» (владелец): первая тестовая партия,
+     не эмодзи-текст, а векторный контур. Источник — Google Material Symbols (Apache 2.0),
+     filled-стиль 24px, взято побайтово с github.com/google/material-design-icons (тот же
+     источник, что раньше у иконки отпечатка пальца) — не нарисовано на глаз (правило
+     «официальные иконки — не по памяти», см. STYLE-GUIDE). У декали вместо ch — свой
+     контур (svg, путь) + vb (viewBox иконки: [minX,minY,width,height]); отрисовка в
+     render.js/ui.js: masштабирует путь под тот же зрительный размер ~9px, что у эмодзи,
+     фиксированным цветом (перекраска под скин — отдельный следующий шаг). */
+  {id:218, name:'Ракета (вектор)', price:150, vb:[0,-960,960,960], cat:'icons',
+    svg:'m98-537 168-168q14-14 33-20t39-2l52 11q-54 64-85 116t-60 126L98-537Zm205 91q23-72 62.5-136T461-702q88-88 201-131.5T873-860q17 98-26 211T716-448q-55 55-120 95.5T459-289L303-446Zm276-120q23 23 56.5 23t56.5-23q23-23 23-56.5T692-679q-23-23-56.5-23T579-679q-23 23-23 56.5t23 56.5ZM551-85l-64-147q74-29 126.5-60T730-377l10 52q4 20-2 39.5T718-252L551-85ZM162-318q35-35 85-35.5t85 34.5q35 35 35 85t-35 85q-25 25-83.5 43T87-74q14-103 32-161t43-83Z'},
+  {id:219, name:'Медаль (вектор)', price:150, vb:[0,-960,960,960], cat:'icons',
+    svg:'M280-880h400v314q0 23-10 41t-28 29l-142 84 28 92h152l-124 88 48 152-124-94-124 94 48-152-124-88h152l28-92-142-84q-18-11-28-29t-10-41v-314Zm160 80v282l40 24 40-24v-282h-80Z'},
+  {id:220, name:'Молния (вектор)', price:150, vb:[0,-960,960,960], cat:'icons',
+    svg:'m320-80 40-280H160l360-520h80l-40 320h240L400-80h-80Z'},
+  {id:221, name:'Бриллиант (вектор)', price:150, vb:[0,-960,960,960], cat:'icons',
+    svg:'m368-630 106-210h12l106 210H368Zm82 474L105-570h345v414Zm60 0v-414h345L510-156Zm148-474L554-840h206l105 210H658Zm-563 0 105-210h206L302-630H95Z'},
+  {id:222, name:'Щит (вектор)', price:150, vb:[0,-960,960,960], cat:'icons',
+    svg:'M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Z'},
 ];
 const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
