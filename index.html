@@ -194,14 +194,14 @@ button, input, select, textarea { text-transform:inherit; }
   justify-content:center; z-index:10; pointer-events:none; }
 /* читаемость экранов поверх живого фона: затемнение без blur (дорого на слабых).
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
-#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #modesScreen, #diagScreen, #cardScreen {
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #modesScreen, #diagScreen, #cardScreen, #feedbackScreen {
   background:rgba(6,10,24,.45); }
 /* v1.282.13: предупреждение о тесном экране — выше всех окон. Раньше у него был общий
    .overlay z-index:10 и никакого фона, а экраны идут ниже в разметке и с вуалью — при
    равном слое меню рисовалось поверх. Момент, когда предупреждение нужнее всего (игрок
    тянет угол окна, стоя в меню), был ровно тем, когда его не видно. */
 #tooNarrow { z-index:40; background:rgba(6,10,24,.94); pointer-events:auto; }
-#settingsScreen, #achScreen, #hangarScreen, #forgeScreen, #diagScreen { justify-content:flex-start;
+#settingsScreen, #achScreen, #hangarScreen, #forgeScreen, #diagScreen, #feedbackScreen { justify-content:flex-start;
   /* 13.08.2026 «Подушка не для меню». var(--sat) — это защита от чужой шапки: внутри
      Telegram она перекрывает верх экрана, и под неё нельзя писать. А вот лишние 48px
      сверху были украшением, и вместе с подушкой давали 144px пустоты на эталонном
@@ -224,10 +224,10 @@ button, input, select, textarea { text-transform:inherit; }
    весь .overlay, а только .scrBody внутри него; кнопка — обычный элемент колонки
    ПОСЛЕ скролл-зоны, не sticky. Физически не может лечь на список ни при какой
    высоте окна — не нужно новое число под каждый следующий вьюпорт. */
-#hangarScreen, #achScreen, #forgeScreen, #diagScreen { overflow-y:hidden; }
+#hangarScreen, #achScreen, #forgeScreen, #diagScreen, #feedbackScreen { overflow-y:hidden; }
 .scrBody { flex:1 1 auto; min-height:0; width:100%; overflow-y:auto;
   display:flex; flex-direction:column; align-items:center; padding-bottom:16px; }
-#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>*, #diagScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>*, #diagScreen>*, #feedbackScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 .scrBody>* { flex-shrink:0; }
 /* 27.08.2026: без этой строки правило выше (#hangarScreen>*, специфичность по ID) перебивало
    бы flex-shrink:1 из .scrBody (специфичность по классу ниже) — ЖИВОЙ проверкой в браузере
@@ -235,10 +235,10 @@ button, input, select, textarea { text-transform:inherit; }
    #hangarScreen (overflow-y:hidden) молча обрезал лишнее — часть сетки становилась
    недостижимой, а не прокручиваемой. Страж 130 такое не ловит (видит только геометрию
    видимого, не обрезанное). Явный селектор той же ID-специфичности возвращает сжатие. */
-#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody, #diagScreen>.scrBody { flex-shrink:1; }
+#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody, #diagScreen>.scrBody, #feedbackScreen>.scrBody { flex-shrink:1; }
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
-#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen, #diagScreen { pointer-events:auto; }
+#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen, #diagScreen, #feedbackScreen { pointer-events:auto; }
 /* 23.08.2026: виджет входа Telegram (#webJoinWidget) — вставленный извне <iframe>, у него
    нет класса .btn, только .tgWidget (тот не трогает pointer-events). Обычные кнопки
    экрана итогов работали через свой .btn, а виджет наследовал pointer-events:none от
@@ -344,7 +344,12 @@ button, input, select, textarea { text-transform:inherit; }
 /* ---- Заголовки экранов ---- */
 .screenTitle { font-family:var(--font-disp); font-weight:400;
   font-size:clamp(28px,7.5vw,42px); letter-spacing:.05em; color:var(--ink);
-  text-shadow:0 0 22px rgba(140,180,255,.18); margin-bottom:20px; }
+  text-shadow:0 0 22px rgba(140,180,255,.18); margin-bottom:20px;
+  /* 30.08.2026: text-align:start было незаметно на коротких заголовках («Достижения») —
+     блок сам сжимается по содержимому (flex align-items:center) и выглядит центрированным.
+     Длинный заголовок («Написать разработчику») при переносе растягивает блок на всю
+     ширину экрана, и текст прижимался к левому краю, налезая на круглую кнопку «Назад». */
+  text-align:center; }
 .miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
 .achTab .ic, .topCat .ic { width:1.15em; height:1.15em; vertical-align:-0.2em; margin-right:.35em; }
 .topCat .ic:only-child { margin-right:0; width:19px; height:19px; }
@@ -647,7 +652,13 @@ button, input, select, textarea { text-transform:inherit; }
 .setPanel { width:min(92%,380px); pointer-events:auto; background:rgba(22,38,56,.55);
   border:1px solid var(--line); border-radius:var(--r-card); margin:2px 0 12px; overflow:hidden; }
 .setPanel .btn { width:100%; margin:0; border:none; border-radius:0; background:transparent;
-  justify-content:flex-start; padding:13px 18px; } /* v1.92.0: меньше разделителей — строки дышат воздухом, а не линейкой */
+  padding:13px 18px; } /* v1.92.0: меньше разделителей — строки дышат воздухом, а не линейкой */
+/* 30.08.2026 (владелец): left-align («Скопировать самописец» и подобные) не был
+   намеренным решением дизайна — просто так исторически легло правилом v1.92.0 и никто
+   не заметил на коротких словах. Убрано: текст по центру — умолчание везде внутри
+   .setPanel, кроме .modeIt (Режимы), у которой своя, более специфичная раскладка
+   (двухстрочные имя+описание, align-items:center уже задан отдельно) и её это не
+   касается. Раньше здесь же был узкий фикс только для .btn.pri — снят, стал не нужен. */
 .setPanel .btn:active { transform:none; background:rgba(120,170,255,.08); color:#dce9ff; }
 /* v1.63.0: строка «параметр — значение» — вся ширина жмётся, значение справа */
 .setRow { display:flex; align-items:center; justify-content:space-between; gap:12px;
