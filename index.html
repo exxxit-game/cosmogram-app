@@ -726,19 +726,16 @@ button, input, select, textarea { text-transform:inherit; }
   text-transform:uppercase; cursor:pointer; white-space:nowrap; }
 .angarTab.sel { background:rgba(120,170,255,.12); border-color:rgba(190,225,255,.5); color:#eaf2ff;
   box-shadow:0 0 16px rgba(120,170,255,.14); }
-/* 28.08.2026 «категории для эмодзи, чтобы не всей кучей»: вторая, более узкая лента
-   чипов — подкатегории внутри вкладки «Декаль» (Космос/Зодиак/...). Показывается
-   только когда активна категория с подкатегориями; та же лента-с-маской, что и у
-   #angarTabs, только чипы мельче. */
-#angarSubTabs { display:flex; gap:6px; width:min(92%,380px); margin-bottom:10px; overflow-x:auto;
-  scrollbar-width:none; -webkit-mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%);
-  mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%); }
-#angarSubTabs::-webkit-scrollbar { display:none; }
-.angarSubTab { flex:none; border:1px solid var(--line); background:rgba(22,38,56,.4); color:var(--muted);
-  border-radius:999px; padding:5px 12px; font-size:10.5px; letter-spacing:.03em; cursor:pointer; white-space:nowrap; }
-.angarSubTab.sel { background:rgba(240,192,64,.14); border-color:rgba(240,192,64,.55); color:var(--gold-hi); }
 /* Жетоны — три в ряд */
 #angarGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(92%,380px); }
+/* 29.08.2026 «полный каталог, не куча вкладок»: подкатегории декалей были отдельной
+   лентой чипов-переключателей (#angarSubTabs, теперь снята) — владелец увидел в ней
+   лишнее дробление и попросил один общий прокручиваемый список с разделением на
+   категории внутри. .angarCatHead — подзаголовок группы прямо в сетке (растянут на
+   всю ширину: grid-column:1/-1), не кнопка и не тап-цель — тот же текстовый почерк,
+   что у .angarIt .nm, только без обрезки в одну строку. */
+.angarCatHead { grid-column:1/-1; font-size:11px; letter-spacing:.08em; color:var(--muted);
+  text-transform:uppercase; margin-top:6px; }
 .angarIt { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
   pointer-events:auto; }
 .angarIt .dot { width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
@@ -1591,7 +1588,6 @@ canvas.starJewelSm { width:10px; height:10px; flex:none; vertical-align:-1px; } 
        с каталогом. Внутри .scrBody — вкладки (пока одна, «Цвет») и сетка жетонов. -->
   <div class="scrBody">
     <div id="angarTabs"></div>
-    <div id="angarSubTabs" class="hidden"></div>
     <div id="angarGrid"></div>
   </div>
 </div>

@@ -957,11 +957,14 @@ const ANGAR_CATS = {
   decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' }
 };
 let angarCat = 'color';   // активная вкладка тюнинга
-let angarSubCat = '';     // активная подкатегория декалей (Космос/Зодиак/...), пусто до первого захода на вкладку
-/* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026):
-   подкатегории — из самих DECALS (поле cat), в порядке первого появления в массиве, без
-   «Нет» (id0, cat:'none' — это не подкатегория, а обычный бесплатный жетон). Одним проходом
-   по данным, а не отдельным вручную сверяемым списком — не разойдётся с составом DECALS. */
+/* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
+   потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
+   (владелец, 29.08.2026): подкатегории — из самих DECALS (поле cat), в порядке первого
+   появления в массиве, без «Нет» (id0, cat:'none' — это не подкатегория, а обычный
+   бесплатный жетон). Одним проходом по данным, а не отдельным вручную сверяемым списком —
+   не разойдётся с составом DECALS. Раньше был ещё angarSubCat — какая подкатегория выбрана
+   в отдельной ленте вкладок; сама лента снята, список теперь всегда показывает все
+   подкатегории подряд, фильтровать стало нечем. */
 const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
 
 /* 28.08.2026 «Один общий, не франкенштейн»: отдельная строка-кнопка под небом снята —
@@ -991,24 +994,28 @@ function angarItemFill(el, item){
     }
   }
 }
-function angarVisibleList(){ // список жетонов активной вкладки — у декалей ещё фильтр по подкатегории
+function angarVisibleList(){ // список жетонов активной вкладки — у декалей это уже весь каталог разом
   const cfg = ANGAR_CATS[angarCat];
   if(angarCat!=='decal') return cfg.list;
-  // «Нет» (id0, cat:'none') не входит ни в одну подкатегорию по построению — без этой
-  // строки плитка «снять декаль» была бы недостижима нигде в сетке. Держим её первой
-  // плиткой любой подкатегории, а не отдельной вкладкой/«Всё» (владелец: не кучей).
-  const none = cfg.list.find(d=>d.cat==='none');
-  const rest = cfg.list.filter(d=>d.cat===angarSubCat);
-  return none ? [none].concat(rest) : rest;
+  // 29.08.2026 «полный каталог, не кучей вкладок»: раньше фильтровали по одной активной
+  // angarSubCat — теперь отдаём всё сразу, сгруппированное по категориям в том же порядке,
+  // что раньше был у ленты вкладок (ANGAR_DECAL_CATS). «Нет» (id0, cat:'none') не входит ни
+  // в одну категорию по построению — держим её первой плиткой списка один раз, не по разу
+  // на категорию (была именно эта жалоба владельца — «пустые места в декали»).
+  const none = cfg.list.filter(d=>d.cat==='none');
+  const rest = ANGAR_DECAL_CATS.flatMap(cat=>cfg.list.filter(d=>d.cat===cat));
+  return none.concat(rest);
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
-  if(grid){ angarVisibleList().forEach((item,i)=>{ const el=grid.children[i]; if(el) angarItemFill(el, item); }); }
+  // 29.08.2026: в сетке декалей теперь ещё .angarCatHead-подзаголовки вперемешку с
+  // плитками — считаем позицию только по .angarIt, иначе индекс от заголовков съедет.
+  if(grid){ const els=grid.querySelectorAll('.angarIt'); angarVisibleList().forEach((item,i)=>{ const el=els[i]; if(el) angarItemFill(el, item); }); }
   setText('angarWalletN', Math.round(S.wallet));
   starJewelWake();
 }
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый/выбранный элемент)
-let angarBuilt = false;    // жетоны построены — второй раз не строим (сбрасывается при смене вкладки/подкатегории)
+let angarBuilt = false;    // жетоны построены — второй раз не строим (сбрасывается при смене вкладки)
 
 let angarTabsBuilt = false;
 function angarBuildTabs(){
@@ -1030,39 +1037,25 @@ function angarRenderTabsSel(){
   if(tc) tc.classList.toggle('sel', angarCat==='color');
   if(td) td.classList.toggle('sel', angarCat==='decal');
 }
-function angarBuildSubTabs(){
-  const wrap=$('angarSubTabs'); if(!wrap) return;
-  wrap.classList.toggle('hidden', angarCat!=='decal');
-  if(angarCat!=='decal') return;
-  wrap.innerHTML='';
-  ANGAR_DECAL_CATS.forEach(cat=>{
-    const b=document.createElement('button');
-    b.className='angarSubTab'+(cat===angarSubCat?' sel':'');
-    b.dataset.cat=cat;
-    b.textContent = (L.decalCatNames && L.decalCatNames[cat]) || cat;
-    b.addEventListener('click',()=>angarSwitchSubCat(cat));
-    wrap.appendChild(b);
-  });
-}
 function angarSwitchCat(cat){
   if(angarCat===cat) return;
   angarCat=cat; angarBuilt=false; angarSel=S[ANGAR_CATS[cat].selKey];
-  if(cat==='decal' && !angarSubCat) angarSubCat=ANGAR_DECAL_CATS[0];
   sfx.click(); haptic('light');
-  angarRenderTabsSel(); angarBuildSubTabs(); angarBuildGrid(); angarPvDraw(performance.now());
-}
-function angarSwitchSubCat(cat){
-  if(angarSubCat===cat) return;
-  angarSubCat=cat; angarBuilt=false; sfx.click(); haptic('light');
-  const wrap=$('angarSubTabs');
-  if(wrap) [...wrap.children].forEach(b=>b.classList.toggle('sel', b.dataset.cat===cat));
-  angarBuildGrid();
+  angarRenderTabsSel(); angarBuildGrid(); angarPvDraw(performance.now());
 }
 function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
     grid.innerHTML='';
+    let lastCat=null; // 29.08.2026: подзаголовок вставляется перед первой плиткой новой категории
     angarVisibleList().forEach(item=>{
+      if(angarCat==='decal' && item.cat && item.cat!==lastCat){
+        const head=document.createElement('div');
+        head.className='angarCatHead';
+        head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
+        grid.appendChild(head);
+        lastCat = item.cat;
+      }
       const el=document.createElement('div');
       el.className='angarIt';
       if(angarCat==='color'){
@@ -1090,8 +1083,6 @@ function renderHangar(){
   angarRenderTabsSel();
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
-  if(angarCat==='decal' && !angarSubCat) angarSubCat=ANGAR_DECAL_CATS[0];
-  angarBuildSubTabs();
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
@@ -1102,7 +1093,8 @@ function angarPick(id){
   if(angarSel===id) return;
   angarSel=id; sfx.click(); haptic('light');
   const grid=$('angarGrid');
-  angarVisibleList().forEach((item,i)=>{ const el=grid.children[i];
+  const els=grid.querySelectorAll('.angarIt'); // см. angarBuyFill — заголовки категорий в счёт не идут
+  angarVisibleList().forEach((item,i)=>{ const el=els[i];
     if(el) el.classList.toggle('sel', item.id===angarSel); });
   angarBuyFill(); angarPvWake();
   /* 27.08.2026: было — временно подменить S.skin, нарисовать один кадр, вернуть обратно.
