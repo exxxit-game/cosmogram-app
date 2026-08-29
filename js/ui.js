@@ -1931,7 +1931,7 @@ function renderTop(){
       /* v1.282.20: экранирование вместо выкусывания. Раньше из чужого имени просто вырезались
          три символа — «Смит & Сын» терял амперсанд, а кавычки не трогались вовсе. escapeHtml
          из ядра сохраняет имя как есть и закрывает все пять опасных символов, включая кавычки. */
-      '<span class="topNm">'+escapeHtml(r.name)+(r.provider&&r.provider!=='tg'?' <b class="pvTag">'+escapeHtml(r.provider)+'</b>':'')+(r.username?' <i>@'+escapeHtml(r.username)+'</i>':'')+'</span>'+
+      '<span class="topNm">'+escapeHtml(r.name)+(r.provider&&r.provider!=='tg'?' <b class="pvTag">'+escapeHtml(r.provider)+'</b>':'')+'</span>'+
       '<span class="topSc">'+fmtN(r.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')+'</span>'+
       // v1.282.20: сервер отдаёт verified — рекорд объяснён паспортом забега, а не чтением хранилища
       (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('checkbadge')+'</span>':'')+
