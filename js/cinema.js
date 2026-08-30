@@ -21,42 +21,70 @@
    Примерно у 28% проверенных Android-устройств не собрался НИ ОДИН
    кодек — на них pickVideoCodec() честно вернёт null, а не подменит
    отказ подделкой. */
-/* ---------- Реплики к моменту (30.08.2026, владелец, черновик — 8 строк на категорию) ----------
-   Пока просто плоский пул, случайный выбор без защиты от повтора — расширять/добавлять веса и
-   антиповтор имеет смысл, когда пул вырастет заметно больше 8 строк на категорию. */
+/* ---------- Реплики к моменту (30.08.2026, владелец, черновик по-русски, остальные 4 языка — мой
+   черновой перевод, НЕ сверен носителем — качество ES/PT/FR ниже, чем у RU/EN) ----------
+   По языку игрока (langEff, см. ui.js applyLangPref — единый источник «на каком языке мы сейчас»).
+   Пока просто плоский пул на язык, случайный выбор без защиты от повтора — антиповтор имеет смысл,
+   когда пул вырастет заметно больше 8 строк на категорию. */
 const CINEMA_LINES={
-  record:['НОВЫЙ РЕКОРД!','Космическая скорость.','Так ещё никто не летал.','Старый рекорд в шоке.',
-    'Вот это разгон!','Улетел выше космоса.','Рекорд? Обычное дело.','Небо запомнит этот полёт.'],
-  nearmiss:['На волосок!','Вот это нервы.','Ещё сантиметр — и всё.','Просвистело рядом.',
-    'Хладнокровный пилот.','Космос дышал в крыло.','Ювелирная работа.','Тоньше некуда.'],
-  death:['Ну хоть красиво.','Астероид оказался крепче.','Не в этот раз.','Приземление... неудачное.',
-    'Разбился о собственную смелость.','Полёт окончен. Слава была близко.','Космос забрал своё.','Ещё один герой пал красиво.'],
+  ru:{ record:['НОВЫЙ РЕКОРД!','Космическая скорость.','Так ещё никто не летал.','Старый рекорд в шоке.',
+      'Вот это разгон!','Улетел выше космоса.','Рекорд? Обычное дело.','Небо запомнит этот полёт.'],
+    nearmiss:['На волосок!','Вот это нервы.','Ещё сантиметр — и всё.','Просвистело рядом.',
+      'Хладнокровный пилот.','Космос дышал в крыло.','Ювелирная работа.','Тоньше некуда.'],
+    death:['Ну хоть красиво.','Астероид оказался крепче.','Не в этот раз.','Приземление... неудачное.',
+      'Разбился о собственную смелость.','Полёт окончен. Слава была близко.','Космос забрал своё.','Ещё один герой пал красиво.'] },
+  en:{ record:['NEW RECORD!','Cosmic speed.',"Nobody's flown like this.",'Old record: shook.',
+      'What a burn!','Flew past the cosmos.','Record? Just routine.','The sky will remember this.'],
+    nearmiss:['So close!','Nerves of steel.','One inch from the end.','Whistled right by.',
+      'Ice-cold pilot.','Space grazed the wing.','Surgical precision.',"Couldn't be closer."],
+    death:['At least it looked good.','The asteroid won this round.','Not this time.','Landing... unsuccessful.',
+      'Crashed by his own courage.','Flight over. Glory was close.','Space took its due.','Another hero, fallen in style.'] },
+  es:{ record:['¡NUEVO RÉCORD!','Velocidad cósmica.','Nadie ha volado así.','El récord anterior, temblando.',
+      '¡Qué acelerón!','Voló más allá del cosmos.','¿Récord? Cosa de todos los días.','El cielo recordará este vuelo.'],
+    nearmiss:['¡Por un pelo!','Qué nervios.','Un centímetro más y se acaba.','Pasó rozando.',
+      'Piloto de sangre fría.','El espacio rozó el ala.','Precisión de relojero.','No se pudo más ajustado.'],
+    death:['Al menos quedó bonito.','El asteroide ganó esta vez.','Esta vez no.','Aterrizaje... fallido.',
+      'Se estrelló por su propio valor.','Vuelo terminado. La gloria estuvo cerca.','El espacio cobró lo suyo.','Otro héroe, caído con estilo.'] },
+  pt:{ record:['NOVO RECORDE!','Velocidade cósmica.','Ninguém voou assim antes.','O recorde antigo tremeu.',
+      'Que aceleração!','Voou além do cosmos.','Recorde? Rotina.','O céu vai lembrar deste voo.'],
+    nearmiss:['Por um triz!','Que nervos.','Mais um centímetro e era o fim.','Passou raspando.',
+      'Piloto de sangue frio.','O espaço roçou a asa.','Trabalho de relojoaria.','Não dava pra ser mais justo.'],
+    death:['Pelo menos ficou bonito.','O asteroide venceu dessa vez.','Não dessa vez.','Pouso... malsucedido.',
+      'Caiu pela própria coragem.','Voo encerrado. A glória estava perto.','O espaço cobrou o que era dele.','Mais um herói, caído com estilo.'] },
+  fr:{ record:['NOUVEAU RECORD !','Vitesse cosmique.',"Personne n'a jamais volé comme ça.",'L’ancien record en tremble.',
+      'Quelle accélération !','Envolé au-delà du cosmos.','Record ? Une formalité.','Le ciel se souviendra de ce vol.'],
+    nearmiss:['Au poil !','Quels nerfs.','Un centimètre de plus et c’était fini.','Ça a sifflé tout près.',
+      'Pilote au sang-froid.','L’espace a frôlé l’aile.','Travail de précision.','Impossible de faire plus serré.'],
+    death:['Au moins, c’était beau.','L’astéroïde a gagné cette fois.','Pas cette fois.','Atterrissage... raté.',
+      'Écrasé par son propre courage.','Vol terminé. La gloire était proche.','L’espace a pris son dû.','Un héros de plus, tombé avec classe.'] },
 };
-function cinemaPickLine(cat){ const a=CINEMA_LINES[cat]; return a ? a[Math.floor(Math.random()*a.length)] : ''; }
+function cinemaPickLine(cat){
+  const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';
+  const a=CINEMA_LINES[lang][cat]; return a ? a[Math.floor(Math.random()*a.length)] : '';
+}
 
 /* ---------- Вжигание текста в кадр (30.08.2026) ----------
    Рисуем НЕ на живом канвасе игры (render.js не трогаем) — а на отдельном канвасе-компоновщике:
-   копия игрового кадра + подпись/водяной знак поверх, и уже ЕГО кодируем. Игра выглядит как всегда,
-   текст есть только в записанном ролике. Пока прототип: одна статичная реплика на весь ролик + водяной
-   знак — тайминг (когда именно появляется реплика) не решён, это отдельный следующий шаг. */
+   копия игрового кадра + подпись поверх, и уже ЕГО кодируем. Игра выглядит как всегда, текст есть
+   только в записанном ролике. 30.08.2026 (владелец): отдельный тихий водяной знак был незаметен —
+   авторство переехало прямо под реплику, тем же кадром внимания, а не отдельной невзрачной меткой.
+   Пока прототип: одна статичная реплика на весь ролик — тайминг (когда именно появляется реплика,
+   если их несколько) не решён, это отдельный следующий шаг. */
 function cinemaDrawOverlay(ctx, w, h, caption){
-  ctx.textBaseline='alphabetic'; ctx.textAlign='center';
-  // водяной знак — имя игры, тихо, нижний край
-  ctx.font='600 '+Math.round(h*0.022)+'px "Exo 2", sans-serif';
-  ctx.fillStyle='rgba(255,255,255,.55)';
-  ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=Math.round(h*0.006);
-  ctx.fillText('COSMOGRAM', w/2, h*0.97);
   if (!caption) return;
-  // реплика — крупно, с тёмной подложкой для читаемости без звука (см. разбор с владельцем 30.08.2026)
-  const fs=Math.round(h*0.038);
-  ctx.font='700 '+fs+'px "Exo 2", sans-serif';
-  const padY=fs*0.6, barY=h*0.10, barH=fs+padY*2;
-  ctx.shadowBlur=0;
+  ctx.textBaseline='alphabetic'; ctx.textAlign='center';
+  const fs=Math.round(h*0.038), fs2=Math.round(h*0.02); // реплика + строка авторства помельче под ней
+  const padY=fs*0.55, gap=fs*0.35, barY=h*0.10, barH=fs+fs2+gap+padY*2;
   ctx.fillStyle='rgba(6,10,20,.55)';
   ctx.fillRect(0, barY-barH/2, w, barH);
+  ctx.font='700 '+fs+'px "Exo 2", sans-serif';
   ctx.fillStyle='#fff';
   ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=Math.round(h*0.004);
-  ctx.fillText(caption, w/2, barY+fs*0.32);
+  const capY=barY-barH/2+padY+fs*0.78;
+  ctx.fillText(caption, w/2, capY);
+  ctx.font='600 '+fs2+'px "Exo 2", sans-serif';
+  ctx.fillStyle='#f0c040'; // --gold-hi: тот же золотой, что у рекордов/чисел в игре
+  ctx.fillText('© Cosmogram', w/2, capY+fs2+gap);
   ctx.shadowBlur=0;
 }
 
