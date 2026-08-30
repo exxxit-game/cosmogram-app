@@ -26,7 +26,7 @@
 const ic = (n,cls)=>'<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#i-'+n+'"></use></svg>';
 const I18N = {
   ru: {
-    start:'Начать полёт', retry:'Ещё раз?', menu:'Меню', watchFlight:'Смотреть полёт', theaterChip:'Повтор полёта',
+    start:'Начать полёт', retry:'Ещё раз', menu:'Меню', watchFlight:'Смотреть полёт', theaterChip:'Повтор полёта',
     tribune:'Трибуна чемпиона', tribuneNone:'Мастер ещё не показал полёт',
     goldStarStats:(c,f)=>'Золотую звезду сегодня взяли '+c+' из '+f,
     goldChip:'★ Знак дня',
@@ -177,7 +177,7 @@ const I18N = {
     ghostBeat:(n,sc,b)=>'Призрак '+escapeHtml(n||'игрока')+' повержен: '+fmtN(sc)+' против '+fmtN(b)
   },
   en: {
-    start:'Start flight', retry:'Fly again?', menu:'Menu', watchFlight:'Watch flight', theaterChip:'Flight replay',
+    start:'Start flight', retry:'Fly again', menu:'Menu', watchFlight:'Watch flight', theaterChip:'Flight replay',
     tribune:'Champion’s stand', tribuneNone:'The master hasn’t shown a flight yet',
     goldStarStats:(c,f)=>'Today’s golden star was caught by '+c+' of '+f,
     goldChip:'★ Sign of the day',
@@ -320,7 +320,7 @@ const I18N = {
     ghostBeat:(n,sc,b)=>'Ghost of '+escapeHtml(n||'player')+' beaten: '+fmtN(sc)+' vs '+fmtN(b)
   },
   es:{
-    start:'Iniciar vuelo', retry:'¿Otra vez?', menu:'Menú', watchFlight:'Ver vuelo', theaterChip:'Repetición de vuelo',
+    start:'Iniciar vuelo', retry:'Otra vez', menu:'Menú', watchFlight:'Ver vuelo', theaterChip:'Repetición de vuelo',
     tribune:'Tribuna del campeón', tribuneNone:'El maestro aún no mostró su vuelo',
     goldStarStats:(c,f)=>'Hoy tomaron la estrella dorada '+c+' de '+f,
     goldChip:'★ Marca del día',
@@ -481,7 +481,7 @@ const I18N = {
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jugador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
   },
   pt:{
-    start:'Iniciar voo', retry:'De novo?', menu:'Menu', watchFlight:'Ver voo', theaterChip:'Repetição de voo',
+    start:'Iniciar voo', retry:'De novo', menu:'Menu', watchFlight:'Ver voo', theaterChip:'Repetição de voo',
     tribune:'Tribuna do campeão', tribuneNone:'O mestre ainda não mostrou seu voo',
     goldStarStats:(c,f)=>'Hoje pegaram a estrela dourada '+c+' de '+f,
     goldChip:'★ Marca do dia',
@@ -642,7 +642,7 @@ const I18N = {
     ghostBeat:(n,sc,b)=>'Fantasma de '+escapeHtml(n||'jogador')+' superado: '+fmtN(sc)+' contra '+fmtN(b)
   },
   fr:{
-    start:'Décoller', retry:'Revoler ?', menu:'Menu', watchFlight:'Voir le vol', theaterChip:'Replay du vol',
+    start:'Décoller', retry:'Revoler', menu:'Menu', watchFlight:'Voir le vol', theaterChip:'Replay du vol',
     tribune:'Tribune du champion', tribuneNone:'Le maître n\u2019a pas encore montré de vol',
     goldStarStats:(c,f)=>'L\u2019étoile dorée du jour a été attrapée par '+c+' sur '+f,
     goldChip:'★ Signe du jour',

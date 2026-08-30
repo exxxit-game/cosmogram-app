@@ -555,8 +555,9 @@ button, input, select, textarea { text-transform:inherit; }
   text-shadow:0 0 16px rgba(240,192,64,.3); margin-bottom:2px; opacity:.85; }
 #finalScore { font-family:var(--font-disp); font-weight:400;
   font-size:clamp(56px,15vw,96px); line-height:1; color:var(--gold-hi);
-  text-shadow:0 0 30px rgba(240,192,64,.35); margin-bottom:6px; }
+  text-shadow:0 0 30px rgba(240,192,64,.35); margin-bottom:2px; }
 #newRecord { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:4px; }
+#newRecord:empty, #duelRes:empty { margin:0; min-height:0; } /* 30.08.2026 (владелец, подтверждено): пустые распорки между счётом и «Войдите» держали место даже без содержимого */
 #goldChip { color:#ffd76a; font-size:17px; font-weight:700; text-align:center; margin:2px 0 4px;
   text-shadow:0 0 12px rgba(255,200,90,.55); } /* v1.100.2: знак дня — золото чести */
 #dayStats { color:rgba(191,232,255,.75); font-size:13px; text-align:center; margin-bottom:6px; } /* v1.100.2: N из M */
@@ -1714,7 +1715,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div id="dcJoinWidget"></div>
     <div id="gJoinWidget"></div>
   </div>
-  <button class="btn pri" id="retryBtn">Ещё раз?</button>
+  <button class="btn pri" id="retryBtn">Ещё раз</button>
   <button class="btn ghost hidden" id="watchBtn">Смотреть полёт</button>
   <button class="btn ghost hidden" id="tribuneBtn">Трибуна чемпиона</button><!-- v1.100.1 «Трибуна чемпиона»: спектакль лучшего лётчика дня — после твоей посадки -->
   <div id="overQuiet">
