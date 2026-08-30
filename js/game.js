@@ -1748,7 +1748,13 @@ function spawnPowerup(forceKind){ // forceKind — урок III «Ловец б�
   const kinds=['shield','magnet','slowmo','life','dash','nova']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая
   const lifeCap=(S.mode==='custom')?(S.customLv||3):3; // v1.70.0: потолок жизней — у своей трассы он авторский, иначе бонус ломал бы «Ад на одну жизнь»
   const weights=[3,3,2,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток
-  let r=mapRNG()*9, kind='shield';
+  // 30.08.2026: множитель был жёстко зашит *9 вместо суммы весов (3+3+2+1+1+1=11) — тот же
+  // приём, что уже верно сделан в spawnObstacle() чуть выше в этом файле (tot считается из
+  // массива, не вписан числом). При *9 цикл гарантированно останавливался не позже «life»
+  // (3+3+2+1=9) — «dash» и «nova» были математически недостижимы ни при каком mapRNG().
+  // Проверено численно (2 000 000 прогонов той же формулы): dash/nova выпадали 0 раз из 2 млн.
+  let tot=0; for(const w of weights) tot+=w;
+  let r=mapRNG()*tot, kind='shield';
   for(let i=0;i<kinds.length;i++){ r-=weights[i]; if(r<=0){kind=kinds[i];break;} }
   if (typeof forceKind==='string') kind=forceKind;
   if (kind==='life' && S.lives>=lifeCap) kind='shield'; // v1.46.0: жизнь — только раненым. Страж абсолютный: даже принудительный спавн не выдаст жизнь при полном корпусе
