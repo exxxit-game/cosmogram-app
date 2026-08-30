@@ -421,6 +421,59 @@ async function cinemaTestStop(){
     db.close();
   }catch(e){} }
 }
+
+/* ---------- Момент полёта: авто-запись под «Поделиться» (30.08.2026, владелец) ----------
+   «Больше не важно, слабый телефон или нет — у нас есть решение для тех и тех»: слабое
+   устройство молча получает только картинку (уже готова и работает у всех), способное —
+   само включает запись, без кнопки, без участия игрока. Порог CINEMA_HIGHLIGHT_MIN_FPS —
+   намеренно осторожное временное число (близко к «явно достаточно»), НЕ измеренное на
+   реальном слабом устройстве — у обоих исходов ошибки есть безопасный запасной путь
+   (картинка всё равно работает), так что ошибиться в диапазоне не критично, точная
+   калибровка — по данным теста на A03 Core, когда будут. */
+const CINEMA_HIGHLIGHT_MIN_FPS = 40;
+function cinemaHighlightEligible(){
+  return typeof Q!=='undefined' && Q._baseFps!=null && Q._baseFps >= CINEMA_HIGHLIGHT_MIN_FPS;
+}
+let _cinemaHighlightWatcher=0, _cinemaHighlightBest=0;
+function cinemaHighlightStart(canvas){
+  if (!cinemaHighlightEligible()) return; // слабое/неизвестное устройство — тихо пропускаем, картинка всё равно есть
+  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (первый полёт/тест) — не перехватываем
+  _cinemaOwner='highlight';
+  const mode = (typeof controlMode==='function') ? controlMode() : 'touch'; // game.js, только чтение — как и S/Store/Q везде в этом файле
+  const modeKey = (typeof S!=='undefined' && S.bullet) ? 'bestBullet' : (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'));
+  _cinemaHighlightBest = (typeof Store!=='undefined') ? saneNumberSafe(Store.get(modeKey, 0)) : 0; // та же формула, что ui.js/gameOver считает рекордом
+  cinemaStart(canvas, 12_000_000, 20_000_000).then(ok=>{
+    if(!ok){ _cinemaOwner=null; return; }
+    _cinemaHighlightWatcher=setInterval(()=>{
+      if (typeof S!=='undefined' && S.score>_cinemaHighlightBest) cinemaMarkRecord(); // первое пересечение — markRecord сама не даст сработать дважды
+    }, 200);
+  });
+}
+function saneNumberSafe(v){ v=+v; return (isFinite(v) && v>=0) ? v : 0; } // Store иногда отдаёт мусор из старых версий — тот же дух, что saneNumber в ui.js, но без зависимости от него
+async function cinemaHighlightStop(){
+  if (_cinemaHighlightWatcher){ clearInterval(_cinemaHighlightWatcher); _cinemaHighlightWatcher=0; }
+  if (!cinemaActive() || _cinemaOwner!=='highlight') return;
+  _cinemaOwner=null;
+  const blob = await cinemaStop();
+  if (blob){ try{ const db=await cinemaDb();
+    await new Promise((res,rej)=>{ const tx=db.transaction(CINEMA_STORE,'readwrite'); tx.objectStore(CINEMA_STORE).put(blob,'highlight'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    db.close();
+  }catch(e){} }
+}
+async function cinemaLoadHighlight(){
+  try{
+    const db = await cinemaDb();
+    const blob = await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readonly');
+      const req = tx.objectStore(CINEMA_STORE).get('highlight');
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => rej(req.error);
+    });
+    db.close();
+    return blob;
+  }catch(e){ return null; }
+}
+
 /* ---------- Карточка на главном экране + плеер ----------
    28.08.2026. Своя, независимая от setScreen() накладка (тот же приём, что у
    achClaimShow/Hide в ach.js) — открытие/закрытие плеера не меняет текущий
