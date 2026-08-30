@@ -1751,6 +1751,23 @@ $('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
   setTimeout(()=>skazat(false), 1200); // молчащий буфер: обещание не может висеть без ответа
 });
 
+// 31.08.2026 «Приложить диагностику» (владелец): та же лента, что и diagCopyBtn (BB.text()),
+// но подставляется прямо в это поле, не через буфер обмена — снимает и лишний экран
+// (Сервисный центр → назад → сюда), и Samsung/Telegram WebView, где системная вставка
+// иногда просто не срабатывает (жалоба владельца, живое устройство). Метка-разделитель
+// защищает от повторного приклеивания той же ленты, если нажать ещё раз не читая.
+const FEEDBACK_TAPE_MARK='\n\n— — —\n';
+wireOn('feedbackAttachBtn', 'click', ()=>{
+  const ta=$('feedbackText'); if(!ta) return;
+  sfx.click(); haptic('light');
+  if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return; // уже приложено — не дублируем
+  let text=''; try{ text=(typeof BB!=='undefined' && BB.text) ? BB.text() : ''; }catch(e){}
+  if(!text) text='Cosmogram v'+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?')+' blackbox · лента пуста';
+  ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+text;
+  if(ta.value.length>ta.maxLength) ta.value=ta.value.slice(0,ta.maxLength); // тот же потолок, что и у ручного ввода
+  feedbackUpdateCount();
+  if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
+});
 wireOn('diagSupportBtn', 'click', ()=>{ haptic('light'); openFeedback('diag'); });
 wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая проверка цены записи на реальном телефоне
   if (typeof cinemaTestArm==='function') cinemaTestArm();
@@ -2150,6 +2167,7 @@ function applyLang(){
   setText('feedbackHint',L.feedbackHint);
   setAttr('feedbackText','placeholder',L.feedbackPlaceholder);
   setText('feedbackSendBtn',L.feedbackSend);
+  setText('feedbackAttachBtn',L.feedbackAttach);
   setText('pauseTitle',L.pause);
   setAttr('pauseBtn','aria-label',L.ariaPause); // v1.47.1: скринридер говорит на языке игрока — метка из словаря, не из разметки
   setText('resumeBtn',L.resume);

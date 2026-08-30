@@ -1646,6 +1646,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
              border-radius:10px;padding:10px 12px;text-transform:none;letter-spacing:normal;
              outline:none;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
     <div id="feedbackCount" style="text-align:right;margin:0 16px 10px;font-size:11px"></div>
+    <!-- 31.08.2026 (владелец): «Скопировать самописец» из Сервисного центра требовала два экрана
+         (скопировать там → вставить здесь) — и вставка не всегда работает (Samsung/Telegram
+         WebView иногда режет системное меню «Вставить»). Кнопка сама подставляет тот же текст
+         (BB.text(), как у diagCopyBtn) прямо в это поле — без буфера обмена, без второго экрана. -->
+    <button class="btn ghost" id="feedbackAttachBtn" style="width:calc(100% - 32px);margin:0 16px 10px">Приложить диагностику</button>
     <div class="stack" style="margin:0 16px 14px">
       <button class="btn pri" id="feedbackSendBtn">Отправить</button>
     </div>
