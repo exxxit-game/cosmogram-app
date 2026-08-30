@@ -48,6 +48,8 @@ async function pickVideoCodec(w, h){
    ~15ГБ, если копить сырыми). Итоговый файл — тот порядок, что в конфиге
    (bitrate 2 Мбит/с) — около 15МБ на минуту. */
 let _cinemaRec=null;
+let _cinemaOwner=null; // 30.08.2026: 'first' | 'test' — единственная запись (_cinemaRec) на двоих потребителей,
+  // без метки Stop одного мог забрать запись, начатую Start другого (см. разбор с владельцем)
 async function cinemaStart(canvas){
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
@@ -160,16 +162,53 @@ async function cinemaDeleteFirst(){
    здесь не реализован. */
 function cinemaFirstFlightStart(canvas){
   if (Store.get('cinemaFirstDone', 0)) return; // уже было — не пишем второй раз поверх
+  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (тест) — не перехватываем
+  _cinemaOwner='first';
   cinemaStart(canvas); // намеренно без await — взлёт не должен ждать подбор кодека
 }
 async function cinemaFirstFlightStop(){
-  if (!cinemaActive()) return; // либо не первый полёт, либо кодек не нашёлся на старте — тихо, без ошибки
+  if (!cinemaActive() || _cinemaOwner!=='first') return; // либо не первый полёт, либо кодек не нашёлся на старте, либо запись сейчас чужая — тихо, без ошибки
+  _cinemaOwner=null;
   const blob = await cinemaStop();
   Store.set('cinemaFirstDone', 1); // помечаем «было» независимо от успеха — вторая попытка не начнётся молча поверх первой
   if (blob) await cinemaSaveFirst(blob);
   if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // карточка на главном — без ожидания следующего захода в меню
 }
 
+/* ---------- Тест «цена записи в бою» (30.08.2026, владелец, живое устройство Samsung A03
+   Core — самый слабый борт в парке, куплен специально для таких проверок) ----------
+   Отдельная, самая простая запись поверх «Первого полёта»: один явный тест по кнопке
+   в Сервисном центре, не вместо памяти первого полёта, ей не мешает. Считает Q.fps
+   (уже живая, render.js) каждые 500мс всё время полёта — сравнение среднего FPS
+   разговора не заменяет, но даёт число, а не ощущение. */
+function cinemaTestArm(){ Store.set('cinemaTestArmed',1); }
+let _cinemaTestSamples=null, _cinemaTestTimer=0, _cinemaTestOn=false;
+function cinemaTestStart(canvas){
+  _cinemaTestOn=false; _cinemaTestSamples=[];
+  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (первый полёт) — не перехватываем
+  _cinemaOwner='test';
+  cinemaStart(canvas).then(ok=>{
+    _cinemaTestOn=ok;
+    if(!ok){ _cinemaOwner=null; if(typeof toast==='function') toast('Кодек не нашёлся на этом устройстве','rgba(255,159,176,.5)'); return; }
+    _cinemaTestTimer=setInterval(()=>{ if(typeof Q!=='undefined') _cinemaTestSamples.push(Q.fps); },500);
+  });
+}
+async function cinemaTestStop(){
+  if(_cinemaTestTimer){ clearInterval(_cinemaTestTimer); _cinemaTestTimer=0; }
+  if(!_cinemaTestOn || _cinemaOwner!=='test'){ _cinemaTestOn=false; return; }
+  _cinemaTestOn=false; _cinemaOwner=null;
+  const blob=await cinemaStop();
+  const s=_cinemaTestSamples||[];
+  const avg=s.length?+(s.reduce((a,b)=>a+b,0)/s.length).toFixed(1):0;
+  const min=s.length?+Math.min(...s).toFixed(1):0;
+  const msg='avg:'+avg+' min:'+min+' n:'+s.length+' saved:'+(!!blob);
+  if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_test_fps', msg);
+  if(typeof toast==='function') toast('Запись: avg '+avg+' fps, мин '+min+' fps','rgba(140,220,180,.5)');
+  if(blob){ try{ const db=await cinemaDb();
+    await new Promise((res,rej)=>{ const tx=db.transaction(CINEMA_STORE,'readwrite'); tx.objectStore(CINEMA_STORE).put(blob,'test'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+    db.close();
+  }catch(e){} }
+}
 /* ---------- Карточка на главном экране + плеер ----------
    28.08.2026. Своя, независимая от setScreen() накладка (тот же приём, что у
    achClaimShow/Hide в ach.js) — открытие/закрытие плеера не меняет текущий

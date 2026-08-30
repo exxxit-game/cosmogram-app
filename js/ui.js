@@ -327,6 +327,7 @@ function startGame(saved){
   if (typeof streakDayCheck==='function') streakDayCheck(); // v1.108.1: серия дней — тот же момент, тот же принцип
   if (typeof welcomeDayCheck==='function' && welcomeDayCheck() && typeof welcomeShow==='function') welcomeShow(); // 28.08.2026: «Добро пожаловать» — раз в день, тем же моментом
   if (!saved && typeof cinemaFirstFlightStart==='function'){ const gc=document.getElementById('game'); if(gc) cinemaFirstFlightStart(gc); } // 28.08.2026: «Кино полёта» — только самый первый полёт, не восстановленный автосейвом
+  if (Store.get('cinemaTestArmed',0) && typeof cinemaTestStart==='function'){ Store.set('cinemaTestArmed',0); const gc=document.getElementById('game'); if(gc) cinemaTestStart(gc); } // 30.08.2026: разовый тест цены записи по кнопке в Сервисном центре
   S.dayKey = todayKey(); // 27.08.2026: день ВЗЛЁТА, читаем часы один раз — посадка (dayAdd) использует его же, а не читает часы заново
   if (typeof dayMark==='function') dayMark(S.dayKey); // v1.282.20 «Дневник борта»: день засчитывается на взлёте — забег может не долететь до отправки, день был
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: на сцене — твоя лента дня; теней нет, зритель смотрит сам самолётик
@@ -377,6 +378,7 @@ function startBullet(){ // отдельный режим: каждый near-miss
 function retryRun(){ runMode==='bullet'?startBullet():startGame(); } // «ЕЩЁ РАЗ» — в той же дисциплине (v1.42.0)
 function gameOver(){
   if (typeof cinemaFirstFlightStop==='function') cinemaFirstFlightStop(); // 28.08.2026: стоп до любого раннего return ниже — первый полёт всегда должен сохраниться, каким бы ни оказался финиш
+  if (typeof cinemaTestStop==='function') cinemaTestStop(); // 30.08.2026: тот же порядок — до любого раннего return
   /* v1.282.13: страховка кассы. В театре единственный выход — endTheater(); если сюда
      всё-таки попали (лента пропала, неуязвимость не встала), нельзя пускать зрителя по
      полному тракту посадки: он запишет статистику смертей, near-miss-очки уйдут в рекорд
@@ -1738,6 +1740,11 @@ $('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
 });
 
 wireOn('diagSupportBtn', 'click', ()=>{ haptic('light'); openFeedback('diag'); });
+wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая проверка цены записи на реальном телефоне
+  if (typeof cinemaTestArm==='function') cinemaTestArm();
+  haptic('light'); sfx.click();
+  if (typeof toast==='function') toast('Записано будет — лети', 'rgba(140,220,180,.5)');
+});
 // v1.65.0 «Спойлеры»: категории — аккордеон. Открыта всегда одна панель — ничего ни на что не налезает,
 // закрытый экран помещается целиком; экран скроллится как страховка + подскролл к открытой шапке
 const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpProf','accPanel']];
