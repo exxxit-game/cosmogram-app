@@ -84,6 +84,11 @@ function cardDraw(){
   x.fillText('@realcosmogrambot',W/2,682);
 }
 
+function cardShareRecordGlow(){ // 30.08.2026: разовое свечение «Поделиться» — только в момент рекорда
+  const btn=$('cardShare'); if(!btn) return;
+  btn.classList.remove('glow'); void btn.offsetWidth; // сброс всегда — иначе старое свечение переживало обычный заход после рекордного (найдено живьём)
+  if(cardData.rec && !btn.classList.contains('hidden')) btn.classList.add('glow');
+}
 function cardOpen(){
   if(typeof document!=='undefined' && document.fonts && document.fonts.ready)
     document.fonts.ready.then(cardDraw); // Exo 2 локальный — к моменту финала загружен, но перестрахуемся
@@ -91,6 +96,7 @@ function cardOpen(){
   cardChatGate(); // v1.97.0: золотая дверь решает, видна ли она в этой среде
   cardStoryGate(); // v1.97.1: и сторис-дверь рядом
   cardShareGate(); // 30.08.2026: и системное «Поделиться» — своя дверь, не завязана на Telegram
+  cardShareRecordGlow(); // 30.08.2026: после gate — глядим на актуальную видимость кнопки
   setScreen('card'); sfx.click(); haptic('light');
 }
 function cardFill(){ // подписи по языку (вызывается из applyLang)

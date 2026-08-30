@@ -1000,6 +1000,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   border:1px solid rgba(201,164,92,.35);box-shadow:0 12px 44px rgba(0,0,0,.55)}
 .cardWrap canvas{display:block;width:100%;height:auto}
 .cardHint{font-size:13px;color:var(--gold-hi);letter-spacing:.04em;text-align:center;padding:0 24px}
+/* 30.08.2026 (владелец, макет утверждён): разовое золотое свечение «Поделиться» — только когда
+   результат реально особенный (новый рекорд, см. cardShareRecordGlow в card.js). На обычном заходе
+   кнопка выглядит как всегда — постоянная анимация читалась бы как навязчивость, гасила бы эффект. */
+@keyframes sharePulse{
+  0%   { box-shadow:0 0 0 0 rgba(240,192,64,.55); }
+  50%  { box-shadow:0 0 22px 6px rgba(240,192,64,.85); border-color:rgba(240,192,64,.9); }
+  100% { box-shadow:0 0 0 0 rgba(240,192,64,.55); } }
+#cardShare.glow{ animation:sharePulse 1.6s ease-in-out 2; }
 /* 30.08.2026 «Единый паспорт забега»: было три разных визуальных языка подряд (пилюли
    режима+времени+ударов+бонусов+плавности, отдельная сетка 2×2 миссия/дистанция/звёзды/
    комбо, ещё одна лента пилюль с рекордами) — владелец: «сложно и непонятно». Режим+
