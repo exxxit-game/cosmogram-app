@@ -386,6 +386,7 @@ function audioSample(){
     }
   }
   acPrevT=AC.currentTime; acPrevAt=nowAt;
+  audioHeartbeatTick(); // 30.08.2026: см. комментарий над функцией — тот же тик, не новый таймер
 }
 /* 26.08.2026: «тихая заморозка» неизлечима внутри того же AudioContext (сам баг — в часах
    браузера, не в нашем коде) — единственное лекарство таким же приёмом, что уже был для
@@ -393,6 +394,25 @@ function audioSample(){
    music.js (ensureChain) и g/src в engine (engine.start, тот же файл) держат ссылку на
    старый контекст — они сами замечают несовпадение (mg.context!==ac) и пересобираются на
    следующем тике audioKeep() (js/ui.js, каждые 6с), сами узлы здесь, в core.js, не трогаем. */
+/* 30.08.2026 «Heartbeat Keepalive» (гипотеза, не подтверждённый факт): источник — «5 нишевых
+   исследований Principal Engineer», 25.08.2026. Android WebView (особенно MIUI/HyperOS)
+   агрессивно морозит вкладку без звука, если решает, что она «неактивна» — например, после
+   свайпа шторки уведомлений. Беззвучный тик (gain 0.001, ультразвук 18кГц — двойная
+   подстраховка неслышимости) раз в 2с должен давать ОС тот же сигнал «здесь играет медиа»,
+   что и настоящий звук, без осознанного звука для игрока. Совпадает по платформе
+   (Android+Telegram) с телеметрией audio_stall_recover, но проверить сам эффект здесь
+   нельзя — только живыми сигналами после выхода. Новый таймер не заводим: тик уже
+   вызывается из существующего 2с-цикла audioSample() ниже (тот же цикл, что уже ловит
+   «тихую заморозку») — тот же принцип экономии таймеров, что и у неё самой. */
+function audioHeartbeatTick(){
+  if(!AC || AC.state!=='running') return;
+  try{
+    const osc=AC.createOscillator(), g=AC.createGain();
+    g.gain.value=0.001; osc.frequency.value=18000;
+    osc.connect(g); g.connect(AC.destination);
+    osc.start(); osc.stop(AC.currentTime+0.05);
+  }catch(e){}
+}
 function audioRecoverStall(){
   try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('audio_stall_recover', AC.state); }catch(_){}
   try{ AC.close(); }catch(e){}
