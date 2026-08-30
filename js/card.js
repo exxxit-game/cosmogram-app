@@ -90,6 +90,7 @@ function cardOpen(){
   cardDraw();
   cardChatGate(); // v1.97.0: золотая дверь решает, видна ли она в этой среде
   cardStoryGate(); // v1.97.1: и сторис-дверь рядом
+  cardShareGate(); // 30.08.2026: и системное «Поделиться» — своя дверь, не завязана на Telegram
   setScreen('card'); sfx.click(); haptic('light');
 }
 function cardFill(){ // подписи по языку (вызывается из applyLang)
@@ -100,6 +101,7 @@ function cardFill(){ // подписи по языку (вызывается и�
   if(L.cardChat){ const t4=$('cardChat'); if(t4) t4.textContent=L.cardChat; }
   if(L.cardStory){ const t5=$('cardStory'); if(t5) t5.textContent=L.cardStory; }
   if(L.cardSave){ const t6=$('cardSave'); if(t6) t6.textContent=L.cardSave; }
+  if(L.share){ const t7=$('cardShare'); if(t7) t7.textContent=L.share; }
 }
 /* v1.96.0 «Одна дверь», шаг Б «Сохранить карточку»: PNG уходит файлом —
    в Telegram 8.0+ через tg.downloadFile, вне него — якорем download. Скриншот больше не обязателен. */
@@ -161,10 +163,40 @@ async function cardStory(){
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;
 }
+/* 30.08.2026 «Одна дверь для всех»: вместо отдельных кнопок под каждую соцсеть (у большинства
+   веб-ссылка на шаринг несёт только текст+ссылку, картинку прицепить нельзя — ограничение самих
+   платформ; у Instagram веб-ссылки для шаринга нет вовсе) — системное окно «Поделиться»
+   (Web Share API, files). Оно само показывает все установленные у игрока приложения с картинкой
+   внутри, а не гадает, под какую сеть строить обходной путь. */
+function cardShareGate(){
+  const b=$('cardShare'); if(!b) return;
+  let can=false;
+  try{
+    const probe=new File(['x'],'t.png',{type:'image/png'});
+    can=!!(navigator.share && navigator.canShare && navigator.canShare({files:[probe]}));
+  }catch(e){}
+  b.classList.toggle('hidden', !can);
+}
+function cardShare(){
+  const b=$('cardShare'), cv=$('cardCanvas');
+  if(!b||!cv||b._busy) return; b._busy=1;
+  cv.toBlob(async function(blob){
+    b._busy=0;
+    if(!blob) return;
+    try{
+      const file=new File([blob], 'cosmogram-'+(cardData.sc||0)+'.png', {type:'image/png'});
+      if(!navigator.canShare({files:[file]})) return;
+      await navigator.share({files:[file], text:(typeof L!=='undefined' && L.shareText)?L.shareText(cardData.sc):''});
+      haptic('light');
+    }catch(e){} // отказ игрока в системном окне — не ошибка, молчим
+  }, 'image/png');
+}
 wireOnLocal('cardBtn','click',cardOpen);
 wireOnLocal('cardChat','click',cardSend);
 wireOnLocal('cardStory','click',cardStory);
+wireOnLocal('cardShare','click',cardShare);
 wireOnLocal('cardSave','click',cardSave);
 wireOnLocal('cardBack','click',function(){ sfx.click(); setScreen('over'); });
 cardChatGate(); // при загрузке: среда уже известна
 cardStoryGate(); // и сторис-дверь при загрузке
+cardShareGate(); // и системное «Поделиться» тоже
