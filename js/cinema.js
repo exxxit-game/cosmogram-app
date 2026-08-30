@@ -254,6 +254,13 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption){
   let frameN = 0;
   const grab = () => {
     if (!_cinemaRec) return;
+    // 30.08.2026 (владелец, экстренно — живое зависание на A03 Core и Oppo): без этой проверки
+    // encoder.encode() звался каждые 33мс независимо от того, успевает ли кодировщик — на слабом
+    // устройстве программное кодирование одного кадра может занять дольше 33мс, и очередь внутри
+    // VideoEncoder росла без остановки (задокументированная ловушка WebCodecs, encodeQueueSize —
+    // MDN/спецификация). Порог 2 — общепринятое значение из примеров WebCodecs, не выдуман с нуля.
+    // Пропущенный кадр здесь не «баг», а нормальная просадка частоты клипа под нагрузкой.
+    if (encoder.encodeQueueSize > 2) return;
     try{
       let src = canvas;
       if (ov){ ov.octx.drawImage(canvas,0,0); cinemaDrawOverlay(ov.octx, canvas.width, canvas.height, overlayCaption); src = ov.oc; }
