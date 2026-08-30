@@ -197,7 +197,15 @@ async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
   made.muxer.finalize();
   return new Blob([made.target.buffer], { type: 'video/mp4' });
 }
+// 30.08.2026 (владелец, экстренно): живое зависание на A03 Core И на Oppo при ручном тесте
+// FPS-записи — механизм явно тяжелее, чем показала песочница на компьютере. Рубильник в одном
+// месте вместо трёх точек запуска (первый полёт/ручной тест/авто-момент) — останавливает запись
+// целиком, пока причина не найдена. Гипотеза, не диагноз: подозревается сам cinemaStart
+// (VideoEncoder+канвас), не конкретно новая авто-развилка по порогу — владелец ловил зависание
+// именно на РУЧНОЙ кнопке теста, которая живёт с самого начала этого модуля.
+const CINEMA_DISABLED = true;
 async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption){
+  if (CINEMA_DISABLED) return false;
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
   const picked = await pickVideoCodec(canvas.width, canvas.height);
