@@ -379,11 +379,15 @@ async function cinemaFirstFlightStop(){
 }
 
 /* ---------- Тест «цена записи в бою» (30.08.2026, владелец, живое устройство Samsung A03
-   Core — самый слабый борт в парке, куплен специально для таких проверок) ----------
+   Core — самый слабый борт в парке, куплен специально для таких проверок; 30.08.2026, позже:
+   владелец — оставить не на один раз, а насовсем, как способ увидеть, где и почему проседает
+   FPS, и не сразу винить телефон, а сначала проверить, не наша ли это вина) ----------
    Отдельная, самая простая запись поверх «Первого полёта»: один явный тест по кнопке
    в Сервисном центре, не вместо памяти первого полёта, ей не мешает. Считает Q.fps
-   (уже живая, render.js) каждые 500мс всё время полёта — сравнение среднего FPS
-   разговора не заменяет, но даёт число, а не ощущение. */
+   (уже живая, render.js) каждые 500мс всё время полёта — и сравнивает со СВОИМ же
+   Q._baseFps (среднее первых 60 сек СЕССИИ на этом устройстве без записи, снимается
+   один раз и не сдвигается разогревом — см. страж 143/qualityTick в render.js). Так число
+   не голое — сразу видно, эта просадка от записи или устройство и так еле тянет игру. */
 function cinemaTestArm(){ Store.set('cinemaTestArmed',1); }
 let _cinemaTestSamples=null, _cinemaTestTimer=0, _cinemaTestOn=false;
 function cinemaTestStart(canvas){
@@ -404,9 +408,14 @@ async function cinemaTestStop(){
   const s=_cinemaTestSamples||[];
   const avg=s.length?+(s.reduce((a,b)=>a+b,0)/s.length).toFixed(1):0;
   const min=s.length?+Math.min(...s).toFixed(1):0;
-  const msg='avg:'+avg+' min:'+min+' n:'+s.length+' saved:'+(!!blob);
+  const base=(typeof Q!=='undefined' && Q._baseFps!=null) ? +Q._baseFps.toFixed(1) : null;
+  // база ещё не снята (меньше ~60 сек живой игры за сессию) — сравнивать не с чем, честно говорим об этом,
+  // а не подставляем выдуманное число
+  const baseTxt = base!=null ? ('база '+base+' fps') : 'база ещё не снята — налетай ещё немного без теста';
+  const dropTxt = base!=null ? (', просадка '+Math.max(0,Math.round((1-avg/base)*100))+'%') : '';
+  const msg='avg:'+avg+' min:'+min+' base:'+(base??'null')+' n:'+s.length+' saved:'+(!!blob);
   if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_test_fps', msg);
-  if(typeof toast==='function') toast('Запись: avg '+avg+' fps, мин '+min+' fps','rgba(140,220,180,.5)');
+  if(typeof toast==='function') toast('Запись: avg '+avg+' fps, мин '+min+' · '+baseTxt+dropTxt,'rgba(140,220,180,.5)');
   if(blob){ try{ const db=await cinemaDb();
     await new Promise((res,rej)=>{ const tx=db.transaction(CINEMA_STORE,'readwrite'); tx.objectStore(CINEMA_STORE).put(blob,'test'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
     db.close();
