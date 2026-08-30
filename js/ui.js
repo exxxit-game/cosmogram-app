@@ -1422,7 +1422,10 @@ function audioKeep(){
 let audioKeepIv=0;
 function audioKeepStart(){
   if(audioKeepIv || document.hidden) return;
-  audioKeepIv=setInterval(audioKeep, 6000);
+  audioKeepIv=setInterval(audioKeep, 2000); // 30.08.2026: было 6000 — разошлось с собственным комментарием
+    // выше («раз в 2 секунды»); «тихая заморозка» (core.js) ловится этим же тиком — на 6с
+    // окно немой/зацикленной музыки на слабом Android доходило до 6с при каждой заморозке
+    // (живые сигналы audio_stall_recover, владелец, Oppo CPH2565, 9 раз за 4 дня), на 2с втрое короче.
 }
 function audioKeepStop(){
   if(!audioKeepIv) return;
