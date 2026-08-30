@@ -1373,10 +1373,11 @@ function duelBanner(){ // плашка вызова в меню + планка �
   }
   if(d && typeof duelGhostFetch==='function') duelGhostFetch(); // склейка: призрак вызвавшего — рядом в забеге
 }
-function duelBoot(){ // deep-link ?startapp=duel_<pid>: забрать планку вызвавшего с сервера
+function duelBoot(){ // deep-link ?startapp=duel_<pid> (Telegram) или #duel=<pid> (веб, тот же приём, что forgeBoot у #map=)
   try{
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
-    const pid = duelParse(sp);
+    let pid = duelParse(sp);
+    if(!pid && location.hash && location.hash.indexOf('#duel=')===0) pid = duelParse('duel_'+location.hash.slice(6)); // 30.08.2026: друг без Telegram открыл веб-ссылку
     if(!pid || (typeof syncMyId==='function' && pid===syncMyId())){ duelBanner(); return false; } // не вызов / сам себе
     syncDuel(pid).then(d=>{
       if(d && d.ok && d.best>0){
@@ -2058,14 +2059,26 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
   const pid=(typeof syncMyId==='function')?syncMyId():null;
   if(!pid){ toast(L.duelTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; } // вне мини-аппа нет верифицированной личности
   haptic('success'); sfx.click();
-  const link='https://t.me/realcosmogrambot/app?startapp=duel_'+pid;
+  const tgLink='https://t.me/realcosmogrambot/app?startapp=duel_'+pid;
+  /* 30.08.2026 (владелец): раньше ссылка ВСЕГДА вела в Telegram — друга без Telegram звать
+     было некуда. Веб-версия игры уже умеет Discord/Google (см. duelBoot — тот же приём,
+     что forgeBoot уже делает для #map=), поэтому вне Telegram шарим ссылку на неё саму,
+     не на t.me. */
+  const webLink=location.origin+location.pathname+'#duel='+pid;
   const text=L.duelShareText(Math.floor(S.dist), S.mission);
-  const url='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(text);
   /* v1.282.20: счётчик двигаем ТОЛЬКО когда окно отправки реально открылось. Раньше он
      рос по самому нажатию, и достижение «Дуэлянт» (+10 ✦) бралось тапом с немедленным
      закрытием диалога — награда за ничего. */
   const sent=()=>{ Stats.duelsSent=(Stats.duelsSent||0)+1; saveStats(); if(typeof achCheck==='function') achCheck(); };
-  if(tg&&tg.openTelegramLink){ try{ tg.openTelegramLink(url); sent(); return; }catch(e){} }
+  if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ссылка сразу открывает мини-апп
+    const url='https://t.me/share/url?url='+encodeURIComponent(tgLink)+'&text='+encodeURIComponent(text);
+    try{ tg.openTelegramLink(url); sent(); return; }catch(e){}
+  }
+  if(navigator.share){ // вне Telegram — системный лист ОС (любой мессенджер), ссылка ведёт на веб-версию
+    navigator.share({text:text, url:webLink}).catch(()=>{});
+    sent(); return;
+  }
+  const url='https://t.me/share/url?url='+encodeURIComponent(tgLink)+'&text='+encodeURIComponent(text);
   const w=window.open(url,'_blank'); if(w) sent();
 });
 wireOn('feedbackBtn', 'click', ()=>openFeedback('menu'));

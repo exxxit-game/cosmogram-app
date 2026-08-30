@@ -344,7 +344,8 @@ function syncTop(category){
    цифру в ссылке подделать бессмысленно, её там просто нет. Только чтение. */
 function syncMyId(){ try{ const u=tg && tg.initDataUnsafe && tg.initDataUnsafe.user; if(u && u.id) return u.id; }catch(e){}
   const w=syncWebAuth(); if(w) return w.id;
-  const c=syncDcAuth(); return c && c.pid ? c.pid : null; // у Discord-игрока — наш внутренний id из сессии
+  const c=syncDcAuth(); if(c && c.pid) return c.pid; // у Discord-игрока — наш внутренний id из сессии
+  const g=syncGAuth(); return g && g.pid ? g.pid : null; // 30.08.2026: тот же приём для Google — раньше здесь не проверялся, «Вызов» молчал именно для этого входа
 }
 function syncDuel(pid){
   if(!syncAvailable()) return Promise.resolve(null);
