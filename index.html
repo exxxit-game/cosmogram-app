@@ -468,6 +468,10 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   cursor:pointer; pointer-events:auto; z-index:2; transition:transform .12s, box-shadow .2s; }
 .menuBack:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
 .menuBack .ic { width:13px; height:13px; stroke-width:2.6; filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
+/* 30.08.2026: только у Ангара — «Назад» подвинут на ту же высоту, что и #angarWallet справа
+   (владелец: ровная строка). Общий .menuBack не тронут — на остальных экранах кошелька нет,
+   двигать там нечего и незачем. */
+#hangarBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
 /* 28.08.2026 «Планета с кольцом»: космический вид круглых кнопок (владелец выбрал вариант «Д» из
    восьми макетов, показанных до правки, — см. AI-DECISION-REGISTRY). То же кольцо, что у иконки
    гироскопа (i-phone, две наклонные дуги) — теперь узнаваемый почерк круглых кнопок игры, не
@@ -806,7 +810,15 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    30.08.2026: переехал ещё раз — с неба в шапку экрана, круглой кнопкой-жетоном справа
    на уровень «Назад» (владелец, макет), тем же стеклом, что .menuBack, золотая рамка
    вместо голубой. Небо превью корабля теперь свободно целиком. */
-#angarWallet { position:absolute; top:calc(10px + var(--sat-menu)); right:16px; height:32px; z-index:2;
+/* 30.08.2026: +24px — тот же запас вниз, что уже измерен владельцем на реальном устройстве
+   у #livesCanvas (index.html:497) для этого же класса проблемы: Telegram перекрывает СВЕРХУ
+   ВНИЗ, не сбоку, и кошелёк — с той же правой стороны, что и жизни. Число перенесено с
+   другого экрана (там --sat, тут --sat-menu) — не проверено живьём именно на этом месте,
+   ждёт подтверждения владельца. «Назад» этого экрана подвинут на ту же высоту ниже
+   (#hangarBackBtn) — владелец: ровная строка, не вразнобой, даже хотя слева у Telegram
+   физического перекрытия нет (там подмена кнопки, не наложение иконок) — эстетика важнее
+   технической разницы механизмов. */
+#angarWallet { position:absolute; top:calc(10px + var(--sat-menu) + 24px); right:16px; height:32px; z-index:2;
   display:flex; align-items:center; gap:4px; padding:0 10px;
   background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -994,6 +1006,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeCodeRow{display:flex;gap:8px;width:100%}
 .forgeCodeRow .forgeName{text-align:left;flex:1}
 .forgeLoadBtn{flex:none;padding-left:16px;padding-right:16px}
+/* 30.08.2026: .setPanel .btn{width:100%} (index.html:684) — два класса, специфичность выше одного
+   .forgeLoadBtn — width:auto там же не сработал (проверено живьём, осталось 373.6px). #forgeFine
+   (id) поднимает специфичность выше .setPanel (класс), только так побеждает. Измерено: было
+   input 25.6px/кнопка 373.6px, после фикса — кнопка по тексту, поле забирает остаток строки. */
+#forgeFine .forgeLoadBtn{width:auto}
 /* v1.73.0 «Карточка для скриншота»: итог забега картинкой — человек шлёт скриншот сам, сервер не нужен */
 #cardScreen{justify-content:center;gap:14px;z-index:12}
 .cardWrap{width:min(82vw,320px);border-radius:18px;overflow:hidden;
