@@ -185,8 +185,11 @@ html,body { width:100%; height:100%; overflow:hidden; background:var(--bg-0);
    где случайный зум/скролл реально мешает пилотировать; везде остальные — жесты живы. */
 body.flying { touch-action:none; }
 b { font-weight:inherit; } /* единая насыщенность: <b> только для цвета, не для жирности */
-/* v1.101.0: браузер молча сбрасывает регистр у форм-элементов — возвращаем им закон заглавных */
-button, input, select, textarea { text-transform:inherit; }
+/* v1.101.0: браузер молча сбрасывает регистр у форм-элементов — возвращаем им закон заглавных.
+   30.08.2026: та же беда была и со шрифтом — <button> не наследует font-family, пять классов
+   (.achTab/.topCat/.forgeSegBtn/.forgeChip/.forgeSkyBtn) без своего явного font-family рендерились
+   в Arial вместо Exo 2, хотя «один шрифт на всю игру» — решение 28.08.2026. Один корень, один фикс. */
+button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #game { position:fixed; inset:0; display:block; }
 
 /* ---- Каркас экранов ---- */
@@ -303,6 +306,8 @@ button, input, select, textarea { text-transform:inherit; }
   box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); }
 .btn.ghost { background:rgba(10,18,36,.4); border-color:rgba(160,210,255,.12);
   color:#9fb4d8; font-weight:500; }
+.btn.sec { background:rgba(10,18,36,.4); border-color:rgba(160,210,255,.12);
+  color:#9fb4d8; font-weight:500; } /* 30.08.2026: не было своего правила вовсе — молча падал на базовый .btn (вес 600), выбивался из соседних .ghost (вес 500); владелец увидел разницу на глаз */
 .btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.35); }
 .btn.small { padding:10px 18px; }
 
@@ -321,6 +326,7 @@ button, input, select, textarea { text-transform:inherit; }
 
 /* Сетка 2 колонки для второстепенных кнопок (v1.34.0): ровный строй, нечётная последняя — на всю ширину */
 .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:min(92%,380px); pointer-events:auto; }
+#menuRow { margin-top:2px; } /* 30.08.2026: было 6px (margin кнопки над сеткой) — сама сетка держит внутренний шаг 8px; измерено живьём, теперь тоже 8px */
 .grid2 .btn { width:100%; margin:0; }
 .grid2 .btn.span2 { grid-column:1 / -1; }
 
@@ -673,6 +679,7 @@ button, input, select, textarea { text-transform:inherit; }
    (двухстрочные имя+описание, align-items:center уже задан отдельно) и её это не
    касается. Раньше здесь же был узкий фикс только для .btn.pri — снят, стал не нужен. */
 .setPanel .btn:active { transform:none; background:rgba(120,170,255,.08); color:#dce9ff; }
+.setPanel .modeIt:not(:first-child) { border-top:1px dashed rgba(160,210,255,.16); } /* 30.08.2026 (владелец): у «Режимов» две строки текста на пункт, воздуха v1.92.0 мало — точечная линия, только здесь, не во всём .setPanel */
 /* v1.63.0: строка «параметр — значение» — вся ширина жмётся, значение справа */
 .setRow { display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:13px 16px; font-size:14px; font-weight:600; letter-spacing:.03em; color:#dce9ff;
@@ -712,11 +719,11 @@ button, input, select, textarea { text-transform:inherit; }
 /* Имя игры на главном экране (13.08.2026). Заглавные и разрядка — как у всех наших
    заголовков; подпись под именем набрана мельче и глуше, чтобы читалась как обещание,
    а не как второй заголовок. */
-#brandName { font-family:var(--font-disp); font-weight:400; letter-spacing:.06em;
+#brandName { font-family:var(--font-disp); font-weight:700; letter-spacing:.06em;
   font-size:clamp(30px,9vw,46px); line-height:1.05; color:var(--ink); text-transform:uppercase;
-  text-shadow:0 0 26px rgba(140,180,255,.22); margin-top:6px; }
-#brandSub { margin-top:4px; font-size:clamp(11px,3.2vw,14px); letter-spacing:.18em;
-  text-transform:uppercase; color:rgba(190,215,255,.55); }
+  text-shadow:0 0 26px rgba(140,180,255,.22); margin-top:6px; } /* 30.08.2026: было 400 — владелец: «слабый» шрифт названия, тот же Exo 2 просто жирнее */
+#brandSub { margin-top:0; font-size:clamp(15px,4.5vw,23px); letter-spacing:.04em; font-weight:500;
+  text-transform:uppercase; color:var(--gold-hi); text-shadow:0 0 14px rgba(240,192,64,.3); } /* 30.08.2026: было мельче/тусклее (нарочно, 13.08.2026) — владелец попросил укрупнить до половины COSMOGRAM и сделать золотой (макет, вариант Е) */
 
 /* ============================================================
    АНГАР — витрина (13.08.2026). Было: список строк, где каждая карточка несла
@@ -1073,7 +1080,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .accStatus { color:var(--muted); font-size:13px; text-align:center; line-height:1.5; padding:2px 10px; }
 .tgWidget { display:flex; justify-content:center; }
 .tgWidget:empty { display:none; }
-#webJoin { margin:2px 0 4px; text-align:center; }
+#webJoin { margin:0 0 4px; text-align:center; } /* 30.08.2026: было 2px сверху — счёт стоял ближе к подписи над ним (2px), чем к «Войдите» под ним (4px); измерено живьём, теперь 2px/2px */
 /* 30.08.2026 (владелец): «войдите, чтобы рекорд попал в таблицу» — не мелкая
    служебная строка, а зазывала на аккаунт (важная функция, направляет к
    Discord/Google ниже). Раньше цвет --muted топил её среди обычного текста;
