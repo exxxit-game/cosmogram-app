@@ -986,9 +986,16 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   border:1px solid rgba(201,164,92,.35);box-shadow:0 12px 44px rgba(0,0,0,.55)}
 .cardWrap canvas{display:block;width:100%;height:auto}
 .cardHint{font-size:13px;color:var(--gold-hi);letter-spacing:.04em;text-align:center;padding:0 24px}
-#runPass{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0}
-#runPass .passPill{background:rgba(16,24,54,.5);border:1px solid rgba(140,170,255,.18);border-radius:999px;
-  padding:4px 10px;font-size:11px;color:#9fb4d8;font-family:var(--font-disp);letter-spacing:.04em} /* HUD-пилюля «Единой палубы» */
+/* 30.08.2026 «Единый паспорт забега»: было три разных визуальных языка подряд (пилюли
+   режима+времени+ударов+бонусов+плавности, отдельная сетка 2×2 миссия/дистанция/звёзды/
+   комбо, ещё одна лента пилюль с рекордами) — владелец: «сложно и непонятно». Режим+
+   управление теперь одна тихая строка сверху (#runHead, было продублировано пилюлей и
+   значком), все 8 чисел забега — один язык, .statGrid.stats4 (та же плитка, что уже
+   есть у других экранов), рекорды по управлению — подписанным блоком ниже, не вперемешку. */
+#runHead{display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 2px;
+  font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;color:#eaf2ff}
+#runHead .runCtl{color:var(--muted);font-size:11px}
+.bestLbl{font-size:9px;letter-spacing:.1em;color:var(--muted);text-align:center;margin-bottom:6px}
 #duelRes{margin:6px 0;font-size:14px;min-height:4px}
 #duelRes .duelWin{color:var(--gold-hi);font-family:var(--font-disp)}
 #duelRes .duelLose{color:var(--muted)}
@@ -1203,7 +1210,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    кнопки и обычный текст сознательно остаются строчными (читаемость, «без крика»). */
 .screenTitle,#finalScore,.recChip,.statCell b,.achRw,.achPr,.topN,.topSc,
 .achBadge,.claimName,.claimRw,#myRank,
-#duelBanner,#duelHud,#modeHud,#runPass .passPill,#duelRes .duelWin { text-transform:uppercase; }
+#duelBanner,#duelHud,#modeHud,#duelRes .duelWin { text-transform:uppercase; }
 </style>
 <!-- v1.108.0 «Имена неба»: чужой шильдик sdk-seed снят — небо переехало на собственный хостинг,
      игрокам лишний сторонний скрипт ни к чему. Историческая табличка старого дома — в летописи. -->
@@ -1738,6 +1745,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div id="toRecord"></div>
     <div id="toLoc"></div>
     <div id="myRank"></div>
+    <div id="runHead"></div>
     <div id="runPass"></div>
     <div id="stats"></div>
   </div>

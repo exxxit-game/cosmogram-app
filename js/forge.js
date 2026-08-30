@@ -381,7 +381,6 @@ function forgeBoot(){ // true = есть трасса друга: этот за�
 
 /* ---------- Финиш трассы: цифры забега, но ничего не пишется (не в зачёт) ---------- */
 function mapOver(sc){
-  const distM=Math.floor(S.dist);
   ['myRank','toRecord','toLoc'].forEach(function(id){ const el=$(id); if(el) el.textContent=''; });
   ['newRecord','duelRes'].forEach(function(id){ const el=$(id); if(el) el.innerHTML=''; });
   /* v1.282.14: гасим и то, что ставит только gameOver. Своя трасса — не в зачёт, но экран
@@ -390,18 +389,17 @@ function mapOver(sc){
      «★ Знак дня», статистика дня и мёртвая кнопка трибуны. */
   ['goldChip','dayStats','tribuneBtn','statusBtn'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
   const fsEl=$('finalScore'); if(fsEl) fsEl.textContent=sc;
-  const statCell=function(v,l){ return '<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>'; };
   const winPill=S.mapWin?'<span class="miniPill">'+ic('trophy')+L.forgeWin+'</span>':'';
   const statsEl=$('stats');
-  if(statsEl) statsEl.innerHTML='<div class="statGrid rise" style="animation-delay:120ms">'+
-    statCell(S.mission,L.missionLbl)+statCell(distM+' '+(L.unitM||'м'),L.dist)+
-    statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+'</div>'+
-    '<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill runMode">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
+  // 30.08.2026 «Единый паспорт забега»: числа этого забега (миссия/дистанция/звёзды/комбо) теперь
+  // строит runPassFill() (#runHead/#runPass) — здесь дублировать их старой сеткой больше не нужно,
+  // остаётся только имя трассы + плашка победы.
+  if(statsEl) statsEl.innerHTML='<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
   runPassFill();
   if (typeof cardCapture==='function') cardCapture(sc,{win:!!S.mapWin}); // v1.73.0: карточка и для своей трассы — с именем автора
   const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
   tryOnRevert(); music.sting(S.mapWin?'record':'death'); music.stop(2); engine.stop();
-  ['stats','runPass'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
+  ['stats','runPass','runHead'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
   const odbEl=$('overDetailsBtn'); if(odbEl) odbEl.classList.remove('open');
   setScreen('over');
   const f=$('flash');

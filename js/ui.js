@@ -202,12 +202,20 @@ function modesFill(){ // подписи + отметка выбранного р
   const sel={daily:'modeDaily',bullet:'modeBullet',speedrun:'modeSpeedrun'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
-function runPassFill(){ // паспорт забега: режим, время, удары, бонусы, плавность
-  const el=$('runPass'); if(!el) return;
+function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
+  // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
+  // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
+  const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
   const names={classic:L.modeClassic,bullet:L.bullet,speedrun:L.modeSpeedrun,daily:L.modeDaily,custom:L.modeForge}; // v1.68.0: + своя трасса
-  const pills=[names[S.mode||'classic'], L.passTime+' '+fmtTime(S.time), L.passHits+' '+S.hits,
-    L.passBonus+' '+S.bonuses, L.passSmooth+' '+Math.round(S.smooth*100)+'%'];
-  el.innerHTML=pills.map(p=>'<span class="passPill">'+p+'</span>').join('');
+  const mode=(typeof controlMode==='function')?controlMode():'touch';
+  const ctlName=S.bullet?L.bullet:(mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch));
+  head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
+  const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
+  grid.className='statGrid stats4';
+  grid.innerHTML=statCell(Math.floor(S.dist)+' '+(L.unitM||'м'),L.dist)+statCell(fmtTime(S.time),L.passTime)+
+    statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+
+    statCell(S.mission,L.missionLbl)+statCell(S.hits,L.passHits)+
+    statCell(S.bonuses,L.passBonus)+statCell(Math.round(S.smooth*100)+'%',L.passSmooth);
 }
 /* ============================================================
    ПОКОЛЕНИЕ ЗАБЕГА (v1.282.20 «Ответ из прошлого»)
@@ -463,7 +471,7 @@ function gameOver(){
      remove('hidden') для них. После одного забега по своей трассе «Подробности полёта» на
      всех последующих обычных итогах оставались без сетки и паспорта до перезагрузки
      страницы — притом что gameOver честно писал в них innerHTML. */
-  toggleCls('stats','hidden',false); toggleCls('runPass','hidden',false);
+  toggleCls('stats','hidden',false); toggleCls('runPass','hidden',false); toggleCls('runHead','hidden',false);
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
@@ -592,17 +600,13 @@ function ghostUpload(category, track, skin, best, seed){
   } else setHTML('duelRes', '');
   toggleCls('duelBtn','hidden',false); // «Вызов» виден всегда: вне Telegram тап объяснит, как его включить
   if (typeof starStatusGate==='function') starStatusGate(isRecord||isDistRecord); // v1.98.0 «Звезда-статус»: рекорд → искра в статус (Premium, мост 8.0)
-  // статы забега — сетка 2×2 метрик; под ней плашки: режим забега + рекорды категорий
-  const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
+  // 30.08.2026 «Единый паспорт забега»: числа этого забега и режим+управление переехали в
+  // runPassFill() (#runHead/#runPass) — здесь остаются только рекорды по управлению, подписанные,
+  // не вперемешку с числами текущего забега (владелец: старая раскладка «сложная и непонятная»).
   const bestPill=(icn,v)=>'<span class="miniPill">'+ic(icn)+'<b>'+v+'</b></span>';
   setHTML('stats',
-    '<div class="statGrid rise" style="animation-delay:120ms">'+
-      statCell(S.mission,L.missionLbl)+statCell(distM+' '+(L.unitM||'м'),L.dist)+
-      statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+
-    '</div>'+
+    '<div class="bestLbl rise" style="animation-delay:120ms">'+L.bestByControl+'</div>'+
     '<div class="bestPills rise" style="animation-delay:200ms">'+
-      '<span class="miniPill runMode">'+ic(S.bullet?'timer':(mode==='gyro'?'phone':(mode==='keys'?'keys':'hand')))+
-        (S.bullet?L.bullet:(mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch)))+'</span>'+
       bestPill('phone',saneNumber(Store.get('bestGyro',0),0))+
       bestPill('hand',saneNumber(Store.get('bestTouch',0),0))+
       bestPill('keys',saneNumber(Store.get('bestKeys',0),0))+
@@ -713,6 +717,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   const nr=$('newRecord'); if(nr) nr.innerHTML='';
   const st=$('stats'); if(st){ st.innerHTML=''; st.classList.add('hidden'); }
   const rp=$('runPass'); if(rp) rp.classList.add('hidden');
+  const rh=$('runHead'); if(rh){ rh.innerHTML=''; rh.classList.add('hidden'); } // 30.08.2026: новая строка режима+управления — та же чистка, что у соседей
   const mr=$('myRank'); if(mr) mr.textContent='';
   const dr=$('duelRes'); if(dr) dr.innerHTML='';
   const tr=$('toRecord'); if(tr) tr.textContent='';
