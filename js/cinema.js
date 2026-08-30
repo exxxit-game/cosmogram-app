@@ -48,55 +48,92 @@ async function pickVideoCodec(w, h){
    ~15ГБ, если копить сырыми). Итоговый файл — тот порядок, что в конфиге
    (bitrate 2 Мбит/с) — около 15МБ на минуту. */
 let _cinemaRec=null;
-let _cinemaOwner=null; // 30.08.2026: 'first' | 'test' — единственная запись (_cinemaRec) на двоих потребителей,
-  // без метки Stop одного мог забрать запись, начатую Start другого (см. разбор с владельцем)
-async function cinemaStart(canvas){
+let _cinemaOwner=null; // 30.08.2026: 'first' | 'test' | 'highlight' — единственная запись (_cinemaRec) на нескольких
+  // потребителей, без метки Stop одного мог забрать запись, начатую Start другого (см. разбор с владельцем)
+
+/* ---------- Кольцевая обрезка (30.08.2026, владелец: «момент смерти/рекорда», не весь полёт) ----------
+   Смерть непредсказуема заранее, поэтому клип нельзя начать записывать «когда надо» — вместо этого
+   пишем как обычно, но НЕ мукшим чанки сразу, а копим их (уже закодированные, не сырые кадры — тот же
+   принцип «без сырых кадров в памяти», просто окно короче) и постоянно подрезаем всё старше ~12 сек.
+   На Stop мукшим только то, что осталось. Готовый mp4 обязан НАЧИНАТЬСЯ с ключевого кадра — поэтому
+   резать можно только по границе ключевого кадра, не как попало (см. trimRing). */
+function trimRing(ring, windowUs){
+  if (!ring.length) return;
+  const cutoff = ring[ring.length-1].ts - windowUs;
+  let keepFrom = 0; // ни одного ключевого кадра в окне ещё не было — оставляем как есть (ring[0] всегда key, см. grab())
+  for (let i=0;i<ring.length;i++){ if (ring[i].key && ring[i].ts <= cutoff) keepFrom = i; }
+  if (keepFrom > 0) ring.splice(0, keepFrom);
+}
+async function cinemaStart(canvas, ringWindowUs){
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
   const picked = await pickVideoCodec(canvas.width, canvas.height);
   if (!picked) return false; // честный отказ — на этом устройстве нет рабочего кодека
 
-  const target = new Mp4Muxer.ArrayBufferTarget();
-  let muxer;
-  try{
-    muxer = new Mp4Muxer.Muxer({
-      target,
-      video: { codec: picked.mux, width: canvas.width, height: canvas.height, frameRate: 30 },
-      fastStart: 'in-memory',
-      firstTimestampBehavior: 'offset', // кадры идут от performance.now() — не с нуля, см. описание опции в d.ts
-    });
-  }catch(e){ return false; }
+  const muxCfg = { video: { codec: picked.mux, width: canvas.width, height: canvas.height, frameRate: 30 },
+    fastStart: 'in-memory', firstTimestampBehavior: 'offset' }; // кадры идут от performance.now() — не с нуля, см. d.ts
+  const makeMuxer = () => {
+    const t = new Mp4Muxer.ArrayBufferTarget();
+    const m = new Mp4Muxer.Muxer({ target: t, ...muxCfg });
+    return { target: t, muxer: m };
+  };
+
+  const ring = ringWindowUs ? [] : null;
+  let target=null, muxer=null, decoderConfig=null; // 30.08.2026: VideoEncoder кладёт decoderConfig только
+    // в meta САМОГО ПЕРВОГО чанка сессии, не в каждый ключевой — обрезка кольца выбрасывает тот чанк, и
+    // новый муксер без decoderConfig на своём первом чанке падал в finalize() (проверено живьём: mp4-muxer.min.js
+    // TypeError на null.colorSpace). Запоминаем его один раз и подставляем обратно первому чанку в обрезанном окне.
+  if (!ring){ const made = makeMuxer(); target = made.target; muxer = made.muxer; }
 
   const encoder = new VideoEncoder({
-    output: (chunk, meta) => { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} },
+    output: (chunk, meta) => {
+      if (meta && meta.decoderConfig && !decoderConfig) decoderConfig = meta.decoderConfig;
+      if (ring){ ring.push({ chunk, meta, ts: chunk.timestamp, key: chunk.type==='key' }); trimRing(ring, ringWindowUs); }
+      else { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} }
+    },
     error: (e) => { if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_enc_err', String((e&&e.message)||e)); },
   });
   try{ encoder.configure(picked.config); }catch(e){ return false; }
 
   const frameMs = 1000/30;
   const t0 = performance.now();
+  let frameN = 0;
   const grab = () => {
     if (!_cinemaRec) return;
     try{
       const frame = new VideoFrame(canvas, { timestamp: Math.round((performance.now()-t0)*1000) });
-      encoder.encode(frame);
+      // ключевой кадр раз в ~2 сек (и всегда самый первый) — иначе обрезке кольца не от чего оттолкнуться
+      encoder.encode(frame, { keyFrame: (frameN % 60 === 0) });
       frame.close();
+      frameN++;
     }catch(e){} // один пропущенный кадр не должен уронить всю запись
   };
-  _cinemaRec = { encoder, muxer, target, timer: setInterval(grab, frameMs) };
+  _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, makeMuxer,
+    getDecoderConfig: () => decoderConfig, timer: setInterval(grab, frameMs) };
   return true;
 }
 async function cinemaStop(){
   if (!_cinemaRec) return null;
-  const { encoder, muxer, target, timer } = _cinemaRec;
+  const { encoder, muxer, target, timer, ring, ringWindowUs, makeMuxer, getDecoderConfig } = _cinemaRec;
   clearInterval(timer);
   _cinemaRec = null;
   try{
     await encoder.flush();
     encoder.close();
+    if (ring){
+      trimRing(ring, ringWindowUs); // последняя подрезка — flush() мог дописать ещё несколько чанков
+      const made = makeMuxer();
+      const dc = getDecoderConfig();
+      ring.forEach((e, i) => {
+        const meta = (i===0 && dc && !(e.meta && e.meta.decoderConfig)) ? { ...e.meta, decoderConfig: dc } : e.meta;
+        try{ made.muxer.addVideoChunk(e.chunk, meta); }catch(err){}
+      });
+      made.muxer.finalize();
+      return new Blob([made.target.buffer], { type: 'video/mp4' });
+    }
     muxer.finalize();
+    return new Blob([target.buffer], { type: 'video/mp4' });
   }catch(e){ return null; }
-  return new Blob([target.buffer], { type: 'video/mp4' });
 }
 function cinemaActive(){ return !!_cinemaRec; }
 
