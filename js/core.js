@@ -1010,8 +1010,14 @@ if (typeof window!=='undefined' && typeof window.addEventListener==='function') 
 }
 
 /* ---------- Wake Lock (Блок 1) ---------- */
-let wakeLock=null;
-async function keepAwake(){ if(wakeLock) return; try{ if('wakeLock' in navigator) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} } // v1.282.15: второй вызов до releaseAwake присваивал новый замок поверх старого — старый не отпускался никогда, и экран мог остаться незасыпающим после выхода в меню
+let wakeLock=null, _wakeLockPending=false;
+async function keepAwake(){ // v1.282.15: второй вызов до releaseAwake присваивал новый замок поверх старого — старый не отпускался никогда, и экран мог остаться незасыпающим после выхода в меню
+  if(wakeLock || _wakeLockPending) return; // 30.08.2026: сама проверка wakeLock синхронна, но request() — нет; два вызова подряд ДО того как первый await разрешится, оба проходили эту проверку (она ещё видела wakeLock===null) — _wakeLockPending закрывает окно гонки синхронно, до await
+  if(!('wakeLock' in navigator)) return;
+  _wakeLockPending=true;
+  try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+  finally{ _wakeLockPending=false; }
+}
 function releaseAwake(){ try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null; }
 
 /* ---------- Канвас / вьюпорт (Блок 3) ---------- */
