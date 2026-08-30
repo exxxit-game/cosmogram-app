@@ -105,8 +105,15 @@ function syncDcClientId(){
 }
 function dcMount(el){
   if(!el || typeof document==='undefined') return;
+  // 30.08.2026: гонка — кнопка появляется только ПОСЛЕ ответа сети (до ~2.3с), а el.firstChild
+  // (единственная защита от повтора в вызывающем коде) всё это время пуст. Второй вызов dcMount
+  // в то же окно (например, второй gameOver() подряд) проходил мимо и запускал второй запрос
+  // и вторую кнопку с своим слушателем. Флаг ставится синхронно, до await, закрывает гонку.
+  if(el.firstChild || el.dataset.dcMounting) return;
+  el.dataset.dcMounting='1';
   el.innerHTML='';
   syncDcClientId().then(cid=>{
+    delete el.dataset.dcMounting;
     if(!cid || !el.isConnected) return;
     const b=document.createElement('button');
     b.className='btn ghost small dcBtn'; b.type='button'; b.innerHTML=ic('discord')+L.dcLogin;
@@ -144,8 +151,11 @@ function syncGClientId(){
 }
 function gMount(el){
   if(!el || typeof document==='undefined') return;
+  if(el.firstChild || el.dataset.gMounting) return; // 30.08.2026: см. коммент у dcMount — та же гонка, тот же фикс
+  el.dataset.gMounting='1';
   el.innerHTML='';
   syncGClientId().then(cid=>{
+    delete el.dataset.gMounting;
     if(!cid || !el.isConnected) return;
     const b=document.createElement('button');
     b.className='btn ghost small gBtn'; b.type='button'; b.innerHTML=ic('google')+L.gLogin;
@@ -397,7 +407,11 @@ function syncDailyEnqueue(o){
 }
 let _dailyFlying=null;
 function syncDailyFlush(){
-  if(_dailyFlying) return _dailyFlying;
+  // 30.08.2026: было симметрично со старой (уже исправленной) редакцией syncFlush — второй
+  // вызов во время полёта первого получал ТОТ ЖЕ промис и молчал, второй (новый) счёт дня
+  // не отправлялся автоматически следом, ждал следующего постороннего триггера. syncFlush
+  // (выше в этом файле, v1.282.14) уже чинил ровно это — та же цепочка здесь.
+  if(_dailyFlying) return (_dailyFlying = _dailyFlying.catch(()=>{}).then(()=>syncDailyFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
   const q=syncDailyQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'daily_submit'},syncAuth(),item)).then(r=>{

@@ -20,6 +20,10 @@ async function statusStarAsk(){
   const b=$('statusBtn'); if(!b || b._busy) return;
   if(typeof isLabEnv==='function' && isLabEnv()){ toast('Печать лаборатории: статус не меняем на верстаке'); return; } // v1.108.1
   b._busy=true;
+  let pending=false; // 30.08.2026: setEmojiStatus зовёт колбэк, не Promise — try завершается, как только мост ПОЗВАН,
+    // а не когда он реально ответил; finally ниже снимал _busy сразу, окно быстрого повторного тапа проходило
+    // мимо защиты и запускало весь заход второй раз (повторный запрос статуса, второй бридж-вызов). pending
+    // держит _busy занятым до самого колбэка — finally снимает флаг только если до колбэка не дошли.
   try{
     sfx.click();
     const allowed=await new Promise(res=>{ // мост спрашивает у Telegram: можно ли менять статус
@@ -29,13 +33,15 @@ async function statusStarAsk(){
     const r=await syncFetch(SYNC_URL,{action:'status_emoji',initData:tg.initData});
     const ans=await r.json().catch(()=>({}));
     if(!r.ok || !ans.ok || !ans.emoji_id){ toast(L.statusStarErr); haptic('error'); return; }
+    pending=true;
     tg.setEmojiStatus(ans.emoji_id,{duration:259200},ok=>{ // 3 дня: награда за рекорд гаснет сама
+      b._busy=false;
       if(ok){ toast(L.statusStarOk); haptic('success'); b.classList.add('hidden'); // искра надета — дверь закрылась
         if(typeof BEACON!=='undefined') BEACON.signal('star_ok',''); } // v1.108.1: раньше не было подтверждения, что фича вообще у кого-то срабатывает
       else { toast(L.statusStarErr); haptic('error'); }
     });
   }catch(e){ toast(L.statusStarErr); haptic('error'); }
-  finally{ b._busy=false; }
+  finally{ if(!pending) b._busy=false; }
 }
 /* v1.282.13: единственная строка файла без проверки на месте — остальной модуль
    (и соседние ui.js/ach.js) везде сначала спрашивает «элемент есть?». Сейчас #statusBtn
