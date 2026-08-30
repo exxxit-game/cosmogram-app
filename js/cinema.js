@@ -261,15 +261,19 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption){
     // MDN/спецификация). Порог 2 — общепринятое значение из примеров WebCodecs, не выдуман с нуля.
     // Пропущенный кадр здесь не «баг», а нормальная просадка частоты клипа под нагрузкой.
     if (encoder.encodeQueueSize > 2) return;
+    let frame; // 30.08.2026: объявлен снаружи try — если encode() бросит, frame.close() всё равно
+      // должен выполниться (VideoFrame держит нативный/GPU-буфер, не обычный JS-объект под GC).
+      // Раньше close() стоял ПОСЛЕ encode() последней строкой — ошибка кодировщика (реалистичнее
+      // всего именно на слабом/нестабильном устройстве) пропускала close() и кадр утекал молча.
     try{
       let src = canvas;
       if (ov){ ov.octx.drawImage(canvas,0,0); cinemaDrawOverlay(ov.octx, canvas.width, canvas.height, overlayCaption); src = ov.oc; }
-      const frame = new VideoFrame(src, { timestamp: Math.round((performance.now()-t0)*1000) });
+      frame = new VideoFrame(src, { timestamp: Math.round((performance.now()-t0)*1000) });
       // ключевой кадр раз в ~2 сек (и всегда самый первый) — иначе обрезке кольца не от чего оттолкнуться
       encoder.encode(frame, { keyFrame: (frameN % 60 === 0) });
-      frame.close();
       frameN++;
     }catch(e){} // один пропущенный кадр не должен уронить всю запись
+    finally{ if (frame) frame.close(); }
   };
   _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, maxWindowUs, makeMuxer,
     getDecoderConfig: () => decoderConfig,
@@ -292,9 +296,9 @@ async function cinemaStop(){
   const { encoder, muxer, target, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
   clearInterval(timer);
   _cinemaRec = null;
+  try{ await encoder.flush(); }catch(e){} // сбой flush() (нестабильное устройство) не должен пропускать close() ниже
+  try{ encoder.close(); }catch(e){} // 30.08.2026: раньше стоял внутри общего try сразу после flush() — сбой flush() пропускал close(), кодировщик (и его нативный ресурс) не освобождался
   try{
-    await encoder.flush();
-    encoder.close();
     if (ring){
       const dc = getDecoderConfig();
       const pinLost = trimRing(ring, ringWindowUs, getPinnedUs(), maxWindowUs); // последняя подрезка — flush() мог дописать ещё несколько чанков
