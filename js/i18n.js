@@ -24,6 +24,14 @@
 // зависимости (чистая строка) — переносить безопасно; core.js остаётся без
 // неё, но найдёт её тем же глобальным именем, раз файл грузится позже.
 const ic = (n,cls)=>'<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#i-'+n+'"></use></svg>';
+// 30.08.2026: тот же класс бага, что уже правили сегодня в cinema.js (ruPtsWord) — «N очков»
+// голой строкой ломает русское числительное+сущ. на 1/2-4/21/22/101 и т.д. («1 очков» неверно).
+// Дублирую здесь, не завожу общий файл — в проекте нет import/export, а функция короткая.
+function i18nRuPts(n){ const a=Math.abs(n)%100, b=a%10;
+  if (a>=11 && a<=14) return 'очков';
+  if (b===1) return 'очко';
+  if (b>=2 && b<=4) return 'очка';
+  return 'очков'; }
 const I18N = {
   ru: {
     start:'Начать полёт', retry:'Ещё раз', menu:'Меню', watchFlight:'Смотреть полёт', theaterChip:'Повтор полёта',
@@ -134,7 +142,7 @@ const I18N = {
     diagKicked:'Запросили датчик заново — подвигай телефон',
     diagReportBtn:'Скопировать отчёт', diagCopied:'Отчёт скопирован — вставь его в сообщение',
     diagCopyFail:'Не смог скопировать — выдели текст ниже вручную', diagSupportBtn:'Написать в поддержку',
-    shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' очков! Сможешь больше?',
+    shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' '+i18nRuPts(s)+'! Сможешь больше?',
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться',
     tutGyroBody:'Телефон умеет быть штурвалом. Наклоняй — самолётик слушается. Передумаешь — вернёшь палец одним касанием.', tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
     missionLbl:'Волна', angarTabColor:'Цвет', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак'],
@@ -280,7 +288,7 @@ const I18N = {
     diagKicked:'Sensor re-requested — move the phone',
     diagReportBtn:'Copy report', diagCopied:'Report copied — paste it into your message',
     diagCopyFail:'Couldn’t copy — select the text below manually', diagSupportBtn:'Contact support',
-    shareText:s=>'🚀 My Cosmogram record: '+s+' points! Beat it?',
+    shareText:s=>'🚀 My Cosmogram record: '+s+' '+(s===1?'point':'points')+'! Beat it?',
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me',
     tutGyroBody:'Your phone can be the yoke. Tilt it — the plane follows. Change your mind and one tap brings the finger back.', tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
     missionLbl:'Wave', angarTabColor:'Color', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost'],
@@ -336,7 +344,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     srGoal:'Meta', srFinish:'¡Meta!', srNewBest:'Nuevo récord de tiempo',
     modeDaily:'Pista del día', modeDailyD:'Una pista para todos los jugadores — marca el récord del día',
-    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'5 intentos', dailyLeft:(n)=>n+' restantes',
+    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'5 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Hoy ya saltaste · tu vuelo: '+s+' · pista nueva mañana',
     modeForge:'Pista propia', modeForgeD:'Constructor de vuelo: arma y comparte el código',
     forgeTitle:'Pista propia', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
@@ -431,7 +439,7 @@ const I18N = {
     diagReportBtn:'Copiar informe', diagCopied:'Informe copiado — pégalo en tu mensaje',
     diagCopyFail:'No se pudo copiar — selecciona el texto abajo manualmente',
     diagSupportBtn:'Escribir a soporte',
-    shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' puntos! ¿Puedes superarlo?',
+    shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' '+(s===1?'punto':'puntos')+'! ¿Puedes superarlo?',
     shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme',
     tutGyroBody:'El teléfono puede ser el timón. Inclínalo y el avión obedece. Si cambias de idea, un toque devuelve el dedo.', tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
     missionLbl:'Oleada', angarTabColor:'Color',
@@ -497,7 +505,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     srGoal:'Meta', srFinish:'Chegada!', srNewBest:'Novo recorde de tempo',
     modeDaily:'Pista do dia', modeDailyD:'Uma pista para todos os jogadores — bata o recorde do dia',
-    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+' restantes',
+    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Hoje você já voou · seu voo: '+s+' · pista nova amanhã',
     modeForge:'Pista própria', modeForgeD:'Construtor de voo: monte e compartilhe o código',
     forgeTitle:'Pista própria', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
@@ -592,7 +600,7 @@ const I18N = {
     diagReportBtn:'Copiar relatório', diagCopied:'Relatório copiado — cole na sua mensagem',
     diagCopyFail:'Não consegui copiar — selecione o texto abaixo manualmente',
     diagSupportBtn:'Falar com o suporte',
-    shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' pontos! Consegue superar?',
+    shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' '+(s===1?'ponto':'pontos')+'! Consegue superar?',
     shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar',
     tutGyroBody:'O telefone pode ser o leme. Incline-o e o avião obedece. Se mudar de ideia, um toque devolve o dedo.', tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
     missionLbl:'Onda', angarTabColor:'Cor',
@@ -658,7 +666,7 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
     modeDaily:'Trace du jour', modeDailyD:'Une trace pour tous les joueurs — décroche le record du jour', dlNewBest:'Nouveau record de la Trace du jour',
-    dailyOnce:'5 tentatives', dailyLeft:(n)=>n+' restants', dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
+    dailyOnce:'5 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
     modeForge:'Trace personnalisée', modeForgeD:'Créateur de trace : règle-la et partage le code',
     forgeTitle:'Trace personnalisée', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
@@ -744,7 +752,7 @@ const I18N = {
     diagKicked:'Capteur redemandé — bouge le téléphone',
     diagReportBtn:'Copier le rapport', diagCopied:'Rapport copié — colle-le dans ton message',
     diagCopyFail:'Impossible de copier — sélectionne le texte ci-dessous manuellement', diagSupportBtn:'Contacter le support',
-    shareText:s=>'🚀 Mon record Cosmogram : '+s+' points ! Peux-tu faire mieux ?',
+    shareText:s=>'🚀 Mon record Cosmogram : '+s+' '+(s===1?'point':'points')+' ! Peux-tu faire mieux ?',
     shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper',
     tutGyroBody:'Le téléphone peut être le manche. Incline-le, l\'avion suit. Si tu changes d\'avis, une touche rend le doigt.', tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
     missionLbl:'Vague', angarTabColor:'Couleur', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme'],
