@@ -272,7 +272,10 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 
 /* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
 #startScreen { justify-content:space-between;
-  padding-top:calc(12px + var(--sat-menu)); }   /* 13.08.2026: см. «Подушка не для меню» выше */
+  padding-top:calc(12px + var(--sat-menu) + 24px); }   /* 13.08.2026: см. «Подушка не для меню» выше;
+  30.08.2026 (владелец, макет, живое фото Telegram): было --sat-menu без запаса — «Закрыть»/⌄/⋮
+  наезжали на COSMOGRAM. Тот же +24px, что уже спас #livesCanvas и #angarWallet/#hangarBackBtn —
+  тот же класс перекрытия сверху, --sat-menu на его устройстве отдаёт только пол в 8px. */
 .scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
 .scrFoot { display:flex; justify-content:center; width:100%;
   padding-bottom:calc(18px + var(--sab)); }
@@ -690,7 +693,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    (двухстрочные имя+описание, align-items:center уже задан отдельно) и её это не
    касается. Раньше здесь же был узкий фикс только для .btn.pri — снят, стал не нужен. */
 .setPanel .btn:active { transform:none; background:rgba(120,170,255,.08); color:#dce9ff; }
-.setPanel .modeIt:not(:first-child) { border-top:1px dashed rgba(160,210,255,.16); } /* 30.08.2026 (владелец): у «Режимов» две строки текста на пункт, воздуха v1.92.0 мало — точечная линия, только здесь, не во всём .setPanel */
+/* 30.08.2026 (владелец, макет «отличные макеты, все нравится»): точечная линия между режимами
+   (была тут же) снята — «так себе выглядит». Воздух между пунктами теперь держат сами карточки
+   #modesScreen .modeIt ниже (тот же язык, что forgePresetTile/statCell), не линия. */
 /* v1.63.0: строка «параметр — значение» — вся ширина жмётся, значение справа */
 .setRow { display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:13px 16px; font-size:14px; font-weight:600; letter-spacing:.03em; color:#dce9ff;
@@ -944,7 +949,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .modeIt.locked{opacity:.62} /* v1.93 «Одна попытка»: закрытая дверь дня — приглушена, табличка на ней всё говорит */
 .modeIt .modeName{font-size:15px}
 .modeIt .modeDesc{font-size:11px;opacity:.62;line-height:1.25}
-.modeIt.sel{border-color:rgba(190,225,255,.45);background:rgba(120,170,255,.08)} /* лёд «Единой палубы» — выбранная дисциплина */
+/* 30.08.2026 (владелец, макет): каждый режим — своя карточка (язык forgePresetTile/statCell),
+   не строка в общем списке за линией. #modesScreen поднимает специфичность выше .setPanel .btn
+   (index.html:684, два класса) — тот же приём, что уже дважды в игре (#forgeFine .forgeLoadBtn,
+   #hangarWallet), иначе border/background/radius молча проигрывают более общему правилу. */
+#modesScreen .setPanel{background:transparent;border:none;overflow:visible;display:flex;flex-direction:column;gap:8px}
+#modesScreen .modeIt{border:1px solid var(--line);border-radius:var(--r-card);background:rgba(22,38,56,.42);padding:12px 14px;transition:border-color .2s,background .2s}
+#modesScreen .modeIt:active{background:rgba(120,170,255,.08);border-color:rgba(190,225,255,.3)}
+#modesScreen .modeIt.sel{border-color:rgba(190,225,255,.45);background:rgba(120,170,255,.08)} /* лёд «Единой палубы» — выбранная дисциплина */
 
 /* v1.68.0 «Своя трасса»: конструктор забега — ползунки, чипы преград, сегменты длины */
 .forgeName{width:100%;box-sizing:border-box;background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:12px;
@@ -963,8 +975,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
   padding:7px 12px;font-size:12.5px;cursor:pointer;pointer-events:auto;transition:all .15s}
 .forgeSegBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
-.forgeGrpLbl{font-size:11px;letter-spacing:.16em;color:#8ab4ff;margin:14px 0 0;text-transform:uppercase;
-  border-top:1px solid var(--line);padding-top:10px;width:100%;text-align:center}
+/* 30.08.2026: .forgeGrpLbl (плоские заголовки групп) удалён — три группы «Тонкой настройки»
+   стали аккордеоном (.setGrp.spoiler, тот же класс что в Настройках), правило больше нигде не используется */
 .forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-top:2px} /* v1.86.0: тихие плитки-программы */
 .forgePreset{border:1px solid rgba(140,170,255,.3);background:rgba(16,24,54,.55);color:#bcd2ff;border-radius:999px;
   padding:6px 12px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
@@ -999,6 +1011,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #forgeFine .forgeName{margin-top:10px} /* название трассы живёт в сервисном меню */
 #forgeFine.hidden{display:none}
 #forgeFine{width:100%;display:flex;flex-direction:column;align-items:center}
+/* 30.08.2026 «Тонкая настройка — аккордеон»: forgeRow/forgeLblBlk/forgeChips/forgeSeg/forgeSky
+   центрировались раньше только за счёт align-items:center у #forgeFine (были его прямыми
+   детьми) — переехали на уровень глубже, в .setPanel-панели групп (не flex по умолчанию).
+   Тот же flex+center здесь, плюс паддинг — иначе строки прижаты к рамке новой карточки. */
+#forgePanelHard,#forgePanelEn,#forgePanelMood{display:flex;flex-direction:column;align-items:center;padding:12px 16px 6px}
 .forgeSky{display:flex;gap:8px;justify-content:center;width:100%}
 .forgeSkyBtn{width:34px;height:26px;border-radius:8px;border:2px solid var(--line);cursor:pointer;
   pointer-events:auto;transition:all .15s;padding:0}
@@ -1660,26 +1677,35 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div class="scrBody">
     <div id="forgeFine" class="setPanel forgePanel hidden">
       <input class="forgeName" id="forgeName" maxlength="20" placeholder="Название неба" autocomplete="off">
-      <div class="forgeGrpLbl" id="forgeGrpHard">Сложность</div>
-      <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
-      <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
-      <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
-      <div class="forgeSeg" id="forgeLivesSeg"></div>
-      <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
-      <div class="forgeSeg" id="forgeWaveSeg"></div>
-      <div class="forgeChips" id="forgeFlatChip"></div>
-      <div class="forgeLblBlk" id="forgeBonusLbl">Бонусы</div>
-      <div class="forgeSeg" id="forgeBonusSeg"></div>
-      <div class="forgeGrpLbl" id="forgeGrpEn">Состав</div>
-      <div class="forgeLblBlk" id="forgeEnLbl">Преграды</div>
-      <div class="forgeChips" id="forgeChips"></div>
-      <div class="forgeGrpLbl" id="forgeGrpMood">Настроение</div>
-      <div class="forgeLblBlk" id="forgeLenLbl">Длина неба</div>
-      <div class="forgeSeg" id="forgeSeg"></div>
-      <div class="forgeLblBlk" id="forgeSkyLbl">Небо</div>
-      <div class="forgeSky" id="forgeSkyRow"></div>
-      <div class="forgeLblBlk" id="forgeFogLbl">Туман</div>
-      <div class="forgeSeg" id="forgeFogSeg"></div>
+      <!-- 30.08.2026 (владелец, макет «отличные макеты, все нравится»): три плоских forgeGrpLbl
+           стали аккордеоном — тот же .setGrp.spoiler, что уже в Настройках (SET_GRPS в ui.js),
+           не новый приём. Открыта максимум одна группа — весь длинный список не листается разом. -->
+      <div class="setGrp spoiler" id="forgeGrpHard" role="button" tabindex="0"><span class="setGrpT">Сложность</span><span class="setGrpSub" id="forgeGrpHardSub"></span></div>
+      <div class="setPanel hidden" id="forgePanelHard">
+        <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
+        <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
+        <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
+        <div class="forgeSeg" id="forgeLivesSeg"></div>
+        <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
+        <div class="forgeSeg" id="forgeWaveSeg"></div>
+        <div class="forgeChips" id="forgeFlatChip"></div>
+        <div class="forgeLblBlk" id="forgeBonusLbl">Бонусы</div>
+        <div class="forgeSeg" id="forgeBonusSeg"></div>
+      </div>
+      <div class="setGrp spoiler" id="forgeGrpEn" role="button" tabindex="0"><span class="setGrpT">Состав</span><span class="setGrpSub" id="forgeGrpEnSub"></span></div>
+      <div class="setPanel hidden" id="forgePanelEn">
+        <div class="forgeLblBlk" id="forgeEnLbl">Преграды</div>
+        <div class="forgeChips" id="forgeChips"></div>
+      </div>
+      <div class="setGrp spoiler" id="forgeGrpMood" role="button" tabindex="0"><span class="setGrpT">Настроение</span><span class="setGrpSub" id="forgeGrpMoodSub"></span></div>
+      <div class="setPanel hidden" id="forgePanelMood">
+        <div class="forgeLblBlk" id="forgeLenLbl">Длина неба</div>
+        <div class="forgeSeg" id="forgeSeg"></div>
+        <div class="forgeLblBlk" id="forgeSkyLbl">Небо</div>
+        <div class="forgeSky" id="forgeSkyRow"></div>
+        <div class="forgeLblBlk" id="forgeFogLbl">Туман</div>
+        <div class="forgeSeg" id="forgeFogSeg"></div>
+      </div>
       <div class="forgeLblBlk" id="forgeCodeLbl">Трасса друга — вставь код или ссылку</div>
       <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" placeholder="CG1.…" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
     </div>

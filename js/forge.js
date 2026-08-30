@@ -21,8 +21,9 @@ function wireOnLocal(id, ev, fn){
 
 /* ---------- Схема конфига и кодек ---------- */
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
-const FORGE_LENS=[500,1000,1500,2500,4000,0]; // 0 = бесконечная
+const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
+const FORGE_GRPS=[['forgeGrpHard','forgePanelHard'],['forgeGrpEn','forgePanelEn'],['forgeGrpMood','forgePanelMood']]; // 30.08.2026: три спойлера «Тонкой настройки» — аккордеон
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
    кадре, пока «Своя трасса» открыта — тот же класс, что уже чинили для HUD (game.js,
    v1.282.21). Узел статичный (из index.html), forge.js — defer, значит DOM уже разобран
@@ -38,13 +39,13 @@ const elForgeScreen=(typeof document!=='undefined')?document.getElementById('for
 const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0};
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
   {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1000,lv:3,w:1,fl:0,b:3,sky:0,fog:0}},
-  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:2500,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
+  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:5000,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
   {k:'fpHell', c:{n:'',d:80,s:85,e:255,l:4000,lv:1,w:5,fl:1,b:0,sky:240,fog:0}},
   {k:'fpFog',  c:{n:'',d:45,s:50,e:13,l:1500,lv:3,w:2,fl:0,b:2,sky:180,fog:2}},
   // v1.83.0 «Галерея мастера»: эталонные трассы с выверенным характером — карты в галерее рядом с базовыми
-  {k:'fpGarden', c:{n:'',d:35,s:45,e:33,l:2500,lv:3,w:2,fl:0,b:3,sky:300,fog:0}}, // розовое небо, камни+кометы, щедрые звёзды — медитация
-  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:2500,lv:3,w:3,fl:0,b:2,sky:60,fog:0}}, // дрейфы+врата в индиго — чистое мастерство
-  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:2500,lv:2,w:4,fl:1,b:1,sky:240,fog:1}},  // искатели+мины в мадженте, фонарик, дымка — охота
+  {k:'fpGarden', c:{n:'',d:35,s:45,e:33,l:5000,lv:3,w:2,fl:0,b:3,sky:300,fog:0}}, // розовое небо, камни+кометы, щедрые звёзды — медитация
+  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:5000,lv:3,w:3,fl:0,b:2,sky:60,fog:0}}, // дрейфы+врата в индиго — чистое мастерство
+  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:5000,lv:2,w:4,fl:1,b:1,sky:240,fog:1}},  // искатели+мины в мадженте, фонарик, дымка — охота
   {k:'fpPulse', c:{n:'',d:70,s:95,e:17,l:1000,lv:2,w:5,fl:0,b:3,sky:120,fog:0}}   // камни+спутники во фиолете — короткий спринт на пределе
 ];
 
@@ -138,8 +139,10 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
   }
   if(cfg.b>0){ x.fillStyle='#ffd76a'; for(let i=0;i<cfg.b+1;i++){ const sx=(i*263+97)%W, sy=(_fSkyT*10+i*47)%H;
     x.globalAlpha=.8; x.beginPath(); x.arc(sx,sy,2.2,0,6.283); x.fill(); } x.globalAlpha=1; }
-  if(cfg.fog>0){ x.fillStyle='rgba(190,205,235,'+(cfg.fog===2?'.16':'.08')+')';
-    for(let i=0;i<3;i++){ const fy=(_fSkyT*6+i*77)%H; x.fillRect(0,fy,W,26+cfg.fog*10); } }
+  // 30.08.2026 (владелец, макет): «Туман» в превью конструктора рисовался тремя плоскими
+  // rgba-прямоугольниками — на глаз читалось как чёткие белые полосы, не как дымка. Убрано
+  // совсем, не заменено — настоящий эффект «Туман» в полёте это другой, рабочий механизм
+  // (радиальная виньетка #fog.f1/.f2 в index.html/ui.js), preview-баг его не касался.
   if(cfg.fl){ const v=x.createRadialGradient(W/2,H/2,30,W/2,H/2,W*.55); // фонарик: свет вокруг, края тонут
     v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.82)');
     x.fillStyle=v; x.fillRect(0,0,W,H); }
@@ -220,12 +223,15 @@ function forgeFill(){ // подписи + состояние виджетов п
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],
-    ['forgeHeatLbl',L.forgeHeat],['forgeGrpHard',L.forgeGrpHard],['forgeGrpEn',L.forgeGrpEn],
-    ['forgeGrpMood',L.forgeGrpMood],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
+    ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
     ['forgePlay',L.start]]; // v1.87.0: «Поделиться» переехала в итоги трассы; 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
+  // 30.08.2026: три заголовка групп стали .setGrp (аккордеон) — текст живёт в дочернем .setGrpT,
+  // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
+  const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } };
+  grpT('forgeGrpHard',L.forgeGrpHard); grpT('forgeGrpEn',L.forgeGrpEn); grpT('forgeGrpMood',L.forgeGrpMood);
   const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
@@ -294,6 +300,20 @@ function forgeFill(){ // подписи + состояние виджетов п
       const hid = ff ? !ff.classList.contains('hidden') : true; // новое состояние — считаем сами, не полагаемся на return classList.toggle()
       if(ff) ff.classList.toggle('hidden', hid);
       fb.classList.toggle('open',!hid); sfx.click(); haptic('light'); }); } }
+  // 30.08.2026 «Тонкая настройка — аккордеон»: три группы, открыта максимум одна — тот же
+  // приём (SET_GRPS), что уже в Настройках (ui.js). Биндим один раз — forgeFill зовётся
+  // и на смену языка, дублировать слушатели незачем.
+  if(!forgeFill._grpBound){ forgeFill._grpBound=1;
+    FORGE_GRPS.forEach(function(pair){
+      const g=$(pair[0]), p=$(pair[1]); if(!g||!p) return;
+      g.addEventListener('click',function(){
+        const willOpen=p.classList.contains('hidden');
+        FORGE_GRPS.forEach(function(pp){ const G=$(pp[0]),P=$(pp[1]); if(!G||!P) return; P.classList.add('hidden'); G.classList.remove('open'); });
+        if(willOpen){ p.classList.remove('hidden'); g.classList.add('open'); try{ g.scrollIntoView({block:'nearest'}); }catch(e){} }
+        sfx.click(); haptic('light');
+      });
+    });
+  }
   forgeSyncWidgets();
 }
 function forgeSyncWidgets(){ // конфиг → виджеты
@@ -313,7 +333,17 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const pre=$('forgePresets'); // выбранная программа мягко светится — видно, что сейчас в небе (v1.86.0)
   if(pre&&pre.children.length===FORGE_PRESETS.length){ const m=forgePresetMatch();
     for(let i=0;i<FORGE_PRESETS.length;i++) pre.children[i].classList.toggle('sel',i===m); }
+  forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
+}
+function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
+  const hs=$('forgeGrpHardSub');
+  if(hs) hs.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv;
+  const es=$('forgeGrpEnSub');
+  if(es){ let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; es.textContent=n+' / '+FORGE_KINDS.length; }
+  const ms=$('forgeGrpMoodSub');
+  if(ms){ const lenT=forgeCfg.l>0?forgeCfg.l+' '+(L.unitM||'м'):(L.forgeInf||'∞');
+    ms.textContent=lenT+(forgeCfg.fog>0?' · '+(L.forgeFog||''):''); }
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); } // v1.85.0: небо оживает при входе в конструктор
 
