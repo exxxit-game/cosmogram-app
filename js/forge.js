@@ -2,9 +2,9 @@
 /* ============================================================
    FORGE v1.69.0 «Своя трасса»: конструктор забега — полная редакция.
    10 ручек в трёх группах: сложность / состав / настроение.
-   Карта = компактный JSON-конфиг → код CG1.xxx → ссылка Telegram
+   Карта = компактный бит-пак конфига → код CG2.xxx → ссылка Telegram
    (?startapp=map_...). Сервер не нужен: конфиг едет в самой ссылке.
-   Схема v2; коды v1 (v1.68.0) читаются и дополняются дефолтами.
+   Старые коды CG1.* (JSON→base64, схемы 1-4) по-прежнему читаются.
    Забег по трассе — НЕ в зачёт (ни рекордов, ни кошелька): иначе
    лёгкие карты стали бы фермой звёзд. Честно — как разведка Пакта.
    Зависит от core.js ($, Store, L, clamp, toast, tg), ui.js (setScreen).
@@ -36,7 +36,7 @@ const elForgeScreen=(typeof document!=='undefined')?document.getElementById('for
    и к УЖЕ РОЗДАННЫМ кодам, то есть молча переписала чужие трассы: у карты, вылизанной под
    свой рекорд, преграды поехали с первой секунды. Признак wg («волновой гейт») разводит
    поколения: коды v1 и v2 читаются со старым поведением, новые пишутся с новым. */
-const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0};
+const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0,hs:0};
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
   {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1000,lv:3,w:1,fl:0,b:3,sky:0,fog:0}},
   {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:5000,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
@@ -52,7 +52,7 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
   const o={v:3};
-  o.n=(typeof sanitizeTrackName==='function') ? sanitizeTrackName(c.n) : String(c.n==null?'':c.n).replace(/[<>&"'\\]/g,'').trim().slice(0,20);
+  o.n=(typeof sanitizeTrackName==='function') ? sanitizeTrackName(c.n) : String(c.n==null?'':c.n).replace(/[<>&"'\\]/g,'').trim().slice(0,17); // 17 — безопасный кириллический остаток байтового бюджета; путь дублирует sanitizeTrackName только если она недоступна
   o.d=clamp(Math.round(isFinite(+c.d)?+c.d:50),10,100);
   o.s=clamp(Math.round(isFinite(+c.s)?+c.s:50),10,100);
   o.e=clamp(Math.round(isFinite(+c.e)?+c.e:15),1,255); // минимум один вид преград
@@ -67,28 +67,82 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
   o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
   o.wg=c.wg?1:0; // 1 — старая раскладка: волновой гейт держит выбранные автором виды до своей волны
+  o.hs=c.hs?1:0; // 31.08.2026 «Высокая ставка»: форсирует 1 жизнь и бонусы выкл — не отдельная механика,
+  // а форс уже существующих полей; принудительно поверх любых значений полей выше, а не только
+  // как совет в интерфейсе — иначе чужой код с hs=1, но подкрученными lv/b, тихо давал бы больше
+  // жизней/бонусов, чем ставка обещает.
+  if(o.hs){ o.lv=1; o.b=0; }
   return o;
 }
-function forgeEncode(cfg){
-  const a=[3,cfg.n||'',cfg.d,cfg.s,cfg.e,cfg.l,cfg.lv,cfg.w,cfg.fl,cfg.b,cfg.sky,cfg.fog,cfg.seed||0]; // v1.108.1: seed — 13-й элемент; v1.282.15: схема 3 — воля автора сильнее волнового гейта (у кодов 1 и 2 гейт остаётся, иначе их расстановка поехала бы)
-  const b=btoa(unescape(encodeURIComponent(JSON.stringify(a))))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  return 'CG1.'+b;
+/* 31.08.2026 «Компактный код» (CG2): CG1 (JSON.stringify → base64) был впритык к диплинку
+   Telegram (~64 символа) уже с ПУСТЫМ именем — любое имя переполняло лимит (замерено вживую:
+   64 символа на пустое, 76-126 с именем). Причина — двойной оверхед: знаки JSON (скобки/
+   запятые/кавычки строки) поверх base64 (+33%), хотя почти все поля — маленькие числа,
+   влезающие в несколько бит. CG2 — та же схема полей, но бит-упаковка вместо JSON. Числовая
+   проверка ДО правки (скрипт, 2000 случайных конфигов + граничные значения d/s/e/seed) — 0
+   расхождений между упаковкой и распаковкой. Новые коды пишутся как CG2; CG1 остаётся
+   читаемым — старые розданные коды/ссылки не ломаются (тот же принцип, что уже трижды
+   применялся к схеме v1→v4 внутри самого CG1). «Партитура» (события) сюда пока не входит —
+   когда появится, ляжет отдельным хвостом байт после этого блока, а не переделкой формата.
+   Раскладка (71 бит скаляров, MSB-first, 9 байт с 1 запасным битом в хвосте):
+   d-10(7) s-10(7) e(8) lIdx(3) lv-1(2) w-1(3) fl(1) b(2) skyIdx(3) fog(2) hs(1) seed(32)
+   + 1 байт — длина имени В БАЙТАХ + сырые UTF-8 байты имени (без JSON-строки и её кавычек). */
+function forgeBitsPack(cfg){
+  const bits=[];
+  const put=(val,n)=>{ for(let i=n-1;i>=0;i--) bits.push((val>>>i)&1); };
+  put(cfg.d-10,7); put(cfg.s-10,7); put(cfg.e,8);
+  put(FORGE_LENS.indexOf(cfg.l),3); put(cfg.lv-1,2); put(cfg.w-1,3);
+  put(cfg.fl,1); put(cfg.b,2); put(FORGE_SKYS.indexOf(cfg.sky),3); put(cfg.fog,2);
+  put(cfg.hs,1); put((cfg.seed||0)>>>0,32);
+  const head=[];
+  for(let i=0;i<bits.length;i+=8){ let by=0; for(let j=0;j<8;j++) by=(by<<1)|(bits[i+j]||0); head.push(by); }
+  const nameBytes=Array.from(new TextEncoder().encode(cfg.n||''));
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes));
 }
-function forgeDecode(str){ // принимает код, полную ссылку t.me или startapp-строку; v1 и v2
+function forgeBitsUnpack(bytes){
+  const HEAD=9; // Math.ceil(71/8)
+  const bits=[];
+  for(let i=0;i<HEAD;i++) for(let j=7;j>=0;j--) bits.push((bytes[i]>>>j)&1);
+  let pos=0; const get=(n)=>{ let v=0; for(let i=0;i<n;i++) v=(v<<1)|(bits[pos++]||0); return v>>>0; };
+  const d=get(7)+10, s=get(7)+10, e=get(8);
+  const lIdx=get(3), lv=get(2)+1, w=get(3)+1;
+  const fl=get(1), b=get(2), skyIdx=get(3), fog=get(2), hs=get(1), seed=get(32);
+  const nameLen=bytes[HEAD]||0;
+  const nameBytes=bytes.slice(HEAD+1, HEAD+1+nameLen);
+  const n=new TextDecoder().decode(nameBytes);
+  return { n, d, s, e, l:FORGE_LENS[lIdx], lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0 };
+}
+function forgeEncode(cfg){
+  const bytes=forgeBitsPack(cfg);
+  let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+  const b=btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return 'CG2.'+b;
+}
+function forgeDecodeV1(s){ // 31.08.2026: старый JSON-путь (CG1, схемы 1-4) — без изменений, отделён от CG2 ниже
+  let b=s.slice(4).replace(/-/g,'+').replace(/_/g,'/');
+  while(b.length%4) b+='=';
+  const a=JSON.parse(decodeURIComponent(escape(atob(b))));
+  if(!Array.isArray(a)) return null;
+  // v1.282.15: у поколений 1 и 2 поднимаем флаг старой раскладки — их расстановка обязана
+  // остаться той же, какой была, когда автор делился ссылкой.
+  if(a[0]===1) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],wg:1}); // v1: остальное — дефолты
+  if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:1});
+  if(a[0]===3) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:0});
+  if(a[0]===4) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:0,hs:a[13]}); // 31.08.2026 «Высокая ставка»
+  return null;
+}
+function forgeDecode(str){ // принимает код, полную ссылку t.me или startapp-строку; CG1 (JSON, схемы 1-4) и CG2 (бит-пак)
   try{
     let s=String(str||'').trim();
-    const m=s.match(/map_(CG1\.[A-Za-z0-9\-_]+)/); if(m) s=m[1]; // вытащили из ссылки
-    if(s.indexOf('CG1.')!==0) return null;
-    let b=s.slice(4).replace(/-/g,'+').replace(/_/g,'/');
-    while(b.length%4) b+='=';
-    const a=JSON.parse(decodeURIComponent(escape(atob(b))));
-    if(!Array.isArray(a)) return null;
-    // v1.282.15: у поколений 1 и 2 поднимаем флаг старой раскладки — их расстановка обязана
-    // остаться той же, какой была, когда автор делился ссылкой.
-    if(a[0]===1) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],wg:1}); // v1: остальное — дефолты
-    if(a[0]===2) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:1});
-    if(a[0]===3) return forgeSanitize({n:a[1],d:a[2],s:a[3],e:a[4],l:a[5],lv:a[6],w:a[7],fl:a[8],b:a[9],sky:a[10],fog:a[11],seed:a[12],wg:0});
+    const m=s.match(/map_(CG[12]\.[A-Za-z0-9\-_]+)/); if(m) s=m[1]; // вытащили из ссылки
+    if(s.indexOf('CG2.')===0){
+      let b=s.slice(4).replace(/-/g,'+').replace(/_/g,'/');
+      while(b.length%4) b+='=';
+      const bin=atob(b); const bytes=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return forgeSanitize(forgeBitsUnpack(bytes));
+    }
+    if(s.indexOf('CG1.')===0) return forgeDecodeV1(s);
     return null;
   }catch(e){ return null; }
 }
@@ -169,7 +223,8 @@ function forgeCfgGet(){ return forgeCfg; }
 function forgePresetMatch(){ // светится ровно та программа, что сейчас в небе (v1.86.0)
   for(let i=0;i<FORGE_PRESETS.length;i++){ const c=FORGE_PRESETS[i].c;
     if(forgeCfg.d===c.d&&forgeCfg.s===c.s&&forgeCfg.e===c.e&&forgeCfg.l===c.l&&forgeCfg.lv===c.lv&&
-       forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog) return i; }
+       forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog&&
+       forgeCfg.hs===(c.hs||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно
   return -1;
 }
 
@@ -288,6 +343,9 @@ function forgeFill(){ // подписи + состояние виджетов п
   forgeSegBuild($('forgeFogSeg'),[{v:0,t:L.fog0},{v:1,t:L.fog1},{v:2,t:L.fog2}],
     function(){return forgeCfg.fog;},function(v){forgeCfg.fog=v;});
   forgeChipBuild($('forgeFlatChip'),L.forgeFlat,function(){return forgeCfg.fl;},function(v){forgeCfg.fl=v;});
+  forgeChipBuild($('forgeHSChip'),L.forgeHS,function(){return forgeCfg.hs;},function(v){
+    forgeCfg.hs=v; if(v){ forgeCfg.lv=1; forgeCfg.b=0; } // 31.08.2026: форс сразу виден в сегментах, не только на старте
+  });
   forgeSkyBuild($('forgeSkyRow'));
   // v1.85.0: ручка «Жар» и спойлер тонкой настройки — живут на сцене, не в сегментах
   const heat=$('forgeHeat');
@@ -337,8 +395,9 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
-  const hs=$('forgeGrpHardSub');
-  if(hs) hs.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv;
+  const hsEl=$('forgeGrpHardSub');
+  if(hsEl) hsEl.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv+
+    (forgeCfg.hs?' · '+(L.forgeHS||'')+' ×4':''); // 31.08.2026: закрытая группа не молчит про включённую ставку
   const es=$('forgeGrpEnSub');
   if(es){ let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; es.textContent=n+' / '+FORGE_KINDS.length; }
   const ms=$('forgeGrpMoodSub');
@@ -394,7 +453,7 @@ function forgeLoadCode(){
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
 }
 
-/* ---------- Deep-link: ?startapp=map_CG1.xxx (и #map= для браузера) ---------- */
+/* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
 function forgeBoot(){ // true = есть трасса друга: этот запуск открывается в конструкторе, а не в полёте
   try{
     let raw='';

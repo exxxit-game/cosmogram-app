@@ -279,7 +279,7 @@ function startGame(saved){
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,srWin:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
-    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже
+    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
@@ -299,7 +299,7 @@ function startGame(saved){
        составлял 2.17× в пользу аса — ровно наоборот замыслу. Скорость (am.s) применяется
        к S.speed напрямую и была верна, её не трогаем. */
     S.customE=fc.e; S.customD=forgeDensityMul(fc.d)/(am.d||1); S.customS=forgeSpeedMul(fc.s)*am.s; S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
-    S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; S.customWG=fc.wg?1:0; // v1.282.15: старые коды (v1/v2) летят со старой раскладкой преград // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0)
+    S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; S.customWG=fc.wg?1:0; S.customHS=fc.hs?1:0; // v1.282.15: старые коды (v1/v2) летят со старой раскладкой преград // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0); 31.08.2026: «Высокая ставка»
     if(!saved){ S.lives=fc.lv; S.mission=fc.w; } // жизни и жара автора (автосейв честнее — не переписываем)
     S.hueShift=fc.sky; // небо автора: сдвиг оттенка стартует с его палитры
     const fogEl=document.getElementById('fog');
@@ -1780,6 +1780,17 @@ wireOn('setGfxBtn', 'click', ()=>{
   Store.set('gfx',Q.mode); gfxCap(); resize(); // HD-резолюция следует за режимом
   gfxLabel(); haptic('light'); sfx.click();
 });
+/* 31.08.2026 «Стоп-кадр»: владелец — «Затишье» уже замедляет мир при near-miss (game.js:
+   baseTimeScale, было жёстко .4) — не новый режим, а сила уже готовой машинерии. Тот же
+   цикл-паттерн, что у gfxModes/gfxLabel выше. .4 первым — прежнее поведение остаётся
+   умолчанием для всех, кто уже играет в «Затишье», ничей опыт не меняется молча. */
+let BT_TS = Store.get('btTs', .4);
+function btModes(){ return [.4,.2,0]; }
+function btLabel(){ rowV('setBtBtn', BT_TS===.2?L.btStrong:(BT_TS===0?L.btFreeze:L.btSoft)); }
+wireOn('setBtBtn', 'click', ()=>{
+  const ms=btModes(); BT_TS=ms[(ms.indexOf(BT_TS)+1)%ms.length];
+  Store.set('btTs',BT_TS); btLabel(); haptic('light'); sfx.click();
+});
 function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0)
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
@@ -2165,12 +2176,12 @@ function applyLang(){
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   setText('diagSupportBtn',L.diagSupportBtn);
-  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); btLabel(); gyroStatus(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],['setMorseBtn','setMorse'],
-   ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
+   ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setBtBtn','setBt'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   setText('diagVibroBtn',L.diagVibro);

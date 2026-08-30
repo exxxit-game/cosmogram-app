@@ -1555,7 +1555,7 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
 let A11Y_SPEED=1;
 function baseTimeScale(slowmoOn, btOn, dying, pausing, a11ySpeed){
   let ts = slowmoOn ? .45 : 1;
-  if (btOn) ts=Math.min(ts,.4);
+  if (btOn) ts=Math.min(ts, (typeof BT_TS==='number')?BT_TS:.4); // 31.08.2026 «Стоп-кадр»: сила «Затишья» теперь настройкой (Мягко .4 / Сильно .2 / Стоп-кадр 0), было жёстко .4
   if (dying) ts=Math.min(ts,.12);
   if (pausing) ts=Math.min(ts,.05);
   ts=Math.min(ts, a11ySpeed);
@@ -1783,12 +1783,16 @@ function spawnPowerup(forceKind){ // forceKind — урок III «Ловец б�
   powerups.push(p);
 }
 
+// 31.08.2026 «Высокая ставка»: единая точка множителя очков — вместо того, чтобы размазывать
+// одно и то же условие по всем семи местам начисления (звезда/таран/near-miss/ворота/сверхновая),
+// каждое из них домножает свой pts на scoreMult() один раз.
+function scoreMult(){ return (S.mode==='custom' && S.customHS) ? 4 : 1; }
 /* ---------- Единая награда за звезду ---------- */
 function collectStar(x,y){ // единственное место, где звезда превращается в награду — палец или магнит
   S.combo++; S.comboMax=Math.max(S.comboMax,S.combo);
   S.starsCollected++;
   const mult = 1+Math.min(S.combo,10)*.3;
-  const pts = Math.round(50*mult);
+  const pts = Math.round(50*mult)*scoreMult();
   S.score += pts;
   showPopup('+'+pts, x, y, juicy('#ffd76a','color(display-p3 1 .86 .44)')); // v1.99.3 «Сочные чернила»: золото очков
   burst(x,y,juicy('#ffd76a','color(display-p3 1 .86 .44)'), Q.level>=3?12:(Q.level>=2?10:8)); // v1.37.0: салют по ступени графики; v1.99.3: сочный флагману
@@ -2218,7 +2222,7 @@ function update(dt){
       if (S.invuln<=0 && ghit){
         if (S.dash>0){ // Таран: ворота разбиваются об самолётик (v1.40.0, логика v1.19.0)
           killIdx(obstacles,i,poolOb);
-          const pts=Math.round(50*(1+Math.min(S.combo,10)*.3));
+          const pts=Math.round(50*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts; showPopup('+'+pts,o.x,o.y,'#a9bcff');
           burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); S.shake=Math.max(S.shake,.5);
         } else if (S.shield>0){
@@ -2237,7 +2241,7 @@ function update(dt){
         sfx.nearMiss();
         haptic('light');
         if (fullRisk()){ // Б1: монеты — только за настоящий риск
-          const pts=Math.round(25*(1+Math.min(S.combo,10)*.3));
+          const pts=Math.round(25*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts;
           showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
@@ -2246,7 +2250,7 @@ function update(dt){
       if (runMode!=='theater' && !o.passed && o.y>plane.y){ // ворота пролетели — был ли самолётик в проходе (v1.94.0: в театре касса молчит)
         o.passed=true;
         if (Math.abs(plane.x-o.x) < o.gap/2-plane.r-6){
-          const pts=Math.round(150*(1+Math.min(S.combo,10)*.3));
+          const pts=Math.round(150*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts;
           showPopup(L.gate+' +'+pts, o.x, plane.y-50, '#5eead4'); // 22.08.2026: насыщенная бирюза — холоднее и щита, и слоумо
           sfx.gate(); haptic('medium');
@@ -2259,7 +2263,7 @@ function update(dt){
       if (d2 < rr*rr){
         if (S.dash>0){ // Таран: ты снаряд — опасность в пыль и очки (v1.40.0, логика v1.19.0)
           killIdx(obstacles,i,poolOb);
-          const pts=Math.round(50*(1+Math.min(S.combo,10)*.3));
+          const pts=Math.round(50*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts; showPopup('+'+pts,o.x,o.y,'#a9bcff');
           burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); S.shake=Math.max(S.shake,.5);
         } else if (S.shield>0){
@@ -2276,7 +2280,7 @@ function update(dt){
         sfx.nearMiss(); // свист пролёта
         haptic('light');
         if (fullRisk()){ // Б1: под бонусом — честь и свист, монет нет
-          const pts=Math.round(25*(1+Math.min(S.combo,10)*.3))*(o.kind==='comet'?2:1); // комета: двойной бонус
+          const pts=Math.round(25*(1+Math.min(S.combo,10)*.3))*(o.kind==='comet'?2:1)*scoreMult(); // комета: двойной бонус
           S.score+=pts;
           showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
@@ -2325,7 +2329,7 @@ function update(dt){
         const mult=1+Math.min(S.combo,10)*.3;
         let pts=0;
         for(let j=obstacles.length-1;j>=0;j--){ const o=obstacles[j];
-          pts+=Math.round(100*mult);
+          pts+=Math.round(100*mult)*scoreMult();
           burst(o.x,o.y,'#fff0a8',12);
           killIdx(obstacles,j,poolOb);
         }

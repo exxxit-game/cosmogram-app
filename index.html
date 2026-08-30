@@ -1523,6 +1523,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
     <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
     <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
+    <!-- 31.08.2026 (владелец, «делаем»): «Стоп-кадр» — не новый режим, а сила уже существующего
+         замедления «Затишья» (тот же триггер near-miss, меняется только глубина остановки) -->
+    <div class="setRow" id="setBtBtn" role="button" tabindex="0"><span class="setK">Интенсивность Затишья</span><span class="setV arr">Мягко</span></div>
     <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setLangBtn" role="button" tabindex="0"><span class="setK">Язык</span><span class="setV arr">Авто</span></div>
@@ -1676,7 +1679,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div>
   <div class="scrBody">
     <div id="forgeFine" class="setPanel forgePanel hidden">
-      <input class="forgeName" id="forgeName" maxlength="20" placeholder="Название неба" autocomplete="off">
+      <!-- 31.08.2026: maxlength — мягкая узда по символам (защита от вставки простыни текста);
+           настоящая граница — байтовый бюджет в sanitizeTrackName (core.js), где кириллица
+           и латиница честно платят каждая свою цену за байт -->
+      <input class="forgeName" id="forgeName" maxlength="35" placeholder="Название неба" autocomplete="off">
       <!-- 30.08.2026 (владелец, макет «отличные макеты, все нравится»): три плоских forgeGrpLbl
            стали аккордеоном — тот же .setGrp.spoiler, что уже в Настройках (SET_GRPS в ui.js),
            не новый приём. Открыта максимум одна группа — весь длинный список не листается разом. -->
@@ -1691,6 +1697,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <div class="forgeChips" id="forgeFlatChip"></div>
         <div class="forgeLblBlk" id="forgeBonusLbl">Бонусы</div>
         <div class="forgeSeg" id="forgeBonusSeg"></div>
+        <!-- 31.08.2026 «Высокая ставка»: форсирует Жизни=1 и Бонусы=Выкл выше (не отдельная
+             механика — комбинация уже существующих полей) + очки ×4 в самом забеге -->
+        <div class="forgeChips" id="forgeHSChip"></div>
       </div>
       <div class="setGrp spoiler" id="forgeGrpEn" role="button" tabindex="0"><span class="setGrpT">Состав</span><span class="setGrpSub" id="forgeGrpEnSub"></span></div>
       <div class="setPanel hidden" id="forgePanelEn">
@@ -1707,7 +1716,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <div class="forgeSeg" id="forgeFogSeg"></div>
       </div>
       <div class="forgeLblBlk" id="forgeCodeLbl">Трасса друга — вставь код или ссылку</div>
-      <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" placeholder="CG1.…" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
+      <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" placeholder="CG2.…" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
     </div>
   </div>
 </div>
