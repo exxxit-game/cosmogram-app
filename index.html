@@ -211,6 +211,14 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
      экране — шестую часть высоты, отданную ни за что, на КАЖДОМ экране меню.
      Защиту оставляем, украшение снимаем. */
   padding-top:calc(10px + var(--sat-menu)); }
+/* 31.08.2026 (владелец, живое устройство): «Назад»/кошелёк Ангара сдвинуты на +24px вниз
+   (спасение от кнопок Telegram, 30.08.2026), а сам отступ экрана — нет: заголовок и окно
+   превью остались на старом месте, шапка над ними уехала и легла поверх. Измерено вживую
+   (getBoundingClientRect): заголовок и шапка перекрывались на 26px. Только у Ангара шапка
+   вообще сдвинута — остальные пять экранов в правиле выше делят с ним общий отступ, но не
+   общую высоту шапки, поэтому им эта правка не нужна и не сделана. Позже в каскаде — тот же
+   принцип специфичности (один ID), что уже применялся для #hangarBackBtn. */
+#hangarScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
 /* Настройки: «Назад» — обычная строка в конце последней панели, в потоке документа
    (так и было задумано с самого начала, см. коммент «Назад в потоке» у разметки) —
    поэтому весь экран целиком остаётся одной прокручиваемой лентой, как раньше. */
@@ -455,6 +463,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   color:#eaf3ff; display:flex; align-items:center; justify-content:center;
   cursor:pointer; pointer-events:auto; transition:transform .12s, box-shadow .2s; }
 #pauseBtn.ghost { opacity:0; } /* v1.101.0 «Чистое небо»: у Telegram есть своя «Назад» — наша кнопка растворяется, след-подушка под ней остаётся */
+.menuBack.ghost { opacity:0; pointer-events:none; } /* 31.08.2026: тот же приём для всех девяти .menuBack — были видны ОБЕ «Назад» разом; pointer-events:none — своя дверь не должна ловить тап там, где игрок видит только кнопку Telegram */
 #pauseBtn:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
 #pauseBtn .ic { width:13px; height:13px; stroke-width:2.6; /* 28.08.2026: было 17px, вслед за самой кнопкой */
   filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }

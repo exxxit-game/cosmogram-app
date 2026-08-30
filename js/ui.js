@@ -96,9 +96,19 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 }
 // v1.101.0 «Чистое небо»: где у Telegram есть своя «Назад», наша пауза — призрак
 // (невидимая подушка-след под ней); где родной кнопки нет — наша видна всегда
+// 31.08.2026 (владелец, живое устройство: «сразу видно две кнопки назад — нашу и от
+// телеграм»): тот же приём раньше стоял ТОЛЬКО у #pauseBtn — все девять .menuBack-кнопок
+// (Настройки/Сервисный центр/Обратная связь/Режимы/Своё небо/Ангар/Достижения/Карточка/
+// Первый полёт) не проверялись вовсе и показывались всегда, хотя setScreen() уже показывает
+// нативную «Назад» Telegram на каждом экране кроме меню (setBack(name!=='menu')) — то же
+// условие, что и у паузы, просто не было доведено до остальных восьми кнопок тогда же.
 function pauseGhostSync(){
   const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
   toggleCls('pauseBtn','ghost', nativeBack);
+  // firstFlightClose исключён: открывается прямо на экране меню (firstFlightOpen() не зовёт
+  // setScreen()), а там родная «Назад» Telegram всегда скрыта (setBack(name!=='menu')) — это
+  // «Закрыть» карточки, не «Назад» экрана, заменить её в этот момент нечем.
+  document.querySelectorAll('.menuBack:not(#firstFlightClose)').forEach(function(el){ el.classList.toggle('ghost', nativeBack); });
 }
 pauseGhostSync();
 function setScreen(name){
