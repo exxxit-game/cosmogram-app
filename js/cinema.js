@@ -21,6 +21,45 @@
    Примерно у 28% проверенных Android-устройств не собрался НИ ОДИН
    кодек — на них pickVideoCodec() честно вернёт null, а не подменит
    отказ подделкой. */
+/* ---------- Реплики к моменту (30.08.2026, владелец, черновик — 8 строк на категорию) ----------
+   Пока просто плоский пул, случайный выбор без защиты от повтора — расширять/добавлять веса и
+   антиповтор имеет смысл, когда пул вырастет заметно больше 8 строк на категорию. */
+const CINEMA_LINES={
+  record:['НОВЫЙ РЕКОРД!','Космическая скорость.','Так ещё никто не летал.','Старый рекорд в шоке.',
+    'Вот это разгон!','Улетел выше космоса.','Рекорд? Обычное дело.','Небо запомнит этот полёт.'],
+  nearmiss:['На волосок!','Вот это нервы.','Ещё сантиметр — и всё.','Просвистело рядом.',
+    'Хладнокровный пилот.','Космос дышал в крыло.','Ювелирная работа.','Тоньше некуда.'],
+  death:['Ну хоть красиво.','Астероид оказался крепче.','Не в этот раз.','Приземление... неудачное.',
+    'Разбился о собственную смелость.','Полёт окончен. Слава была близко.','Космос забрал своё.','Ещё один герой пал красиво.'],
+};
+function cinemaPickLine(cat){ const a=CINEMA_LINES[cat]; return a ? a[Math.floor(Math.random()*a.length)] : ''; }
+
+/* ---------- Вжигание текста в кадр (30.08.2026) ----------
+   Рисуем НЕ на живом канвасе игры (render.js не трогаем) — а на отдельном канвасе-компоновщике:
+   копия игрового кадра + подпись/водяной знак поверх, и уже ЕГО кодируем. Игра выглядит как всегда,
+   текст есть только в записанном ролике. Пока прототип: одна статичная реплика на весь ролик + водяной
+   знак — тайминг (когда именно появляется реплика) не решён, это отдельный следующий шаг. */
+function cinemaDrawOverlay(ctx, w, h, caption){
+  ctx.textBaseline='alphabetic'; ctx.textAlign='center';
+  // водяной знак — имя игры, тихо, нижний край
+  ctx.font='600 '+Math.round(h*0.022)+'px "Exo 2", sans-serif';
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=Math.round(h*0.006);
+  ctx.fillText('COSMOGRAM', w/2, h*0.97);
+  if (!caption) return;
+  // реплика — крупно, с тёмной подложкой для читаемости без звука (см. разбор с владельцем 30.08.2026)
+  const fs=Math.round(h*0.038);
+  ctx.font='700 '+fs+'px "Exo 2", sans-serif';
+  const padY=fs*0.6, barY=h*0.10, barH=fs+padY*2;
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(6,10,20,.55)';
+  ctx.fillRect(0, barY-barH/2, w, barH);
+  ctx.fillStyle='#fff';
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=Math.round(h*0.004);
+  ctx.fillText(caption, w/2, barY+fs*0.32);
+  ctx.shadowBlur=0;
+}
+
 const CINEMA_CODECS=[
   {id:'h264', str:'avc1.42001E', mux:'avc'},
   {id:'vp9',  str:'vp09.00.10.08', mux:'vp9'},
@@ -104,11 +143,18 @@ async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
   made.muxer.finalize();
   return new Blob([made.target.buffer], { type: 'video/mp4' });
 }
-async function cinemaStart(canvas, ringWindowUs, maxWindowUs){
+async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption){
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
   const picked = await pickVideoCodec(canvas.width, canvas.height);
   if (!picked) return false; // честный отказ — на этом устройстве нет рабочего кодека
+
+  // 30.08.2026: прототип вжигания текста — отдельный канвас-компоновщик, живой канвас игры не трогаем
+  let ov=null;
+  if (overlayCaption){
+    const oc = document.createElement('canvas'); oc.width=canvas.width; oc.height=canvas.height;
+    ov = { oc, octx: oc.getContext('2d') };
+  }
 
   const muxCfg = { video: { codec: picked.mux, width: canvas.width, height: canvas.height, frameRate: 30 },
     fastStart: 'in-memory', firstTimestampBehavior: 'offset' }; // кадры идут от performance.now() — не с нуля, см. d.ts
@@ -147,7 +193,9 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs){
   const grab = () => {
     if (!_cinemaRec) return;
     try{
-      const frame = new VideoFrame(canvas, { timestamp: Math.round((performance.now()-t0)*1000) });
+      let src = canvas;
+      if (ov){ ov.octx.drawImage(canvas,0,0); cinemaDrawOverlay(ov.octx, canvas.width, canvas.height, overlayCaption); src = ov.oc; }
+      const frame = new VideoFrame(src, { timestamp: Math.round((performance.now()-t0)*1000) });
       // ключевой кадр раз в ~2 сек (и всегда самый первый) — иначе обрезке кольца не от чего оттолкнуться
       encoder.encode(frame, { keyFrame: (frameN % 60 === 0) });
       frame.close();
