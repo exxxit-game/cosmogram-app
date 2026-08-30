@@ -57,14 +57,54 @@ let _cinemaOwner=null; // 30.08.2026: 'first' | 'test' | 'highlight' — еди�
    принцип «без сырых кадров в памяти», просто окно короче) и постоянно подрезаем всё старше ~12 сек.
    На Stop мукшим только то, что осталось. Готовый mp4 обязан НАЧИНАТЬСЯ с ключевого кадра — поэтому
    резать можно только по границе ключевого кадра, не как попало (см. trimRing). */
-function trimRing(ring, windowUs){
-  if (!ring.length) return;
-  const cutoff = ring[ring.length-1].ts - windowUs;
+/* 30.08.2026 (владелец): «просто так оно не станет вирусным» — если рекорд случился РАНЬШЕ, чем
+   началось обычное хвостовое окно, клип должен дотянуться до него, а не потерять. pinnedUs (если
+   задан) отодвигает начало окна назад до момента рекорда, но не дальше maxWindowUs от текущего
+   момента — потолок, чтобы очень ранний рекорд на длинном полёте не растянул клип бесконечно. */
+function trimRing(ring, windowUs, pinnedUs, maxWindowUs){
+  if (!ring.length) return false;
+  const nowTs = ring[ring.length-1].ts;
+  const hardFloor = nowTs - (maxWindowUs||windowUs); // потолок длины — дальше не тянемся, даже ради закреплённого момента
+  let desired = nowTs - windowUs; // обычная цель — короткий хвост
+  if (pinnedUs != null && pinnedUs < desired) desired = pinnedUs; // рекорд старше хвоста — тянемся к нему
+  let pinLost = false;
+  if (desired < hardFloor){ desired = hardFloor; pinLost = (pinnedUs != null); } // потолок победил — закреплённый момент не поместился
   let keepFrom = 0; // ни одного ключевого кадра в окне ещё не было — оставляем как есть (ring[0] всегда key, см. grab())
-  for (let i=0;i<ring.length;i++){ if (ring[i].key && ring[i].ts <= cutoff) keepFrom = i; }
+  for (let i=0;i<ring.length;i++){ if (ring[i].key && ring[i].ts <= desired) keepFrom = i; }
   if (keepFrom > 0) ring.splice(0, keepFrom);
+  return pinLost;
 }
-async function cinemaStart(canvas, ringWindowUs){
+/* 30.08.2026 (владелец): «два коротких куска со склейкой» — если момент рекорда не поместился даже с
+   потолком (pinLost), берём его отдельным снимком (не зависящим от общей подрезки кольца) и на Stop
+   склеиваем встык с обычным коротким хвостом перед смертью. Жёсткая склейка, без перехода/кроссфейда —
+   это уже переисполнение (декод+рендер+перекодирование), тот самый расход памяти на сырые кадры, которого
+   весь модуль сознательно избегает. CINEMA_SNAPSHOT_SPAN_US — сколько снимка вокруг момента брать. */
+const CINEMA_SNAPSHOT_SPAN_US = 4_000_000; // ~4 сек — предложенное число, не проверено с владельцем отдельно
+async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
+  const made = makeMuxer();
+  let offset = 0, firstChunk = true;
+  for (const seg of segments){
+    if (!seg || !seg.length) continue;
+    const segStart = seg[0].ts;
+    for (const e of seg){
+      const newTs = e.ts - segStart + offset;
+      let chunkToAdd = e.chunk, meta = e.meta;
+      if (newTs !== e.ts){ // склейка второго сегмента — его штампы времени продолжают первый, EncodedVideoChunk неизменяем
+        const buf = new Uint8Array(e.chunk.byteLength);
+        e.chunk.copyTo(buf);
+        chunkToAdd = new EncodedVideoChunk({ type: e.chunk.type, timestamp: newTs, duration: e.chunk.duration, data: buf });
+      }
+      if (firstChunk && decoderConfig && !(meta && meta.decoderConfig)) meta = { ...(meta||{}), decoderConfig };
+      try{ made.muxer.addVideoChunk(chunkToAdd, meta); }catch(err){}
+      firstChunk = false;
+    }
+    const lastE = seg[seg.length-1];
+    offset += (lastE.ts - segStart) + (lastE.chunk.duration || 33333); // следующий сегмент начинается сразу после этого
+  }
+  made.muxer.finalize();
+  return new Blob([made.target.buffer], { type: 'video/mp4' });
+}
+async function cinemaStart(canvas, ringWindowUs, maxWindowUs){
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
   const picked = await pickVideoCodec(canvas.width, canvas.height);
@@ -79,16 +119,22 @@ async function cinemaStart(canvas, ringWindowUs){
   };
 
   const ring = ringWindowUs ? [] : null;
-  let target=null, muxer=null, decoderConfig=null; // 30.08.2026: VideoEncoder кладёт decoderConfig только
-    // в meta САМОГО ПЕРВОГО чанка сессии, не в каждый ключевой — обрезка кольца выбрасывает тот чанк, и
-    // новый муксер без decoderConfig на своём первом чанке падал в finalize() (проверено живьём: mp4-muxer.min.js
-    // TypeError на null.colorSpace). Запоминаем его один раз и подставляем обратно первому чанку в обрезанном окне.
+  let target=null, muxer=null, decoderConfig=null, pinnedUs=null, snapshot=null, snapshotGrowUntil=0;
+  // 30.08.2026: VideoEncoder кладёт decoderConfig только в meta САМОГО ПЕРВОГО чанка сессии, не в каждый
+  // ключевой — обрезка кольца выбрасывает тот чанк, и новый муксер без decoderConfig на своём первом чанке
+  // падал в finalize() (проверено живьём: mp4-muxer.min.js TypeError на null.colorSpace). Запоминаем его
+  // один раз и подставляем обратно первому чанку в обрезанном окне (и в снимке — см. markRecord ниже).
   if (!ring){ const made = makeMuxer(); target = made.target; muxer = made.muxer; }
 
   const encoder = new VideoEncoder({
     output: (chunk, meta) => {
       if (meta && meta.decoderConfig && !decoderConfig) decoderConfig = meta.decoderConfig;
-      if (ring){ ring.push({ chunk, meta, ts: chunk.timestamp, key: chunk.type==='key' }); trimRing(ring, ringWindowUs); }
+      if (ring){
+        const entry = { chunk, meta, ts: chunk.timestamp, key: chunk.type==='key' };
+        ring.push(entry);
+        trimRing(ring, ringWindowUs, pinnedUs, maxWindowUs);
+        if (snapshot && entry.ts <= snapshotGrowUntil) snapshot.push(entry); // снимок момента растёт своим окном, кольцо его не подрежет
+      }
       else { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} }
     },
     error: (e) => { if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_enc_err', String((e&&e.message)||e)); },
@@ -108,22 +154,40 @@ async function cinemaStart(canvas, ringWindowUs){
       frameN++;
     }catch(e){} // один пропущенный кадр не должен уронить всю запись
   };
-  _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, makeMuxer,
-    getDecoderConfig: () => decoderConfig, timer: setInterval(grab, frameMs) };
+  _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, maxWindowUs, makeMuxer,
+    getDecoderConfig: () => decoderConfig,
+    markRecord: () => { // первое пересечение рекорда — единственное, второе не бывает
+      if (pinnedUs!=null || !ring) return;
+      pinnedUs = Math.round((performance.now()-t0)*1000);
+      let from = 0; // снимок стартует с последнего ключевого кадра на момент рекорда (или раньше — если такого ещё не было)
+      for (let i=0;i<ring.length;i++){ if (ring[i].key && ring[i].ts <= pinnedUs) from = i; }
+      snapshot = ring.slice(from);
+      snapshotGrowUntil = pinnedUs + CINEMA_SNAPSHOT_SPAN_US;
+    },
+    getPinnedUs: () => pinnedUs,
+    getSnapshot: () => snapshot,
+    timer: setInterval(grab, frameMs) };
   return true;
 }
+function cinemaMarkRecord(){ if (_cinemaRec && _cinemaRec.markRecord) _cinemaRec.markRecord(); } // 30.08.2026: снаружи, без правки ядра — вызывающий код сам решает, когда счёт обогнал рекорд
 async function cinemaStop(){
   if (!_cinemaRec) return null;
-  const { encoder, muxer, target, timer, ring, ringWindowUs, makeMuxer, getDecoderConfig } = _cinemaRec;
+  const { encoder, muxer, target, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
   clearInterval(timer);
   _cinemaRec = null;
   try{
     await encoder.flush();
     encoder.close();
     if (ring){
-      trimRing(ring, ringWindowUs); // последняя подрезка — flush() мог дописать ещё несколько чанков
-      const made = makeMuxer();
       const dc = getDecoderConfig();
+      const pinLost = trimRing(ring, ringWindowUs, getPinnedUs(), maxWindowUs); // последняя подрезка — flush() мог дописать ещё несколько чанков
+      const snapshot = getSnapshot();
+      if (pinLost && snapshot && snapshot.length){
+        // рекорд не поместился даже с потолком — снимок момента + обычный короткий хвост, встык (см. cinemaMuxSegments)
+        trimRing(ring, ringWindowUs, null, ringWindowUs); // ring — теперь просто обычный короткий хвост, без пина
+        return await cinemaMuxSegments(makeMuxer, dc, [snapshot, ring]);
+      }
+      const made = makeMuxer();
       ring.forEach((e, i) => {
         const meta = (i===0 && dc && !(e.meta && e.meta.decoderConfig)) ? { ...e.meta, decoderConfig: dc } : e.meta;
         try{ made.muxer.addVideoChunk(e.chunk, meta); }catch(err){}
