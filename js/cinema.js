@@ -26,41 +26,67 @@
    По языку игрока (langEff, см. ui.js applyLangPref — единый источник «на каком языке мы сейчас»).
    Пока просто плоский пул на язык, случайный выбор без защиты от повтора — антиповтор имеет смысл,
    когда пул вырастет заметно больше 8 строк на категорию. */
+/* 30.08.2026: «не хватило N очков» — русское числительное+сущ. не терпит наивной подстановки
+   ({n} очков ломается на 1/2/3/4: «1 очков», «2 очков» — неверно). ruPtsWord() — тот же класс
+   проблемы, что уже правили в i18n.js (dailyLeft/день-дня-дней), здесь для «очко». Остальные языки
+   (EN/ES/PT/FR) — простое единственное/множественное число, тоже через функцию, не голой строкой. */
+function ruPtsWord(n){ const a=Math.abs(n)%100, b=a%10;
+  if (a>=11 && a<=14) return 'очков';
+  if (b===1) return 'очко';
+  if (b>=2 && b<=4) return 'очка';
+  return 'очков'; }
 const CINEMA_LINES={
   ru:{ record:['НОВЫЙ РЕКОРД!','Космическая скорость.','Так ещё никто не летал.','Старый рекорд в шоке.',
       'Вот это разгон!','Улетел выше космоса.','Рекорд? Обычное дело.','Небо запомнит этот полёт.'],
     nearmiss:['На волосок!','Вот это нервы.','Ещё сантиметр — и всё.','Просвистело рядом.',
       'Хладнокровный пилот.','Космос дышал в крыло.','Ювелирная работа.','Тоньше некуда.'],
     death:['Ну хоть красиво.','Астероид оказался крепче.','Не в этот раз.','Приземление... неудачное.',
-      'Разбился о собственную смелость.','Полёт окончен. Слава была близко.','Космос забрал своё.','Ещё один герой пал красиво.'] },
+      'Разбился о собственную смелость.','Полёт окончен. Слава была близко.','Космос забрал своё.','Ещё один герой пал красиво.'],
+    nearrecord:[n=>`Не хватило ${n} ${ruPtsWord(n)} до рекорда.`,'Так близко к рекорду!',
+      n=>`Ещё ${n} — и рекорд твой.`,'Почти переписал историю.',n=>`До рекорда — всего ${n} ${ruPtsWord(n)}.`,
+      'В следующий раз — точно.',n=>`${n} ${ruPtsWord(n)} до величия.`,'Рекорд был совсем рядом.'] },
   en:{ record:['NEW RECORD!','Cosmic speed.',"Nobody's flown like this.",'Old record: shook.',
       'What a burn!','Flew past the cosmos.','Record? Just routine.','The sky will remember this.'],
     nearmiss:['So close!','Nerves of steel.','One inch from the end.','Whistled right by.',
       'Ice-cold pilot.','Space grazed the wing.','Surgical precision.',"Couldn't be closer."],
     death:['At least it looked good.','The asteroid won this round.','Not this time.','Landing... unsuccessful.',
-      'Crashed by his own courage.','Flight over. Glory was close.','Space took its due.','Another hero, fallen in style.'] },
+      'Crashed by his own courage.','Flight over. Glory was close.','Space took its due.','Another hero, fallen in style.'],
+    nearrecord:[n=>`${n} ${n===1?'point':'points'} short of the record.`,'So close to the record!',
+      n=>`${n} more and it's yours.`,'Almost rewrote history.',n=>`Just ${n} ${n===1?'point':'points'} from the record.`,
+      'Next time, for sure.',n=>`${n} ${n===1?'point':'points'} from greatness.`,'The record was so close.'] },
   es:{ record:['¡NUEVO RÉCORD!','Velocidad cósmica.','Nadie ha volado así.','El récord anterior, temblando.',
       '¡Qué acelerón!','Voló más allá del cosmos.','¿Récord? Cosa de todos los días.','El cielo recordará este vuelo.'],
     nearmiss:['¡Por un pelo!','Qué nervios.','Un centímetro más y se acaba.','Pasó rozando.',
       'Piloto de sangre fría.','El espacio rozó el ala.','Precisión de relojero.','No se pudo más ajustado.'],
     death:['Al menos quedó bonito.','El asteroide ganó esta vez.','Esta vez no.','Aterrizaje... fallido.',
-      'Se estrelló por su propio valor.','Vuelo terminado. La gloria estuvo cerca.','El espacio cobró lo suyo.','Otro héroe, caído con estilo.'] },
+      'Se estrelló por su propio valor.','Vuelo terminado. La gloria estuvo cerca.','El espacio cobró lo suyo.','Otro héroe, caído con estilo.'],
+    nearrecord:[n=>`A ${n} ${n===1?'punto':'puntos'} del récord.`,'¡Tan cerca del récord!',
+      n=>`${n} más y era tuyo.`,'Casi reescribes la historia.',n=>`Solo ${n} ${n===1?'punto':'puntos'} del récord.`,
+      'La próxima, seguro.',n=>`A ${n} ${n===1?'punto':'puntos'} de la gloria.`,'El récord estuvo tan cerca.'] },
   pt:{ record:['NOVO RECORDE!','Velocidade cósmica.','Ninguém voou assim antes.','O recorde antigo tremeu.',
       'Que aceleração!','Voou além do cosmos.','Recorde? Rotina.','O céu vai lembrar deste voo.'],
     nearmiss:['Por um triz!','Que nervos.','Mais um centímetro e era o fim.','Passou raspando.',
       'Piloto de sangue frio.','O espaço roçou a asa.','Trabalho de relojoaria.','Não dava pra ser mais justo.'],
     death:['Pelo menos ficou bonito.','O asteroide venceu dessa vez.','Não dessa vez.','Pouso... malsucedido.',
-      'Caiu pela própria coragem.','Voo encerrado. A glória estava perto.','O espaço cobrou o que era dele.','Mais um herói, caído com estilo.'] },
+      'Caiu pela própria coragem.','Voo encerrado. A glória estava perto.','O espaço cobrou o que era dele.','Mais um herói, caído com estilo.'],
+    nearrecord:[n=>`A ${n} ${n===1?'ponto':'pontos'} do recorde.`,'Tão perto do recorde!',
+      n=>`Mais ${n} e era seu.`,'Quase reescreveu a história.',n=>`Só ${n} ${n===1?'ponto':'pontos'} do recorde.`,
+      'Da próxima vez, com certeza.',n=>`A ${n} ${n===1?'ponto':'pontos'} da glória.`,'O recorde ficou tão perto.'] },
   fr:{ record:['NOUVEAU RECORD !','Vitesse cosmique.',"Personne n'a jamais volé comme ça.",'L’ancien record en tremble.',
       'Quelle accélération !','Envolé au-delà du cosmos.','Record ? Une formalité.','Le ciel se souviendra de ce vol.'],
     nearmiss:['Au poil !','Quels nerfs.','Un centimètre de plus et c’était fini.','Ça a sifflé tout près.',
       'Pilote au sang-froid.','L’espace a frôlé l’aile.','Travail de précision.','Impossible de faire plus serré.'],
     death:['Au moins, c’était beau.','L’astéroïde a gagné cette fois.','Pas cette fois.','Atterrissage... raté.',
-      'Écrasé par son propre courage.','Vol terminé. La gloire était proche.','L’espace a pris son dû.','Un héros de plus, tombé avec classe.'] },
+      'Écrasé par son propre courage.','Vol terminé. La gloire était proche.','L’espace a pris son dû.','Un héros de plus, tombé avec classe.'],
+    nearrecord:[n=>`À ${n} ${n===1?'point':'points'} du record.`,'Si près du record !',
+      n=>`${n} de plus et c'était le tien.`,'Presque réécrit l\'histoire.',n=>`Seulement ${n} ${n===1?'point':'points'} du record.`,
+      'La prochaine fois, c\'est sûr.',n=>`À ${n} ${n===1?'point':'points'} de la gloire.`,'Le record était si proche.'] },
 };
-function cinemaPickLine(cat){
+function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';
-  const a=CINEMA_LINES[lang][cat]; return a ? a[Math.floor(Math.random()*a.length)] : '';
+  const a=CINEMA_LINES[lang][cat]; if (!a) return '';
+  const line=a[Math.floor(Math.random()*a.length)];
+  return (typeof line==='function') ? line(n) : line;
 }
 
 /* ---------- Вжигание текста в кадр (30.08.2026) ----------
@@ -84,7 +110,7 @@ function cinemaDrawOverlay(ctx, w, h, caption){
   ctx.fillText(caption, w/2, capY);
   ctx.font='600 '+fs2+'px "Exo 2", sans-serif';
   ctx.fillStyle='#f0c040'; // --gold-hi: тот же золотой, что у рекордов/чисел в игре
-  ctx.fillText('© Cosmogram', w/2, capY+fs2+gap);
+  ctx.fillText('© COSMOGRAM', w/2, capY+fs2+gap);
   ctx.shadowBlur=0;
 }
 
