@@ -788,12 +788,20 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .angarTileBuy { width:100%; margin-top:4px; padding:5px 6px; font-size:10.5px; letter-spacing:.02em; gap:.35em; }
 .angarTileBuy canvas.starJewelSm { width:9px; height:9px; }
 /* 28.08.2026: кошелёк был отдельной строкой под кнопкой — переехал пилюлей на само небо
-   превью (владелец: «занимают лишнее место», пример макета — пилюля в углу картинки). */
-#angarWallet { position:absolute; top:8px; right:8px; z-index:1; display:flex; align-items:center; gap:5px;
-  background:rgba(10,16,36,.72); border:1px solid rgba(255,215,106,.3); border-radius:999px; padding:4px 10px 4px 7px;
-  font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
-#angarWallet b { color:#eaf2ff; font-weight:600; letter-spacing:.04em; text-transform:none; margin-left:2px; }
-#angarWalletIc { width:13px; height:13px; }
+   превью (владелец: «занимают лишнее место», пример макета — пилюля в углу картинки).
+   30.08.2026: переехал ещё раз — с неба в шапку экрана, круглой кнопкой-жетоном справа
+   на уровень «Назад» (владелец, макет), тем же стеклом, что .menuBack, золотая рамка
+   вместо голубой. Небо превью корабля теперь свободно целиком. */
+#angarWallet { position:absolute; top:calc(10px + var(--sat-menu)); right:16px; height:32px; z-index:2;
+  display:flex; align-items:center; gap:4px; padding:0 10px;
+  background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,215,106,.5); border-radius:999px;
+  box-shadow:0 0 14px rgba(255,215,106,.25), inset 0 0 10px rgba(255,215,106,.1); }
+#angarWalletLbl { display:none; }
+#angarWallet b { font-family:var(--font-disp); color:#eaf2ff; font-weight:600; font-size:13px;
+  letter-spacing:.04em; text-transform:none; }
+#angarWalletIc { width:14px; height:14px; }
 
 /* 24.08.2026: блок «Ангар: карточки-строки с жёсткими колонками» убран целиком —
    .shipItem/.shipPv/#shipList не присваивались ни в одном JS-файле (проверено:
@@ -1631,10 +1639,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <div id="hangarScreen" class="overlay hidden">
   <button class="menuBack" id="hangarBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="hangarTitle">Ангар</div>
+  <!-- 30.08.2026: кошелёк переехал с неба превью в шапку экрана, на уровень «Назад» (владелец,
+       макет) — своя круглая кнопка справа, тем же стеклом, что у .menuBack, только золотая
+       рамка вместо голубой. Подпись #angarWalletLbl осталась в DOM для i18n/скринридера,
+       но скрыта — пилюля показывает только значок и число. -->
+  <div id="angarWallet"><canvas id="angarWalletIc" class="starJewelSm" width="32" height="32" aria-hidden="true"></canvas><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
   <div id="angarSky"><canvas id="angarPv"></canvas>
-    <!-- 28.08.2026: кошелёк переехал на превью корабля (владелец, пример с макетом) — не
-         своя строка под кнопкой, а пилюля поверх неба, тем же приёмом, что круглые кнопки. -->
-    <div id="angarWallet"><canvas id="angarWalletIc" class="starJewelSm" width="32" height="32" aria-hidden="true"></canvas><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
   </div>
   <!-- 28.08.2026: отдельная строка-кнопка под небом снята (владелец: «занимает лишнее
        место», «франкенштейн» — не своя, отдельная деталь, а действие теперь живёт прямо
