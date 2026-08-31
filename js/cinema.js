@@ -474,14 +474,21 @@ function cinemaHighlightStart(canvas){
   });
 }
 function saneNumberSafe(v){ v=+v; return (isFinite(v) && v>=0) ? v : 0; } // Store иногда отдаёт мусор из старых версий — тот же дух, что saneNumber в ui.js, но без зависимости от него
+function cinemaHighlightActive(){ return cinemaActive() && _cinemaOwner==='highlight'; } // 31.08.2026: ui.js спрашивает это на посадке до асинхронного стопа — не лезет в _cinemaOwner напрямую
+/* 31.08.2026 «Момент полёта, кнопка»: реплика («НОВЫЙ РЕКОРД» или тишина) решается здесь, не
+   вжигается в кадр — запись стартует на взлёте, а рекорд узнаётся только на посадке, вжигать
+   было бы рано (см. разбор с владельцем). wasRecord — та же проверка, что уже вела слежение
+   (S.score>_cinemaHighlightBest), не пересчитывается заново другой формулой. */
 async function cinemaHighlightStop(){
   if (_cinemaHighlightWatcher){ clearInterval(_cinemaHighlightWatcher); _cinemaHighlightWatcher=0; }
   if (!cinemaActive() || _cinemaOwner!=='highlight') return;
   _cinemaOwner=null;
+  const wasRecord = typeof S!=='undefined' && S.score>_cinemaHighlightBest;
   const blob = await cinemaStop();
   if (blob){ try{ const db=await cinemaDb();
     await new Promise((res,rej)=>{ const tx=db.transaction(CINEMA_STORE,'readwrite'); tx.objectStore(CINEMA_STORE).put(blob,'highlight'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
     db.close();
+    if (typeof cinemaClipRefresh==='function') cinemaClipRefresh(wasRecord); // ui.js: показать кнопку «Клип» на «Итогах» + подсветить один раз
   }catch(e){} }
 }
 async function cinemaLoadHighlight(){
@@ -523,15 +530,7 @@ function firstFlightFill(){
 }
 function firstFlightOpen(){
   const url=$('firstFlightThumb') && $('firstFlightThumb').src; if(!url) return;
-  const v=$('firstFlightVideo'); if(!v) return;
-  v.src=url; v.currentTime=0;
-  const p=$('firstFlightPlayer'); if(p) p.classList.remove('hidden');
-  v.play().catch(()=>{}); // автовоспроизведение может быть отклонено — плеер всё равно открыт, кнопка play доступна
-  if (typeof sfx!=='undefined' && sfx.click) sfx.click();
-}
-function firstFlightClosePlayer(){
-  const v=$('firstFlightVideo'); if(v){ v.pause(); }
-  const p=$('firstFlightPlayer'); if(p) p.classList.add('hidden');
+  playerOpen(url, ''); // «Первый полёт» — без реплики, всегда
 }
 function firstFlightDelete(){
   const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof firstFlightRefresh==='function') firstFlightRefresh(); }); };
@@ -540,8 +539,78 @@ function firstFlightDelete(){
   else if (typeof confirm==='function'){ if(confirm(msg)) go(); }
   else go(); // нет способа спросить — тот же честный компромисс, что у duelReplaceQ выше в ui.js
 }
-(function firstFlightWire(){ // грузится раньше ui.js — свои обработчики без общего wireOn()
+
+/* ---------- «Момент полёта»: кнопка «Клип» на «Итогах» + тот же плеер (31.08.2026) ----------
+   Реплика решается на посадке (cinemaHighlightStop выше передаёт wasRecord), не вжигается в
+   кадр — рисуется поверх, средствами плеера. Кнопка гасится на каждом новом взлёте
+   (см. gameOver() в ui.js) — не донашивает клип с прошлой посадки, если в этом полёте
+   «Момент» не сработал (слабое устройство/устройство недоступно). */
+function cinemaClipRefresh(wasRecord){
+  Store.set('cinemaClipIsRecord', wasRecord?1:0);
+  const b=$('cinemaClipBtn'); if(!b) return;
+  b.classList.remove('hidden');
+  b.classList.remove('glow'); void b.offsetWidth; b.classList.add('glow'); // перезапуск анимации, если сработало дважды подряд
+}
+function cinemaClipHide(){ const b=$('cinemaClipBtn'); if(b){ b.classList.add('hidden'); b.classList.remove('glow'); } }
+let _clipUrl=null;
+async function cinemaClipOpen(){
+  const blob = await cinemaLoadHighlight(); if(!blob) return;
+  if (_clipUrl) URL.revokeObjectURL(_clipUrl);
+  _clipUrl = URL.createObjectURL(blob);
+  const wasRecord = !!(typeof Store!=='undefined' && Store.get('cinemaClipIsRecord',0));
+  const cap = wasRecord ? cinemaPickLine('record') : ''; // 31.08.2026 (владелец, план): без интриги — без реплики, не рекламный плакат на каждой посадке
+  playerOpen(_clipUrl, cap);
+}
+
+/* ---------- Общий плеер: свои кнопки вместо системных Android (31.08.2026, владелец) ----------
+   Один плеер на «Первый полёт» и «Клип» — переиспользуется целиком, не два экрана.
+   currentTime/duration — обычные свойства <video>, слушаем timeupdate/loadedmetadata, ничего
+   не переизобретаем сверх плеера. */
+function fmtClipT(s){ s=Math.max(0,Math.floor(s||0)); const m=(s/60)|0, sec=s%60; return m+':'+(sec<10?'0':'')+sec; }
+function playerOpen(url, caption){
+  const v=$('firstFlightVideo'); if(!v) return;
+  v.src=url; v.currentTime=0;
+  const capEl=$('ffCaption'), capMain=$('ffCapMain');
+  if (caption){ if(capMain) capMain.textContent=caption; if(capEl) capEl.classList.remove('hidden'); }
+  else if (capEl) capEl.classList.add('hidden');
+  const fill=$('ffScrubFill'); if(fill) fill.style.width='0%';
+  const cur=$('ffTimeCur'); if(cur) cur.textContent='0:00';
+  const p=$('firstFlightPlayer'); if(p) p.classList.remove('hidden');
+  const playBtn=$('ffPlayBtn'); if(playBtn) playBtn.classList.remove('playing');
+  v.play().then(()=>{ if(playBtn) playBtn.classList.add('playing'); }).catch(()=>{}); // автовоспроизведение может быть отклонено — плеер всё равно открыт, кнопка play доступна
+  if (typeof sfx!=='undefined' && sfx.click) sfx.click();
+}
+function playerClose(){
+  const v=$('firstFlightVideo'); if(v){ v.pause(); }
+  const p=$('firstFlightPlayer'); if(p) p.classList.add('hidden');
+}
+function playerToggle(){
+  const v=$('firstFlightVideo'), b=$('ffPlayBtn'); if(!v) return;
+  if (v.paused){ v.play().then(()=>{ if(b) b.classList.add('playing'); }).catch(()=>{}); }
+  else { v.pause(); if(b) b.classList.remove('playing'); }
+}
+(function playerWire(){ // грузится раньше ui.js — свои обработчики без общего wireOn()
   const card=$('firstFlightCard'); if(card) card.addEventListener('click', firstFlightOpen);
   const del=$('firstFlightDel'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
-  const close=$('firstFlightClose'); if(close) close.addEventListener('click', firstFlightClosePlayer);
+  const close=$('firstFlightClose'); if(close) close.addEventListener('click', playerClose);
+  const clipBtn=$('cinemaClipBtn'); if(clipBtn) clipBtn.addEventListener('click', cinemaClipOpen);
+  const v=$('firstFlightVideo');
+  if (v){
+    v.addEventListener('click', playerToggle);
+    v.addEventListener('ended', ()=>{ const b=$('ffPlayBtn'); if(b) b.classList.remove('playing'); });
+    v.addEventListener('timeupdate', ()=>{
+      if(!v.duration) return;
+      const fill=$('ffScrubFill'); if(fill) fill.style.width=(v.currentTime/v.duration*100)+'%';
+      const cur=$('ffTimeCur'); if(cur) cur.textContent=fmtClipT(v.currentTime);
+      const dur=$('ffTimeDur'); if(dur) dur.textContent=fmtClipT(v.duration);
+    });
+  }
+  const playBtn=$('ffPlayBtn'); if(playBtn) playBtn.addEventListener('click', e=>{ e.stopPropagation(); playerToggle(); });
+  const track=$('ffScrubTrack');
+  if (track) track.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(!v || !v.duration) return;
+    const r=track.getBoundingClientRect();
+    v.currentTime = Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*v.duration;
+  });
 })();

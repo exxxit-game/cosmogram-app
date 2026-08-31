@@ -295,6 +295,7 @@ function startGame(saved){
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
   smoothWasPerfect=true; // старт полёта = потолок плавности сам по себе, попап «Плавный полёт» не за это
   lastDistKm=0; // новый забег — золотая вспышка километров начинается с нуля, не с прошлого полёта
+  if (typeof cinemaClipHide==='function') cinemaClipHide(); // 31.08.2026 «Момент полёта»: кнопка «Клип» не донашивает клип с прошлой посадки, если в ЭТОМ полёте запись не сработает
   S.dailyDay = runMode==='theater' ? theaterDay : (runMode==='daily' ? (saved&&saved.dailyDay ? saved.dailyDay : trackDayKey()) : ''); // v1.282.20: день соревнования общий // v1.93 «Одна попытка»: прыжок принадлежит дню взлёта — даже через полночь; v1.94.0: театр помнит день спектакля
   if (runMode==='daily' && !saved){ // 23.08.2026 «5 попыток»: счётчик +1 на взлёте — та же защита от читерства, что была у одной попытки, порог просто выше
     const dr0=Store.get('dailyRun',null), curN=(dr0&&dr0.d===S.dailyDay)?(dr0.n||0):dailyDoneGet(S.dailyDay); // после сброса хранилища — восстанавливаем счётчик из журнала, не начинаем с нуля
