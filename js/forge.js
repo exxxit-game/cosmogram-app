@@ -36,7 +36,16 @@ const elForgeScreen=(typeof document!=='undefined')?document.getElementById('for
    и к УЖЕ РОЗДАННЫМ кодам, то есть молча переписала чужие трассы: у карты, вылизанной под
    свой рекорд, преграды поехали с первой секунды. Признак wg («волновой гейт») разводит
    поколения: коды v1 и v2 читаются со старым поведением, новые пишутся с новым. */
-const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0,hs:0};
+const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg:0,hs:0,sc:[]};
+/* 31.08.2026 «Партитура»/«Расстановка», MVP: точное авторское размещение поверх статистических
+   ручек. Три типа события: 'pause' (гарантия передышки в этой точке), 'kind' (в этой точке —
+   заданный вид препятствия, не случайный) и 'marker' (заметка для себя — текст в игру и в код
+   НЕ едет вовсе, решение владельца 31.08.2026: заметка живёт только у автора локально в
+   Кузнице; здесь у marker-события используется только at, kind всегда 0 и игнорируется).
+   Максимум 50 событий на трассу — защита от разрастания кода, число из плана, не выдумано
+   заново здесь. */
+const FORGE_SC_TYPES=['pause','kind','marker']; // индекс = 2 бита в кодеке ниже (влезает: 0-2 из 0-3)
+const FORGE_SC_MAX=50;
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
   {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1000,lv:3,w:1,fl:0,b:3,sky:0,fog:0}},
   {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:5000,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
@@ -72,6 +81,23 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // как совет в интерфейсе — иначе чужой код с hs=1, но подкрученными lv/b, тихо давал бы больше
   // жизней/бонусов, чем ставка обещает.
   if(o.hs){ o.lv=1; o.b=0; }
+  // 31.08.2026 «Партитура»: вход недоверенный (код приходит извне) — не клэмпим мусорное
+  // событие до валидного, а выбрасываем целиком, как и требует план («at — конечное
+  // неотрицательное число, иначе событие отбрасывается»). Максимум 50 — лишние отрезаны.
+  o.sc=[];
+  if(Array.isArray(c.sc)){
+    for(const ev of c.sc){
+      if(o.sc.length>=FORGE_SC_MAX) break;
+      if(!ev || typeof ev!=='object') continue;
+      const at=+ev.at;
+      if(!isFinite(at) || at<0) continue;
+      const type=FORGE_SC_TYPES.indexOf(ev.type)>=0 ? ev.type : null;
+      if(!type) continue;
+      const kind=clamp(Math.round(isFinite(+ev.kind)?+ev.kind:0),0,FORGE_KINDS.length-1);
+      o.sc.push({at:Math.round(at), type:type, kind:kind});
+    }
+    o.sc.sort(function(a,b){ return a.at-b.at; }); // отсортировано по дистанции — так их читает game.js по одному разу
+  }
   return o;
 }
 /* 31.08.2026 «Компактный код» (CG2): CG1 (JSON.stringify → base64) был впритык к диплинку
@@ -82,11 +108,15 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
    проверка ДО правки (скрипт, 2000 случайных конфигов + граничные значения d/s/e/seed) — 0
    расхождений между упаковкой и распаковкой. Новые коды пишутся как CG2; CG1 остаётся
    читаемым — старые розданные коды/ссылки не ломаются (тот же принцип, что уже трижды
-   применялся к схеме v1→v4 внутри самого CG1). «Партитура» (события) сюда пока не входит —
-   когда появится, ляжет отдельным хвостом байт после этого блока, а не переделкой формата.
+   применялся к схеме v1→v4 внутри самого CG1). «Партитура» (события) — отдельный хвост байт
+   ПОСЛЕ имени (см. ниже), не переделка этого блока: код без событий (старые CG2, до
+   31.08.2026) читается ровно как раньше, лишних байт после имени у него просто нет.
    Раскладка (71 бит скаляров, MSB-first, 9 байт с 1 запасным битом в хвосте):
    d-10(7) s-10(7) e(8) lIdx(3) lv-1(2) w-1(3) fl(1) b(2) skyIdx(3) fog(2) hs(1) seed(32)
-   + 1 байт — длина имени В БАЙТАХ + сырые UTF-8 байты имени (без JSON-строки и её кавычек). */
+   + 1 байт — длина имени В БАЙТАХ + сырые UTF-8 байты имени (без JSON-строки и её кавычек)
+   + [«Партитура», 31.08.2026] 1 байт — число событий (0-50) + по 3 байта на событие:
+   at>>8, at&255, (typeIdx<<3)|kind — проверено численно (скрипт, 2000 прогонов + граничные
+   значения) до правки. Хвост опционален: 0 событий = 1 байт (счётчик 0), ничего больше. */
 function forgeBitsPack(cfg){
   const bits=[];
   const put=(val,n)=>{ for(let i=n-1;i>=0;i--) bits.push((val>>>i)&1); };
@@ -97,7 +127,14 @@ function forgeBitsPack(cfg){
   const head=[];
   for(let i=0;i<bits.length;i+=8){ let by=0; for(let j=0;j<8;j++) by=(by<<1)|(bits[i+j]||0); head.push(by); }
   const nameBytes=Array.from(new TextEncoder().encode(cfg.n||''));
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes));
+  const sc=Array.isArray(cfg.sc)?cfg.sc:[];
+  const scOut=[Math.min(sc.length,FORGE_SC_MAX)];
+  for(let i=0;i<scOut[0];i++){
+    const ev=sc[i], at=Math.max(0,Math.min(65535,Math.round(ev.at)));
+    const typeIdx=Math.max(0,FORGE_SC_TYPES.indexOf(ev.type));
+    scOut.push(at>>8, at&255, ((typeIdx<<3)|(ev.kind&7))&255);
+  }
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -110,7 +147,19 @@ function forgeBitsUnpack(bytes){
   const nameLen=bytes[HEAD]||0;
   const nameBytes=bytes.slice(HEAD+1, HEAD+1+nameLen);
   const n=new TextDecoder().decode(nameBytes);
-  return { n, d, s, e, l:FORGE_LENS[lIdx], lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0 };
+  // «Партитура»: хвост опционален — код без него (или обрезанный/битый хвост) просто даёт sc=[]
+  const scOff=HEAD+1+nameLen;
+  const sc=[];
+  if(scOff<bytes.length){
+    const scN=bytes[scOff]||0;
+    for(let i=0;i<scN;i++){
+      const b=scOff+1+i*3;
+      if(b+2>=bytes.length) break; // обрезанный хвост — не падаем, просто меньше событий
+      const at=(bytes[b]<<8)|bytes[b+1], tb=bytes[b+2];
+      sc.push({at:at, type:FORGE_SC_TYPES[(tb>>3)&3]||'pause', kind:tb&7});
+    }
+  }
+  return { n, d, s, e, l:FORGE_LENS[lIdx], lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
