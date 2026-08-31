@@ -502,53 +502,32 @@ function isLowPowerDevice(frameNow){
 }
 function drawNebulas(h1,h2,tN,lowPower){
   if(typeof lowPower!=='boolean') lowPower=isLowPowerDevice();
+  /* 31.08.2026: два плоских круглых пятна на дне/средней владелец разобрал как «портят
+     картинку, статичные — тем более» — макет сравнения «как сейчас»/«убрано»/«неровная
+     форма» решил в пользу «без пятен лучше». Убраны целиком для lowPower/Q.level<2; ничего
+     больше печь для этих ступеней не нужно — nebCache/nebulaField существуют только ради
+     HD/Ультра ниже. */
+  if(lowPower || Q.level<2) return;
   const hq1=Math.round(S.hueShift/NF_HUE_STEP); // v1.282.15: тот же грубый квант — иначе два спрайта 200×200 пеклись каждые 833мс
   if(nebCache.h!==hq1){
     nebCache={h:hq1,a:nebulaSprite(h1+40),b:nebulaSprite(h2+60)};
   }
-  if(lowPower || Q.level===0){
-    /* 22.08.2026 «Дно тоже летит вперёд»: раньше пятно стояло по неподвижным координатам
-       (W*.15, H*.25 — константы), пока весь остальной мир дрейфует — жалоба владельца,
-       «на экране идёт движение вперёд, а она статическая, это противоречие». Цена дрейфа
-       та же, что у статичной позиции (тот же один drawImage, другое число на входе) —
-       чиним бесплатно. Заодно: Q.level===0 раньше не получал НИ ОДНОГО пятна тумана,
-       строже, чем сама метка lowPower — теперь дно получает то же, что и слабое железо. */
-    ctx.globalAlpha=.18;
-    ctx.drawImage(nebCache.a, W*.15+Math.sin(tN*.04)*30, H*.25+Math.cos(tN*.03)*20, W*.7, H*.55);
-    /* 27.08.2026: владелец, реальное слабое устройство — «туманность выглядит уродливо, как
-       пятно», «без ущерба для игры». Разбор: одно голое пятно без второго тона и правда
-       читается плоско. nebCache.b уже собран строкой выше ДЛЯ ВСЕХ уровней разом (один общий
-       кэш на весь модуль) — здесь просто никогда не рисовался. Добавить его сюда стоит ровно
-       один drawImage (та же самая дешёвая операция, что и у пятна выше) — генерация спрайта
-       уже оплачена независимо от того, использует его этот уровень или нет. */
-    ctx.globalAlpha=.13;
-    ctx.drawImage(nebCache.b, W*.55+Math.cos(tN*.035)*26-W*.22, H*.62+Math.sin(tN*.045)*24-W*.22, W*.44, W*.44);
-    ctx.globalAlpha=1;
-    return;
-  }
-  if(Q.level>=2){ // HD/Ультра: богатое поле туманностей + живые дрейфующие пятна поверх
-    const nf=nebulaField(h1,h2);
-    const pan=nfPanOffset(tN, nf.marginPxX||0, nf.marginPxY||0);
-    ctx.drawImage(nf, pan.x, pan.y, nf.baseCw||W, nf.baseChh||H, 0,0,W,H); // окно-кроп из увеличенного поля — сама текстура плывёт, не только пятна поверх
-    // 28.08.2026: точечная пыль (nf.dust) убрана целиком — bgStars уже мерцают сами, вторая
-    // мигающая система поверх туманности была лишней (владелец). См. правку формы в nebulaField().
-    ctx.globalAlpha=.09;
-    ctx.drawImage(nebCache.a, W*.2+Math.sin(tN*.05)*40-W*.28, H*.3-W*.28, W*.56, W*.56);
-    ctx.globalAlpha=.08;
-    ctx.drawImage(nebCache.b, W*.85-W*.25, H*.7+Math.cos(tN*.04)*50-W*.25, W*.5, W*.5);
-    ctx.globalAlpha=1;
-    if(Q.level>=3){ // Ультра: четвёртое дыхание неба — северное пятно
-      ctx.globalAlpha=.07;
-      ctx.drawImage(nebCache.a, W*.55-W*.22, H*.12+Math.sin(tN*.06)*30-W*.22, W*.44, W*.44);
-      ctx.globalAlpha=1;
-    }
-    return;
-  }
-  ctx.globalAlpha=.11;
-  ctx.drawImage(nebCache.a, W*.2+Math.sin(tN*.05)*40-W*.28, H*.3-W*.28, W*.56, W*.56);
+  // HD/Ультра: богатое поле туманностей + живые дрейфующие пятна поверх
+  const nf=nebulaField(h1,h2);
+  const pan=nfPanOffset(tN, nf.marginPxX||0, nf.marginPxY||0);
+  ctx.drawImage(nf, pan.x, pan.y, nf.baseCw||W, nf.baseChh||H, 0,0,W,H); // окно-кроп из увеличенного поля — сама текстура плывёт, не только пятна поверх
+  // 28.08.2026: точечная пыль (nf.dust) убрана целиком — bgStars уже мерцают сами, вторая
+  // мигающая система поверх туманности была лишней (владелец). См. правку формы в nebulaField().
   ctx.globalAlpha=.09;
+  ctx.drawImage(nebCache.a, W*.2+Math.sin(tN*.05)*40-W*.28, H*.3-W*.28, W*.56, W*.56);
+  ctx.globalAlpha=.08;
   ctx.drawImage(nebCache.b, W*.85-W*.25, H*.7+Math.cos(tN*.04)*50-W*.25, W*.5, W*.5);
   ctx.globalAlpha=1;
+  if(Q.level>=3){ // Ультра: четвёртое дыхание неба — северное пятно
+    ctx.globalAlpha=.07;
+    ctx.drawImage(nebCache.a, W*.55-W*.22, H*.12+Math.sin(tN*.06)*30-W*.22, W*.44, W*.44);
+    ctx.globalAlpha=1;
+  }
 }
 
 /* ================= DRAW ================= */
