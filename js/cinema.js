@@ -474,21 +474,32 @@ function cinemaHighlightStart(canvas){
   });
 }
 function saneNumberSafe(v){ v=+v; return (isFinite(v) && v>=0) ? v : 0; } // Store иногда отдаёт мусор из старых версий — тот же дух, что saneNumber в ui.js, но без зависимости от него
-function cinemaHighlightActive(){ return cinemaActive() && _cinemaOwner==='highlight'; } // 31.08.2026: ui.js спрашивает это на посадке до асинхронного стопа — не лезет в _cinemaOwner напрямую
-/* 31.08.2026 «Момент полёта, кнопка»: реплика («НОВЫЙ РЕКОРД» или тишина) решается здесь, не
-   вжигается в кадр — запись стартует на взлёте, а рекорд узнаётся только на посадке, вжигать
-   было бы рано (см. разбор с владельцем). wasRecord — та же проверка, что уже вела слежение
-   (S.score>_cinemaHighlightBest), не пересчитывается заново другой формулой. */
+/* 31.08.2026 «Момент полёта, куратор» (владелец: «клип сохраняется на КАЖДОЙ подходящей
+   посадке, рекорд был или нет — это не куратор, это просто хвост последнего полёта, нужно
+   исправить»): клип теперь сохраняется ТОЛЬКО когда реально что-то поймано — рекорд побит
+   (record) или упущен в пределах 10% (nearrecord, владелец выбрал порог явно, не додумано).
+   Обычная посадка — cinemaStop() всё равно вызывается (иначе VideoEncoder/VideoFrame не
+   освободятся, та же утечка, что уже один раз ловили), но результат никуда не пишется и
+   кнопка не появляется — реального «момента» не было, показывать нечего.
+   Реплика («НОВЫЙ РЕКОРД»/«не хватило N очков») решается не здесь и не вжигается в кадр —
+   запись стартует на взлёте, а исход узнаётся только на посадке, вжигать было бы рано (см.
+   разбор с владельцем). Категория и число сохраняются, cinemaClipOpen() достаёт их и
+   зовёт cinemaPickLine() в момент открытия плеера. */
 async function cinemaHighlightStop(){
   if (_cinemaHighlightWatcher){ clearInterval(_cinemaHighlightWatcher); _cinemaHighlightWatcher=0; }
   if (!cinemaActive() || _cinemaOwner!=='highlight') return;
   _cinemaOwner=null;
-  const wasRecord = typeof S!=='undefined' && S.score>_cinemaHighlightBest;
+  const score = typeof S!=='undefined' ? S.score : 0;
+  const wasRecord = score>_cinemaHighlightBest;
+  const wasNear = !wasRecord && _cinemaHighlightBest>0 && score>=_cinemaHighlightBest*0.9; // владелец: «в пределах 10% от рекорда»
+  if (!wasRecord && !wasNear){ await cinemaStop(); return; } // обычная посадка — момент не пойман, клип не сохраняем совсем
   const blob = await cinemaStop();
   if (blob){ try{ const db=await cinemaDb();
     await new Promise((res,rej)=>{ const tx=db.transaction(CINEMA_STORE,'readwrite'); tx.objectStore(CINEMA_STORE).put(blob,'highlight'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
     db.close();
-    if (typeof cinemaClipRefresh==='function') cinemaClipRefresh(wasRecord); // ui.js: показать кнопку «Клип» на «Итогах» + подсветить один раз
+    const cat = wasRecord ? 'record' : 'nearrecord';
+    const n = wasRecord ? 0 : Math.round(_cinemaHighlightBest-score);
+    if (typeof cinemaClipRefresh==='function') cinemaClipRefresh(cat, n); // ui.js: показать кнопку «Клип» на «Итогах» + подсветить один раз
   }catch(e){} }
 }
 async function cinemaLoadHighlight(){
@@ -541,12 +552,14 @@ function firstFlightDelete(){
 }
 
 /* ---------- «Момент полёта»: кнопка «Клип» на «Итогах» + тот же плеер (31.08.2026) ----------
-   Реплика решается на посадке (cinemaHighlightStop выше передаёт wasRecord), не вжигается в
-   кадр — рисуется поверх, средствами плеера. Кнопка гасится на каждом новом взлёте
-   (см. gameOver() в ui.js) — не донашивает клип с прошлой посадки, если в этом полёте
-   «Момент» не сработал (слабое устройство/устройство недоступно). */
-function cinemaClipRefresh(wasRecord){
-  Store.set('cinemaClipIsRecord', wasRecord?1:0);
+   Реплика решается на посадке (cinemaHighlightStop выше передаёт категорию record/nearrecord
+   и число очков), не вжигается в кадр — рисуется поверх, средствами плеера. Кнопка гасится
+   на каждом новом взлёте (см. gameOver() в ui.js) — не донашивает клип с прошлой посадки,
+   если в этом полёте «Момент» не сработал (слабое устройство/обычная посадка без момента —
+   клип тогда и не сохраняется вовсе, см. cinemaHighlightStop). */
+function cinemaClipRefresh(cat, n){
+  Store.set('cinemaClipCat', cat);
+  Store.set('cinemaClipN', n||0);
   const b=$('cinemaClipBtn'); if(!b) return;
   b.classList.remove('hidden');
   b.classList.remove('glow'); void b.offsetWidth; b.classList.add('glow'); // перезапуск анимации, если сработало дважды подряд
@@ -557,8 +570,9 @@ async function cinemaClipOpen(){
   const blob = await cinemaLoadHighlight(); if(!blob) return;
   if (_clipUrl) URL.revokeObjectURL(_clipUrl);
   _clipUrl = URL.createObjectURL(blob);
-  const wasRecord = !!(typeof Store!=='undefined' && Store.get('cinemaClipIsRecord',0));
-  const cap = wasRecord ? cinemaPickLine('record') : ''; // 31.08.2026 (владелец, план): без интриги — без реплики, не рекламный плакат на каждой посадке
+  const cat = typeof Store!=='undefined' ? Store.get('cinemaClipCat','') : '';
+  const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
+  const cap = cat ? cinemaPickLine(cat, n) : ''; // 'record' — без числа, 'nearrecord' — «не хватило N очков»
   playerOpen(_clipUrl, cap);
 }
 
