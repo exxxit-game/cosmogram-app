@@ -136,7 +136,7 @@ async function cardSend(){
   if(!b||!cv||b._busy) return; b._busy=1;
   try{
     const png=cv.toDataURL('image/png');
-    const caption=(typeof shareTextFor==='function')?shareTextFor():('Cosmogram: '+cardData.sc);
+    const caption=(typeof L!=='undefined' && L.shareText)?L.shareText(cardData.sc):('Cosmogram: '+cardData.sc); // shareTextFor() никогда не существовала — подпись всегда падала в голую заглушку
     const r=await syncFetch(SYNC_URL,{action:'share_card',initData:tg.initData,png,caption});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
