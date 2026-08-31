@@ -403,6 +403,223 @@ function powGlow(color){
   }
   return powGlowCache[color];
 }
+/* 31.08.2026 «Гранёный камень» (владелец, макет-сравнение «мыло»/«гранёное», три раунда
+   правок по живым скриншотам): испечённый спрайт вместо живого fill+clip+3×drawImage на
+   каждый кадр — тот же принцип экономии, что уже даёт powGlow/nebulaSprite/vignetteSprite
+   выше в этом файле. Форма/кратеры камня (o._path/o._decor) не меняю — они уже кэшированы
+   и уже используют mapRand (общий детерминированный RNG уровня, от него зависит Daily
+   Challenge/тень). Новая случайность (угол света, вершина-зачинщик грани, зонирование
+   граней, джиттер цвета/шума, вытяжение силуэта) — СВОЙ приватный LCG, засеянный от уже
+   сгенерированных o.verts/o.r, ни одного нового обращения к mapRand: тот же принцип «свой
+   LCG — глобальный RNG не трогаем», что уже применён у nebulaSprite чуть выше. */
+function rockLcgSeed(o){
+  let h=0;
+  for(const v of o.verts) h=(h*31+((v.r*100000)|0))>>>0;
+  return ((h^((o.r*1000)|0))>>>0)||1;
+}
+function jitterHex(hex,R,amt){ // свой оттенок на камень — даже одна и та же палитра (5 тонов) перестаёт быть одним пикселем
+  const n=parseInt(hex.slice(1),16), r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const cl=(c)=>Math.max(0,Math.min(255,Math.round(c+(R()-.5)*2*amt)));
+  return 'rgb('+cl(r)+','+cl(g)+','+cl(b)+')';
+}
+function mixTone(rgbOrHex,k,towards){ // towards: 255 к белому, 0 к чёрному; принимает и 'rgb(...)', и '#hex'
+  let r,g,b;
+  if(rgbOrHex[0]==='#'){ const n=parseInt(rgbOrHex.slice(1),16); r=(n>>16)&255; g=(n>>8)&255; b=n&255; }
+  else { const m=rgbOrHex.match(/\d+/g); r=+m[0]; g=+m[1]; b=+m[2]; }
+  const mix=(c)=>Math.round(c+(towards-c)*k);
+  return 'rgb('+mix(r)+','+mix(g)+','+mix(b)+')';
+}
+function bakeRockSprite(o){
+  const px=skyPx(); // те же реальные пиксели холста, что у vignetteSprite — иначе замылится на широком экране/планшете (тот же урок, что уже был у виньетки)
+  if(o._sprite && o._spritePx===px) return o._sprite;
+  const tint=planetRockTint(o);
+  let s=rockLcgSeed(o);
+  const R=()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+  const stretchX=.84+R()*.38, stretchY=.84+R()*.38; // силуэт визуально вытянут/приплюснут — хитбокс (game.js: круг по o.r) не затронут
+  const jTint=jitterHex(tint,R,14);
+  const weather=.06+R()*.16; // сила выветренности — своя на камень
+  const lightAng=R()*6.283;
+  const lightDir={x:Math.cos(lightAng),y:Math.sin(lightAng)};
+  const n=o.verts.length;
+  const apexI=Math.floor(R()*n); // вершина-зачинщик скола — своя на камень (веер не от центра, иначе «кристалл вокруг сердцевины» на любом камне)
+  const apexV=o.verts[apexI];
+  const ax=Math.cos(apexV.a)*apexV.r*o.r, ay=Math.sin(apexV.a)*apexV.r*o.r;
+  const padCss=8, cssSize=o.r*2*1.25+padCss*2, cw=Math.ceil(cssSize*px);
+  const c=document.createElement('canvas'); c.width=c.height=cw;
+  const x=ctx2d(c);
+  x.setTransform(px,0,0,px,cw/2,cw/2); x.scale(stretchX,stretchY);
+  let zoneLeft=0, zoneTone=null;
+  for(let k=1;k<n-1;k++){ // веер от вершины apexI ко всем остальным по кругу — та же схема, что макет
+    const i0=(apexI+k)%n, i1=(apexI+k+1)%n;
+    const v0=o.verts[i0], v1=o.verts[i1];
+    const x0=Math.cos(v0.a)*v0.r*o.r, y0=Math.sin(v0.a)*v0.r*o.r;
+    const x1=Math.cos(v1.a)*v1.r*o.r, y1=Math.sin(v1.a)*v1.r*o.r;
+    if(zoneLeft<=0){ // грани сгруппированы в зоны 1-3 — свои на камень (кто-то крупно колот, кто-то мелко)
+      zoneLeft=1+Math.floor(R()*3);
+      const cx=(ax+x0+x1)/3, cy=(ay+y0+y1)/3;
+      const cl=Math.hypot(cx,cy)||1;
+      const facing=(cx/cl)*lightDir.x+(cy/cl)*lightDir.y;
+      const jitter=(R()-.5)*weather;
+      const facingJ=Math.max(-1,Math.min(1,facing+jitter));
+      zoneTone=facingJ>0?mixTone(jTint,facingJ*.32,255):mixTone(jTint,-facingJ*.36,0);
+    }
+    zoneLeft--;
+    x.fillStyle=zoneTone;
+    x.beginPath(); x.moveTo(ax,ay); x.lineTo(x0,y0); x.lineTo(x1,y1); x.closePath(); x.fill();
+  }
+  // зерно — та же техника точек, что и у nebulaSprite/starDot в этом файле; свой генератор, не mapRand
+  x.save(); x.clip(o._path);
+  let gs=((s*7+3)>>>0)||1;
+  const G=()=>{ gs=(gs*1664525+1013904223)>>>0; return gs/4294967296; };
+  for(let i=0;i<70;i++){
+    const gx=(G()-.5)*o.r*2.1, gy=(G()-.5)*o.r*2.1;
+    x.globalAlpha=.05+G()*.10;
+    x.fillStyle=G()<.5?'#000000':'#ffffff';
+    const sz=.6+G()*1.3;
+    x.fillRect(gx,gy,sz,sz);
+  }
+  x.globalAlpha=1;
+  // кратеры — как и раньше, из o._decor (mapRand, не трогаю)
+  const dc=o._decor;
+  x.globalAlpha=.13; x.drawImage(powGlow('#ffffff'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2);
+  x.globalAlpha=.27; x.drawImage(powGlow('#000000'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2);
+  x.globalAlpha=.40; x.drawImage(powGlow('#000000'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
+  x.globalAlpha=1;
+  x.restore();
+  o._sprite=c; o._spritePx=px; o._spriteCss=cssSize;
+  return c;
+}
+/* 31.08.2026 «Спутник не клон» (владелец: o.r у спутника ВСЕГДА 18, без разброса — все
+   спутники одного «лица» были пиксель в пиксель одинаковы, gradCache тоже ключевался от
+   этого фиксированного размера). После трёх раундов правок по живым скриншотам (баг зазора,
+   баг угла, баг асимметрии) владелец прямо попросил форму не трогать вовсе — только цвет.
+   Печётся один раз в свой офскрин (не в общий gradCache — джиттерные цвета иначе раздували
+   бы его на каждый новый оттенок), маячок (мигает по времени) и ядро-ауреола остаются вне
+   спрайта, рисуются живьём как и раньше. Сид — из o.ph/o.amp (уже случайны при спавне,
+   игре не нужно новое поле), ни одного обращения к mapRand — та же причина, что и у камня. */
+function bakeSatSprite(o){
+  const px=skyPx();
+  if(o._sprite && o._spritePx===px) return o._sprite;
+  const r2=o.r;
+  let s=((Math.abs(o.ph)*100000+Math.abs(o.amp||0)*37)|0)>>>0 || 1;
+  const R=()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+  const panelC0=jitterHex('#4a629a',R,22), panelC1=jitterHex('#33487c',R,18), panelC2=jitterHex('#263a66',R,14);
+  const bodyC0=jitterHex('#8ea6d8',R,22), bodyC1=jitterHex('#6c83b8',R,18), bodyC2=jitterHex('#4c5f8e',R,14);
+  const size=Math.ceil(r2*6.5*px);
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const x=ctx2d(c);
+  x.setTransform(px,0,0,px,size/2,size/2);
+  const satPanel=(px_,py,pw,ph2)=>{
+    const g=x.createLinearGradient(0,py,0,py+ph2);
+    g.addColorStop(0,panelC0); g.addColorStop(.5,panelC1); g.addColorStop(1,panelC2);
+    x.fillStyle=g; rr(x,px_,py,pw,ph2,2.5); x.fill();
+    x.strokeStyle='rgba(180,210,250,.4)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(px_+2,py+.5); x.lineTo(px_+pw-2,py+.5); x.stroke();
+  };
+  const satBody=(bw,bh,brad)=>{
+    const g=x.createLinearGradient(0,-bh/2,0,bh/2);
+    g.addColorStop(0,bodyC0); g.addColorStop(.45,bodyC1); g.addColorStop(1,bodyC2);
+    x.fillStyle=g; rr(x,-bw/2,-bh/2,bw,bh,brad); x.fill();
+    x.strokeStyle='rgba(220,235,255,.4)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(-bw/2+3,-bh/2+.5); x.lineTo(bw/2-3,-bh/2+.5); x.stroke();
+  };
+  const satLens=(lx,ly,lr2)=>{
+    const g=x.createRadialGradient(lx-2,ly-2,1,lx,ly,lr2||.1);
+    g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec');
+    x.fillStyle=g; x.beginPath(); x.arc(lx,ly,lr2,0,6.283); x.fill();
+  };
+  const sk=o.skin||0;
+  // те же числа, что и раньше в render.js — форма не джиттерится, только цвет
+  if(sk===1){
+    satPanel(-r2*1.9,-r2*.14,r2*1.05,r2*.28); satPanel(r2*.85,-r2*.14,r2*1.05,r2*.28);
+    satPanel(-r2*.14,-r2*.9,r2*.28,r2*.55);
+    satBody(r2*1.3,r2*1.3,3); satLens(0,0,r2*.3);
+  } else if(sk===2){
+    satPanel(-r2*1.9,-r2*.26,r2*.8,r2*.52); satPanel(r2*1.1,-r2*.26,r2*.8,r2*.52);
+    satBody(r2*1.5,r2*1.0,8);
+    x.strokeStyle='#9fabca'; x.lineWidth=2;
+    x.beginPath(); x.moveTo(0,-r2*.5); x.lineTo(0,-r2*.78); x.stroke();
+    const dg=x.createLinearGradient(0,-r2*.78*1.05,0,-r2*.78*.7);
+    dg.addColorStop(0,bodyC0); dg.addColorStop(1,bodyC2);
+    x.fillStyle=dg; x.beginPath(); x.arc(0,-r2*.78,r2*.26,Math.PI,0); x.fill();
+    satLens(0,2,r2*.24);
+  } else if(sk===3){
+    satPanel(-r2*1.9,-r2*.2,r2*.8,r2*.4);
+    satBody(r2*2.1,r2*.85,9);
+    x.fillStyle='rgba(20,28,52,.35)'; x.beginPath(); x.arc(r2*.62,0,r2*.3,0,6.283); x.fill();
+    x.fillStyle='rgba(150,200,255,.5)'; x.beginPath(); x.arc(r2*.62,0,r2*.16,0,6.283); x.fill();
+    satLens(-r2*.15,0,r2*.2);
+  } else {
+    satPanel(-r2*1.9,-r2*.32,r2*.85,r2*.64); satPanel(r2*1.05,-r2*.32,r2*.85,r2*.64);
+    satBody(r2*1.8,r2*1.1,4); satLens(0,0,r2*.28);
+  }
+  o._sprite=c; o._spritePx=px; o._spriteCss=r2*6.5;
+  return c;
+}
+/* 31.08.2026 «Обломок — то же самое, дешевле»: без повода менять вид (уже варьируется
+   размером и 5 «лицами», жалоб не было) — спрайт копирует ровно тот же путь отрисовки,
+   что и раньше, пиксель в пиксель (проверено визуально и сканом разницы на макете), только
+   печётся один раз вместо fill+stroke заново на каждый кадр. Аудитория/сигнальный огонёк
+   (sh-гейтятся, могут появиться/исчезнуть на лету при смене качества графики автоподбором)
+   остаются живыми снаружи спрайта — тот же приём, что и у маячка спутника: спрайт держит
+   только то, что не зависит ни от времени, ни от текущей ступени графики. */
+function bakeDebrisSprite(o){
+  const px=skyPx();
+  if(o._sprite && o._spritePx===px) return o._sprite;
+  const sk=o.skin||0, hw=o.w/2, hh=o.h/2;
+  const pad=10, cssW=o.w+pad*2, cssH=o.h+pad*2, cssSize=Math.max(cssW,cssH);
+  const cw=Math.ceil(cssSize*px);
+  const c=document.createElement('canvas'); c.width=c.height=cw;
+  const x=ctx2d(c);
+  x.setTransform(px,0,0,px,cw/2,cw/2);
+  const qh=Math.round(hh*4)/4;
+  const mg=x.createLinearGradient(0,-qh,0,qh);
+  mg.addColorStop(0,sk===3?'#d2dbeb':'#cdd7ea'); mg.addColorStop(.4,sk===3?'#aeb9d0':'#a9b6cf'); mg.addColorStop(1,'#7e8ba4');
+  x.fillStyle=mg;
+  if(sk===1){
+    x.save(); x.rotate(.14); rr(x,-hw,-hh,hw+1,o.h,3); x.fill(); x.restore();
+    x.save(); x.rotate(-.14); rr(x,-1,-hh,hw+1,o.h,3); x.fill(); x.restore();
+    x.strokeStyle='rgba(255,255,255,.3)'; x.lineWidth=1.1;
+    x.beginPath(); x.moveTo(-hw+4,-hh+2); x.lineTo(-2,-hh-1);
+    x.moveTo(2,-hh-1); x.lineTo(hw-4,-hh+2); x.stroke();
+    x.fillStyle='rgba(20,28,52,.3)';
+    x.beginPath(); x.arc(-o.w*.26,2,1.1,0,6.283); x.arc(o.w*.26,2,1.1,0,6.283); x.fill();
+  } else if(sk===2){
+    rr(x,-hw,-hh,o.w,o.h,3.5); x.fill();
+    x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=1.2;
+    x.beginPath(); x.moveTo(-hw+4,-hh+1); x.lineTo(hw-4,-hh+1); x.stroke();
+    x.strokeStyle='#9fabca'; x.lineWidth=2.4; x.lineCap='round';
+    x.beginPath(); x.moveTo(-6,0); x.lineTo(8,-hh+2); x.stroke();
+    x.fillStyle='#d8e0ee'; x.beginPath(); x.arc(9,-hh+1.5,2,0,6.283); x.fill();
+  } else if(sk===3){
+    rr(x,-hw,-hh,o.w,o.h,hh); x.fill();
+    x.strokeStyle='rgba(255,255,255,.4)'; x.lineWidth=1.2;
+    x.beginPath(); x.moveTo(-hw+8,-hh+2); x.lineTo(hw-8,-hh+2); x.stroke();
+    x.strokeStyle='rgba(20,28,52,.3)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(-10,-hh+2); x.lineTo(-10,hh-2);
+    x.moveTo(10,-hh+2); x.lineTo(10,hh-2); x.stroke();
+  } else if(sk===4){
+    rr(x,-hw,-hh,o.w,o.h,3.5); x.fill();
+    x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=1.2;
+    x.beginPath(); x.moveTo(-hw+4,-hh+1); x.lineTo(hw-4,-hh+1); x.stroke();
+    const lr=Math.min(hh,hw)*.62;
+    const lg=x.createRadialGradient(-lr*.3,-lr*.3,lr*.1,0,0,lr);
+    lg.addColorStop(0,'#eef2fa'); lg.addColorStop(1,'#8b98b5');
+    x.fillStyle=lg; x.beginPath(); x.arc(0,0,lr,0,6.283); x.fill();
+    x.strokeStyle='rgba(20,28,52,.4)'; x.lineWidth=1;
+    x.beginPath(); x.arc(0,0,lr,0,6.283); x.stroke();
+  } else {
+    rr(x,-hw,-hh,o.w,o.h,3.5); x.fill();
+    x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=1.2;
+    x.beginPath(); x.moveTo(-hw+4,-hh+1); x.lineTo(hw-4,-hh+1); x.stroke();
+    x.strokeStyle='rgba(20,28,52,.28)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(-hw+3,2); x.lineTo(hw-3,2); x.stroke();
+    x.fillStyle='rgba(20,28,52,.35)';
+    for(const px_ of [-hw+8,-8,8,hw-8]){ x.beginPath(); x.arc(px_,-3,1.1,0,6.283); x.fill(); }
+  }
+  o._sprite=c; o._spritePx=px; o._spriteCss=cssSize;
+  return c;
+}
 /* v1.282.20 «Градиент — не расходник».
    Обломки, спутники и значки бонусов создавали свои градиенты ЗАНОВО в каждом кадре: у
    спутника это 3–6 штук (панели, корпус, линза, тарелка), у обломка один, у каждого значка
@@ -879,57 +1096,18 @@ function draw(){
     ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot);
     if (o.kind==='debris'){ // семья обломков (v1.105.0 «Свет и дым»): один смысл «рукотворный
       // мусор», четыре лица; габарит o.w×o.h священен — читаемость столкновения не меняется
+      /* 31.08.2026 «Обломок — то же самое, дешевле»: см. bakeDebrisSprite() выше по файлу —
+         спрайт держит форму, ауреола и сигнальный огонёк (оба sh-гейтятся, реагируют на
+         живую смену ступени графики) остаются вне спрайта. */
       const sk=o.skin||0, hw=o.w/2, hh=o.h/2;
       if(sh){ ctx.globalAlpha=.4; ctx.drawImage(powGlow('#aebbd2'),-hw-9,-hh-9,o.w+18,o.h+18); ctx.globalAlpha=1; } // спрайт-ауреола
-      // v1.282.20: мягкий металл (свет сверху, тень снизу) — кэш по высоте обломка и лицу
-      const qh=Math.round(hh*4)/4, mgk='dbr'+qh+(sk===3?'a':'b'); let mg=gradCache[mgk];
-      if(!mg){ mg=ctx.createLinearGradient(0,-qh,0,qh);
-        mg.addColorStop(0,sk===3?'#d2dbeb':'#cdd7ea'); mg.addColorStop(.4,sk===3?'#aeb9d0':'#a9b6cf'); mg.addColorStop(1,'#7e8ba4'); gradPut(mgk,mg); }
-      ctx.fillStyle=mg;
-      if(sk===1){ // погнутая панель: две половины под углом
-        ctx.save(); ctx.rotate(.14); rr(ctx,-hw,-hh,hw+1,o.h,3); ctx.fill(); ctx.restore();
-        ctx.save(); ctx.rotate(-.14); rr(ctx,-1,-hh,hw+1,o.h,3); ctx.fill(); ctx.restore();
-        ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1.1;
-        ctx.beginPath(); ctx.moveTo(-hw+4,-hh+2); ctx.lineTo(-2,-hh-1);
-        ctx.moveTo(2,-hh-1); ctx.lineTo(hw-4,-hh+2); ctx.stroke();
-        ctx.fillStyle='rgba(20,28,52,.3)';
-        ctx.beginPath(); ctx.arc(-o.w*.26,2,1.1,0,6.283); ctx.arc(o.w*.26,2,1.1,0,6.283); ctx.fill();
-      } else if(sk===2){ // обломок антенны: панель + сломанный штырь внутри габарита
-        rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
-        ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
-        ctx.strokeStyle='#9fabca'; ctx.lineWidth=2.4; ctx.lineCap='round';
-        ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(8,-hh+2); ctx.stroke();
-        ctx.fillStyle='#d8e0ee'; ctx.beginPath(); ctx.arc(9,-hh+1.5,2,0,6.283); ctx.fill();
-      } else if(sk===3){ // бак: капсула с обечайками и огоньком
-        rr(ctx,-hw,-hh,o.w,o.h,hh); ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1.2;
-        ctx.beginPath(); ctx.moveTo(-hw+8,-hh+2); ctx.lineTo(hw-8,-hh+2); ctx.stroke();
-        ctx.strokeStyle='rgba(20,28,52,.3)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(-10,-hh+2); ctx.lineTo(-10,hh-2);
-        ctx.moveTo(10,-hh+2); ctx.lineTo(10,hh-2); ctx.stroke();
-        if(sh){ ctx.drawImage(powGlow('#ffe2b0'),hw-14,-5,10,10);
+      const spr=bakeDebrisSprite(o);
+      const cs=o._spriteCss;
+      ctx.drawImage(spr, -cs/2, -cs/2, cs, cs);
+      if(sh && (sk===3 || sk===0)){ // сигнальный огонёк — только у бака и панели, как и раньше
+        if(sk===3){ ctx.drawImage(powGlow('#ffe2b0'),hw-14,-5,10,10);
           ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-9,0,1.4,0,6.283); ctx.fill(); }
-      } else if(sk===4){ // иллюминатор: панель с круглым окном (27.08.2026, владелец: больше лиц обломкам)
-        rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
-        ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
-        const lr=Math.min(hh,hw)*.62;
-        const lk='dbl'+Math.round(lr*4)/4; let lg=gradCache[lk];
-        if(!lg){ lg=ctx.createRadialGradient(-lr*.3,-lr*.3,lr*.1,0,0,lr);
-          lg.addColorStop(0,'#eef2fa'); lg.addColorStop(1,'#8b98b5'); gradPut(lk,lg); }
-        ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.fill();
-        ctx.strokeStyle='rgba(20,28,52,.4)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.stroke();
-      } else { // панель: скруглённый металл, шов и заклёпки
-        rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2; // кромка света — линия, не полоса
-        ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
-        ctx.strokeStyle='rgba(20,28,52,.28)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(-hw+3,2); ctx.lineTo(hw-3,2); ctx.stroke();
-        ctx.fillStyle='rgba(20,28,52,.35)';
-        for(const px of [-hw+8,-8,8,hw-8]){ ctx.beginPath(); ctx.arc(px,-3,1.1,0,6.283); ctx.fill(); }
-        if(sh){ ctx.drawImage(powGlow('#ffe2b0'),hw-12,-8,12,12); // сигнальный огонёк светится
+        else { ctx.drawImage(powGlow('#ffe2b0'),hw-12,-8,12,12);
           ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-6,-2,1.5,0,6.283); ctx.fill(); }
       }
     } else if (o.kind==='mine' || o.kind==='seeker'){
@@ -964,54 +1142,19 @@ function draw(){
     } else if (o.kind==='sat'){ // семья спутников (v1.105.0 «Свет и дым»): четыре лица
       // «рукотворного мусора»; конверт ±1.9r × ±0.9r священен — читаемость прежняя,
       // циан ушёл, пришла сталь с кромкой света; маячок и линза — у каждого лица
+      /* 31.08.2026 «Спутник не клон»: панели/корпус/линза испечены в свой спрайт —
+         bakeSatSprite() выше по файлу, форма не изменилась ни на число, джиттерится
+         только цвет. Ауреола и маячок остаются живыми (маячок мигает по времени,
+         Math.sin(o.ph*2.2) — не заморозить в статичном спрайте). */
       const sk=o.skin||0, r2=o.r;
+      const beaconAt = sk===1?{x:0,y:-r2*.86} : sk===2?{x:r2*.42,y:-r2*.4} : sk===3?{x:-r2*.5,y:-r2*.5} : {x:0,y:-r2*.75};
       if(sh){ ctx.globalAlpha=.6; ctx.drawImage(powGlow('#78b4ff'),-r2,-r2,r2*2,r2*2); ctx.globalAlpha=1; } // ядро — спрайт
-      const satPanel=(px,py,pw,ph2)=>{ const qy=Math.round(py*4)/4, qh2=Math.round(ph2*4)/4;
-        const k='sp'+qy+'_'+qh2; let g=gradCache[k];
-        if(!g){ g=ctx.createLinearGradient(0,qy,0,qy+qh2);
-          g.addColorStop(0,'#4a629a'); g.addColorStop(.5,'#33487c'); g.addColorStop(1,'#263a66'); gradPut(k,g); }
-        ctx.fillStyle=g; rr(ctx,px,py,pw,ph2,2.5); ctx.fill();
-        ctx.strokeStyle='rgba(180,210,250,.4)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(px+2,py+.5); ctx.lineTo(px+pw-2,py+.5); ctx.stroke(); };
-      const satBody=(bw,bh,brad)=>{ const qb=Math.round(bh*2)/4; // половина высоты, четверть меры
-        const k='sb'+qb; let g=gradCache[k];
-        if(!g){ g=ctx.createLinearGradient(0,-qb,0,qb);
-          g.addColorStop(0,'#8ea6d8'); g.addColorStop(.45,'#6c83b8'); g.addColorStop(1,'#4c5f8e'); gradPut(k,g); }
-        ctx.fillStyle=g; rr(ctx,-bw/2,-bh/2,bw,bh,brad); ctx.fill();
-        ctx.strokeStyle='rgba(220,235,255,.4)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(-bw/2+3,-bh/2+.5); ctx.lineTo(bw/2-3,-bh/2+.5); ctx.stroke(); };
-      const satBeacon=(bx,by)=>{ ctx.globalAlpha=.4+.6*Math.abs(Math.sin(o.ph*2.2));
-        if(sh) ctx.drawImage(powGlow('#ff7a6a'),bx-6,by-6,12,12);
-        ctx.fillStyle='#ff8a7a'; ctx.beginPath(); ctx.arc(bx,by,2,0,6.283); ctx.fill(); ctx.globalAlpha=1; };
-      const satLens=(lx,ly,lr2)=>{ const qx=Math.round(lx*4)/4, qy2=Math.round(ly*4)/4, qr=Math.round(lr2*4)/4;
-        const k='sl'+qx+'_'+qy2+'_'+qr; let g=gradCache[k];
-        if(!g){ g=ctx.createRadialGradient(qx-2,qy2-2,1,qx,qy2,qr||.1);
-          g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec'); gradPut(k,g); }
-        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(lx,ly,lr2,0,6.283); ctx.fill(); };
-      if(sk===1){ // кубсат: тонкие крылья-планки и куб
-        satPanel(-r2*1.9,-r2*.14,r2*1.05,r2*.28); satPanel(r2*.85,-r2*.14,r2*1.05,r2*.28);
-        satPanel(-r2*.14,-r2*.9,r2*.28,r2*.55);
-        satBody(r2*1.3,r2*1.3,3); satBeacon(0,-r2*.86); satLens(0,0,r2*.3);
-      } else if(sk===2){ // зонд: сфера-обтекатель и тарелка
-        satPanel(-r2*1.9,-r2*.26,r2*.8,r2*.52); satPanel(r2*1.1,-r2*.26,r2*.8,r2*.52);
-        satBody(r2*1.5,r2*1.0,8);
-        ctx.strokeStyle='#9fabca'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(0,-r2*.5); ctx.lineTo(0,-r2*.78); ctx.stroke();
-        const qd=Math.round(r2*4)/4, dk='sd'+qd; let g=gradCache[dk];
-        if(!g){ g=ctx.createLinearGradient(0,-qd*1.05,0,-qd*.7);
-          g.addColorStop(0,'#8ea6d8'); g.addColorStop(1,'#4c5f8e'); gradPut(dk,g); }
-        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-r2*.78,r2*.26,Math.PI,0); ctx.fill();
-        satBeacon(r2*.42,-r2*.4); satLens(0,2,r2*.24);
-      } else if(sk===3){ // телескоп: труба с объективом и одна панель
-        satPanel(-r2*1.9,-r2*.2,r2*.8,r2*.4);
-        satBody(r2*2.1,r2*.85,9);
-        ctx.fillStyle='rgba(20,28,52,.35)'; ctx.beginPath(); ctx.arc(r2*.62,0,r2*.3,0,6.283); ctx.fill();
-        ctx.fillStyle='rgba(150,200,255,.5)'; ctx.beginPath(); ctx.arc(r2*.62,0,r2*.16,0,6.283); ctx.fill();
-        satBeacon(-r2*.5,-r2*.5); satLens(-r2*.15,0,r2*.2);
-      } else { // классика: корпус и два крыла
-        satPanel(-r2*1.9,-r2*.32,r2*.85,r2*.64); satPanel(r2*1.05,-r2*.32,r2*.85,r2*.64);
-        satBody(r2*1.8,r2*1.1,4); satBeacon(0,-r2*.75); satLens(0,0,r2*.28);
-      }
+      const spr=bakeSatSprite(o);
+      const cs=o._spriteCss;
+      ctx.drawImage(spr, -cs/2, -cs/2, cs, cs);
+      ctx.globalAlpha=.4+.6*Math.abs(Math.sin(o.ph*2.2));
+      if(sh) ctx.drawImage(powGlow('#ff7a6a'),beaconAt.x-6,beaconAt.y-6,12,12);
+      ctx.fillStyle='#ff8a7a'; ctx.beginPath(); ctx.arc(beaconAt.x,beaconAt.y,2,0,6.283); ctx.fill(); ctx.globalAlpha=1;
     } else if (o.kind==='comet'){ // комета: яркое ядро + хвост по вектору полёта
       const tx=-o.vx*7, ty=-o.vy*7;
       if(sh) ctx.globalCompositeOperation='lighter'; // хвост светится аддитивно (v1.37.0: со средней)
@@ -1114,36 +1257,13 @@ function draw(){
            формы скобки. Тон/цвет/заметность камня не менялись ни разу за все три захода. */
         o._decor={ light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) };
       }
-      /* 28.08.2026 «Без контура»: обводка силуэта (rgba(200,215,240,.35), 1.5px, lineJoin
-         'round' от митр-шипа 22.08.2026) снята целиком — владелец на свежем снимке увидел
-         её как «белый контур по краю» у метеорита. Заливка + кратеры остаются единственным
-         источником формы, обводки нигде на камне больше нет. */
-      ctx.fill(o._path);
-      ctx.save(); ctx.clip(o._path); // v1.39.0: вся штриховка — строго внутри силуэта, блики не вылезают за края
-      const dc=o._decor;
-      /* 27.08.2026 «Дуг больше нет»: см. пометку у построения o._decor выше. Дуги
-         (ctx.arc(...).stroke()) убраны без замены — никакого нового пятна вместо них,
-         чтобы не класть кружок поверх уже существующего кратера в том же месте. Осталось
-         ровно три кратера, что были: light/darkSmall/darkBig. Одно правило для ВСЕХ камней
-         (rock и drift) — дуг не должно остаться нигде в файле.
-         Второй заход (владелец: «красивее, чтобы и на каждом уровне графики отлично»):
-         жёсткий край плоской заливки (ctx.arc+fill одним тоном) сменён на мягкий —
-         тот же кэшированный спрайт powGlow(), что уже используется у метеора/станции/
-         значков (никакого нового кэша, никакого градиента в кадре). powGlow держит центр
-         на альфе .55, поэтому globalAlpha здесь — старая целевая альфа делённая на .55
-         (.07→.13, .15→.27, .22→.40), чтобы пик яркости пятна остался тем же, что и у
-         плоской заливки раньше — меняется только мягкость края, не заметность. Цвета
-         те же нейтральные белый/чёрный, никакой новой смысловой палитры. */
-      /* 31.08.2026: были под if(sh)/if(uq) — тот же кэш-спрайт powGlow(), что и darkBig ниже
-         (тот уже без гейта). Включены на всех ступенях — камень был плоским без светлого края. */
-      ctx.globalAlpha=.13;
-      ctx.drawImage(powGlow('#ffffff'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2);
-      ctx.globalAlpha=.27;
-      ctx.drawImage(powGlow('#000000'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2);
-      ctx.globalAlpha=.40;
-      ctx.drawImage(powGlow('#000000'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
-      ctx.globalAlpha=1;
-      ctx.restore();
+      /* 31.08.2026 «Гранёный камень»: плоская заливка+кратеры (fill+clip+3×drawImage живьём
+         каждый кадр) заменены на один испечённый спрайт — см. bakeRockSprite() выше по
+         файлу. Форма (o._path) и кратеры (o._decor) не изменились ни на пиксель, добавлены
+         только грани/зерно/цвет внутри самого спрайта. */
+      const spr=bakeRockSprite(o);
+      const cs=o._spriteCss;
+      ctx.drawImage(spr, -cs/2, -cs/2, cs, cs);
     }
     ctx.restore();
   }
