@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Макет — Кузница целиком, Партитура как раздел аккордеона</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --danger:#e0533d; --ok:#8fff9f;
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-btn:14px; --r-card:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  /* v66 (владелец): фон страницы был плоским var(--bg-0), без ощущения игры. Реальный
+     приём звёзд-точек уже есть в самой игре (.corrEdge, index.html:526-542 — «тот же дух,
+     что bgStars в render.js») — переиспользован тут, растянут на весь фон вместо узкой
+     полосы, две смещённые копии (как в оригинале) — не механическое мерцание в такт. */
+  body{margin:0;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);
+    font-weight:500;letter-spacing:.05em;text-transform:uppercase;font-variant-numeric:tabular-nums;
+    display:flex;justify-content:center;padding:20px 12px;overflow-x:hidden;position:relative}
+  body::before, body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-repeat:repeat;background-size:260px 260px;
+    background-image:
+      radial-gradient(circle 1.4px at 12% 8%, rgba(230,242,255,.9), transparent 60%),
+      radial-gradient(circle 1px at 34% 22%, rgba(159,232,255,.7), transparent 60%),
+      radial-gradient(circle 1.2px at 58% 4%, rgba(230,242,255,.8), transparent 60%),
+      radial-gradient(circle 1px at 80% 30%, rgba(159,232,255,.65), transparent 60%),
+      radial-gradient(circle 1.6px at 20% 46%, rgba(230,242,255,.95), transparent 60%),
+      radial-gradient(circle 1px at 46% 62%, rgba(159,232,255,.6), transparent 60%),
+      radial-gradient(circle 1.3px at 68% 54%, rgba(230,242,255,.85), transparent 60%),
+      radial-gradient(circle 1px at 90% 70%, rgba(159,232,255,.7), transparent 60%),
+      radial-gradient(circle 1.5px at 10% 86%, rgba(230,242,255,.9), transparent 60%),
+      radial-gradient(circle 1.1px at 40% 92%, rgba(159,232,255,.65), transparent 60%),
+      radial-gradient(circle 1.3px at 74% 88%, rgba(230,242,255,.85), transparent 60%);
+    animation:bgTwinkle 5s ease-in-out infinite}
+  body::after{background-position:70px 130px;animation-delay:2.3s;opacity:.6}
+  @keyframes bgTwinkle{0%,100%{opacity:.5}50%{opacity:1}}
+  .phone{position:relative;z-index:1}
+  /* v70 (владелец): «Назад» — один в один #forgeBack из реальной игры (index.html:1685,
+     .menuBack CSS:474-482) — тот же кружок, что на Ангаре/Достижениях/Настройках/Кузнице.
+     Там кружок лежит ПОВЕРХ экрана (position:absolute внутри .overlay, без своего отступа) —
+     v71 (владелец): я по ошибке отодвинул под неё всю карточку вниз (padding-top на .phone),
+     кружок повис отдельно НАД окном вместо того чтобы сидеть на его углу. Исправлено —
+     кружок теперь просто лежит поверх верхнего левого угла карточки, как и должен. */
+  .menuBack{position:absolute;top:26px;left:16px;width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1.5px solid rgba(150,205,255,.55);
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#eaf3ff;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;z-index:5;transition:transform .12s, box-shadow .2s}
+  .menuBack:active{transform:scale(.9);box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22)}
+  .menuBack svg{width:13px;height:13px;stroke-width:2.6;fill:none;stroke:currentColor;
+    stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(160,210,255,.95))}
+  /* v61 (владелец): было width:380px — жёсткая ширина, на экранах уже 404px (380+отступы)
+     карточка обрезалась по краям целиком (текст, кнопки длины) вместо переноса/сжатия.
+     Резиновая ширина с потолком — сжимается на узких экранах, не растёт бесконечно на широких. */
+  .phone{width:100%;max-width:380px}
+
+  .kzTitle{font-size:20px;letter-spacing:.08em;margin:0 0 6px;text-align:center;color:var(--cream)}
+  .kzSub{font-size:11px;color:var(--muted);text-align:center;margin:0 0 6px;letter-spacing:.05em}
+  /* v33: настоящий класс игры (.forgePresetTile, index.html:996) — свотч+текст+тихое
+     свечение выбранного, не выдуманный «kzPreset». 8 штук, не 2. */
+  .kzPresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+  .forgePresetTile{position:relative;display:flex;align-items:center;gap:9px;min-height:46px;
+    padding:7px 11px;border:1px solid var(--line);border-radius:12px;background:rgba(22,38,56,.45);
+    color:var(--muted);font-size:11.5px;font-weight:500;letter-spacing:.01em;line-height:1.25;
+    text-align:left;cursor:pointer;transition:border-color .2s,background .2s,color .2s}
+  .forgePresetTile .sw{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+  .forgePresetTile.sel{border-color:rgba(190,225,255,.55);background:rgba(120,170,255,.10);color:#eaf2ff;
+    box-shadow:0 0 14px rgba(120,170,255,.12)}
+  .kzHero{width:100%;padding:16px;border-radius:var(--r-btn);border:1px solid rgba(190,225,255,.45);
+    background:rgba(24,40,72,.7);color:#f2f7ff;font-size:16px;letter-spacing:.1em;text-align:center;
+    box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05);margin-bottom:22px}
+
+  /* ---------- аккордеон Тонкой настройки — реальный класс игры ---------- */
+  .setGrp{width:100%;margin:4px 0 0;padding:12px 36px 12px 14px;text-align:left;
+    font-size:11px;font-weight:700;letter-spacing:.12em;color:#c9d8f5;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-btn);
+    position:relative;cursor:pointer;transition:background .2s}
+  .setGrp:active{background:rgba(201,164,92,.08)}
+  .setGrp::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.5;font-size:11px}
+  .setGrp.open::after{content:'▴'}
+  .setGrp.open{border-radius:var(--r-btn) var(--r-btn) 0 0;border-bottom-color:transparent}
+  .setGrpSub{display:block;margin-top:3px;font-size:10px;font-weight:500;letter-spacing:.02em;
+    text-transform:none;color:var(--muted)}
+  .setPanel{display:none;background:var(--bg-2);border:1px solid var(--line);border-top:none;
+    border-radius:0 0 var(--r-btn) var(--r-btn);padding:14px;margin-bottom:10px}
+  .setPanel.open{display:block}
+  /* v34: Партитура больше не спойлер — заголовок без стрелочки, без клика, панель
+     под ним ВСЕГДА открыта. Прячущаяся секция, которая должна учить примером, работает
+     хуже, чем всегда видная. */
+  .setGrp.partitura{margin-top:10px;cursor:default;text-align:center;font-weight:500;
+    letter-spacing:.02em;font-size:12px;color:var(--cream);line-height:1.5;padding:14px 14px 6px;
+    border-radius:var(--r-btn) var(--r-btn) 0 0;border-bottom-color:transparent}
+  .setGrp.partitura::after{content:''}
+  #partituraPanel{display:block!important;padding-top:8px}
+  /* v31: соседние группы — неактивная декорация, только контекст. Ни стрелочки, ни
+     курсора-руки, ни клика — тап в пустоту раньше открывал бессмысленную строку. */
+  .setGrp.deco{cursor:default}
+  .setGrp.deco::after{content:''}
+  .setGrp.deco:active{background:var(--bg-2)}
+  .dummyRow{font-size:10.5px;color:var(--muted);text-transform:none;letter-spacing:.02em;padding:6px 0;line-height:1.5}
+
+  /* ---------- всё дальше — содержимое самой Партитуры, без изменений логики ---------- */
+  /* v63 (владелец): 5 кнопок длины (были то в ряд, то с переносом, то с прокруткой — три
+     захода подряд, жалоба не унималась) заменены на слайдер (.forgeRow, тот же класс, что
+     у цвета/густоты ниже) — один непрерывный ползунок вместо пяти отдельных кнопок «на одну
+     функцию», как и просил владелец. */
+
+  .track-wrap{position:relative;padding:6px 0 6px}
+  /* v42 (окончательно, владелец): у ленты была СВОЯ рамка + СВОЙ фон (--bg-1), отдельные от
+     карточки-группы (--bg-2 + своя рамка) — коробка внутри коробки, «окно в окне», вне
+     зависимости от того, что внутри неё нарисовано. Это и был настоящий корень всех «двух
+     окон» — не канвас, не звёзды, не цвет. Убрано: лента больше не рамка, а плоский участок
+     внутри той же карточки, фон наследуется от неё же. */
+  /* v48 (владелец): фон должен быть виден именно В ЛЕНТЕ (своё окно), не размазан по всей
+     карточке. Возвращена своя рамка/фон/скругление — цвет пишет paintTrackBg() ниже. */
+  /* v65 (владелец): слайдер длины — не под окном, а В НИЖНЕЙ ЧАСТИ САМОГО окна. Рамка/
+     скругление переехали на .trackBox (общая обёртка ленты+полосы), .track сам теперь без
+     рамки — верхняя часть общего окна, .trackFooter — нижняя, с тем же бордером снаружи,
+     визуально одно целое, не два элемента. */
+  .trackBox{border:1px solid var(--line-gold);border-radius:var(--r-card);overflow:hidden}
+  .track{position:relative;width:100%;height:120px;touch-action:none}
+  .trackFooter{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;
+    background:rgba(8,14,28,.55);border-top:1px solid rgba(255,255,255,.08)}
+  .trackFooter .forgeLbl2{font-size:9.5px;font-weight:700;color:var(--muted);flex:none;letter-spacing:.08em}
+  .trackFooter input[type=range]{flex:1;accent-color:var(--gold);height:20px}
+  .trackFooter b{flex:none;width:48px;text-align:left;font-size:11px;color:var(--gold-hi)}
+  /* v49 (владелец): фоновые звёзды в ленте вернуты — теперь у ленты снова своё окно (v48),
+     звёзды здесь больше не читаются как второе конкурирующее превью. */
+  /* v53 (владелец): звёзды были плоскими белыми точками — скучно. Тёплый/холодный оттенок
+     (#ffe9b8/#dfe8ff, та же пара, что в настоящей forgeSkyPaint(), forge.js:219) + мягкое
+     свечение того же цвета + лёгкая пульсация размера вместе с мерцанием, не только альфа. */
+  .star{position:absolute;border-radius:50%;pointer-events:none}
+  /* v57 (владелец): фон вернули к статике (v56) — мигание было лишним шумом ПОВСЮДУ. Но
+     точечно, ровно в месте, куда указывает рука-подсказка (playDemo, endX=62%/endY=50%),
+     мигание работает как намёк «сюда» — не декорация, а указатель. Гаснет с первой точкой. */
+  .starHint{position:absolute;border-radius:50%;pointer-events:none;background:#ffe9b8;
+    animation:hintBlink 1.3s ease-in-out infinite}
+  @keyframes hintBlink{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1.3)}}
+  .track::after{content:'стикеры под окном — добавляйте сюда';position:absolute;inset:0;display:flex;
+    align-items:center;justify-content:center;font-size:11px;color:var(--muted);opacity:.5;pointer-events:none;
+    padding:0 20px;text-align:center;letter-spacing:.04em;z-index:2}
+  .track.has-pins::after{content:''}
+  .track.dropok::before{content:'';position:absolute;inset:0;border:2px dashed var(--line-gold);pointer-events:none}
+  .ruler{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:6px;padding:0 2px}
+
+
+  /* v73 (владелец): «стикеры слишком большие» — с 14+ точками на ленте они наезжали друг на
+     друга сплошной кашей (скриншот с реального устройства). Размер точки теперь зависит от
+     того, сколько их всего — см. pinSizeFor() в скрипте. */
+  .pin{position:absolute;top:36px;width:var(--pinSz,48px);height:var(--pinSz,48px);border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:18px;cursor:grab;border:1.5px solid rgba(255,255,255,.22);transform:translateX(-50%);
+    transition:box-shadow .15s,opacity .15s,width .15s,height .15s;user-select:none;background:var(--bg-2)}
+  .pin:active{cursor:grabbing}
+  @keyframes popIn{0%{transform:translateX(-50%) scale(.3)}60%{transform:translateX(-50%) scale(1.25)}100%{transform:translateX(-50%) scale(1)}}
+  .pin.pop{animation:popIn .32s cubic-bezier(.3,1.4,.5,1)}
+  .pin.sel{border-color:var(--line-gold);box-shadow:0 0 14px rgba(201,164,92,.35)}
+  .pin.pause .sw{background:linear-gradient(180deg,rgba(160,210,255,.9),rgba(160,210,255,.65))}
+  .pin.marker .sw{background:linear-gradient(180deg,rgba(240,192,64,.9),rgba(240,192,64,.65))}
+  .pin .sw{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:var(--ink)}
+  .pin .sw svg{display:block;width:60%;height:60%;max-width:22px;max-height:22px}
+  .pin-lbl{position:absolute;top:15px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--muted);
+    white-space:nowrap;pointer-events:none;letter-spacing:.03em;opacity:0;transition:opacity .15s}
+  .pin-lbl.sel{opacity:1}
+
+  .tray{display:flex;gap:12px;overflow-x:auto;padding:4px 24px 10px 16px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to right, transparent, black 14px, black calc(100% - 20px), transparent);
+    mask-image:linear-gradient(to right, transparent, black 14px, black calc(100% - 20px), transparent)}
+  .tray::-webkit-scrollbar{display:none}
+  .stickerItem{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:62px}
+  .stickerCap{font-size:8px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.2}
+  .sticker{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:19px;border:1.5px solid rgba(255,255,255,.22);background:var(--bg-1);cursor:grab;touch-action:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:var(--ink)}
+  .sticker svg{display:block}
+  .sticker.dragging{opacity:.25}
+  .tray.nearMax .sticker{opacity:.55;transition:opacity .2s}
+  .tray.atMax .sticker{opacity:.28;cursor:default;transition:opacity .2s}
+  .sticker.pause{background:linear-gradient(180deg,rgba(160,210,255,.9),rgba(160,210,255,.65));
+    box-shadow:0 0 14px rgba(160,210,255,.45), inset 0 0 0 1px rgba(255,255,255,.28)}
+  .sticker.marker{background:linear-gradient(180deg,rgba(240,192,64,.9),rgba(240,192,64,.65));
+    box-shadow:0 0 14px rgba(240,192,64,.45), inset 0 0 0 1px rgba(255,255,255,.28)}
+
+  /* v55 (владелец): «привидение» при перетаскивании было 56px и ещё увеличивалось до ×1.15 —
+     больше самого стикера (52px) и крупнее опущенной точки (48px), закрывало собой место
+     под пальцем, куда целишься. Меньше исходного — видно, куда падает точка. */
+  .ghost{position:fixed;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:15px;pointer-events:none;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.4);
+    border:2px solid rgba(255,255,255,.5);transform:translate(-50%,-50%) scale(.85)}
+
+  .demoHand{position:fixed;font-size:30px;pointer-events:none;z-index:60;opacity:0;left:0;top:0;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));transform:translate(-50%,-50%);
+    transition:left 1.1s cubic-bezier(.4,0,.2,1),top 1.1s cubic-bezier(.4,0,.2,1),opacity .3s}
+  .demoSticker{position:fixed;width:52px;height:52px;border-radius:50%;pointer-events:none;z-index:59;left:0;top:0;
+    display:flex;align-items:center;justify-content:center;font-size:19px;opacity:0;
+    transform:translate(-50%,-50%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+    transition:left 1.1s cubic-bezier(.4,0,.2,1),top 1.1s cubic-bezier(.4,0,.2,1),opacity .3s}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+    background:var(--bg-1);border:1px solid var(--line-gold);border-radius:999px;padding:11px 8px 11px 18px;
+    display:flex;align-items:center;gap:12px;font-size:11px;color:var(--cream);letter-spacing:.04em;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+  /* v54 (владелец): «Вернуть» была плоской — у настоящих кнопок игры (kzHero, fonSaveBtn)
+     есть лёгкое золотое свечение и центрирование текста, тут их не было. */
+  .toast .undo{background:rgba(201,164,92,.18);border:1px solid var(--line-gold);border-radius:999px;
+    padding:8px 18px;color:var(--gold-hi);cursor:pointer;min-height:36px;display:flex;align-items:center;
+    justify-content:center;box-shadow:0 0 10px rgba(201,164,92,.18), inset 0 0 8px rgba(201,164,92,.08)}
+
+  /* v74 (владелец): зона-мусорка и текстовая «Удалить» в панели точки делали одно и то же —
+     убрал мусорку совсем, остаётся только «Удалить» в панели уже выбранной точки. */
+
+  .count{font-size:10px;color:var(--muted);text-align:center;margin-bottom:14px;letter-spacing:.04em}
+  .count b{color:var(--cream)}
+
+  .evtRow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);
+    cursor:pointer;min-height:44px}
+  .evtRow:last-child{border-bottom:none}
+  .evtRow:active{background:rgba(201,164,92,.06)}
+  .evtRow .ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+  .evtRow .ic svg{width:13px;height:13px;display:block}
+  .evtRow .nm{flex:1;font-size:11px;letter-spacing:.04em;color:var(--cream)}
+  .evtRow .mt{font-size:10.5px;color:var(--gold-hi);flex-shrink:0;text-align:right;display:flex;flex-direction:column;gap:1px}
+  .evtRow .mt .gap{font-size:9px;color:var(--muted);text-transform:none;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .evtRow .rm{color:var(--danger);font-size:18px;padding:4px 6px;flex-shrink:0;line-height:1}
+  .evtEmpty{font-size:10.5px;color:var(--muted);text-align:center;padding:6px 0;text-transform:none;letter-spacing:.02em}
+
+  .panel{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;margin-bottom:10px;
+    display:none}
+  .panel.show{display:block}
+  /* v75: quickEdit прячется целиком, пока точка не выбрана — без слов, ничего лишнего */
+  .panel.quickEdit{display:none;margin-bottom:14px}
+  .panel.quickEdit.show{display:block}
+  .panel .k{font-size:11px;letter-spacing:.12em;color:var(--gold);margin-bottom:14px;
+    display:flex;justify-content:space-between;align-items:center}
+  .kTitle{display:flex;align-items:center;gap:8px}
+  .kIcon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--gold)}
+  .kIcon svg{display:block;width:16px;height:16px}
+  .panel .del{color:var(--danger);cursor:pointer;font-size:11px;letter-spacing:.04em;padding:8px;min-height:44px;
+    display:flex;align-items:center}
+
+  .atrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .nudge{width:44px;height:44px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--bg-1);
+    color:var(--cream);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    transition:border-color .15s}
+  .nudge:active{border-color:var(--line-gold);background:rgba(201,164,92,.1)}
+  .atval{flex:1;display:flex;align-items:baseline;justify-content:center;gap:2px}
+  .atval input{width:74px;text-align:right;font-size:22px;color:var(--gold-hi);background:transparent;
+    border:none;border-bottom:1px solid transparent;font-family:var(--font-ui);font-variant-numeric:tabular-nums;
+    -moz-appearance:textfield}
+  .atval input::-webkit-outer-spin-button,.atval input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .atval input:focus{outline:none;border-bottom-color:var(--line-gold)}
+  .atval span{font-size:11px;color:var(--muted)}
+  .nudgehint{font-size:9.5px;color:var(--muted);text-align:center;margin:0 0 16px;letter-spacing:.02em;text-transform:none}
+
+  .note{width:100%;background:var(--bg-1);border:1px solid var(--line-gold);border-radius:var(--r-btn);
+    padding:10px;color:var(--ink);font-size:13px;font-family:var(--font-ui);text-transform:none;letter-spacing:.02em;
+    font-weight:400;resize:none;margin-top:12px}
+  .hint{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5;letter-spacing:.02em;text-transform:none}
+
+  .dump{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-btn);padding:10px 12px;
+    font-family:'SF Mono',Consolas,monospace;font-size:10px;color:var(--ok);white-space:pre-wrap;line-height:1.5;
+    margin-top:16px;text-transform:none;letter-spacing:0;font-weight:400}
+  .dump .lbl{color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+
+  .changelog{margin-top:18px;font-size:10px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);
+    padding-top:12px;text-transform:none;letter-spacing:.01em;font-weight:400}
+  .changelog b{color:var(--ok)}
+
+  /* v38 (владелец): не отдельная группа и не отдельная коробка-превью — ползунки цвета
+     переехали ВНУТРЬ «Расстановки», сразу под лентой. Лента и так красится в эти цвета
+     (v37), а раз ползунки теперь физически рядом с ней, второй индикатор не нужен —
+     эта же лента всегда в поле зрения, пока крутишь ползунки под ней. */
+  .subHdr{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--cream);text-align:left;
+    margin:16px 0 8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14)}
+  .forgeLblBlk{font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin:10px 0 6px;text-align:center}
+  .forgeRow{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:2px}
+  .forgeVal{flex:none;width:32px;text-align:right;font-size:12px;color:var(--gold-hi)}
+  .forgeRow input[type=range]{flex:1;accent-color:var(--gold);height:22px}
+  .forgeName{width:100%;box-sizing:border-box;background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:12px;
+    padding:10px 12px;color:#eaf2ff;font:inherit;font-size:14px;text-align:center;outline:none}
+  .forgeName:focus{border-color:var(--line-gold)}
+  .forgeChips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%}
+  .forgeChip{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+    padding:6px 11px;font-size:12px;cursor:pointer;transition:all .15s}
+  .forgeChip.sel{background:rgba(201,164,92,.14);border-color:var(--line-gold);color:var(--gold-hi)}
+  .forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+  .forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+    padding:7px 12px;font-size:12.5px;cursor:pointer;transition:all .15s}
+  .forgeSegBtn.sel{background:rgba(201,164,92,.14);border-color:var(--line-gold);color:var(--gold-hi)}
+  .forgeSky{display:flex;gap:8px;justify-content:center;width:100%;flex-wrap:wrap}
+  .forgeSkyBtn{width:34px;height:26px;border-radius:8px;border:2px solid var(--line);cursor:pointer;padding:0;transition:all .15s}
+  .forgeSkyBtn.sel{border-color:var(--line-gold);box-shadow:0 0 8px rgba(201,164,92,.35)}
+  #forgePanelHard.open,#forgePanelEn.open{display:flex;flex-direction:column;align-items:center;padding:12px 16px 6px}
+  .fonSwatch{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  .saveTarget{font-size:10px;color:var(--muted);text-align:center;margin:10px 0 8px;text-transform:none;letter-spacing:.02em}
+  .saveTarget b{color:var(--gold-hi);font-weight:500}
+  .fonSaveBtn{padding:11px;border-radius:999px;border:1px solid var(--line-gold);
+    background:rgba(201,164,92,.14);color:var(--gold-hi);font-size:11px;text-align:center;cursor:pointer;
+    min-height:36px;display:flex;align-items:center;justify-content:center}
+  .fonSaveHint{font-size:9.5px;color:var(--muted);text-align:center;margin-top:6px;text-transform:none;
+    letter-spacing:.02em;min-height:14px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <button class="menuBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+  <!-- ================= v34 (владелец): «Проверить» убрана — «Лететь» рядом даёт настоящий,
+       не приближённый ответ, анимация корабля стала лишней. Список событий остаётся —
+       точные секунды до каждого он даёт, а обычный полёт на глаз нет. Партитура больше
+       не спойлер — видна сразу, раз она теперь учит примерами пресетов, прятать её
+       за лишним тапом вредно самой идее. ================= -->
+  <!-- v69 (владелец): «Своё небо» + подзаголовок были отдельным текстом над карточкой —
+       перенесены внутрь того же блока (setGrp.partitura уже сшит с #partituraPanel в
+       одну карточку без шва — border-bottom-color:transparent + общий radius). -->
+  <div class="setGrp partitura" id="partituraGrp">
+    <div class="kzTitle">Своё небо</div>
+    <div class="kzSub">Здесь можно создать небо на свой вкус</div>
+    <span>Расстановка точек по дистанции, выберите где будет передышка или препятствия.</span>
+  </div>
+  <div class="setPanel" id="partituraPanel">
+
+    <!-- v65 (владелец): слайдер длины теперь В НИЖНЕЙ ЧАСТИ САМОГО окна (.trackFooter),
+         не под ним и не над ним отдельным блоком — одно окно, у которого есть верх (лента)
+         и низ (управление длиной), а не два разных места. -->
+    <div class="track-wrap">
+      <div class="trackBox">
+        <div class="track" id="track"></div>
+        <div class="trackFooter">
+          <span class="forgeLbl2">Длина</span>
+          <input type="range" id="lenSlider" min="1000" max="10000" step="250" value="1500">
+          <b id="lenVal">1500м</b>
+        </div>
+      </div>
+      <div class="ruler" id="ruler"></div>
+    </div>
+
+    <div class="tray" id="tray">
+      <div class="stickerItem"><div class="sticker pause" data-t="pause" data-k="0"></div><div class="stickerCap">Передышка</div></div>
+      <div class="stickerItem"><div class="sticker marker" data-t="marker" data-k="0"></div><div class="stickerCap">Заметка</div></div>
+    </div>
+
+    <!-- v64 (владелец): «Точек: N/50» переставлен ВЫШЕ «Удалить» по просьбе владельца. -->
+    <div class="count">Точек: <b id="cnt">0</b> / 50</div>
+
+    <!-- v75 (владелец): текстовая подсказка «тапни точку» убрана целиком — жест тапа и так
+         учит демо-рука при первом входе, писать это ещё и словами — оскорбление игроку.
+         Блок теперь просто НЕ показывается, пока точка не выбрана (без слов, без плейсхолдера). -->
+    <div class="panel quickEdit" id="quickEdit">
+      <div id="qeBody">
+        <div class="k"><span class="kTitle"><span id="panelIcon" class="kIcon"></span><span id="panelTitle">Точка</span></span><span class="del" id="delBtn">удалить</span></div>
+        <div class="atrow">
+          <div class="nudge" id="atMinus10">−10</div>
+          <div class="nudge" id="atMinus1">−1</div>
+          <div class="atval"><input id="atVal" type="number" inputmode="numeric"><span>м</span></div>
+          <div class="nudge" id="atPlus1">+1</div>
+          <div class="nudge" id="atPlus10">+10</div>
+        </div>
+        <div class="nudgehint">±1/±10 или впиши число сам — для больших перестановок на длинном небе</div>
+      </div>
+    </div>
+
+    <!-- v67 (владелец): «Лететь» перенесена сюда — раньше стояла наверху
+         страницы, после настройки всего внизу пришлось бы скроллить обратно. -->
+    <div class="kzHero">▶ Лететь</div>
+
+    <div class="setGrp spoiler" id="listGrp" style="background:var(--bg-1)"><span class="setGrpT">Список точек</span><span class="setGrpSub" id="listSub">пусто</span></div>
+    <div class="setPanel" id="listPanel" style="background:var(--bg-1)"></div>
+
+    <!-- v60 (владелец): 8 карточек-примеров переехали сюда, между списком точек и цветом
+         неба — тематически они и то, и другое (задают и точки, и цвет), логично стоят
+         между разделом «свои точки» и разделом «свой цвет», как мостик между ними. -->
+    <div class="subHdr">Начать с примера</div>
+    <div class="kzPresets" id="kzPresets"></div>
+
+    <!-- v47 (владелец): цвет стоял МЕЖДУ лентой и треем — чтобы дотащить стикер из трея до
+         ленты, палец шёл ЧЕРЕЗ ползунки цвета. Перенесено после трея/корзины/списка: путь
+         перетаскивания (лента ↔ трей) теперь ничем не разорван. -->
+    <div class="subHdr">Цвет неба</div>
+    <div class="forgeLblBlk">Цвет неба (верх)</div>
+    <div class="forgeRow">
+      <span class="fonSwatch" id="sw1"></span>
+      <input type="range" id="hue1" min="0" max="360" step="1" value="232">
+      <b class="forgeVal" id="hue1V">232</b>
+    </div>
+    <div class="forgeLblBlk">Второй цвет (низ, переход)</div>
+    <div class="forgeRow">
+      <span class="fonSwatch" id="sw2"></span>
+      <input type="range" id="hue2" min="0" max="360" step="1" value="200">
+      <b class="forgeVal" id="hue2V">200</b>
+    </div>
+    <div class="forgeLblBlk">Густота (звёзды и туманности)</div>
+    <div class="forgeRow">
+      <input type="range" id="dens" min="10" max="100" step="5" value="50">
+      <b class="forgeVal" id="densV">50</b>
+    </div>
+    <div class="saveTarget" id="saveTarget"></div>
+    <div class="fonSaveBtn" id="fonSaveBtn">Сохранить фон</div>
+    <div class="fonSaveHint" id="fonSaveHint"></div>
+
+    <!-- v74: заголовок/удалить/«Точнее» переехали в #quickEdit (там, где раньше мусорка) —
+         здесь остались только доп.детали точки (заметка/подсказки), не нужен свой заголовок. -->
+    <div class="panel" id="panel">
+      <div id="kindLbl" class="hint" style="display:none;margin-top:0"></div>
+      <div id="markerBox" style="display:none">
+        <textarea class="note" id="noteText" rows="2" placeholder="заметка для себя…"></textarea>
+        <div class="hint">Не влияет на сам полёт — заметка видна только автору в этом экране.</div>
+      </div>
+      <div id="pauseHint" class="hint" style="display:none;margin-top:0">Гарантия передышки в этой точке — рядом не появится препятствие.</div>
+    </div>
+
+    <div class="dump">
+      <span class="lbl">sc: (то, что уедет в код неба)</span><span id="dump">[]</span>
+    </div>
+  </div>
+  <!-- ================= конец группы Партитуры ================= -->
+
+  <div class="subHdr">Тонкая настройка (уже есть в игре сегодня)</div>
+
+  <div class="setGrp spoiler" id="forgeGrpHard"><span class="setGrpT">Сложность</span><span class="setGrpSub" id="forgeGrpHardSub"></span></div>
+  <div class="setPanel" id="forgePanelHard">
+    <div class="forgeRow"><span class="forgeLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
+    <div class="forgeRow"><span class="forgeLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
+    <div class="forgeLblBlk">Жизни</div>
+    <div class="forgeSeg" id="forgeLivesSeg"></div>
+    <div class="forgeLblBlk">Стартовая жара</div>
+    <div class="forgeSeg" id="forgeWaveSeg"></div>
+    <div class="forgeChips"><button class="forgeChip" id="forgeFlatChip">Ровный жар — без разгона</button></div>
+    <div class="forgeLblBlk">Бонусы</div>
+    <div class="forgeSeg" id="forgeBonusSeg"></div>
+    <div class="forgeChips"><button class="forgeChip" id="forgeHSChip">Высокая ставка — 1 жизнь, бонусов нет, очки ×4</button></div>
+    <!-- v79 (владелец): «Настроение» держалась ради одного поля (Туман) после того, как
+         «Длина неба»/«Небо» ушли как повтор — отдельная кнопка-группа под одно поле лишняя,
+         Туман переехал сюда. -->
+    <div class="forgeLblBlk">Туман</div>
+    <div class="forgeSeg" id="forgeFogSeg"></div>
+  </div>
+
+  <div class="setGrp spoiler" id="forgeGrpEn"><span class="setGrpT">Состав</span><span class="setGrpSub" id="forgeGrpEnSub"></span></div>
+  <div class="setPanel" id="forgePanelEn">
+    <div class="forgeLblBlk">Преграды</div>
+    <div class="forgeChips" id="compChips"></div>
+  </div>
+
+  <div class="changelog">
+    <b>v30, интеграция в Кузницу:</b> Партитура — больше не отдельный экран (был провал: «зашёл → назад → зашёл ещё» — реальная жалоба владельца на прошлую версию). Теперь это четвёртая группа того же аккордеона «Тонкой настройки», рядом со Сложностью/Составом/Настроением. Никакой навигации: свернул — ты уже на главном экране Кузницы, где «Лететь». Свёрнутая группа шепчет текущее состояние (закон Nintendo, как у остальных трёх) — «пусто» или «N событий».
+  </div>
+</div>
+
+<div class="ghost" id="ghost" style="display:none"></div>
+<div class="demoHand" id="demoHand">👆</div>
+<div class="demoSticker" id="demoSticker"></div>
+<div class="toast" id="toast"><span id="toastTxt"></span><span class="undo" id="toastUndo">вернуть</span></div>
+
+<script>
+/* v35 (жалоба владельца): было два звёздных окна на одном экране — декоративный
+   превью-блок неба над «Лететь» (ничего не делал, просто контекст) и настоящая
+   рабочая лента Партитуры чуть ниже. Выглядело как два одинаковых окна подряд.
+   Декоративный убран целиком, осталось одно — то, где реально расставляют события. */
+/* v33 (идея владельца): 8 настоящих пресетов из forge.js:47-57 — точные d/s/e/l/sky,
+   имена из i18n.js:70-71. Каждому — честный пример расстановки Партитуры, использующий
+   ТОЛЬКО те виды, что разрешает его настоящая битовая маска e (не любой вид подряд).
+   Это МОЙ придуманный пример, не официально утверждённый контент — сказано прямо в
+   подписи под лентой при загрузке, не выдаётся за готовое. */
+/* v37 (владелец, 31.08.2026): «Готовые фоны» отдельной галереей и своим превью-окном —
+   лишнее место и повтор той же идеи, что уже есть в этих 8 карточках (каждая и так несёт
+   свой цвет неба). Слил: h1/h2/d вместо одного sky, свотч — двухцветный градиент, как в
+   бывшей отдельной галерее. 8 моих черновых цветовых пар растащены по смыслу названий. */
+const PRESETS=[
+  {name:'Разминка', h1:210, h2:250, d:40, l:1000, sc:[{at:150,type:'pause'},{at:400,type:'kind',kind:0},{at:750,type:'kind',kind:1}]},
+  {name:'Метеоритный дождь', h1:0, h2:30, d:60, l:5000, sc:[{at:500,type:'kind',kind:5},{at:1800,type:'kind',kind:0},{at:3200,type:'kind',kind:5},{at:4500,type:'marker',note:'дождь гуще к концу'}]},
+  {name:'Ад на одну жизнь', h1:248, h2:258, d:90, l:4000, sc:[{at:100,type:'pause'},{at:900,type:'kind',kind:3},{at:2000,type:'kind',kind:6},{at:3200,type:'kind',kind:3}]},
+  {name:'Туманная ночь', h1:190, h2:220, d:20, l:1500, sc:[{at:300,type:'kind',kind:2},{at:900,type:'kind',kind:3}]},
+  {name:'Кометный сад', h1:320, h2:350, d:55, l:5000, sc:[{at:600,type:'kind',kind:5},{at:1800,type:'marker',note:'красивый пролёт — сбавь и смотри'},{at:3000,type:'kind',kind:5},{at:4200,type:'pause'}]},
+  {name:'Коридор ворот', h1:270, h2:310, d:70, l:5000, sc:[{at:500,type:'kind',kind:7},{at:1500,type:'kind',kind:7},{at:2800,type:'kind',kind:7},{at:4200,type:'kind',kind:7}]},
+  {name:'Сафари с искателями', h1:20, h2:45, d:30, l:5000, sc:[{at:700,type:'kind',kind:6},{at:2200,type:'kind',kind:6},{at:3800,type:'kind',kind:3}]},
+  {name:'Пульсар', h1:150, h2:190, d:85, l:1000, sc:[{at:250,type:'kind',kind:4},{at:650,type:'kind',kind:0}]}
+];
+/* v46 (владелец): «Сохранить» раньше писало только в переменную в памяти вкладки — закрыл
+   вкладку, всё пропало. Игроку должно быть по-настоящему комфортно оставлять здесь свои
+   небеса — значит должно реально сохраняться, а не только выглядеть сохранённым. Кладём
+   в localStorage браузера: переживает закрытие/повторное открытие страницы. Восстанавливаем
+   ДО отрисовки карточек — на загрузке сразу видно то, что сохранено, не дефолт. */
+const FON_LS_KEY='cosmogram_svoeNebo_fon_v1';
+(function restoreSavedFons(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(FON_LS_KEY)||'null');
+    if(Array.isArray(saved)) saved.forEach((s,i)=>{
+      if(PRESETS[i] && s && isFinite(s.h1) && isFinite(s.h2) && isFinite(s.d)){
+        PRESETS[i].h1=s.h1; PRESETS[i].h2=s.h2; PRESETS[i].d=s.d;
+      }
+    });
+  }catch(e){}
+})();
+function saveFonsToStorage(){
+  try{ localStorage.setItem(FON_LS_KEY, JSON.stringify(PRESETS.map(p=>({h1:p.h1,h2:p.h2,d:p.d})))); }catch(e){}
+}
+/* v48 (владелец): на 22px значке-плитке два цвета не нужны вовсе — это не окно неба, а
+   узнаваемая иконка пресета. В реальной игре forgePresetTile всегда одного плоского цвета
+   (index.html:996-1001). Один цвет (h1) на плитке, двухцветный переход виден в самой ленте,
+   когда пресет загружен, — там ему и место. */
+const swGrad=h1=>`hsl(${h1},60%,50%)`;
+const kzPresetsEl=document.getElementById('kzPresets');
+let selPreset=-1;
+/* v45: selPreset — только подсветка (честность: гаснет при любой правке). saveTargetIdx —
+   куда уедет «Сохранить», НЕ гаснет при правке цвета — иначе правка сама стирает адрес,
+   в который её же и надо сохранить (было именно так: подвинул цвет → цель потерялась →
+   «Сохранить» ушло не в ту карточку). По умолчанию 0, пока ничего явно не загружено. */
+let saveTargetIdx=0;
+/* v43 (владелец): подсветка карточки наверху раньше была неправдой — тапнул «Пульсар»,
+   потом подвинул цвет или переставил точку, а карточка так и оставалась подсвеченной,
+   будто всё ещё соответствует ему. Теперь любая правка (длина/цвет/события) снимает
+   подсветку — она означает «вот это сейчас реально загружено», а не «это тапали
+   последним». Пока не докажет — не считается связанным. */
+function deselectPreset(){
+  if(selPreset<0) return;
+  selPreset=-1;
+  [...kzPresetsEl.children].forEach(el=>el.classList.remove('sel'));
+  syncSaveTarget();
+}
+function syncSaveTarget(){
+  const el=document.getElementById('saveTarget'); if(!el) return;
+  el.innerHTML='Сохранится в <b>«'+PRESETS[saveTargetIdx].name+'»</b>';
+}
+PRESETS.forEach((p,i)=>{
+  const t=document.createElement('div'); t.className='forgePresetTile';
+  const sw=document.createElement('span'); sw.className='sw'; sw.style.background=swGrad(p.h1);
+  t.appendChild(sw); t.appendChild(document.createTextNode(p.name));
+  t.addEventListener('click', ()=>{
+    // v59 (владелец): свои точки молча пропадали при тапе по другой карточке — нужно
+    // предупреждение перед потерей, не тихая замена.
+    if(pins.length>0 && i!==selPreset){
+      const n=pins.length, n10=n%10, n100=n%100;
+      const word = (n100>=11&&n100<=14) ? 'точек' : n10===1 ? 'точка' : (n10>=2&&n10<=4) ? 'точки' : 'точек';
+      const ok=confirm('Твои '+n+' '+word+' будут заменены на «'+p.name+'» — продолжить?');
+      if(!ok) return;
+    }
+    selPreset=i; saveTargetIdx=i;
+    [...kzPresetsEl.children].forEach((el,ix)=>el.classList.toggle('sel',ix===i));
+    LEN=p.l; syncLenUI(); renderRuler();
+    pins=p.sc.map(e=>Object.assign({},e));
+    selIdx=-1; render();
+    fh1=p.h1; fh2=p.h2; fdens=p.d; syncFonUI();
+    syncSaveTarget();
+    // v60: карточки переехали внутрь панели, ниже ленты — после выбора скроллим К ЛЕНТЕ
+    // (не к началу панели, это теперь означало бы скролл ВВЕРХ, мимо места клика), чтобы
+    // сразу видно было загруженные точки и цвет.
+    track.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  kzPresetsEl.appendChild(t);
+});
+
+const KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate'];
+// v76: имена сверены с реальными (js/i18n.js:61-62, fkRock..fkGate) — камень/обломки/дрейф/
+// искатель были моими придуманными, в игре это Астероид/Обломок/Дрейфер/Ловец.
+const KIND_LABEL={rock:'Астероид',debris:'Обломок',drift:'Дрейфер',mine:'Мина',sat:'Спутник',comet:'Комета',seeker:'Ловец',gate:'Ворота'};
+// v72 (владелец): «блёклые, как туалетная бумага» — камень/обломки/дрейф/спутник были
+// приглушённо-серые. Подняты в насыщенности, остальные (уже яркие) не тронуты.
+const KIND_COLOR={rock:'#d99a4e',debris:'#6fa3e0',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffa53a',gate:'#22b8dd'};
+/* v68 (владелец): иконка «Ворота» — сознательное отступление от точной копии реальной
+   отрисовки (render.js:1048-1077). Там у каждого пилона круг + яркая точка ровно по центру —
+   на 22px это читается как глаза, владелец подтвердил после проверки по исходнику. Оставлены
+   только кольца пилонов + луч между ними, без центральной точки — узнаваемо как «ворота»,
+   не 1:1 с игрой. */
+const ICON_SVG={
+  pause:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="6.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/><rect x="13.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/></svg>',
+  marker:'<svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 21l1.2-5.6L15.6 3.9a1.6 1.6 0 0 1 2.3 0l2.2 2.2a1.6 1.6 0 0 1 0 2.3L8.6 19.8 3 21z" fill="currentColor"/></svg>',
+  rock:'<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="12,2.5 18,6.5 20.5,13 16,20 8,19.5 3.5,13.5 5.5,6" fill="currentColor"/></svg>',
+  debris:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="8" width="18" height="8" rx="2" fill="currentColor"/><rect x="3" y="11.2" width="18" height="1.6" fill="rgba(0,0,0,.3)"/></svg>',
+  drift:'<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="2,12 7,5.5 17,5 22,12 16,19 6,18.5" fill="currentColor"/></svg>',
+  mine:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="12" x2="22" y2="12"/><line x1="16.2" y1="16.2" x2="19.1" y2="19.1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="7.8" y1="16.2" x2="4.9" y2="19.1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="7.8" y1="7.8" x2="4.9" y2="4.9"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="16.2" y1="7.8" x2="19.1" y2="4.9"/></g></svg>',
+  sat:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="10" y="9.5" width="4" height="5" rx="1" fill="currentColor"/><rect x="1.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><rect x="16.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><line x1="7.5" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="12" x2="16.5" y2="12" stroke="currentColor" stroke-width="1.6"/></svg>',
+  comet:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="16" cy="8" r="3.4" fill="currentColor"/><path d="M14 10.2C10 12 5.5 15 2 21c5.5-2.6 9.5-5.3 12.6-9.4z" fill="currentColor" opacity=".55"/></svg>',
+  seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>',
+  gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+};
+let LEN=1500; const MAX=50;
+function renderRuler(){
+  const ruler=document.getElementById('ruler'); ruler.innerHTML='';
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const s=document.createElement('span');
+    s.textContent=Math.round(LEN*i/steps)+'м';
+    ruler.appendChild(s);
+  }
+}
+function syncLenUI(){
+  document.getElementById('lenSlider').value=LEN;
+  document.getElementById('lenVal').textContent=LEN+'м';
+}
+document.getElementById('lenSlider').addEventListener('input', e=>{
+  deselectPreset();
+  const oldLen=LEN; LEN=+e.target.value;
+  pins.forEach(p=>{ p.at=Math.round(p.at * LEN/oldLen / 5)*5; });
+  syncLenUI(); renderRuler(); render();
+});
+let pins=[]; // {at, type, kind}
+let selIdx=-1;
+
+const track=document.getElementById('track');
+const panel=document.getElementById('panel');
+const ghost=document.getElementById('ghost');
+
+document.querySelector('.sticker.pause').innerHTML=ICON_SVG.pause;
+document.querySelector('.sticker.marker').innerHTML=ICON_SVG.marker;
+
+/* v58 (владелец): фоновые звёзды убраны совсем — лишние, раз есть точечный намёк (ниже).
+   Густота (fdens) больше НИЧЕГО не красит в самой ленте — только цвет неба (paintTrackBg).
+   Слайдер оставлен как есть (владелец не просил его убирать), но живого превью густоты
+   в ленте с этой правки нет — честно отмечаю, не решаю за владельца сам. */
+
+/* v57/v58: маленький мерцающий кластер — не там же, где текст «перетащи сюда…» (это уже
+   один раз было исправлено для фоновых звёзд и забыто здесь же — теперь слева-сверху,
+   подальше и по горизонтали, и по вертикали от центра, где сидит текст). Не декорация,
+   а указатель «сюда». Гаснет, как только человек сам поставил первую точку. */
+const hintEls=[];
+(function starHint(){
+  const spots=[[0,0],[6,-4],[-5,3],[3,6],[-4,-5]]; // маленький разброс вокруг центра намёка
+  spots.forEach(([dx,dy],i)=>{
+    const h=document.createElement('div'); h.className='starHint';
+    const sz=2+(i%2);
+    h.style.width=h.style.height=sz+'px';
+    h.style.left=(50+dx*0.6)+'%'; h.style.top=(20+dy)+'%';
+    h.style.animationDelay=(i*0.15)+'s';
+    track.appendChild(h);
+    hintEls.push(h);
+  });
+})();
+function hideStarHint(){ hintEls.forEach(h=>h.style.display='none'); }
+
+const tray=document.getElementById('tray');
+KINDS.forEach((k,ki)=>{
+  const item=document.createElement('div'); item.className='stickerItem';
+  const s=document.createElement('div');
+  s.className='sticker'; s.dataset.t='kind'; s.dataset.k=ki;
+  const c=KIND_COLOR[k];
+  s.style.background=`linear-gradient(180deg, ${c}, ${c}dd)`;
+  s.style.boxShadow=`0 0 14px ${c}77, inset 0 0 0 1px rgba(255,255,255,.28)`;
+  s.innerHTML=ICON_SVG[k];
+  const cap=document.createElement('div'); cap.className='stickerCap'; cap.textContent=KIND_LABEL[k];
+  item.appendChild(s); item.appendChild(cap);
+  tray.appendChild(item);
+});
+
+function xToAt(clientX){
+  const r=track.getBoundingClientRect();
+  const p=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+  return Math.round(p*LEN/5)*5;
+}
+function atToPct(at){ return (at/LEN*100).toFixed(2)+'%'; }
+function clampAt(v){ return Math.max(0,Math.min(LEN,v)); }
+function overRect(x,y,el){ const r=el.getBoundingClientRect(); return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; }
+
+function spreadOffsets(){
+  // v73: раньше сдвиг рос без предела (+34 на каждую близкую точку подряд) — при плотной
+  // расстановке (50 точек по 200м) улетал на сотни px вниз, точки вываливались из ленты.
+  // Теперь сдвиг зациклен на 3 ряда — дальше повторяется, но хотя бы не убегает с экрана.
+  const sorted=pins.map((p,i)=>({i,at:p.at})).sort((a,b)=>a.at-b.at);
+  const offs=new Array(pins.length).fill(0);
+  const THRESH=LEN*0.035;
+  const ROWS=3, ROW_H=28;
+  let streak=0;
+  for(let k=1;k<sorted.length;k++){
+    if(sorted[k].at-sorted[k-1].at < THRESH){
+      streak++;
+      offs[sorted[k].i] = (streak%ROWS)*ROW_H;
+    } else streak=0;
+  }
+  return offs;
+}
+
+function pinSizeFor(n){
+  if(n<=10) return 48;
+  if(n<=20) return 40;
+  if(n<=35) return 32;
+  return 26;
+}
+function render(justPoppedIdx){
+  track.querySelectorAll('.pin,.pin-lbl').forEach(e=>e.remove());
+  track.classList.toggle('has-pins', pins.length>0);
+  if(pins.length>0) hideStarHint(); // намёк своё дело сделал — человек уже поставил точку сам
+  const pinSz=pinSizeFor(pins.length);
+  track.style.setProperty('--pinSz', pinSz+'px');
+  const pinTop=60-pinSz/2; // центр точки всегда на середине высоты ленты (36+48/2=60)
+  const offs=spreadOffsets();
+  pins.forEach((p,i)=>{
+    const lbl=document.createElement('div');
+    lbl.className='pin-lbl'+(i===selIdx?' sel':''); lbl.style.left=atToPct(p.at);
+    lbl.style.top=(15+offs[i])+'px';
+    lbl.textContent=p.at+'м'+(p.type==='kind'?' · '+KIND_LABEL[KINDS[p.kind]]:'');
+    track.appendChild(lbl);
+    const el=document.createElement('div');
+    el.className='pin '+p.type+(i===selIdx?' sel':'')+(i===justPoppedIdx?' pop':'');
+    el.style.left=atToPct(p.at);
+    el.style.top=(pinTop+offs[i])+'px';
+    const sw=document.createElement('div'); sw.className='sw';
+    if(p.type==='kind'){ const c=KIND_COLOR[KINDS[p.kind]]; sw.style.background=`linear-gradient(180deg, ${c}, ${c}dd)`; sw.style.boxShadow=`0 0 10px ${c}66, inset 0 0 0 1px rgba(255,255,255,.14)`; }
+    sw.innerHTML = p.type==='pause' ? ICON_SVG.pause : p.type==='marker' ? ICON_SVG.marker : ICON_SVG[KINDS[p.kind]];
+    el.appendChild(sw);
+    el.addEventListener('pointerdown', ev=>startPinDrag(ev,i));
+    track.appendChild(el);
+  });
+  document.getElementById('cnt').textContent=pins.length;
+  tray.classList.toggle('nearMax', pins.length>=45 && pins.length<MAX);
+  tray.classList.toggle('atMax', pins.length>=MAX);
+  renderPanel();
+  renderDump();
+  renderList();
+}
+
+function renderPanel(){
+  const quickEdit=document.getElementById('quickEdit');
+  if(selIdx<0 || !pins[selIdx]){
+    panel.classList.remove('show');
+    quickEdit.classList.remove('show');
+    return;
+  }
+  const p=pins[selIdx];
+  panel.classList.add('show');
+  quickEdit.classList.add('show');
+  document.getElementById('panelTitle').textContent=({pause:'Передышка',kind:KIND_LABEL[KINDS[p.kind]],marker:'Заметка'})[p.type];
+  document.getElementById('panelIcon').innerHTML = p.type==='pause' ? ICON_SVG.pause : p.type==='marker' ? ICON_SVG.marker : ICON_SVG[KINDS[p.kind]];
+  document.getElementById('atVal').value=p.at;
+  document.getElementById('kindLbl').style.display = p.type==='kind' ? 'block' : 'none';
+  if(p.type==='kind') document.getElementById('kindLbl').textContent='Здесь всегда будет '+KIND_LABEL[KINDS[p.kind]].toLowerCase()+' — не случайный вид.';
+  document.getElementById('markerBox').style.display = p.type==='marker' ? 'block' : 'none';
+  document.getElementById('pauseHint').style.display = p.type==='pause' ? 'block' : 'none';
+  if(p.type==='marker'){
+    const ta=document.getElementById('noteText');
+    ta.value=p.note||'';
+    ta.oninput=()=>{ p.note=ta.value; renderDump(); };
+  }
+}
+
+function renderDump(){
+  const lines=pins.slice().sort((a,b)=>a.at-b.at).map(p=>{
+    let extra = p.type==='kind' ? `, kind:'${KINDS[p.kind]}'` : (p.type==='marker' && p.note ? `, note:'${p.note.slice(0,18).replace(/'/g,"")}${p.note.length>18?'…':''}'` : '');
+    return `  {at:${p.at}, type:'${p.type}'${extra}}`;
+  });
+  document.getElementById('dump').textContent = pins.length ? '['+'\n'+lines.join(',\n')+'\n]' : '[]';
+}
+
+let actx=null;
+function chime(freq){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') actx.resume();
+    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+.3);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+.32);
+  }catch(e){}
+}
+
+const toast=document.getElementById('toast'), toastTxt=document.getElementById('toastTxt'), toastUndo=document.getElementById('toastUndo');
+let toastTimer=null;
+function showToast(text, undoFn){
+  toastTxt.textContent=text;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('show'), 3000);
+  toastUndo.onclick=()=>{ undoFn(); toast.classList.remove('show'); clearTimeout(toastTimer); };
+}
+function pinName(p){ return p.type==='pause'?'передышку':p.type==='marker'?'заметку':KIND_LABEL[KINDS[p.kind]].toLowerCase(); }
+
+tray.addEventListener('pointerdown', ev=>{
+  const s=ev.target.closest('.sticker'); if(!s) return;
+  if(pins.length>=MAX) return;
+  cancelDemo();
+  s.classList.add('dragging');
+  ghost.style.display='flex';
+  ghost.style.background=getComputedStyle(s).background;
+  ghost.innerHTML=s.innerHTML; ghost.style.color=getComputedStyle(s).color;
+  moveGhost(ev.clientX,ev.clientY);
+  const onMove=e=>{
+    moveGhost(e.clientX,e.clientY);
+    track.classList.toggle('dropok', overRect(e.clientX,e.clientY,track));
+  };
+  const onUp=e=>{
+    document.removeEventListener('pointermove',onMove);
+    document.removeEventListener('pointerup',onUp);
+    s.classList.remove('dragging'); ghost.style.display='none'; track.classList.remove('dropok');
+    if(overRect(e.clientX,e.clientY,track)){
+      deselectPreset();
+      const at=xToAt(e.clientX);
+      const p={at, type:s.dataset.t, kind:+s.dataset.k};
+      pins.push(p);
+      selIdx=pins.length-1;
+      chime(660);
+      render(selIdx);
+      showToast('Поставил '+pinName(p), ()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); selIdx=-1; render(); });
+    }
+  };
+  document.addEventListener('pointermove',onMove);
+  document.addEventListener('pointerup',onUp);
+});
+function moveGhost(x,y){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; }
+
+function startPinDrag(ev, i){
+  // v74: раньше перетаскивание в зону-мусорку тоже удаляло точку — мусорку убрали
+  // (дублировала «Удалить» в панели), перетаскивание теперь только двигает точку по ленте.
+  ev.stopPropagation();
+  selIdx=i;
+  render();
+  const onMove=e=>{
+    deselectPreset();
+    pins[i].at=xToAt(e.clientX);
+    render(); selIdx=i;
+  };
+  const onUp=e=>{
+    document.removeEventListener('pointermove',onMove);
+    document.removeEventListener('pointerup',onUp);
+    render();
+  };
+  document.addEventListener('pointermove',onMove);
+  document.addEventListener('pointerup',onUp);
+}
+
+function removePin(i){
+  deselectPreset();
+  const p=pins[i], at=p.at;
+  pins.splice(i,1); selIdx=-1;
+  chime(320);
+  showToast('Убрал '+pinName(p), ()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); selIdx=pins.findIndex(x=>x===p); render(); });
+}
+
+document.getElementById('delBtn').addEventListener('click', ()=>{
+  if(selIdx<0) return;
+  removePin(selIdx);
+  render();
+});
+function nudge(d){
+  if(selIdx<0) return;
+  deselectPreset();
+  pins[selIdx].at=clampAt(pins[selIdx].at+d);
+  render();
+}
+document.getElementById('atMinus10').addEventListener('click',()=>nudge(-10));
+document.getElementById('atMinus1').addEventListener('click',()=>nudge(-1));
+document.getElementById('atPlus1').addEventListener('click',()=>nudge(1));
+document.getElementById('atPlus10').addEventListener('click',()=>nudge(10));
+document.getElementById('atVal').addEventListener('change', ev=>{
+  if(selIdx<0) return;
+  deselectPreset();
+  const v=Math.round(+ev.target.value);
+  pins[selIdx].at = isFinite(v) ? clampAt(v) : pins[selIdx].at;
+  render();
+});
+
+const listGrp=document.getElementById('listGrp'), listPanel=document.getElementById('listPanel'), listSub=document.getElementById('listSub');
+listGrp.addEventListener('click', ()=>{ listGrp.classList.toggle('open'); listPanel.classList.toggle('open'); });
+function fmtTime(s){ const m=Math.floor(s/60), sec=Math.round(s%60); return m+':'+String(sec).padStart(2,'0'); }
+function timeAtDistance(curve, dist){
+  const pts=curve.pts; if(dist<=0) return 0;
+  let lo=0, hi=pts.length-1;
+  while(lo<hi-1){ const mid=(lo+hi)>>1; if(pts[mid].d<dist) lo=mid; else hi=mid; }
+  const a=pts[lo], b=pts[hi], k=(dist-a.d)/((b.d-a.d)||1);
+  return a.t+(b.t-a.t)*k;
+}
+function renderList(){
+  const curve=simulateFlightCurve(LEN);
+  listSub.textContent = pins.length ? pins.length+' шт. · весь полёт ~'+fmtTime(curve.total) : 'пусто';
+  listPanel.innerHTML='';
+  if(!pins.length){ listPanel.innerHTML='<div class="evtEmpty">пока ничего не добавлено</div>'; return; }
+  const order=pins.map((p,i)=>i).sort((a,b)=>pins[a].at-pins[b].at);
+  let prevT=0;
+  order.forEach(i=>{
+    const p=pins[i];
+    const row=document.createElement('div'); row.className='evtRow';
+    const ic=document.createElement('div'); ic.className='ic';
+    if(p.type==='kind'){ const c=KIND_COLOR[KINDS[p.kind]]; ic.style.background=`linear-gradient(180deg, ${c}, ${c}dd)`; }
+    else ic.style.background = p.type==='pause' ? 'linear-gradient(180deg,rgba(160,210,255,.9),rgba(160,210,255,.65))' : 'linear-gradient(180deg,rgba(240,192,64,.9),rgba(240,192,64,.65))';
+    ic.innerHTML = p.type==='pause' ? ICON_SVG.pause : p.type==='marker' ? ICON_SVG.marker : ICON_SVG[KINDS[p.kind]];
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent = p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':KIND_LABEL[KINDS[p.kind]];
+    const evtT=timeAtDistance(curve,p.at);
+    const gap=evtT-prevT; prevT=evtT;
+    const mt=document.createElement('div'); mt.className='mt';
+    mt.innerHTML = p.at+'м · '+fmtTime(evtT)+'<span class="gap">+'+gap.toFixed(1)+'с от прошлого</span>';
+    const rm=document.createElement('div'); rm.className='rm'; rm.textContent='×';
+    row.append(ic,nm,mt,rm);
+    row.addEventListener('click', ev=>{
+      if(ev.target===rm){ removePin(i); render(); return; }
+      selIdx=i; render();
+      document.getElementById('fineGrp').scrollIntoView({behavior:'smooth', block:'center'});
+    });
+    listPanel.appendChild(row);
+  });
+}
+
+const demoHand=document.getElementById('demoHand'), demoSticker=document.getElementById('demoSticker');
+let demoT=null;
+function cancelDemo(){
+  clearTimeout(demoT);
+  demoHand.style.opacity=0; demoSticker.style.opacity=0;
+}
+function playDemo(){
+  // v50: убрана проверка classList.contains('open') — с v34 группа всегда открыта через
+  // CSS (#partituraPanel{display:block!important}), класс 'open' больше никогда не ставится,
+  // проверка всегда обрывала показ жеста. Демо реально ни разу не запускалось с v34.
+  if(pins.length>0) return;
+  const s=tray.querySelector('.sticker'); if(!s) return;
+  const sR=s.getBoundingClientRect(), tR=track.getBoundingClientRect();
+  const startX=sR.left+sR.width/2, startY=sR.top+sR.height/2;
+  const endX=tR.left+tR.width*0.5, endY=tR.top+tR.height*0.20; // та же точка, что и starHint ниже — по центру, над текстом
+  demoHand.style.transition='none'; demoSticker.style.transition='none';
+  demoHand.style.left=startX+'px'; demoHand.style.top=startY+'px';
+  demoSticker.style.left=startX+'px'; demoSticker.style.top=startY+'px';
+  demoSticker.style.background=getComputedStyle(s).background; demoSticker.innerHTML=s.innerHTML; demoSticker.style.color=getComputedStyle(s).color;
+  void demoHand.offsetWidth;
+  demoHand.style.transition=''; demoSticker.style.transition='';
+  demoHand.style.opacity=1; demoSticker.style.opacity=1;
+  demoT=setTimeout(()=>{
+    demoHand.style.left=endX+'px'; demoHand.style.top=endY+'px';
+    demoSticker.style.left=endX+'px'; demoSticker.style.top=endY+'px';
+    demoT=setTimeout(()=>{ demoHand.style.opacity=0; demoSticker.style.opacity=0; }, 1400);
+  }, 500);
+}
+document.addEventListener('pointerdown', cancelDemo, {once:true, capture:true});
+
+function simulateFlightCurve(len){
+  const pts=[{t:0,d:0}]; let dist=0,t=0; const dt=1/30;
+  while(dist<len && t<600){
+    const opening=.62*(1-Math.exp(-dist/100))*Math.exp(-dist/900);
+    const dd=Math.min(1, dist/6000+opening);
+    const speed=3.4+dd*4.6;
+    dist=Math.min(len, dist+speed*dt*8); t+=dt;
+    pts.push({t,d:dist});
+  }
+  return {pts, total:t||1};
+}
+// v34: distAtFraction/playPreview/корабль убраны целиком — «Проверить» была лишней
+// раз «Лететь» рядом даёт настоящий ответ. simulateFlightCurve остаётся — им пользуется
+// «Список событий» (timeAtDistance) для честных секунд до каждого события.
+const partituraGrp=document.getElementById('partituraGrp'), partituraPanel=document.getElementById('partituraPanel');
+// v34: Партитура больше не спойлер — панель всегда видна, кликать по заголовку не нужно.
+setTimeout(playDemo, 700); // показ жеста при первом входе — теперь просто при загрузке страницы
+
+syncLenUI();
+renderRuler();
+render();
+
+/* v41 (окончательно, владелец 31.08.2026): один блок, не два. Никакого отдельного канваса
+   наверху — убран совсем. Лента «Расстановки» сама и есть превью цвета (красится в fh1/fh2
+   живьём) и рабочая поверхность для точек одновременно. Ползунки — прямо под ней, в той же
+   группе. v44: «Сохранить фон» — настоящая нужная функция (владелец), убирать её было моей
+   ошибкой. Пишет ТОЛЬКО h1/h2/густоту в загруженную карточку — имя/длину/события карточки
+   не трогает, восемь карточек остаются восемью. */
+let fh1=232, fh2=200, fdens=50;
+function paintTrackBg(){
+  /* v48: цвет виден именно В ЛЕНТЕ, не размазан по всей карточке — карточка остаётся
+     обычной (var(--bg-2)), лента — своё окно со своим фоном и рамкой. v58: фоновых звёзд
+     в ленте больше нет (убраны), густота теперь ни на что в самой ленте не влияет. */
+  track.style.background='linear-gradient(180deg, hsl('+fh1+',60%,22%), hsl('+fh2+',65%,10%))';
+}
+function syncFonUI(){
+  document.getElementById('hue1').value=fh1; document.getElementById('hue1V').textContent=fh1;
+  document.getElementById('hue2').value=fh2; document.getElementById('hue2V').textContent=fh2;
+  document.getElementById('dens').value=fdens; document.getElementById('densV').textContent=fdens;
+  document.getElementById('sw1').style.background='hsl('+fh1+',60%,45%)';
+  document.getElementById('sw2').style.background='hsl('+fh2+',60%,45%)';
+  paintTrackBg();
+}
+document.getElementById('hue1').addEventListener('input',e=>{ deselectPreset(); fh1=+e.target.value; syncFonUI(); });
+document.getElementById('hue2').addEventListener('input',e=>{ deselectPreset(); fh2=+e.target.value; syncFonUI(); });
+document.getElementById('dens').addEventListener('input',e=>{ deselectPreset(); fdens=+e.target.value; syncFonUI(); });
+syncFonUI();
+syncSaveTarget();
+
+document.getElementById('fonSaveBtn').addEventListener('click', ()=>{
+  const slot=saveTargetIdx;
+  PRESETS[slot].h1=fh1; PRESETS[slot].h2=fh2; PRESETS[slot].d=fdens; // только фон — имя/длину/события карточки не трогаем
+  selPreset=slot; // после сохранения подсветка снова честна — карточка реально совпадает с текущим цветом
+  [...kzPresetsEl.children].forEach((el,ix)=>{
+    el.classList.toggle('sel', ix===slot);
+    if(ix===slot) el.querySelector('.sw').style.background=swGrad(fh1);
+  });
+  saveFonsToStorage();
+  document.getElementById('fonSaveHint').textContent='Сохранено в «'+PRESETS[slot].name+'» — останется и после перезагрузки страницы';
+});
+
+/* v76/v77: «Тонкая настройка» — Сложность/Состав/Настроение, подписи и значения 1:1 с реальной
+   игрой (js/forge.js: FORGE_LENS/FORGE_SKYS/FORGE_KINDS, js/i18n.js). Просмотр композиции —
+   клики дают честный визуальный отклик (sel-подсветка), но не пересобирают само небо: это
+   уже делает настоящая игра, здесь только видно, как это будет смотреться рядом. */
+function segBuild(el, items, initIdx){
+  el.innerHTML='';
+  items.forEach((it,i)=>{
+    const b=document.createElement('button');
+    b.className='forgeSegBtn'+(i===initIdx?' sel':'');
+    b.textContent=it;
+    b.addEventListener('click',()=>{
+      [...el.children].forEach(c=>c.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+    el.appendChild(b);
+  });
+}
+segBuild(document.getElementById('forgeLivesSeg'), ['1','2','3'], 2);
+segBuild(document.getElementById('forgeWaveSeg'), ['1','2','3','4','5','6'], 0);
+segBuild(document.getElementById('forgeBonusSeg'), ['Выкл','Редко','Норма','Часто'], 1);
+segBuild(document.getElementById('forgeFogSeg'), ['Нет','Лёгкий','Густой'], 0);
+['forgeFlatChip','forgeHSChip'].forEach(id=>{
+  const b=document.getElementById(id);
+  b.addEventListener('click',()=>b.classList.toggle('sel'));
+});
+const compChipsEl=document.getElementById('compChips');
+KINDS.forEach(k=>{
+  const b=document.createElement('button');
+  b.className='forgeChip sel'; b.textContent=KIND_LABEL[k];
+  b.addEventListener('click',()=>{
+    const selCount=[...compChipsEl.children].filter(c=>c.classList.contains('sel')).length;
+    if(b.classList.contains('sel') && selCount<=1) return; // небо не бывает пустым насовсем — как в реальной игре
+    b.classList.toggle('sel');
+    forgeGrpEnSub();
+  });
+  compChipsEl.appendChild(b);
+});
+function forgeGrpEnSub(){
+  const n=[...compChipsEl.children].filter(c=>c.classList.contains('sel')).length;
+  document.getElementById('forgeGrpEnSub').textContent=n+' / '+KINDS.length;
+}
+forgeGrpEnSub();
+document.getElementById('forgeGrpHardSub').textContent='Плотность 50 · Скорость 50 · Жизни 3 · Туман нет';
+const FORGE_GRPS=[['forgeGrpHard','forgePanelHard'],['forgeGrpEn','forgePanelEn']];
+FORGE_GRPS.forEach(([gid,pid])=>{
+  const g=document.getElementById(gid), p=document.getElementById(pid);
+  g.addEventListener('click',()=>{
+    const willOpen=!g.classList.contains('open');
+    FORGE_GRPS.forEach(([GID,PID])=>{
+      document.getElementById(GID).classList.remove('open');
+      document.getElementById(PID).classList.remove('open');
+    });
+    if(willOpen){ g.classList.add('open'); p.classList.add('open'); }
+  });
+});
+</script>
+</body>
+</html>
