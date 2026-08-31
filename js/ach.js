@@ -199,50 +199,68 @@ function favMode(){
   if(k>=g&&k>=t) return L.modeKeys;
   return g>=t?L.modeGyro:L.modeTouch;
 }
+/* 31.08.2026 «Переосмысление вида Достижений» (владелец, макет): своя иконка+цвет на каждой
+   плитке статистики и каждом достижении — раньше все плитки были одинаковой серой коробкой.
+   6 из 8+6 иконок переиспользуют уже существующие символы игры (i-plane/i-ruler/i-star4/
+   i-trophy/i-checkbadge/i-target/i-phone), 6 — новые (i-combo/i-nearmiss/i-karman/i-swords/
+   i-palette/i-crown, index.html). Текст/значения/логика — не тронуты, только вид. */
+const ACH_STAT_ICO=[
+  ['plane','#9fb4d8'],['ruler','#9fe8ff'],['star4','#f0c040'],['combo','#8fff9f'],
+  ['nearmiss','#eef4ff'],['trophy','#c58fff'],['checkbadge','#f0c040'],['target','#ff9f8f'],
+];
+const ACH_ICO={c1:'karman', f1:'phone', d1:'swords', d2:'trophy', h1:'palette', h2:'crown'};
+const CAT_COLOR={cosmos:'#9fe8ff', flight:'#8fb4ff', duel:'#ff9f8f', hangar:'#c58fff'};
 function renderAch(){
   const un=achUnlockedSet(), q=achQueue();
-  const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList');
-  if(!elStats||!elProg||!elProgFill||!elList){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
+  const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList'),
+    elCtlGrp=$('achCtlGrp'), elCtlSub=$('achCtlSub'), elCtlPanel=$('achCtlPanel');
+  if(!elStats||!elProg||!elProgFill||!elList||!elCtlGrp||!elCtlSub||!elCtlPanel){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','achStats');
     return;
   }
-  // статистика — ряд метрик с крупными числами; режимы — плашки с иконками
-  const statCell=(v,l)=>'<div class="statCell"><b>'+v+'</b><span>'+l+'</span></div>';
+  // статистика — своя иконка+цвет на каждой плитке (icon+число в ряд, не друг над другом —
+  // тот же язык, что уже у .achRw/.miniPill в этой же игре)
+  const statVals=[Stats.games||0,Stats.totalDist||0,Stats.totalStars||0,'×'+(Stats.bestCombo||0),
+    Stats.nearMiss||0,Stats.duelsWon||0,Stats.perfectRuns||0,Stats.recBeats||0];
+  const statLbls=[L.statFlights,L.statDist,L.statStars,L.statCombo,L.statNearMiss,L.statDuelsWon,L.statPerfect,L.statRecBeats];
+  const statCell=(v,l,i)=>'<div class="statCell" style="--sc:'+ACH_STAT_ICO[i][1]+'">'+ic(ACH_STAT_ICO[i][0],'scIc')+
+    '<span class="scTxt"><b>'+(typeof v==='number'?fmtN(v):v)+'</b><span>'+l+'</span></span></div>';
+  elStats.innerHTML = '<div class="statGrid">'+statVals.map((v,i)=>statCell(v,statLbls[i],i)).join('')+'</div>';
+  // «Управление» — та же голая пара иконка+число, что была всегда, но теперь подписана и
+  // свёрнута (не главное для этого экрана, реюз .setGrp/.setPanel — тот же приём, что в Настройках)
   const gN=Stats.gGames||0, tN=Stats.tGames||0, bN=Stats.bGames||0, kN=Stats.kGames||0;
-  const favIc=(bN>=gN&&bN>=tN&&bN>=kN)?'timer':((kN>=gN&&kN>=tN)?'keys':(gN>=tN?'phone':'hand'));
-  elStats.innerHTML =
-    '<div class="statGrid stats4">'+
-      statCell(fmtN(Stats.games||0),L.statFlights)+
-      statCell(fmtN(Stats.totalDist||0),L.statDist)+
-      statCell(fmtN(Stats.totalStars||0),L.statStars)+
-      statCell('×'+(Stats.bestCombo||0),L.statCombo)+
-      statCell(fmtN(Stats.nearMiss||0),L.statNearMiss)+
-      statCell(fmtN(Stats.duelsWon||0),L.statDuelsWon)+
-      statCell(fmtN(Stats.perfectRuns||0),L.statPerfect)+
-      statCell(fmtN(Stats.recBeats||0),L.statRecBeats)+
-    '</div>'+
-    '<div class="bestPills">'+
-      (gN+tN+bN+kN>0?'<span class="miniPill runMode">'+ic(favIc)+favMode()+'</span>':'')+
-      '<span class="miniPill">'+ic('phone')+'<b>'+fmtN(gN)+'</b></span>'+
-      '<span class="miniPill">'+ic('hand')+'<b>'+fmtN(tN)+'</b></span>'+
-      '<span class="miniPill">'+ic('keys')+'<b>'+fmtN(kN)+'</b></span>'+
-      '<span class="miniPill">'+ic('timer')+'<b>'+fmtN(bN)+'</b></span>'+
-    '</div>';
+  elCtlSub.textContent = (gN+tN+bN+kN>0) ? favMode() : '';
+  elCtlPanel.innerHTML =
+    '<div class="ctlRow">'+ic('phone')+'<span class="ctlLbl">'+L.modeGyro+'</span><b>'+fmtN(gN)+'</b></div>'+
+    '<div class="ctlRow">'+ic('hand')+'<span class="ctlLbl">'+L.modeTouch+'</span><b>'+fmtN(tN)+'</b></div>'+
+    '<div class="ctlRow">'+ic('keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>'+
+    '<div class="ctlRow">'+ic('timer')+'<span class="ctlLbl">'+L.bullet+'</span><b>'+fmtN(bN)+'</b></div>';
+  if(!renderAch._ctlBound){ renderAch._ctlBound=1; // 30.08.2026-стиль: биндим один раз, не на каждый рендер
+    elCtlGrp.addEventListener('click', ()=>{
+      const willOpen=elCtlPanel.classList.contains('hidden');
+      elCtlPanel.classList.toggle('hidden', !willOpen); elCtlGrp.classList.toggle('open', willOpen);
+      haptic('light'); sfx.click();
+    });
+  }
   elProg.innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
   elProgFill.style.width = (un.length/ACH.length*100)+'%';
   let h='', hI=0; // hI — счётчик каскадной задержки строк (+60ms, потолок 600ms)
   for(const cid of CATS){
     const items=ACH.filter(a=>a.cat===cid); if(!items.length) continue;
-    h+='<div class="achCat">'+(CAT_N[cid][typeof langEff!=='undefined'?langEff:'ru'] || CAT_N[cid].en || CAT_N[cid].ru)+'</div>';
+    const cc=CAT_COLOR[cid]||'var(--muted)';
+    h+='<div class="achCat" style="--cc:'+cc+'">'+(CAT_N[cid][typeof langEff!=='undefined'?langEff:'ru'] || CAT_N[cid].en || CAT_N[cid].ru)+'</div>';
     for(const a of items){
       const got=un.indexOf(a.id)>=0, tt=aT(a);
       const name=tt.n, desc=tt.d; // секретов в реестре нет (v1.32.0) — имя и описание всегда настоящие
       const pend=q.indexOf(a.id)>=0; // открыто, но ждёт «Забрать»
+      const big=a.id==='c1'; // единственная по-настоящему большая веха (владелец, макет) — не выдумано, «Линия Кармана»
       let side='', barHtml='';
       if(!got&&!a.secret){ let v=0; try{ v=a.val(); }catch(e){}
         side='<span class="achPr">'+fmtN(Math.min(v,a.need))+'/'+fmtN(a.need)+'</span>';
         barHtml='<span class="achBar"><i style="width:'+Math.min(100,Math.round(v/a.need*100))+'%"></i></span>'; }
-      h+='<div class="achIt'+(got?' got':'')+(pend?' pend':'')+'" style="animation-delay:'+(Math.min(hI++,10)*60)+'ms">'+
+      h+='<div class="achIt'+(got?' got':'')+(pend?' pend':'')+(big?' big':'')+
+        '" style="--ac:'+cc+';--acg:'+cc+'55;animation-delay:'+(Math.min(hI++,10)*60)+'ms">'+
+        '<span class="achIco">'+ic(ACH_ICO[a.id]||'star4')+'</span>'+
         '<span class="achTx"><b>'+name+'</b><i>'+desc+'</i>'+barHtml+'</span>'+
         (got?(pend?'<span class="achRw pendBtn" data-claim="'+a.id+'">'+L.achClaim+' +'+a.rw+ic('star4','i-s4')+'</span>':'<span class="achRw">+'+a.rw+ic('star4','i-s4')+'</span>'):side)+'</div>';
     }
