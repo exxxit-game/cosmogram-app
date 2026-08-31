@@ -95,6 +95,13 @@ function audioVerdict(){
     if(AC.state==='suspended' || AC.state==='interrupted') return L.audioVSuspended+' ('+AC.state+')';
     if(typeof acStalled!=='undefined' && acStalled) return L.audioVStalled;
     if(typeof music==='undefined' || !music._theme()) return L.audioVNoTheme;
+    // 31.08.2026 (владелец: «цепь цела, а музыка не играет — вечные проблемы»): всё выше —
+    // только состояния (тема выбрана? контекст жив?), реальную громкость шины никто не
+    // смотрел. Гейн мог застрять у нуля (недокрученный дак/кик, см. music.js:257-263 —
+    // похожий баг там уже ловили раньше) — вердикт всё равно рапортовал «ОК». Порог 0.05
+    // заметно ниже любого НАМЕРЕННОГО тихого состояния (дак держит .3 от цели, кик — .32) —
+    // ловит только настоящее залипание, не обычное приглушение на паузе/ударе.
+    if(typeof music._gain==='function'){ const g=music._gain(); if(g!=null && g<0.05) return L.audioVQuiet; }
     return L.audioVOk;
   }catch(e){ return 'n/a'; }
 }
