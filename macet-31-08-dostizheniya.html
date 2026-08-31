@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Макет — Достижения: переосмысление вида</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --danger:#e0533d; --ok:#8fff9f;
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-btn:14px; --r-card:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);
+    font-weight:500;letter-spacing:.05em;text-transform:uppercase;font-variant-numeric:tabular-nums;
+    display:flex;justify-content:center;padding:20px 12px;overflow-x:hidden;position:relative}
+  body::before, body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-repeat:repeat;background-size:260px 260px;
+    background-image:
+      radial-gradient(circle 1.4px at 12% 8%, rgba(230,242,255,.9), transparent 60%),
+      radial-gradient(circle 1px at 34% 22%, rgba(159,232,255,.7), transparent 60%),
+      radial-gradient(circle 1.2px at 58% 4%, rgba(230,242,255,.8), transparent 60%),
+      radial-gradient(circle 1px at 80% 30%, rgba(159,232,255,.65), transparent 60%),
+      radial-gradient(circle 1.6px at 20% 46%, rgba(230,242,255,.95), transparent 60%),
+      radial-gradient(circle 1px at 46% 62%, rgba(159,232,255,.6), transparent 60%),
+      radial-gradient(circle 1.3px at 68% 54%, rgba(230,242,255,.85), transparent 60%),
+      radial-gradient(circle 1px at 90% 70%, rgba(159,232,255,.7), transparent 60%),
+      radial-gradient(circle 1.5px at 10% 86%, rgba(230,242,255,.9), transparent 60%);
+    animation:bgTwinkle 5s ease-in-out infinite}
+  body::after{background-position:70px 130px;animation-delay:2.3s;opacity:.6}
+  @keyframes bgTwinkle{0%,100%{opacity:.5}50%{opacity:1}}
+  /* 31.08.2026 (владелец): «Мои/Топ выровнять по центру» — в реальной игре «Назад» стоит
+     position:absolute и не участвует в раскладке вовсе (index.html:474), а .screenTitle
+     центрируется САМ по себе (text-align:center + max-width:calc(100% - 96px), index.html:369-376),
+     экран — flex-column с align-items:center (.overlay, index.html:196-197). В макете кнопка и
+     заголовок стояли в одном ряду — из-за этого центр всегда съезжал вправо на её ширину.
+     Переведено на настоящую схему, не придумано заново. */
+  .phone{position:relative;z-index:1;width:100%;max-width:420px}
+
+  .menuBack{position:absolute;top:0;left:16px;width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    backdrop-filter:blur(8px);border:1.5px solid rgba(150,205,255,.55);
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#eaf3ff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+  .menuBack svg{width:13px;height:13px;stroke-width:2.6;fill:none;stroke:currentColor;
+    stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(160,210,255,.95))}
+  .screenTitle{width:100%;font-size:clamp(24px,7vw,32px);letter-spacing:.05em;color:var(--ink);
+    text-shadow:0 0 22px rgba(140,180,255,.18);text-align:center;
+    max-width:calc(100% - 96px);margin:2px auto 14px}
+
+  .achTabs{display:flex;justify-content:center;gap:8px;margin:2px 0 16px}
+  .achTab{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);
+    border-radius:12px;padding:8px 18px;font-size:13px;cursor:pointer}
+  .achTab.sel{background:rgba(120,170,255,.10);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+
+  .subHdr{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--cream);text-align:left;
+    margin:16px 0 8px}
+
+  /* v80: статистика — своя иконка + свой намёк цвета на каждой плитке, не одна серая коробка
+     на все восемь. Иконки — 6 из 8 переиспользуют реальные спрайты игры (i-plane/i-ruler/
+     i-star4/i-trophy/i-checkbadge/i-target, index.html:1312-1352), 2 новые (комбо, впритык) —
+     нарисованы тем же языком (тонкий обвод, 24×24), не выдуманы с нуля стилистически. */
+  .statGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}
+  /* 31.08.2026 (владелец): иконка и число — в ряд, не одно над другим (короче по высоте, и так
+     уже стоит в самой игре — .achRw «число+звезда», .miniPill «иконка+число», нигде не стоят
+     друг под другом). */
+  .statCell{position:relative;background:rgba(22,38,56,.55);border:1px solid var(--line);
+    border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;
+    overflow:hidden}
+  .statCell::before{content:'';position:absolute;inset:0;opacity:.10;pointer-events:none;
+    background:var(--sc,transparent)}
+  .statCell .scIc{flex:none;width:22px;height:22px;color:var(--sc,var(--muted))}
+  .statCell .scIc svg{width:100%;height:100%;display:block}
+  .statCell .scTxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .statCell b{font-family:var(--font-disp);font-weight:400;font-size:20px;line-height:1.05;color:var(--ink)}
+  .statCell span{font-size:9px;color:var(--muted);letter-spacing:.08em}
+
+  /* v80: ряд «управление» — раньше голые иконка+число без подписи, теперь подписано и
+     свёрнуто по умолчанию (не главное для этого экрана, но не потеряно — тот же принцип
+     сворачивания, что уже применён к «Список точек»/«Тонкой настройке» в другом макете). */
+  .setGrp{width:100%;margin:4px 0 0;padding:12px 14px;text-align:left;
+    font-size:11px;font-weight:700;letter-spacing:.12em;color:#c9d8f5;
+    background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:var(--r-btn);
+    position:relative;cursor:pointer}
+  .setGrp::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.5;font-size:11px}
+  .setGrp.open::after{content:'▴'}
+  .setGrp.open{border-radius:var(--r-btn) var(--r-btn) 0 0;border-bottom-color:transparent}
+  .setGrpSub{display:block;margin-top:3px;font-size:10px;font-weight:500;color:var(--muted);text-transform:none}
+  .ctlPanel{display:none;background:rgba(22,38,56,.55);border:1px solid var(--line);border-top:none;
+    border-radius:0 0 var(--r-btn) var(--r-btn);padding:14px;margin-bottom:14px}
+  .ctlPanel.open{display:block}
+  .ctlRow{display:flex;align-items:center;gap:10px;padding:6px 0}
+  .ctlRow+.ctlRow{border-top:1px solid var(--line)}
+  .ctlRow .ic{width:18px;height:18px;color:#9fe8ff;flex:none}
+  .ctlRow .ic svg{width:100%;height:100%}
+  .ctlRow .lbl{flex:1;font-size:11px;color:var(--muted);text-align:left;letter-spacing:.04em}
+  .ctlRow b{font-family:var(--font-disp);font-weight:400;font-size:15px;color:var(--cream)}
+  .ctlRow.fav .lbl, .ctlRow.fav b{color:var(--gold-hi)}
+
+  .achProgWrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0 0 16px}
+  .achProg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cream);letter-spacing:.04em}
+  .achProg .ic{width:18px;height:18px;color:var(--gold-hi)}
+  .achProg .ic svg{width:100%;height:100%}
+  .achProgBar{width:100%;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+  .achProgFill{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-hi))}
+
+  .achCat{color:var(--muted);font-size:11px;letter-spacing:.14em;margin:16px 4px 8px;
+    display:flex;align-items:center;gap:8px}
+  .achCat::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--cc,var(--muted))}
+
+  /* v80: главная правка — got/not-got теперь РАЗНЫЕ по силе, не «на 5% тусклее».
+     Полученное: иконка в своём цвете, мягкое свечение рамки, лёгкий блеск фона.
+     Неполученное: та же иконка силуэтом (серая, приглушённая), никакого свечения —
+     читается как «ещё не открыто», а не «то же самое, только унылое». */
+  .achIt{position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;margin:6px 0;
+    background:rgba(22,38,56,.5);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .achIt.got{background:rgba(22,38,56,.7);border-color:var(--ac,var(--line-gold));
+    box-shadow:0 0 18px var(--acg,rgba(201,164,92,.18)), inset 0 0 14px rgba(255,255,255,.02)}
+  .achIco{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(8,14,28,.55);border:1.5px solid var(--line)}
+  .achIt.got .achIco{background:radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ac,var(--gold)) 35%, transparent), rgba(8,14,28,.6));
+    border-color:var(--ac,var(--line-gold));box-shadow:0 0 12px var(--acg,rgba(201,164,92,.35))}
+  .achIco svg{width:24px;height:24px}
+  .achIt:not(.got) .achIco svg{color:rgba(125,138,168,.55)}
+  .achIt.got .achIco svg{color:var(--ac,var(--gold-hi))}
+  .achTx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.3}
+  .achTx b{color:var(--ink);font-size:13px;text-transform:none}
+  .achIt:not(.got) .achTx b{color:rgba(244,246,251,.6)}
+  .achTx i{font-style:normal;color:var(--muted);font-size:10.5px;text-transform:none;letter-spacing:.02em}
+  .achBar{display:block;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:5px;overflow:hidden}
+  .achBar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-hi))}
+  .achRw{flex:none;display:flex;align-items:center;gap:3px;color:var(--gold-hi);font-family:var(--font-disp);
+    font-size:14px;text-transform:none}
+  .achRw svg{width:14px;height:14px}
+  .achPr{flex:none;color:var(--cream);font-family:var(--font-disp);font-size:12px;min-width:48px;text-align:right;text-transform:none}
+
+  /* v80: «крупные» вехи — Линия Кармана крупнее, шире, с собственным акцентом (не как остальные) */
+  .achIt.big{padding:16px 16px}
+  .achIt.big .achIco{width:56px;height:56px}
+  .achIt.big .achIco svg{width:30px;height:30px}
+  .achIt.big .achTx b{font-size:15px}
+  .achIt.big .achTx i{font-size:11px}
+
+  .changelog{margin-top:24px;font-size:10px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);
+    padding-top:12px;text-transform:none;letter-spacing:.02em}
+  .changelog b{color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <button class="menuBack" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+  <div class="screenTitle">Достижения</div>
+  <div class="achTabs">
+    <button class="achTab sel">Мои</button>
+    <button class="achTab">Топ</button>
+  </div>
+
+  <div class="subHdr">Статистика</div>
+  <div class="statGrid" id="statGrid"></div>
+
+  <div class="setGrp" id="ctlGrp"><span>Управление</span><span class="setGrpSub" id="ctlSub"></span></div>
+  <div class="ctlPanel" id="ctlPanel"></div>
+
+  <div class="achProgWrap">
+    <span class="achProg"><span class="ic"></span><span id="achProgTxt"></span></span>
+    <div class="achProgBar"><i class="achProgFill" id="achProgFill"></i></div>
+  </div>
+
+  <div id="achList"></div>
+
+  <div class="changelog">
+    <b>v80, переосмысление вида:</b> текст и логика достижений не тронуты (владелец: «на будущее мысль»,
+    контент — отдельная задача). Здесь только внешний вид: своя иконка на каждой плитке статистики и
+    каждом достижении (6 из 8+6 — реальные спрайты игры, не выдуманы), сильная разница получено/не
+    получено (свечение + цветная иконка vs серый силуэт, не «на 5% тусклее»), ряд управления свёрнут
+    и подписан (был голыми числами без подписи), «Линия Кармана» — крупнее и с собственным акцентом
+    как единственная по-настоящему большая веха. Только макет — в игру не добавлено.
+  </div>
+</div>
+
+<script>
+// ---- реальные иконки игры (index.html: symbol id="i-...") — скопированы 1:1, не выдуманы ----
+const ICON={
+  plane:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"/><path d="M11.4 13.6 21 3"/></svg>',
+  ruler:'<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="19.5" r="1.3" fill="#f0c040" stroke="none"/><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" stroke="#9fe8ff"/><path d="M15.3 4.3 19 3.2l-1.1 3.7" stroke="#c9a45c"/></svg>',
+  star4:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4.5a5 5 0 0 1-10 0z"/><path d="M7 5.5H4a3 3 0 0 0 3.2 4.4M17 5.5h3a3 3 0 0 1-3.2 4.4M12 13.5v3.5M8.5 21h7M10 17h4"/></svg>',
+  checkbadge:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="currentColor"/><path d="M7.8 12.3l3 3 5.6-6.2" fill="none" stroke="#0b1626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="12" rx="9" ry="5" stroke="#9fe8ff" stroke-width="1.5" transform="rotate(-25 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="5" stroke="#c9a45c" stroke-width="1.5" transform="rotate(25 12 12)"/><circle cx="12" cy="12" r="3.6" fill="#f0c040" stroke="#0b1626" stroke-width="0.6"/></svg>',
+  keys:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="6" width="19" height="12" rx="2.8"/><path d="M6 10h1.2M9.5 10h1.2M13 10h1.2M16.5 10h1.2M6 13.5h1.2M9.5 13.5h1.2M13 13.5h1.2M16.5 13.5h1.2"/><path d="M8 16.3h8"/></svg>',
+  timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9.5 2.5h5M12 4.5v2"/><circle cx="12" cy="14" r="7.5"/><path d="M12 10.2V14l2.8 2"/></svg>',
+  hand:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 11V5a1.5 1.5 0 0 1 3 0v6M13 11V6a1.5 1.5 0 0 1 3 0v6M16 12v-3.5a1.5 1.5 0 0 1 3 0V14c0 4-2.5 7-6.5 7S6 18 6 15v-2.5L4.3 11a1.4 1.4 0 0 1 2-2L8 10.5"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  // ---- новые: 2 для статистики (комбо/впритык), 4 для достижений — тот же язык (24×24, тонкий обвод) ----
+  combo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17 10 11 14 15 20 7"/><path d="M14 7h6v6"/></svg>',
+  nearmiss:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3v18M18 3v18"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>',
+  karman:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15a10 6 0 0 1 20 0" stroke-dasharray="1 3.2"/><path d="M8 9 16 4"/><path d="M14.5 4.6 16 4l.4 1.6" stroke-linejoin="round"/><circle cx="5" cy="6" r=".9" fill="currentColor" stroke="none"/><circle cx="19" cy="9" r=".7" fill="currentColor" stroke="none"/></svg>',
+  swords:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7.5 7.5M4 4l1.6 5M4 4l5 1.6"/><path d="M20 4l-7.5 7.5M20 4l-1.6 5M20 4l-5 1.6"/><path d="M8 16l3-3M16 16l-3-3"/><path d="M5 19l3-3M19 19l-3-3"/></svg>',
+  palette:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-5 0-8.5 3.7-8.5 8 0 3 2 4.5 4 4.5 1 0 1.3-.6 1.3-1.2 0-.6-.4-1-.4-1.8 0-1 .8-1.8 2-1.8h2.4c2.6 0 5.7-1.8 5.7-5.6 0-3-2.9-2.1-6.5-2.1z"/><circle cx="8" cy="9.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="7.3" r=".9" fill="currentColor" stroke="none"/><circle cx="15.8" cy="9.2" r=".9" fill="currentColor" stroke="none"/></svg>',
+  crown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3.5 18h17l-1.3-8-4 3-3.2-5.5-3.2 5.5-4-3z"/><path d="M3.5 18v1.6h17V18"/></svg>',
+};
+const ic=(name,cls)=>'<span class="ic '+(cls||'')+'">'+(ICON[name]||'')+'</span>';
+
+// ---- реальные значения (Stats.*), взяты из скриншота владельца — для демонстрации вида, не выдуманы ----
+const STATS={games:1065,totalDist:798322,totalStars:9664,bestCombo:31,nearMiss:6228,duelsWon:0,perfectRuns:499,recBeats:47};
+const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+
+const statDefs=[
+  {v:STATS.games, l:'Полётов', i:'plane', c:'#9fb4d8'},
+  {v:STATS.totalDist, l:'Дистанция всего', i:'ruler', c:'#9fe8ff'},
+  {v:STATS.totalStars, l:'Звёзд всего', i:'star4', c:'#f0c040'},
+  {v:'×'+STATS.bestCombo, l:'Лучшее комбо', i:'combo', c:'#8fff9f'},
+  {v:STATS.nearMiss, l:'Впритык', i:'nearmiss', c:'#eef4ff'},
+  {v:STATS.duelsWon, l:'Дуэлей выиграно', i:'trophy', c:'#c58fff'},
+  {v:STATS.perfectRuns, l:'Идеальных забегов', i:'checkbadge', c:'#f0c040'},
+  {v:STATS.recBeats, l:'Рекордов побито', i:'target', c:'#ff9f8f'},
+];
+document.getElementById('statGrid').innerHTML = statDefs.map(s=>
+  '<div class="statCell" style="--sc:'+s.c+'"><span class="scIc">'+(ICON[s.i]||'')+'</span>'+
+  '<span class="scTxt"><b>'+(typeof s.v==='number'?fmtN(s.v):s.v)+'</b><span>'+s.l+'</span></span></div>'
+).join('');
+
+// ---- ряд управления: подписан, свёрнут по умолчанию ----
+const CTL=[
+  {ic:'phone', lbl:'Гироскоп', n:174},
+  {ic:'hand', lbl:'Касание', n:451},
+  {ic:'keys', lbl:'Клавиатура', n:19},
+  {ic:'timer', lbl:'Bullet Time', n:30},
+];
+const fav=CTL.reduce((a,b)=>b.n>a.n?b:a);
+document.getElementById('ctlSub').textContent='Любимое — '+fav.lbl.toLowerCase();
+document.getElementById('ctlPanel').innerHTML = CTL.map(c=>
+  '<div class="ctlRow'+(c===fav?' fav':'')+'">'+ic(c.ic)+'<span class="lbl">'+c.lbl+'</span><b>'+fmtN(c.n)+'</b></div>'
+).join('');
+document.getElementById('ctlGrp').addEventListener('click', ()=>{
+  document.getElementById('ctlGrp').classList.toggle('open');
+  document.getElementById('ctlPanel').classList.toggle('open');
+});
+
+// ---- прогресс ----
+document.querySelector('.achProg .ic').innerHTML = ICON.trophy;
+document.getElementById('achProgTxt').textContent = 'Открыто 5 / 6';
+document.getElementById('achProgFill').style.width = (5/6*100)+'%';
+
+// ---- достижения: реальные тексты/категории из js/ach.js, свои иконки, сильный got/not-got ----
+const CATS=[
+  {id:'cosmos', name:'Космическая шкала', color:'#9fe8ff', items:[
+    {ic:'karman', big:true, got:true, name:'Линия Кармана', desc:'Ты в космосе! Официально.', rw:25},
+  ]},
+  {id:'flight', name:'Полёт', color:'#8fb4ff', items:[
+    {ic:'phone', got:true, name:'Пилот', desc:'Впервые послушался наклона — «Полёт без рук» ожил.', rw:15},
+  ]},
+  {id:'duel', name:'Дуэль', color:'#ff9f8f', items:[
+    {ic:'swords', got:true, name:'Первый вызов', desc:'Бросил другу вызов на Дуэль.', rw:10},
+    {ic:'trophy', got:false, name:'Победитель дуэли', desc:'Побил чужую планку в Дуэли.', rw:20, cur:0, need:1},
+  ]},
+  {id:'hangar', name:'Ангар', color:'#c58fff', items:[
+    {ic:'palette', got:true, name:'Первый скин', desc:'Купил свой первый скин в Ангаре.', rw:10},
+    {ic:'crown', got:false, name:'Вся коллекция', desc:'Собрал все скины Ангара.', rw:400, cur:1, need:9},
+  ]},
+];
+let listHtml='';
+for(const cat of CATS){
+  listHtml+='<div class="achCat" style="--cc:'+cat.color+'">'+cat.name+'</div>';
+  for(const a of cat.items){
+    const side = a.got
+      ? '<span class="achRw">+'+a.rw+ic('star4')+'</span>'
+      : '<span class="achPr">'+(a.cur!=null?a.cur+'/'+a.need:'')+'</span>';
+    const bar = (!a.got && a.need) ? '<span class="achBar"><i style="width:'+Math.round(a.cur/a.need*100)+'%"></i></span>' : '';
+    listHtml += '<div class="achIt'+(a.got?' got':'')+(a.big?' big':'')+'" style="--ac:'+cat.color+';--acg:'+cat.color+'44">'+
+      '<span class="achIco">'+(ICON[a.ic]||'')+'</span>'+
+      '<span class="achTx"><b>'+a.name+'</b><i>'+a.desc+'</i>'+bar+'</span>'+
+      side+'</div>';
+  }
+}
+document.getElementById('achList').innerHTML=listHtml;
+</script>
+</body>
+</html>
