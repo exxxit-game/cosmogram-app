@@ -1613,17 +1613,19 @@ function drawPlane(sh,nowMs){
   ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
   ctx.fillStyle=skin.fold;
   ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
-  if(sh){ // кромки крыльев — хрусткая бумага; блик на носу + огонёк двигателя (v1.37.0: со средней ступени)
+  if(sh){ // кромки крыльев — хрусткая бумага (со средней ступени)
     ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
     ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14); ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.75)';
-    ctx.beginPath(); ctx.ellipse(-3,-12,2.6,5,.25,0,6.283); ctx.fill();
-    ctx.globalAlpha=.6+.4*Math.sin(nowMs/70);
-    ctx.fillStyle=skin.trail+'.95)';
-    const er=fx==='plasma'? 3.4+1.6*Math.sin(nowMs/60) : (uq?3.2:2.6); // у Плазмы — живой огонь; ультра — жарче
-    ctx.beginPath(); ctx.arc(0,11,er,0,6.283); ctx.fill();
-    ctx.globalAlpha=ghostA;
   }
+  /* 31.08.2026: блик-эллипс у носа (владелец обвёл жёлтым: «я думал ранее это какая-то
+     ошибка... он мешает») — убран целиком. Огонёк двигателя владельцу, наоборот,
+     понравился — вынесен из-под if(sh) и включён на всех ступенях, включая дно: один
+     fillStyle+arc, та же дешёвая заливка, что уже была здесь. */
+  ctx.globalAlpha=.6+.4*Math.sin(nowMs/70);
+  ctx.fillStyle=skin.trail+'.95)';
+  const er=fx==='plasma'? 3.4+1.6*Math.sin(nowMs/60) : (uq?3.2:2.6); // у Плазмы — живой огонь; ультра — жарче
+  ctx.beginPath(); ctx.arc(0,11,er,0,6.283); ctx.fill();
+  ctx.globalAlpha=ghostA;
   if(uq){ // ультра: зеркальный блик правого крыла
     ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(2,-18); ctx.lineTo(13,11); ctx.stroke();
