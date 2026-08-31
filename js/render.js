@@ -1052,12 +1052,16 @@ function draw(){
          o.r не меняется нигде — хитбокс столкновения (js/game.js) остаётся честным. */
       const pylonScale = o.breathe ? (1 + (1 - clamp((o.gap-(o.gapMid-o.gapAmp))/(o.gapAmp*2),0,1))*.32) : 1;
       const pr = o.r*pylonScale;
-      if(sh){ // v1.66.0: свечение ворот — широкий полупрозрачный дубль луча + спрайты пилонов вместо shadowBlur
-        ctx.strokeStyle='rgba(159,232,255,.22)'; ctx.lineWidth=6;
-        ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
-        ctx.globalAlpha=.55;
-        for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-pr-6,-pr-6,(pr+6)*2,(pr+6)*2);
-        ctx.globalAlpha=1; }
+      // v1.66.0: свечение ворот — широкий полупрозрачный дубль луча + спрайты пилонов вместо shadowBlur
+      /* 31.08.2026: было под if(sh) — тот же кэш-спрайт powGlow(), что уже бесплатен на всех
+         ступенях у мины/обломка/спутника/кометы/тёмного кратера камня рядом в этом же файле;
+         ворота остались забытым исключением. Ворота — самый частый игровой элемент, включено
+         везде (владелец). */
+      ctx.strokeStyle='rgba(159,232,255,.22)'; ctx.lineWidth=6;
+      ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
+      ctx.globalAlpha=.55;
+      for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-pr-6,-pr-6,(pr+6)*2,(pr+6)*2);
+      ctx.globalAlpha=1;
       if(sh && !o.passed){ // бегущая энергия по лучу (v1.37.0: со средней)
         ctx.setLineDash([7,7]); ctx.lineDashOffset=-nowMs/28;
       }
@@ -1142,10 +1146,12 @@ function draw(){
          (.07→.13, .15→.27, .22→.40), чтобы пик яркости пятна остался тем же, что и у
          плоской заливки раньше — меняется только мягкость края, не заметность. Цвета
          те же нейтральные белый/чёрный, никакой новой смысловой палитры. */
-      if(sh) { ctx.globalAlpha=.13;
-        ctx.drawImage(powGlow('#ffffff'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2); }
-      if(uq) { ctx.globalAlpha=.27;
-        ctx.drawImage(powGlow('#000000'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2); }
+      /* 31.08.2026: были под if(sh)/if(uq) — тот же кэш-спрайт powGlow(), что и darkBig ниже
+         (тот уже без гейта). Включены на всех ступенях — камень был плоским без светлого края. */
+      ctx.globalAlpha=.13;
+      ctx.drawImage(powGlow('#ffffff'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2);
+      ctx.globalAlpha=.27;
+      ctx.drawImage(powGlow('#000000'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2);
       ctx.globalAlpha=.40;
       ctx.drawImage(powGlow('#000000'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
       ctx.globalAlpha=1;
