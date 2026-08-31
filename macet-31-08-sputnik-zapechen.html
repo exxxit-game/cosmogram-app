@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: спутник — испечённый спрайт</title>
+<style>
+  :root{ --bg:#05070f; --card:#0d1120; --line:#232a44; --txt:#dfe6ff; --sub:#8a93b8; --accent:#7fd8ff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:20px 14px 60px}
+  h1{font-size:19px;margin:0 0 4px;text-align:center}
+  .sub{color:var(--sub);font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5}
+  .row{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+  .col{width:230px}
+  .label{text-align:center;font-size:13px;font-weight:700;margin-bottom:8px}
+  .label .tag{display:block;font-weight:400;color:var(--sub);font-size:11px;margin-top:2px}
+  .frame{position:relative;width:230px;height:300px;border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  canvas{display:block;width:100%;height:100%}
+  .zoomRow{display:flex;justify-content:center;gap:14px;margin-top:26px;flex-wrap:wrap}
+  .zoomFrame{width:150px;height:150px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  .zoomLabel{text-align:center;font-size:11.5px;color:var(--sub);margin-top:6px}
+  .note{max-width:720px;margin:26px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.6;color:var(--sub)}
+  .note b{color:var(--txt)}
+</style>
+</head>
+<body>
+
+<h1>Спутник (классика): клоны vs уникальные</h1>
+<p class="sub">Сейчас o.r у спутника всегда=18, без разброса — все спутники одного «лица» пиксель в пиксель одинаковы. Хитбокс (game.js:2268) — простой круг по o.r, не по силуэту, поэтому визуальный джиттер пропорций так же безопасен, как у камня. Сид беру из уже существующих при спавне o.ph/o.amp — новое поле в game.js не нужно.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="label">Как сейчас<span class="tag">5 штук, все идентичны</span></div>
+    <div class="frame"><canvas id="cvNow" width="230" height="300"></canvas></div>
+  </div>
+  <div class="col">
+    <div class="label">Испечённые<span class="tag">только свой оттенок, форма не тронута</span></div>
+    <div class="frame"><canvas id="cvBaked" width="230" height="300"></canvas></div>
+  </div>
+</div>
+
+<div class="zoomRow">
+  <div>
+    <div class="zoomFrame"><canvas id="zNow" width="150" height="150"></canvas></div>
+    <div class="zoomLabel">крупно — как сейчас</div>
+  </div>
+  <div>
+    <div class="zoomFrame"><canvas id="zBaked" width="150" height="150"></canvas></div>
+    <div class="zoomLabel">крупно — испечённый</div>
+  </div>
+</div>
+
+<div class="note">
+  <b>Сид без нового поля:</b> при спавне спутник уже получает случайные <code>o.ph</code>
+  (фаза маячка) и <code>o.amp</code> (амплитуда виляния) — оба нужны игре сами по себе, но
+  заодно годятся как готовый уникальный «отпечаток» объекта. Беру
+  <code>seed = Math.floor(o.ph*100000 + o.amp*37)</code> — детерминировано на весь срок жизни
+  спутника (оба поля не меняются после спавна... проверить перед переносом: o.ph меняется
+  КАЖДЫЙ кадр в update() для анимации виляния! Для сида нужно исходное значение при спавне,
+  не текущее — либо кэшировать сид в o._sk (аналог o._path у камня) при первом рендере, тем
+  же приёмом «если нет — вычислить один раз и запомнить в объекте».
+  <br><br>
+  <b>Что джиттерю:</b> базовые цвета панелей/корпуса (сейчас — голые хекс-строки без единого
+  варианта) + пропорции панелей/корпуса ±12% от текущих чисел. Печётся один раз в маленький
+  спрайт при первом рендере объекта — на кадр как и у камня: один <code>drawImage</code>
+  вместо текущих ~8 вызовов (2-3 панели + корпус + маячок + линза, каждый — минимум fill).
+</div>
+
+<script>
+(function(){
+  function mkRng(seed){ let s=seed>>>0||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function jitterColor(hex, rng, amt){
+    const n=parseInt(hex.slice(1),16), r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    const cl=(c)=>Math.max(0,Math.min(255,Math.round(c+(rng()-.5)*2*amt)));
+    const toHex=(c)=>c.toString(16).padStart(2,'0');
+    return '#'+toHex(cl(r))+toHex(cl(g))+toHex(cl(b));
+  }
+
+  const gradCache={};
+  function satPanelGrad(ctx,qy,qh2,c0,c1,c2){
+    const k='sp'+qy+'_'+qh2+'_'+c0; let g=gradCache[k];
+    if(!g){ g=ctx.createLinearGradient(0,qy,0,qy+qh2);
+      g.addColorStop(0,c0); g.addColorStop(.5,c1); g.addColorStop(1,c2); gradCache[k]=g; }
+    return g;
+  }
+  function satBodyGrad(ctx,qb,c0,c1,c2){
+    const k='sb'+qb+'_'+c0; let g=gradCache[k];
+    if(!g){ g=ctx.createLinearGradient(0,-qb,0,qb);
+      g.addColorStop(0,c0); g.addColorStop(.45,c1); g.addColorStop(1,c2); gradCache[k]=g; }
+    return g;
+  }
+
+  // === КАК СЕЙЧАС: живой drawSat, фиксированные цвета/пропорции, r2 всегда 18 ===
+  function drawSatNow(ctx, r2){
+    const satPanel=(px,py,pw,ph2)=>{
+      ctx.fillStyle=satPanelGrad(ctx,py,ph2,'#4a629a','#33487c','#263a66');
+      rr(ctx,px,py,pw,ph2,2.5); ctx.fill();
+      ctx.strokeStyle='rgba(180,210,250,.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(px+2,py+.5); ctx.lineTo(px+pw-2,py+.5); ctx.stroke();
+    };
+    const satBody=(bw,bh,brad)=>{
+      ctx.fillStyle=satBodyGrad(ctx,bh/2,'#8ea6d8','#6c83b8','#4c5f8e');
+      rr(ctx,-bw/2,-bh/2,bw,bh,brad); ctx.fill();
+      ctx.strokeStyle='rgba(220,235,255,.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-bw/2+3,-bh/2+.5); ctx.lineTo(bw/2-3,-bh/2+.5); ctx.stroke();
+    };
+    const satBeacon=(bx,by)=>{ ctx.fillStyle='#ff8a7a'; ctx.beginPath(); ctx.arc(bx,by,2,0,6.283); ctx.fill(); };
+    const satLens=(lx,ly,lr2)=>{
+      const k='sl'+lr2; let g=gradCache[k];
+      if(!g){ g=ctx.createRadialGradient(lx-2,ly-2,1,lx,ly,lr2||.1);
+        g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec'); gradCache[k]=g; }
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(lx,ly,lr2,0,6.283); ctx.fill();
+    };
+    satPanel(-r2*1.9,-r2*.32,r2*.85,r2*.64); satPanel(r2*1.05,-r2*.32,r2*.85,r2*.64);
+    satBody(r2*1.8,r2*1.1,4); satBeacon(0,-r2*.75); satLens(0,0,r2*.28);
+  }
+  function rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r);
+    x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
+
+  // === ИСПЕЧЁННЫЙ: свой оттенок + пропорции ±12%, один раз в офскрин ===
+  const bakedCache={};
+  function bakeSat(seed, r2){
+    if(bakedCache[seed]) return bakedCache[seed];
+    const R=mkRng(seed);
+    const size=Math.ceil(r2*6.2);
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const x=c.getContext('2d');
+    x.translate(size/2,size/2);
+    /* 31.08.2026, четвёртый заход — владелец прямо попросил не трогать форму вообще («давай
+       не менять форму, просто поднимем качество»): три подряд попытки жонглировать
+       пропорциями (независимые L/R, зазор, угол) каждый раз давали новый визуальный баг —
+       правильный вывод не «починить ещё раз», а перестать трогать то, что не просили.
+       Форма теперь БУКВАЛЬНО те же числа, что в реальном коде игры (r2*1.9, r2*.85 и т.д.,
+       см. render.js) — ни одного джиттера размера/угла/зазора. Разнообразие — только
+       цвет, тем же jitterColor, что и у камня. */
+    const rr2=r2;
+    const panelC0=jitterColor('#4a629a',R,26), panelC1=jitterColor('#33487c',R,22), panelC2=jitterColor('#263a66',R,18);
+    const bodyC0=jitterColor('#8ea6d8',R,26), bodyC1=jitterColor('#6c83b8',R,22), bodyC2=jitterColor('#4c5f8e',R,18);
+    const satPanel=(px,py,pw,ph2)=>{
+      x.fillStyle=satPanelGrad(x,py,ph2,panelC0,panelC1,panelC2);
+      rr(x,px,py,pw,ph2,2.5); x.fill();
+      x.strokeStyle='rgba(180,210,250,.4)'; x.lineWidth=1;
+      x.beginPath(); x.moveTo(px+2,py+.5); x.lineTo(px+pw-2,py+.5); x.stroke();
+    };
+    const satBody=(bw,bh,brad)=>{
+      x.fillStyle=satBodyGrad(x,bh/2,bodyC0,bodyC1,bodyC2);
+      rr(x,-bw/2,-bh/2,bw,bh,brad); x.fill();
+      x.strokeStyle='rgba(220,235,255,.4)'; x.lineWidth=1;
+      x.beginPath(); x.moveTo(-bw/2+3,-bh/2+.5); x.lineTo(bw/2-3,-bh/2+.5); x.stroke();
+    };
+    const satLens=(lx,ly,lr2)=>{
+      const g=x.createRadialGradient(lx-2,ly-2,1,lx,ly,lr2||.1);
+      g.addColorStop(0,'#f4f8ff'); g.addColorStop(1,'#b9c8ec');
+      x.fillStyle=g; x.beginPath(); x.arc(lx,ly,lr2,0,6.283); x.fill();
+    };
+    // те же числа, что в render.js для sk===0 «классика» — форма не джиттерится вовсе
+    satPanel(-rr2*1.9,-rr2*.32,rr2*.85,rr2*.64);
+    satPanel(rr2*1.05,-rr2*.32,rr2*.85,rr2*.64);
+    satBody(rr2*1.8,rr2*1.1,4);
+    satLens(0,0,rr2*.28);
+    bakedCache[seed]={c,size};
+    return bakedCache[seed];
+  }
+  function drawSatBaked(ctx, seed, r2, ph){
+    const {c,size}=bakeSat(seed,r2);
+    ctx.drawImage(c,-size/2,-size/2,size,size);
+    // маячок — единственное, что законно живёт вне спрайта (он мигает по времени)
+    ctx.globalAlpha=.4+.6*Math.abs(Math.sin(ph*2.2));
+    ctx.fillStyle='#ff8a7a'; ctx.beginPath(); ctx.arc(0,-r2*.75,2,0,6.283); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+
+  function bgGradient(ctx,h1,h2,H){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,`hsl(${h1},62%,10%)`); g.addColorStop(.55,`hsl(${h1},58%,16%)`); g.addColorStop(1,`hsl(${h2},70%,26%)`);
+    return g;
+  }
+  function mkStars(n){ const R=mkRng(555); const a=[]; for(let i=0;i<n;i++) a.push({x:R(),y:R(),s:1+R()*1.4,a:.3+R()*.5}); return a; }
+  const stars=mkStars(30);
+  function drawStars(ctx,W,H){ ctx.fillStyle='#cfe0ff'; for(const s of stars){ ctx.globalAlpha=s.a; ctx.fillRect(s.x*W,s.y*H,s.s,s.s); } ctx.globalAlpha=1; }
+
+  const SATS=[
+    {seed:11, x:.24, y:.18}, {seed:42, x:.62, y:.3}, {seed:77, x:.3, y:.5},
+    {seed:19, x:.68, y:.66}, {seed:63, x:.35, y:.82},
+  ];
+
+  function scene(canvasId, baked){
+    const canvas=document.getElementById(canvasId);
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle=bgGradient(ctx,232,200,H); ctx.fillRect(0,0,W,H);
+    drawStars(ctx,W,H);
+    for(const s of SATS){
+      ctx.save(); ctx.translate(s.x*W, s.y*H);
+      baked ? drawSatBaked(ctx, s.seed, 18, s.seed*.7) : drawSatNow(ctx, 18);
+      ctx.restore();
+    }
+  }
+  function zoomScene(canvasId, baked){
+    const canvas=document.getElementById(canvasId);
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle=bgGradient(ctx,232,200,H); ctx.fillRect(0,0,W,H);
+    drawStars(ctx,W,H);
+    ctx.save(); ctx.translate(W/2,H/2);
+    baked ? drawSatBaked(ctx, 42, 30, 30) : drawSatNow(ctx, 30);
+    ctx.restore();
+  }
+
+  scene('cvNow', false);
+  scene('cvBaked', true);
+  zoomScene('zNow', false);
+  zoomScene('zBaked', true);
+})();
+</script>
+</body>
+</html>

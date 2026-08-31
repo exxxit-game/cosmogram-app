@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: обломки — испечённый спрайт</title>
+<style>
+  :root{ --bg:#05070f; --card:#0d1120; --line:#232a44; --txt:#dfe6ff; --sub:#8a93b8; --accent:#7fd8ff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:20px 14px 60px}
+  h1{font-size:19px;margin:0 0 4px;text-align:center}
+  .sub{color:var(--sub);font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5}
+  .row{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+  .col{width:230px}
+  .label{text-align:center;font-size:13px;font-weight:700;margin-bottom:8px}
+  .label .tag{display:block;font-weight:400;color:var(--sub);font-size:11px;margin-top:2px}
+  .frame{position:relative;width:230px;height:330px;border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  canvas{display:block;width:100%;height:100%}
+  .costRow{display:flex;justify-content:center;gap:24px;margin:18px auto 0;max-width:720px;flex-wrap:wrap}
+  .costCard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:12.5px;text-align:center;min-width:170px}
+  .costCard b{display:block;font-size:20px;color:var(--accent);margin-bottom:2px}
+  .note{max-width:720px;margin:18px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.6;color:var(--sub)}
+  .note b{color:var(--txt)}
+</style>
+</head>
+<body>
+
+<h1>Обломки: живая отрисовка vs испечённый спрайт</h1>
+<p class="sub">Без жалоб на вид — уже варьируются размером и 5 «лицами», градиент-тень уже есть. Задача чисто про экономию: то же самое, что уже сделано с камнем/спутником, форма и цвет не меняются НИ НА ЙОТУ — только способ рисования.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="label">Как сейчас<span class="tag">живой fill+stroke каждый кадр</span></div>
+    <div class="frame"><canvas id="cvNow" width="230" height="330"></canvas></div>
+  </div>
+  <div class="col">
+    <div class="label">Испечённые<span class="tag">пиксель в пиксель то же самое</span></div>
+    <div class="frame"><canvas id="cvBaked" width="230" height="330"></canvas></div>
+  </div>
+</div>
+
+<div class="costRow">
+  <div class="costCard"><b>5-9 вызовов/кадр</b>как сейчас, на обломок<br>(зависит от «лица»)</div>
+  <div class="costCard"><b>1 вызов/кадр</b>испечённый<br>(один drawImage)</div>
+</div>
+
+<div class="note">
+  <b>Важно:</b> здесь я не имею права нарисовать «немного иначе» — это не тот случай, что
+  камень/спутник (там был явный повод: «мыло», «клоны»). У обломков повода менять внешний
+  вид нет, значит функция копирует пиксель в пиксель тот же путь отрисовки, что уже есть в
+  <code>render.js</code>, просто один раз в офскрин вместо каждого кадра.
+</div>
+
+<script>
+(function(){
+  function mkRng(seed){ let s=seed>>>0||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r);
+    x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
+  const powGlowCache={};
+  function powGlow(color){
+    if(!powGlowCache[color]){
+      const c=document.createElement('canvas'); c.width=c.height=56;
+      const x=c.getContext('2d');
+      const g=x.createRadialGradient(28,28,2,28,28,28);
+      const n=parseInt(color.slice(1),16), r=(n>>16)&255,gg=(n>>8)&255,b=n&255;
+      g.addColorStop(0,'rgba('+r+','+gg+','+b+',.55)'); g.addColorStop(1,'rgba('+r+','+gg+','+b+',0)');
+      x.fillStyle=g; x.fillRect(0,0,56,56);
+      powGlowCache[color]=c;
+    }
+    return powGlowCache[color];
+  }
+  const gradCache={};
+  function debrisGrad(ctx,qh,sk3){
+    const k='dbr'+qh+(sk3?'a':'b'); let mg=gradCache[k];
+    if(!mg){ mg=ctx.createLinearGradient(0,-qh,0,qh);
+      mg.addColorStop(0,sk3?'#d2dbeb':'#cdd7ea'); mg.addColorStop(.4,sk3?'#aeb9d0':'#a9b6cf'); mg.addColorStop(1,'#7e8ba4');
+      gradCache[k]=mg; }
+    return mg;
+  }
+
+  // === ровно тот же путь отрисовки, что и в render.js (obstacles, kind==='debris') ===
+  function drawDebris(ctx, o){
+    const sk=o.skin||0, hw=o.w/2, hh=o.h/2;
+    ctx.globalAlpha=.4; ctx.drawImage(powGlow('#aebbd2'),-hw-9,-hh-9,o.w+18,o.h+18); ctx.globalAlpha=1;
+    const qh=Math.round(hh*4)/4;
+    ctx.fillStyle=debrisGrad(ctx,qh,sk===3);
+    if(sk===1){
+      ctx.save(); ctx.rotate(.14); rr(ctx,-hw,-hh,hw+1,o.h,3); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.rotate(-.14); rr(ctx,-1,-hh,hw+1,o.h,3); ctx.fill(); ctx.restore();
+      ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1.1;
+      ctx.beginPath(); ctx.moveTo(-hw+4,-hh+2); ctx.lineTo(-2,-hh-1);
+      ctx.moveTo(2,-hh-1); ctx.lineTo(hw-4,-hh+2); ctx.stroke();
+      ctx.fillStyle='rgba(20,28,52,.3)';
+      ctx.beginPath(); ctx.arc(-o.w*.26,2,1.1,0,6.283); ctx.arc(o.w*.26,2,1.1,0,6.283); ctx.fill();
+    } else if(sk===2){
+      rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
+      ctx.strokeStyle='#9fabca'; ctx.lineWidth=2.4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(8,-hh+2); ctx.stroke();
+      ctx.fillStyle='#d8e0ee'; ctx.beginPath(); ctx.arc(9,-hh+1.5,2,0,6.283); ctx.fill();
+    } else if(sk===3){
+      rr(ctx,-hw,-hh,o.w,o.h,hh); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(-hw+8,-hh+2); ctx.lineTo(hw-8,-hh+2); ctx.stroke();
+      ctx.strokeStyle='rgba(20,28,52,.3)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-10,-hh+2); ctx.lineTo(-10,hh-2);
+      ctx.moveTo(10,-hh+2); ctx.lineTo(10,hh-2); ctx.stroke();
+      ctx.drawImage(powGlow('#ffe2b0'),hw-14,-5,10,10);
+      ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-9,0,1.4,0,6.283); ctx.fill();
+    } else if(sk===4){
+      rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
+      const lr=Math.min(hh,hw)*.62;
+      const lg=ctx.createRadialGradient(-lr*.3,-lr*.3,lr*.1,0,0,lr);
+      lg.addColorStop(0,'#eef2fa'); lg.addColorStop(1,'#8b98b5');
+      ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.fill();
+      ctx.strokeStyle='rgba(20,28,52,.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(0,0,lr,0,6.283); ctx.stroke();
+    } else {
+      rr(ctx,-hw,-hh,o.w,o.h,3.5); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(-hw+4,-hh+1); ctx.lineTo(hw-4,-hh+1); ctx.stroke();
+      ctx.strokeStyle='rgba(20,28,52,.28)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(-hw+3,2); ctx.lineTo(hw-3,2); ctx.stroke();
+      ctx.fillStyle='rgba(20,28,52,.35)';
+      for(const px of [-hw+8,-8,8,hw-8]){ ctx.beginPath(); ctx.arc(px,-3,1.1,0,6.283); ctx.fill(); }
+      ctx.drawImage(powGlow('#ffe2b0'),hw-12,-8,12,12);
+      ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-6,-2,1.5,0,6.283); ctx.fill();
+    }
+  }
+
+  const bakedCache={};
+  function bakeDebris(o){
+    const key=o.skin+'_'+o.w+'_'+o.h;
+    if(bakedCache[key]) return bakedCache[key];
+    const pad=14, size=Math.ceil(Math.max(o.w,o.h)*1.3+pad*2);
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const x=c.getContext('2d');
+    x.translate(size/2,size/2);
+    drawDebris(x,o);
+    bakedCache[key]={c,size};
+    return bakedCache[key];
+  }
+  function drawDebrisBaked(ctx,o){
+    const {c,size}=bakeDebris(o);
+    ctx.drawImage(c,-size/2,-size/2,size,size);
+  }
+
+  function bgGradient(ctx,h1,h2,H){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,`hsl(${h1},62%,10%)`); g.addColorStop(.55,`hsl(${h1},58%,16%)`); g.addColorStop(1,`hsl(${h2},70%,26%)`);
+    return g;
+  }
+  function mkStars(n){ const R=mkRng(555); const a=[]; for(let i=0;i<n;i++) a.push({x:R(),y:R(),s:1+R()*1.4,a:.3+R()*.5}); return a; }
+  const stars=mkStars(35);
+  function drawStars(ctx,W,H){ ctx.fillStyle='#cfe0ff'; for(const s of stars){ ctx.globalAlpha=s.a; ctx.fillRect(s.x*W,s.y*H,s.s,s.s); } ctx.globalAlpha=1; }
+
+  const OBJS=[
+    {skin:0, w:38, h:12, x:.26, y:.14, rot:.1},
+    {skin:1, w:40, h:11, x:.66, y:.28, rot:-.2},
+    {skin:2, w:34, h:10, x:.28, y:.46, rot:.3},
+    {skin:3, w:30, h:13, x:.68, y:.62, rot:-.1},
+    {skin:4, w:32, h:12, x:.32, y:.78, rot:.15},
+    {skin:0, w:26, h:9,  x:.7,  y:.92, rot:.4},
+  ];
+
+  function scene(canvasId, baked){
+    const canvas=document.getElementById(canvasId);
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle=bgGradient(ctx,232,200,H); ctx.fillRect(0,0,W,H);
+    drawStars(ctx,W,H);
+    for(const o of OBJS){
+      ctx.save(); ctx.translate(o.x*W, o.y*H); ctx.rotate(o.rot);
+      baked ? drawDebrisBaked(ctx,o) : drawDebris(ctx,o);
+      ctx.restore();
+    }
+  }
+  scene('cvNow', false);
+  scene('cvBaked', true);
+})();
+</script>
+</body>
+</html>

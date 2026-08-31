@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: астероид — испечённый спрайт</title>
+<style>
+  :root{ --bg:#05070f; --card:#0d1120; --line:#232a44; --txt:#dfe6ff; --sub:#8a93b8; --accent:#7fd8ff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:20px 14px 60px}
+  h1{font-size:19px;margin:0 0 4px;text-align:center}
+  .sub{color:var(--sub);font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5}
+  .row{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+  .col{width:230px}
+  .label{text-align:center;font-size:13px;font-weight:700;margin-bottom:8px}
+  .label .tag{display:block;font-weight:400;color:var(--sub);font-size:11px;margin-top:2px}
+  .frame{position:relative;width:230px;height:330px;border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  canvas{display:block;width:100%;height:100%}
+  .zoomRow{display:flex;justify-content:center;gap:14px;margin-top:26px;flex-wrap:wrap}
+  .zoomFrame{width:170px;height:170px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+  .zoomLabel{text-align:center;font-size:11.5px;color:var(--sub);margin-top:6px}
+  .note{max-width:720px;margin:26px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.6;color:var(--sub)}
+  .note b{color:var(--txt)}
+  .costRow{display:flex;justify-content:center;gap:24px;margin:18px auto 0;max-width:720px;flex-wrap:wrap}
+  .costCard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:12.5px;text-align:center;min-width:170px}
+  .costCard b{display:block;font-size:20px;color:var(--accent);margin-bottom:2px}
+</style>
+</head>
+<body>
+
+<h1>Астероид: испечённый в спрайт</h1>
+<p class="sub">Гранёная база (low-poly flat shading, тон каждой грани по углу к свету) + зерно поверх + те же 3 кратера — всё испечено ОДИН раз в маленький кэш-спрайт при появлении камня, дальше один drawImage на кадр.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="label">Как сейчас<span class="tag">живой fill+clip каждый кадр</span></div>
+    <div class="frame"><canvas id="cvNow" width="230" height="330"></canvas></div>
+  </div>
+  <div class="col">
+    <div class="label">Испечённый<span class="tag">грани + зерно, один спрайт</span></div>
+    <div class="frame"><canvas id="cvBaked" width="230" height="330"></canvas></div>
+  </div>
+</div>
+
+<div class="costRow">
+  <div class="costCard"><b>~4 вызова/кадр</b>как сейчас, на камень<br>(1 fill + до 3 drawImage)</div>
+  <div class="costCard"><b>1 вызов/кадр</b>испечённый<br>(один drawImage, форма любой сложности)</div>
+</div>
+
+<div class="zoomRow">
+  <div>
+    <div class="zoomFrame"><canvas id="zNow" width="170" height="170"></canvas></div>
+    <div class="zoomLabel">крупно — как сейчас</div>
+  </div>
+  <div>
+    <div class="zoomFrame"><canvas id="zBaked" width="170" height="170"></canvas></div>
+    <div class="zoomLabel">крупно — испечённый</div>
+  </div>
+</div>
+
+<div class="note">
+  <b>Как считается грань:</b> тот же контур (<code>o.verts</code>), но не один сплошной fill —
+  раскладка на треугольники от центра к каждой паре соседних вершин, тон треугольника — база
+  светлее/темнее по тому, куда «смотрит» его грань относительно фиксированного света
+  (верхний левый угол). Зерно — та же техника точек, что уже красит спрайт туманности в этом
+  файле (<code>nebulaSprite</code>), только по силуэту камня. Кратеры — как есть.
+  <br><br>
+  <b>Почему дешевле, а не дороже:</b> вся эта сборка (грани+зерно+кратеры) происходит ОДИН раз
+  при спавне камня, в свой маленький офскрин-канвас — ровно тот же приём, что уже используют
+  <code>starGlow</code>/<code>nebulaSprite</code>/<code>powGlow</code>/<code>vignetteSprite</code>
+  в этом файле. На каждый кадр после этого — один <code>drawImage</code>, вместо текущих
+  fill+clip+несколько drawImage. Дешевле именно потому, что сложность спрайта эту цену
+  не увеличивает — граней может быть 7 или 20, кадру всё равно.
+  <br><br>
+  <b>Что важно не забыть при переносе в реальный код (не в этом макете):</b> спрайт нужно печь
+  в реальных пикселях холста (DPR×SC), тем же приёмом, что уже применён к
+  <code>vignetteSprite()</code> — иначе на широком экране/планшете камень замылится, ровно та
+  же болезнь, что уже один раз ловили на виньетке.
+</div>
+
+<script>
+(function(){
+  function mkRng(seed){ let s=seed>>>0||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  const powGlowCache={};
+  function powGlow(colorPrefix){
+    if(!powGlowCache[colorPrefix]){
+      const c=document.createElement('canvas'); c.width=c.height=56;
+      const x=c.getContext('2d');
+      const g=x.createRadialGradient(28,28,2,28,28,28);
+      g.addColorStop(0,colorPrefix+'.55)'); g.addColorStop(1,colorPrefix+'0)');
+      x.fillStyle=g; x.fillRect(0,0,56,56);
+      powGlowCache[colorPrefix]=c;
+    }
+    return powGlowCache[colorPrefix];
+  }
+  function mkRock(seed, r, tint){
+    const R=mkRng(seed);
+    const n=7;
+    const verts=[];
+    for(let i=0;i<n;i++) verts.push({ a: (i/n)*6.283 + (R()-.5)*.35, r: .7+R()*.45 });
+    const path=new Path2D();
+    verts.forEach((v,i)=>{ const x=Math.cos(v.a)*v.r*r, y=Math.sin(v.a)*v.r*r; i?path.lineTo(x,y):path.moveTo(x,y); });
+    path.closePath();
+    let minVertR=verts[0].r; for(const v of verts) if(v.r<minVertR) minVertR=v.r;
+    const blikR=r*minVertR*.85;
+    const mkSpot=(rMin,rMax)=>{ const rr=(rMin+R()*(rMax-rMin))*r; const budget=Math.max(0,blikR-rr), d=R()*budget, a=R()*6.283;
+      return { x:Math.cos(a)*d, y:Math.sin(a)*d, r:rr }; };
+    return { r, tint, path, verts, seed,
+      decor:{ light:mkSpot(.15,.24), darkSmall:mkSpot(.12,.18), darkBig:mkSpot(.24,.34) } };
+  }
+  function mixC(hex,k,towards){ // towards: 255=к белому, 0=к чёрному
+    const n=parseInt(hex.slice(1),16), r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    const mix=(c)=>Math.round(c+(towards-c)*k);
+    return 'rgb('+mix(r)+','+mix(g)+','+mix(b)+')';
+  }
+  function jitterColor(hex, rng, amt){ // свой оттенок на камень — тот же «тип» палитры перестаёт быть одним пикселем
+    const n=parseInt(hex.slice(1),16), r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    const cl=(c)=>Math.max(0,Math.min(255,Math.round(c+(rng()-.5)*2*amt)));
+    const toHex=(c)=>c.toString(16).padStart(2,'0');
+    return '#'+toHex(cl(r))+toHex(cl(g))+toHex(cl(b));
+  }
+
+  // === КАК СЕЙЧАС: плоская заливка + кратеры, живьём каждый кадр ===
+  function drawRockNow(ctx, rock){
+    ctx.save();
+    ctx.fillStyle=rock.tint;
+    ctx.fill(rock.path);
+    ctx.save(); ctx.clip(rock.path);
+    const dc=rock.decor;
+    ctx.globalAlpha=.13; ctx.drawImage(powGlow('rgba(255,255,255,'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2);
+    ctx.globalAlpha=.27; ctx.drawImage(powGlow('rgba(0,0,0,'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2);
+    ctx.globalAlpha=.40; ctx.drawImage(powGlow('rgba(0,0,0,'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
+    ctx.globalAlpha=1;
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // === ИСПЕЧЁННЫЙ: грани + зерно + кратеры, один раз в офскрин, дальше drawImage ===
+  const bakedCache={};
+  function bakeRock(rock){
+    if(bakedCache[rock.seed]) return bakedCache[rock.seed];
+    /* 31.08.2026, четвёртый заход (владелец: «больше форм, изгибов»): проверил game.js:2268 —
+       столкновение считается простым кругом по o.r, полигон-силуэт чисто декоративный. Значит
+       можно вытянуть/сплющить силуэт визуально (ctx.scale) без малейшего риска для игры —
+       на кадр это не добавляет ни одного вызова (тот же один drawImage готового спрайта),
+       только вход в печку меняется. Запас канваса увеличен под макс. растяжение (1.22x). */
+    const SR=mkRng(rock.seed*29+11);
+    const stretchX=.84+SR()*.38, stretchY=.84+SR()*.38; // 0.84-1.22 по каждой оси независимо
+    const pad=8, size=Math.ceil(rock.r*2*1.25+pad*2);
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const x=c.getContext('2d');
+    x.translate(size/2,size/2);
+    x.scale(stretchX,stretchY);
+    /* 31.08.2026 (владелец, дважды по фото макета): 1) один угол света на все камни — чинил
+       рандомизацией; 2) «углы по середине всё так же сходятся одинаково» — это глубже, чем
+       свет: веер от ЦЕНТРА сам по себе даёт «кристалл вокруг сердцевины» на любом камне,
+       откуда свет ни свети. Настоящий скол камня так не выглядит. Смена схемы: веер не от
+       центра, а от ОДНОЙ ИЗ ВЕРШИН контура (натуральное раскалывание расходится от края, не
+       от воображаемого центра внутри), сама вершина-«зачинщик» — своя на каждый камень
+       (сид). Тот же класс лекарства, что уже был у «штампа» кратеров 26.08 — рандомизация,
+       не новый параметр из воздуха. Печётся один раз, цена та же. */
+    const LR=mkRng(rock.seed*13+5);
+    /* 31.08.2026, третий заход (владелец: «куда интереснее, сможешь ещё уникальнее, без
+       потерь для игры»): контур/хитбокс НЕ трогаю (тот же o._path, что кладёт кратеры и
+       зерно) — разнообразие только в раскраске, той же ценой (печётся один раз):
+       1) собственный сдвиг цвета на камень (jitterColor) — даже одинаковый «тип» камня
+          (5 палитр в реальном коде) перестаёт быть буквально одним и тем же пикселем;
+       2) грани сгруппированы в зоны по 1-3 (свои на камень) — один камень несколько
+          крупных плоскостей, другой мелко колотый, силуэт при этом всегда честный,
+          собран из тех же исходных рёбер, зоны просто красятся в один тон;
+       3) сила выветренности (амплитуда шума грани) — своя на камень, не общая константа. */
+    const tint=jitterColor(rock.tint, LR, 14);
+    const weather=.06+LR()*.16;
+    const lightAng=LR()*6.283;
+    const lightDir={x:Math.cos(lightAng), y:Math.sin(lightAng)};
+    const n=rock.verts.length;
+    const apexI=Math.floor(LR()*n); // вершина-зачинщик скола — своя на каждый камень
+    const apexV=rock.verts[apexI];
+    const ax=Math.cos(apexV.a)*apexV.r*rock.r, ay=Math.sin(apexV.a)*apexV.r*rock.r;
+    let zoneLeft=0, zoneTone=null;
+    for(let k=1;k<n-1;k++){ // веер от вершины apexI ко всем остальным вершинам по кругу
+      const i0=(apexI+k)%n, i1=(apexI+k+1)%n;
+      const v0=rock.verts[i0], v1=rock.verts[i1];
+      const x0=Math.cos(v0.a)*v0.r*rock.r, y0=Math.sin(v0.a)*v0.r*rock.r;
+      const x1=Math.cos(v1.a)*v1.r*rock.r, y1=Math.sin(v1.a)*v1.r*rock.r;
+      if(zoneLeft<=0){ // новая зона граней одного тона — 1-3 подряд, решает сид камня
+        zoneLeft=1+Math.floor(LR()*3);
+        const cx=(ax+x0+x1)/3, cy=(ay+y0+y1)/3;
+        const cl=Math.hypot(cx,cy)||1;
+        const facing=(cx/cl)*lightDir.x+(cy/cl)*lightDir.y; // -1..1
+        const jitter=(LR()-.5)*weather;
+        const facingJ=Math.max(-1,Math.min(1,facing+jitter));
+        zoneTone = facingJ>0 ? mixC(tint, facingJ*.32, 255) : mixC(tint, -facingJ*.36, 0);
+      }
+      zoneLeft--;
+      x.fillStyle=zoneTone;
+      x.beginPath(); x.moveTo(ax,ay); x.lineTo(x0,y0); x.lineTo(x1,y1); x.closePath(); x.fill();
+    }
+    // зерно поверх граней — та же техника, что и в nebulaSprite/starDot этого файла
+    x.save(); x.clip(rock.path);
+    const R=mkRng(rock.seed*7+3);
+    for(let i=0;i<70;i++){
+      const gx=(R()-.5)*rock.r*2.1, gy=(R()-.5)*rock.r*2.1;
+      x.globalAlpha=.05+R()*.10;
+      x.fillStyle=R()<.5?'#000000':'#ffffff';
+      const sz=.6+R()*1.3;
+      x.fillRect(gx,gy,sz,sz);
+    }
+    x.globalAlpha=1;
+    // кратеры — как есть
+    const dc=rock.decor;
+    x.globalAlpha=.13; x.drawImage(powGlow('rgba(255,255,255,'), dc.light.x-dc.light.r, dc.light.y-dc.light.r, dc.light.r*2, dc.light.r*2);
+    x.globalAlpha=.27; x.drawImage(powGlow('rgba(0,0,0,'), dc.darkSmall.x-dc.darkSmall.r, dc.darkSmall.y-dc.darkSmall.r, dc.darkSmall.r*2, dc.darkSmall.r*2);
+    x.globalAlpha=.40; x.drawImage(powGlow('rgba(0,0,0,'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
+    x.globalAlpha=1;
+    x.restore();
+    bakedCache[rock.seed]={c,size};
+    return bakedCache[rock.seed];
+  }
+  function drawRockBaked(ctx, rock){
+    const {c,size}=bakeRock(rock);
+    ctx.drawImage(c, -size/2, -size/2, size, size);
+  }
+
+  function bgGradient(ctx,h1,h2,H){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,`hsl(${h1},62%,10%)`); g.addColorStop(.55,`hsl(${h1},58%,16%)`); g.addColorStop(1,`hsl(${h2},70%,26%)`);
+    return g;
+  }
+  function mkStars(n){ const R=mkRng(555); const a=[]; for(let i=0;i<n;i++) a.push({x:R(),y:R(),s:1+R()*1.4,a:.3+R()*.5}); return a; }
+  const stars=mkStars(40);
+  function drawStars(ctx,W,H){ ctx.fillStyle='#cfe0ff'; for(const s of stars){ ctx.globalAlpha=s.a; ctx.fillRect(s.x*W,s.y*H,s.s,s.s); } ctx.globalAlpha=1; }
+
+  const ROCKS=[
+    {seed:11, r:30, tint:'#8a7360', x:.24, y:.16},
+    {seed:42, r:40, tint:'#786a5c', x:.66, y:.32},
+    {seed:77, r:24, tint:'#7d6f8f', x:.24, y:.5},
+    {seed:19, r:34, tint:'#6b7484', x:.68, y:.64},
+    {seed:63, r:22, tint:'#75688c', x:.3, y:.82},
+  ];
+
+  function scene(canvasId, baked){
+    const canvas=document.getElementById(canvasId);
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle=bgGradient(ctx,232,200,H); ctx.fillRect(0,0,W,H);
+    drawStars(ctx,W,H);
+    for(const spec of ROCKS){
+      const rock=mkRock(spec.seed, spec.r, spec.tint);
+      ctx.save(); ctx.translate(spec.x*W, spec.y*H);
+      baked ? drawRockBaked(ctx, rock) : drawRockNow(ctx, rock);
+      ctx.restore();
+    }
+  }
+  function zoomScene(canvasId, baked){
+    const canvas=document.getElementById(canvasId);
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle=bgGradient(ctx,232,200,H); ctx.fillRect(0,0,W,H);
+    drawStars(ctx,W,H);
+    const rock=mkRock(42, 62, '#786a5c');
+    ctx.save(); ctx.translate(W/2,H/2);
+    baked ? drawRockBaked(ctx, rock) : drawRockNow(ctx, rock);
+    ctx.restore();
+  }
+
+  scene('cvNow', false);
+  scene('cvBaked', true);
+  zoomScene('zNow', false);
+  zoomScene('zBaked', true);
+})();
+</script>
+</body>
+</html>
