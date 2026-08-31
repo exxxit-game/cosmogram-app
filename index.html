@@ -454,7 +454,17 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    исходную колонку: пауза над звёздами, как было. v1.101.0: пауза над звёздами, одной осью
    под «Назад»; v1.102.0: призрак залегает в мёртвую зону родной пилюли (её тапы ловит сам
    Telegram), звёзды поднимаются вплотную под «Назад» — счётчик больше не висит в пустом небе. */
-#pausePack { display:flex; flex-direction:column; align-items:center; gap:8px; margin-left:20px; margin-top:-26px; pointer-events:none; }
+/* 31.08.2026 (владелец, живое устройство): столбик (пауза над звёздами) прятал звёзды под
+   пилюлю Telegram, когда наша пауза гаснет. Пробовали перенести к жизням — владелец: справа
+   стало тесно, слева пусто. Теперь ряд — та же самая раскладка, что уже используется у этого
+   же блока в альбомной ориентации ниже (#pausePack landscape, flex-direction:row) — не новый
+   приём, тот же самый, что уже проверен для другого выреза экрана. */
+/* 31.08.2026 (владелец): пробовали общий стеклянный фон-рамку вокруг паузы и звёзд —
+   «кнопка в кнопке, бред», убрано. Пауза и звёзды остаются на тех же безопасных местах
+   (пауза — точка Telegram-пилюли; звёзды — 24px вниз, проверено на устройстве), просто без
+   рамки — разрыв между ними пока пустой, владелец сам придумает, чем его занять позже. */
+#pausePack { display:flex; flex-direction:column; align-items:flex-start; gap:18px;
+  margin-left:20px; margin-top:-26px; pointer-events:none; }
 #pauseBtn { width:32px; height:32px; border-radius:50%; flex:none; /* v1.101.0: прибор кабины — своё стекло, своё кольцо; 28.08.2026: было 42px — владелец, «большая очень» рядом со звёздами (17px) и жизнями (24px) */
   background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
@@ -1266,6 +1276,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #livesCanvas.hit { animation:lifeHit .28s ease-out; }
 @keyframes lifeHit { 0%{transform:translateX(0);opacity:1} 20%{transform:translateX(-2px);opacity:.45}
   45%{transform:translateX(2px)} 70%{transform:translateX(-1px);opacity:.8} 100%{transform:translateX(0);opacity:1} }
+/* 31.08.2026 (владелец): каждый пройденный километр — цифра расстояния на секунду вспыхивает
+   золотым (--gold-hi, «числа, рекорды» — тот же цвет, что и у счёта/рекордов) и гаснет обратно
+   в свой обычный синий (#distHud b). Тот же приём и тот же класс правок, что #score.pop выше. */
+#distN.milestone { animation:distMilestone 1s ease-out; }
+@keyframes distMilestone { 0%{color:var(--gold-hi)} 100%{color:#bcd2ff} }
 /* Склейка Game Over: итоги не рывком — мягко поднимаются из темноты за .45с */
 #gameOverScreen:not(.hidden) { animation:overIn .45s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes overIn { from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none} }
@@ -1367,9 +1382,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.477.74"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.477.74"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.477.74"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.477.75"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.477.75"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.477.75"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1429,6 +1444,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 </div>
 
 <div id="topHud" class="hidden">
+  <!-- 31.08.2026 (владелец, живое устройство): пауза и звёзды снова в одном столбике (были
+       разъединены — владелец: «далеко», выглядело как два случайных предмета). Зазор между
+       ними (18px) подобран так, чтобы звёзды остались на той же проверенной глубине (24px от
+       верха HUD, core.js:822), что и раньше — расстояние не поменялось. Пробовали общий
+       стеклянный фон-рамку вокруг обеих — «кнопка в кнопке, бред», убрано, разрыв пока пустой. -->
   <div id="pausePack">
     <div id="pauseBtn" role="button" tabindex="0"><svg class="ic" aria-hidden="true"><use href="#i-pause"></use></svg></div>
     <span id="starsTelem"><canvas id="starJewel" class="i-pl" width="32" height="32" aria-hidden="true"></canvas> <b id="pillStarsN">0</b></span>
@@ -1867,24 +1887,24 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.477.74" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.477.74"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.477.74"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.477.74"></script>
-<script defer src="js/game.js?v=1.477.74" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.477.74"></script>
-<script defer src="js/sync.js?v=1.477.74"></script>
-<script defer src="js/render.js?v=1.477.74"></script>
-<script defer src="js/planetarium.js?v=1.477.74"></script>
-<script defer src="js/goldstar.js?v=1.477.74"></script>
-<script defer src="js/music.js?v=1.477.74"></script>
-<script defer src="js/gyro.js?v=1.477.74"></script>
-<script defer src="js/forge.js?v=1.477.74"></script>
-<script defer src="js/adaptive.js?v=1.477.74"></script>
-<script defer src="js/card.js?v=1.477.74"></script>
-<script defer src="js/star.js?v=1.477.74"></script>
-<script defer src="js/cinema.js?v=1.477.74"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.477.74"></script>
+<script defer src="js/core.js?v=1.477.75" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.477.75"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.477.75"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.477.75"></script>
+<script defer src="js/game.js?v=1.477.75" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.477.75"></script>
+<script defer src="js/sync.js?v=1.477.75"></script>
+<script defer src="js/render.js?v=1.477.75"></script>
+<script defer src="js/planetarium.js?v=1.477.75"></script>
+<script defer src="js/goldstar.js?v=1.477.75"></script>
+<script defer src="js/music.js?v=1.477.75"></script>
+<script defer src="js/gyro.js?v=1.477.75"></script>
+<script defer src="js/forge.js?v=1.477.75"></script>
+<script defer src="js/adaptive.js?v=1.477.75"></script>
+<script defer src="js/card.js?v=1.477.75"></script>
+<script defer src="js/star.js?v=1.477.75"></script>
+<script defer src="js/cinema.js?v=1.477.75"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.477.75"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

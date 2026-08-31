@@ -1498,6 +1498,7 @@ const plane = { x:0, y:0, vx:0, vy:0, bank:0, r:16 };
 let obstacles=[], stars=[], powerups=[], particles=[], bgStars=[], popups=[];
 let spawnT=0, starT=0, powT=0;
 let lastScoreShown=-1, lastDistShown=-1; // чтобы не писать в DOM без изменений
+let lastDistKm=0; // v1.77.0: золотая вспышка цифры расстояния на каждом пройденном километре
 
 /* ---------- Профиль игрока: счётчики для статистики и достижений (модуль ach.js) ---------- */
 let Stats = {games:0,deaths:0,totalStars:0,nearMiss:0,
@@ -1836,12 +1837,18 @@ function smoothStep(){
   else S.smooth=clamp(S.smooth+(jerk<0?.0012:.0025), .5, 1); // 22.08.2026: рост замедлен вдвое (было .002/.004) — индикатор реагирует на обычное пилотирование, не только на грубые ошибки
 }
 let lastSmoothShown=-1;
+let smoothWasPerfect=true; // v1.77.0 (владелец): старт полёта S.smooth=1 — это не заслуга игрока,
+  // попап должен праздновать ВОЗВРАЩЕНИЕ к идеалу после рывка, не сам факт старта с потолка
 function updateSmoothHud(){
   const v=Math.round(S.smooth*100);
   if (v===lastSmoothShown) return; lastSmoothShown=v;
   const el=elSmoothFill; if(!el) return;
   el.style.transform='scaleX('+Math.max(0,(S.smooth-.5)*2)+')'; // v1.66.0: compositor-only
   el.style.background = S.smooth>.92?'#8fff9f':S.smooth>.75?'#ffd76a':'#ff9f8f'; // 22.08.2026: пороги сужены (было .85/.65) — «пустая механика» больше не пустая
+  // v1.77.0 (владелец, 31.08.2026): «Плавность» есть, но невидима в моменте — реюзаем готовый
+  // showPopup(), тот же приём, что у «Впритык»/«Ворота» — не новый визуальный язык.
+  if (v>=99){ if(!smoothWasPerfect){ smoothWasPerfect=true; showPopup(L.smoothPerfect, plane.x, plane.y-40, '#8fff9f'); } }
+  else smoothWasPerfect=false;
 }
 
 /* ---------- Личный призрак: запись траектории рекордного забега ---------- */
@@ -2364,6 +2371,9 @@ function update(dt){
   if(sc!==lastScoreShown){ lastScoreShown=sc; elScore.textContent=sc; }
   const d5=Math.floor(S.dist/5); // расстояние в HUD: живой счётчик, шаг 5 м — без DOM-флуда
   if(d5!==lastDistShown){ lastDistShown=d5; elDistN.textContent=d5*5; }
+  const distKm=Math.floor(S.dist/1000); // v1.77.0 (владелец): золотая вспышка на каждом км — тот же приём, что у #score.pop/#livesCanvas.hit
+  if(distKm>lastDistKm){ lastDistKm=distKm;
+    elDistN.classList.remove('milestone'); void elDistN.offsetWidth; elDistN.classList.add('milestone'); }
   if (S.mode==='speedrun'){ // Спидран: таймер + цель; 10 000 — финиш (v1.42.0)
     const elMH=elModeHud, tSec=Math.floor(S.time*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec;
