@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Макет — Свой фон (цвет неба свободно, градиент, густота, галерея)</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-btn:14px; --r-card:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);
+    font-weight:500;letter-spacing:.05em;text-transform:uppercase;font-variant-numeric:tabular-nums;
+    display:flex;justify-content:center;padding:20px 12px;overflow-x:hidden}
+  .phone{width:380px}
+
+  .kzTitle{font-size:20px;letter-spacing:.08em;margin:4px 0 4px;text-align:center;color:var(--cream)}
+  .kzSub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px;letter-spacing:.05em;text-transform:none}
+
+  /* ---------- настоящие классы игры (index.html:974-1031) ---------- */
+  #forgePreview{width:100%;height:140px;border-radius:14px;border:1px solid rgba(140,170,255,.18);
+    display:block;margin-bottom:14px;background:#0b1626}
+  .forgeLblBlk{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px;text-transform:uppercase}
+  .forgeRow{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:4px}
+  .forgeLbl{font-size:12px;color:var(--muted);flex:none;width:74px;text-align:left}
+  .forgeVal{flex:none;width:34px;text-align:right;font-size:13px;color:#bcd2ff}
+  .forgeRow input[type=range]{flex:1;accent-color:#8ab4ff;height:22px}
+  .swatch{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+
+  .setGrp{width:100%;margin:14px 0 0;padding:12px 14px;text-align:left;
+    font-size:11px;font-weight:700;letter-spacing:.12em;color:#c9d8f5;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-btn) var(--r-btn) 0 0;
+    border-bottom-color:transparent}
+  .setPanel{background:var(--bg-2);border:1px solid var(--line);border-top:none;
+    border-radius:0 0 var(--r-btn) var(--r-btn);padding:14px;margin-bottom:4px;
+    display:flex;flex-direction:column;align-items:center}
+
+  .galTitle{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:18px 2px 8px;text-transform:uppercase}
+  .galHint{font-size:10px;color:var(--muted);margin:-4px 2px 10px;letter-spacing:.02em;text-transform:none;line-height:1.5}
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .fonTile{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;
+    background:var(--bg-1);transition:border-color .2s,box-shadow .2s}
+  .fonTile.sel{border-color:rgba(190,225,255,.6);box-shadow:0 0 14px rgba(120,170,255,.18)}
+  .fonSw{width:100%;height:44px}
+  .fonName{font-size:10.5px;color:#dbe6ff;padding:7px 9px;line-height:1.3;letter-spacing:.01em}
+
+  .changelog{margin-top:20px;font-size:10px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);
+    padding-top:12px;text-transform:none;letter-spacing:.01em;font-weight:400}
+  .changelog b{color:#8fff9f}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="kzTitle">Свой фон</div>
+  <div class="kzSub">Цвет неба на свой вкус — не только заготовки</div>
+
+  <canvas id="forgePreview" width="380" height="140"></canvas>
+
+  <div class="setGrp">Настроение</div>
+  <div class="setPanel">
+    <div class="forgeLblBlk">Цвет неба (верх)</div>
+    <div class="forgeRow">
+      <span class="swatch" id="sw1"></span>
+      <input type="range" id="hue1" min="0" max="360" step="1" value="232">
+      <b class="forgeVal" id="hue1V">232</b>
+    </div>
+    <div class="forgeLblBlk">Второй цвет (низ, переход)</div>
+    <div class="forgeRow">
+      <span class="swatch" id="sw2"></span>
+      <input type="range" id="hue2" min="0" max="360" step="1" value="200">
+      <b class="forgeVal" id="hue2V">200</b>
+    </div>
+    <div class="forgeLblBlk">Густота (звёзды и туманности)</div>
+    <div class="forgeRow">
+      <span class="forgeLbl" style="width:auto"></span>
+      <input type="range" id="dens" min="10" max="100" step="5" value="50">
+      <b class="forgeVal" id="densV">50</b>
+    </div>
+  </div>
+
+  <div class="galTitle">Готовые фоны</div>
+  <div class="galHint">8 черновых идей от меня — не официальный список, можно тюнинговать выше и придумать свои.</div>
+  <div class="gallery" id="gallery"></div>
+
+  <div class="changelog">
+    <b>Черновик 31.08:</b> расширяет ручку «Небо» — сейчас в игре только 6 фиксированных положений
+    оттенка (FORGE_SKYS в forge.js) и общий «Туман» (0/1/2). Здесь: свободный цвет верха/низа неба
+    (не 6 точек, а вся палитра), густота звёзд/туманностей отдельной ручкой, и галерея готовых
+    сочетаний. Превью — тот же алгоритм, что реальный forgeSkyPaint() в forge.js (звёзды + дальняя
+    стая + ближняя стая), только с двумя независимыми оттенками и одной ручкой густоты вместо
+    жёстко связанных d/s/e. Ничего не тронуто в реальном коде — это только макет.
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('forgePreview'), ctx=cv.getContext('2d');
+let hue1=232, hue2=200, dens=50;
+let t=0, seed=12345;
+function rnd(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; }
+
+function paint(){
+  const W=cv.width, H=cv.height;
+  seed=12345; // тот же приём, что в forgeSkyPaint: статичный сид на кадр — картинка не «мерцает» случайно
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'hsl('+hue1+',60%,22%)'); g.addColorStop(1,'hsl('+hue2+',65%,10%)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  const starN=Math.round(40+dens*.6);
+  for(let i=0;i<starN;i++){
+    const sx=rnd()*W, sy=(rnd()*H+t*(8+dens*.25)*(0.3+rnd()))%H;
+    ctx.globalAlpha=.25+rnd()*.55; ctx.fillStyle=rnd()>.85?'#ffe9b8':'#dfe8ff';
+    ctx.beginPath(); ctx.arc(sx,sy,rnd()*1.4+.4,0,6.283); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  for(let i=0;i<9;i++){
+    const fx=(i*311+41)%W, fy=(t*(5+dens*.12)+i*83)%(H+40)-20;
+    ctx.globalAlpha=.3; ctx.fillStyle='rgba(120,150,220,.5)';
+    ctx.beginPath(); ctx.arc(fx,fy,3+(i%3)*2,0,6.283); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  const base=4, n=base+Math.round(dens/11);
+  for(let i=0;i<n;i++){
+    const near=i<base;
+    const ox=(i*197+53)%W, oy=(t*(near?20+dens*.45:13+dens*.35)+i*61)%(H+90)-45;
+    const r=near?15+(i%3)*6:7+(i%3)*4;
+    ctx.fillStyle=near?'rgba(5,9,20,.78)':'rgba(8,12,26,.6)'; ctx.strokeStyle='rgba(150,180,240,.42)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(ox,oy,r,0,6.283); ctx.fill(); ctx.stroke();
+  }
+}
+function loop(){ t+=1/60; paint(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+function syncUI(){
+  document.getElementById('hue1').value=hue1; document.getElementById('hue1V').textContent=hue1;
+  document.getElementById('hue2').value=hue2; document.getElementById('hue2V').textContent=hue2;
+  document.getElementById('dens').value=dens; document.getElementById('densV').textContent=dens;
+  document.getElementById('sw1').style.background='hsl('+hue1+',60%,45%)';
+  document.getElementById('sw2').style.background='hsl('+hue2+',60%,45%)';
+}
+document.getElementById('hue1').addEventListener('input',e=>{ hue1=+e.target.value; syncUI(); selGallery(-1); });
+document.getElementById('hue2').addEventListener('input',e=>{ hue2=+e.target.value; syncUI(); selGallery(-1); });
+document.getElementById('dens').addEventListener('input',e=>{ dens=+e.target.value; syncUI(); selGallery(-1); });
+syncUI();
+
+/* 8 черновых сочетаний — моя придумка для примера, не утверждённый контент */
+const FONS=[
+  {name:'Полночный залив', h1:210, h2:250, d:40},
+  {name:'Пурпурная туманность', h1:270, h2:310, d:70},
+  {name:'Розовый прибой', h1:320, h2:350, d:55},
+  {name:'Изумрудный шторм', h1:150, h2:190, d:85},
+  {name:'Янтарный закат', h1:20, h2:45, d:30},
+  {name:'Ледяная бездна', h1:190, h2:220, d:20},
+  {name:'Алая комета', h1:0, h2:30, d:60},
+  {name:'Глубокий космос', h1:248, h2:258, d:90}
+];
+const gallery=document.getElementById('gallery');
+let selIdx=-1;
+function selGallery(i){
+  selIdx=i;
+  [...gallery.children].forEach((el,ix)=>el.classList.toggle('sel',ix===i));
+}
+FONS.forEach((f,i)=>{
+  const t=document.createElement('div'); t.className='fonTile';
+  const sw=document.createElement('div'); sw.className='fonSw';
+  sw.style.background='linear-gradient(180deg, hsl('+f.h1+',60%,42%), hsl('+f.h2+',60%,20%))';
+  const nm=document.createElement('div'); nm.className='fonName'; nm.textContent=f.name;
+  t.appendChild(sw); t.appendChild(nm);
+  t.addEventListener('click',()=>{ hue1=f.h1; hue2=f.h2; dens=f.d; syncUI(); selGallery(i); });
+  gallery.appendChild(t);
+});
+</script>
+</body>
+</html>

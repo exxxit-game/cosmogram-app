@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет — событие «Метка» в Партитуре</title>
+<style>
+  :root{ --bg-0:#0b1626; --ink:#f4f6fb; --gold:#c9a45c; --muted:#7d8aa8; --line:rgba(255,255,255,.08); }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg-0);color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    display:flex;justify-content:center;padding:24px 12px}
+  .phone{width:340px}
+  .title{font-family:'Exo 2',sans-serif;font-weight:400;font-size:22px;letter-spacing:.05em;margin:4px 0 14px;text-align:center}
+  .track{position:relative;width:100%;height:64px;background:rgba(22,38,56,.55);border:1px solid var(--line);
+    border-radius:12px;margin-bottom:8px}
+  .ruler{position:absolute;bottom:4px;left:10px;right:10px;height:14px;font-size:9px;color:var(--muted);
+    display:flex;justify-content:space-between}
+  .pin{position:absolute;top:8px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:12px;cursor:pointer;border:1.5px solid;transform:translateX(-50%)}
+  .pin.pause{background:rgba(120,170,255,.18);border-color:rgba(160,210,255,.5);color:#bcd2ff}
+  .pin.kind{background:rgba(255,159,176,.15);border-color:rgba(255,159,176,.5);color:#ffb3c2}
+  .pin.marker{background:rgba(255,215,106,.15);border-color:rgba(255,215,106,.55);color:#ffd76a}
+  .legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--muted);margin:0 0 18px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.pause{background:#8ab4ff}.dot.kind{background:#ff9fb0}.dot.marker{background:#ffd76a}
+  .panel{background:rgba(22,38,56,.55);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+  .panel .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  .note{width:100%;background:rgba(10,16,40,.6);border:1px solid rgba(120,170,255,.25);border-radius:8px;
+    padding:8px 10px;color:#eaf0ff;font-size:13px;font-family:inherit;resize:none}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="title">Партитура — лента дистанции</div>
+  <div class="track">
+    <div class="pin pause" style="left:20%">⏸</div>
+    <div class="pin kind" style="left:48%">▲</div>
+    <div class="pin marker" style="left:76%">✎</div>
+    <div class="ruler"><span>0м</span><span>500м</span><span>1000м</span></div>
+  </div>
+  <div class="legend">
+    <span><i class="dot pause"></i>Пауза</span>
+    <span><i class="dot kind"></i>Вид</span>
+    <span><i class="dot marker"></i>Метка</span>
+  </div>
+
+  <div class="panel">
+    <div class="k">Метка на 760м</div>
+    <textarea class="note" rows="2">здесь проверяю поведение мин при высокой скорости</textarea>
+    <div class="hint">Не влияет на сам полёт — просто заметка, видна только тебе в этом экране. Игрок в полёте её не видит и не слышит.</div>
+  </div>
+</div>
+</body>
+</html>
