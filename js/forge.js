@@ -71,7 +71,7 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // (verify-len2.js, 5017 прогонов, 0 расхождений) до этой правки, включая обратную
   // совместимость: код без нового хвоста (см. forgeBitsPack/Unpack ниже) читает старое
   // 3-битное поле как раньше.
-  o.l=(+c.l===0)?0:clamp(Math.round((isFinite(+c.l)&&+c.l>0?+c.l:1500)/250)*250,1000,10000);
+  o.l=(+c.l===0)?0:clamp(Math.round((isFinite(+c.l)&&+c.l>0?+c.l:1500)/250)*250,1000,25000);
   o.lv=clamp(Math.round(isFinite(+c.lv)?+c.lv:3),1,3);
   o.w=clamp(Math.round(isFinite(+c.w)?+c.w:1),1,6);
   o.fl=c.fl?1:0;
