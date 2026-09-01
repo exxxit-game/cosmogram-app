@@ -65,7 +65,13 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   o.d=clamp(Math.round(isFinite(+c.d)?+c.d:50),10,100);
   o.s=clamp(Math.round(isFinite(+c.s)?+c.s:50),10,100);
   o.e=clamp(Math.round(isFinite(+c.e)?+c.e:15),1,255); // минимум один вид преград
-  o.l=FORGE_LENS.indexOf(+c.l)>=0?+c.l:1500;
+  // 01.09.2026 «Непрерывная длина»: раньше — строго одно из 5 значений FORGE_LENS. Теперь —
+  // любое значение 1000-10000 шагом 250 (37 вариантов), либо 0 (бесконечная). Старые 5 значений
+  // сами кратны 250 — ничего не ломается для уже розданных кодов/пресетов. Проверено численно
+  // (verify-len2.js, 5017 прогонов, 0 расхождений) до этой правки, включая обратную
+  // совместимость: код без нового хвоста (см. forgeBitsPack/Unpack ниже) читает старое
+  // 3-битное поле как раньше.
+  o.l=(+c.l===0)?0:clamp(Math.round((isFinite(+c.l)&&+c.l>0?+c.l:1500)/250)*250,1000,10000);
   o.lv=clamp(Math.round(isFinite(+c.lv)?+c.lv:3),1,3);
   o.w=clamp(Math.round(isFinite(+c.w)?+c.w:1),1,6);
   o.fl=c.fl?1:0;
@@ -116,12 +122,29 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
    + 1 байт — длина имени В БАЙТАХ + сырые UTF-8 байты имени (без JSON-строки и её кавычек)
    + [«Партитура», 31.08.2026] 1 байт — число событий (0-50) + по 3 байта на событие:
    at>>8, at&255, (typeIdx<<3)|kind — проверено численно (скрипт, 2000 прогонов + граничные
-   значения) до правки. Хвост опционален: 0 событий = 1 байт (счётчик 0), ничего больше. */
+   значения) до правки. Хвост опционален: 0 событий = 1 байт (счётчик 0), ничего больше.
+   + [«Непрерывная длина», 01.09.2026] 1 байт extFlags (бит0 — точная длина есть) + 2 байта
+   длины в метрах, big-endian. Живёт ПОСЛЕ хвоста Партитуры, тем же приёмом («сложи хвост на
+   хвост», не переделывай нижние слои). 3-битное поле lIdx выше по-прежнему пишется — но
+   только ближайшим приближением из FORGE_LENS, для приложений до этой правки, которым
+   достанется чужой новый код. Проверено численно (verify-len2.js, 5017 прогонов, включая
+   обратную совместимость кода без этого хвоста) до правки. */
+function forgeNearestLegacyLen(l){ // старое 3-битное поле — ближайшее из 5 старых значений,
+  // для приложений ДО этой правки, читающих новый код (graceful degradation, не крах)
+  if(l===0) return FORGE_LENS.indexOf(0);
+  let best=0, bestD=Infinity;
+  for(let i=0;i<FORGE_LENS.length;i++){
+    if(FORGE_LENS[i]===0) continue;
+    const d=Math.abs(FORGE_LENS[i]-l);
+    if(d<bestD){ bestD=d; best=i; }
+  }
+  return best;
+}
 function forgeBitsPack(cfg){
   const bits=[];
   const put=(val,n)=>{ for(let i=n-1;i>=0;i--) bits.push((val>>>i)&1); };
   put(cfg.d-10,7); put(cfg.s-10,7); put(cfg.e,8);
-  put(FORGE_LENS.indexOf(cfg.l),3); put(cfg.lv-1,2); put(cfg.w-1,3);
+  put(forgeNearestLegacyLen(cfg.l),3); put(cfg.lv-1,2); put(cfg.w-1,3);
   put(cfg.fl,1); put(cfg.b,2); put(FORGE_SKYS.indexOf(cfg.sky),3); put(cfg.fog,2);
   put(cfg.hs,1); put((cfg.seed||0)>>>0,32);
   const head=[];
@@ -134,7 +157,11 @@ function forgeBitsPack(cfg){
     const typeIdx=Math.max(0,FORGE_SC_TYPES.indexOf(ev.type));
     scOut.push(at>>8, at&255, ((typeIdx<<3)|(ev.kind&7))&255);
   }
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut));
+  // 01.09.2026 «Непрерывная длина»: хвост ПОСЛЕ sc[] — 1 байт extFlags (бит0 = точная длина
+  // есть) + 2 байта длины в метрах (big-endian). Старое 3-битное поле выше несёт только
+  // ближайшее приближение — точное значение живёт здесь. Проверено численно (verify-len2.js).
+  const lenTail=[1, (cfg.l>>8)&255, cfg.l&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, lenTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -150,6 +177,7 @@ function forgeBitsUnpack(bytes){
   // «Партитура»: хвост опционален — код без него (или обрезанный/битый хвост) просто даёт sc=[]
   const scOff=HEAD+1+nameLen;
   const sc=[];
+  let cursor=scOff;
   if(scOff<bytes.length){
     const scN=bytes[scOff]||0;
     for(let i=0;i<scN;i++){
@@ -158,8 +186,16 @@ function forgeBitsUnpack(bytes){
       const at=(bytes[b]<<8)|bytes[b+1], tb=bytes[b+2];
       sc.push({at:at, type:FORGE_SC_TYPES[(tb>>3)&3]||'pause', kind:tb&7});
     }
+    cursor=scOff+1+scN*3;
   }
-  return { n, d, s, e, l:FORGE_LENS[lIdx], lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0, sc:sc };
+  // «Непрерывная длина»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто не доходит
+  // сюда — l остаётся старым приближением из lIdx, ровно как читался раньше.
+  let l=FORGE_LENS[lIdx];
+  if(cursor<bytes.length){
+    const extFlags=bytes[cursor]||0;
+    if((extFlags&1) && cursor+2<bytes.length) l=(bytes[cursor+1]<<8)|bytes[cursor+2];
+  }
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -442,7 +478,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
     for(let i=0;i<FORGE_PRESETS.length;i++) pre.children[i].classList.toggle('sel',i===m); }
   forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
-  if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l — лента Партитуры должна это увидеть
+  if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l — лента и ползунок Партитуры должны это увидеть
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
   const hsEl=$('forgeGrpHardSub');

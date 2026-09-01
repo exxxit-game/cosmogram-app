@@ -249,6 +249,31 @@ function ptWireOnce(){
   });
   const lg=$('ptListGrp'), lp=$('ptListPanel');
   if(lg&&lp) lg.addEventListener('click',()=>{ lg.classList.toggle('open'); lp.classList.toggle('hidden'); });
+  // 01.09.2026 «Непрерывная длина»: заменяет старые 5 кнопок «Длина неба» — ползунок +
+  // отдельная кнопка ∞ (старые кнопки несли и 4 числа, и «бесконечную» одним списком — тут
+  // это две разные по природе вещи: число и особый режим, разведены на два разных виджета).
+  // Формат кода уже поддерживает любое значение 1000-10000 шагом 250 (forgeBitsPack/Unpack).
+  const ls=$('ptLenSlider');
+  if(ls) ls.addEventListener('input',()=>{
+    forgeCfg.l=+ls.value; ptSyncLenUI();
+    ptRenderRuler(); ptRender();
+    if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
+  });
+  const ib=$('ptInfBtn');
+  if(ib) ib.addEventListener('click',()=>{
+    forgeCfg.l = forgeCfg.l===0 ? (+($('ptLenSlider')?.value)||1500) : 0; // повторный тап возвращает последнее число на ползунке, не сброс к 1500 всегда
+    ptSyncLenUI(); ptRenderRuler(); ptRender();
+    if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
+    sfx.click(); haptic('light');
+  });
+}
+function ptSyncLenUI(){
+  const ls=$('ptLenSlider'), lv=$('ptLenVal'), ib=$('ptInfBtn'); if(!ls) return;
+  const inf=forgeCfg.l===0;
+  ls.disabled=inf;
+  if(!inf) ls.value=forgeCfg.l;
+  if(lv) lv.textContent=inf?(L.forgeInf||'∞'):(ls.value+(L.unitM||'м'));
+  if(ib) ib.classList.toggle('sel',inf);
 }
 function ptFill(){
   if(typeof L==='undefined'||!L.forgeTitle) return; // тот же ранний выход, что и forgeFill — язык ещё не загружен
@@ -256,6 +281,7 @@ function ptFill(){
   const s=$('ptSub'); if(s) s.textContent='Точки на дистанции — где будет передышка или препятствие';
   ptWireTray();
   ptWireOnce();
+  ptSyncLenUI();
   ptRender();
   ptRenderRuler();
 }
