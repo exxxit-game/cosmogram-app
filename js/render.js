@@ -1825,18 +1825,45 @@ let acc=0, lastTime=0, rafId=0, menuDrawT=0, loopScr='', pauseT0=0, drawForce=fa
 function interpPos(prev,cur,alpha){ return prev+(cur-prev)*alpha; }
 let prevPlaneX=0, prevPlaneY=0, renderPlaneX=0, renderPlaneY=0;
 function drawKick(){ drawForce=true; } // внешнее событие (resize) — кадр вне очереди, но БЕЗ сброса часов сна (v1.66.2)
-let corrShown=false;
+let corrShown=false, corrWasInGame=false;
 function corridorEdgesSync(inGameNow){
   if (typeof inGameNow!=='boolean'){
     // вызов без параметра (из core.js, по таймеру дребезга/скрытию) — сами смотрим на игровое состояние
     inGameNow = (typeof screenName!=='undefined' && screenName==='game' && typeof S!=='undefined' && S && S.running && !S.paused);
   }
+  /* 01.09.2026: --corrEdgeTop меряет telemHud/pausePack (syncScoreHudGap, core.js) — а вне
+     полёта они пустые/свёрнуты (0 высоты). Все прежние поводы для перемера (resize, смена
+     --sat, готовый шрифт) уже случались ДО взлёта, отступ застывал на этом нулевом числе, и
+     линия въезжала прямо в HUD (владелец поймал вживую, 01.09.2026, скрин с «▲▲▲» под линией).
+     Взлёт (переход в inGameNow) — отдельный повод, которого не было: HUD как раз тогда
+     наполняется реальным содержимым и раскрывается до настоящей высоты. */
+  if (inGameNow && !corrWasInGame && typeof syncScoreHudGap==='function') requestAnimationFrame(syncScoreHudGap);
+  corrWasInGame=inGameNow;
   const wantShow = inGameNow && (typeof corrWideOk!=='undefined' && corrWideOk);
   if (wantShow===corrShown) return; // не трогаем DOM, если ничего не изменилось — дёшево на каждый кадр
   corrShown=wantShow;
   const l=document.getElementById('corrEdgeL'), r=document.getElementById('corrEdgeR');
   if(l) l.classList.toggle('show', wantShow);
   if(r) r.classList.toggle('show', wantShow);
+}
+/* 01.09.2026 «Не вморожена»: владелец — статичная рамка коридора читается отдельным,
+   неподвижным объектом рядом с летящим миром, «убивает» ощущение скорости.
+   Первая попытка (0.024*speed*1.5, тот же коэффициент, что у фоновых звёзд) оказалась
+   ошибкой того же класса, о которой предупреждает сам проект: число скопировано, не
+   проверено численно под НОВЫЙ контекст. 0.024 калиброван для мелких точек, разбросанных
+   по всему высокому канвасу — там медленный дрейф всё равно заметен за счёт масштаба сцены.
+   У полосы коридора узор всего 96px и повторяется — на максимуме S.speed=8 то же число
+   давало бы полный цикл узора за 333 секунды, то есть глазом неотличимо от статики (ровно
+   то, что владелец и увидел живьём). Число ниже подобрано заново под РАЗМЕР ЭТОГО узора:
+   на старте (speed=3.4) полный цикл ~2.8с, на потолке (speed=8, v1.31 game.js:2039) ~1.2с —
+   отчётливо видно движение на любой стадии полёта. Скорость по-прежнему честно берётся из
+   S.speed (не выдуманное отдельное число, синхронно с миром), только коэффициент — не тот
+   же самый, что у фона, а свой, посчитанный под этот масштаб. Тикает ТОЛЬКО пока полоса
+   реально видна (corrShown) — на паузе/в меню не расходует ничего. */
+let corrScrollY=0;
+function corrScrollTick(dt){
+  corrScrollY=(corrScrollY+dt*S.speed*S.timeScale*10)%96;
+  document.documentElement.style.setProperty('--corrScrollY',corrScrollY.toFixed(2)+'px');
 }
 function loop(t){
   rafId=requestAnimationFrame(loop);
@@ -1863,6 +1890,7 @@ function loop(t){
   if (inGameNow) qualityTick(dt);
   else { Q._acc=0; Q._n=0; Q._t=0; }
   corridorEdgesSync(inGameNow); // v1.415.2: рамка коридора — то же игровое состояние, мгновенно, без задержки дребезга (та живёт только у геометрии в core.js)
+  if (corrShown) corrScrollTick(dt); // 01.09.2026: тикает только пока полоса реально видна — дёшево
   if (S.running && !S.paused){
     prevPlaneX=plane.x; prevPlaneY=plane.y; // снимок ДО шагов физики этого кадра
     acc+=dt;

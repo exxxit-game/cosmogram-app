@@ -471,7 +471,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.477.97'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.0'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -912,6 +912,16 @@ function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один заз�
   const gapPx = Math.round(rect.bottom+2)+'px';
   document.documentElement.style.setProperty('--topHudTop', gapPx);
   document.documentElement.style.setProperty('--telemHudTop', gapPx);
+  /* 01.09.2026 «Полоса коридора впритык»: тот же принцип, один раз ещё — .corrEdge (боковые
+     звёзды широкого экрана) держала отдельную забитую руками цифру (190px), унаследованную
+     от диагноза, который сам же потом опроверг другой страж (см. историю в index.html у
+     .corrEdge). Вместо новой забитой руками цифры — тот же измеритель: РЕАЛЬНЫЙ нижний край
+     самого нижнего элемента HUD (телеметрия и левая кучка паузы/жизней — разной высоты на
+     разных языках/раскладках), плюс небольшой запас. Владелец — «под HUD почти в притык». */
+  const th=document.getElementById('telemHud'), pp=document.getElementById('pausePack');
+  const thB=th?th.getBoundingClientRect().bottom:0, ppB=pp?pp.getBoundingClientRect().bottom:0;
+  const corrTop=Math.round(Math.max(thB,ppB)+6)+'px';
+  document.documentElement.style.setProperty('--corrEdgeTop', corrTop);
 }
 // v1.102.1 «Ровная земля»: событийный замер — шквал Telegram (полный экран, вьюпорт, инсеты
 // сыплются пачкой) слипается в ОДИН замер после 350мс тишины; прямые вызовы остаются мгновенными
