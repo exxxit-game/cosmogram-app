@@ -156,14 +156,28 @@ function rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px
 
 /* ---------- Кэш градиентов (пересоздаём только при смене волны/размера) ---------- */
 let bgCache={h:-1,w:-1,ht:-1,g:null};
-function bgGradient(h1,h2){
+/* 01.09.2026 «Настроение неба»: m=50 — сегодняшний вид без изменений (62/58/70 sat, 10/16/26
+   light — те же числа, что были зашиты намертво), m двигает насыщенность/яркость всех трёх
+   точек вместе, оттенок не трогает. Формула и диапазоны — из macet-01-09-nastroenie-neba.html,
+   численно сверены verify-mood.js (5008 проверок, 0 расхождений) и глазами на 3 оттенках×5 значений. */
+function moodSL(m){
+  const dm=(m-50)/50;
+  return {
+    S0:clamp(62+dm*18,15,90), L0:clamp(10+dm*14,3,45),
+    S1:clamp(58+dm*20,15,90), L1:clamp(16+dm*16,4,50),
+    S2:clamp(70+dm*15,20,95), L2:clamp(26+dm*20,8,60),
+  };
+}
+function bgGradient(h1,h2,mood){
   const hq0=Math.round(S.hueShift); // квант: плавный дрейф не пересобирает кэш каждый кадр (v1.24.0)
-  if(bgCache.h!==hq0||bgCache.w!==W||bgCache.ht!==H){
+  const mq0=Math.round(isFinite(mood)?mood:50);
+  if(bgCache.h!==hq0||bgCache.w!==W||bgCache.ht!==H||bgCache.m!==mq0){
+    const sl=moodSL(mq0);
     const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,`hsl(${h1},62%,10%)`);
-    g.addColorStop(.55,`hsl(${h1},58%,16%)`);
-    g.addColorStop(1,`hsl(${h2},70%,26%)`);
-    bgCache={h:hq0,w:W,ht:H,g};
+    g.addColorStop(0,`hsl(${h1},${sl.S0}%,${sl.L0}%)`);
+    g.addColorStop(.55,`hsl(${h1},${sl.S1}%,${sl.L1}%)`);
+    g.addColorStop(1,`hsl(${h2},${sl.S2}%,${sl.L2}%)`);
+    bgCache={h:hq0,w:W,ht:H,m:mq0,g};
   }
   return bgCache.g;
 }
@@ -929,7 +943,8 @@ function draw(){
   // разная, дыхание неба выглядит одинаково знакомым в любом режиме.
   const baseH1 = (S.mode==='custom') ? S.customH1 : 232, baseH2 = (S.mode==='custom') ? S.customH2 : 200;
   const h1 = baseH1+S.hueShift*.3, h2 = baseH2+S.hueShift*.3;
-  ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
+  const mood = (S.mode==='custom') ? S.customMood : 50; // 01.09.2026 «Настроение неба»: только «Свой фон», обычные режимы — прежний вид (m=50)
+  ctx.fillStyle=bgGradient(h1,h2,mood); ctx.fillRect(-20,-20,W+40,H+40);
   const lowPower = isLowPowerDevice(nowMs);
   /* 26.08.2026: было nowS (часы браузера) — туман плыл и на паузе, и в меню, пока весь
      остальной мир честно стоял (жалоба владельца, тот же класс, что и мерцание звёзд ниже).

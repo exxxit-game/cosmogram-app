@@ -29,6 +29,37 @@ const PT_ICON_SVG={
 const PT_MAX=50;
 let ptSelIdx=-1;
 
+/* 01.09.2026 «Настроение неба» — гармония и случайное небо. Источник: обычный поворот круга
+   (180°/120°/30°) даёт столкновения в некоторых зонах оттенка (владелец поймал живьём: красный+
+   зелёный читается как «ёлочная гирлянда», зелёный+пурпур — как «гниль») — вместо формулы 18
+   пар подобраны и проверены глазами (macet-01-09-nastroenie-neba.html), «Случайное небо» и
+   авто-гармония берут пары только отсюда, не вычисляют угол. */
+const PT_SAFE_PAIRS=[
+  [220,260],[230,300],[260,320],[280,200],[320,260],[20,340],[25,5],[200,180],
+  [240,280],[340,280],[350,300],[260,25],[300,240],[35,320],[180,220],[355,265],
+  [200,340],[290,230],
+];
+function ptHueDist(a,b){ const d=Math.abs(a-b)%360; return d>180?360-d:d; }
+let ptH2Touched=false; // сброшен при каждом открытии экрана — авто-гармония работает, пока автор сам не тронул второй цвет
+function ptAutoHarmonize(h1){
+  let best=null,bestD=1e9;
+  PT_SAFE_PAIRS.forEach(function(p){
+    const d0=ptHueDist(h1,p[0]); if(d0<bestD){ bestD=d0; best=p[1]; }
+    const d1=ptHueDist(h1,p[1]); if(d1<bestD){ bestD=d1; best=p[0]; }
+  });
+  return best===null?h1:best;
+}
+function ptRandomSky(){
+  const p=PT_SAFE_PAIRS[Math.floor(Math.random()*PT_SAFE_PAIRS.length)];
+  const flip=Math.random()<0.5;
+  forgeCfg.h1=flip?p[0]:p[1]; forgeCfg.h2=flip?p[1]:p[0];
+  forgeCfg.mood=20+Math.floor(Math.random()*60); // те же безопасные границы, что в макете — не полные 0/100
+  ptH2Touched=true; // случайная пара уже согласована сама с собой — авто-гармония не должна её тут же переписать
+  ptSyncColorUI();
+  if(typeof forgeSkyKick==='function') forgeSkyKick();
+  sfx.click(); haptic('medium');
+}
+
 function ptPins(){ if(!forgeCfg.sc) forgeCfg.sc=[]; return forgeCfg.sc; }
 function ptLen(){ return forgeCfg.l>0?forgeCfg.l:5000; } // «бесконечная» (l=0) — лента размечена под условную длину, точки всё равно ставятся в метрах
 
@@ -252,14 +283,36 @@ function ptWireOnce(){
   // 01.09.2026 «Свой фон»: свободный цвет неба — формат уже поддерживает (extFlags бит1,
   // forgeBitsPack/Unpack). Лента красится живьём в эти цвета (ptPaintTrackBg), тот же приём,
   // что уже был в одобренном макете.
-  ['ptHue1','ptHue2','ptDens'].forEach(function(id){
-    const el=$(id); if(!el) return;
-    el.addEventListener('input',function(){
-      forgeCfg.h1=+$('ptHue1').value; forgeCfg.h2=+$('ptHue2').value; forgeCfg.dens=+$('ptDens').value;
-      ptSyncColorUI();
-      if(typeof forgeSkyKick==='function') forgeSkyKick(); // конструктор-превью тоже должен отреагировать, не только лента
-    });
+  const h1el=$('ptHue1');
+  if(h1el) h1el.addEventListener('input',function(){
+    forgeCfg.h1=+h1el.value;
+    // 01.09.2026 «Авто-гармония»: пока автор не тронул второй цвет вручную сам — он едет
+    // вслед за первым к ближайшей проверенной паре, чтобы новичок не мог случайно поставить
+    // столкновение. Один тап по ptHue2 отключает автовождение до конца сессии в конструкторе.
+    if(!ptH2Touched){ forgeCfg.h2=ptAutoHarmonize(forgeCfg.h1); }
+    ptSyncColorUI();
+    if(typeof forgeSkyKick==='function') forgeSkyKick();
   });
+  const h2el=$('ptHue2');
+  if(h2el) h2el.addEventListener('input',function(){
+    forgeCfg.h2=+h2el.value; ptH2Touched=true;
+    ptSyncColorUI();
+    if(typeof forgeSkyKick==='function') forgeSkyKick();
+  });
+  const densEl=$('ptDens');
+  if(densEl) densEl.addEventListener('input',function(){
+    forgeCfg.dens=+densEl.value;
+    ptSyncColorUI();
+    if(typeof forgeSkyKick==='function') forgeSkyKick();
+  });
+  const moodEl=$('ptMood');
+  if(moodEl) moodEl.addEventListener('input',function(){
+    forgeCfg.mood=+moodEl.value;
+    ptSyncColorUI();
+    if(typeof forgeSkyKick==='function') forgeSkyKick();
+  });
+  const rndBtn=$('ptRandomSkyBtn');
+  if(rndBtn) rndBtn.addEventListener('click',ptRandomSky);
   // 01.09.2026 «Непрерывная длина»: заменяет старые 5 кнопок «Длина неба» — ползунок +
   // отдельная кнопка ∞ (старые кнопки несли и 4 числа, и «бесконечную» одним списком — тут
   // это две разные по природе вещи: число и особый режим, разведены на два разных виджета).
@@ -288,14 +341,16 @@ function ptSyncLenUI(){
 }
 function ptPaintTrackBg(){
   const track=$('ptTrack'); if(!track) return;
-  track.style.background='linear-gradient(180deg, hsl('+forgeCfg.h1+',60%,22%), hsl('+forgeCfg.h2+',65%,10%))';
+  const psl=(typeof forgePreviewMoodSL==='function')?forgePreviewMoodSL(forgeCfg.mood):{S0:60,L0:22,S1:65,L1:10};
+  track.style.background='linear-gradient(180deg, hsl('+forgeCfg.h1+','+psl.S0+'%,'+psl.L0+'%), hsl('+forgeCfg.h2+','+psl.S1+'%,'+psl.L1+'%))';
 }
 function ptSyncColorUI(){
-  const h1=$('ptHue1'), h2=$('ptHue2'), dens=$('ptDens'); if(!h1) return;
-  h1.value=forgeCfg.h1; h2.value=forgeCfg.h2; dens.value=forgeCfg.dens;
+  const h1=$('ptHue1'), h2=$('ptHue2'), dens=$('ptDens'), mood=$('ptMood'); if(!h1) return;
+  h1.value=forgeCfg.h1; h2.value=forgeCfg.h2; dens.value=forgeCfg.dens; if(mood) mood.value=forgeCfg.mood;
   const h1v=$('ptHue1V'); if(h1v) h1v.textContent=forgeCfg.h1;
   const h2v=$('ptHue2V'); if(h2v) h2v.textContent=forgeCfg.h2;
   const densv=$('ptDensV'); if(densv) densv.textContent=forgeCfg.dens;
+  const moodv=$('ptMoodV'); if(moodv) moodv.textContent=forgeCfg.mood;
   const sw1=$('ptSw1'); if(sw1) sw1.style.background='hsl('+forgeCfg.h1+',60%,45%)';
   const sw2=$('ptSw2'); if(sw2) sw2.style.background='hsl('+forgeCfg.h2+',60%,45%)';
   ptPaintTrackBg();
@@ -304,6 +359,7 @@ function ptFill(){
   if(typeof L==='undefined'||!L.forgeTitle) return; // тот же ранний выход, что и forgeFill — язык ещё не загружен
   const t=$('ptTitle'); if(t) t.textContent='Расстановка';
   const s=$('ptSub'); if(s) s.textContent='Точки на дистанции — где будет передышка или препятствие';
+  ptH2Touched=false; // новое открытие экрана — авто-гармония снова ведёт второй цвет, пока автор сам его не тронет
   ptWireTray();
   ptWireOnce();
   ptSyncLenUI();

@@ -87,6 +87,11 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   o.h1=clamp(Math.round(isFinite(+c.h1)?+c.h1:_defH1),0,359);
   o.h2=clamp(Math.round(isFinite(+c.h2)?+c.h2:_defH2),0,359);
   o.dens=clamp(Math.round(isFinite(+c.dens)?+c.dens:50),10,100);
+  // 01.09.2026 «Настроение неба»: 0-100, по умолчанию 50 — двигает насыщенность/яркость всех
+  // точек градиента ВМЕСТЕ (не оттенок), от «глубокий космос» (0) до «яркая туманность» (100).
+  // 50 = сегодняшние зашитые числа, без изменений. Диапазон подобран и проверен глазами на
+  // трёх разных оттенках (macet-01-09-nastroenie-neba.html) до этой правки.
+  o.mood=clamp(Math.round(isFinite(+c.mood)?+c.mood:50),0,100);
   o.fog=clamp(Math.round(isFinite(+c.fog)?+c.fog:0),0,2);
   // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
@@ -133,15 +138,16 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
    + [«Партитура», 31.08.2026] 1 байт — число событий (0-50) + по 3 байта на событие:
    at>>8, at&255, (typeIdx<<3)|kind — проверено численно (скрипт, 2000 прогонов + граничные
    значения) до правки. Хвост опционален: 0 событий = 1 байт (счётчик 0), ничего больше.
-   + [«Непрерывная длина» + «Свой фон», 01.09.2026] 1 байт extFlags — бит0 = точная длина,
-   бит1 = свободный цвет неба — ОБЩИЙ на оба расширения, не два отдельных байта. Если бит0:
-   2 байта длины в метрах. Если бит1: 2 байта h1 + 2 байта h2 (оттенки 0-359°, big-endian) +
-   1 байт густоты (10-100). Живёт ПОСЛЕ хвоста Партитуры, тем же приёмом («сложи хвост на
+   + [«Непрерывная длина» + «Свой фон» + «Настроение неба», 01.09.2026] 1 байт extFlags —
+   бит0 = точная длина, бит1 = свободный цвет неба, бит2 = настроение — ОБЩИЙ на все три
+   расширения, не отдельные байты каждому. Если бит0: 2 байта длины в метрах. Если бит1:
+   2 байта h1 + 2 байта h2 (оттенки 0-359°, big-endian) + 1 байт густоты (10-100). Если бит2:
+   1 байт настроения (0-100). Живёт ПОСЛЕ хвоста Партитуры, тем же приёмом («сложи хвост на
    хвост», не переделывай нижние слои). Старые 3-битное lIdx и sky выше по-прежнему пишутся —
    только ближайшим/производным приближением, для приложений до этой правки, которым
    достанется чужой новый код. Проверено численно (verify-len2.js — 5017 прогонов,
-   verify-color2.js — 5029 прогонов, включая обратную совместимость кода без этих хвостов)
-   до правки. */
+   verify-color2.js — 5029 прогонов, verify-mood.js — 5008 прогонов, включая обратную
+   совместимость кода без этих хвостов) до правки. */
 function forgeNearestLegacyLen(l){ // старое 3-битное поле — ближайшее из 5 старых значений,
   // для приложений ДО этой правки, читающих новый код (graceful degradation, не крах)
   if(l===0) return FORGE_LENS.indexOf(0);
@@ -170,14 +176,16 @@ function forgeBitsPack(cfg){
     const typeIdx=Math.max(0,FORGE_SC_TYPES.indexOf(ev.type));
     scOut.push(at>>8, at&255, ((typeIdx<<3)|(ev.kind&7))&255);
   }
-  // 01.09.2026 «Непрерывная длина» + «Свой фон»: один extFlags-байт на оба расширения —
-  // бит0 = точная длина (2 байта метров), бит1 = свободный цвет (2б h1, 2б h2, 1б густота).
-  // Оба бита сейчас всегда 1 — новый интерфейс всегда пишет оба поля. Проверено численно
-  // (verify-len2.js, verify-color2.js) до правки.
-  const extFlags=[1|2];
+  // 01.09.2026 «Непрерывная длина» + «Свой фон» + «Настроение неба»: один extFlags-байт на
+  // все три расширения — бит0 = точная длина (2 байта метров), бит1 = свободный цвет (2б h1,
+  // 2б h2, 1б густота), бит2 = настроение (1б, 0-100). Все три бита сейчас всегда 1 — новый
+  // интерфейс всегда пишет все поля. Проверено численно (verify-len2.js, verify-color2.js,
+  // verify-mood.js) до правки.
+  const extFlags=[1|2|4];
   const lenTail=[(cfg.l>>8)&255, cfg.l&255];
   const colorTail=[(cfg.h1>>8)&255, cfg.h1&255, (cfg.h2>>8)&255, cfg.h2&255, cfg.dens&255];
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail));
+  const moodTail=[cfg.mood&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -207,7 +215,7 @@ function forgeBitsUnpack(bytes){
   // «Непрерывная длина» / «Свой фон»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто
   // не доходит сюда — l остаётся старым приближением из lIdx, h1/h2 выводятся из legacy sky
   // в forgeSanitize (та же формула, что уже рисовала это небо раньше), ровно как читалось раньше.
-  let l=FORGE_LENS[lIdx], h1, h2, dens;
+  let l=FORGE_LENS[lIdx], h1, h2, dens, mood;
   if(cursor<bytes.length){
     const extFlags=bytes[cursor]||0;
     let p=cursor+1;
@@ -217,8 +225,9 @@ function forgeBitsUnpack(bytes){
       h2=(bytes[p]<<8)|bytes[p+1]; p+=2;
       dens=bytes[p]; p+=1;
     }
+    if((extFlags&4) && p<bytes.length){ mood=bytes[p]; p+=1; }
   }
-  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, fog, hs, seed, wg:0, sc:sc };
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -265,6 +274,18 @@ function forgeHeatSet(h){ // одна ручка вместо трёх: плот
 }
 function forgeHeatGet(){ return clamp(Math.round((forgeCfg.d-8)/9),1,10); } // обратно: из плотности автора
 
+/* 01.09.2026 «Настроение неба»: та же дельта (dm), что в moodSL() (render.js), но применена к
+   СВОИМ базовым числам превью (60/22, 65/10) — превью и раньше отличалось от настоящего полёта
+   (нарочно светлее), при mood=50 (по умолчанию) вид превью/ленты не меняется вообще. Общая для
+   forgeSkyPaint() и ptPaintTrackBg() (partitura.js, грузится после forge.js) — одна формула,
+   не две похожие копии. */
+function forgePreviewMoodSL(mood){
+  const dm=((isFinite(mood)?mood:50)-50)/50;
+  return {
+    S0:clamp(60+dm*18,15,90), L0:clamp(22+dm*14,3,45),
+    S1:clamp(65+dm*15,20,95), L1:clamp(10+dm*20,3,60),
+  };
+}
 let _fSkyT=0, _fSkyRun=false;
 function forgeSkyPaint(dt){ // живое мини-небо конструктора: выбранные небо/туман/состав/жар летают в превью
   const cv=$('forgePreview'); if(!cv||!cv.getContext) return;
@@ -274,7 +295,8 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
   // 01.09.2026 «Свой фон»: h1/h2 читаются напрямую — не выводятся из sky каждый раз заново.
   // Для конфигов, где автор не трогал свободный цвет, forgeSanitize уже положил туда те же
   // числа, что раньше давала эта же формула (232+sky*.3, 200+sky*.3) — картинка не меняется.
-  g.addColorStop(0,'hsl('+cfg.h1+',60%,22%)'); g.addColorStop(1,'hsl('+cfg.h2+',65%,10%)');
+  const psl=forgePreviewMoodSL(cfg.mood);
+  g.addColorStop(0,'hsl('+cfg.h1+','+psl.S0+'%,'+psl.L0+'%)'); g.addColorStop(1,'hsl('+cfg.h2+','+psl.S1+'%,'+psl.L1+'%)');
   x.fillStyle=g; x.fillRect(0,0,W,H);
   _fSkyT+=dt;
   let seed=12345; const rnd=function(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
