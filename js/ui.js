@@ -289,7 +289,7 @@ function startGame(saved){
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,srWin:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
-    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»
+    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
@@ -313,8 +313,14 @@ function startGame(saved){
        к S.speed напрямую и была верна, её не трогаем. */
     S.customE=fc.e; S.customD=forgeDensityMul(fc.d)/(am.d||1); S.customS=forgeSpeedMul(fc.s)*am.s; S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
     S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; S.customWG=fc.wg?1:0; S.customHS=fc.hs?1:0; // v1.282.15: старые коды (v1/v2) летят со старой раскладкой преград // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0); 31.08.2026: «Высокая ставка»
+    S.customH1=fc.h1; S.customH2=fc.h2; // 01.09.2026 «Свой фон»: forgeSanitize уже гарантирует оба поля (выводит из legacy sky, если автор не трогал свободный цвет явно)
     if(!saved){ S.lives=fc.lv; S.mission=fc.w; } // жизни и жара автора (автосейв честнее — не переписываем)
-    S.hueShift=fc.sky; // небо автора: сдвиг оттенка стартует с его палитры
+    // 01.09.2026 «Свой фон»: раньше — S.hueShift=fc.sky (дрейф стартовал со значения-индекса
+    // палитры). Теперь базовый цвет живёт в customH1/H2 (см. render.js), а hueShift — просто
+    // «сколько дрейфа накопилось с взлёта», стартует с нуля. Для старых кодов (без явного
+    // цвета) customH1/H2 уже равны 232+fc.sky*.3/200+fc.sky*.3 — та же картинка в кадре 0,
+    // что давала старая формула 232+fc.sky*.3 (проверено вручную, не только по формуле).
+    S.hueShift=0;
     const fogEl=document.getElementById('fog');
     if(fogEl){ fogEl.classList.toggle('f1',fc.fog===1); fogEl.classList.toggle('f2',fc.fog===2); }
   } else { const fogEl=document.getElementById('fog'); if(fogEl){ fogEl.classList.remove('f1'); fogEl.classList.remove('f2'); } }

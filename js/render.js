@@ -923,7 +923,12 @@ function draw(){
   const shx = shk>0?rand(-6,6)*shk:0, shy = shk>0?rand(-6,6)*shk:0;
   ctx.save(); ctx.translate(shx,shy);
 
-  const h1 = 232+S.hueShift*.3, h2 = 200+S.hueShift*.3;
+  // 01.09.2026 «Свой фон»: своя трасса дышит от СВОИХ стартовых оттенков (customH1/H2 —
+  // любые, не только производные от одного числа sky), обычные режимы — от прежних 232/200,
+  // не тронуты. Скорость дрейфа (hueShift*.3) одна и та же для всех — только стартовая точка
+  // разная, дыхание неба выглядит одинаково знакомым в любом режиме.
+  const baseH1 = (S.mode==='custom') ? S.customH1 : 232, baseH2 = (S.mode==='custom') ? S.customH2 : 200;
+  const h1 = baseH1+S.hueShift*.3, h2 = baseH2+S.hueShift*.3;
   ctx.fillStyle=bgGradient(h1,h2); ctx.fillRect(-20,-20,W+40,H+40);
   const lowPower = isLowPowerDevice(nowMs);
   /* 26.08.2026: было nowS (часы браузера) — туман плыл и на паузе, и в меню, пока весь
