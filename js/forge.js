@@ -390,18 +390,10 @@ function forgeChipBuild(el,text,get,set){
   el._text=text;
   el._sync=function(){ el.children[0].textContent=el._text; el.children[0].classList.toggle('sel',!!get()); };
 }
-function forgeSkyBuild(el){
-  if(!el||el.children.length===FORGE_SKYS.length) return;
-  el.innerHTML='';
-  FORGE_SKYS.forEach(function(h){
-    const b=document.createElement('button');
-    b.className='forgeSkyBtn'; b.title='';
-    b.style.background='linear-gradient(180deg, hsl('+(232+h*.3)+',60%,22%), hsl('+(200+h*.3)+',65%,10%))';
-    b.addEventListener('click',function(){ forgeCfg.sky=h; forgeSyncWidgets(); sfx.click(); haptic('light'); });
-    el.appendChild(b);
-  });
-  el._sync=function(){ for(let i=0;i<el.children.length;i++) el.children[i].classList.toggle('sel',FORGE_SKYS[i]===forgeCfg.sky); };
-}
+/* 01.09.2026 «Пространство в меню»: forgeSkyBuild() (свотчи «Небо») удалена — дублировала
+   свободные ползунки h1/h2 в Расстановке, не зная о них. FORGE_SKYS/forgeCfg.sky остаются
+   в forgeSanitize/Pack/Unpack — старые уже разосланные коды без явного h1/h2 по-прежнему
+   выводят цвет из sky (обратная совместимость), просто UI-пикер для него больше не строится. */
 
 /* ---------- Экран: наполнение и события ---------- */
 function forgeFill(){ // подписи + состояние виджетов по текущему языку (вызывается из applyLang)
@@ -479,7 +471,6 @@ function forgeFill(){ // подписи + состояние виджетов п
   forgeChipBuild($('forgeHSChip'),L.forgeHS,function(){return forgeCfg.hs;},function(v){
     forgeCfg.hs=v; if(v){ forgeCfg.lv=1; forgeCfg.b=0; } // 31.08.2026: форс сразу виден в сегментах, не только на старте
   });
-  forgeSkyBuild($('forgeSkyRow'));
   // v1.85.0: ручка «Жар» и спойлер тонкой настройки — живут на сцене, не в сегментах
   const heat=$('forgeHeat');
   if(heat&&!heat._bound){ heat._bound=1; heat.addEventListener('input',function(){
@@ -518,7 +509,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
-  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeSkyRow'].forEach(function(id){
+  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
   const pre=$('forgePresets'); // выбранная программа мягко светится — видно, что сейчас в небе (v1.86.0)
@@ -534,9 +525,11 @@ function forgeGrpSubSync(){ // «Тонкая настройка»: подпис
     (forgeCfg.hs?' · '+(L.forgeHS||'')+' ×4':''); // 31.08.2026: закрытая группа не молчит про включённую ставку
   const es=$('forgeGrpEnSub');
   if(es){ let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; es.textContent=n+' / '+FORGE_KINDS.length; }
+  // 01.09.2026 «Пространство в меню»: подпись группы показывала ДЛИНУ трассы (застряло с
+  // тех пор, когда группа сама держала длину) — та давно уехала на ползунок в Расстановке,
+  // а группа теперь только про туман. Подпись обновлена под реальное содержимое.
   const ms=$('forgeGrpMoodSub');
-  if(ms){ const lenT=forgeCfg.l>0?forgeCfg.l+' '+(L.unitM||'м'):(L.forgeInf||'∞');
-    ms.textContent=lenT+(forgeCfg.fog>0?' · '+(L.forgeFog||''):''); }
+  if(ms) ms.textContent=[L.fog0,L.fog1,L.fog2][forgeCfg.fog]||'';
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
 

@@ -60,7 +60,7 @@ const I18N = {
     forgeGuest:'Небо друга загружено — жми «Лететь»', forgeShareTxt:'Лети в моё небо «%s» в Cosmogram!',
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
-    forgeGrpHard:'Сложность', forgeGrpEn:'Состав', forgeGrpMood:'Настроение', // v1.69.0
+    forgeGrpHard:'Сложность', forgeGrpEn:'Состав', forgeGrpMood:'Туман', // v1.69.0; 01.09.2026: было «Настроение» — держала длину+небо+туман, оба переехали/убраны, осталось только это
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
     forgeLives:'Жизни', forgeWave:'Стартовая жара', forgeFlat:'Ровный жар — без разгона',
     forgeHS:'Высокая ставка — 1 жизнь, бонусов нет, очки ×4',
@@ -214,7 +214,7 @@ const I18N = {
     forgeGuest:"Friend's track loaded — hit Fly", forgeShareTxt:'Fly my track «%s» in Cosmogram!',
     fkRock:'Asteroid', fkDebris:'Debris', fkDrift:'Drifter', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comet', fkSeeker:'Seeker', fkGate:'Gate',
-    forgeGrpHard:'Difficulty', forgeGrpEn:'Lineup', forgeGrpMood:'Mood', // v1.69.0
+    forgeGrpHard:'Difficulty', forgeGrpEn:'Lineup', forgeGrpMood:'Fog', // v1.69.0
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
     forgeLives:'Lives', forgeWave:'Starting heat', forgeFlat:'Flat heat — no ramp-up',
     forgeHS:'High stakes — 1 life, no powerups, ×4 score',
@@ -361,7 +361,7 @@ const I18N = {
     forgeShareTxt:'¡Vuela mi pista «%s» en Cosmogram!',
     fkRock:'Asteroide', fkDebris:'Escombro', fkDrift:'Vagabundo', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Buscador', fkGate:'Puerta',
-    forgeGrpHard:'Dificultad', forgeGrpEn:'Composición', forgeGrpMood:'Ambiente',
+    forgeGrpHard:'Dificultad', forgeGrpEn:'Composición', forgeGrpMood:'Niebla',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
     bOff:'Apagado', bRare:'Raro', bNorm:'Normal', bOften:'Frecuente',
@@ -524,7 +524,7 @@ const I18N = {
     forgeShareTxt:'Voe na minha pista «%s» no Cosmogram!',
     fkRock:'Asteroide', fkDebris:'Destroço', fkDrift:'Errante', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Perseguidor', fkGate:'Portal',
-    forgeGrpHard:'Dificuldade', forgeGrpEn:'Composição', forgeGrpMood:'Clima',
+    forgeGrpHard:'Dificuldade', forgeGrpEn:'Composição', forgeGrpMood:'Névoa',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
     bOff:'Desligado', bRare:'Raro', bNorm:'Normal', bOften:'Frequente',
@@ -685,7 +685,7 @@ const I18N = {
     forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
     fkRock:'Astéroïde', fkDebris:'Débris', fkDrift:'Dériveur', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comète', fkSeeker:'Chercheur', fkGate:'Portail',
-    forgeGrpHard:'Difficulté', forgeGrpEn:'Composition', forgeGrpMood:'Ambiance',
+    forgeGrpHard:'Difficulté', forgeGrpEn:'Composition', forgeGrpMood:'Brouillard',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
     forgeLives:'Vies', forgeWave:'Intensité de départ', forgeFlat:'Intensité fixe — pas de montée',
     forgeHS:'Mise élevée — 1 vie, aucun bonus, score ×4',
