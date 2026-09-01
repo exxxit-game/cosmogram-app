@@ -249,6 +249,17 @@ function ptWireOnce(){
   });
   const lg=$('ptListGrp'), lp=$('ptListPanel');
   if(lg&&lp) lg.addEventListener('click',()=>{ lg.classList.toggle('open'); lp.classList.toggle('hidden'); });
+  // 01.09.2026 «Свой фон»: свободный цвет неба — формат уже поддерживает (extFlags бит1,
+  // forgeBitsPack/Unpack). Лента красится живьём в эти цвета (ptPaintTrackBg), тот же приём,
+  // что уже был в одобренном макете.
+  ['ptHue1','ptHue2','ptDens'].forEach(function(id){
+    const el=$(id); if(!el) return;
+    el.addEventListener('input',function(){
+      forgeCfg.h1=+$('ptHue1').value; forgeCfg.h2=+$('ptHue2').value; forgeCfg.dens=+$('ptDens').value;
+      ptSyncColorUI();
+      if(typeof forgeSkyKick==='function') forgeSkyKick(); // конструктор-превью тоже должен отреагировать, не только лента
+    });
+  });
   // 01.09.2026 «Непрерывная длина»: заменяет старые 5 кнопок «Длина неба» — ползунок +
   // отдельная кнопка ∞ (старые кнопки несли и 4 числа, и «бесконечную» одним списком — тут
   // это две разные по природе вещи: число и особый режим, разведены на два разных виджета).
@@ -275,6 +286,20 @@ function ptSyncLenUI(){
   if(lv) lv.textContent=inf?(L.forgeInf||'∞'):(ls.value+(L.unitM||'м'));
   if(ib) ib.classList.toggle('sel',inf);
 }
+function ptPaintTrackBg(){
+  const track=$('ptTrack'); if(!track) return;
+  track.style.background='linear-gradient(180deg, hsl('+forgeCfg.h1+',60%,22%), hsl('+forgeCfg.h2+',65%,10%))';
+}
+function ptSyncColorUI(){
+  const h1=$('ptHue1'), h2=$('ptHue2'), dens=$('ptDens'); if(!h1) return;
+  h1.value=forgeCfg.h1; h2.value=forgeCfg.h2; dens.value=forgeCfg.dens;
+  const h1v=$('ptHue1V'); if(h1v) h1v.textContent=forgeCfg.h1;
+  const h2v=$('ptHue2V'); if(h2v) h2v.textContent=forgeCfg.h2;
+  const densv=$('ptDensV'); if(densv) densv.textContent=forgeCfg.dens;
+  const sw1=$('ptSw1'); if(sw1) sw1.style.background='hsl('+forgeCfg.h1+',60%,45%)';
+  const sw2=$('ptSw2'); if(sw2) sw2.style.background='hsl('+forgeCfg.h2+',60%,45%)';
+  ptPaintTrackBg();
+}
 function ptFill(){
   if(typeof L==='undefined'||!L.forgeTitle) return; // тот же ранний выход, что и forgeFill — язык ещё не загружен
   const t=$('ptTitle'); if(t) t.textContent='Расстановка';
@@ -282,6 +307,7 @@ function ptFill(){
   ptWireTray();
   ptWireOnce();
   ptSyncLenUI();
+  ptSyncColorUI();
   ptRender();
   ptRenderRuler();
 }

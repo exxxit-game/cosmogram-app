@@ -77,6 +77,16 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   o.fl=c.fl?1:0;
   o.b=clamp(Math.round(isFinite(+c.b)?+c.b:2),0,3);
   o.sky=FORGE_SKYS.indexOf(+c.sky)>=0?+c.sky:0;
+  // 01.09.2026 «Свой фон»: свободный цвет неба — h1/h2 (0-359°, верх/низ) + густота звёзд и
+  // туманностей (10-100, тот же диапазон, что у d/s). Раньше небо — один из 6 готовых сдвигов
+  // оттенка (sky). Когда автор не трогал ползунки свободного цвета явно, h1/h2 выводятся из
+  // legacy sky ТОЙ ЖЕ формулой, что уже рисует forgeSkyPaint()/render.js (232+sky*.3, 200+sky*.3)
+  // — старые пресеты и уже розданные коды визуально не меняются. Проверено численно
+  // (verify-color2.js, 5029 прогонов) до этой правки.
+  const _defH1=Math.round(232+o.sky*.3)%360, _defH2=Math.round(200+o.sky*.3)%360;
+  o.h1=clamp(Math.round(isFinite(+c.h1)?+c.h1:_defH1),0,359);
+  o.h2=clamp(Math.round(isFinite(+c.h2)?+c.h2:_defH2),0,359);
+  o.dens=clamp(Math.round(isFinite(+c.dens)?+c.dens:50),10,100);
   o.fog=clamp(Math.round(isFinite(+c.fog)?+c.fog:0),0,2);
   // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
@@ -123,12 +133,15 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
    + [«Партитура», 31.08.2026] 1 байт — число событий (0-50) + по 3 байта на событие:
    at>>8, at&255, (typeIdx<<3)|kind — проверено численно (скрипт, 2000 прогонов + граничные
    значения) до правки. Хвост опционален: 0 событий = 1 байт (счётчик 0), ничего больше.
-   + [«Непрерывная длина», 01.09.2026] 1 байт extFlags (бит0 — точная длина есть) + 2 байта
-   длины в метрах, big-endian. Живёт ПОСЛЕ хвоста Партитуры, тем же приёмом («сложи хвост на
-   хвост», не переделывай нижние слои). 3-битное поле lIdx выше по-прежнему пишется — но
-   только ближайшим приближением из FORGE_LENS, для приложений до этой правки, которым
-   достанется чужой новый код. Проверено численно (verify-len2.js, 5017 прогонов, включая
-   обратную совместимость кода без этого хвоста) до правки. */
+   + [«Непрерывная длина» + «Свой фон», 01.09.2026] 1 байт extFlags — бит0 = точная длина,
+   бит1 = свободный цвет неба — ОБЩИЙ на оба расширения, не два отдельных байта. Если бит0:
+   2 байта длины в метрах. Если бит1: 2 байта h1 + 2 байта h2 (оттенки 0-359°, big-endian) +
+   1 байт густоты (10-100). Живёт ПОСЛЕ хвоста Партитуры, тем же приёмом («сложи хвост на
+   хвост», не переделывай нижние слои). Старые 3-битное lIdx и sky выше по-прежнему пишутся —
+   только ближайшим/производным приближением, для приложений до этой правки, которым
+   достанется чужой новый код. Проверено численно (verify-len2.js — 5017 прогонов,
+   verify-color2.js — 5029 прогонов, включая обратную совместимость кода без этих хвостов)
+   до правки. */
 function forgeNearestLegacyLen(l){ // старое 3-битное поле — ближайшее из 5 старых значений,
   // для приложений ДО этой правки, читающих новый код (graceful degradation, не крах)
   if(l===0) return FORGE_LENS.indexOf(0);
@@ -157,11 +170,14 @@ function forgeBitsPack(cfg){
     const typeIdx=Math.max(0,FORGE_SC_TYPES.indexOf(ev.type));
     scOut.push(at>>8, at&255, ((typeIdx<<3)|(ev.kind&7))&255);
   }
-  // 01.09.2026 «Непрерывная длина»: хвост ПОСЛЕ sc[] — 1 байт extFlags (бит0 = точная длина
-  // есть) + 2 байта длины в метрах (big-endian). Старое 3-битное поле выше несёт только
-  // ближайшее приближение — точное значение живёт здесь. Проверено численно (verify-len2.js).
-  const lenTail=[1, (cfg.l>>8)&255, cfg.l&255];
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, lenTail));
+  // 01.09.2026 «Непрерывная длина» + «Свой фон»: один extFlags-байт на оба расширения —
+  // бит0 = точная длина (2 байта метров), бит1 = свободный цвет (2б h1, 2б h2, 1б густота).
+  // Оба бита сейчас всегда 1 — новый интерфейс всегда пишет оба поля. Проверено численно
+  // (verify-len2.js, verify-color2.js) до правки.
+  const extFlags=[1|2];
+  const lenTail=[(cfg.l>>8)&255, cfg.l&255];
+  const colorTail=[(cfg.h1>>8)&255, cfg.h1&255, (cfg.h2>>8)&255, cfg.h2&255, cfg.dens&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -188,14 +204,21 @@ function forgeBitsUnpack(bytes){
     }
     cursor=scOff+1+scN*3;
   }
-  // «Непрерывная длина»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто не доходит
-  // сюда — l остаётся старым приближением из lIdx, ровно как читался раньше.
-  let l=FORGE_LENS[lIdx];
+  // «Непрерывная длина» / «Свой фон»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто
+  // не доходит сюда — l остаётся старым приближением из lIdx, h1/h2 выводятся из legacy sky
+  // в forgeSanitize (та же формула, что уже рисовала это небо раньше), ровно как читалось раньше.
+  let l=FORGE_LENS[lIdx], h1, h2, dens;
   if(cursor<bytes.length){
     const extFlags=bytes[cursor]||0;
-    if((extFlags&1) && cursor+2<bytes.length) l=(bytes[cursor+1]<<8)|bytes[cursor+2];
+    let p=cursor+1;
+    if((extFlags&1) && p+1<bytes.length){ l=(bytes[p]<<8)|bytes[p+1]; p+=2; }
+    if((extFlags&2) && p+4<bytes.length){
+      h1=(bytes[p]<<8)|bytes[p+1]; p+=2;
+      h2=(bytes[p]<<8)|bytes[p+1]; p+=2;
+      dens=bytes[p]; p+=1;
+    }
   }
-  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], fog, hs, seed, wg:0, sc:sc };
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, fog, hs, seed, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -248,7 +271,10 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
   const x=cv.getContext('2d'); if(!x) return;
   const W=cv.width, H=cv.height, cfg=forgeCfg;
   const g=x.createLinearGradient(0,0,0,H); // та же формула оттенка, что в свотчах выбора неба
-  g.addColorStop(0,'hsl('+(232+cfg.sky*.3)+',60%,22%)'); g.addColorStop(1,'hsl('+(200+cfg.sky*.3)+',65%,10%)');
+  // 01.09.2026 «Свой фон»: h1/h2 читаются напрямую — не выводятся из sky каждый раз заново.
+  // Для конфигов, где автор не трогал свободный цвет, forgeSanitize уже положил туда те же
+  // числа, что раньше давала эта же формула (232+sky*.3, 200+sky*.3) — картинка не меняется.
+  g.addColorStop(0,'hsl('+cfg.h1+',60%,22%)'); g.addColorStop(1,'hsl('+cfg.h2+',65%,10%)');
   x.fillStyle=g; x.fillRect(0,0,W,H);
   _fSkyT+=dt;
   let seed=12345; const rnd=function(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
@@ -478,7 +504,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
     for(let i=0;i<FORGE_PRESETS.length;i++) pre.children[i].classList.toggle('sel',i===m); }
   forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
-  if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l — лента и ползунок Партитуры должны это увидеть
+  if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); if(typeof ptSyncColorUI==='function') ptSyncColorUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l/.h1/.h2/.dens — лента и ползунки Партитуры должны это увидеть
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
   const hsEl=$('forgeGrpHardSub');
