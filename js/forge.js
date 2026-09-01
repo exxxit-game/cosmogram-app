@@ -442,6 +442,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
     for(let i=0;i<FORGE_PRESETS.length;i++) pre.children[i].classList.toggle('sel',i===m); }
   forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
+  if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l — лента Партитуры должна это увидеть
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
   const hsEl=$('forgeGrpHardSub');
@@ -453,7 +454,7 @@ function forgeGrpSubSync(){ // «Тонкая настройка»: подпис
   if(ms){ const lenT=forgeCfg.l>0?forgeCfg.l+' '+(L.unitM||'м'):(L.forgeInf||'∞');
     ms.textContent=lenT+(forgeCfg.fog>0?' · '+(L.forgeFog||''):''); }
 }
-function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); } // v1.85.0: небо оживает при входе в конструктор
+function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){

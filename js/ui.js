@@ -2158,6 +2158,7 @@ function applyLang(){
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
   setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
+  if (typeof ptFill==='function') ptFill(); // 01.09.2026: Партитура — своя лента, тот же вызов смены языка
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
   setText('finalScoreLabel',L.finalScoreLabel);
