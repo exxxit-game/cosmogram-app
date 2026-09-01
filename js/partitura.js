@@ -151,6 +151,26 @@ function ptRenderPanel(){
   const icon=$('ptPanelIcon'); if(icon) icon.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
   const av=$('ptAtVal'); if(av) av.value=p.at;
   const kl=$('ptKindLbl'); if(kl){ kl.style.display=p.type==='kind'?'block':'none'; if(p.type==='kind') kl.textContent='Здесь всегда будет '+(PT_KIND_LABEL[kindName]||'').toLowerCase()+' — не случайный вид.'; }
+  // 01.09.2026 «Направление»: сторона видна только у кометы/дрейфера — у остальных видов (и у
+  // спутника, который лишь колеблется) стороны не существует физически, контрол не показываем.
+  const dr=$('ptDirRow');
+  if(dr){
+    const showDir=p.type==='kind'&&(kindName==='comet'||kindName==='drift');
+    dr.style.display=showDir?'block':'none';
+    if(showDir){
+      const seg=$('ptDirSeg');
+      if(seg){
+        seg.innerHTML='';
+        [[0,'Случайно'],[-1,'Влево'],[1,'Вправо']].forEach(function(it){
+          const b=document.createElement('button');
+          b.className='forgeSegBtn'+((p.dir||0)===it[0]?' sel':'');
+          b.textContent=it[1];
+          b.addEventListener('click',function(){ p.dir=it[0]; ptRenderPanel(); sfx.click(); haptic('light'); });
+          seg.appendChild(b);
+        });
+      }
+    }
+  }
   const mb=$('ptMarkerBox'); if(mb) mb.style.display=p.type==='marker'?'block':'none';
   const ph=$('ptPauseHint'); if(ph) ph.style.display=p.type==='pause'?'block':'none';
   if(p.type==='marker'){ const ta=$('ptNoteText'); if(ta){ ta.value=p.note||''; ta.oninput=()=>{ p.note=ta.value; ptRenderList(); }; } }
