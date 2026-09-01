@@ -113,7 +113,14 @@ function ptRender(justPoppedIdx){
   track.classList.toggle('has-pins',pins.length>0);
   const pinSz=ptPinSizeFor(pins.length);
   track.style.setProperty('--pinSz',pinSz+'px');
-  const pinTop=60-pinSz/2;
+  /* 02.09.2026: было 60-pinSz/2 — центрирует только РЯД 0, а ряды 1-2 (ptSpreadOffsets,
+     до 2×28px вниз) добавляются исключительно вниз, не трогая запас над рядом 0. При
+     плотных точках (сегодняшние пресеты — «Пульсар» и другие) 3-й ряд реально вылезал
+     за нижний край окна (измерено вживую: низ 136px при высоте окна 120px). Центруем
+     весь трёхрядный стек (ROWS=3, ROW_H=28 — см. ptSpreadOffsets), не только первый ряд:
+     сдвигаем базу на (ROWS-1)*ROW_H/2 вверх. Проверено численно для всех 4 размеров
+     стикера (48/40/32/26px) × 3 ряда — везде укладывается в [0,120] с запасом. */
+  const pinTop=60-pinSz/2-28;
   const offs=ptSpreadOffsets(pins);
   pins.forEach((p,i)=>{
     const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;

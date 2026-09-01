@@ -23,7 +23,7 @@ function wireOnLocal(id, ev, fn){
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
 const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
-const FORGE_GRPS=[['forgeGrpHard','forgePanelHard'],['forgeGrpEn','forgePanelEn']]; // 30.08.2026: спойлеры «Тонкой настройки» — аккордеон; 02.09.2026: «Туман» переехал в Расстановку, третьей группы («Три яруса») больше нет
+const FORGE_GRPS=[['forgeGrpHard','forgePanelHard']]; // 30.08.2026: спойлер «Тонкой настройки»; 02.09.2026: «Туман» переехал в Расстановку, «Состав» переехал внутрь «Сложности» — осталась одна группа, не аккордеон
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
    кадре, пока «Своя трасса» открыта — тот же класс, что уже чинили для HUD (game.js,
    v1.282.21). Узел статичный (из index.html), forge.js — defer, значит DOM уже разобран
@@ -458,7 +458,7 @@ function forgeFill(){ // подписи + состояние виджетов п
   // 30.08.2026: три заголовка групп стали .setGrp (аккордеон) — текст живёт в дочернем .setGrpT,
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } };
-  grpT('forgeGrpHard',L.forgeGrpHard); grpT('forgeGrpEn',L.forgeGrpEn);
+  grpT('forgeGrpHard',L.forgeGrpHard);
   const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
@@ -506,12 +506,19 @@ function forgeFill(){ // подписи + состояние виджетов п
   // сегменты
   forgeSegBuild($('forgeSeg'),FORGE_LENS.map(function(m){ return {v:m,t:m>0?m+' '+(L.unitM||'м'):L.forgeInf}; }),
     function(){return forgeCfg.l;},function(v){forgeCfg.l=v;});
+  /* 02.09.2026: «Высокая ставка» обещает «1 жизнь, бонусов нет» — но Жизни/Бонусы
+     оставались кликабельными поверх неё. Тап по «Часто» реально менял forgeCfg.b (страж
+     живого замера: b 0→3), однако forgeSanitize() при сохранении/полёте всё равно
+     возвращает b=0 (это уже было — see forgeSanitize «if(o.hs){ o.lv=1; o.b=0; }»)
+     — тап казался рабочим, а результат тихо стирался. Владелец вживую: «сломанная
+     кнопка». Теперь set() игнорирует тап, пока ставка активна — то же самое, что
+     forgeSanitize уже гарантирует, только видно сразу, а не после полёта. */
   forgeSegBuild($('forgeLivesSeg'),[{v:1,t:'1'},{v:2,t:'2'},{v:3,t:'3'}],
-    function(){return forgeCfg.lv;},function(v){forgeCfg.lv=v;});
+    function(){return forgeCfg.lv;},function(v){ if(!forgeCfg.hs) forgeCfg.lv=v; });
   forgeSegBuild($('forgeWaveSeg'),[{v:1,t:'1'},{v:2,t:'2'},{v:3,t:'3'},{v:4,t:'4'},{v:5,t:'5'},{v:6,t:'6'}],
     function(){return forgeCfg.w;},function(v){forgeCfg.w=v;});
   forgeSegBuild($('forgeBonusSeg'),[{v:0,t:L.bOff},{v:1,t:L.bRare},{v:2,t:L.bNorm},{v:3,t:L.bOften}],
-    function(){return forgeCfg.b;},function(v){forgeCfg.b=v;});
+    function(){return forgeCfg.b;},function(v){ if(!forgeCfg.hs) forgeCfg.b=v; });
   forgeSegBuild($('forgeFogSeg'),[{v:0,t:L.fog0},{v:1,t:L.fog1},{v:2,t:L.fog2}],
     function(){return forgeCfg.fog;},function(v){forgeCfg.fog=v;});
   forgeChipBuild($('forgeFlatChip'),L.forgeFlat,function(){return forgeCfg.fl;},function(v){forgeCfg.fl=v;});
@@ -556,6 +563,9 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
+  const livesSegEl=$('forgeLivesSeg'), bonusSegEl=$('forgeBonusSeg'); // 02.09.2026: те же два, что set() теперь игнорирует под «Высокой ставкой» — видно сразу, не только по бездействию тапа
+  if(livesSegEl) livesSegEl.classList.toggle('locked',!!forgeCfg.hs);
+  if(bonusSegEl) bonusSegEl.classList.toggle('locked',!!forgeCfg.hs);
   ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
@@ -569,10 +579,11 @@ function forgeSyncWidgets(){ // конфиг → виджеты
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
   const hsEl=$('forgeGrpHardSub');
-  if(hsEl) hsEl.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv+
-    (forgeCfg.hs?' · '+(L.forgeHS||'')+' ×4':''); // 31.08.2026: закрытая группа не молчит про включённую ставку
-  const es=$('forgeGrpEnSub');
-  if(es){ let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; es.textContent=n+' / '+FORGE_KINDS.length; }
+  if(hsEl){
+    let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; // 02.09.2026: «Состав» переехал сюда же — счётчик видов теперь в общей подписи
+    hsEl.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv+' · '+n+'/'+FORGE_KINDS.length+
+      (forgeCfg.hs?' · '+(L.forgeHS||''):''); // 31.08.2026: закрытая группа не молчит про включённую ставку; 02.09.2026: L.forgeHS уже кончается на «×4» сам по себе — приписанное здесь ещё одно «×4» дублировало текст («…очки ×4 ×4», владелец поймал вживую)
+  }
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
 
