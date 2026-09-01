@@ -542,6 +542,7 @@ function firstFlightFill(){
 function firstFlightOpen(){
   const url=$('firstFlightThumb') && $('firstFlightThumb').src; if(!url) return;
   playerOpen(url, ''); // «Первый полёт» — без реплики, всегда
+  const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку — только у клипа рекорда, не у этой записи
 }
 function firstFlightDelete(){
   const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof firstFlightRefresh==='function') firstFlightRefresh(); }); };
@@ -574,6 +575,140 @@ async function cinemaClipOpen(){
   const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
   const cap = cat ? cinemaPickLine(cat, n) : ''; // 'record' — без числа, 'nearrecord' — «не хватило N очков»
   playerOpen(_clipUrl, cap);
+  const sb=$('ffShareBtn'); if(sb) sb.classList.remove('hidden'); // «Поделиться» — только у клипа, не у «Первого полёта»
+}
+
+/* ---------- Экспорт клипа как карточки (01.09.2026) ----------
+   Тот же приём, что cinemaDrawOverlay() выше (вжигание текста в кадр), но пост-обработкой уже
+   сохранённого клипа, не вживую во время записи — реплика (cinemaPickLine) известна только на
+   посадке, вжигать во время самой записи поздно. Источник кадров — канвас игры, не экран
+   телефона: #score/#topHud — отдельные HTML-узлы поверх канваса (index.html), canvas.getContext
+   их не рисовал никогда — значит HUD в записи нет вообще, обрезка кадра не нужна (проверено
+   чтением разметки, не на глаз — см. разбор с владельцем 01.09.2026).
+   Вид рамки/звёзд/свечения — тот же язык, что утверждён в макете
+   macet-01-09-karta-redkoe-yavlenie.html, перенесён сюда один в один, не заново придуман. */
+function cinemaRR(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r);
+  x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
+function cinemaStar4(x,cx,cy,r){ x.beginPath();
+  x.moveTo(cx,cy-r); x.bezierCurveTo(cx+r*.12,cy-r*.12,cx+r*.88,cy-r*.88,cx+r,cy);
+  x.bezierCurveTo(cx+r*.12,cy+r*.12,cx+r*.88,cy+r*.88,cx,cy+r);
+  x.bezierCurveTo(cx-r*.12,cy+r*.12,cx-r*.88,cy+r*.88,cx-r,cy);
+  x.bezierCurveTo(cx-r*.12,cy-r*.12,cx-r*.88,cy-r*.88,cx,cy-r); x.closePath(); }
+function cinemaFitText(x,text,maxW,startPx,minPx,weight,family){
+  let px=startPx; x.font=weight+' '+px+'px "'+family+'"';
+  while (x.measureText(text).width>maxW && px>minPx){ px-=1; x.font=weight+' '+px+'px "'+family+'"'; }
+  return px;
+}
+const CINEMA_CARD_TIER={ // рекорд — золото (легендарный тон), почти рекорд — голубой (на ступень тише)
+  record:{a:'#ffd76a', glow:'255,210,110'},
+  nearrecord:{a:'#7fd8ff', glow:'130,210,255'},
+};
+function cinemaDrawCardBadge(x, realW, caption, tc){
+  const DESIGN_W=540; // тот же опорный размер, что в одобренном макете — пропорции не плывут на любом реальном разрешении канваса
+  const s=realW/DESIGN_W;
+  x.save(); x.scale(s,s);
+  const w=DESIGN_W;
+  x.textAlign='center'; x.textBaseline='alphabetic';
+  const badgePx=cinemaFitText(x,caption,w-150,32,20,'700','Exo 2');
+  const badgeHalf=x.measureText(caption).width/2;
+  const starR=badgePx*0.24, starOffset=badgeHalf+22, EDGE_PAD=17;
+  const frameHalfW=starOffset+starR+EDGE_PAD;
+  const capH=badgePx*0.72, descH=badgePx*0.22, V_PAD=15;
+  const baseline=68, frameY=baseline-capH-V_PAD, frameH=capH+descH+V_PAD*2;
+  x.save();
+  x.shadowColor='rgba('+tc.glow+',.55)'; x.shadowBlur=16;
+  cinemaRR(x,w/2-frameHalfW,frameY,frameHalfW*2,frameH,frameH/2);
+  x.fillStyle='rgba(10,14,28,.55)'; x.fill();
+  x.lineWidth=1.5; x.strokeStyle=tc.a; x.stroke();
+  x.shadowBlur=0;
+  cinemaRR(x,w/2-frameHalfW+3,frameY+3,frameHalfW*2-6,frameH-6,frameH/2-3);
+  x.lineWidth=1; x.strokeStyle='rgba(255,255,255,.18)'; x.stroke();
+  x.restore();
+  x.shadowColor='rgba('+tc.glow+',.75)'; x.shadowBlur=20;
+  x.fillStyle=tc.a;
+  x.fillText(caption,w/2,baseline);
+  x.shadowBlur=0;
+  [-1,1].forEach(function(side){
+    const sx=w/2+side*starOffset, sy=baseline-badgePx*0.34;
+    const g=x.createRadialGradient(sx,sy,0,sx,sy,14);
+    g.addColorStop(0,'rgba(240,192,64,.55)'); g.addColorStop(1,'rgba(240,192,64,0)');
+    x.fillStyle=g; x.beginPath(); x.arc(sx,sy,14,0,6.283); x.fill();
+    cinemaStar4(x,sx,sy,badgePx*0.24); x.fillStyle='#f0c040'; x.fill();
+  });
+  x.fillStyle='#ffd76a'; x.font='600 13px "Exo 2",sans-serif'; x.letterSpacing='.08em';
+  x.shadowColor='rgba(0,0,0,.6)'; x.shadowBlur=4;
+  x.fillText('© COSMOGRAM', w/2, frameY+frameH+26);
+  x.shadowBlur=0; x.letterSpacing='0px';
+  x.restore();
+}
+
+/* Пересобирает уже сохранённый клип: та же запись + вжигаем рамку/реплику этим разом.
+   Возвращает Blob('video/mp4') или null (честный отказ — старое устройство/нет клипа/кодек
+   не собрался), вызывающий код (cinemaClipShare) сам решает, что показать при null. */
+async function cinemaExportHighlightCard(){
+  const blob = await cinemaLoadHighlight(); if(!blob) return null;
+  const cat = typeof Store!=='undefined' ? Store.get('cinemaClipCat','') : '';
+  const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
+  const caption = cat ? cinemaPickLine(cat, n) : ''; if(!caption) return null;
+  const tc = CINEMA_CARD_TIER[cat] || CINEMA_CARD_TIER.nearrecord;
+
+  const v=document.createElement('video'); v.muted=true; v.playsInline=true;
+  const srcUrl=URL.createObjectURL(blob); v.src=srcUrl;
+  try{
+    await new Promise((res,rej)=>{ v.addEventListener('loadedmetadata',res,{once:true}); v.addEventListener('error',()=>rej(new Error('video_load')),{once:true}); });
+    const W=v.videoWidth, H=v.videoHeight;
+    const picked=await pickVideoCodec(W,H);
+    if(!picked) return null;
+
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const xc=cv.getContext('2d');
+    const target=new Mp4Muxer.ArrayBufferTarget();
+    const muxer=new Mp4Muxer.Muxer({ target, video:{codec:picked.mux,width:W,height:H,frameRate:20}, fastStart:'in-memory', firstTimestampBehavior:'offset' });
+    const encoder=new VideoEncoder({
+      output:(chunk,meta)=>{ try{ muxer.addVideoChunk(chunk,meta); }catch(e){} },
+      error:(e)=>{ if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_card_enc_err', String((e&&e.message)||e)); },
+    });
+    try{ encoder.configure(picked.config); }catch(e){ return null; }
+
+    const FPS=20, N=Math.max(1,Math.floor(v.duration*FPS));
+    for(let i=0;i<N;i++){
+      const t=i/FPS;
+      v.currentTime=Math.min(t, Math.max(0,v.duration-0.001));
+      await new Promise(res=>v.addEventListener('seeked',res,{once:true}));
+      xc.drawImage(v,0,0,W,H);
+      cinemaDrawCardBadge(xc, W, caption, tc);
+      let frame;
+      try{ frame=new VideoFrame(cv,{ timestamp: Math.round(t*1e6) }); encoder.encode(frame,{ keyFrame: i===0 }); }
+      catch(e){}
+      finally{ if(frame) frame.close(); }
+    }
+    try{ await encoder.flush(); }catch(e){}
+    try{ encoder.close(); }catch(e){}
+    try{ muxer.finalize(); }catch(e){ return null; }
+    return new Blob([target.buffer], { type:'video/mp4' });
+  } finally { URL.revokeObjectURL(srcUrl); }
+}
+
+/* «Поделиться» на «Клипе» — системное окно (тот же путь, что cardShare() в card.js), тут же
+   собирает карточку из сырой записи (никогда не хранится с вжатым текстом — реплика решается
+   каждый раз заново из тех же cat/n, чтобы при повторном показе не залипала одна и та же фраза
+   из восьми вариантов). Кнопка гасится на время сборки — повторный тап поверх уже идущей не
+   запускает вторую сборку одновременно. */
+let _cinemaShareBusy=false;
+async function cinemaClipShare(){
+  if (_cinemaShareBusy) return; _cinemaShareBusy=true;
+  const b=$('ffShareBtn'); const oldTxt=b?b.textContent:'';
+  if(b){ b.disabled=true; b.textContent=(typeof L!=='undefined'&&L.cinemaShareBusy)||'Собираю…'; }
+  try{
+    const blob=await cinemaExportHighlightCard();
+    if(!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    const file=new File([blob],'cosmogram-clip.mp4',{type:'video/mp4'});
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      if (typeof haptic==='function') haptic('light');
+    } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
+  }catch(e){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
+  finally{ _cinemaShareBusy=false; if(b){ b.disabled=false; b.textContent=oldTxt; } }
 }
 
 /* ---------- Общий плеер: свои кнопки вместо системных Android (31.08.2026, владелец) ----------
@@ -608,6 +743,7 @@ function playerToggle(){
   const del=$('firstFlightDel'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
   const close=$('firstFlightClose'); if(close) close.addEventListener('click', playerClose);
   const clipBtn=$('cinemaClipBtn'); if(clipBtn) clipBtn.addEventListener('click', cinemaClipOpen);
+  const shareBtn=$('ffShareBtn'); if(shareBtn) shareBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipShare(); });
   const v=$('firstFlightVideo');
   if (v){
     v.addEventListener('click', playerToggle);
