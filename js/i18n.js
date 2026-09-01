@@ -62,7 +62,9 @@ const I18N = {
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', // v1.69.0; 02.09.2026: «Настроение»→«Туман» переехало в Расстановку, «Состав» переехал сюда же — обе больше не отдельные группы
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
-    forgeLives:'Жизни', forgeWave:'Стартовая жара', forgeFlat:'Ровный жар — без разгона',
+    forgeLives:'Жизни', forgeWave:'Стартовая жара',
+    forgeWaveHint:'С какой волны начинаешь — выше значит больше видов препятствий сразу',
+    forgeFlat:'Ровный жар — без разгона',
     forgeHS:'Высокая ставка — 1 жизнь, бонусов нет, очки ×4',
     forgeBonus:'Бонусы', forgeSky:'Небо', forgeFog:'Туман',
     bOff:'Выкл', bRare:'Редко', bNorm:'Норма', bOften:'Часто',
@@ -216,7 +218,9 @@ const I18N = {
     fkSat:'Satellite', fkComet:'Comet', fkSeeker:'Seeker', fkGate:'Gate',
     forgeGrpHard:'Difficulty', // v1.69.0
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
-    forgeLives:'Lives', forgeWave:'Starting heat', forgeFlat:'Flat heat — no ramp-up',
+    forgeLives:'Lives', forgeWave:'Starting heat',
+    forgeWaveHint:'Which wave you start at — higher means more obstacle types right away',
+    forgeFlat:'Flat heat — no ramp-up',
     forgeHS:'High stakes — 1 life, no powerups, ×4 score',
     forgeBonus:'Bonuses', forgeSky:'Sky', forgeFog:'Fog',
     bOff:'Off', bRare:'Rare', bNorm:'Normal', bOften:'Often',
@@ -363,6 +367,7 @@ const I18N = {
     fkComet:'Cometa', fkSeeker:'Buscador', fkGate:'Puerta',
     forgeGrpHard:'Dificultad',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
+    forgeWaveHint:'En qué oleada empiezas — más alto significa más tipos de obstáculos de inmediato',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
     bOff:'Apagado', bRare:'Raro', bNorm:'Normal', bOften:'Frecuente',
     fog0:'Sin niebla', fog1:'Ligera', fog2:'Densa',
@@ -526,6 +531,7 @@ const I18N = {
     fkComet:'Cometa', fkSeeker:'Perseguidor', fkGate:'Portal',
     forgeGrpHard:'Dificuldade',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
+    forgeWaveHint:'Em que onda você começa — mais alto significa mais tipos de obstáculos de uma vez',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
     bOff:'Desligado', bRare:'Raro', bNorm:'Normal', bOften:'Frequente',
     fog0:'Nenhuma', fog1:'Leve', fog2:'Densa',
@@ -687,7 +693,9 @@ const I18N = {
     fkSat:'Satellite', fkComet:'Comète', fkSeeker:'Chercheur', fkGate:'Portail',
     forgeGrpHard:'Difficulté',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
-    forgeLives:'Vies', forgeWave:'Intensité de départ', forgeFlat:'Intensité fixe — pas de montée',
+    forgeLives:'Vies', forgeWave:'Intensité de départ',
+    forgeWaveHint:'À quelle vague tu commences — plus haut veut dire plus de types d’obstacles tout de suite',
+    forgeFlat:'Intensité fixe — pas de montée',
     forgeHS:'Mise élevée — 1 vie, aucun bonus, score ×4',
     forgeBonus:'Bonus', forgeSky:'Ciel', forgeFog:'Brouillard',
     bOff:'Désactivé', bRare:'Rare', bNorm:'Normal', bOften:'Fréquent',

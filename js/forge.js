@@ -451,7 +451,7 @@ function forgeFill(){ // подписи + состояние виджетов п
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
-    ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeBonusLbl',L.forgeBonus],
+    ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
     ['forgePlay',L.start]]; // v1.87.0: «Поделиться» переехала в итоги трассы; 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
