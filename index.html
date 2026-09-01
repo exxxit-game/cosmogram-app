@@ -1086,7 +1086,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeSegBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
 /* 30.08.2026: .forgeGrpLbl (плоские заголовки групп) удалён — три группы «Тонкой настройки»
    стали аккордеоном (.setGrp.spoiler, тот же класс что в Настройках), правило больше нигде не используется */
-.forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-top:2px} /* v1.86.0: тихие плитки-программы */
+.forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:min(92%,380px);margin-top:2px} /* v1.86.0: тихие плитки-программы; 01.09.2026: было width:100% — держалось узким только пока родителем был .setPanel (сам width:min(92%,380px)); после переноса в раскладке родитель — широкий .scrBody, плитки расползлись во весь экран. Ограничение теперь своё, не одолженное у родителя */
 .forgePreset{border:1px solid rgba(140,170,255,.3);background:rgba(16,24,54,.55);color:#bcd2ff;border-radius:999px;
   padding:6px 12px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
 .forgePreset:active{transform:scale(.95)}
@@ -1628,9 +1628,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.4"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.4"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.4"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.5"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.5"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.5"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2016,7 +2016,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="forgeRow"><input type="range" id="ptMood" min="0" max="100" step="1" value="50"><b class="forgeVal" id="ptMoodV">50</b></div>
       <button class="ptRandomBtn" id="ptRandomSkyBtn" type="button"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-shuffle"></use></svg> Случайное небо</button>
     </div>
-    <div class="forgePanel">
+    <div class="setPanel forgePanel">
       <div class="forgeRow heatRow"><span class="forgeLbl" id="forgeHeatLbl">Жар</span><input type="range" id="forgeHeat" min="1" max="10" step="1" value="4"><b class="forgeVal" id="forgeHeatV">4</b></div>
       <button class="btn pri forgeHeroBtn" id="forgePlay">Лететь</button>
     </div>
@@ -2230,25 +2230,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.4" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.4"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.478.4"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.478.4"></script>
-<script defer src="js/game.js?v=1.478.4" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.4"></script>
-<script defer src="js/sync.js?v=1.478.4"></script>
-<script defer src="js/render.js?v=1.478.4"></script>
-<script defer src="js/planetarium.js?v=1.478.4"></script>
-<script defer src="js/goldstar.js?v=1.478.4"></script>
-<script defer src="js/music.js?v=1.478.4"></script>
-<script defer src="js/gyro.js?v=1.478.4"></script>
-<script defer src="js/forge.js?v=1.478.4"></script>
-<script defer src="js/partitura.js?v=1.478.4"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.4"></script>
-<script defer src="js/card.js?v=1.478.4"></script>
-<script defer src="js/star.js?v=1.478.4"></script>
-<script defer src="js/cinema.js?v=1.478.4"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.4"></script>
+<script defer src="js/core.js?v=1.478.5" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.5"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.478.5"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.478.5"></script>
+<script defer src="js/game.js?v=1.478.5" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.5"></script>
+<script defer src="js/sync.js?v=1.478.5"></script>
+<script defer src="js/render.js?v=1.478.5"></script>
+<script defer src="js/planetarium.js?v=1.478.5"></script>
+<script defer src="js/goldstar.js?v=1.478.5"></script>
+<script defer src="js/music.js?v=1.478.5"></script>
+<script defer src="js/gyro.js?v=1.478.5"></script>
+<script defer src="js/forge.js?v=1.478.5"></script>
+<script defer src="js/partitura.js?v=1.478.5"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.5"></script>
+<script defer src="js/card.js?v=1.478.5"></script>
+<script defer src="js/star.js?v=1.478.5"></script>
+<script defer src="js/cinema.js?v=1.478.5"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.5"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
