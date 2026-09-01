@@ -1628,9 +1628,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.2"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.2"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.2"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.3"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.3"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.3"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1973,10 +1973,17 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <div class="trackBox">
           <div class="track" id="ptTrack"></div>
           <div class="trackFooter">
+            <!-- 01.09.2026: кнопка «∞» убрана — владелец вживую: показывала условные «5000м» на
+                 линейке ПОКА была включена (плейсхолдер для рендера, не настоящий предел) —
+                 читалось как «бесконечность упёрлась в 5000», противоречиво. Настоящих причин
+                 делать бесконечную трассу нет («никто не будет бесконечную трассу делать» —
+                 владелец). Потолок ползунка поднят взамен: 10000 → 25000. Формат кода
+                 по-прежнему поддерживает l=0 (forgeSanitize, forge.js) — старые уже разосланные
+                 коды друзей с бесконечной трассой останутся читаемыми, просто создать новую
+                 такую через интерфейс больше нельзя. -->
             <span class="forgeLbl2" id="ptLenLbl">Длина</span>
-            <input type="range" id="ptLenSlider" min="1000" max="10000" step="250" value="1500">
+            <input type="range" id="ptLenSlider" min="1000" max="25000" step="250" value="1500">
             <b id="ptLenVal">1500м</b>
-            <button class="ptInfBtn" id="ptInfBtn" type="button" aria-label="Бесконечная">∞</button>
           </div>
         </div>
         <div class="ruler" id="ptRuler"></div>
@@ -2219,25 +2226,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.2" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.2"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.478.2"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.478.2"></script>
-<script defer src="js/game.js?v=1.478.2" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.2"></script>
-<script defer src="js/sync.js?v=1.478.2"></script>
-<script defer src="js/render.js?v=1.478.2"></script>
-<script defer src="js/planetarium.js?v=1.478.2"></script>
-<script defer src="js/goldstar.js?v=1.478.2"></script>
-<script defer src="js/music.js?v=1.478.2"></script>
-<script defer src="js/gyro.js?v=1.478.2"></script>
-<script defer src="js/forge.js?v=1.478.2"></script>
-<script defer src="js/partitura.js?v=1.478.2"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.2"></script>
-<script defer src="js/card.js?v=1.478.2"></script>
-<script defer src="js/star.js?v=1.478.2"></script>
-<script defer src="js/cinema.js?v=1.478.2"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.2"></script>
+<script defer src="js/core.js?v=1.478.3" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.3"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.478.3"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.478.3"></script>
+<script defer src="js/game.js?v=1.478.3" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.3"></script>
+<script defer src="js/sync.js?v=1.478.3"></script>
+<script defer src="js/render.js?v=1.478.3"></script>
+<script defer src="js/planetarium.js?v=1.478.3"></script>
+<script defer src="js/goldstar.js?v=1.478.3"></script>
+<script defer src="js/music.js?v=1.478.3"></script>
+<script defer src="js/gyro.js?v=1.478.3"></script>
+<script defer src="js/forge.js?v=1.478.3"></script>
+<script defer src="js/partitura.js?v=1.478.3"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.3"></script>
+<script defer src="js/card.js?v=1.478.3"></script>
+<script defer src="js/star.js?v=1.478.3"></script>
+<script defer src="js/cinema.js?v=1.478.3"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.3"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

@@ -313,22 +313,17 @@ function ptWireOnce(){
   });
   const rndBtn=$('ptRandomSkyBtn');
   if(rndBtn) rndBtn.addEventListener('click',ptRandomSky);
-  // 01.09.2026 «Непрерывная длина»: заменяет старые 5 кнопок «Длина неба» — ползунок +
-  // отдельная кнопка ∞ (старые кнопки несли и 4 числа, и «бесконечную» одним списком — тут
-  // это две разные по природе вещи: число и особый режим, разведены на два разных виджета).
-  // Формат кода уже поддерживает любое значение 1000-10000 шагом 250 (forgeBitsPack/Unpack).
+  // 01.09.2026 «Непрерывная длина»: заменяет старые 5 кнопок «Длина неба» — просто ползунок.
+  // Кнопка ∞ убрана в тот же день (см. комментарий у #ptLenSlider в index.html) — «5000м» на
+  // линейке, пока ∞ была включена, читались как настоящий предел, противоречиво; и реальной
+  // нужды в бесконечной авторской трассе не нашлось. Формат кода по-прежнему поддерживает l=0
+  // (forgeSanitize, forge.js) — старые коды друзей с этим значением останутся читаемыми, новых
+  // через интерфейс больше не создать.
   const ls=$('ptLenSlider');
   if(ls) ls.addEventListener('input',()=>{
     forgeCfg.l=+ls.value; ptSyncLenUI();
     ptRenderRuler(); ptRender();
     if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
-  });
-  const ib=$('ptInfBtn');
-  if(ib) ib.addEventListener('click',()=>{
-    forgeCfg.l = forgeCfg.l===0 ? (+($('ptLenSlider')?.value)||1500) : 0; // повторный тап возвращает последнее число на ползунке, не сброс к 1500 всегда
-    ptSyncLenUI(); ptRenderRuler(); ptRender();
-    if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
-    sfx.click(); haptic('light');
   });
 }
 function ptSyncLenUI(){
