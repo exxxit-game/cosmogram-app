@@ -247,6 +247,16 @@ function ptStartPinDrag(ev,i){
   document.addEventListener('pointermove',onMove);
   document.addEventListener('pointerup',onUp);
 }
+function ptSyncTrayAvailability(){ // 02.09.2026: «Состав» может полностью выключить вид —
+  // стикер того же вида в лотке обязан честно это показать, а не молча спорить с обещанием
+  // «полностью исключить из игры». Тот же визуальный язык, что уже есть у .atMax (opacity .28).
+  const tray=$('ptTray'); if(!tray || typeof forgeCfg==='undefined') return;
+  Array.from(tray.children).forEach(function(item){
+    const s=item.querySelector('.sticker'); if(!s || s.dataset.t!=='kind') return;
+    const excluded=!(forgeCfg.e>>(+s.dataset.k)&1);
+    item.classList.toggle('excluded',excluded);
+  });
+}
 function ptWireTray(){
   const tray=$('ptTray'); if(!tray||tray._ptWired) return; tray._ptWired=1;
   const stickerDefs=[{t:'pause',k:0,cap:'Передышка'},{t:'marker',k:0,cap:'Заметка'}]
@@ -261,8 +271,10 @@ function ptWireTray(){
     item.appendChild(s); item.appendChild(cap);
     tray.appendChild(item);
   });
+  ptSyncTrayAvailability();
   tray.addEventListener('pointerdown',ev=>{
     const s=ev.target.closest('.sticker'); if(!s) return;
+    if(s.closest('.stickerItem').classList.contains('excluded')) return; // 02.09.2026: вид выключен в «Составе» — стикер не тащится, не спорит с «полностью исключить из игры»
     const pins=ptPins(); if(pins.length>=PT_MAX) return;
     s.classList.add('dragging');
     if(!ptGhostEl){ ptGhostEl=document.createElement('div'); ptGhostEl.className='ptGhost'; document.body.appendChild(ptGhostEl); }

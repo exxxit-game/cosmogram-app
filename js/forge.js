@@ -46,16 +46,52 @@ const FORGE_DEF={v:3,n:'',d:50,s:50,e:15,l:1500,lv:3,w:1,fl:0,b:2,sky:0,fog:0,wg
    заново здесь. */
 const FORGE_SC_TYPES=['pause','kind','marker']; // индекс = 2 бита в кодеке ниже (влезает: 0-2 из 0-3)
 const FORGE_SC_MAX=50;
+/* 02.09.2026 «Пресеты — рабочие примеры, не только числа»: раньше 8 готовых сценариев были
+   чистыми пресетами параметров (плотность/скорость/состав/цвет) — что реально выпадет на
+   трассе, решал случай при каждом полёте, окно ленты ничего не показывало. Владелец: «оно
+   должно быть точно» — плюс пресеты учат Партитуре на примере, раз лента теперь рисует точки
+   сама (forgeSyncWidgets→ptRender, готово с сегодняшнего коммита). Каждый пресет ниже получил
+   sc — авторские точки (все укладываются в свой l с запасом, максимум 22 из разрешённых 50).
+   Длины подросли по просьбе владельца: от 1500 у «Разминки» и дальше. */
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
-  {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1000,lv:3,w:1,fl:0,b:3,sky:0,fog:0}},
-  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:5000,lv:3,w:3,fl:1,b:2,sky:120,fog:0}},
-  {k:'fpHell', c:{n:'',d:80,s:85,e:255,l:4000,lv:1,w:5,fl:1,b:0,sky:240,fog:0}},
-  {k:'fpFog',  c:{n:'',d:45,s:50,e:13,l:1500,lv:3,w:2,fl:0,b:2,sky:180,fog:2}},
+  {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1500,lv:3,w:1,fl:0,b:3,sky:0,fog:0,sc:[ // мягкое знакомство: редкие камни, одна передышка, одни ворота как «выпускной»
+    {at:100,type:'pause'},{at:300,type:'kind',kind:0},{at:500,type:'kind',kind:0},{at:700,type:'pause'},
+    {at:900,type:'kind',kind:1},{at:1100,type:'kind',kind:0},{at:1300,type:'kind',kind:7}]}},
+  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:4000,lv:3,w:3,fl:1,b:2,sky:120,fog:0,sc:[ // плотный шторм камней/обломков + кометы поочерёдно слева-справа — витрина направления
+    {at:150,type:'kind',kind:0},{at:300,type:'kind',kind:1},{at:450,type:'kind',kind:0},{at:600,type:'kind',kind:0},
+    {at:750,type:'kind',kind:5,dir:1},{at:900,type:'kind',kind:1},{at:1050,type:'kind',kind:0},{at:1200,type:'kind',kind:5,dir:-1},
+    {at:1350,type:'kind',kind:0},{at:1500,type:'kind',kind:1},{at:1650,type:'kind',kind:0},{at:1800,type:'kind',kind:5,dir:1},
+    {at:1950,type:'kind',kind:0},{at:2100,type:'kind',kind:1},{at:2250,type:'kind',kind:5,dir:-1},{at:2400,type:'kind',kind:0},
+    {at:2550,type:'kind',kind:1},{at:2700,type:'kind',kind:5,dir:1},{at:2850,type:'kind',kind:0},{at:3000,type:'kind',kind:5,dir:-1},
+    {at:3150,type:'kind',kind:1},{at:3300,type:'kind',kind:0}]}},
+  {k:'fpHell', c:{n:'',d:80,s:85,e:255,l:3000,lv:1,w:5,fl:1,b:0,sky:240,fog:0,sc:[ // без права на ошибку: ловцы+мины вперемешку, узкие ворота, ни одной паузы
+    {at:200,type:'kind',kind:3},{at:400,type:'kind',kind:6},{at:600,type:'kind',kind:3},{at:800,type:'kind',kind:7},
+    {at:1000,type:'kind',kind:6},{at:1200,type:'kind',kind:3},{at:1400,type:'kind',kind:6},{at:1600,type:'kind',kind:7},
+    {at:1800,type:'kind',kind:3},{at:2000,type:'kind',kind:6},{at:2200,type:'kind',kind:6},{at:2400,type:'kind',kind:7},
+    {at:2600,type:'kind',kind:3},{at:2800,type:'kind',kind:6}]}},
+  {k:'fpFog',  c:{n:'',d:45,s:50,e:13,l:2500,lv:3,w:2,fl:0,b:2,sky:180,fog:2,sc:[ // туман режет видимость — препятствия предсказуемые, разнесённые, щедрые паузы
+    {at:150,type:'pause'},{at:400,type:'kind',kind:4},{at:700,type:'kind',kind:2},{at:1000,type:'pause'},
+    {at:1300,type:'kind',kind:4},{at:1600,type:'kind',kind:2},{at:1900,type:'pause'},{at:2200,type:'kind',kind:4}]}},
   // v1.83.0 «Галерея мастера»: эталонные трассы с выверенным характером — карты в галерее рядом с базовыми
-  {k:'fpGarden', c:{n:'',d:35,s:45,e:33,l:5000,lv:3,w:2,fl:0,b:3,sky:300,fog:0}}, // розовое небо, камни+кометы, щедрые звёзды — медитация
-  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:5000,lv:3,w:3,fl:0,b:2,sky:60,fog:0}}, // дрейфы+врата в индиго — чистое мастерство
-  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:5000,lv:2,w:4,fl:1,b:1,sky:240,fog:1}},  // искатели+мины в мадженте, фонарик, дымка — охота
-  {k:'fpPulse', c:{n:'',d:70,s:95,e:17,l:1000,lv:2,w:5,fl:0,b:3,sky:120,fog:0}}   // камни+спутники во фиолете — короткий спринт на пределе
+  {k:'fpGarden', c:{n:'',d:35,s:45,e:33,l:5000,lv:3,w:2,fl:0,b:3,sky:300,fog:0,sc:[ // розовое небо, спокойная витрина комет ритмично слева-справа, широкие паузы — медитация
+    {at:200,type:'kind',kind:5,dir:1},{at:500,type:'pause'},{at:800,type:'kind',kind:5,dir:-1},{at:1100,type:'pause'},
+    {at:1400,type:'kind',kind:5,dir:1},{at:1700,type:'kind',kind:0},{at:2000,type:'kind',kind:5,dir:-1},{at:2300,type:'pause'},
+    {at:2600,type:'kind',kind:5,dir:1},{at:2900,type:'kind',kind:5,dir:-1},{at:3200,type:'kind',kind:0},{at:3500,type:'kind',kind:5,dir:1},
+    {at:3800,type:'pause'},{at:4100,type:'kind',kind:5,dir:-1},{at:4400,type:'kind',kind:5,dir:1},{at:4700,type:'kind',kind:5,dir:-1}]}}, // розовое небо, камни+кометы, щедрые звёзды — медитация
+  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:4500,lv:3,w:3,fl:0,b:2,sky:60,fog:0,sc:[ // почти сплошные ворота подряд — витрина «дышащих» ворот с первой волны, узкие просветы
+    {at:200,type:'kind',kind:7},{at:450,type:'kind',kind:7},{at:700,type:'kind',kind:2},{at:950,type:'kind',kind:7},
+    {at:1200,type:'kind',kind:7},{at:1450,type:'kind',kind:2},{at:1700,type:'kind',kind:7},{at:1950,type:'kind',kind:7},
+    {at:2200,type:'pause'},{at:2450,type:'kind',kind:7},{at:2700,type:'kind',kind:7},{at:2950,type:'kind',kind:2},
+    {at:3200,type:'kind',kind:7},{at:3450,type:'kind',kind:7},{at:3700,type:'kind',kind:2},{at:3950,type:'kind',kind:7},{at:4200,type:'kind',kind:7}]}}, // дрейфы+врата в индиго — чистое мастерство
+  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:3500,lv:2,w:4,fl:1,b:1,sky:240,fog:1,sc:[ // ловцы преследуют, спутники между ними — ощущение погони
+    {at:200,type:'kind',kind:6},{at:450,type:'kind',kind:4},{at:700,type:'kind',kind:6},{at:950,type:'kind',kind:4},
+    {at:1200,type:'pause'},{at:1450,type:'kind',kind:6},{at:1700,type:'kind',kind:6},{at:1950,type:'kind',kind:4},
+    {at:2200,type:'kind',kind:6},{at:2450,type:'pause'},{at:2700,type:'kind',kind:6},{at:2950,type:'kind',kind:4},{at:3200,type:'kind',kind:6}]}},
+  {k:'fpPulse', c:{n:'',d:70,s:95,e:17,l:2000,lv:2,w:5,fl:0,b:3,sky:120,fog:0,sc:[ // короткий рваный спринт: пачки препятствий, разделённые крошечными паузами, как пульс
+    {at:150,type:'kind',kind:0},{at:200,type:'kind',kind:0},{at:250,type:'pause'},{at:500,type:'kind',kind:4},
+    {at:550,type:'kind',kind:0},{at:600,type:'pause'},{at:850,type:'kind',kind:0},{at:900,type:'kind',kind:1},
+    {at:950,type:'kind',kind:0},{at:1000,type:'pause'},{at:1250,type:'kind',kind:4},{at:1300,type:'kind',kind:0},
+    {at:1350,type:'pause'},{at:1600,type:'kind',kind:0},{at:1650,type:'kind',kind:4},{at:1700,type:'pause'},{at:1900,type:'kind',kind:7}]}}
 ];
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
@@ -529,6 +565,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
   if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); if(typeof ptSyncColorUI==='function') ptSyncColorUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l/.h1/.h2/.dens — лента и ползунки Партитуры должны это увидеть
+  if(typeof ptSyncTrayAvailability==='function') ptSyncTrayAvailability(); // 02.09.2026: «Состав» мог включить/выключить вид — лоток стикеров должен это честно показать
 }
 function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
   const hsEl=$('forgeGrpHardSub');
