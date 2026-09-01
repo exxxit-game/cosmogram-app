@@ -206,8 +206,8 @@ const I18N = {
     srGoal:'Goal', srFinish:'Finish!', srNewBest:'New time record',
     modeDaily:'Track of the day', modeDailyD:'One track for every player — set the day record', dlNewBest:'New track of the day record',
     dailyOnce:'5 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'You already jumped today · your flight: '+s+' · new track tomorrow',
-    modeForge:'Custom track', modeForgeD:'Run builder: tune it and share the code', // v1.68.0
-    forgeTitle:'Custom track', forgeNamePh:'Track name', forgeDefName:'Pilot track',
+    modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
+    forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
     forgeCodeLbl:"Friend's track — paste the code or link",
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
@@ -352,8 +352,8 @@ const I18N = {
     modeDaily:'Pista del día', modeDailyD:'Una pista para todos los jugadores — marca el récord del día',
     dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'5 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Hoy ya saltaste · tu vuelo: '+s+' · pista nueva mañana',
-    modeForge:'Pista propia', modeForgeD:'Constructor de vuelo: arma y comparte el código',
-    forgeTitle:'Pista propia', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
+    modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
+    forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
     forgeCodeLbl:'Pista de un amigo — pega el código o el enlace',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
@@ -515,8 +515,8 @@ const I18N = {
     modeDaily:'Pista do dia', modeDailyD:'Uma pista para todos os jogadores — bata o recorde do dia',
     dlNewBest:'Novo recorde da pista do dia', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Hoje você já voou · seu voo: '+s+' · pista nova amanhã',
-    modeForge:'Pista própria', modeForgeD:'Construtor de voo: monte e compartilhe o código',
-    forgeTitle:'Pista própria', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
+    modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
+    forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
     forgeCodeLbl:'Pista de um amigo — cole o código ou o link',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
@@ -677,8 +677,8 @@ const I18N = {
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
     modeDaily:'Trace du jour', modeDailyD:'Une trace pour tous les joueurs — décroche le record du jour', dlNewBest:'Nouveau record de la Trace du jour',
     dailyOnce:'5 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
-    modeForge:'Trace personnalisée', modeForgeD:'Créateur de trace : règle-la et partage le code',
-    forgeTitle:'Trace personnalisée', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
+    modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
+    forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
     forgeCodeLbl:"Trace d'un ami — colle le code ou le lien",
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
