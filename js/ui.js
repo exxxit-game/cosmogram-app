@@ -1955,33 +1955,31 @@ document.querySelectorAll('.topCat').forEach(b=>b.addEventListener('click',()=>{
 /* ---------- Одна таблица, много входов (v1.51.0) ----------
    Гость играет полноценно, рекорд ждёт локально; вход — Telegram Login Widget (только браузер).
    Анонимных записей нет: без подписи Telegram в таблицу не встать — доверие дороже охвата. */
-function accFill(){ // настройки: статус входа + виджет (гость) / «Выйти» (веб-сессия)
-  const st=$('accStatus'), wg=$('accWidget'), out=$('accOutBtn');
+function accFill(){ // настройки: статус входа + кнопки (гость) / «Выйти» (веб-сессия)
+  const st=$('accStatus'), out=$('accOutBtn');
   if(!st || typeof syncAvailable!=='function') return;
   const dw=$('dcWidget'), gw=$('gWidget');
   if (syncAvailable()){
     st.textContent=L.accIn(typeof syncAuthName==='function'?(syncAuthName()||''):'');
-    wg.innerHTML=''; if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
+    if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
     out.classList.toggle('hidden', !!syncInitData()); // из мини-аппа «выходить» нечего — ты дома
   } else {
     st.textContent=L.accGuest;
     out.classList.add('hidden');
-    if(!syncInitData()){ tgWidgetMount(wg); if(dw) dcMount(dw); if(gw) gMount(gw); } else { wg.innerHTML=''; if(dw) dw.innerHTML=''; if(gw) gw.innerHTML=''; }
+    if(!syncInitData()){ if(dw) dcMount(dw); if(gw) gMount(gw); } else { if(dw) dw.innerHTML=''; if(gw) gw.innerHTML=''; }
   }
 }
 function webJoinFill(){ // экран итогов: гостю — приглашение и кнопка входа, вошедшему — чисто
   const wj=$('webJoin'); if(!wj || typeof syncAvailable!=='function') return;
   const guest=!syncAvailable();
   wj.classList.toggle('hidden', !guest);
-  /* v1.282.20: раньше виджет входа перемонтировался на КАЖДОЙ смерти — а tgWidgetMount вставляет
-     внешний <script> и заводит сторож на 5 секунд. Двадцать смертей за сессию у веб-гостя = двадцать
-     вставок и двадцать iframe подряд. Монтируем один раз и оставляем, пока он жив. */
+  /* v1.282.20: раньше виджет входа перемонтировался на КАЖДОЙ смерти — а dcMount/gMount вставляют
+     внешнюю кнопку и заводят сторож на 5 секунд. Двадцать смертей за сессию у веб-гостя = двадцать
+     вставок подряд. Монтируем один раз и оставляем, пока он жив. */
   if (guest){ $('webJoinTxt').textContent=L.webJoin;
-    const w=$('webJoinWidget');
-    if (w && !w.firstChild) tgWidgetMount(w);
     const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0);
     const gj0=$('gJoinWidget'); if (gj0 && !gj0.firstChild) gMount(gj0); }
-  else { setHTML('webJoinWidget',''); const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
+  else { const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
   accFill(); webJoinFill();
@@ -2009,19 +2007,17 @@ function myBestFor(cat){
    ============================================================ */
 function renderTop(){
   const list=$('topList'), me=$('topMe');
-  const wb=$('topWouldBe'), jn=$('topJoin'), tl=$('topLogin'), dl=$('dcLogin');
+  const wb=$('topWouldBe'), jn=$('topJoin'), dl=$('dcLogin');
   const gost = (typeof syncAvailable!=='function') || !syncAvailable();
   me.textContent=''; list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
   if(wb) wb.classList.add('hidden');
   if(jn) jn.classList.add('hidden');
   if (typeof syncTop!=='function'){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
-  /* Виджеты входа: гостю — под таблицей, вошедшему — прочь. Раньше они появлялись ВМЕСТО
+  /* Кнопка входа: гостю — под таблицей, вошедшему — прочь. Раньше появлялась ВМЕСТО
      таблицы, теперь только рядом с приглашением. */
   if (gost){
-    if (tl){ tl.classList.remove('hidden'); if(!syncInitData()) tgWidgetMount(tl); } // v1.51.0
-    if (dl){ dl.classList.remove('hidden'); if(!syncInitData()) dcMount(dl); }       // v1.52.0
+    if (dl){ dl.classList.remove('hidden'); if(!syncInitData()) dcMount(dl); } // v1.52.0
   } else {
-    if (tl){ tl.classList.add('hidden'); tl.innerHTML=''; }
     if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; }
   }
   const askCat=topCat; // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком

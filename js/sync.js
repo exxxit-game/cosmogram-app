@@ -9,10 +9,11 @@
 const SYNC_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-sync';
 const SYNC_KEY='sb_publishable_0Ut2DUmAbYkJoxVLTMAKqg_Qwn3OMnI'; // публичный ключ: безопасен, доступ решает подпись Telegram
 const SYNC_CATS=['gyro','touch','bullet','dist','keys'];
-const TG_BOT_USERNAME='realcosmogrambot'; // Login Widget: вход из браузера в ту же таблицу (v1.51.0 «Одна таблица»)
 
-/* ---------- Два входа, одна таблица (v1.51.0) ----------
-   initData — внутри мини-аппа; webAuth — Telegram Login Widget в браузере.
+/* ---------- Несколько входов, одна таблица ----------
+   initData — внутри мини-аппа; webAuth — старая веб-сессия Telegram Login Widget (виджет
+   убран 02.09.2026 — см. ниже, но уже выданные сессии этим же способом продолжают
+   работать, читаются отсюда же); dcAuth/gAuth — Discord/Google.
    Анонимов в таблице нет и не будет: ник без подписи = флуд и стертое доверие. */
 function syncInitData(){ return (tg && tg.initData) || null; } // подпись есть только внутри Telegram
 function syncWebAuth(){ const w=Store.get('tgWebAuth',null); return (w && w.id && w.hash) ? w : null; } // веб-сессия виджета (живёт ~неделю, потом вход в один тап)
@@ -31,61 +32,14 @@ function syncAuthName(){ // имя для «ты в таблице как …»
   const g=syncGAuth(); return g ? String(g.name||'Игрок') : null;
 }
 
-/* Кнопка входа Telegram (только браузер): виджет сам рисует себя в контейнере.
-   Требует /setdomain у BotFather для домена, где живёт игра. */
-function tgWidgetMount(el){
-  if(!el || typeof document==='undefined') return false;
-  el.innerHTML=''; el.classList.remove('wgOff');
-  const host=location.hostname;
-  if(location.protocol==='file:' || host==='localhost' || host==='127.0.0.1' || host==='[::1]'){
-    el.classList.add('wgOff');
-    return false;
-  }
-  const s=document.createElement('script');
-  s.src='https://telegram.org/js/telegram-widget.js?22';
-  s.async=true;
-  s.setAttribute('data-telegram-login',TG_BOT_USERNAME);
-  s.setAttribute('data-size','medium');
-  s.setAttribute('data-userpic','false');
-  s.setAttribute('data-onauth','onTelegramAuth(user)');
-  el.appendChild(s);
-  // v1.84.0 «Финал в полголоса»: домен не привязан (/setdomain) — виджет пишет игроку сырой
-  // «Bot domain invalid». Это не для сцены: если за 5с кнопка-iframe не родилась — сигнал
-  // уходит нам молча в BEACON (телеметрия), не на экран игрока.
-  // 26.08.2026: el.classList.add('wgOff') здесь же и ПРЯТАЛ кнопку — .wgOff{display:none
-  // !important} перевешивает даже :not(:empty), так что если скрипт telegram.org был не сломан,
-  // а просто медленный (мобильная сеть — ровно жалоба владельца), и iframe всё же прилетал
-  // на 6-й/8-й секунде, кнопка оставалась скрытой НАВСЕГДА тем же !important — виджет
-  // работал, а игрок его никогда не видел. Диагностика (телеметрия) остаётся; прятать
-  // саму кнопку по таймауту больше не нужно — .tgWidget:empty уже прячет её, пока внутри
-  // пусто, и сама открывает её, стоит iframe появиться, в любую секунду, без верхней границы.
-  // 02.09.2026: строка на экране Сервисного центра убрана (это инструкция для нас про
-  // BotFather, игрок её не починит) — сигнал теперь только сюда, в телеметрию.
-  setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe') && typeof BEACON!=='undefined'){ BEACON.signal('tg_widget_silent',''); } },5000);
-  // 26.08.2026: подгонка кнопок Discord/Google под размер этой самой кнопки шла вслепую —
-  // cross-origin запрещает читать что-либо ВНУТРИ iframe (та же защита, что не даёт сайту
-  // подсмотреть форму входа банка в чужом iframe), но собственный прямоугольник iframe
-  // (his own box, не содержимое) — это наш DOM, читать можно. Раз в сессию, только когда
-  // печать лаборатории снята (isLabEnv()=false — с живого владельца, не с моих тестов),
-  // одна короткая открытка с настоящим размером. Дедуп в drop() и так не даст спамить.
-  let tgSizeTries=0;
-  const tgSizePoll=setInterval(()=>{
-    const ifr=el.querySelector('iframe');
-    if(ifr){
-      clearInterval(tgSizePoll);
-      const r=ifr.getBoundingClientRect();
-      if(r.width>0 && typeof BEACON!=='undefined') BEACON.signal('tg_widget_px', Math.round(r.width)+'x'+Math.round(r.height));
-    } else if(++tgSizeTries>40){ clearInterval(tgSizePoll); } // 40×150мс=6с — чуть дольше таймаута тишины выше
-  },150);
-  return true;
-}
-window.onTelegramAuth=function(u){ // ответ виджета — уже подписан Telegram, сервер проверит HMAC
-  if(!u || !u.id || !u.hash) return;
-  Store.set('tgWebAuth',u);
-  Store.set('syncQ',[]); // чистим, чтобы залить свежие локальные максимумы гостя
-  syncSubmit(syncLocalScores()); // гостевой мостик: полёты встают в общую таблицу (сервер монотонен)
-  if(typeof syncAuthChanged==='function') syncAuthChanged();
-};
+/* 02.09.2026: браузерная кнопка входа Telegram (виджет telegram.org, tgWidgetMount) убрана
+   целиком — владелец: игрок внутри Telegram и так входит сам собой через initData, третья
+   форма входа рядом с Google/Discord ломала единый вид ряда кнопок и не стоила своей возни
+   (чужой iframe: непредсказуемый язык, недоступная изнутри вёрстка — та же беда, что уже не
+   раз ловила подгонку Discord/Google под этот же виджет). Уже выданные веб-сессии (Store
+   'tgWebAuth') продолжают читаться как обычно — syncWebAuth()/syncAuthName() выше их не
+   теряют, теряется только способ завести НОВУЮ такую сессию. window.onTelegramAuth (коллбэк
+   виджета) убран вместе с ним — вызывать его больше некому. */
 
 /* ---------- Второй вход: Discord (v1.52.0) ----------
    Кнопка появляется, только когда сервер настроен (public_config отдаёт client_id —
