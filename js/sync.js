@@ -209,7 +209,14 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
     history.replaceState(null,'',ru); // код вычеркнут из адресной строки сразу
     // 29.08.2026: localStorage вместо sessionStorage — см. коммент у dcGo/gGo
     let saved=null; try{ saved=JSON.parse(localStorage.getItem('oauthState')||'null'); localStorage.removeItem('oauthState'); }catch(e){}
-    if(!saved || !saved.state || state!==saved.state){ syncAuthFail(); return; } // v1.282.8: чужой code без нашего ярлыка — не наш поход
+    if(!saved || !saved.state || state!==saved.state){
+      /* 02.09.2026 «Диагностика молчаливого сбоя»: временный тост, снять после разбора живого
+         бага (владелец: Google-вход никогда не засчитывается). syncAuthFail() сам не говорит,
+         НА КАКОМ ИМЕННО шаге билет потерялся — не найден в localStorage вовсе (запись в gGo()
+         могла молча упасть, try/catch там глотает ошибку) или найден, но state не совпал. */
+      try{ if(typeof toast==='function') toast('Диагностика входа: билет '+(saved?('найден, совпадает='+(state===saved.state)):'НЕ найден в localStorage'), 'rgba(255,159,176,.5)'); }catch(e){}
+      syncAuthFail(); return;
+    } // v1.282.8: чужой code без нашего ярлыка — не наш поход
     if(saved.provider==='dc') syncDiscordCode(code, ru);
     else if(saved.provider==='gg') syncGoogleCode(code, ru);
   }catch(e){ syncAuthFail(); }
