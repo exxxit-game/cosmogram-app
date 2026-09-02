@@ -566,7 +566,10 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const livesSegEl=$('forgeLivesSeg'), bonusSegEl=$('forgeBonusSeg'); // 02.09.2026: те же два, что set() теперь игнорирует под «Высокой ставкой» — видно сразу, не только по бездействию тапа
   if(livesSegEl) livesSegEl.classList.toggle('locked',!!forgeCfg.hs);
   if(bonusSegEl) bonusSegEl.classList.toggle('locked',!!forgeCfg.hs);
-  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip'].forEach(function(id){
+  // 02.09.2026: forgeHSChip строится тем же forgeChipBuild(), что и forgeFlatChip — обоим
+  // нужен вызов _sync() отсюда, иначе кнопка навсегда остаётся без подписи (владелец вживую:
+  // «под кнопкой часто видно пустую кнопку»). Забыли добавить соседа в список — страж 147.
+  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeHSChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
   const pre=$('forgePresets'); // выбранная программа мягко светится — видно, что сейчас в небе (v1.86.0)
