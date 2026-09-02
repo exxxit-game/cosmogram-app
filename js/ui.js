@@ -1739,37 +1739,8 @@ wireOn('diagVibroBtn', 'click', ()=>{ // v1.60.0: длинный сильный 
     [0,260,520].forEach(t=>setTimeout(()=>{ try{ hf.impactOccurred('heavy'); }catch(e){} },t)); }
   else if (navigator.vibrate){ try{ navigator.vibrate([300,120,300,120,300]); }catch(e){} }
 });
-/* 13.08.2026: здесь стояли слушатели двух кнопок ручной отправки — «Скопировать отчёт»
-   и «Скопировать самописец». Обе просили игрока сделать нашу работу: скопировать текст,
-   открыть переписку, вставить. С появлением «Почты неба» это стало притворством —
-   те же данные приходят к нам сами. Кнопки и запасное окно с текстом убраны.
-   Дверь к людям осталась одна и живая: «Написать в поддержку». */
-/* v1.284.13 «Лента в руки» (решение владельца 14.08). Кнопка ничего не отправляет —
-   «Почта неба» шлёт сама. Она отдаёт игроку ленту самописца: паспорт борта, вердикт цепи
-   руля и события с метками времени. Нужна затем, что мост Telegram глотает исключения
-   внутри своих колбэков, и такие падения не доходят ни до почты, ни до окна «экипаж знает»:
-   единственный способ их увидеть — прочитать ленту глазами.
-   Буфер в webview бывает запрещён, поэтому текст всегда кладётся и в поле для выделения:
-   кнопка, которая молча ничего не сделала, хуже отсутствующей. */
-$('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
-  let text=''; try{ text = (typeof BB!=='undefined' && BB.text) ? BB.text() : ''; }catch(e){}
-  if(!text) text = 'Cosmogram v'+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?')+' blackbox · лента пуста';
-  const box=$('diagTapeBox');
-  if(box){ box.value=text; box.classList.remove('hidden'); }
-  sfx.click(); haptic('light');
-  let done=false;
-  const skazat=(ok)=>{ if(done) return; done=true;
-    if(typeof svcToast==='function') svcToast(ok?L.diagCopyOk:L.diagCopyManual,'rgba(159,232,255,.5)');
-    if(!ok && box){ try{ box.focus(); box.select(); }catch(e){} } };
-  try{
-    if(navigator.clipboard && navigator.clipboard.writeText)
-      navigator.clipboard.writeText(text).then(()=>skazat(true), ()=>skazat(false));
-    else skazat(false);
-  }catch(e){ skazat(false); }
-  setTimeout(()=>skazat(false), 1200); // молчащий буфер: обещание не может висеть без ответа
-});
-
-// 31.08.2026 «Приложить диагностику» (владелец): та же лента, что и diagCopyBtn (BB.text()),
+// 31.08.2026 «Приложить диагностику» (владелец): та же лента, что показывала снятая
+// 02.09.2026 кнопка «Скопировать самописец» (BB.text()),
 // но подставляется прямо в это поле, не через буфер обмена — снимает и лишний экран
 // (Сервисный центр → назад → сюда), и Samsung/Telegram WebView, где системная вставка
 // иногда просто не срабатывает (жалоба владельца, живое устройство). Метка-разделитель
@@ -1810,7 +1781,6 @@ wireOn('feedbackAttachBtn', 'click', ()=>{
   feedbackUpdateCount();
   if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
 });
-wireOn('diagSupportBtn', 'click', ()=>{ haptic('light'); openFeedback('diag'); });
 wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая проверка цены записи на реальном телефоне
   if (typeof cinemaTestArm==='function') cinemaTestArm();
   haptic('light'); sfx.click();
@@ -2185,7 +2155,6 @@ wireOn('feedbackText', 'input', feedbackUpdateCount);
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
-  { const b=$('diagCopyBtn'); if(b && L.diagCopy) b.textContent=L.diagCopy; } // v1.284.13: подпись кнопки самописца на пяти языках
   // v1.34.0 «Единая палуба»: иконки перед текстом убраны из всех окон — кнопки говорят текстом
   /* 13.08.2026: подписи pillGyro/pillTouch/pillDist/pillBullet больше некому раздавать —
      строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
@@ -2246,7 +2215,6 @@ function applyLang(){
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
-  setText('diagSupportBtn',L.diagSupportBtn);
   gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); btLabel(); gyroStatus(); morseLabel(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
