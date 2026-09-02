@@ -47,6 +47,25 @@ const BEACON=(()=>{
       return 'fps:'+fps+' lvl:'+lvl+' tier:'+tier;
     }catch(e){ return ''; }
   }
+  /* 02.09.2026 (владелец, «раз и навсегда отточить инструмент»): версия моста Telegram и
+     настоящие отступы безопасной зоны раньше не ехали ни с одним письмом — только косвенно,
+     кусками текста, если повезёт. Именно версия tg могла бы сказать, на КАКИХ клиентах
+     занижается viewportStableHeight (сегодняшнее расследование, guardCanvasNeverShorterThanWindow).
+     Едет с КАЖДЫМ письмом, не только со снимком — дёшево (одна строка), не требует shot. */
+  function envCtx(){
+    try{
+      const rt=(typeof tgApp==='function')?tgApp():null;
+      const tgv=(rt&&rt.version)||'-';
+      const exp=rt?(rt.isExpanded?1:0):'-';
+      const full=rt?(rt.isFullscreen?1:0):'-';
+      const stable=rt?(rt.viewportStableHeight||'-'):'-';
+      const cs=(typeof getComputedStyle==='function')?getComputedStyle(document.documentElement):null;
+      const v=(name)=>cs?cs.getPropertyValue(name).trim():'-';
+      return 'tgv:'+tgv+' exp:'+exp+' full:'+full+' stable:'+stable+
+        ' iw:'+(window.innerWidth||'-')+' ih:'+(window.innerHeight||'-')+
+        ' sat:'+v('--sat')+' satm:'+v('--sat-menu')+' sab:'+v('--sab')+' sar:'+v('--sar');
+    }catch(e){ return ''; }
+  }
   function postcard(kind,msg,stack,shot){
     let verdict='', tail='', audioV='';
     try{ verdict=bbVerdict(); }catch(e){}
@@ -59,7 +78,7 @@ const BEACON=(()=>{
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     const pc = { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
       msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, audio:audioV, tail:tail,
-      ua:(navigator.userAgent||'').slice(0,200), anon:anon(), ts:Date.now() };
+      env:envCtx(), ua:(navigator.userAgent||'').slice(0,200), anon:anon(), ts:Date.now() };
     if(shot) pc.shot=shot; // 02.09.2026 «Снимок на подозрение»: см. signalShot() ниже
     return pc;
   }
