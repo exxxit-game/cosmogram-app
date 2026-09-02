@@ -231,6 +231,20 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    уже дважды проверенный на этой же беде приём. */
 #diagScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
 #diagBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
+/* 02.09.2026 (владелец, живые устройства, два скриншота подряд): «в написать разработчику
+   кнопка назад не нажимается» и «в достижениях текст на кнопку назад заходит» — тот же
+   класс беды, теперь подтверждённый дважды за одну сессию на разных экранах. Родная кнопка
+   Telegram (её собственное «← Назад») перекрывает нашу — тот же +24px, что уже решил это
+   у Ангара/Конструктора/Сервисного центра/Итогов. Заодно применяю и к Настройкам —
+   механизм тот же (тот же .menuBack, та же группа отступа), отдельного скриншота для неё
+   ещё не было, но ждать третьего репорта той же беды нет смысла — принцип 7 отчёта
+   («Согласованность между экранами») именно об этом. */
+#achScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
+#achBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
+#feedbackScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
+#feedbackBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
+#settingsScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
+#settingsBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
 /* Настройки: «Назад» — обычная строка в конце последней панели, в потоке документа
    (так и было задумано с самого начала, см. коммент «Назад в потоке» у разметки) —
    поэтому весь экран целиком остаётся одной прокручиваемой лентой, как раньше. */
@@ -1459,6 +1473,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    системным prefers-reduced-motion общим правилом (см. ниже, тот же селектор *). */
 #retryBtn { font-size:20px; padding:14px 18px; width:auto; min-height:56px; margin:16px 0 10px;
   animation:retryLure 3.6s ease-in-out infinite; } /* герой среди кнопок */
+/* 02.09.2026 (аудит «Пространство в меню», пункт 4): «Продолжить»/«Начать полёт» были
+   главной кнопкой только по цвету стекла (.btn.pri) — без места, хотя у «Ещё раз» и «Лететь»
+   (.forgeHeroBtn) уже есть готовый приём «герой сцены» размером, не только цветом. Те же
+   числа, без анимации-пульса — retryLure зовёт переиграть после потери, здесь кнопка видна
+   при каждом открытии игры, постоянный пульс надоест быстрее, чем поможет. Макет:
+   macet-02-09-geroy-knopka-pauza-start.html. */
+.btn.hero { font-size:19px; min-height:54px; margin-top:14px; margin-bottom:8px; }
 @keyframes retryLure {
   0%,100% { box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); transform:scale(1); }
   50% { box-shadow:0 0 30px rgba(130,180,255,.30), inset 0 0 16px rgba(130,180,255,.10); transform:scale(1.012); }
@@ -1730,9 +1751,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.22"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.22"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.22"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.24"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.24"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.24"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -1846,7 +1867,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        кошелёк в Ангаре, там же, где его тратят. Страж 110 сторожит невозврат. -->
   <div class="scrMid">
     <div class="stack">
-      <button class="btn pri" id="startBtn">Начать полёт</button>
+      <button class="btn pri hero" id="startBtn">Начать полёт</button>
       <button class="btn sec" id="modesBtn">Режимы</button>
     </div>
     <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
@@ -1871,7 +1892,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <div id="pauseScreen" class="overlay hidden">
   <div class="screenTitle" id="pauseTitle">Пауза</div>
   <div class="stack">
-    <button class="btn pri" id="resumeBtn">Продолжить</button>
+    <button class="btn pri hero" id="resumeBtn">Продолжить</button>
     <button class="btn sec" id="restartBtn">Заново</button>
     <button class="btn ghost" id="pauseSettingsBtn">Настройки</button>
     <button class="btn ghost" id="pauseMenuBtn">Меню</button>
@@ -2332,25 +2353,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.22" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.22"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.478.22"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.478.22"></script>
-<script defer src="js/game.js?v=1.478.22" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.22"></script>
-<script defer src="js/sync.js?v=1.478.22"></script>
-<script defer src="js/render.js?v=1.478.22"></script>
-<script defer src="js/planetarium.js?v=1.478.22"></script>
-<script defer src="js/goldstar.js?v=1.478.22"></script>
-<script defer src="js/music.js?v=1.478.22"></script>
-<script defer src="js/gyro.js?v=1.478.22"></script>
-<script defer src="js/forge.js?v=1.478.22"></script>
-<script defer src="js/partitura.js?v=1.478.22"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.22"></script>
-<script defer src="js/card.js?v=1.478.22"></script>
-<script defer src="js/star.js?v=1.478.22"></script>
-<script defer src="js/cinema.js?v=1.478.22"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.22"></script>
+<script defer src="js/core.js?v=1.478.24" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.24"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.478.24"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.478.24"></script>
+<script defer src="js/game.js?v=1.478.24" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.24"></script>
+<script defer src="js/sync.js?v=1.478.24"></script>
+<script defer src="js/render.js?v=1.478.24"></script>
+<script defer src="js/planetarium.js?v=1.478.24"></script>
+<script defer src="js/goldstar.js?v=1.478.24"></script>
+<script defer src="js/music.js?v=1.478.24"></script>
+<script defer src="js/gyro.js?v=1.478.24"></script>
+<script defer src="js/forge.js?v=1.478.24"></script>
+<script defer src="js/partitura.js?v=1.478.24"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.24"></script>
+<script defer src="js/card.js?v=1.478.24"></script>
+<script defer src="js/star.js?v=1.478.24"></script>
+<script defer src="js/cinema.js?v=1.478.24"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.24"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
