@@ -471,7 +471,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.31'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.32'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1245,8 +1245,20 @@ try{ const mqRM=matchMedia('(prefers-reduced-motion: reduce)'); RM=!!mqRM.matche
 function resize(){
   const cssW = window.innerWidth;
   const rt=tgApp(); // v1.71.0: в fullscreen viewportStableHeight на Android может лагать — берём честный innerHeight
-  const cssH = (rt && rt.isFullscreen) ? window.innerHeight
-    : (rt && rt.viewportStableHeight && rt.isExpanded) ? rt.viewportStableHeight : window.innerHeight;
+  // 02.09.2026 (владелец вживую, iPhone 16, скриншоты): тот же класс бага и в этой ветке —
+  // viewportStableHeight занижен, холст короче окна, снизу видна голая чёрная полоса под
+  // холстом. window.innerHeight — честная правда браузера о своей же странице, никогда не
+  // соврёт В БОЛЬШУЮ сторону; берём больший из двух — заниженный stableHeight не может
+  // сделать холст короче того, что браузер сам подтверждает как видимое. Страж 150.
+  let cssH = window.innerHeight;
+  if (rt && rt.isFullscreen) cssH = window.innerHeight;
+  else if (rt && rt.viewportStableHeight && rt.isExpanded){
+    cssH = Math.max(rt.viewportStableHeight, window.innerHeight);
+    // 02.09.2026: гипотеза «Telegram занижает viewportStableHeight» подтвердить без реального
+    // устройства нельзя — если это правда, сигнал даст точные цифры с настоящего телефона.
+    if (rt.viewportStableHeight < window.innerHeight - 20 && typeof BEACON!=='undefined')
+      BEACON.signal('vh_underreport', rt.viewportStableHeight+'<'+window.innerHeight);
+  }
   if (cssW<=0 || cssH<=0) return;
   /* v1.284.6 «Клавиатура — не узкое окно». Экранная клавиатура съедает 250-350 px высоты
      из 667, SC проваливается ниже пола, и поверх поля, в которое игрок ПЕЧАТАЕТ, встаёт
