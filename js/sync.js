@@ -210,14 +210,17 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
     // 29.08.2026: localStorage вместо sessionStorage — см. коммент у dcGo/gGo
     let saved=null; try{ saved=JSON.parse(localStorage.getItem('oauthState')||'null'); localStorage.removeItem('oauthState'); }catch(e){}
     if(!saved || !saved.state || state!==saved.state){
-      /* 02.09.2026 «Диагностика молчаливого сбоя»: временный тост, снять после разбора живого
-         бага (владелец: Google-вход никогда не засчитывается). syncAuthFail() сам не говорит,
-         НА КАКОМ ИМЕННО шаге билет потерялся — не найден в localStorage вовсе (запись в gGo()
-         могла молча упасть, try/catch там глотает ошибку) или найден, но state не совпал.
-         Первая попытка звала и этот тост, и следом syncAuthFail() — оба пишут в один и тот же
-         DOM-элемент (core.js:176-183, без очереди), второй вызов мгновенно затирал текст
-         первого. Теперь только один тост — сам несёт нужный текст, syncAuthFail() не зовём. */
-      try{ if(typeof toast==='function') toast('Вход не удался — билет '+(saved?('найден, совпадает='+(state===saved.state)):'НЕ найден в localStorage'), 'rgba(255,159,176,.5)'); }catch(e){}
+      /* 02.09.2026 «Диагностика молчаливого сбоя»: временный тост+консоль, снять после разбора
+         живого бага (владелец: Google-вход никогда не засчитывается). syncAuthFail() сам не
+         говорит, НА КАКОМ ИМЕННО шаге билет потерялся — не найден в localStorage вовсе (запись
+         в gGo() могла молча упасть, try/catch там глотает ошибку) или найден, но state не совпал.
+         Вторая попытка (v1.478.43): тост начинался теми же словами «Вход не удался», что и
+         старый — глаз мог зацепиться за знакомую фразу и не долистать до сути за 1.5с, пока
+         тост не погас (core.js:182). Слова теперь другие, плюс console.error — не гаснет,
+         ждёт в DevTools сколько угодно. */
+      const diag='ДИАГНОСТИКА БИЛЕТА: '+(saved?('найден, совпадает='+(state===saved.state)):'НЕ найден в localStorage');
+      try{ console.error('[Cosmogram OAuth]', diag, {urlState:state, saved:saved}); }catch(e){}
+      try{ if(typeof toast==='function') toast(diag, 'rgba(255,159,176,.5)'); }catch(e){}
       return;
     } // v1.282.8: чужой code без нашего ярлыка — не наш поход
     if(saved.provider==='dc') syncDiscordCode(code, ru);
