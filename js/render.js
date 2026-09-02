@@ -68,7 +68,7 @@ function qualityTick(dt){
       if (Q.fps < dnEarly*.6 && Q.level>0){
         Q._ceil = Q.level;
         const changed = applyLevelChange(Q.level-1, Q._ceil);
-        if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop_severe', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo());
+        if (changed && typeof BEACON!=='undefined') BEACON.signalShot('fps_drop_severe', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo()); // 02.09.2026: снимок холста — просадка кадра видна НА canvas, значит есть смысл смотреть на неё, не только читать число
         return;
       }
       Q._hold--; Q._up=0; Q._dn=0; Q._prove=0; return; // карантин после смены уровня: небо не дёргается
@@ -88,7 +88,7 @@ function qualityTick(dt){
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
       Q._ceil = Q.level;
       const changed = applyLevelChange(Q.level-1, Q._ceil);
-      if (changed && typeof BEACON!=='undefined') BEACON.signal('fps_drop', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo()); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр
+      if (changed && typeof BEACON!=='undefined') BEACON.signalShot('fps_drop', Math.round(Q.fps)+' '+frameProfileSnapshot()+qBaseInfo()); } } // v1.108.1: тихая автокоррекция теперь долетает до почты — раньше об этом узнавал только тот, кто сам зашёл в Сервисный центр; 02.09.2026: + снимок холста, просадка видна НА canvas
     else if(Q.fps>up && Q.level<ceil){ Q._dn=0; if(++Q._up>=8){ const old = Q.level; Q.level++; Q._up=0; Q._prove=0; Q._hold=8; Store.set('gfxLv',Q.level); gfxCap(); if (old !== Q.level) resize(); } } // v1.282.15: и разрешение поднимаем обратно — обе ветки понижения это делают, ветка повышения не делала, и после одной случайной просадки картинка оставалась мыльной до конца сессии // выученный уровень запоминаем между сессиями
     else if(Q.fps>up){ Q._dn=0; Q._up=0; if(Q._ceil>=0 && ++Q._prove>=20){ Q._ceil=-1; Q._prove=0; Store.set('gfxCeil',-1); } } // v1.284.22: устройство доказало запас — забываем потолок и в хранилище тоже, иначе он держал бы уровень внизу вечно // 20 секунд уверенного запаса — потолок-памятка снимается
     else { Q._up=0; Q._dn=0; Q._prove=0; }

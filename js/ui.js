@@ -1715,7 +1715,7 @@ async function diagFixSensor(){
   if (typeof gyroKick==='function') gyroKick();
   toast(L.diagKicked,'rgba(143,255,159,.5)');
 }
-function diagFixGfx(){ Q.mode='low'; Store.set('gfx','low'); gfxCap(); resize(); gfxLabel(); diagLastT=0; diagRefresh(); haptic('light'); if(typeof BEACON!=='undefined') BEACON.signal('gfx_fix',''); } // v1.107.0: нажал «Снизить графику» — кадры болели, почта знает
+function diagFixGfx(){ Q.mode='low'; Store.set('gfx','low'); gfxCap(); resize(); gfxLabel(); diagLastT=0; diagRefresh(); haptic('light'); if(typeof BEACON!=='undefined') BEACON.signalShot('gfx_fix',''); } // v1.107.0: нажал «Снизить графику» — кадры болели, почта знает; 02.09.2026: + снимок холста
 /* 13.08.2026: слепок остался, а кнопка «Скопировать отчёт» ушла. Просить игрока копировать
    текст и вставлять его в сообщение мы больше не будем: «Почта неба» присылает то же самое
    сама и без его участия. Сам diagReport() держим живым намеренно — это готовый паспорт

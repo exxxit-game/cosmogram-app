@@ -61,20 +61,45 @@ const BEACON=(()=>{
       const stable=rt?(rt.viewportStableHeight||'-'):'-';
       const cs=(typeof getComputedStyle==='function')?getComputedStyle(document.documentElement):null;
       const v=(name)=>cs?cs.getPropertyValue(name).trim():'-';
+      /* 02.09.2026: качество сети — отделить «плохой интернет» от «сломанный код» у симптомов
+         вроде card_save_fail/card_chat_fail. API есть не везде (Safari его не отдаёт вовсе) —
+         честное '-' там, где спросить некого, не подмена значения. Численно проверено: даже
+         в наихудшем случае (все поля на максимум) итоговая строка — 207 из 300 символов
+         лимита на сервере, запас есть. */
+      const conn=(typeof navigator!=='undefined')?(navigator.connection||navigator.mozConnection||navigator.webkitConnection):null;
+      const net=conn?(String(conn.effectiveType||'-')+' dl:'+(conn.downlink!=null?conn.downlink:'-')+' rtt:'+(conn.rtt!=null?conn.rtt:'-')):'-';
       return 'tgv:'+tgv+' exp:'+exp+' full:'+full+' stable:'+stable+
         ' iw:'+(window.innerWidth||'-')+' ih:'+(window.innerHeight||'-')+
-        ' sat:'+v('--sat')+' satm:'+v('--sat-menu')+' sab:'+v('--sab')+' sar:'+v('--sar');
+        ' sat:'+v('--sat')+' satm:'+v('--sat-menu')+' sab:'+v('--sab')+' sar:'+v('--sar')+
+        ' net:'+net;
+    }catch(e){ return ''; }
+  }
+  /* 02.09.2026 «Паспорт полёта» (владелец, «раз и навсегда отточить инструмент»): бортовой
+     самописец (blackbox.js) знает про руль/датчики, но не про само игровое состояние —
+     режим, скин, счёт, дистанцию. На взлёте/посадке эти числа попадают в ленту одной строкой
+     (BB.log('takeoff'/'landing',...)), а ошибка СРЕДИ полёта раньше не оставляла следа, что
+     именно происходило в этот момент. Пусто вне полёта (S.running=false) — в меню эти поля
+     не значат ничего, только шумели бы. */
+  function flightCtx(){
+    try{
+      if(typeof S==='undefined' || !S || !S.running) return '';
+      return 'mode:'+(S.mode||'?')+' mission:'+(S.mission!=null?S.mission:'?')+
+        ' skin:'+(S.skin!=null?S.skin:'?')+' score:'+Math.floor(S.score||0)+
+        ' combo:'+Math.floor(S.combo||0)+' lives:'+(S.lives!=null?S.lives:'?')+
+        ' dist:'+Math.floor(S.dist||0);
     }catch(e){ return ''; }
   }
   function postcard(kind,msg,stack,shot){
     let verdict='', tail='', audioV='';
     try{ verdict=bbVerdict(); }catch(e){}
     try{ audioV=audioVerdict(); }catch(e){}
+    let flight=''; try{ flight=flightCtx(); }catch(e){}
     /* 23.08.2026: стек вызовов — бесплатно от браузера через e.error.stack, но раньше
        не читался вовсе, ловилось только сообщение+файл:строка:столбец. Кладём стек
        ПЕРЕД хвостом чёрного ящика в уже существующем поле tail (лимит 3000 символов
-       на сервере — щедрый, схему БД трогать не пришлось), с явной подписью. */
-    try{ tail=(stack?('стек:\n'+String(stack).slice(0,1200)+'\n---\n'):'')+BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
+       на сервере — щедрый, схему БД трогать не пришлось), с явной подписью.
+       02.09.2026: паспорт полёта — первой строкой, в том же поле tail, без новой колонки. */
+    try{ tail=(flight?('полёт: '+flight+'\n'):'')+(stack?('стек:\n'+String(stack).slice(0,1200)+'\n---\n'):'')+BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     const pc = { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
       msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, audio:audioV, tail:tail,
@@ -484,6 +509,6 @@ const BEACON=(()=>{
     }catch(e){ return {ok:false, reason:'net'}; }
     finally{ if(tmr) clearTimeout(tmr); }
   }
-  return { signal, signalShot, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, feedback, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+  return { signal, signalShot, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, envCtx, flightCtx, feedback, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
 if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

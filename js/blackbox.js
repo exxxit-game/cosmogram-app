@@ -42,6 +42,12 @@ const BB=(()=>{
     // 27.08.2026: паспорт слабого борта (BEACON.deviceProfileProbe) — та же строка, что летит
     // телеметрией, но здесь видна сразу на экране, без ожидания письма на почту неба.
     try{ if(typeof BEACON!=='undefined' && BEACON.profileText && BEACON.profileText()) Ln.push('device: '+BEACON.profileText()); }catch(e){}
+    /* 02.09.2026 (владелец, вживую — «эти данные так же будут в диагностике? их можно
+       скопировать с телефона?»): паспорт окружения и полёта раньше видел только сервер,
+       когда письмо реально долетало. Тот же приём, что и у паспорта слабого борта строкой
+       выше — видно сразу на экране, без ожидания письма на почту неба. */
+    try{ if(typeof BEACON!=='undefined' && BEACON.envCtx) Ln.push('env: '+BEACON.envCtx()); }catch(e){}
+    try{ if(typeof BEACON!=='undefined' && BEACON.flightCtx && BEACON.flightCtx()) Ln.push('flight: '+BEACON.flightCtx()); }catch(e){}
     Ln.push('--- tape ---');
     for(const e of tape) Ln.push('['+e.t+'] '+e.ev+(e.d?': '+e.d:''));
     return Ln.join('\n');
