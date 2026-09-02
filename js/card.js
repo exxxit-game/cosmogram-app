@@ -247,11 +247,18 @@ function cardFill(){ // подписи по языку (вызывается и�
    в Telegram 8.0+ через tg.downloadFile, вне него — якорем download. Скриншот больше не обязателен. */
 function cardSave(){
   const cv=$('cardCanvas'); if(!cv) return;
-  let url=''; try{ url=cv.toDataURL('image/png'); }catch(e){ return; }
+  let url=''; try{ url=cv.toDataURL('image/png'); }
+  catch(e){ if(typeof BEACON!=='undefined') BEACON.signal('card_save_fail','todataurl: '+String(e&&e.message||e).slice(0,60)); return; }
   const name='cosmogram-'+(cardData.sc||0)+'.png';
   if(typeof tg!=='undefined' && tg && tg.downloadFile && typeof tgv==='function' && tgv('8.0')){
-    try{ tg.downloadFile({url:url,file_name:name},function(){ haptic('light'); }); sfx.click(); return; }catch(e){}
+    try{ tg.downloadFile({url:url,file_name:name},function(){ haptic('light'); }); sfx.click(); return; }
+    catch(e){ if(typeof BEACON!=='undefined') BEACON.signal('card_save_fail','downloadfile_threw: '+String(e&&e.message||e).slice(0,60)); }
   }
+  // 02.09.2026 (владелец вживую — «сохранить полностью тишина»): якорь-download — известно хрупкий
+  // способ внутри Telegram WebView (клиенты часто тихо глотают клик без tg.downloadFile, 8.0+).
+  // Сигнал шлём только когда мы ВНУТРИ Telegram и всё равно скатились на якорь (это и есть
+  // подозрительный случай) — вне Telegram якорь и так единственный штатный путь, не беда.
+  if(typeof tg!=='undefined' && tg && typeof BEACON!=='undefined') BEACON.signal('card_save_fail','anchor_fallback_in_tg');
   const a=document.createElement('a'); a.href=url; a.download=name;
   document.body.appendChild(a); a.click(); a.remove(); sfx.click(); haptic('light');
 }
@@ -276,10 +283,20 @@ async function cardSend(){
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
     tg.shareMessage(ans.id,function(ok){
       if(ok){ haptic('success'); }
-      else { if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); } // 28.08.2026: раньше отказ (ok=false) был полной тишиной — владелец: «в чат не работает»
+      else {
+        // 02.09.2026: тост один и тот же что при сетевом сбое ниже, а причины разные — сервер
+        // тут уже успешно отдал ans.id, отказал сам tg.shareMessage на стороне клиента Telegram.
+        if(typeof BEACON!=='undefined') BEACON.signal('card_chat_fail','share_rejected_after_id');
+        if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error');
+      } // 28.08.2026: раньше отказ (ok=false) был полной тишиной — владелец: «в чат не работает»
     });
     sfx.click();
-  }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
+  }catch(e){
+    // 02.09.2026: сеть/сервер не дошли до ans.id вообще — сообщение e.message несёт код причины
+    // (http_XXX от нашей функции, или error-поле сервера: tg_only/tg_prepare/tg_net/not_configured).
+    if(typeof BEACON!=='undefined') BEACON.signal('card_chat_fail','no_id: '+String(e&&e.message||e).slice(0,60));
+    if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error');
+  }
   b._busy=0;
 }
 /* v1.97.1 «Сторис»: та же карточка — в истории. PNG → сервер (card_url) → публичный адрес →
