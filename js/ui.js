@@ -71,6 +71,7 @@ function backAction(){
   else if(screenName==='forge') setScreen('modes'); // v1.68.0: конструктор — назад к дисциплинам
   else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
   else if(screenName==='over') toMenu();
+  else if(screenName==='feedback') closeFeedback(); // 02.09.2026: владелец, живое устройство — нативная «Назад» на этом экране молчала, ветки не было вовсе
 }
 if (tg && tg.BackButton && tgv('6.1')){
   try{ tg.BackButton.onClick(backAction); }catch(e){}
