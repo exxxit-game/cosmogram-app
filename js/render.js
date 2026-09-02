@@ -1515,14 +1515,35 @@ function drawMorse(){
    скина подстраиваться» — вернул, только опорный цвет сменился с fold на glow). Двойной
    проход (широкий полупрозрачный ореол + чёткий силуэт) вместо ctx.shadowBlur: дёшево на
    каждый кадр, не требует кэш-спрайта, как planeGlow(). */
+/* 02.09.2026 «Декали разного размера»: эмодзи-декали (в отличие от векторных иконок, у которых
+   уже есть нормализация s=9/max(vb)) рисовались одним фиксированным font-size=9px для всех —
+   но у разных эмодзи разная НАСТОЯЩАЯ ширина при том же размере шрифта (замерено вживую:
+   6.3px у «Италии» до 13.1px у «Фудзиямы», почти двукратный разброс — владелец поймал: одни
+   эмодзи вылезают за сгиб корпуса, другие нет). ctx.measureText() — не дешёвая операция, но
+   ширина ОДНОГО и того же символа при ОДНОМ и том же font-size не меняется от кадра к кадру —
+   меряем раз на декаль (при первой отрисовке ЛЮБЫМ бортом), дальше только умножение, как уже
+   у иконок. Кэш — по символу, не по id декали: разные декали с одним и тем же ch (если такие
+   появятся) меряются один раз на двоих. */
+const DECAL_W_CACHE=new Map();
+const DECAL_TARGET_W=9; // тот же запас у сгиба, что и в исходном расчёте (см. комментарий выше в drawPlane)
+function decalFontSize(dc, ctx){
+  let w=DECAL_W_CACHE.get(dc.ch);
+  if(w===undefined){
+    const prevFont=ctx.font; ctx.font='9px sans-serif';
+    w=ctx.measureText(dc.ch).width||9; // 0/NaN (несуществующий глиф) — не даём делению на ноль улететь в бесконечность
+    ctx.font=prevFont;
+    DECAL_W_CACHE.set(dc.ch,w);
+  }
+  return clamp(9*DECAL_TARGET_W/w, 4, 20); // зажато — сломанный/крошечный глиф не раздувается в исполинский шрифт
+}
 function drawDecalSvg(c, dc, cx, cy, skin){
   const vb=dc.vb, s=9/Math.max(vb[2],vb[3]), path=new Path2D(dc.svg), vcx=vb[0]+vb[2]/2, vcy=vb[1]+vb[3]/2;
   const base=(skin||SKINS[0]).glow.slice(0, (skin||SKINS[0]).glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что в drawLaunchFlash
   const col=a=>base+Math.max(0,a).toFixed(2)+')';
   c.save();
   c.translate(cx,cy); c.scale(s,s); c.translate(-vcx,-vcy);
-  c.save(); c.translate(vcx,vcy); c.scale(1.35,1.35); c.translate(-vcx,-vcy);
-  c.fillStyle=col(.3); c.fill(path);
+  c.save(); c.translate(vcx,vcy); c.scale(1.10,1.10); c.translate(-vcx,-vcy);
+  c.fillStyle=col(.15); c.fill(path);
   c.restore();
   c.fillStyle=col(.95); c.fill(path);
   /* 30.08.2026 «Тень позади иконки» (баг владельца): glow почти совпадал с fold на нескольких
@@ -1530,7 +1551,12 @@ function drawDecalSvg(c, dc, cx, cy, skin){
      (стартовый скин у всех новых игроков) — силуэт тонул в панели, оставался виден только
      широкий ореол выше, который и читался как «тень». Тёмная обводка держит контур видимым
      на любом скине, не трогая саму заливку (она по-прежнему цвет скина — решение владельца
-     от 29.08.2026 выше по файлу). */
+     от 29.08.2026 выше по файлу).
+     02.09.2026: та самая «тень» сама стала жалобой — без размытия плоская копия на 35%
+     крупнее/30% непрозрачности читалась как жёсткое кольцо-контур вокруг иконки, не как
+     мягкая тень (владелец вживую, скриншот). Макет (macet-02-09-tenj-ikonki.html), три
+     варианта — владелец выбрал «В»: тень тише (1.10/×0.15 вместо 1.35/×0.30), кольцо
+     исчезает, лёгкий отблеск остаётся. */
   c.lineJoin='round'; c.lineWidth=Math.max(vb[2],vb[3])*0.035; c.strokeStyle='rgba(8,12,26,.5)';
   c.stroke(path);
   c.restore();
@@ -1793,7 +1819,8 @@ function drawPlane(sh,nowMs){
      Владелец должен увидеть вживую и поправить размер/позицию по факту — не финал. */
   if(S.decal){ const dc=DECALS_BY_ID.get(S.decal);
     if(dc && dc.ch){
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font='9px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font=decalFontSize(dc,ctx)+'px sans-serif';
       ctx.fillText(dc.ch,-5.3,-0.7);
     }
   }
