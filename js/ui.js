@@ -1197,8 +1197,11 @@ function angarBuildGrid(){
       const el=document.createElement('div');
       el.className='angarIt';
       if(angarCat==='color'){
-        el.innerHTML='<span class="dot"><canvas width="186" height="144"></canvas></span>'+
-                     '<span class="nm"></span><span class="pr"></span>';
+        // 02.09.2026: .pr переехал ВНУТРЬ .dot (плашка поверх низа квадрата, не строка под
+        // ним) — см. комментарий у .angarIt .pr в index.html. Канвас рисуют через getContext,
+        // не innerHTML, так что соседство с .pr внутри одного .dot ему не мешает.
+        el.innerHTML='<span class="dot"><canvas width="186" height="144"></canvas><span class="pr"></span></span>'+
+                     '<span class="nm"></span>';
         const cv=el.querySelector('canvas');
         const x=cv.getContext('2d');
         x.setTransform(3,0,0,3,0,0); x.translate(31,26); // 62×48 мер при DPR 3
@@ -1207,8 +1210,9 @@ function angarBuildGrid(){
         /* 29.08.2026: плитка вспышки — не глиф, а сам узор, заморожен на p=.55 (середина
            анимации, там уже видна форма). Тот же renderFlashPattern, что и в полёте
            (render.js) — плитка не врёт о том, как это будет выглядеть на самом деле.
-           Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas></span><span class="pr"></span>';
+           Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре.
+           02.09.2026: .pr — внутрь .ch, тем же приёмом, что у .dot выше. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span>';
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
           const skin=SKINS[S.skin]||SKINS[0];
@@ -1220,9 +1224,12 @@ function angarBuildGrid(){
         el.setAttribute('aria-label', item.name);
       } else {
         // 29.08.2026: у «Нет» была подпись только через убранный сейчас заголовок строки — переехала на саму плитку.
+        // 02.09.2026: глиф/svg переехал в свой .chGlyph — раньше писался прямо в .ch через
+        // textContent/innerHTML, а .pr теперь тоже живёт внутри .ch (плашка поверх низа
+        // квадрата); textContent=item.ch стёр бы .pr, если бы она осталась соседкой глифа.
         const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '') : '';
-        el.innerHTML='<span class="ch"></span>'+(nmText?'<span class="nm">'+nmText+'</span>':'')+'<span class="pr"></span>';
-        const chEl=el.querySelector('.ch');
+        el.innerHTML='<span class="ch"><span class="chGlyph"></span><span class="pr"></span></span>'+(nmText?'<span class="nm">'+nmText+'</span>':'');
+        const chEl=el.querySelector('.chGlyph');
         if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
           chEl.innerHTML='<svg viewBox="'+item.vb.join(' ')+'" width="26" height="26"><path d="'+item.svg+'" fill="#eaf2ff"/></svg>';
         } else {

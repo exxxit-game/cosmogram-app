@@ -912,30 +912,50 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   text-transform:uppercase; margin-top:6px; }
 .angarIt { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
   pointer-events:auto; }
-.angarIt .dot { width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
-  border:1px solid var(--line); background:rgba(16,26,50,.55); transition:border-color .2s, background .2s; }
+.angarIt .dot { position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
+  padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55); transition:border-color .2s, background .2s; }
 .angarIt canvas { width:62px; height:48px; }
 /* 28.08.2026: плитка декали — тот же короб, что у канваса корабля (.dot), но без канваса:
    сам символ эмодзи, крупно и по центру. Общий .sel-хайлайт ниже расширен на оба вида. */
-.angarIt .ch { width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
-  border:1px solid var(--line); background:rgba(16,26,50,.55); font-size:26px; line-height:1;
+.angarIt .ch { position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
+  padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55); font-size:26px; line-height:1;
   transition:border-color .2s, background .2s; }
 .angarIt .nm { font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase;
   max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.angarIt .pr { font-size:11px; color:var(--gold-hi); display:flex; align-items:center; gap:3px; margin-top:-3px; }
+/* 02.09.2026 (владелец, живое устройство): кнопка «Купить» раньше стояла ПОД квадратом,
+   отдельным .btn-элементом — выше обычной текстовой цены, из-за чего вся строка грида
+   растягивалась под самую высокую плитку, а соседи получали пустой хвост снизу (замерено:
+   129px против 144px). Владелец: «нужно чтобы на иконку перешла цена, кнопка, выбрано» —
+   для ВСЕХ трёх состояний одно и то же место, плашкой поверх нижнего края квадрата (макет
+   macet-02-09-tyuning-kupit-vnutri-plitki.html, вариант Б). Высота плитки теперь одна и та
+   же всегда — у .dot/.ch выше добавлен padding-bottom:26px, ровно под эту плашку, картинка/
+   канвас центрируются уже в оставшемся пространстве и не перекрываются с ней (второе
+   замечание владельца по первой версии макета — «кнопка режется иконкой», тоже проверено
+   вживую). Действует для всех вкладок Тюнинга (Цвет/Эмодзи/Иконки/Вспышка) одинаково. */
+.angarIt .pr { position:absolute; left:4px; right:4px; bottom:4px; margin:0;
+  padding:4px 6px; border-radius:10px; font-size:10px; letter-spacing:.02em;
+  background:rgba(8,14,28,.82); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+  border:1px solid rgba(190,225,255,.35); color:#f2f7ff;
+  display:flex; align-items:center; justify-content:center; gap:3px; }
+.angarIt .pr:empty { display:none; } /* жетон ещё не построен/цена не задана — плашки без текста не рисуем */
 .angarIt .pr .ic { width:10px; height:10px; }
 canvas.starJewelSm { width:10px; height:10px; flex:none; vertical-align:-1px; } /* 28.08.2026: та же кисть, что у звёзд полёта — drawStarJewel(), не контур i-star4;
   селектор с тегом canvas — иначе .angarIt canvas{width:62px;height:48px} (превью корабля) специфичнее голого класса и растягивает звезду до размеров корабля */
 canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловушка специфичности, что у starJewelSm — плитка вспышки, тег canvas обязателен в селекторе */
-.angarIt .pr.own { color:var(--ok); }
+.angarIt .pr.own { color:var(--ok); border-color:rgba(95,216,138,.4); }
 .angarIt.sel .dot, .angarIt.sel .ch { border-color:rgba(190,225,255,.55); background:rgba(120,170,255,.10);
   box-shadow:0 0 20px rgba(120,170,255,.16); }
 .angarIt.sel .nm { color:#eaf2ff; }
-/* Покупка и кошелёк под ней: баланс нужен ровно тогда, когда палец над кнопкой */
-/* 28.08.2026: кнопка действия переехала внутрь выбранного жетона (.angarTileBuy ниже) —
-   те же .btn.pri.small токены, что везде в игре (владелец: «не франкенштейн, одним общим»),
-   только уже, чтобы влезть в колонку сетки из трёх жетонов. */
-.angarTileBuy { width:100%; margin-top:4px; padding:5px 6px; font-size:10.5px; letter-spacing:.02em; gap:.35em; }
+/* 02.09.2026: кнопка «Купить»/«Надеть» теперь живёт ВНУТРИ плашки .pr выше (единое место
+   для цены/«Выбран»/кнопки) — своего фона/паддинга/рамки ей уже не нужно, плашка их даёт. */
+/* 02.09.2026: один класс (.angarTileBuy) слабее по специфичности, чем .btn.pri/.btn.small
+   (два класса) — кнопка тихо падала обратно на их padding:10px 18px и цвет фона, плашка
+   раздувалась в 2 раза (владелец поймал живьём, скриншот: «КУПИТЬ 100» заметно выше соседних
+   «+100»). Тот же приём специфичности, что уже описан выше в файле у .btn.dcBtn/.btn.gBtn —
+   родительский контекст (.angarIt .pr .angarTileBuy, 3 класса) бьёт .btn.pri/.btn.small
+   независимо от порядка правил в файле. */
+.angarIt .pr .angarTileBuy { width:100%; margin:0; padding:0; background:transparent; border:none;
+  box-shadow:none; font-size:10px; letter-spacing:.02em; gap:.3em; color:inherit; }
 .angarTileBuy canvas.starJewelSm { width:9px; height:9px; }
 /* 28.08.2026: кошелёк был отдельной строкой под кнопкой — переехал пилюлей на само небо
    превью (владелец: «занимают лишнее место», пример макета — пилюля в углу картинки).
@@ -1675,9 +1695,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.16"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.16"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.16"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.17"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.17"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.17"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2286,25 +2306,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.16" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.16"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.478.16"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.478.16"></script>
-<script defer src="js/game.js?v=1.478.16" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.16"></script>
-<script defer src="js/sync.js?v=1.478.16"></script>
-<script defer src="js/render.js?v=1.478.16"></script>
-<script defer src="js/planetarium.js?v=1.478.16"></script>
-<script defer src="js/goldstar.js?v=1.478.16"></script>
-<script defer src="js/music.js?v=1.478.16"></script>
-<script defer src="js/gyro.js?v=1.478.16"></script>
-<script defer src="js/forge.js?v=1.478.16"></script>
-<script defer src="js/partitura.js?v=1.478.16"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.16"></script>
-<script defer src="js/card.js?v=1.478.16"></script>
-<script defer src="js/star.js?v=1.478.16"></script>
-<script defer src="js/cinema.js?v=1.478.16"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.16"></script>
+<script defer src="js/core.js?v=1.478.17" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.17"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.478.17"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.478.17"></script>
+<script defer src="js/game.js?v=1.478.17" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.17"></script>
+<script defer src="js/sync.js?v=1.478.17"></script>
+<script defer src="js/render.js?v=1.478.17"></script>
+<script defer src="js/planetarium.js?v=1.478.17"></script>
+<script defer src="js/goldstar.js?v=1.478.17"></script>
+<script defer src="js/music.js?v=1.478.17"></script>
+<script defer src="js/gyro.js?v=1.478.17"></script>
+<script defer src="js/forge.js?v=1.478.17"></script>
+<script defer src="js/partitura.js?v=1.478.17"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.17"></script>
+<script defer src="js/card.js?v=1.478.17"></script>
+<script defer src="js/star.js?v=1.478.17"></script>
+<script defer src="js/cinema.js?v=1.478.17"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.17"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
