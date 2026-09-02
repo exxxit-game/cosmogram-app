@@ -179,7 +179,15 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
     } // v1.282.8: чужой code без нашего ярлыка — не наш поход
     if(saved.provider==='dc') syncDiscordCode(code, ru);
     else if(saved.provider==='gg') syncGoogleCode(code, ru);
-  }catch(e){ syncAuthFail(); }
+  }catch(e){
+    /* 03.09.2026 «Тишина при реальном сбое»: этот catch ловит ЛЮБОЕ исключение во всей функции
+       (например, history.replaceState() выше ничем не защищена) — раньше он просто показывал
+       общий тост и молчал, какая ошибка произошла на самом деле. За сутки логов сервера — ни
+       одного запроса google_login вообще, значит код падает ДО сети, где-то в этой функции, и
+       без текста исключения дальше гадать бессмысленно. */
+    try{ console.error('[Cosmogram OAuth] исключение в syncBootOAuth:', e && e.name, e && e.message, e); }catch(e2){}
+    syncAuthFail();
+  }
 })();
 
 /* Очередь в Store: переживает закрытие приложения */
