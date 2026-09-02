@@ -882,11 +882,14 @@ function angarShip(x, sk, s, bolshoy){
   x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
   x.fillStyle=sk.fold;
   x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
-  if(bolshoy){ // кромки крыльев и блик — только на большом борту, в жетоне это каша
+  if(bolshoy){ // кромки крыльев — только на большом борту, в жетоне это каша
+    // 02.09.2026 (владелец вживую — «над сердцем... белое пятно, выходит за корпус»):
+    // блик-эллипс здесь убран. Тот же самый блик уже убирали 31.08.2026 из render.js
+    // (настоящий полёт) — владелец обвёл его жёлтым как ошибку тогда же. angarShip() —
+    // отдельная, скопированная функция рисования борта для витрины Ангара/Тюнинга, и
+    // блик остался только в этой копии, непочищенным. Страж 149.
     x.strokeStyle='rgba(255,255,255,.32)'; x.lineWidth=1.1;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14); x.stroke();
-    x.fillStyle='rgba(255,255,255,.75)';
-    x.beginPath(); x.ellipse(-3,-12,2.6,5,.25,0,6.283); x.fill();
   } else {
     x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();
