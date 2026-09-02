@@ -453,7 +453,10 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
-    ['forgePlay',L.start]]; // v1.87.0: «Поделиться» переехала в итоги трассы; 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
+    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn]];
+    // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
+    // 02.09.2026: «Поделиться небом» вернулась в Конструктор — mapShare() существовала
+    // с v1.87.0, но не была вызвана ни одной кнопкой (см. wireOnLocal ниже)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   // 30.08.2026: три заголовка групп стали .setGrp (аккордеон) — текст живёт в дочернем .setGrpT,
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
@@ -682,6 +685,7 @@ function mapOver(sc){
 
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
+wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
 wireOnLocal('forgeLoad', 'click', forgeLoadCode);
 wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); });
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
