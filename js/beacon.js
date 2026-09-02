@@ -47,7 +47,7 @@ const BEACON=(()=>{
       return 'fps:'+fps+' lvl:'+lvl+' tier:'+tier;
     }catch(e){ return ''; }
   }
-  function postcard(kind,msg,stack){
+  function postcard(kind,msg,stack,shot){
     let verdict='', tail='', audioV='';
     try{ verdict=bbVerdict(); }catch(e){}
     try{ audioV=audioVerdict(); }catch(e){}
@@ -57,9 +57,11 @@ const BEACON=(()=>{
        на сервере — щедрый, схему БД трогать не пришлось), с явной подписью. */
     try{ tail=(stack?('стек:\n'+String(stack).slice(0,1200)+'\n---\n'):'')+BB._tape().slice(-12).map(e=>'['+e.t+'] '+e.ev+(e.d?': '+e.d:'')).join('\n'); }catch(e){}
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
-    return { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
+    const pc = { v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, kind:kind,
       msg:String(msg==null?'':msg).slice(0,300), verdict:verdict, audio:audioV, tail:tail,
       ua:(navigator.userAgent||'').slice(0,200), anon:anon(), ts:Date.now() };
+    if(shot) pc.shot=shot; // 02.09.2026 «Снимок на подозрение»: см. signalShot() ниже
+    return pc;
   }
   /* v1.282.13: отправка с поводком и честным чтением ответа.
      Было две беды. Первая: fetch без таймаута — если сервер завис (а не отказал),
@@ -165,12 +167,12 @@ const BEACON=(()=>{
      из текста. fps меняется каждую секунду, значит одна и та же ошибка давала
      десятки разных ключей: закон «одна ошибка — одно письмо за сессию» не работал,
      а сервер считал почти каждое письмо новым типом и слал разработчику «🆕 Новый тип». */
-  function drop(kind,msg,ctx,stack){ if(!on()||sealed()) return; // выкл значит выкл: ни писем, ни очереди; печать — то же молчание
+  function drop(kind,msg,ctx,stack,shot){ if(!on()||sealed()) return; // выкл значит выкл: ни писем, ни очереди; печать — то же молчание
     const key=kind+'|'+String(msg==null?'':msg).slice(0,60);
     if(seen.has(key)) return; seen.add(key); // дедуп: одна ошибка — одно письмо за сессию
     if(kind==='error') errCount++; // v1.108.1: слой 3 считает именно падения, не сигналы-симптомы
     const text=(ctx?'['+ctx+'] ':'')+String(msg==null?'':msg);
-    const q=queue(); q.push(postcard(kind,text,stack));
+    const q=queue(); q.push(postcard(kind,text,stack,shot));
     Store.set('beaconQ',q.slice(-10)); // очередь — не архив: десять последних
     razbudit(); // v1.284.19: не «отправить сейчас», а «прийти, когда дверь откроется» — см. окно вежливости выше
   }
@@ -233,6 +235,33 @@ const BEACON=(()=>{
      gfx_fix (нажал «Снизить графику» — кадры болели), liar (суд нашёл лжеца —
      датчик врёт), cal_storm (калибруется без конца — ноль не держится) */
   function signal(kind,msg){ drop('signal',kind+(msg?': '+msg:'')); }
+  /* 02.09.2026 «Снимок на подозрение» (владелец: «пусть само приходит, не буду просить
+     людей играть и слать скрин руками»): для отдельных, редких, по-настоящему подозрительных
+     сигналов (не для всех — иначе хранилище раздувается на пустом месте) кладём вместе с
+     текстом маленький снимок игрового холста в момент срабатывания. Показывает только то,
+     что рисует НАШ canvas — не всю страницу целиком (заголовок Telegram, пробел ПОД холстом
+     и подобное снаружи canvas снимок не увидит, это ограничение честно, не тайное).
+     Тем не менее для класса «холст короче окна» числа (window.innerHeight vs высота холста)
+     уже несёт сам текст сигнала — снимок здесь как подтверждение, что рисуется внутри холста
+     корректно, а не замена измерению.
+     Даунскейл до ≤480px по длинной стороне и JPEG q=0.6 — предсказуемо мелкий файл
+     (диагностика, не витрина), не PNG (тот на градиентах неба весит ощутимо больше).
+     Дедуп — тот же самый key в drop(), что и у обычного signal(): один и тот же род один раз
+     за сессию, снимок не шлётся повторно на каждое срабатывание. */
+  function captureShot(){
+    try{
+      const src=(typeof canvas!=='undefined'&&canvas)?canvas:document.getElementById('game');
+      if(!src||!src.width||!src.height) return '';
+      const maxSide=480;
+      const s=Math.min(1, maxSide/Math.max(src.width,src.height));
+      const w=Math.max(1,Math.round(src.width*s)), h=Math.max(1,Math.round(src.height*s));
+      const off=document.createElement('canvas'); off.width=w; off.height=h;
+      const octx=off.getContext('2d'); if(!octx) return '';
+      octx.drawImage(src,0,0,w,h);
+      return off.toDataURL('image/jpeg',0.6);
+    }catch(e){ return ''; }
+  }
+  function signalShot(kind,msg){ drop('signal',kind+(msg?': '+msg:''),null,null,captureShot()); }
   /* 24.08.2026 «Браузер предупреждал, а мы не слушали»: ReportingObserver ловит
      deprecation (используем API, который движок скоро уберёт) и intervention
      (движок САМ отключил что-то у нас на странице ради безопасности/производительности —
@@ -436,6 +465,6 @@ const BEACON=(()=>{
     }catch(e){ return {ok:false, reason:'net'}; }
     finally{ if(tmr) clearTimeout(tmr); }
   }
-  return { signal, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, feedback, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
+  return { signal, signalShot, err, calTick, days, webcodecsProbe, deviceProfileProbe, profileText:()=>lastProfile, feedback, _flush:flush, _okno:()=>OKNO, _state:()=>({q:queue().length,on:on(),seen:seen.size}) };
 })();
 if(typeof module!=='undefined' && module.exports){ module.exports = { pickDispatchCandidate, BEACON }; }

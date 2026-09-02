@@ -471,7 +471,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.32'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.33'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1251,13 +1251,11 @@ function resize(){
   // соврёт В БОЛЬШУЮ сторону; берём больший из двух — заниженный stableHeight не может
   // сделать холст короче того, что браузер сам подтверждает как видимое. Страж 150.
   let cssH = window.innerHeight;
+  let vhGap = 0; // 02.09.2026: заполняется ниже, сигнал шлём в конце — после свежего кадра, не раньше (иначе снимок будет пустым)
   if (rt && rt.isFullscreen) cssH = window.innerHeight;
   else if (rt && rt.viewportStableHeight && rt.isExpanded){
     cssH = Math.max(rt.viewportStableHeight, window.innerHeight);
-    // 02.09.2026: гипотеза «Telegram занижает viewportStableHeight» подтвердить без реального
-    // устройства нельзя — если это правда, сигнал даст точные цифры с настоящего телефона.
-    if (rt.viewportStableHeight < window.innerHeight - 20 && typeof BEACON!=='undefined')
-      BEACON.signal('vh_underreport', rt.viewportStableHeight+'<'+window.innerHeight);
+    if (rt.viewportStableHeight < window.innerHeight - 20) vhGap = window.innerHeight - rt.viewportStableHeight;
   }
   if (cssW<=0 || cssH<=0) return;
   /* v1.284.6 «Клавиатура — не узкое окно». Экранная клавиатура съедает 250-350 px высоты
@@ -1329,6 +1327,15 @@ function resize(){
   if (typeof drawKick==='function') drawKick(); // v1.66.2: спящая пауза/меню — свежий кадр сразу после пересчёта
   if (typeof corridorEdgesGeometry==='function') corridorEdgesGeometry(); // v1.415.2: рамка коридора — геометрия из core.js, видимость из render.js
   requestAnimationFrame(syncScoreHudGap); // 23.08.2026: ширина окна меняет размер шрифта счёта (vw) — та же перепроверка зазора, что и при смене --sat
+  if (vhGap && typeof BEACON!=='undefined'){
+    // 02.09.2026 (владелец вживую, iPhone 16): гипотеза «Telegram занижает viewportStableHeight»
+    // подтвердить без реального устройства нельзя — сигнал даст точные цифры с настоящего
+    // телефона. Снимок — вторым кадром (requestAnimationFrame), не сразу: drawKick() только
+    // ПРОСИТ перерисовку, красит канвас браузер по своему расписанию — снимок раньше времени
+    // поймал бы ещё старый/пустой кадр.
+    const gap=vhGap;
+    requestAnimationFrame(()=>{ if(typeof BEACON!=='undefined' && BEACON.signalShot) BEACON.signalShot('vh_underreport', gap+'px'); });
+  }
 }
 /* 22.08.2026 «Рамка коридора без мигания»: жалоба владельца — в Telegram линии коридора
    (тогда ещё рисовались внутри canvas) мелькали и пропадали. Причина — window.innerWidth в
