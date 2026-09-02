@@ -39,7 +39,6 @@ function tgWidgetMount(el){
   const host=location.hostname;
   if(location.protocol==='file:' || host==='localhost' || host==='127.0.0.1' || host==='[::1]'){
     el.classList.add('wgOff');
-    window.__tgWgSilent=1;
     return false;
   }
   const s=document.createElement('script');
@@ -51,8 +50,8 @@ function tgWidgetMount(el){
   s.setAttribute('data-onauth','onTelegramAuth(user)');
   el.appendChild(s);
   // v1.84.0 «Финал в полголоса»: домен не привязан (/setdomain) — виджет пишет игроку сырой
-  // «Bot domain invalid». Это не для сцены: если за 5с кнопка-iframe не родилась — в сервисный
-  // центр уходит тихая строка диагностики (жалоба владельца: «иногда две кнопки вместо трёх»).
+  // «Bot domain invalid». Это не для сцены: если за 5с кнопка-iframe не родилась — сигнал
+  // уходит нам молча в BEACON (телеметрия), не на экран игрока.
   // 26.08.2026: el.classList.add('wgOff') здесь же и ПРЯТАЛ кнопку — .wgOff{display:none
   // !important} перевешивает даже :not(:empty), так что если скрипт telegram.org был не сломан,
   // а просто медленный (мобильная сеть — ровно жалоба владельца), и iframe всё же прилетал
@@ -60,7 +59,9 @@ function tgWidgetMount(el){
   // работал, а игрок его никогда не видел. Диагностика (телеметрия) остаётся; прятать
   // саму кнопку по таймауту больше не нужно — .tgWidget:empty уже прячет её, пока внутри
   // пусто, и сама открывает её, стоит iframe появиться, в любую секунду, без верхней границы.
-  setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe')){ window.__tgWgSilent=1; } },5000);
+  // 02.09.2026: строка на экране Сервисного центра убрана (это инструкция для нас про
+  // BotFather, игрок её не починит) — сигнал теперь только сюда, в телеметрию.
+  setTimeout(()=>{ if(el.isConnected && !el.querySelector('iframe') && typeof BEACON!=='undefined'){ BEACON.signal('tg_widget_silent',''); } },5000);
   // 26.08.2026: подгонка кнопок Discord/Google под размер этой самой кнопки шла вслепую —
   // cross-origin запрещает читать что-либо ВНУТРИ iframe (та же защита, что не даёт сайту
   // подсмотреть форму входа банка в чужом iframe), но собственный прямоугольник iframe

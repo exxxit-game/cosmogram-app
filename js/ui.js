@@ -1632,32 +1632,41 @@ function diagRows(){
       else R.push({st:'ok', txt:L.diagZeroOk+' '+Math.round(input.baseG)+'°'});
     }
     else if (alive) R.push({st:'warn', txt:L.diagZeroWait, fix:L.diagFixCal, act:()=>calibrateTilt()});
-    else R.push({st:'info', txt:L.diagZeroIdle});
+    // 02.09.2026: было R.push(info, «Нуль появится сам на первых секундах полёта») —
+    // владелец: «зачем это игроку?». Эта ветка (не alive, ноль не принят) срабатывает
+    // ровно там же, где и «Датчик молчит» наверху, — сказать больше нечего, строку убрали.
     if (typeof bbVerdict==='function'){ // v1.99.7 «Чёрный ящик»: первое сломанное звено цепи — одной строкой
       const v=bbVerdict();
-      R.push({st:(v===L.bbVOk)?'ok':((v.indexOf(L.bbVSkew)===0)?'warn':'info'), txt:L.diagChain+' '+v, rare:true});
+      // 02.09.2026: bbVLock срабатывает в том же условии, что и убранная «Полёт без рук
+      // заперт» ниже (!gyroUnlocked()) — тот же смысл другими словами, не дублируем.
+      if (v!==L.bbVLock) R.push({st:(v===L.bbVOk)?'ok':((v.indexOf(L.bbVSkew)===0)?'warn':'info'), txt:L.diagChain+' '+v, rare:true});
     }
   }
   if (Q.fps>=45) R.push({st:'ok', txt:L.diagFpsOk+' '+Math.round(Q.fps)});
   else R.push({st:'warn', txt:L.diagFpsLow+' '+Math.round(Q.fps), fix:L.diagFixGfx, act:diagFixGfx});
   R.push({st: MUTED?'info':'ok', txt: MUTED?L.diagSoundOff:L.diagSoundOn});
-  // v1.99.6 «Паспорт штурвала»: сервисный центр знает всю новую кабину —
-  // геймпад, мерку неба, лист с потолком, бережный режим, чернила.
+  // v1.99.6 «Паспорт штурвала» (02.09.2026: переименован в «Геймпад» — «штурвал» без
+  // расшифровки не говорил игроку, что это джойстик/геймпад; EN/ES/PT/FR уже были прямым
+  // текстом, только RU оставался поэтичным).
   let pads=[]; try{ if(typeof navigator!=='undefined'&&navigator.getGamepads)
     pads=Array.from(navigator.getGamepads()).filter(p=>p&&p.connected); }catch(e){}
   /* 13.08.2026: у строки появилась метка `rare`. Редкое — не то, что неважно, а то, что
-     человек не проверяет: техническое устройство борта. Штурвал — особый случай: пока его
+     человек не проверяет: техническое устройство борта. Геймпад — особый случай: пока его
      нет, это самая бесполезная строка на экране; как только он появился, это ответ на
      вопрос «а он вообще виден?». Поэтому редкость у него не постоянная, а по факту. */
   if (pads.length) R.push({st:'ok', txt:L.diagPadOk+' '+pads[0].id.split('(')[0].trim()});
   else R.push({st:'info', txt:L.diagPadNone, rare:true});
-  if (typeof BB!=='undefined') R.push({st:'info', txt:L.diagTape+' '+BB.count()+' '+L.diagTapeEvt, rare:true}); // v1.99.7
-  R.push({st:'info', txt:L.diagWorld+' '+W+'×'+H+' · ×'+(Math.round(SC*100)/100), rare:true});
-  R.push({st:'info', txt:L.diagSheet+' '+canvas.width+'×'+canvas.height+' ≤'+capPx, rare:true});
+  // 02.09.2026 (владелец, «зачем это игроку? он будто знает что это за события»): «Лента
+  // самописца: N событий», «Мир неба», «Лист холста», «Чернила» убраны — голые внутренние
+  // числа без объяснения и без действия для игрока. Ничего не теряем: diagReport() (паспорт
+  // борта, уходит с реальным отчётом) и BB.text() (сама лента) собирают то же самое отдельно,
+  // независимо от этого экрана — см. js/ui.js diagReport().
   R.push({st:'info', txt:L.diagMotion+' '+(RM?L.diagOn:L.diagOff), rare:true});
-  R.push({st:'info', txt:L.diagInk+' '+(P3?'display-p3':'srgb'), rare:true});
-  if (window.__tgWgSilent) R.push({st:'warn', txt:L.diagWgSilent}); // v1.84.0: виджет входа промолчал — сцена чиста, здесь честно
-  if (HAS_GYRO && !gyroUnlocked()) R.push({st:'info', txt:L.diagLocked});
+  // 02.09.2026: строка «виджет входа Telegram молчит» отсюда убрана — это инструкция ДЛЯ НАС
+  // (проверь /setdomain у BotFather), игрок её не починит и не поймёт. Сигнал теперь уходит
+  // молча в BEACON (js/sync.js), а не на верхнюю, самую заметную строку экрана игрока.
+  // 02.09.2026: «Полёт без рук пока заперт» тоже убрана — не поломка, а прогресс игры,
+  // уже объясняется правильно в Настройках, где этот режим реально открывают.
   return R;
 }
 let diagLastT=0;
