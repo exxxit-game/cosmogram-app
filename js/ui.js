@@ -471,14 +471,38 @@ function gameOver(){
     fsEl.textContent=String(Math.round(sc*(1-Math.pow(1-k,3)))); // easeOutCubic
     if(k<1) requestAnimationFrame(tick);
   });
-  // рекорды — золотые плашки в ряд с иконками категорий (не строки текста)
+  /* 02.09.2026 «Медали над результатом»: рекорд по типу управления/дистанции — золотая
+     медаль с настоящей иконкой игры + цветная лента, НАД счётом (#recordMedals), а не
+     плашкой под ним — три раунда макетов у владельца перед этой версией (см. index.html,
+     комментарий у #recordMedals). Остальные особые моменты (спидран/трасса дня/призрак/
+     пасхалки) остаются старыми текстовыми плашками ниже — их текст динамический (имя
+     соперника, время), под формат «золотая медаль + короткая подпись» не ложится. */
+  const MEDAL_CAT = {
+    touch:  { cls:'cat-touch',  icon:'i-medal-touch',  vb:'0 -960 960 960', label:L.recordTouch },
+    gyro:   { cls:'cat-gyro',   icon:'i-medal-gyro',   vb:'0 0 24 24',      label:L.recordGyro },
+    keys:   { cls:'cat-keys',   icon:'i-medal-keys',   vb:'0 0 24 24',      label:L.recordKeys },
+    bullet: { cls:'cat-bullet', icon:'i-medal-bullet', vb:'0 0 24 24',      label:L.recordBullet },
+    dist:   { cls:'cat-dist',   icon:'i-medal-dist',   vb:'0 0 24 24',      label:L.recordDist },
+  };
+  function medalHTML(cat, delayMs){
+    const m=MEDAL_CAT[cat];
+    return '<div class="medalCol" style="animation-delay:'+delayMs+'ms">'
+      +'<div class="medalBox">'
+      +'<svg class="medalRibbon '+m.cls+'" viewBox="0 0 60 64"><use href="#i-medal-ribbon"></use></svg>'
+      +'<svg class="medalDisc" viewBox="0 0 60 64"><use href="#i-medal-disc"></use></svg>'
+      +'<svg class="medalIcon" viewBox="'+m.vb+'"><use href="#'+m.icon+'"></use></svg>'
+      +'</div>'
+      +'<div class="medalCap">'+m.label+'</div>'
+      +'</div>';
+  }
+  const medals=[];
+  if (isRecord) medals.push(medalHTML(S.bullet?'bullet':(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch')), 0));
+  if (isDistRecord) medals.push(medalHTML('dist', medals.length*80));
+  setHTML('recordMedals', medals.join(''));
+
+  // остальные особые моменты — золотые плашки в ряд с иконками категорий (не строки текста)
   const recChips=[];
-  /* 27.08.2026: иконки категории/линейки на этих двух плашках убраны — владелец, «иконки
-     там лишние»: подпись (РЕКОРД КАСАНИЯ/ДИСТАНЦИИ) сама по себе понятна без картинки. */
-  if (isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+
-    (S.bullet?L.recordBullet:(mode==='gyro'?L.recordGyro:(mode==='keys'?L.recordKeys:L.recordTouch)))+'</span>');
-  if (isDistRecord) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+L.recordDist+'</span>');
-  if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
+  if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
     const dd=S.dailyDay||trackDayKey();
     const prevDl=Store.get('dailyBest',null), prevDlSc=(prevDl && prevDl.d===dd)?prevDl.s:0;
@@ -741,6 +765,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
      не оставляем как есть. Найдено в ПЛАН-1.284.2.md. */
   const fsEl=$('finalScore'); if(fsEl) fsEl.textContent='';
   const nr=$('newRecord'); if(nr) nr.innerHTML='';
+  const rm=$('recordMedals'); if(rm) rm.innerHTML=''; // 02.09.2026: та же чистка, что у newRecord — театр не должен показывать чужую медаль
   const st=$('stats'); if(st){ st.innerHTML=''; st.classList.add('hidden'); }
   const rp=$('runPass'); if(rp) rp.classList.add('hidden');
   const rh=$('runHead'); if(rh){ rh.innerHTML=''; rh.classList.add('hidden'); } // 30.08.2026: новая строка режима+управления — та же чистка, что у соседей

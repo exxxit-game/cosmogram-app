@@ -689,8 +689,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    и цвет, что у самой цифры (владелец: «должен быть такими же») — не мелкая
    служебная пометка сбоку, а часть одной надписи, просто меньшего размера. */
 #finalScoreLabel { font-family:var(--font-disp); font-weight:600;
-  font-size:clamp(20px,5.5vw,28px); letter-spacing:.06em; color:var(--gold-hi);
-  text-shadow:0 0 16px rgba(240,192,64,.3); margin-bottom:2px; opacity:.85; }
+  font-size:clamp(20px,5.5vw,28px); line-height:1.05; letter-spacing:.06em; color:var(--gold-hi);
+  text-shadow:0 0 16px rgba(240,192,64,.3); margin-bottom:2px; opacity:.85; } /* 02.09.2026: line-height не был задан явно (браузер брал «normal» ≈1.2) — внутри строки был невидимый воздух, которого нет у #finalScore (line-height:1) — зазор счёт→«Войдите» и подпись→счёт визуально не совпадали при равном margin (владелец поймал на скриншоте), хотя по коробке оба ровно 2px */
 /* 01.09.2026: было 400 — владелец, «цифра стала тоньше текста рядом» (после того как соседние
    кнопки/подписи получили больше веса и свечения). Exo 2 — вариативный шрифт (font-weight:100 900
    в одном файле, см. @font-face выше), 700 уже ничего не стоит и не новый файл — тот же вес,
@@ -710,6 +710,37 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   color:#ffd76a; background:rgba(16,24,54,.5); border:1px solid rgba(255,215,106,.25);
   border-radius:10px; }
 .recChip .ic { width:1.15em; height:1.15em; vertical-align:-0.25em; }
+/* 02.09.2026 «Медали над результатом»: рекорд по типу управления (касание/гироскоп/
+   клавиатура/Bullet Time/дистанция) — над счётом, золотой диск + цветная лента по типу,
+   иконка внутри — та же, что уже используется в статистике достижений (ic('hand') и т.д.),
+   не нарисована заново. Три раунда макетов у владельца перед этой версией: сначала своя
+   рука вместо готовой иконки игры (отклонено), потом щит вместо круглой медали (отклонено),
+   потом красный/синий вместо космических циан/фиолет/лёд (отклонено), потом разный формат
+   двух строк подписи (отклонено) — эта версия одобрена вживую. */
+#recordMedals { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+#recordMedals:empty { margin:0; }
+.medalCol { display:flex; flex-direction:column; align-items:center;
+  animation:medalPop .55s cubic-bezier(.2,.9,.25,1.3) both; }
+.medalBox { position:relative; width:56px; height:60px;
+  animation:medalGlow 2.2s ease-in-out infinite; }
+.medalRibbon { position:absolute; inset:0; width:100%; height:100%; }
+.medalDisc { position:absolute; inset:0; width:100%; height:100%; filter:drop-shadow(0 0 10px rgba(240,192,64,.5)); }
+.medalIcon { position:absolute; width:18px; height:18px; top:15px; left:19px; color:#1a2c4a; }
+/* 02.09.2026: лента разного цвета под разный тип рекорда — диск всегда золотой (это и
+   есть сигнал «рекорд»), лента отвечает за «какой именно». Три из пяти (касание/дистанция/
+   гироскоп) одобрены владельцем вживую; клавиатура/Bullet Time — тем же приёмом (свои
+   космические оттенки, не занятые соседями), владелец их отдельно не видел — если не
+   понравится, поправить одной строкой здесь. */
+.medalRibbon.cat-touch { color:#164a52; }
+.medalRibbon.cat-dist { color:#3a1f52; }
+.medalRibbon.cat-gyro { color:#16223f; }
+.medalRibbon.cat-keys { color:#1f4a2e; }
+.medalRibbon.cat-bullet { color:#241f52; }
+.medalCap { font-family:var(--font-disp); font-weight:700; font-size:10.5px; letter-spacing:.05em;
+  text-transform:uppercase; color:#ffe9ab; text-align:center; line-height:1.3; margin-top:2px;
+  text-shadow:0 0 8px rgba(240,192,64,.35); } /* 02.09.2026: обе строки подписи — один и тот же формат, владелец явно попросил не разводить их по весу/цвету */
+@keyframes medalPop { 0%{opacity:0; transform:scale(.4) translateY(8px);} 70%{opacity:1; transform:scale(1.06) translateY(0);} 100%{transform:scale(1);} }
+@keyframes medalGlow { 0%,100%{filter:drop-shadow(0 0 8px rgba(240,192,64,.4));} 50%{filter:drop-shadow(0 0 16px rgba(240,192,64,.75));} }
 #toRecord { color:var(--gold-hi); font-size:15px; font-weight:600; min-height:20px; margin-bottom:8px;
   text-shadow:0 0 14px rgba(240,192,64,.4); }
 #newRecord:not(:empty) { animation:pulse 1s infinite; }
@@ -1773,10 +1804,24 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <path style="fill:#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path>
   <path style="fill:#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
 </symbol>
+<!-- 02.09.2026 «Медали над результатом»: диск/лента общие для всех медалей, цвет ленты
+     назначается снаружи через CSS (currentColor), диск всегда золотой (сам факт «это
+     рекорд»). Общий градиент — одна копия на все медали разом. -->
+<radialGradient id="medalGoldG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff3d0"/><stop offset=".55" stop-color="#f0c040"/><stop offset="1" stop-color="#a86c10"/></radialGradient>
+<symbol id="i-medal-ribbon" viewBox="0 0 60 64"><path d="M17 36 L10 58 L20 53 L25 63 L29 53 L22 36 Z" fill="currentColor"></path><path d="M43 36 L50 58 L40 53 L35 63 L31 53 L38 36 Z" fill="currentColor"></path></symbol>
+<symbol id="i-medal-disc" viewBox="0 0 60 64"><circle cx="30" cy="24" r="22" fill="url(#medalGoldG)" stroke="#7a4c0c" stroke-width="1"></circle><circle cx="30" cy="24" r="16.5" fill="none" stroke="#fff3d0" stroke-width="1" opacity=".55"></circle></symbol>
+<!-- 02.09.2026: те же значки, что уже используются в игре (i-hand — статистика достижений,
+     i-gyro/i-keys/i-timer/i-ruler), но с currentColor вместо зашитых hex — оригиналы красят
+     части разными цветами напрямую в атрибутах, для медали нужен один управляемый цвет. -->
+<symbol id="i-medal-touch" viewBox="0 -960 960 960"><g transform="translate(120,-120) scale(.75)"><path fill="currentColor" d="M481-781q106 0 200 45.5T838-604q7 9 4.5 16t-8.5 12q-6 5-14 4.5t-14-8.5q-55-78-141.5-119.5T481-741q-97 0-182 41.5T158-580q-6 9-14 10t-14-4q-7-5-8.5-12.5T126-602q62-85 155.5-132T481-781Zm0 94q135 0 232 90t97 223q0 50-35.5 83.5T688-257q-51 0-87.5-33.5T564-374q0-33-24.5-55.5T481-452q-34 0-58.5 22.5T398-374q0 97 57.5 162T604-121q9 3 12 10t1 15q-2 7-8 12t-15 3q-104-26-170-103.5T358-374q0-50 36-84t87-34q51 0 87 34t36 84q0 33 25 55.5t59 22.5q34 0 58-22.5t24-55.5q0-116-85-195t-203-79q-118 0-203 79t-85 194q0 24 4.5 60t21.5 84q3 9-.5 16T208-205q-8 3-15.5-.5T182-217q-15-39-21.5-77.5T154-374q0-133 96.5-223T481-687Z"></path></g></symbol>
+<symbol id="i-medal-gyro" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M21 3.5V8h-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 8.5 15 12l-3 3.5L9 12z" fill="currentColor"></path></symbol>
+<symbol id="i-medal-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.8" fill="none" stroke="currentColor" stroke-width="1.5"></rect><path d="M6 10h1.2M9.5 10h1.2M13 10h1.2M16.5 10h1.2M6 13.5h1.2M9.5 13.5h1.2M13 13.5h1.2M16.5 13.5h1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M8 16.3h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
+<symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
+<symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.40"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.40"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.40"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.41"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.41"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.41"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2329,6 +2374,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      Герой — счёт; тихая строка рекорда; большая «Ещё раз»; рядом тихая тройка действий.
      Всё второе (мотивация, ранг, паспорт, сетка статистики) — за спойлером «Подробности». -->
 <div id="gameOverScreen" class="overlay hidden">
+  <!-- 02.09.2026 «Медали над результатом»: медаль по типу управления (касание/гироскоп/
+       клавиатура/Bullet Time/дистанция) — над счётом, не под ним, чтобы появление рекорда
+       не двигало зазор счёт→«Войдите» (тот самый, который тюнили отдельно). Макет одобрен
+       владельцем вживую (три раунда правок: реальная иконка игры вместо своей руки, круглая
+       медаль вместо щита, космические цвета вместо красного/синего, единый формат подписи). -->
+  <div id="recordMedals"></div>
   <div id="finalScoreLabel"></div>
   <div id="finalScore">0</div>
   <div id="newRecord"></div>
@@ -2405,25 +2456,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.40" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.40"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/beacon.js?v=1.478.40"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
-<script defer src="js/input.js?v=1.478.40"></script>
-<script defer src="js/game.js?v=1.478.40" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.40"></script>
-<script defer src="js/sync.js?v=1.478.40"></script>
-<script defer src="js/render.js?v=1.478.40"></script>
-<script defer src="js/planetarium.js?v=1.478.40"></script>
-<script defer src="js/goldstar.js?v=1.478.40"></script>
-<script defer src="js/music.js?v=1.478.40"></script>
-<script defer src="js/gyro.js?v=1.478.40"></script>
-<script defer src="js/forge.js?v=1.478.40"></script>
-<script defer src="js/partitura.js?v=1.478.40"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.40"></script>
-<script defer src="js/card.js?v=1.478.40"></script>
-<script defer src="js/star.js?v=1.478.40"></script>
-<script defer src="js/cinema.js?v=1.478.40"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.40"></script>
+<script defer src="js/core.js?v=1.478.41" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.41"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/beacon.js?v=1.478.41"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая -->
+<script defer src="js/input.js?v=1.478.41"></script>
+<script defer src="js/game.js?v=1.478.41" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.41"></script>
+<script defer src="js/sync.js?v=1.478.41"></script>
+<script defer src="js/render.js?v=1.478.41"></script>
+<script defer src="js/planetarium.js?v=1.478.41"></script>
+<script defer src="js/goldstar.js?v=1.478.41"></script>
+<script defer src="js/music.js?v=1.478.41"></script>
+<script defer src="js/gyro.js?v=1.478.41"></script>
+<script defer src="js/forge.js?v=1.478.41"></script>
+<script defer src="js/partitura.js?v=1.478.41"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.41"></script>
+<script defer src="js/card.js?v=1.478.41"></script>
+<script defer src="js/star.js?v=1.478.41"></script>
+<script defer src="js/cinema.js?v=1.478.41"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.41"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
