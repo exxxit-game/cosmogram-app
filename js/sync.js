@@ -213,9 +213,12 @@ function syncGoogleCode(code, ru){ // 23.08.2026: возврат из Google —
       /* 02.09.2026 «Диагностика молчаливого сбоя»: временный тост, снять после разбора живого
          бага (владелец: Google-вход никогда не засчитывается). syncAuthFail() сам не говорит,
          НА КАКОМ ИМЕННО шаге билет потерялся — не найден в localStorage вовсе (запись в gGo()
-         могла молча упасть, try/catch там глотает ошибку) или найден, но state не совпал. */
-      try{ if(typeof toast==='function') toast('Диагностика входа: билет '+(saved?('найден, совпадает='+(state===saved.state)):'НЕ найден в localStorage'), 'rgba(255,159,176,.5)'); }catch(e){}
-      syncAuthFail(); return;
+         могла молча упасть, try/catch там глотает ошибку) или найден, но state не совпал.
+         Первая попытка звала и этот тост, и следом syncAuthFail() — оба пишут в один и тот же
+         DOM-элемент (core.js:176-183, без очереди), второй вызов мгновенно затирал текст
+         первого. Теперь только один тост — сам несёт нужный текст, syncAuthFail() не зовём. */
+      try{ if(typeof toast==='function') toast('Вход не удался — билет '+(saved?('найден, совпадает='+(state===saved.state)):'НЕ найден в localStorage'), 'rgba(255,159,176,.5)'); }catch(e){}
+      return;
     } // v1.282.8: чужой code без нашего ярлыка — не наш поход
     if(saved.provider==='dc') syncDiscordCode(code, ru);
     else if(saved.provider==='gg') syncGoogleCode(code, ru);
