@@ -2021,7 +2021,12 @@ function renderTop(){
     if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; }
   }
   const askCat=topCat; // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком
-  syncTop(askCat).then(d=>{
+  /* 03.09.2026: «Трасса дня» — своя дверь (cosmogram-daily, action daily_top), не общая
+     scores/CATS таблица (у дня честное «одно небо на всех», у остальных пяти — нет).
+     Ответ нарочно того же вида ({ok,top,me}), рендер ниже не знает разницы. */
+  const topPromise = (askCat==='daily' && typeof syncDailyTop==='function')
+    ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'') : syncTop(askCat);
+  topPromise.then(d=>{
     if(screenName!=='ach' || topCat!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
     if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
     me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+fmtN(d.me.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')) : '';

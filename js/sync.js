@@ -413,6 +413,13 @@ function syncDailyChampion(day){ // {ok,champion:{name,score,skin,track,me}} | {
     return r.json().catch(()=>null);
   });
 }
+function syncDailyTop(day){ // 03.09.2026: {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null} — тот же контракт, что у syncTop()
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'daily_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 function syncDailyStats(day){ // v1.100.2: {ok, flyers, catchers} — «звезду взяли N из M»; та же дверь fly_first на сервере
   if(!syncAvailable()) return Promise.resolve(null);
   return syncDailyPost(Object.assign({action:'daily_stats', day:day}, syncAuth())).then(r=>{
