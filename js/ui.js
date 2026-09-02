@@ -1775,14 +1775,38 @@ $('diagCopyBtn') && $('diagCopyBtn').addEventListener('click', ()=>{
 // иногда просто не срабатывает (жалоба владельца, живое устройство). Метка-разделитель
 // защищает от повторного приклеивания той же ленты, если нажать ещё раз не читая.
 const FEEDBACK_TAPE_MARK='\n\n— — —\n';
+// 02.09.2026 (владелец, живое наблюдение): было ta.value.slice(0,maxLength) на уже склеенной
+// строке — резало КОНЕЦ, а BB.text() пишет ленту хронологически (старые сверху, самые свежие —
+// в конце), значит терялось именно самое ценное для разбора. Собственный текст игрока тоже
+// мог пострадать. Страж 146 (guard.mjs). Здесь — бюджет считается ОТ текста игрока (его
+// никогда не режем), а сама лента обрезается по строкам с начала (отбрасываем старые события),
+// оставляя заголовок (версия/вердикт/паспорт борта — до «--- tape ---») и как можно больше
+// свежих строк с конца.
+function feedbackTapeFit(budget){
+  let text=''; try{ text=(typeof BB!=='undefined' && BB.text) ? BB.text() : ''; }catch(e){}
+  if(!text) text='Cosmogram v'+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?')+' blackbox · лента пуста';
+  if(budget<=0) return '';
+  if(text.length<=budget) return text;
+  const SEP='--- tape ---\n', OMIT='\n… (старые события пропущены) …';
+  const sepAt=text.indexOf(SEP);
+  if(sepAt<0) return text.slice(0,budget); // формат неожиданно другой — честная обрезка с конца, не выдумываем
+  const head=text.slice(0,sepAt+SEP.length);
+  if(head.length+OMIT.length>=budget) return head.slice(0,budget); // потолок совсем тесный — хотя бы заголовок
+  const lines=text.slice(sepAt+SEP.length).split('\n').filter(Boolean);
+  let bodyBudget=budget-head.length-OMIT.length, kept=[];
+  for(let i=lines.length-1;i>=0;i--){ // от самых свежих назад, пока хватает места
+    const need=lines[i].length+1;
+    if(need>bodyBudget) break;
+    kept.unshift(lines[i]); bodyBudget-=need;
+  }
+  return head+OMIT+(kept.length?'\n'+kept.join('\n'):'');
+}
 wireOn('feedbackAttachBtn', 'click', ()=>{
   const ta=$('feedbackText'); if(!ta) return;
   sfx.click(); haptic('light');
   if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return; // уже приложено — не дублируем
-  let text=''; try{ text=(typeof BB!=='undefined' && BB.text) ? BB.text() : ''; }catch(e){}
-  if(!text) text='Cosmogram v'+(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?')+' blackbox · лента пуста';
-  ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+text;
-  if(ta.value.length>ta.maxLength) ta.value=ta.value.slice(0,ta.maxLength); // тот же потолок, что и у ручного ввода
+  const budget=ta.maxLength-(ta.value||'').length-FEEDBACK_TAPE_MARK.length;
+  ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+feedbackTapeFit(budget);
   feedbackUpdateCount();
   if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
 });
