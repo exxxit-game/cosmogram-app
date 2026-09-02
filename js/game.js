@@ -1692,6 +1692,7 @@ function spawnObstacle(forceKind, forceDir){
   // обходит только живой массив obstacles, а лежащие в пуле объекты выносят обратно градиент МЁРТВОГО
   // контекста. Правило простое: что бы модуль ни повесил на объект, из пула он выходит чистым. Страж 109
   o._blikR=null; // 23.08.2026: и безопасный радиус блика (render.js) — тот же класс, четвёртое поле подряд
+  o.paired=false; o.pairMate=null; o.pairLead=false; o.beamPhase='charge'; o.beamT=0; // 02.09.2026 «Ревизия»: пятое поле того же класса — заряженная пара уничтожается, объект уходит в пул с paired=true/pairMate/beamPhase='strike', следующий спавн ЛЮБОГО вида донашивал чужую пару и получал луч к случайному камню
   o.rot=mapRand(0,6.28);
   if (kind==='rock'){ // астероид
     o.x=x; o.y=-50; o.r=mapRand(16,34+d*16); o.vy=vy; o.vx=mapRand(-.4,.4)*d;
@@ -2239,7 +2240,7 @@ function update(dt){
           const cx=x1+t*dx, cy=y1+t*dy, ddx=plane.x-cx, ddy=plane.y-cy;
           if (ddx*ddx+ddy*ddy < (5+plane.r)*(5+plane.r)){
             if (S.shield>0){ S.shield=0; burst(plane.x,plane.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff'); }
-            else { hitPlane('beam'); }
+            else { hitPlane('beam'); if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':beam'); startDying(); return; } } // 02.09.2026 «Ревизия»: у гейта/обычных столкновений эта проверка уже есть (2273, 2314) — у луча не было, забег не заканчивался на нуле жизней
           }
         }
       }
