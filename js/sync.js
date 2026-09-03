@@ -9,6 +9,17 @@
 const SYNC_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-sync';
 const SYNC_KEY='sb_publishable_0Ut2DUmAbYkJoxVLTMAKqg_Qwn3OMnI'; // публичный ключ: безопасен, доступ решает подпись Telegram
 const SYNC_CATS=['gyro','touch','bullet','dist','keys'];
+/* v1.282.13 «Поводок»: у всех запросов синка есть предел терпения. Раньше fetch уходил без
+   таймаута, и на «полусетевом» канале (соединение открыто, ответа нет) промис висел вечно:
+   очередь не чистилась и не повторялась, а вызывающий код ждал ответа, которого не будет.
+   В логах сервера уже видны ответы под 2.3 секунды — до висяка недалеко.
+   04.09.2026: объявление ПЕРЕНЕСЕНО сюда, к началу файла — жило ниже, у syncFetch() (строка
+   ~207), а syncBootOAuth() ниже — IIFE, выполняется сразу при загрузке скрипта и на возврате
+   из Google/Discord зовёт syncFetch() раньше, чем скрипт доходит до старого места объявления:
+   «can't access lexical declaration 'POST_TIMEOUT' before initialization» — ReferenceError на
+   КАЖДОМ возврате из OAuth, без единого исключения. Поймано только через живую консоль
+   браузера владельца — сервер эту ошибку никогда не видел (падает раньше сети). */
+const POST_TIMEOUT=10000;
 
 /* ---------- Несколько входов, одна таблица ----------
    initData — внутри мини-аппа; webAuth — старая веб-сессия Telegram Login Widget (виджет
@@ -200,11 +211,6 @@ function syncEnqueue(scores){
   for(const c in scores) m[c]=Math.max(m[c]||0, scores[c]||0);
   Store.set('syncQ',[m]);
 }
-/* v1.282.13 «Поводок»: у всех запросов синка есть предел терпения. Раньше fetch уходил без
-   таймаута, и на «полусетевом» канале (соединение открыто, ответа нет) промис висел вечно:
-   очередь не чистилась и не повторялась, а вызывающий код ждал ответа, которого не будет.
-   В логах сервера уже видны ответы под 2.3 секунды — до висяка недалеко. */
-const POST_TIMEOUT=10000;
 function syncFetch(url, body){
   const ctl=(typeof AbortController==='function')?new AbortController():null;
   const t=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },POST_TIMEOUT):0;

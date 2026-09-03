@@ -114,6 +114,11 @@ function pauseGhostSync(){
 pauseGhostSync();
 function setScreen(name){
   if(name==='menu' && typeof runMode!=='undefined' && runMode!=='classic') runMode='classic'; // v1.92.1 «Дом — это классика»: вышел в меню — сессия любой дисциплины закрыта, большая кнопка всегда ведёт домой
+  /* 04.09.2026 (владелец): курсор пропадал даже на паузе — Pointer Lock (input.js) не
+     отпускается сам по себе, когда поверх канваса ложится пауза/итоги (это та же страница,
+     не переход). setScreen — единственное место всех переходов (см. коммент про рамку
+     коридора ниже), поэтому один вызов здесь ловит уход из полёта куда угодно разом. */
+  if(name!=='game' && document.exitPointerLock) document.exitPointerLock();
   screenName=name;
   /* 24.08.2026: рамка коридора (#corrEdgeL/#corrEdgeR) раньше перепроверялась ТОЛЬКО из
      resize() в core.js — то есть только когда меняется размер окна. На статичном рабочем
