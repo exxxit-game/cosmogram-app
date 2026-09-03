@@ -87,7 +87,7 @@ cosmogram-app/
 │   ├── vendor/telegram-web-app.js  # Мост Telegram (загружается первым)
 │   ├── core.js                 # Ядро: i18n, Store, WebAudio, DPR, PRNG, withTrack
 │   ├── blackbox.js             # Самописец: кольцевая лента, вердикт цепи руля
-│   ├── beacon.js               # Почта неба: анонимная телеметрия, окно 21 с
+│   ├── skymail.js               # Почта неба: анонимная телеметрия, окно 21 с
 │   ├── input.js                # 5 штурвалов + арбитр
 │   ├── game.js                 # Цикл 60Hz, пулы, физика, спавн, коллизии, комбо
 │   ├── ach.js                  # Достижения

@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { pickDispatchCandidate } = require('../js/beacon.js');
+const { pickDispatchCandidate } = require('../js/skymail.js');
 
 const queue = [
   { kind: 'signal', msg: 'fps_drop', ts: 1 },

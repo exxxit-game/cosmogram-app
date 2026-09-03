@@ -22,7 +22,7 @@ cmd=$(printf '%s' "$out" | sed -n '2p')
 if [[ "$tool" == "Bash" && "$cmd" == git\ commit* ]]; then
   staged=$(git diff --cached --name-only)
   needs_bump=false
-  for f in js/core.js js/game.js js/render.js js/input.js js/ach.js js/beacon.js \
+  for f in js/core.js js/game.js js/render.js js/input.js js/ach.js js/skymail.js \
            js/blackbox.js js/card.js js/forge.js js/goldstar.js js/gyro.js \
            js/music.js js/planetarium.js js/star.js js/sync.js js/ui.js js/i18n.js \
            index.html sw.js; do
