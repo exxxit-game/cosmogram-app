@@ -1347,9 +1347,61 @@ if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListene
    отдельным способом позже, а прямой связи с владельцем раньше не было вообще. */
 let feedbackSending=false;
 let feedbackFrom='menu'; // куда вернуться: меню или сервисный центр — тот же приём, что у settingsFrom
+/* 03.09.2026 «Снимок к отзыву» (владелец, «с картинкой будет проще показать»): до 5 снимков,
+   даунскейл на клиенте до ≤1080px по длинной стороне, JPEG q=0.82 — выше, чем у автоматической
+   диагностики (≤480px q=0.6, captureShot() в skymail.js), потому что здесь важна читаемость
+   мелкого текста интерфейса (жалоба «кнопка съезжает на испанском» без разборчивого текста
+   бесполезна), а не компактность файла. Замерено вживую перед выбором чисел, не на глаз: похожий
+   по масштабу base64-payload (клип видео до ~6МБ, cosmogram-sync) уже штатно работает в этом же
+   проекте — потолок на один снимок (700000 base64-симв. ≈525КБ) взят с большим запасом ниже
+   уже проверенного прецедента. */
+const FEEDBACK_PHOTO_MAX=5, FEEDBACK_PHOTO_SIDE=1080, FEEDBACK_PHOTO_Q=0.82, FEEDBACK_PHOTO_B64_MAX=700000;
+let feedbackPhotos=[]; // dataURL-строки, готовые к отправке
+function feedbackPhotoRender(){
+  const btn=$('feedbackPhotoBtn'), thumbs=$('feedbackPhotoThumbs');
+  setText('feedbackPhotoLabel', L.feedbackPhotoBtn?L.feedbackPhotoBtn(feedbackPhotos.length):''); // 03.09.2026: не сама кнопка — setText() пишет textContent и стёр бы SVG-иконку рядом
+  if(btn) btn.disabled = feedbackPhotos.length>=FEEDBACK_PHOTO_MAX;
+  if(!thumbs) return;
+  thumbs.innerHTML='';
+  feedbackPhotos.forEach((url,i)=>{
+    const cell=document.createElement('div');
+    cell.style.cssText='position:relative;width:56px;height:56px;border-radius:10px;overflow:hidden;border:1px solid rgba(120,170,255,.3)';
+    const img=document.createElement('img');
+    img.src=url; img.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
+    const rm=document.createElement('div');
+    rm.textContent='×';
+    rm.style.cssText='position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(8,12,28,.85);color:#eaf0ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;line-height:1';
+    rm.onclick=()=>{ feedbackPhotos.splice(i,1); feedbackPhotoRender(); };
+    cell.appendChild(img); cell.appendChild(rm);
+    thumbs.appendChild(cell);
+  });
+}
+function feedbackPhotoAdd(file){
+  return new Promise(resolve=>{
+    try{
+      const img=new Image();
+      const objUrl=URL.createObjectURL(file);
+      img.onload=()=>{
+        try{
+          const s=Math.min(1, FEEDBACK_PHOTO_SIDE/Math.max(img.naturalWidth,img.naturalHeight));
+          const w=Math.max(1,Math.round(img.naturalWidth*s)), h=Math.max(1,Math.round(img.naturalHeight*s));
+          const c=document.createElement('canvas'); c.width=w; c.height=h;
+          const ctx=c.getContext('2d');
+          ctx.drawImage(img,0,0,w,h);
+          const dataUrl=c.toDataURL('image/jpeg',FEEDBACK_PHOTO_Q);
+          URL.revokeObjectURL(objUrl);
+          resolve(dataUrl.length<=FEEDBACK_PHOTO_B64_MAX ? dataUrl : null);
+        }catch(e){ URL.revokeObjectURL(objUrl); resolve(null); }
+      };
+      img.onerror=()=>{ URL.revokeObjectURL(objUrl); resolve(null); };
+      img.src=objUrl;
+    }catch(e){ resolve(null); }
+  });
+}
 function openFeedback(from){
   feedbackFrom=from||'menu'; setScreen('feedback'); sfx.click();
   const status=$('feedbackStatus'); if(status) status.textContent='';
+  feedbackPhotos=[]; feedbackPhotoRender(); // новый заход — чистая коллекция, не старая с прошлого визита
   feedbackUpdateCount();
 }
 function closeFeedback(){ setScreen(feedbackFrom); sfx.click(); }
@@ -1370,13 +1422,14 @@ async function feedbackSend(){
   feedbackSending=true;
   if(btn) btn.disabled=true;
   if(status) status.textContent=L.feedbackSending||'';
-  const res=await BEACON.feedback(text);
+  const res=await BEACON.feedback(text, feedbackPhotos);
   feedbackSending=false;
   if(btn) btn.disabled=false;
   if(!status) return;
   if(res.ok){
     status.textContent=L.feedbackSent||'';
     if(ta) ta.value='';
+    feedbackPhotos=[]; feedbackPhotoRender(); // отправлено — коллекция не переживает успешную отправку
     feedbackUpdateCount();
   } else {
     status.textContent=(res.reason==='rate' ? L.feedbackRate : res.reason==='spam' ? L.feedbackSpam : L.feedbackFail)||'';
@@ -1847,6 +1900,24 @@ wireOn('feedbackAttachBtn', 'click', ()=>{
   ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+feedbackTapeFit(budget);
   feedbackUpdateCount();
   if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
+});
+wireOn('feedbackPhotoBtn', 'click', ()=>{
+  if(feedbackPhotos.length>=FEEDBACK_PHOTO_MAX) return;
+  sfx.click(); haptic('light');
+  const inp=$('feedbackPhotoInput'); if(inp) inp.click();
+});
+wireOn('feedbackPhotoInput', 'change', async ()=>{
+  const inp=$('feedbackPhotoInput'); if(!inp) return;
+  const room=FEEDBACK_PHOTO_MAX-feedbackPhotos.length;
+  const files=Array.from(inp.files||[]).slice(0,room);
+  let skipped=false;
+  for(const f of files){
+    const url=await feedbackPhotoAdd(f);
+    if(url) feedbackPhotos.push(url); else skipped=true;
+  }
+  inp.value='';
+  feedbackPhotoRender();
+  if(skipped && typeof toast==='function') toast(L.feedbackPhotoTooBig,'rgba(255,180,140,.5)');
 });
 wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая проверка цены записи на реальном телефоне
   if (typeof cinemaTestArm==='function') cinemaTestArm();

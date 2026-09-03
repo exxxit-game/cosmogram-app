@@ -1807,6 +1807,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.8" stroke="#9fe8ff"></rect><path d="M6 10h1.2M9.5 10h1.2M13 10h1.2M16.5 10h1.2M6 13.5h1.2M9.5 13.5h1.2M13 13.5h1.2M16.5 13.5h1.2" stroke="#9fe8ff"></path><path d="M8 16.3h8" stroke="#c9a45c"></path></symbol>
 <symbol id="i-star4" viewBox="0 0 24 24"><path d="M12 2.8c.9 5.2 4 8.3 9.2 9.2-5.2.9-8.3 4-9.2 9.2-.9-5.2-4-8.3-9.2-9.2 5.2-.9 8.3-4 9.2-9.2z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
+<!-- 03.09.2026 «Написать разработчику»: снимок к отзыву — простая линейная пиктограмма
+     «изображение» (рамка + горка + солнце), тот же стиль обводки, что у соседей на этой
+     странице. Нарисована с нуля под этот стиль (не бренд-иконка, ничего не заимствовано),
+     макет-эскиз (feedback_photo_macet.html, артефакт) утверждён владельцем 03.09.2026. -->
+<symbol id="i-shot" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"></rect><circle cx="8.3" cy="9.3" r="1.6"></circle><path d="M4 17 9.5 12l3 2.8 3.5-4L20 15"></path></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></symbol>
 <!-- 28.08.2026 «Кнопка назад для Ангара/Достижений»: убрал нижние «Меню»/«Назад» — оказалось,
      на этих экранах не было своей кнопки назад вообще, только нативная Telegram (недоступна
@@ -1857,9 +1862,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.57"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.57"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.57"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.58"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.58"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.58"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2160,6 +2165,15 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          WebView иногда режет системное меню «Вставить»). Кнопка сама подставляет тот же текст
          (BB.text(), как у diagCopyBtn) прямо в это поле — без буфера обмена, без второго экрана. -->
     <button class="btn ghost" id="feedbackAttachBtn" style="width:calc(100% - 32px);margin:0 16px 10px">Приложить диагностику</button>
+    <!-- 03.09.2026 «Снимок к отзыву» (владелец): «с картинкой будет проще показать, что нужно
+         исправить» — до 5 снимков, выбор с устройства, каждый ужимается на клиенте до ≤1080px
+         по длинной стороне (владелец выбрал явно — читаемость мелкого текста интерфейса важнее
+         размера файла для ЭТОГО случая, в отличие от автоматической диагностики ≤480px выше).
+         Макет утверждён (feedback_photo_macet.html, артефакт), иконка — i-shot, не эмодзи. -->
+    <button class="btn ghost" id="feedbackPhotoBtn" style="width:calc(100% - 32px);margin:0 16px 10px">
+      <svg class="ic" aria-hidden="true"><use href="#i-shot"></use></svg><span id="feedbackPhotoLabel">Прикрепить снимок (0/5)</span></button>
+    <div id="feedbackPhotoThumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 16px 10px"></div>
+    <input type="file" id="feedbackPhotoInput" accept="image/*" multiple style="display:none">
     <div class="stack" style="margin:0 16px 14px">
       <button class="btn pri" id="feedbackSendBtn">Отправить</button>
     </div>
@@ -2495,25 +2509,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.57" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.57"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.57"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.57"></script>
-<script defer src="js/game.js?v=1.478.57" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.57"></script>
-<script defer src="js/sync.js?v=1.478.57"></script>
-<script defer src="js/render.js?v=1.478.57"></script>
-<script defer src="js/planetarium.js?v=1.478.57"></script>
-<script defer src="js/goldstar.js?v=1.478.57"></script>
-<script defer src="js/music.js?v=1.478.57"></script>
-<script defer src="js/gyro.js?v=1.478.57"></script>
-<script defer src="js/forge.js?v=1.478.57"></script>
-<script defer src="js/partitura.js?v=1.478.57"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.57"></script>
-<script defer src="js/card.js?v=1.478.57"></script>
-<script defer src="js/star.js?v=1.478.57"></script>
-<script defer src="js/cinema.js?v=1.478.57"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.57"></script>
+<script defer src="js/core.js?v=1.478.58" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.58"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.58"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.58"></script>
+<script defer src="js/game.js?v=1.478.58" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.58"></script>
+<script defer src="js/sync.js?v=1.478.58"></script>
+<script defer src="js/render.js?v=1.478.58"></script>
+<script defer src="js/planetarium.js?v=1.478.58"></script>
+<script defer src="js/goldstar.js?v=1.478.58"></script>
+<script defer src="js/music.js?v=1.478.58"></script>
+<script defer src="js/gyro.js?v=1.478.58"></script>
+<script defer src="js/forge.js?v=1.478.58"></script>
+<script defer src="js/partitura.js?v=1.478.58"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.58"></script>
+<script defer src="js/card.js?v=1.478.58"></script>
+<script defer src="js/star.js?v=1.478.58"></script>
+<script defer src="js/cinema.js?v=1.478.58"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.58"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

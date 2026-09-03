@@ -485,19 +485,23 @@ const BEACON=(()=>{
      выше — те настроены под автоматическую телеметрию (дедуп по сессии, одно письмо в 21с),
      а здесь игрок сам нажал «Отправить» и ждёт немедленного ответа, не окна ожидания.
      Сервер отвечает {ok:true} либо {ok:false, reason}; UI (ui.js) сам решает, что показать. */
-  async function feedback(text){
+  async function feedback(text, photos){
     if(sealed()) return {ok:false, reason:'sealed'};
     const t=String(text==null?'':text).trim().slice(0,28000); // 03.09.2026: потолок 7000→28000 (владелец — 170 событий на ленте самописца
       // всё ещё резались даже на 7000, замерено вживую: полное кольцо 180 событий ≈ 8965 симв.,
       // худший случай — 19764), вместе с index.html и живой Edge Function cosmogram-beacon
     if(!t) return {ok:false, reason:'empty'};
+    // 03.09.2026 «Снимок к отзыву»: до 5 уже готовых JPEG dataURL от feedbackPhotoAdd() (ui.js) —
+    // сервер сам ограничивает и число, и размер каждой, здесь только честная передача того,
+    // что реально собрал игрок (лишнее по счёту сервер отбросит, не UI дублирует эту проверку).
+    const shots=Array.isArray(photos) ? photos.filter(p=>typeof p==='string' && p.length>0).slice(0,5) : [];
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     const ctl=(typeof AbortController==='function')?new AbortController():null;
     const tmr=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },SEND_TIMEOUT):0;
     try{
       const r=await fetch(URL,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({action:'feedback', text:t, anon:anon(),
-          v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf}),
+          v:(typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?'), pf:pf, shots:shots}),
         signal:ctl?ctl.signal:undefined});
       if(!r) return {ok:false, reason:'http'};
       /* 30.08.2026: сервер честно отвечает 400/429 С ТЕЛОМ {ok:false, reason:'rate'|'spam'|...} —
