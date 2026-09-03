@@ -1481,12 +1481,33 @@ function duelBoot(){ // deep-link ?startapp=duel_<pid> (Telegram) или #duel=<
 // сторож звука (v1.20.0): первый жест в WebView ненадёжен — будим контекст на каждом тапе,
 // а раз в 2 секунды проверяем, что музыка живёт там, где должна звучать. Лечит и «умерла
 // после голосового/звонка», и «не проснулась с первого тапа» — на любом телефоне.
+/* 02.09.2026 «Звуковая лента» (владелец: видео с телефона + два «Отзыва»). На ленте
+   самописца не было ни одного события про звук — взлёт, посадка, гироскоп, — а кто щёлкнул
+   выключатель, когда и в каком состоянии пересоздался контекст после «тихой заморозки»
+   (core.js, audioRecoverStall), было невидимо: каждый следующий «Отзыв» так же слеп.
+   Пишем только ПЕРЕМЕНЫ, не каждый тик: новый контекст (номер, состояние, частота, где мы
+   были), смена состояния того же контекста, и нажатия выключателей (в обработчиках
+   setSoundBtn/setMusicBtn ниже). Лента — свидетель, не лекарство: сама ничего не чинит.
+   Страж: guardAudioTapeSeesTogglesAndContext (cosmogram-crew). */
+let audioTapeAC=null, audioTapeState='', audioTapeN=0;
+function audioTape(){
+  if (typeof BB==='undefined' || typeof AC==='undefined') return;
+  const ac=AC;
+  if (ac!==audioTapeAC){
+    audioTapeAC=ac; audioTapeState=ac?ac.state:''; if(ac) audioTapeN++;
+    const where=(typeof S!=='undefined'&&S.running)?((S.paused||S.pausing)?'пауза':'полёт'):screenName;
+    BB.log('audio', (ac?'ctx#'+audioTapeN+' '+ac.state+' '+ac.sampleRate+'Hz':'ctx нет')+' · '+where);
+    return;
+  }
+  if (ac && ac.state!==audioTapeState){ audioTapeState=ac.state; BB.log('audio', 'ctx#'+audioTapeN+' → '+ac.state); }
+}
 function audioKeep(){
   /* v1.282.20: пробуждение контекста вынесено ИЗ-ПОД настроек. Раньше игрок с выключенной
      музыкой, но включёнными звуками не получал ни жестового пробуждения, ни двухсекундной
      самопроверки — то есть после звонка на iPhone у него молчали и звуки тоже. */
   audio(); // создание/пробуждение контекста — в жесте надёжнее всего
   if (typeof audioSample==='function') audioSample(); // 22.08.2026: тот же тик — замер «время идёт?» для audioVerdict()
+  audioTape(); // 02.09.2026: звуковая лента — перемены контекста на ленту самописца (см. выше)
   if (MUTED || !MUSIC_ON) return;
   if (S.running) music.start('game');
   else if (screenName==='menu') music.start('menu');
@@ -1592,6 +1613,7 @@ function calLampUpdate(){
 wireOn('setCalibBtn', 'click', calibrateTilt);
 wireOn('setSoundBtn', 'click', ()=>{
   MUTED=!MUTED; Store.set('muted',MUTED?1:0); soundLabel(); haptic('light'); if(!MUTED) sfx.click();
+  if (typeof BB!=='undefined') BB.log('audio', MUTED?'звук выкл (тап)':'звук вкл (тап)'); // 02.09.2026: звуковая лента — кто щёлкнул выключатель
   if(MUTED){ music.stop(.3); engine.stop(); } // звук выключен — молчит всё
   else { if(MUSIC_ON) music.start(screenName==='game'?'game':'menu'); if(S.running&&!S.paused) engine.start(); }
 });
@@ -1635,6 +1657,7 @@ wireOn('setGyroBtn', 'click', ()=>{
 });
 wireOn('setMusicBtn', 'click', ()=>{
   MUSIC_ON=!MUSIC_ON; Store.set('music',MUSIC_ON?1:0); musicLabel(); haptic('light'); sfx.click();
+  if (typeof BB!=='undefined') BB.log('audio', MUSIC_ON?'музыка вкл (тап)':'музыка выкл (тап)'); // 02.09.2026: звуковая лента
   if(!MUSIC_ON) music.stop(.3);
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
