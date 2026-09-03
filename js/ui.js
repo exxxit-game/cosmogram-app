@@ -1968,7 +1968,37 @@ wireOn('setBtBtn', 'click', ()=>{
   const ms=btModes(); BT_TS=ms[(ms.indexOf(BT_TS)+1)%ms.length];
   Store.set('btTs',BT_TS); btLabel(); haptic('light'); sfx.click();
 });
-function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0)
+const EXXXIT_DOOR_PATH='m 148.169,80.709657 v 60.715533 c 6.31638,0.48241 10.5308,5.63536 10.5308,10.31517 v 2.4687 l -2.46869,-0.006 -8.06211,-0.0182 v 12.73893 l 6.08214,5.9854 h -40.12901 l -7.43227,-7.11934 h -9.238704 l 7.432844,7.11934 H 93.428076 l -6.08214,-5.98542 V 125.1738 h 10.66451 c 0.0833,5.9e-4 0.16247,0.004 0.24579,0.004 0.0556,0 0.0832,-0.007 0.13598,-0.008 0.0349,-5.8e-4 0.0686,-0.002 0.10294,-0.004 1.43847,-0.0274 1.750194,-0.28172 2.778784,-1.31031 l 6.24145,-7.37766 c 1.73064,3.78552 3.36138,7.00437 5.08475,10.65995 0.19459,0.37374 0.65441,1.21334 0.30951,1.86731 l -17.152864,34.63575 6.292634,-0.021 c 3.29001,0.0726 4.66137,-2.19803 5.81814,-4.23075 4.63991,-9.35178 9.30161,-18.69659 13.94909,-28.04895 l 0.87733,16.64253 c 0.22955,2.88042 2.17565,3.61243 4.72575,3.69137 l 28.81702,0.0659 c 0,-3.31243 -3.28192,-7.68712 -8.6265,-7.89482 0,0 -10.29203,0.11556 -15.67301,0.13711 -0.68225,0 -0.86922,-0.38098 -0.94846,-0.94845 -0.24993,-4.28189 -0.48763,-8.59103 -0.7533,-12.87205 -0.16632,-2.12536 -0.3528,-3.59821 -0.96949,-5.20708 -2.0106,-4.31016 -4.02228,-8.59953 -6.03491,-12.89424 l 7.36399,-0.0859 c 0.19342,-0.007 0.34356,0.0358 0.44435,0.20823 l 5.32998,9.33771 c 2.19819,4.00865 8.13833,1.08508 6.14813,-3.16681 l -6.53616,-10.93249 c -1.14949,-1.70937 -1.6747,-2.29896 -4.66145,-2.39188 0,0 -13.95626,-0.0222 -20.94497,-0.0222 v -5.8e-4 c -2.27014,-0.0504 -2.52919,0.66163 -3.61401,1.81782 -2.91625,3.5982 -6.10478,7.43502 -8.949664,10.7891 -0.3953,0.47396 -0.61745,0.67583 -1.55836,0.66796 -1.74231,-0.0292 -3.27034,0.002 -4.6188,0.0808 h -4.28821 V 80.709277 Z m -38.64915,8.33748 c -4.00109,0 -7.06757,3.07482 -7.06757,7.09658 0,4.029633 3.06678,7.103983 7.06757,7.103983 4.00049,0 7.07496,-3.07435 7.07496,-7.103983 0,-4.02205 -3.07447,-7.09658 -7.07496,-7.09658 z';
+/* 03.09.2026: логотип exxxit game — настоящий знак ISO 7010 E001 (Emergency Exit,
+   общественное достояние), дверь перекрашена в космос, человечек/штриховка не тронуты. */
+function exxxitLogoHTML(){
+  return '<div class="exxxitCard">'+
+    '<span class="exxxitRivet tl"></span><span class="exxxitRivet tr"></span>'+
+    '<span class="exxxitRivet bl"></span><span class="exxxitRivet br"></span>'+
+    '<svg class="exxxitIcon" viewBox="0 0 105.83333 105.83333">'+
+      '<defs>'+
+        '<radialGradient id="exxxitSpaceGrad" cx="55%" cy="32%" r="78%">'+
+          '<stop offset="0%" stop-color="#26356e"/><stop offset="60%" stop-color="#0a1230"/>'+
+          '<stop offset="100%" stop-color="#05070f"/></radialGradient>'+
+        '<radialGradient id="exxxitPlanetGrad" cx="40%" cy="40%" r="60%">'+
+          '<stop offset="0%" stop-color="#f2cf7a"/><stop offset="100%" stop-color="#a97a2c"/></radialGradient>'+
+        '<clipPath id="exxxitDoorClip" clipPathUnits="userSpaceOnUse">'+
+          '<use href="#exxxitDoorPath" transform="translate(-65.616667,-71.966666)"/></clipPath>'+
+      '</defs>'+
+      '<g transform="translate(-65.616667,-71.966666)">'+
+        '<path id="exxxitDoorPath" fill="url(#exxxitSpaceGrad)" d="'+EXXXIT_DOOR_PATH+'"/>'+
+      '</g>'+
+      '<g clip-path="url(#exxxitDoorClip)">'+
+        '<circle cx="86" cy="80" r="30" fill="url(#exxxitPlanetGrad)" opacity=".9"/>'+
+        '<circle cx="26" cy="16" r="1.1" fill="#fff"/><circle cx="20" cy="30" r="0.8" fill="#fff"/>'+
+        '<circle cx="34" cy="24" r="1.3" fill="#fff"/><circle cx="16" cy="46" r="0.9" fill="#fff"/>'+
+        '<circle cx="40" cy="10" r="1" fill="#fff"/><circle cx="30" cy="58" r="0.8" fill="#fff"/>'+
+      '</g>'+
+    '</svg>'+
+    '<div class="exxxitWord"><b>EXXXIT</b><span>Game Studio</span></div>'+
+  '</div>';
+}
+function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION+exxxitLogoHTML()); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0); 03.09.2026: + карточка студии
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());

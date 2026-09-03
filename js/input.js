@@ -681,7 +681,8 @@ function mouseRelease(){ if(input.byMouse){ input.touchX=null; input.touchY=null
    game.js:2127 — «руль без потолка» не значит «самолёт без границ трассы». */
 let pointerLocked=false;
 document.addEventListener('pointerlockchange',()=>{ pointerLocked = document.pointerLockElement===canvas; if(!pointerLocked) mouseRelease(); });
-window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; if(canvas.requestPointerLock) canvas.requestPointerLock(); }); // v1.99.0, v1.478.59
+window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC;
+  if(canvas.requestPointerLock){ const p=canvas.requestPointerLock(); if(p&&p.catch) p.catch(()=>{}); } }); // v1.99.0, v1.478.59: iframe/встраивание может честно отказать — не шумим в консоль
 window.addEventListener('mousemove',e=>{
   if(tId!==null) return;
   if(pointerLocked){ input.byMouse=true; input.touchX=(input.touchX||0)+e.movementX/SC; input.touchY=(input.touchY||0)+e.movementY/SC; }
