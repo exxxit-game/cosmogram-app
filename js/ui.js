@@ -271,14 +271,14 @@ function startGame(saved){
      нельзя: иначе поле снова станет зависеть от того, что делал игрок. */
   mapSeedKey = runMode==='daily' ? trackDayKey() // v1.282.20: ключ трассы — по общему времени
     : runMode==='theater' ? String(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? (utcDayKey()+'·speedrun') // 03.09.2026: Спидран остался ежедневным, свой ключ, не trackDayKey() (теперь месяц)
+    : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
     : String(freshSeed);
   mapSeqReset();
   if (typeof nebulaReseed==='function') nebulaReseed(); // v1.282.15: узор туманностей — свой на забег; раньше он менялся раз в секунду прямо в полёте
   mapRNG = runMode==='daily' ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? keyRNG(utcDayKey()+'·speedrun') // v1.108.1 «Честный жар»: свой поток на день, как у Трассы дня — время сравнимо между попытками и между игроками; 03.09.2026: остался ежедневным, utcDayKey()
+    : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
     : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
@@ -621,7 +621,7 @@ function ghostUpload(category, track, skin, best, seed){
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
-    syncSpeedrunSubmit({ day:utcDayKey(), time_sec:S.time, skin:S.skin, // 03.09.2026: остался ежедневным
+    syncSpeedrunSubmit({ day:SPEEDRUN_ETERNAL_DAY, time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed»: постоянный ключ
       track: ghostPackDaily() });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
@@ -2056,7 +2056,7 @@ function renderTop(){
   const topPromise = (askCat==='daily' && typeof syncDailyTop==='function')
     ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'')
     : (askCat==='speedrun' && typeof syncSpeedrunTop==='function')
-    ? syncSpeedrunTop(typeof utcDayKey==='function'?utcDayKey():'') // 03.09.2026: Спидран остался ежедневным
+    ? syncSpeedrunTop(typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?SPEEDRUN_ETERNAL_DAY:'') // 03.09.2026 «Set Seed»: постоянный ключ
     : syncTop(askCat);
   // Спидран меряет секунды (меньше — лучше), не очки/метры — своё форматирование в обоих местах,
   // где счёт показывается («твоё место» и сама строка), одной функцией, не двумя копиями branch'а.
