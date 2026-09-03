@@ -2239,7 +2239,7 @@ function update(dt){
           const t=lenSq>0?clamp(((plane.x-x1)*dx+(plane.y-y1)*dy)/lenSq,0,1):0;
           const cx=x1+t*dx, cy=y1+t*dy, ddx=plane.x-cx, ddy=plane.y-cy;
           if (ddx*ddx+ddy*ddy < (5+plane.r)*(5+plane.r)){
-            if (S.shield>0){ S.shield=0; burst(plane.x,plane.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff'); }
+            if (S.shield>0){ S.shield=0; burst(plane.x,plane.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90); showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff'); }
             else { hitPlane('beam'); if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':beam'); startDying(); return; } } // 02.09.2026 «Ревизия»: у гейта/обычных столкновений эта проверка уже есть (2273, 2314) — у луча не было, забег не заканчивался на нуле жизней
           }
         }
@@ -2263,10 +2263,10 @@ function update(dt){
           killIdx(obstacles,i,poolOb);
           const pts=Math.round(50*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts; showPopup('+'+pts,o.x,o.y,'#a9bcff');
-          burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); S.shake=Math.max(S.shake,.5);
+          burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90); S.shake=Math.max(S.shake,.5);
         } else if (S.shield>0){
           S.shield=0; killIdx(obstacles,i,poolOb);
-          burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium');
+          burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90);
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
         } else {
           hitPlane('gate');
@@ -2304,10 +2304,10 @@ function update(dt){
           killIdx(obstacles,i,poolOb);
           const pts=Math.round(50*(1+Math.min(S.combo,10)*.3))*scoreMult();
           S.score+=pts; showPopup('+'+pts,o.x,o.y,'#a9bcff');
-          burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); S.shake=Math.max(S.shake,.5);
+          burst(o.x,o.y,'#a9bcff',16); sfx.smash(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90); S.shake=Math.max(S.shake,.5);
         } else if (S.shield>0){
           S.shield=0; killIdx(obstacles,i,poolOb);
-          burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium');
+          burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90);
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
         } else {
           hitPlane(o.kind);
