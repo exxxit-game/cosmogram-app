@@ -487,7 +487,9 @@ const BEACON=(()=>{
      Сервер отвечает {ok:true} либо {ok:false, reason}; UI (ui.js) сам решает, что показать. */
   async function feedback(text){
     if(sealed()) return {ok:false, reason:'sealed'};
-    const t=String(text==null?'':text).trim().slice(0,7000); // 02.09.2026: потолок 4000→7000, вместе с index.html и живой Edge Function cosmogram-beacon
+    const t=String(text==null?'':text).trim().slice(0,28000); // 03.09.2026: потолок 7000→28000 (владелец — 170 событий на ленте самописца
+      // всё ещё резались даже на 7000, замерено вживую: полное кольцо 180 событий ≈ 8965 симв.,
+      // худший случай — 19764), вместе с index.html и живой Edge Function cosmogram-beacon
     if(!t) return {ok:false, reason:'empty'};
     let pf='?'; try{ pf=(typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'; }catch(e){}
     const ctl=(typeof AbortController==='function')?new AbortController():null;
