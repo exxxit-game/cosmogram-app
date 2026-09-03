@@ -5,7 +5,7 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.478.64';
+const V = '1.478.65';
 const CACHE = 'cosmogram-v' + V;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 // 01.09.2026: partitura.js добавлен в index.html вместе с Партитурой, но забыт здесь — страж 29
@@ -26,8 +26,8 @@ const SHELL = [
      каждый путь этого списка на самом деле, а не на слово. */
   'fonts/exo2-cyrillic.woff2', 'fonts/exo2-latin.woff2', 'fonts/OFL.txt', // v1.46.0: Exo 2 вместо Russo One
   'fonts/roboto400-cyrillic.woff2', 'fonts/roboto400-latin.woff2', 'fonts/OFL-Roboto.txt', // 26.08.2026: кнопки входа — своя копия Roboto (400, не 500 — Regular)
-  'fonts/jura-cyrillic.woff2', 'fonts/jura-latin.woff2', 'fonts/OFL-Jura.txt', // 03.09.2026: заголовки экранов — своя копия Jura
   'fonts/russoone-cyrillic.woff2', 'fonts/russoone-latin.woff2', 'fonts/OFL-RussoOne.txt', // 03.09.2026: лого-вордмарка «Марс» на главном
+  'fonts/jura-cyrillic.woff2', 'fonts/jura-latin.woff2', 'fonts/OFL-Jura.txt', // 04.09.2026: только карточка exxxit game studio на «Написать разработчику»
   'js/vendor/mp4-muxer-license/LICENSE', // 28.08.2026: MIT-текст рядом с вендором, тот же приём, что у шрифтов
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png',
   'icons/icon-maskable-512.png', 'icons/favicon-32.png', 'icons/og-image.png'

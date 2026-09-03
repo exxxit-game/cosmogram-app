@@ -1403,6 +1403,7 @@ function openFeedback(from){
   const status=$('feedbackStatus'); if(status) status.textContent='';
   feedbackPhotos=[]; feedbackPhotoRender(); // новый заход — чистая коллекция, не старая с прошлого визита
   feedbackUpdateCount();
+  aboutFill(); // 04.09.2026: карточка студии + версия переехали сюда из «Об игре» в Настройках (владелец: «я разработчик, это мой логотип», освободило пункт в настройках)
 }
 function closeFeedback(){ setScreen(feedbackFrom); sfx.click(); }
 function feedbackUpdateCount(){
@@ -1940,11 +1941,6 @@ SET_GRPS.forEach(([gId,pId])=>{
     haptic('light'); sfx.click();
   });
 });
-wireOn('aboutBtn', 'click', ()=>{
-  const aboutBoxWasHidden = (()=>{ const e=$('aboutBox'); return e ? e.classList.contains('hidden') : true; })();
-  toggleCls('aboutBox','hidden', !aboutBoxWasHidden);
-  toggleCls('aboutBtn','open', aboutBoxWasHidden); haptic('light');
-});
 function vibroLabel(){ rowSw('setVibroBtn', VIBRO); setWellFill(); }
 wireOn('setVibroBtn', 'click', ()=>{
   VIBRO=!VIBRO; Store.set('vibro',VIBRO?1:0); vibroLabel(); if(VIBRO) haptic('medium');
@@ -1998,7 +1994,7 @@ function exxxitLogoHTML(){
     '<div class="exxxitWord"><b>EXXXIT</b><span>Game Studio</span></div>'+
   '</div>';
 }
-function aboutFill(){ setHTML('aboutBox', 'Cosmogram · v'+GAME_VERSION+exxxitLogoHTML()); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0); 03.09.2026: + карточка студии
+function aboutFill(){ setHTML('feedbackAbout', 'Cosmogram · v'+GAME_VERSION+exxxitLogoHTML()); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0); 03.09.2026: + карточка студии; 04.09.2026: переехало из «Об игре» (Настройки) на «Написать разработчику» — владелец: «я разработчик, это мой логотип»
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
 function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
@@ -2366,7 +2362,6 @@ function applyLang(){
   setText('pauseSettingsBtn',L.settings);
   setText('settingsTitle',L.settingsTitle);
   setText('setCalibTxt',L.calib); // v1.103.0: текст отдельно от диода — локализация лампу не стирает
-  setText('aboutBtn',L.aboutBtn); aboutFill();
   setText('accOutBtn',L.accOut); // v1.51.0: вход в общую таблицу — на языке игрока
   if(screenName==='settings') accFill(); if(screenName==='over') webJoinFill(); // виджет монтируется лениво — только на открытом экране
   setText('restartBtn',L.restart);

@@ -682,7 +682,13 @@ function mouseRelease(){ if(input.byMouse){ input.touchX=null; input.touchY=null
 let pointerLocked=false;
 document.addEventListener('pointerlockchange',()=>{ pointerLocked = document.pointerLockElement===canvas; if(!pointerLocked) mouseRelease(); });
 window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC;
-  if(canvas.requestPointerLock){ const p=canvas.requestPointerLock(); if(p&&p.catch) p.catch(()=>{}); } }); // v1.99.0, v1.478.59: iframe/встраивание может честно отказать — не шумим в консоль
+  /* 04.09.2026 (владелец): раньше requestPointerLock() звался на ЛЮБОЙ клик по всей странице,
+     включая кнопки меню — курсор пропадал и в меню, мешая кликать. Теперь только во время
+     самого полёта. Голое screenName здесь нельзя (страж 117, живая ReferenceError на 1.284.0 —
+     screenName объявлен в ui.js, который грузится ПОСЛЕ input.js) — берём через ekran(),
+     который уже безопасно оборачивает это try/catch. */
+  if(canvas.requestPointerLock && ekran()==='game'){
+    const p=canvas.requestPointerLock(); if(p&&p.catch) p.catch(()=>{}); } }); // v1.99.0, v1.478.59: iframe/встраивание может честно отказать — не шумим в консоль
 window.addEventListener('mousemove',e=>{
   if(tId!==null) return;
   if(pointerLocked){ input.byMouse=true; input.touchX=(input.touchX||0)+e.movementX/SC; input.touchY=(input.touchY||0)+e.movementY/SC; }

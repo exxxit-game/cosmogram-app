@@ -111,8 +111,9 @@ canvas{display:block}
 @font-face { font-family:'Exo 2'; font-style:normal; font-weight:100 900; font-display:swap;
   src:url('fonts/exo2-latin.woff2') format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
-/* 03.09.2026: Jura — только для заголовков экранов (.screenTitle, #brandName), не везде.
-   Тот же приём, что у Exo 2/Roboto Btn: свои файлы, никакого CDN, google/fonts (OFL). */
+/* 04.09.2026: Jura — только для карточки exxxit game studio в «Об игре» (не часть игры,
+   логотип студии, текст только на английском — проблема Ю/Б на кириллице сюда не относится).
+   Убрана отовсюду из самой игры (заголовки/кнопки) — «выпадает из общего», владелец, 04.09.2026. */
 @font-face { font-family:'Jura'; font-style:normal; font-weight:400 700; font-display:swap;
   src:url('fonts/jura-cyrillic.woff2') format('woff2');
   unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
@@ -186,8 +187,7 @@ canvas{display:block}
   --line-gold:rgba(201,164,92,.45);
   --danger:#e0533d;          /* сдержанный коралл */
   --ok:#8fff9f;
-  --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; /* 03.09.2026: пробовали Jura везде — на весе 700 схлопывались дужки у Ю/Б, ни один вес не спас (живое сравнение с владельцем). Вернули Exo 2, Jura осталась только на --font-h1 (заголовки экранов) */
-  --font-h1:'Jura','Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; /* 03.09.2026: заголовки экранов */
+  --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; /* 04.09.2026: пробовали Jura везде, потом только на заголовках — владелец: «выпадает с общего», убрали совсем. Один шрифт на игру, как и было 28.08.2026 */
   /* 28.08.2026: было -apple-system,'Segoe UI',Roboto,sans-serif — системный шрифт для всего
      обычного текста (кнопки, меню, список настроек), в отличие от --font-disp (счёт, заголовки,
      ярлыки), который уже Exo 2. Владелец: один шрифт на всю игру. Файлы @font-face выше теперь
@@ -362,7 +362,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .i-pl { width:1em; height:1em; vertical-align:-.14em; } /* v1.95.1: звезда-ювелирка счётчика — размером с букву, рисуется кистью, как жизни */
 
 /* ---- Кнопки: стекло неба, как панели оффера в полёте (v1.34.0 «Единая палуба») ----
-   Один кегль и один шрифт везде; иерархия — яркостью стекла, не золотом и не размером. */
+   Один кегль и один шрифт везде; иерархия — яркостью стекла, не золотом и не размером.
+   04.09.2026: пробовали «Кнопки без обода» (макет https://claude.ai/code/artifact/5a2f47b5,
+   «Тихие звёзды») прямо в игре — на реальном телефоне вышло более плотным/залитым, чем было
+   («небо игры» переставало просвечивать), а не более прозрачным, как хотел владелец. Владелец
+   прямо: «этот вариант был лучше» (про старый, с рамкой) — откачено полностью, тема остаётся
+   в очереди на отдельный заход «улучшить по максимуму», не в спешке поверх старого. */
 .btn { pointer-events:auto; cursor:pointer; margin:6px 0;
   display:inline-flex; align-items:center; justify-content:center; gap:.55em;
   border-radius:var(--r-btn); padding:14px 26px;
@@ -380,9 +385,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    трогаем, поднимаем саму кнопку): фон плотнее, рамка ярче, лёгкое свечение — тот же класс,
    один раз, действует на все семь экранов сразу, а не точечно на итогах. */
 .btn.ghost { background:rgba(22,36,64,.68); border-color:rgba(160,210,255,.34);
-  color:#cddcf7; font-weight:600; box-shadow:0 0 12px rgba(120,170,255,.10); } /* 03.09.2026: было 500 — на Jura лёгкий вес читался хуже, чем у .pri (владелец); поднято до базовых 600 */
+  color:#cddcf7; font-weight:500; box-shadow:0 0 12px rgba(120,170,255,.10); }
 .btn.sec { background:rgba(22,36,64,.68); border-color:rgba(160,210,255,.34);
-  color:#cddcf7; font-weight:600; box-shadow:0 0 12px rgba(120,170,255,.10); } /* 03.09.2026: тот же подъём веса, что у .ghost — было 500 (см. 30.08.2026 ниже про исходную причину этого правила) */
+  color:#cddcf7; font-weight:500; box-shadow:0 0 12px rgba(120,170,255,.10); }
 .btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.5); }
 .btn.small { padding:10px 18px; }
 
@@ -434,7 +439,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .exxxitIcon{width:56px;height:70px;flex:0 0 auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35));}
 .exxxitWord{display:flex;flex-direction:column;gap:3px;}
 .exxxitWord b{font-family:'Jura','Exo 2',sans-serif;font-weight:700;font-size:19px;color:#fff;
-  line-height:.9;letter-spacing:.02em;}
+  line-height:.9;letter-spacing:.02em;} /* 04.09.2026: Jura остаётся ТОЛЬКО здесь — своя карточка студии, не часть игры, текст английский (EXXXIT/GAME STUDIO), проблема Ю/Б на кириллице сюда не относится */
 .exxxitWord span{font-family:'Jura','Exo 2',sans-serif;font-weight:600;font-size:8.5px;
   letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.85);}
 
@@ -443,7 +448,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #toLoc:empty { margin:0; min-height:0; }
 
 /* ---- Заголовки экранов ---- */
-.screenTitle { font-family:var(--font-h1); font-weight:400;
+.screenTitle { font-family:var(--font-disp); font-weight:400;
   font-size:clamp(28px,7.5vw,42px); letter-spacing:.05em; color:var(--ink);
   text-shadow:0 0 22px rgba(140,180,255,.18); margin-bottom:20px;
   /* 30.08.2026: text-align:start было незаметно на коротких заголовках («Достижения») —
@@ -620,8 +625,19 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   border:1.5px solid rgba(150,205,255,.55);
   box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
-  display:flex; align-items:center; justify-content:center; transition:opacity .2s; }
-#ffPlayBtn .ic { width:24px; height:24px; margin-left:3px; }
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity .2s, transform .12s, box-shadow .2s; }
+/* 04.09.2026 (владелец): play должен «взять лучшее с кнопки назад» — у .menuBack уже есть
+   кольцо-«планета» (28.08.2026, утверждённый вариант «Д» из AI-DECISION-REGISTRY), нажатие
+   и свечение иконки, а у play их не было, хотя комментарий 31.08.2026 выше обещал «тот же
+   стеклянный язык». Кольцо смасштабировано под больший размер кнопки (58px против 32px). */
+#ffPlayBtn::before { content:''; position:absolute; top:50%; left:50%;
+  width:85px; height:31px; margin:0; border:1.5px solid rgba(200,225,255,.55); border-radius:50%;
+  transform:translate(-50%,-50%) rotate(-20deg); pointer-events:none; }
+#ffPlayBtn:active { transform:translate(-50%,-50%) scale(.9);
+  box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
+#ffPlayBtn .ic { width:24px; height:24px; margin-left:3px; stroke-width:2.6;
+  filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
 #ffPlayBtn.playing { opacity:0; pointer-events:none; }
 #ffScrub { position:absolute; left:14px; right:14px; bottom:14px; display:flex; align-items:center; gap:8px; }
 /* 01.09.2026 «Момент полёта → карточка»: «Поделиться» — только у клипа рекорда (cinemaClipOpen),
@@ -634,8 +650,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   color:rgba(188,210,255,.75); text-shadow:0 1px 3px rgba(6,10,30,.7); font-variant-numeric:tabular-nums; }
 #ffScrubTrack { flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,.14);
   box-shadow:0 0 8px rgba(110,160,255,.2), inset 0 1px 2px rgba(0,0,0,.4); overflow:hidden; cursor:pointer; }
+/* 04.09.2026 (владелец): «дёргается, должна идти плавно» — timeupdate у <video> зовётся
+   редко (обычно ~4 раза в секунду, не каждый кадр), полоска скачет ступеньками между
+   вызовами. transition сглаживает шаг в плавное движение, не трогая сам timeupdate. */
 #ffScrubFill { display:block; height:100%; width:0%; border-radius:3px;
-  background:linear-gradient(90deg,#7fb4ff,#bcd2ff); box-shadow:0 0 6px rgba(140,190,255,.6); }
+  background:linear-gradient(90deg,#7fb4ff,#bcd2ff); box-shadow:0 0 6px rgba(140,190,255,.6);
+  transition:width .25s linear; }
 /* 31.08.2026 (владелец, по скриншоту): весь текст золотом сливался — заголовок и подпись
    неотличимы. Взята пара, что уже есть в игре для собственного имени: #brandName (белый,
    капс, жирный, синее свечение) + #brandSub (золотой, помельче, под ним) — не выдумываю
@@ -1007,25 +1027,38 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    из-за задвоенного "position:relative" в отдельном правиле, страж guardBrandWordmarkLayersOverlap
    стережёт именно это. */
 #brandName { position:relative; display:inline-block; margin-top:6px; margin-bottom:22px;
-  font-family:'Russo One','Jura',var(--font-h1); font-size:clamp(30px,9.5vw,50px); line-height:1;
+  font-family:'Russo One',var(--font-disp); font-size:clamp(30px,9.5vw,50px); line-height:1;
   text-transform:uppercase; letter-spacing:.01em; transform:rotate(-6deg) skewX(-4deg); }
 #brandName span { white-space:nowrap; }
 #brandName .wm-base { visibility:hidden; }
 #brandName .wm-shadow,#brandName .wm-gold,#brandName .wm-white,#brandName .wm-red {
   position:absolute; top:0; left:0; }
 #brandName .wm-shadow { color:#04060d; transform:translate(4px,6px); filter:blur(.4px); }
-#brandName .wm-gold { color:#dba93c; -webkit-text-stroke:9px #dba93c; paint-order:stroke fill; }
-#brandName .wm-white { color:#fff; -webkit-text-stroke:5px #fff; paint-order:stroke fill; }
+/* 04.09.2026 (владелец, живое устройство): на острых пиках букв (верх «M», «S») -webkit-text-stroke
+   даёт длинный игольчатый угол (miter), которым CSS не умеет управлять напрямую (нет
+   stroke-linejoin у text-stroke) — тонкое размытие притупляет именно кончик шипа, не трогая
+   толщину самой обводки на прямых и плавных участках буквы. */
+#brandName .wm-gold { color:#dba93c; -webkit-text-stroke:9px #dba93c; paint-order:stroke fill; filter:blur(.5px); }
+#brandName .wm-white { color:#fff; -webkit-text-stroke:5px #fff; paint-order:stroke fill; filter:blur(.4px); }
 #brandName .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
   -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
 /* 03.09.2026: полоски объёма под словом (владелец прислал фото с наброском линий) — тот же
    слоёный язык, что у самого слова, просто плоские бруски вместо букв, без своего transform
    (наклон/скос уже задаёт #brandName целиком, дети наследуют визуально). */
-#brandName .wm-stripe { position:absolute; left:-4%; right:-4%; height:5px; border-radius:2px; }
-#brandName .wm-stripe.s-black { background:#04060d; bottom:-14px; transform:translate(1px,1.5px); filter:blur(.3px); }
-#brandName .wm-stripe.s-gold { background:#dba93c; bottom:-10px; }
-#brandName .wm-stripe.s-white { background:#fff; bottom:-5px; height:3px; }
-#brandName .wm-stripe.s-red { background:#d6183a; bottom:-1px; height:3px; }
+#brandName .wm-stripe { position:absolute; left:-4%; right:-4%; height:3px; border-radius:2px; }
+/* 04.09.2026: отступы посчитаны так, чтобы полоски стояли строго встык (0px зазор, 0px нахлёст) —
+   раньше между красной и белой была дыра 1px, а золотая с чёрной перекрывались на 1px (нашёл
+   владелец на глаз, подтверждено измерением getBoundingClientRect). Толщина у всех четырёх
+   одинаковая — 3px (раньше чёрная/золотая были 5px, белая/красная — 3px, тоже нашёл владелец). */
+/* 04.09.2026: у чёрной было два независимых смещения разом — общий дрейф от skewX/rotate
+   (тот же, что у остальных трёх, но у неё он больше — она ниже всех) и свой transform:translate,
+   который ДОПОЛНИТЕЛЬНО проворачивался общим поворотом слова (двойной эффект, посчитано через
+   реальную матрицу трансформации). Заменено на margin-left/bottom — участвует в одном общем
+   повороте, как и остальные три, без второго слоя. */
+#brandName .wm-stripe.s-black { background:#04060d; bottom:-13.5px; margin-left:-.37px; filter:blur(.3px); }
+#brandName .wm-stripe.s-gold { background:#dba93c; bottom:-9px; margin-left:-.21px; }
+#brandName .wm-stripe.s-white { background:#fff; bottom:-6px; margin-left:-.11px; }
+#brandName .wm-stripe.s-red { background:#d6183a; bottom:-3px; }
 #brandSub { margin-top:0; font-size:clamp(18.6px,5.58vw,28.52px); letter-spacing:.04em; font-weight:500;
   text-transform:uppercase; color:var(--gold-hi); text-shadow:0 0 14px rgba(240,192,64,.3); } /* 30.08.2026: было мельче/тусклее (нарочно, 13.08.2026) — владелец попросил укрупнить до половины COSMOGRAM и сделать золотой (макет, вариант Е).
   02.09.2026: «половина» была вдвое КОРОЧЕ COSMOGRAM по ширине текста — владелец попросил
@@ -1261,8 +1294,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #modeHud{position:absolute;top:max(142px, calc(52px + var(--sat)));left:50%;transform:translateX(-50%);white-space:nowrap;
   color:#dce9ff;font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;text-shadow:0 2px 8px rgba(0,0,0,.5)}
 /* 28.08.2026 «Добро пожаловать»: раз в день, не на каждый забег (см. welcomeDayCheck в core.js) */
+/* 04.09.2026: единственное место в самой игре, где осталась Jura — короткое слово на всех 5 языках
+   (Привет/Hi/Hola/Olá/Salut) без Ю/Б/Ь, той самой проблемы здесь физически нет; владелец явно попросил
+   вернуть именно сюда после общего отката на Exo 2. */
 #welcomeMsg{position:absolute;top:36%;left:50%;transform:translate(-50%,-50%) scale(.94);white-space:nowrap;
-  color:#eaf3ff;font-family:var(--font-disp);font-weight:500;font-size:clamp(22px,7vw,32px);letter-spacing:.02em;
+  color:#eaf3ff;font-family:'Jura',var(--font-disp);font-weight:500;font-size:clamp(22px,7vw,32px);letter-spacing:.02em;
   text-shadow:0 2px 16px rgba(0,0,0,.6), 0 0 20px rgba(160,210,255,.4);
   opacity:0;pointer-events:none;transition:opacity .5s ease, transform .5s ease}
 #welcomeMsg.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -1509,7 +1545,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    input 25.6px/кнопка 373.6px, после фикса — кнопка по тексту, поле забирает остаток строки. */
 #forgeFine .forgeLoadBtn,#forgeCodePanel .forgeLoadBtn{width:auto} /* 02.09.2026: «Небо друга» переехало в #forgeCodePanel — тот же хвост правила, тот же приём */
 /* v1.73.0 «Карточка для скриншота»: итог забега картинкой — человек шлёт скриншот сам, сервер не нужен */
-#cardScreen{justify-content:center;gap:14px;z-index:12}
+/* 04.09.2026 (владелец, живое устройство): заголовок сидел ниже, чем на остальных экранах меню —
+   у cardScreen была своя схема (justify-content:center, заголовок плавает по центру блока), а не
+   flex-start+padding-top, как у Тюнинга/Конструктора/Сервисного центра, и без их же +24px компенсации
+   под чужую шапку Telegram (см. комментарий 31.08.2026 выше). Приведено к тому же языку — тот же
+   дважды подтверждённый приём, без ожидания третьего отдельного скриншота под именно эту беду. */
+#cardScreen{justify-content:flex-start;padding-top:calc(10px + var(--sat-menu) + 24px);gap:14px;z-index:12}
+#cardBack{top:calc(10px + var(--sat-menu) + 24px)}
 .cardWrap{width:min(82vw,320px);border-radius:18px;overflow:hidden;
   border:1px solid rgba(201,164,92,.35);box-shadow:0 12px 44px rgba(0,0,0,.55)}
 .cardWrap canvas{display:block;width:100%;height:auto}
@@ -1812,7 +1854,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      эффект скорости, тот же язык, что уже есть у гироскопа (i-gyro) ниже. -->
 <symbol id="i-timer" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" stroke="#c9a45c"></path><circle cx="12" cy="14" r="7.5" stroke="#9fe8ff"></circle><path d="M12 10.2V14l2.8 2" stroke="#f0c040"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" stroke="#9fe8ff"></path></symbol>
 <symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13"></path></symbol>
-<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z" fill="#f0c040" stroke="none"></path></symbol><!-- v1.284.4: дверь «смотреть полёт» у чужого рекорда; 28.08.2026: залит золотом по просьбе владельца -->
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5l10 6.5-10 6.5z" stroke-linejoin="round"></path></symbol><!-- v1.284.4: дверь «смотреть полёт» у чужого рекорда; 28.08.2026→04.09.2026: был залит золотом с острыми углами по прошлой просьбе, теперь владелец просит обратно — общий язык иконок (.ic: fill:none, stroke:currentColor, round), тот же цвет и та же скруглённость, что у «назад» -->
 <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></symbol>
 <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v4.5a5 5 0 0 1-10 0z"></path><path d="M7 5.5H4a3 3 0 0 0 3.2 4.4M17 5.5h3a3 3 0 0 1-3.2 4.4M12 13.5v3.5M8.5 21h7M10 17h4"></path></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></symbol>
@@ -1919,9 +1961,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.64"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.64"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.64"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.65"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.65"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.65"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2137,10 +2179,6 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
     <div class="setRow go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
   </div>
-  <div class="setPanel">
-    <div class="setRow solo spoiler" id="aboutBtn" role="button" tabindex="0">Об игре</div>
-    <div id="aboutBox" class="hint hidden" style="position:static;padding:4px 24px 8px"></div>
-  </div>
 </div>
 
 <!-- СЕРВИСНЫЙ ЦЕНТР (v1.66.3): диагностика — отдельный экран ремонта, настройки больше не переполняются -->
@@ -2235,6 +2273,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <button class="btn pri" id="feedbackSendBtn">Отправить</button>
     </div>
     <div id="feedbackStatus" style="text-align:center;margin:0 16px 14px;font-size:13px;min-height:18px"></div>
+    <div id="feedbackAbout" style="text-align:center;margin:18px 16px 4px"></div>
   </div></div>
 </div>
 
@@ -2566,25 +2605,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.64" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.64"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.64"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.64"></script>
-<script defer src="js/game.js?v=1.478.64" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.64"></script>
-<script defer src="js/sync.js?v=1.478.64"></script>
-<script defer src="js/render.js?v=1.478.64"></script>
-<script defer src="js/planetarium.js?v=1.478.64"></script>
-<script defer src="js/goldstar.js?v=1.478.64"></script>
-<script defer src="js/music.js?v=1.478.64"></script>
-<script defer src="js/gyro.js?v=1.478.64"></script>
-<script defer src="js/forge.js?v=1.478.64"></script>
-<script defer src="js/partitura.js?v=1.478.64"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.64"></script>
-<script defer src="js/card.js?v=1.478.64"></script>
-<script defer src="js/star.js?v=1.478.64"></script>
-<script defer src="js/cinema.js?v=1.478.64"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.64"></script>
+<script defer src="js/core.js?v=1.478.65" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.65"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.65"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.65"></script>
+<script defer src="js/game.js?v=1.478.65" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.65"></script>
+<script defer src="js/sync.js?v=1.478.65"></script>
+<script defer src="js/render.js?v=1.478.65"></script>
+<script defer src="js/planetarium.js?v=1.478.65"></script>
+<script defer src="js/goldstar.js?v=1.478.65"></script>
+<script defer src="js/music.js?v=1.478.65"></script>
+<script defer src="js/gyro.js?v=1.478.65"></script>
+<script defer src="js/forge.js?v=1.478.65"></script>
+<script defer src="js/partitura.js?v=1.478.65"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.65"></script>
+<script defer src="js/card.js?v=1.478.65"></script>
+<script defer src="js/star.js?v=1.478.65"></script>
+<script defer src="js/cinema.js?v=1.478.65"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.65"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
