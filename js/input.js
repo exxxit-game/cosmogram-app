@@ -765,10 +765,20 @@ function keysBusy(e){
   const tag=t.tagName.toUpperCase();
   return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t.isContentEditable===true;
 }
+/* v1.478.61 «Одна рука»: WASD и стрелки рулят независимо друг от друга (не нужны обе руки
+   разом) — только неочевидно без подсказки. Разовый тост при первом реальном рулении
+   клавиатурой в полёте, не в меню — Store бережёт факт показа навсегда, второй раз не лезет. */
+function keysOneHandHintMaybe(){
+  if(Store.get('keysOneHandSeen',0)) return;
+  Store.set('keysOneHandSeen',1);
+  if(typeof toast==='function') toast(L.keysOneHandHint,'rgba(159,232,255,.5)');
+}
 window.addEventListener('keydown',e=>{
   if(keysBusy(e)) return;
   const k=e.key, c=e.code; // v1.108.1 «Честная клавиатура»: код физической клавиши, не символ раскладки —
   // раньше 'a'/'A' не срабатывало на AZERTY/QWERTZ (там на месте W/A/S/D другие буквы), только на QWERTY/ЙЦУКЕН
+  const isSteerKey = k==='ArrowLeft'||c==='KeyA'||k==='ArrowRight'||c==='KeyD'||k==='ArrowUp'||c==='KeyW'||k==='ArrowDown'||c==='KeyS';
+  if(isSteerKey && ekran()==='game') keysOneHandHintMaybe();
   if(k==='ArrowLeft'||c==='KeyA'){input.keyL=true;e.preventDefault();}
   if(k==='ArrowRight'||c==='KeyD'){input.keyR=true;e.preventDefault();}
   if(k==='ArrowUp'||c==='KeyW'){input.keyU=true;e.preventDefault();}
