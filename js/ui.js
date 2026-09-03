@@ -2050,7 +2050,11 @@ function renderTop(){
       }
     }
     if(!d.top || !d.top.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
-    list.innerHTML=d.top.map((r,i)=>'<div class="topIt'+(r.me?' me':'')+'" style="animation-delay:'+(Math.min(i,10)*60)+'ms"><span class="topN'+(i<3?' m'+(i+1):'')+'">'+(i+1)+'</span>'+
+    list.innerHTML=d.top.map((r,i)=>'<div class="topIt'+(r.me?' me':'')+'" style="animation-delay:'+(Math.min(i,10)*60)+'ms"><span class="topN'+(i<3?' m'+(i+1):'')+'">'+(i+1)+
+      /* 03.09.2026 «Рекорд должен быть рекордом»: корона над 1-2-3 местом — цвет берёт CSS
+         по классу m1/m2/m3, символ один и тот же (index.html i-crown). */
+      (i<3?'<svg class="crownIc" viewBox="0 0 24 16"><use href="#i-crown"></use></svg>':'')+
+      '</span>'+
       /* v1.282.20: экранирование вместо выкусывания. Раньше из чужого имени просто вырезались
          три символа — «Смит & Сын» терял амперсанд, а кавычки не трогались вовсе. escapeHtml
          из ядра сохраняет имя как есть и закрывает все пять опасных символов, включая кавычки. */
