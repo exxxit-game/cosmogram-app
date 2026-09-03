@@ -428,6 +428,47 @@ function syncDailyStats(day){ // v1.100.2: {ok, flyers, catchers} — «звез
   });
 }
 
+/* 03.09.2026 «Спидран получает свою таблицу» — зеркало очереди daily_submit выше, но СВОЯ
+   очередь (Store 'speedrunQ', свой _speedrunFlying): если переиспользовать dailyQ, забег дня
+   и забег спидрана в один день затёрли бы друг друга — syncDailyEnqueue дедупит только по
+   полю day, без различия действия. Тот же самый Edge Function (cosmogram-daily), другое
+   действие в payload — новый URL не нужен. */
+function syncSpeedrunQueue(){ return saneArray(Store.get('speedrunQ',[]),[]); }
+function syncSpeedrunEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncSpeedrunQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('speedrunQ',q.slice(-14));
+}
+let _speedrunFlying=null;
+function syncSpeedrunFlush(){
+  if(_speedrunFlying) return (_speedrunFlying = _speedrunFlying.catch(()=>{}).then(()=>syncSpeedrunFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncSpeedrunQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'speedrun_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('speedrunQ',syncSpeedrunQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _speedrunFlying=null; });
+  _speedrunFlying=p; return p;
+}
+function syncSpeedrunSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncSpeedrunEnqueue(o);
+  return syncSpeedrunFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncSpeedrunFlush());
+  setTimeout(()=>syncSpeedrunFlush(),4000);
+}
+function syncSpeedrunTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null} — тот же контракт, что у syncDailyTop()
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'speedrun_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
    средство восстановления после офлайна. Правдоподобие проверять обязан сервер, но

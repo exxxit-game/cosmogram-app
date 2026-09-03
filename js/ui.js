@@ -617,6 +617,12 @@ function ghostUpload(category, track, skin, best, seed){
     typeof syncDailySubmit==='function' && typeof ghostPackDaily==='function')
     syncDailySubmit({ day:S.dailyDay||trackDayKey(), score:sc, skin:S.skin, star:!!S.goldStar,
       track: ghostPackDaily() });
+  // 03.09.2026 «Спидран получает свою таблицу»: тот же приём, что у Трассы дня — только
+  // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
+  if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
+    typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
+    syncSpeedrunSubmit({ day:trackDayKey(), time_sec:S.time, skin:S.skin,
+      track: ghostPackDaily() });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
     const rankCat=cat; // v1.280.0: та же категория, что и везде — раньше здесь отдельно повторялась своя логика, включая пропущенную ветку keys
@@ -2021,15 +2027,21 @@ function renderTop(){
     if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; }
   }
   const askCat=topCat; // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком
-  /* 03.09.2026: «Трасса дня» — своя дверь (cosmogram-daily, action daily_top), не общая
-     scores/CATS таблица (у дня честное «одно небо на всех», у остальных пяти — нет).
-     Ответ нарочно того же вида ({ok,top,me}), рендер ниже не знает разницы. */
+  /* 03.09.2026: «Трасса дня»/«Спидран» — свои двери (cosmogram-daily, action daily_top/
+     speedrun_top), не общая scores/CATS таблица (у обоих честное «одно небо на всех»,
+     у остальных пяти — нет). Ответ нарочно того же вида ({ok,top,me}), рендер ниже не знает разницы. */
   const topPromise = (askCat==='daily' && typeof syncDailyTop==='function')
-    ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'') : syncTop(askCat);
+    ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'')
+    : (askCat==='speedrun' && typeof syncSpeedrunTop==='function')
+    ? syncSpeedrunTop(typeof trackDayKey==='function'?trackDayKey():'')
+    : syncTop(askCat);
+  // Спидран меряет секунды (меньше — лучше), не очки/метры — своё форматирование в обоих местах,
+  // где счёт показывается («твоё место» и сама строка), одной функцией, не двумя копиями branch'а.
+  const topFmt = v => askCat==='speedrun' ? fmtTime(v) : fmtN(v)+(askCat==='dist'?' '+(L.unitM||'м'):'');
   topPromise.then(d=>{
     if(screenName!=='ach' || topCat!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
     if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
-    me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+fmtN(d.me.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')) : '';
+    me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+topFmt(d.me.best)) : '';
     /* Гостю — его собственное место в чужой таблице и приглашение. Считаем здесь, а не на
        сервере: сервер не знает, кто это, и спрашивать его второй раз не о чем. */
     if (gost){
@@ -2037,9 +2049,10 @@ function renderTop(){
       const spisok = (d.top||[]);
       if (wb){
         if (moy>0 && spisok.length){
-          const vyshe = spisok.filter(r=>Number(r.best)>moy).length;
-          const ed = askCat==='dist' ? ' '+(L.unitM||'м') : '';
-          wb.textContent = L.topWouldBe(fmtN(moy)+ed, vyshe+1, spisok.length);
+          // Спидран: «выше тебя» — у кого время МЕНЬШЕ твоего, не больше (зеркально от остальных)
+          const vyshe = askCat==='speedrun' ? spisok.filter(r=>Number(r.best)<moy).length
+            : spisok.filter(r=>Number(r.best)>moy).length;
+          wb.textContent = L.topWouldBe(topFmt(moy), vyshe+1, spisok.length);
           wb.classList.remove('hidden');
         } else wb.classList.add('hidden');
       }
@@ -2059,7 +2072,7 @@ function renderTop(){
          три символа — «Смит & Сын» терял амперсанд, а кавычки не трогались вовсе. escapeHtml
          из ядра сохраняет имя как есть и закрывает все пять опасных символов, включая кавычки. */
       '<span class="topNm">'+escapeHtml(r.name)+(r.provider&&r.provider!=='tg'?' <b class="pvTag">'+escapeHtml(r.provider)+'</b>':'')+'</span>'+
-      '<span class="topSc">'+fmtN(r.best)+(askCat==='dist'?' '+(L.unitM||'м'):'')+'</span>'+
+      '<span class="topSc">'+topFmt(r.best)+'</span>'+
       // v1.282.20: сервер отдаёт verified — рекорд объяснён паспортом забега, а не чтением хранилища
       (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('checkbadge')+'</span>':'')+
       /* 28.08.2026: было ограничено askCat==='gyro'||askCat==='touch' — владелец заметил, что
