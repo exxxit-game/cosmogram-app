@@ -674,8 +674,19 @@ function pollTouchHold(){
    Лечение: мышь работает только когда пальца нет (tId===null), и есть три страховки отпускания —
    mouseup, уход курсора из окна и потеря фокуса. */
 function mouseRelease(){ if(input.byMouse){ input.touchX=null; input.touchY=null; } }
-window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; }); // v1.99.0
-window.addEventListener('mousemove',e=>{ if(tId!==null) return; if(e.buttons){ input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; } }); // v1.99.0
+/* v1.478.59 «Мышь без потолка окна»: requestPointerLock() блокирует курсор — руление
+   идёт по накопленному e.movementX/Y, не по абсолютной позиции. Без него быстрое
+   движение мыши упиралось в край браузерного окна (курсор физически не уходит дальше)
+   и руль переставал реагировать. Итоговую позицию самолёта по-прежнему клампит
+   game.js:2127 — «руль без потолка» не значит «самолёт без границ трассы». */
+let pointerLocked=false;
+document.addEventListener('pointerlockchange',()=>{ pointerLocked = document.pointerLockElement===canvas; if(!pointerLocked) mouseRelease(); });
+window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; if(canvas.requestPointerLock) canvas.requestPointerLock(); }); // v1.99.0, v1.478.59
+window.addEventListener('mousemove',e=>{
+  if(tId!==null) return;
+  if(pointerLocked){ input.byMouse=true; input.touchX=(input.touchX||0)+e.movementX/SC; input.touchY=(input.touchY||0)+e.movementY/SC; }
+  else if(e.buttons){ input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; }
+}); // v1.99.0
 window.addEventListener('touchstart',()=>{ input.byMouse=false; },{passive:true}); // палец вернулся — снимаем метку
 window.addEventListener('mouseup',mouseRelease);
 window.addEventListener('mouseleave',mouseRelease);   // курсор ушёл из окна с зажатой кнопкой
