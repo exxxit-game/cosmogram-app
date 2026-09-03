@@ -36,8 +36,8 @@ const I18N = {
   ru: {
     start:'Начать полёт', retry:'Ещё раз', menu:'Меню', watchFlight:'Смотреть полёт', theaterChip:'Повтор полёта',
     tribune:'Трибуна чемпиона', tribuneNone:'Мастер ещё не показал полёт',
-    goldStarStats:(c,f)=>'Золотую звезду сегодня взяли '+c+' из '+f,
-    goldChip:'★ Знак дня',
+    goldStarStats:(c,f)=>'Золотую звезду в этом месяце взяли '+c+' из '+f,
+    goldChip:'★ Знак месяца',
     pause:'Пауза', ariaPause:'Пауза', resume:'Продолжить', restart:'Заново', calib:'Калибровка гироскопа',
     lampGreen:'Оба компаса дышат — гироскоп рулит', lampAmber:'Один канал спит или молчит — гироскоп рулит, запаса нет', lampRed:'Датчик молчит — руль только пальцем',
     hangar:'ТЮНИНГ', best:'Рекорд', // 30.08.2026: было «Ангар» — владелец: звучит как место для работы руками, а тут просто выбор готового (цвет/декаль/иконка/вспышка)
@@ -50,8 +50,8 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
     // v1.70.0: Пакт и «Без ударов» удалены — их ручки переехали в конструктор «Своя трасса»
     srGoal:'Цель', srFinish:'Финиш!', srNewBest:'Новый рекорд времени',
-    modeDaily:'Небо дня', modeDailyD:'Одно небо на всех игроков — поставь рекорд дня', dlNewBest:'Новый рекорд неба дня',
-    dailyOnce:'5 попыток', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'Сегодня ты уже прыгнул · твой полёт: '+s+' · новое небо завтра',
+    modeDaily:'Небо месяца', modeDailyD:'Одно небо на всех игроков — весь месяц, поставь рекорд', dlNewBest:'Новый рекорд неба месяца',
+    dailyOnce:'5 попыток', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'Ты использовал все попытки этого месяца · твой полёт: '+s+' · новое небо в следующем месяце',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
@@ -187,8 +187,8 @@ const I18N = {
   en: {
     start:'Start flight', retry:'Fly again', menu:'Menu', watchFlight:'Watch flight', theaterChip:'Flight replay',
     tribune:'Champion’s stand', tribuneNone:'The master hasn’t shown a flight yet',
-    goldStarStats:(c,f)=>'Today’s golden star was caught by '+c+' of '+f,
-    goldChip:'★ Sign of the day',
+    goldStarStats:(c,f)=>'This month’s golden star was caught by '+c+' of '+f,
+    goldChip:'★ Sign of the month',
     pause:'Paused', ariaPause:'Pause', resume:'Resume', restart:'Restart', calib:'Calibrate gyro',
     lampGreen:'Both compasses breathe — gyro steering live', lampAmber:'One channel asleep or silent — gyro steering live, no backup', lampRed:'No sensor data — touch steering only',
     hangar:'TUNING', best:'Best',
@@ -201,8 +201,8 @@ const I18N = {
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
     // v1.70.0: Pact and Hitless removed — their knobs moved into the Custom track builder
     srGoal:'Goal', srFinish:'Finish!', srNewBest:'New time record',
-    modeDaily:'Track of the day', modeDailyD:'One track for every player — set the day record', dlNewBest:'New track of the day record',
-    dailyOnce:'5 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'You already jumped today · your flight: '+s+' · new track tomorrow',
+    modeDaily:'Track of the month', modeDailyD:'One track for every player, all month — set the record', dlNewBest:'New track of the month record',
+    dailyOnce:'5 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'You’ve used this month’s attempts · your flight: '+s+' · new track next month',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
@@ -330,8 +330,8 @@ const I18N = {
   es:{
     start:'Iniciar vuelo', retry:'Otra vez', menu:'Menú', watchFlight:'Ver vuelo', theaterChip:'Repetición de vuelo',
     tribune:'Tribuna del campeón', tribuneNone:'El maestro aún no mostró su vuelo',
-    goldStarStats:(c,f)=>'Hoy tomaron la estrella dorada '+c+' de '+f,
-    goldChip:'★ Marca del día',
+    goldStarStats:(c,f)=>'Este mes tomaron la estrella dorada '+c+' de '+f,
+    goldChip:'★ Marca del mes',
     pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Reiniciar',
     calib:'Calibrar giroscopio',
     lampGreen:'Ambas brújulas respiran — el giroscopio controla',
@@ -343,9 +343,9 @@ const I18N = {
     modeBulletD:'Cada roce cercano ralentiza el mundo',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     srGoal:'Meta', srFinish:'¡Meta!', srNewBest:'Nuevo récord de tiempo',
-    modeDaily:'Pista del día', modeDailyD:'Una pista para todos los jugadores — marca el récord del día',
-    dlNewBest:'Nuevo récord de la pista del día', dailyOnce:'5 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
-    dailyLocked:(s)=>'Hoy ya saltaste · tu vuelo: '+s+' · pista nueva mañana',
+    modeDaily:'Pista del mes', modeDailyD:'Una pista para todos los jugadores, todo el mes — marca el récord',
+    dlNewBest:'Nuevo récord de la pista del mes', dailyOnce:'5 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
+    dailyLocked:(s)=>'Ya usaste los intentos de este mes · tu vuelo: '+s+' · pista nueva el próximo mes',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
@@ -488,8 +488,8 @@ const I18N = {
   pt:{
     start:'Iniciar voo', retry:'De novo', menu:'Menu', watchFlight:'Ver voo', theaterChip:'Repetição de voo',
     tribune:'Tribuna do campeão', tribuneNone:'O mestre ainda não mostrou seu voo',
-    goldStarStats:(c,f)=>'Hoje pegaram a estrela dourada '+c+' de '+f,
-    goldChip:'★ Marca do dia',
+    goldStarStats:(c,f)=>'Este mês pegaram a estrela dourada '+c+' de '+f,
+    goldChip:'★ Marca do mês',
     pause:'Pausa', ariaPause:'Pausa', resume:'Continuar', restart:'Recomeçar',
     calib:'Calibrar giroscópio',
     lampGreen:'As duas bússolas respiram — o giroscópio controla',
@@ -501,9 +501,9 @@ const I18N = {
     modeBulletD:'Cada quase-toque desacelera o mundo',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     srGoal:'Meta', srFinish:'Chegada!', srNewBest:'Novo recorde de tempo',
-    modeDaily:'Pista do dia', modeDailyD:'Uma pista para todos os jogadores — bata o recorde do dia',
-    dlNewBest:'Novo recorde da pista do dia', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
-    dailyLocked:(s)=>'Hoje você já voou · seu voo: '+s+' · pista nova amanhã',
+    modeDaily:'Pista do mês', modeDailyD:'Uma pista para todos os jogadores, o mês inteiro — bata o recorde',
+    dlNewBest:'Novo recorde da pista do mês', dailyOnce:'5 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
+    dailyLocked:(s)=>'Você já usou as tentativas deste mês · seu voo: '+s+' · pista nova no próximo mês',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
@@ -646,8 +646,8 @@ const I18N = {
   fr:{
     start:'Décoller', retry:'Revoler', menu:'Menu', watchFlight:'Voir le vol', theaterChip:'Replay du vol',
     tribune:'Tribune du champion', tribuneNone:'Le maître n\u2019a pas encore montré de vol',
-    goldStarStats:(c,f)=>'L\u2019étoile dorée du jour a été attrapée par '+c+' sur '+f,
-    goldChip:'★ Signe du jour',
+    goldStarStats:(c,f)=>'L\u2019étoile dorée de ce mois a été attrapée par '+c+' sur '+f,
+    goldChip:'★ Signe du mois',
     pause:'Pause', ariaPause:'Pause', resume:'Reprendre', restart:'Recommencer', calib:'Calibrer le gyroscope',
     lampGreen:'Les deux boussoles respirent — pilotage au gyroscope actif', lampAmber:'Un canal endormi ou silencieux — pilotage au gyroscope actif, sans secours', lampRed:'Aucune donnée du capteur — pilotage tactile uniquement',
     hangar:'TUNING', best:'Meilleur',
@@ -659,8 +659,8 @@ const I18N = {
     modeBulletD:'Chaque frôlement ralentit le monde',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
-    modeDaily:'Trace du jour', modeDailyD:'Une trace pour tous les joueurs — décroche le record du jour', dlNewBest:'Nouveau record de la Trace du jour',
-    dailyOnce:'5 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Tu as déjà sauté aujourd\u2019hui · ton vol : '+s+' · nouvelle trace demain',
+    modeDaily:'Trace du mois', modeDailyD:'Une trace pour tous les joueurs, tout le mois — décroche le record', dlNewBest:'Nouveau record de la Trace du mois',
+    dailyOnce:'5 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Tu as utilisé les tentatives de ce mois · ton vol : '+s+' · nouvelle trace le mois prochain',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',

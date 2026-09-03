@@ -199,7 +199,7 @@ function modesFill(){ // подписи + отметка выбранного р
   const dr=Store.get('dailyRun',null), usedN=(dr&&dr.d===tk)?(dr.n||0):dailyDoneGet(tk); // 23.08.2026 «5 попыток»: счётчик восстанавливается из журнала, если dailyRun не за сегодня (сброс хранилища)
   const dl = usedN>=5;
   const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
-  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(8)+'.'+tk.slice(5,7)+' · '+(usedN>0?L.dailyLeft(5-usedN):L.dailyOnce));
+  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(5-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
   toggleCls('modeDaily','locked',dl);
   put('modeBullet',L.bullet,L.modeBulletD); // v1.45.0 «Для Про»: Классика — на большой кнопке «Начать полёт», здесь только дисциплины
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
@@ -271,14 +271,14 @@ function startGame(saved){
      нельзя: иначе поле снова станет зависеть от того, что делал игрок. */
   mapSeedKey = runMode==='daily' ? trackDayKey() // v1.282.20: ключ трассы — по общему времени
     : runMode==='theater' ? String(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? (trackDayKey()+'\u00b7speedrun')
+    : runMode==='speedrun' ? (utcDayKey()+'·speedrun') // 03.09.2026: Спидран остался ежедневным, свой ключ, не trackDayKey() (теперь месяц)
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
     : String(freshSeed);
   mapSeqReset();
   if (typeof nebulaReseed==='function') nebulaReseed(); // v1.282.15: узор туманностей — свой на забег; раньше он менялся раз в секунду прямо в полёте
   mapRNG = runMode==='daily' ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? keyRNG(trackDayKey()+'·speedrun') // v1.108.1 «Честный жар»: свой поток на день, как у Трассы дня — время сравнимо между попытками и между игроками
+    : runMode==='speedrun' ? keyRNG(utcDayKey()+'·speedrun') // v1.108.1 «Честный жар»: свой поток на день, как у Трассы дня — время сравнимо между попытками и между игроками; 03.09.2026: остался ежедневным, utcDayKey()
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
     : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
@@ -621,7 +621,7 @@ function ghostUpload(category, track, skin, best, seed){
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
-    syncSpeedrunSubmit({ day:trackDayKey(), time_sec:S.time, skin:S.skin,
+    syncSpeedrunSubmit({ day:utcDayKey(), time_sec:S.time, skin:S.skin, // 03.09.2026: остался ежедневным
       track: ghostPackDaily() });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
@@ -2033,7 +2033,7 @@ function renderTop(){
   const topPromise = (askCat==='daily' && typeof syncDailyTop==='function')
     ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'')
     : (askCat==='speedrun' && typeof syncSpeedrunTop==='function')
-    ? syncSpeedrunTop(typeof trackDayKey==='function'?trackDayKey():'')
+    ? syncSpeedrunTop(typeof utcDayKey==='function'?utcDayKey():'') // 03.09.2026: Спидран остался ежедневным
     : syncTop(askCat);
   // Спидран меряет секунды (меньше — лучше), не очки/метры — своё форматирование в обоих местах,
   // где счёт показывается («твоё место» и сама строка), одной функцией, не двумя копиями branch'а.
