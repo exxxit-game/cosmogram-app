@@ -195,16 +195,16 @@ window.addEventListener('pointerdown', function tgImmKick(){ // полный э�
 function modesFill(){ // подписи + отметка выбранного режима
   setText('modesTitle',L.modes);
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
-  const tk=trackDayKey(); // v1.282.20: дверь дня — по общему времени, как и сама трасса
+  const tk=trackDayKey(), ak=attemptDayKey(); // 05.09.2026: tk — какое небо (месяц), ak — счётчик попыток (день), больше не одно и то же
   /* v1.282.20: печать дня ставится в СПИСОК отыгранных дней, а не в одну запись.
      Одна запись снималась за двадцать секунд: перевёл часы телефона на завтра — запись
      перезаписалась завтрашней датой, вернул назад — дверь снова открыта, и так сколько
      угодно раз. Список помнит все дни (храним последние 10), поэтому возврат упирается
      в уже стоящую печать. */
-  const dr=Store.get('dailyRun',null), usedN=(dr&&dr.d===tk)?(dr.n||0):dailyDoneGet(tk); // 23.08.2026 «5 попыток»: счётчик восстанавливается из журнала, если dailyRun не за сегодня (сброс хранилища)
-  const dl = usedN>=5;
+  const dr=Store.get('dailyRun',null), usedN=(dr&&dr.d===ak)?(dr.n||0):dailyDoneGet(ak); // 05.09.2026: ключ счётчика — реальный день (ak), не месяц-сид (tk); счётчик восстанавливается из журнала, если dailyRun не за сегодня (сброс хранилища)
+  const dl = usedN>=DAILY_ATTEMPTS;
   const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
-  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(5-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
+  put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
   toggleCls('modeDaily','locked',dl);
   put('modeBullet',L.bullet,L.modeBulletD); // v1.45.0 «Для Про»: Классика — на большой кнопке «Начать полёт», здесь только дисциплины
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
@@ -306,9 +306,10 @@ function startGame(saved){
   if (typeof cinemaClipHide==='function') cinemaClipHide(); // 31.08.2026 «Момент полёта»: кнопка «Клип» не донашивает клип с прошлой посадки, если в ЭТОМ полёте запись не сработает
   S.dailyDay = runMode==='theater' ? theaterDay : (runMode==='daily' ? (saved&&saved.dailyDay ? saved.dailyDay : trackDayKey()) : ''); // v1.282.20: день соревнования общий // v1.93 «Одна попытка»: прыжок принадлежит дню взлёта — даже через полночь; v1.94.0: театр помнит день спектакля
   if (runMode==='daily' && !saved){ // 23.08.2026 «5 попыток»: счётчик +1 на взлёте — та же защита от читерства, что была у одной попытки, порог просто выше
-    const dr0=Store.get('dailyRun',null), curN=(dr0&&dr0.d===S.dailyDay)?(dr0.n||0):dailyDoneGet(S.dailyDay); // после сброса хранилища — восстанавливаем счётчик из журнала, не начинаем с нуля
+    const ak0=attemptDayKey(); // 05.09.2026: счётчик попыток живёт по реальному дню, не по S.dailyDay (тот — месячный сид неба, не трогаем)
+    const dr0=Store.get('dailyRun',null), curN=(dr0&&dr0.d===ak0)?(dr0.n||0):dailyDoneGet(ak0); // после сброса хранилища — восстанавливаем счётчик из журнала, не начинаем с нуля
     const nextN=curN+1;
-    Store.set('dailyRun',{d:S.dailyDay,n:nextN}); dailyDoneMark(S.dailyDay,nextN);
+    Store.set('dailyRun',{d:ak0,n:nextN}); dailyDoneMark(ak0,nextN);
   } // попытка сгорает на ВЗЛЁТЕ — раньше жёсткое убийство процесса возвращало свежую
   if (runMode==='custom' && typeof forgeCfgGet==='function'){ // Своя трасса: конфиг автора на борт (v1.68.0, v1.69.0 — полная палуба)
     const fc=forgeCfgGet();
@@ -1836,7 +1837,7 @@ wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); set
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 [['modeDaily','daily'],['modeBullet','bullet'],['modeSpeedrun','speedrun']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
-    if (pair[1]==='daily'){ const tk2=trackDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===tk2)?(dr.n||0):dailyDoneGet(tk2); if (usedN2>=5){ haptic('light'); return; } } // 23.08.2026 «5 попыток»: сверяемся со счётчиком, восстановленным из журнала
+    if (pair[1]==='daily'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
