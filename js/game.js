@@ -144,8 +144,8 @@ const DECALS=[
   {id:3, name:'Звезда', price:0, ch:'🌟', cat:'space'}, {id:4, name:'Комета', price:60, ch:'☄️', cat:'space'}, // 04.09.2026: Звезда теперь бесплатна — см. ANGAR_FREEBIE
    {id:6, name:'Полумесяц', price:60, ch:'🌙', cat:'space'},
   {id:7, name:'Пришелец', price:60, ch:'👽', cat:'space'}, {id:8, name:'Искра', price:60, ch:'✨', cat:'space'},
-  {id:62, name:'Спутник', price:60, ch:'🛰️', cat:'space'}, {id:63, name:'Падающая звезда', price:60, ch:'🌠', cat:'space'},
-  {id:64, name:'Телескоп', price:60, ch:'🔭', cat:'space'}, {id:65, name:'Млечный Путь', price:60, ch:'🌌', cat:'space'},
+  {id:62, name:'Спутник', price:60, ch:'🛰️', cat:'space'},
+  {id:64, name:'Телескоп', price:60, ch:'🔭', cat:'space'}, // 05.09.2026: id63 «Падающая звезда»/id65 «Млечный Путь» убраны владельцем
   // Зодиак
    
    
@@ -157,10 +157,8 @@ const DECALS=[
   {id:21, name:'Молния', price:60, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:60, ch:'🌈', cat:'weather'},
   {id:23, name:'Снежинка', price:60, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:60, ch:'🌊', cat:'weather'},
   {id:25, name:'Смерч', price:60, ch:'🌪️', cat:'weather'}, {id:26, name:'Солнце', price:60, ch:'☀️', cat:'weather'},
-  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'}, 
-   
-  {id:121, name:'Туман', price:60, ch:'🌫️', cat:'weather'},
-  {id:181, name:'Термометр', price:60, ch:'🌡️', cat:'weather'},
+  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'},
+  {id:181, name:'Термометр', price:60, ch:'🌡️', cat:'weather'}, // 05.09.2026: id121 «Туман» убран владельцем
   // Смайлики
   {id:27, name:'Улыбка', price:60, ch:'😀', cat:'faces'}, {id:28, name:'Стиль', price:60, ch:'😎', cat:'faces'},
   {id:29, name:'Огонь', price:60, ch:'🔥', cat:'faces'}, {id:30, name:'Сотка', price:0, ch:'💯', cat:'faces'}, // 04.09.2026: бесплатна — см. ANGAR_FREEBIE (ui.js)
