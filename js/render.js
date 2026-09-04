@@ -330,7 +330,12 @@ const FACET_PARTS=[ // грани корпуса для fx:'facets' — коор
   { pts:[[0,-22],[0,6],[8,10]],     base:'.16', cx:2.7 },
   { pts:[[0,-22],[8,10],[16,14]],   base:'.26', cx:8 },
 ];
-const GEM_SLOTS=[ {x:0,y:-9,r:2.1,ph:0}, {x:-9,y:9,r:1.7,ph:2.4}, {x:9,y:9,r:1.7,ph:4.8} ]; // для fx:'inlay'
+/* 04.09.2026 (владелец, живое устройство: «кривые линии»): координаты были на глаз, теперь
+   считаны — [1] и [2] стоят РОВНО на серединах рёбер крыльев ((0,-22)-(-16,14) и
+   (0,-22)-(16,14) → (-8,-4)/(8,-4)), оправа-«паутинка» рисуется от вершины носа (0,-22) до
+   этих же точек — то есть буквально по кромке крыла, не наискось через корпус. [0] — на
+   линии сгиба (x=0), в оправу не входит, отдельный камень. */
+const GEM_SLOTS=[ {x:0,y:-14,r:2.1,ph:0}, {x:-8,y:-4,r:1.7,ph:2.4}, {x:8,y:-4,r:1.7,ph:4.8} ]; // для fx:'inlay'
 const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев для fx:'filigree'
   const edges=[ [[0,-22],[-16,14]], [[0,-22],[16,14]] ], marks=[];
   edges.forEach(([a,b],ei)=>{
@@ -809,6 +814,7 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
   let drawn = 0;
   if(hq) ctx.globalCompositeOperation='lighter';
   let aurSp=null;
+  const fxNow = performance.now(); // 04.09.2026: для дрейфа Обломков-спутников ниже
   for (let pi=particles.length-1;pi>=0;pi--){
     if(drawn>=maxDraw) break;
     const p=particles[pi];
@@ -820,6 +826,39 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
       ctx.drawImage(aurSp,p.x-s/2,p.y-s/2,s,s);
       drawn++;
       continue;
+    }
+    /* 04.09.2026 «Эксклюзивные скины за Stars»: 6 языков следа/частиц, каждый под свой
+       премиум-скин (game.js:SKINS trailFx). Отобраны живьём через макет — тот же приём,
+       что fx корпуса выше по файлу. Лента/Нить-жемчуг сюда не входят — им нужна связная
+       линия между кадрами, не независимая частица, см. drawStructuredTrail() ниже. */
+    if(hq && p.trailFx==='sparks'){ // Искры: мелкие частицы, редкая яркая вспышка на миг
+      const flash = p.flashAt!=null && Math.abs((1-p.life)-p.flashAt)<0.08;
+      ctx.fillStyle = flash ? 'rgba(255,255,255,'+clamp(p.life,0,1).toFixed(2)+')' : partCol(p.color, p.life*.8);
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size*(flash?1.6:1),0,6.283); ctx.fill();
+      drawn++; continue;
+    }
+    if(hq && p.trailFx==='cometdust'){ // Кометная пыль: вытянутые кувыркающиеся обломки
+      const rot=(p.rot||0)+(1-p.life)*(p.spin||0)*8;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(rot);
+      ctx.fillStyle = partCol(p.color, p.life*.85);
+      const l=p.size*1.6;
+      ctx.beginPath(); ctx.moveTo(-l,0); ctx.lineTo(l*.3,-l*.35); ctx.lineTo(l,0); ctx.lineTo(l*.3,l*.35); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      drawn++; continue;
+    }
+    if(hq && p.trailFx==='debris'){ // Обломки-спутники: рыхлый дрейфующий рой, не строгая линия
+      const dx=Math.sin(fxNow/500+(p.jx||0))*2, dy=Math.cos(fxNow/450+(p.jy||0))*2;
+      ctx.fillStyle = partCol(p.color, p.life*.75);
+      ctx.beginPath(); ctx.arc(p.x+dx,p.y+dy,p.size*.8,0,6.283); ctx.fill();
+      drawn++; continue;
+    }
+    if(p.trailFx==='waypoints'){ // Метки пути: редкая гаснущая веха-крестик, не квадрат
+      ctx.strokeStyle = partCol(p.color, p.life*.75); ctx.lineWidth=.9;
+      ctx.beginPath();
+      ctx.moveTo(p.x-p.size,p.y); ctx.lineTo(p.x+p.size,p.y);
+      ctx.moveTo(p.x,p.y-p.size); ctx.lineTo(p.x,p.y+p.size);
+      ctx.stroke();
+      drawn++; continue;
     }
     ctx.fillStyle = partCol(p.color, p.life*.9);
     ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
@@ -1497,12 +1536,26 @@ function drawEchoTrail(skin){
 /* ---------- Морзянка (v1.53.0): шлейф пишет позывной ----------
    Слой идентичности: простые линии на всех ступенях графики, цвет шлейфа скина.
    Старые точки прозрачнее — позывной читается у самолётика и тает позади. */
+const MORSE_TANGENT_WIN=14; // 04.09.2026: окно сглаживания касательной, px по дуге — см. ниже
 function morsePos(buf,a){ // позиция и угол касательной на дуге a (линейная интерполяция по буферу)
   if (a<=buf[0][2]) return [buf[0][0],buf[0][1],0];
   for (let i=1;i<buf.length;i++){
     if (buf[i][2]>=a){
       const p=buf[i-1], q=buf[i], d=q[2]-p[2], f=d>0?(a-p[2])/d:0;
-      return [p[0]+(q[0]-p[0])*f, p[1]+(q[1]-p[1])*f, Math.atan2(q[1]-p[1],q[0]-p[0])];
+      const x=p[0]+(q[0]-p[0])*f, y=p[1]+(q[1]-p[1])*f;
+      /* 04.09.2026 (владелец, живое устройство — «при резком повороте точка/тире ложится
+         почти горизонтально»): касательная раньше бралась ровно по паре (p,q) — один
+         шумный/резкий кадр (гироскоп/палец/клавиша дали скачок X) давал один почти
+         горизонтальный отрезок, и ровно в нём мог оказаться глиф. Теперь угол берём не
+         по соседней паре, а по точкам, отстоящим минимум на MORSE_TANGENT_WIN px дуги в
+         обе стороны от a (естественно сужается у краёв буфера, где столько дуги ещё/уже
+         нет) — единичный скачок кадра тонет в среднем направлении окна, настоящий
+         поворот (много кадров подряд) по-прежнему отражается честно. */
+      let j=i-1; while(j>0 && p[2]-buf[j][2]<MORSE_TANGENT_WIN) j--;
+      let k=i; while(k<buf.length-1 && buf[k][2]-q[2]<MORSE_TANGENT_WIN) k++;
+      const jp=buf[j], kp=buf[k];
+      const ang=(kp[2]>jp[2]) ? Math.atan2(kp[1]-jp[1],kp[0]-jp[0]) : Math.atan2(q[1]-p[1],q[0]-p[0]);
+      return [x,y,ang];
     }
   }
   const l=buf[buf.length-1]; return [l[0],l[1],0];
@@ -2524,10 +2577,11 @@ function drawPlane(sh,nowMs){
     const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
     drawSkinGem(ctx,skin,0,8,1.6,centerGlint*.9);
   }
-  if(hq && fx==='inlay'){ // Инкрустация: 3 камня в корпусе, соединены гравированной оправой
+  if(hq && fx==='inlay'){ // Инкрустация: 3 камня в корпусе; оправа идёт от вершины носа
+    // (0,-22) ровно по кромке крыла до камней [1]/[2] — не наискось через корпус.
     ctx.strokeStyle='rgba(255,220,140,.4)'; ctx.lineWidth=.4;
-    ctx.beginPath(); ctx.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); ctx.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
-    ctx.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); ctx.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
+    ctx.moveTo(0,-22); ctx.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); ctx.stroke();
     const cyc=2400;
     GEM_SLOTS.forEach(gm=>{
       const ph=((nowMs+gm.ph*400)%cyc)/cyc;

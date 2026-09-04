@@ -21,6 +21,7 @@ const elScore=$('score'), elCombo=$('combo'), elLivesC=$('livesCanvas'),
 
 /* ---------- Пулы объектов с капом (Блок 3, без GC-лагов и без утечек) ---------- */
 const POOL_CAP=64, PARTICLE_CAP=(typeof isAndroidGo==='function'&&isAndroidGo())?120:220; // v1.108.1: Go Edition — площе лимит памяти на вкладку, меньше частиц одновременно
+let lastWaypointSpawn=0; // 04.09.2026: trailFx:'waypoints' — редкие метки, не на каждый тик тягача (иначе слипнутся в пятно)
 function makePool(){ const free=[]; return {
   take(){ return free.pop()||{}; },
   give(o){ if(free.length<POOL_CAP) free.push(o); }
@@ -56,12 +57,17 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      реальные цены в Stars), заменить при первом реальном решении. Цвета — тоже черновой
      подбор по принципу «развести по кругу, не повторять 9 выше», не финал, владелец должен
      увидеть вживую. */
-  {id:9,  name:9,  price:1, premium:true, fx:'satellites', body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,'}, // Спутники — синь тона 230°
-  {id:10, name:10, price:1, premium:true, fx:'facets',     body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,'}, // Грани — почти белый хрусталь
-  {id:11, name:11, price:1, premium:true, fx:'inlay',      body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,'},  // Инкрустация — рубин, тон 340°
-  {id:12, name:12, price:1, premium:true, fx:'filigree',   body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,'},  // Филигрань — старое золото, тон 35°
-  {id:13, name:13, price:1, premium:true, fx:'core',       body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,'},  // Ядро — изумруд, тон 140°
-  {id:14, name:14, price:1, premium:true, fx:'aim',        body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'}   // Прицел — электрик, тон 195°
+  /* trailFx — второй слой, отдельный от fx (приём корпуса): свой язык следа/частиц, тоже
+     отобран живьём через макет. Пары подобраны по смыслу (владелец не назначал явно,
+     можно перетасовать): спутники↔обломки-спутники, грани-кристалл↔нить-жемчуг,
+     самоцветы↔искры, золото-гравировка↔кометная пыль, реактор-ядро↔лента-энергия,
+     слежение-прицел↔метки пути. */
+  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,'}, // Спутники — синь тона 230°
+  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,'}, // Грани — почти белый хрусталь
+  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,'},  // Инкрустация — рубин, тон 340°
+  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,'},  // Филигрань — старое золото, тон 35°
+  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,'},  // Ядро — изумруд, тон 140°
+  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'}   // Прицел — электрик, тон 195°
 ];
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
    декаль поверх корпуса. Каждая — готовый символ Unicode (эмодзи), не нарисована нами:
@@ -2452,13 +2458,24 @@ function update(dt){
   const thrusterP = Q.level>=3 ? .8 : Q.level===2 ? .6 : Q.level===1 ? .35 : .18; // v1.38.0: «Ультра» — самый густой след (был перекос: получала минимум)
   const fxK = (Q.mode==='auto' && Q.fps<48) ? (Q.fps<40 ? .55 : .75) : 1;
   if (RNG()<(thrusterP*fxK) && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
-    const t=poolPart.take(), sk=SKINS[S.skin]||SKINS[0];
+    const sk=SKINS[S.skin]||SKINS[0];
+    // 04.09.2026: Метки пути — редкие, не на каждый тик тягача (иначе слипнутся в пятно
+    // под кораблём) — свой интервал поверх общего тягача, тот же приём, что MIN_INTERVAL_MS.
+    const waypointsBlocked = sk.trailFx==='waypoints' && (performance.now()-lastWaypointSpawn<450);
+    if(!waypointsBlocked){
+    const t=poolPart.take();
     t.x=plane.x+rand(-3,3); t.y=plane.y+16; t.vx=rand(-.3,.3); t.vy=rand(1,2.4);
     t.life=rand(.4,.8); t.color=sk.trail; t.size=rand(1,2.5);
     t.fx=sk.fx||''; // фирменный след скина (читается в drawFx)
+    t.trailFx=sk.trailFx||''; // 04.09.2026: второй слой — язык частиц премиум-скина, отдельно от fx корпуса
     if(sk.fx==='plasma'){ t.life=rand(.6,1.05); t.size=rand(1.5,3); t.vy=rand(1.4,2.8); } // длинный огненный шлейф
     else if(sk.fx==='neon'){ t.life=rand(.3,.6); t.size=rand(.8,2); } // короткие искры
+    else if(sk.trailFx==='sparks'){ t.life=rand(.35,.65); t.size=rand(.7,1.8); t.flashAt=RNG()<.3?rand(.3,.7):null; }
+    else if(sk.trailFx==='cometdust'){ t.life=rand(.5,.9); t.size=rand(1.2,2.4); t.rot=rand(0,6.283); t.spin=rand(-.3,.3); }
+    else if(sk.trailFx==='debris'){ t.life=rand(.7,1.1); t.size=rand(1,1.8); t.jx=rand(0,6.283); t.jy=rand(0,6.283); }
+    else if(sk.trailFx==='waypoints'){ t.vx=0; t.vy=1.6; t.life=rand(1.0,1.2); t.size=1.6; lastWaypointSpawn=performance.now(); } // почти не летит, гаснет на месте
     particles.push(t);
+    }
   }
   if (S.dash>0 && RNG()<.7) burst(plane.x+rand(-9,9), plane.y+12+rand(0,18), '#a9bcff', 1); // плазменный след Пули (v1.43.1) (v1.40.0, логика v1.19.0)
 

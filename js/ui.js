@@ -938,6 +938,115 @@ function angarShip(x, sk, s, bolshoy){
   x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
   x.fillStyle=sk.fold;
   x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+  /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец, живое устройство — «в окне
+     предпросмотра видно ноль от новых скинов»): angarShip() никогда не рисовала fx вообще
+     (ни старые Неон/Хром/Плазма, ни новые) — только полёт (render.js:drawPlane) их знал.
+     Тот же код, что там, только на большом борту (bolshoy) — на жетоне мелко, не разглядеть.
+     drawSkinGem/FACET_PARTS/GEM_SLOTS/FIL_MARKS — общие с render.js, тот файл грузится раньше. */
+  if(bolshoy && sk.fx){
+    const pvNow = performance.now();
+    if(sk.fx==='satellites'){
+      let nearTop=0;
+      x.save(); x.globalCompositeOperation='lighter';
+      for(let i=0;i<3;i++){
+        const ph=pvNow/900+i*2.094;
+        const ox=Math.cos(ph)*22, oy=-2+Math.sin(ph)*12;
+        const r=2.6+0.8*Math.sin(pvNow/300+i);
+        const g=x.createRadialGradient(ox,oy,0,ox,oy,r*2.2);
+        g.addColorStop(0,sk.trail+'.95)'); g.addColorStop(1,sk.trail+'0)');
+        x.fillStyle=g;
+        x.beginPath(); x.arc(ox,oy,r*2.2,0,6.283); x.fill();
+        const topDist=Math.abs(((ph%6.283)+6.283)%6.283-4.71);
+        nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
+      }
+      x.restore();
+      drawSkinGem(x,sk,0,-16,1.5,nearTop*.8);
+      x.save(); x.globalCompositeOperation='lighter';
+      x.strokeStyle='rgba(255,255,255,'+(nearTop*.7).toFixed(2)+')'; x.lineWidth=.6;
+      x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14); x.stroke();
+      x.restore();
+    } else if(sk.fx==='facets'){
+      const cyc=2200;
+      const sweep=-26+((pvNow%cyc)/cyc)*52;
+      FACET_PARTS.forEach(f=>{
+        x.fillStyle=sk.trail+f.base+')';
+        x.beginPath(); x.moveTo(f.pts[0][0],f.pts[0][1]); x.lineTo(f.pts[1][0],f.pts[1][1]); x.lineTo(f.pts[2][0],f.pts[2][1]); x.closePath(); x.fill();
+        x.strokeStyle=sk.trail+'.5)'; x.lineWidth=.5; x.stroke();
+        const glint=Math.max(0,1-Math.abs(f.cx-sweep)/7);
+        if(glint>0.02){
+          x.save(); x.globalCompositeOperation='lighter';
+          x.fillStyle='rgba(255,255,255,'+(glint*glint*0.9).toFixed(2)+')';
+          x.beginPath(); x.moveTo(f.pts[0][0],f.pts[0][1]); x.lineTo(f.pts[1][0],f.pts[1][1]); x.lineTo(f.pts[2][0],f.pts[2][1]); x.closePath(); x.fill();
+          x.restore();
+        }
+      });
+      const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
+      drawSkinGem(x,sk,0,8,1.6,centerGlint*.9);
+    } else if(sk.fx==='inlay'){
+      x.strokeStyle='rgba(255,220,140,.4)'; x.lineWidth=.4;
+      x.beginPath(); x.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); x.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
+      x.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); x.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); x.stroke();
+      const cyc=2400;
+      GEM_SLOTS.forEach(gm=>{
+        const ph=((pvNow+gm.ph*400)%cyc)/cyc;
+        const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
+        drawSkinGem(x,sk,gm.x,gm.y,gm.r,glint);
+      });
+    } else if(sk.fx==='filigree'){
+      x.save(); x.globalCompositeOperation='lighter';
+      const cyc=1800;
+      FIL_MARKS.forEach(m=>{
+        x.strokeStyle='rgba(255,220,140,.4)'; x.lineWidth=.5;
+        x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); x.stroke();
+        const local=((pvNow/cyc+m.ph)%1);
+        const glint=Math.max(0,1-local/0.18);
+        if(glint>0.02){
+          x.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
+          x.beginPath(); x.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); x.fill();
+        }
+      });
+      x.restore();
+      const noseGlint=Math.max(0,1-((pvNow/1800)%1)/0.2);
+      drawSkinGem(x,sk,0,-16,1.4,noseGlint*.7);
+    } else if(sk.fx==='core'){
+      x.save(); x.translate(0,2);
+      x.strokeStyle=sk.trail+'.45)'; x.lineWidth=.4;
+      x.beginPath(); x.arc(0,0,3.3,0,6.283); x.stroke();
+      x.globalCompositeOperation='lighter';
+      const pulse=0.5+0.5*Math.sin(pvNow/500);
+      const coreR=1.6+pulse*.5;
+      x.fillStyle='rgba(255,255,255,'+(0.5+0.4*pulse).toFixed(2)+')';
+      x.beginPath(); x.moveTo(0,-coreR); x.lineTo(coreR*.6,0); x.lineTo(0,coreR); x.lineTo(-coreR*.6,0); x.closePath(); x.fill();
+      if(pulse>0.85){
+        const rayA=(pulse-0.85)/0.15;
+        x.strokeStyle=sk.trail+(rayA*.8).toFixed(2)+')'; x.lineWidth=.5;
+        for(let i=0;i<4;i++){
+          const ang=i*(Math.PI/2)+Math.PI/4;
+          x.beginPath(); x.moveTo(Math.cos(ang)*2,Math.sin(ang)*2); x.lineTo(Math.cos(ang)*(4+rayA*3),Math.sin(ang)*(4+rayA*3)); x.stroke();
+        }
+      }
+      x.restore();
+    } else if(sk.fx==='aim'){
+      let anyLock=0;
+      x.save(); x.globalCompositeOperation='lighter';
+      const rot=pvNow/2600;
+      for(let i=0;i<4;i++){
+        const ang=rot+i*(Math.PI/2);
+        const top=((ang-Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+        const distToTop=Math.min(top,Math.PI*2-top);
+        const lock=Math.max(0,1-distToTop/0.35);
+        const R=26-lock*7, spread=4+lock*3;
+        x.save(); x.rotate(ang);
+        x.strokeStyle=lock>0.02?'rgba(255,255,255,'+(0.8+lock*0.2).toFixed(2)+')':sk.trail+'.8)';
+        x.lineWidth=1+lock*.8;
+        x.beginPath(); x.moveTo(-R,-6); x.lineTo(-R,-6-spread); x.lineTo(-R+spread,-6-spread); x.stroke();
+        anyLock=Math.max(anyLock,lock);
+        x.restore();
+      }
+      x.restore();
+      drawSkinGem(x,sk,0,-16,1.4,anyLock*.6);
+    }
+  }
   if(bolshoy){ // кромки крыльев — только на большом борту, в жетоне это каша
     // 02.09.2026 (владелец вживую — «над сердцем... белое пятно, выходит за корпус»):
     // блик-эллипс здесь убран. Тот же самый блик уже убирали 31.08.2026 из render.js
@@ -1335,6 +1444,7 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
   if(owned){
     if(S[cfg.selKey]===item.id) return;
     S[cfg.selKey]=item.id; Store.set(cfg.selKey,item.id); sfx.click(); haptic('light');
+    angarApplyPremiumFlash(item); // 04.09.2026: см. ниже — премиум-скин подставляет свою вспышку
     angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
     angarBuyFill(); if(angarCat==='color') updateLives(); angarPvWake();
     return;
@@ -1350,6 +1460,17 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
   } else {
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
   }
+}
+/* 04.09.2026 «Пакет, не одна вещь» (владелец): у премиум-скина своя вспышка идёт В
+   КОМПЛЕКТЕ — при надевании подставляется автоматически, заменяя то, что было выбрано,
+   чтобы игрок не носил чужую вспышку поверх эксклюзивного скина по недосмотру. item.flash —
+   id из FLASHES; сами новые вспышки под премиум-скины ещё не нарисованы (см. память,
+   «новые, не из старых 13» — решение владельца), поэтому пока у всех id9-14 flash не
+   задан и функция ничего не делает — провод готов, значений ждём. */
+function angarApplyPremiumFlash(item){
+  if(!item.premium || item.flash==null) return;
+  if(S.launchFx===item.flash) return;
+  S.launchFx=item.flash; Store.set('launchFx', item.flash);
 }
 /* 04.09.2026 «Эксклюзивные скины за Stars»: настоящие деньги, не игровая валюта — отдельный
    путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
@@ -1369,6 +1490,7 @@ function angarBuyPremium(item, els){
           if(changed) Store.set('ownedSkins', S.ownedSkins);
         }
         S.skin=item.id; Store.set('skin', item.id);
+        angarApplyPremiumFlash(item);
         sfx.buy(); haptic('success');
         angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
         angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
