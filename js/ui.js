@@ -1073,7 +1073,11 @@ const ANGAR_CATS = {
    владении (см. game.js: ownedDecals/ownedIcons/ownedLaunchFx, price:0 у самих записей).
    Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
    состав каталога, не действие игрока. */
-const ANGAR_FREEBIE = { decal:[1,2], icon:[1,2], flash:[1,2] };
+// 04.09.2026 (владелец, живая сессия): decal/icon поменяны местами со своими старыми
+// бесплатными — Ракета/Тарелка(decal) и Ракета/Медаль(icon, вектор) теперь платные,
+// вместо них бесплатны Звезда/Сотка(decal) и Сетевой узел/Сияние(icon) — выбраны
+// владельцем вживую (клик-ловушка в консоли, не на глаз по коду). flash не менялся.
+const ANGAR_FREEBIE = { decal:[3,30], icon:[28,11], flash:[1,2] };
 let angarCat = 'color';   // активная вкладка тюнинга
 /* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
    потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
@@ -1113,13 +1117,16 @@ function angarItemFill(el, item){
   if(nm && angarCat==='color') nm.textContent = L.skinNames[item.name];
   if(pr){
     pr.classList.toggle('own', owned);
+    // 04.09.2026 «Эксклюзивные скины за Stars»: item.premium — цена в Stars (⭐), не в ✦
+    // (starJewelHtml() рисует игровой жетон, тут он неверен по смыслу — деньги настоящие).
+    const priceHtml = item.premium ? ('⭐ '+Math.round(item.price)) : (starJewelHtml()+Math.round(item.price));
     if(worn){
       pr.innerHTML = L.owned;
     } else if(angarSel===item.id){
       pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
-        (owned ? L.hangarWear : (L.hangarBuy+' '+starJewelHtml()+Math.round(item.price)))+'</button>';
+        (owned ? L.hangarWear : (L.hangarBuy+' '+priceHtml))+'</button>';
     } else {
-      pr.innerHTML = owned ? ic('check') : starJewelHtml()+Math.round(item.price);
+      pr.innerHTML = owned ? ic('check') : priceHtml;
     }
   }
 }
@@ -1332,6 +1339,7 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
     angarBuyFill(); if(angarCat==='color') updateLives(); angarPvWake();
     return;
   }
+  if(item.premium){ angarBuyPremium(item, els); return; } // 04.09.2026: Stars, не ✦ — отдельная ветка ниже
   if(S.wallet>=item.price){
     S.wallet-=item.price; S[cfg.ownedKey].push(item.id); S[cfg.selKey]=item.id;
     Store.set('wallet',S.wallet); Store.set(cfg.ownedKey,S[cfg.ownedKey]); Store.set(cfg.selKey,item.id);
@@ -1342,6 +1350,32 @@ function angarAct(){ // одна кнопка: надеть, если своё; 
   } else {
     toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error');
   }
+}
+/* 04.09.2026 «Эксклюзивные скины за Stars»: настоящие деньги, не игровая валюта — отдельный
+   путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
+   см. syncBuySkinInvoice). Владение подтверждает ТОЛЬКО ответ premium_owned после оплаты —
+   S.ownedSkins пополняется лишь тогда, локальный кэш никогда не решает сам за себя. */
+function angarBuyPremium(item, els){
+  const tw = typeof tgApp==='function' ? tgApp() : null;
+  if(!tw || !tw.openInvoice){ toast(L.premiumTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; }
+  syncBuySkinInvoice(item.id).then(res=>{
+    if(!res || !res.ok || !res.link){ toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    tw.openInvoice(res.link, status=>{
+      if(status!=='paid') return;
+      syncPremiumOwned().then(o=>{
+        if(o && o.ok && Array.isArray(o.owned)){
+          let changed=false;
+          o.owned.forEach(id=>{ if(!S.ownedSkins.includes(id)){ S.ownedSkins.push(id); changed=true; } });
+          if(changed) Store.set('ownedSkins', S.ownedSkins);
+        }
+        S.skin=item.id; Store.set('skin', item.id);
+        sfx.buy(); haptic('success');
+        angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
+        angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
+        if (typeof achCheck==='function') achCheck();
+      });
+    });
+  });
 }
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
@@ -2065,7 +2099,18 @@ wireOn('overDetailsBtn', 'click', ()=>{ // спойлер «Подробност
   const hid = om ? !om.classList.contains('hidden') : true; // новое состояние после переключения — считаем сами, не полагаемся на return classList.toggle()
   toggleCls('overMore','hidden', hid);
   toggleCls('overDetailsBtn','open',!hid); sfx.click(); haptic('light'); });
-wireOn('hangarBtn', 'click', ()=>{ renderHangar(); setScreen('hangar'); sfx.click(); });
+wireOn('hangarBtn', 'click', ()=>{
+  renderHangar(); setScreen('hangar'); sfx.click();
+  // 04.09.2026: подтягиваем владение премиум-скинами с сервера при каждом входе в Ангар —
+  // тихо, в фоне, не блокирует открытие экрана; если что-то новое куплено (или куплено
+  // с другого устройства) — плитки перерисуются сами, когда ответ придёт.
+  if(typeof syncPremiumOwned==='function') syncPremiumOwned().then(o=>{
+    if(!(o && o.ok && Array.isArray(o.owned))) return;
+    let changed=false;
+    o.owned.forEach(id=>{ if(!S.ownedSkins.includes(id)){ S.ownedSkins.push(id); changed=true; } });
+    if(changed){ Store.set('ownedSkins', S.ownedSkins); if(angarCat==='color') angarBuyFill(); }
+  });
+});
 wireOn('hangarBackBtn', 'click', toMenu); // 28.08.2026: вернулась — экран был без единой видимой кнопки назад вне Telegram
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
 function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }

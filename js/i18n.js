@@ -113,6 +113,7 @@ const I18N = {
     /* 13.08.2026 «Ангар-витрина»: слова экрана покупки. Кошелёк переехал под кнопку и
        получил подпись — голое число под кнопкой читалось как ещё одна цена. */
     hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
+    premiumTgOnly:'Покупка за Stars доступна только в Telegram', // 04.09.2026 «Эксклюзивные скины за Stars»
     brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
     calibrated:'Гироскоп откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
@@ -146,7 +147,7 @@ const I18N = {
     shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' '+i18nRuPts(s)+'! Сможешь больше? t.me/realcosmogrambot/app',
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться · t.me/realcosmogrambot/app',
     tutGyroBody:'Телефон умеет быть штурвалом. Наклоняй — самолётик слушается. Передумаешь — вернёшь палец одним касанием.', tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
-    missionLbl:'Волна', angarTabColor:'Цвет', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак'],
+    missionLbl:'Волна', angarTabColor:'Цвет', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак','Спутники','Грани','Инкрустация','Филигрань','Ядро','Прицел'],
     angarTabDecal:'Эмодзи', decalCatNames:{none:'Без украшений',space:'Космос',zodiac:'Зодиак',weather:'Погода',faces:'Смайлы',nature:'Природа',games:'Игры',crafts:'Творчество',animals:'Животные',moon:'Луна',music:'Музыка',myth:'Мифы',status:'Статус',vehicles:'Транспорт',food:'Еда',sport:'Спорт',tech:'Техника',fashion:'Мода',symbols:'Символы',landscape:'Ландшафт',holidays:'Праздники',landmarks:'Ориентиры',science:'Наука',flags:'Флаги',hearts:'Сердца',fx:'Эффекты',sealife:'Морские жители',bugs:'Насекомые',iBasic:'Основное',iSpace:'Космос',iStatus:'Статус',iElem:'Стихии',iTech:'Технологии',iSpecial:'Особенное',iSecrets:'Защита и тайны',iParty:'Праздник и подарки',iSea:'Море и берег',iNature:'Природа',iFlight:'Полёт',iSky:'Небо',iExplore:'Разведка и путь',iMagic:'Магия и цвет',iNight:'Ночь и тайна',iTime:'Время',iSignals:'Сигналы',iTools:'Инструменты',iAbstract:'Абстракция',iHomes:'Дома',iMind:'Разум и знание',iSound:'Звук',iVehicles:'Транспорт',iGames:'Игры',iAdventure:'Зима и приключения',iTravel:'Путешествия'}, angarTabIcon:'Иконки', angarTabFlash:'Вспышка',
     achTitle:'Достижения', achOf:'Открыто',
     achClsB:'Бронзовая награда', achClsS:'Серебряная награда', achClsG:'Золотая награда', achClaim:'Забрать', achDone:'Готово',
@@ -263,6 +264,7 @@ const I18N = {
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     authFailed:'Sign-in failed — try again',
     hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
+    premiumTgOnly:'Star purchases are available in Telegram only',
     brandSub:'One sky for everyone',
     calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
@@ -293,7 +295,7 @@ const I18N = {
     shareText:s=>'🚀 My Cosmogram record: '+s+' '+(s===1?'point':'points')+'! Beat it? t.me/realcosmogrambot/app',
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me · t.me/realcosmogrambot/app',
     tutGyroBody:'Your phone can be the yoke. Tilt it — the plane follows. Change your mind and one tap brings the finger back.', tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
-    missionLbl:'Wave', angarTabColor:'Color', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost'],
+    missionLbl:'Wave', angarTabColor:'Color', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost','Satellites','Facets','Inlay','Filigree','Core','Aim'],
     angarTabDecal:'Emoji', decalCatNames:{none:'No decal',space:'Space',zodiac:'Zodiac',weather:'Weather',faces:'Faces',nature:'Nature',games:'Games',crafts:'Crafts',animals:'Animals',moon:'Moon',music:'Music',myth:'Myth',status:'Status',vehicles:'Vehicles',food:'Food',sport:'Sport',tech:'Tech',fashion:'Fashion',symbols:'Symbols',landscape:'Landscape',holidays:'Holidays',landmarks:'Landmarks',science:'Science',flags:'Flags',hearts:'Hearts',fx:'Effects',sealife:'Sea life',bugs:'Bugs',iBasic:'Basics',iSpace:'Space',iStatus:'Status',iElem:'Elements',iTech:'Technology',iSpecial:'Special',iSecrets:'Security & secrets',iParty:'Party & gifts',iSea:'Sea & shore',iNature:'Nature',iFlight:'Flight',iSky:'Sky',iExplore:'Explore',iMagic:'Magic & color',iNight:'Night & mystery',iTime:'Time',iSignals:'Signals',iTools:'Tools',iAbstract:'Abstract',iHomes:'Homes',iMind:'Mind & knowledge',iSound:'Sound',iVehicles:'Vehicles',iGames:'Games',iAdventure:'Winter & adventure',iTravel:'Travel'}, angarTabIcon:'Icons', angarTabFlash:'Flash',
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
@@ -403,6 +405,7 @@ const I18N = {
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
     authFailed:'Error al iniciar sesión — inténtalo de nuevo',
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas',
+    premiumTgOnly:'La compra con Stars solo está disponible en Telegram',
     brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
     calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
@@ -443,7 +446,7 @@ const I18N = {
     shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme · t.me/realcosmogrambot/app',
     tutGyroBody:'El teléfono puede ser el timón. Inclínalo y el avión obedece. Si cambias de idea, un toque devuelve el dedo.', tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
     missionLbl:'Oleada', angarTabColor:'Color',
-    skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
+    skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustación','Filigrana','Núcleo','Mira'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
     angarTabDecal:'Emoji', decalCatNames:{none:'Sin decoración',space:'Espacio',zodiac:'Zodíaco',weather:'Clima',faces:'Caras',nature:'Naturaleza',games:'Juegos',crafts:'Manualidades',animals:'Animales',moon:'Luna',music:'Música',myth:'Mito',status:'Estatus',vehicles:'Vehículos',food:'Comida',sport:'Deporte',tech:'Tecnología',fashion:'Moda',symbols:'Símbolos',landscape:'Paisaje',holidays:'Fiestas',landmarks:'Monumentos',science:'Ciencia',flags:'Banderas',hearts:'Corazones',fx:'Efectos',sealife:'Vida marina',bugs:'Insectos',iBasic:'Básico',iSpace:'Espacio',iStatus:'Estatus',iElem:'Elementos',iTech:'Tecnología',iSpecial:'Especial',iSecrets:'Seguridad y secretos',iParty:'Fiesta y regalos',iSea:'Mar y costa',iNature:'Naturaleza',iFlight:'Vuelo',iSky:'Cielo',iExplore:'Explorar',iMagic:'Magia y color',iNight:'Noche y misterio',iTime:'Tiempo',iSignals:'Señales',iTools:'Herramientas',iAbstract:'Abstracto',iHomes:'Hogares',iMind:'Mente y saber',iSound:'Sonido',iVehicles:'Vehículos',iGames:'Juegos',iAdventure:'Invierno y aventura',iTravel:'Viajes'}, angarTabIcon:'Íconos', angarTabFlash:'Destello',
     achTitle:'Logros', achOf:'Desbloqueado',
     achClsB:'Premio de bronce', achClsS:'Premio de plata', achClsG:'Premio de oro',
@@ -562,6 +565,7 @@ const I18N = {
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
     authFailed:'Falha no login — tente novamente',
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas',
+    premiumTgOnly:'Compra com Stars disponível apenas no Telegram',
     brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
     calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
@@ -602,7 +606,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar · t.me/realcosmogrambot/app',
     tutGyroBody:'O telefone pode ser o leme. Incline-o e o avião obedece. Se mudar de ideia, um toque devolve o dedo.', tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
     missionLbl:'Onda', angarTabColor:'Cor',
-    skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma'], // v1.282.14: то же — единственное расхождение типов во всём словаре
+    skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustação','Filigrana','Núcleo','Mira'], // v1.282.14: то же — единственное расхождение типов во всём словаре
     angarTabDecal:'Emoji', decalCatNames:{none:'Sem decoração',space:'Espaço',zodiac:'Zodíaco',weather:'Clima',faces:'Rostos',nature:'Natureza',games:'Jogos',crafts:'Artesanato',animals:'Animais',moon:'Lua',music:'Música',myth:'Mito',status:'Status',vehicles:'Veículos',food:'Comida',sport:'Esporte',tech:'Tecnologia',fashion:'Moda',symbols:'Símbolos',landscape:'Paisagem',holidays:'Festas',landmarks:'Marcos',science:'Ciência',flags:'Bandeiras',hearts:'Corações',fx:'Efeitos',sealife:'Vida marinha',bugs:'Insetos',iBasic:'Básico',iSpace:'Espaço',iStatus:'Status',iElem:'Elementos',iTech:'Tecnologia',iSpecial:'Especial',iSecrets:'Segurança e segredos',iParty:'Festa e presentes',iSea:'Mar e litoral',iNature:'Natureza',iFlight:'Voo',iSky:'Céu',iExplore:'Explorar',iMagic:'Magia e cor',iNight:'Noite e mistério',iTime:'Tempo',iSignals:'Sinais',iTools:'Ferramentas',iAbstract:'Abstrato',iHomes:'Casas',iMind:'Mente e saber',iSound:'Som',iVehicles:'Veículos',iGames:'Jogos',iAdventure:'Inverno e aventura',iTravel:'Viagens'}, angarTabIcon:'Ícones', angarTabFlash:'Clarão',
     achTitle:'Conquistas', achOf:'Desbloqueado',
     achClsB:'Prêmio de bronze', achClsS:'Prêmio de prata', achClsG:'Prêmio de ouro',
@@ -724,6 +728,7 @@ const I18N = {
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
     authFailed:'Échec de la connexion — réessayez',
     hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
+    premiumTgOnly:'Achat en Stars disponible uniquement sur Telegram',
     brandSub:'Un ciel pour tous',
     calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
@@ -754,7 +759,7 @@ const I18N = {
     shareText:s=>'🚀 Mon record Cosmogram : '+s+' '+(s===1?'point':'points')+' ! Peux-tu faire mieux ? t.me/realcosmogrambot/app',
     shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper · t.me/realcosmogrambot/app',
     tutGyroBody:'Le téléphone peut être le manche. Incline-le, l\'avion suit. Si tu changes d\'avis, une touche rend le doigt.', tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
-    missionLbl:'Vague', angarTabColor:'Couleur', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme'],
+    missionLbl:'Vague', angarTabColor:'Couleur', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme','Satellites','Facettes','Incrustation','Filigrane','Noyau','Viseur'],
     angarTabDecal:'Emoji', decalCatNames:{none:'Sans décoration',space:'Espace',zodiac:'Zodiaque',weather:'Météo',faces:'Visages',nature:'Nature',games:'Jeux',crafts:'Loisirs créatifs',animals:'Animaux',moon:'Lune',music:'Musique',myth:'Mythe',status:'Statut',vehicles:'Véhicules',food:'Nourriture',sport:'Sport',tech:'Technologie',fashion:'Mode',symbols:'Symboles',landscape:'Paysage',holidays:'Fêtes',landmarks:'Monuments',science:'Science',flags:'Drapeaux',hearts:'Cœurs',fx:'Effets',sealife:'Vie marine',bugs:'Insectes',iBasic:'Basique',iSpace:'Espace',iStatus:'Statut',iElem:'Éléments',iTech:'Technologie',iSpecial:'Spécial',iSecrets:'Sécurité et secrets',iParty:'Fête et cadeaux',iSea:'Mer et rivage',iNature:'Nature',iFlight:'Vol',iSky:'Ciel',iExplore:'Exploration',iMagic:'Magie et couleur',iNight:'Nuit et mystère',iTime:'Temps',iSignals:'Signaux',iTools:'Outils',iAbstract:'Abstrait',iHomes:'Maisons',iMind:'Esprit et savoir',iSound:'Son',iVehicles:'Véhicules',iGames:'Jeux',iAdventure:'Hiver et aventure',iTravel:'Voyages'}, angarTabIcon:'Icônes', angarTabFlash:'Éclat',
     achTitle:'Succès', achOf:'Débloqué',
     achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',

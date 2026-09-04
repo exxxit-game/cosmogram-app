@@ -353,6 +353,27 @@ function syncDuelAccept(pid){ // v1.108.1: сообщаем серверу о с
   syncPost(Object.assign({action:'duel_accept', challenger_pid:pid}, syncAuth())).catch(()=>{});
 }
 
+/* ---------- Эксклюзивные скины за Stars (04.09.2026) ----------
+   Цена и название — только на сервере (PREMIUM_SKINS, cosmogram-sync), тело запроса шлёт
+   только skinId. Сама оплата — Telegram.WebApp.openInvoice(link), не отсюда: этот вызов
+   только получает ссылку на инвойс. Владение подтверждает исключительно сервер
+   (premium_purchases) — S.ownedSkins для premium-id — локальный кэш последнего известного
+   состояния, не источник истины. */
+function syncBuySkinInvoice(skinId){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncPost(Object.assign({action:'buy_skin_invoice', skinId:skinId}, syncAuth())).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+function syncPremiumOwned(){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncPost(Object.assign({action:'premium_owned'}, syncAuth())).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+
 /* ---------- Призрак из топа: загрузка/скачивание треков ----------
    Сервер не даст загрузить трек сильнее верифицированного рекорда — подделка бессмысленна. */
 function syncGhostUp(o){ // {category, track, skin, best, seed} — тихо, как syncSubmit

@@ -304,6 +304,46 @@ function sheenSprite(){
 /* v1.66.0: строки оттенков Неона/Плазмы — посчитаны один раз, в кадре берём готовое */
 const NEON_HUES=[]; for(let i=0;i<360;i++) NEON_HUES.push('hsla('+i+',100%,65%,');
 const PLASMA_HUES=[]; for(let i=0;i<40;i++) PLASMA_HUES.push('hsl('+i+',95%,58%)');
+/* 04.09.2026 «Премиум-скины за Stars»: общий гранёный камень для приёмов корпуса —
+   Спутники/Грани/Инкрустация/Филигрань/Прицел ставят его в разных местах со своей логикой
+   блика, сама форма камня одна и та же маленькая огранка. Отобрано владельцем живьём через
+   макет (см. project_premium_skins_visual_language в памяти) — здесь тот же код, что там,
+   просто с skin.trail вместо демо-цвета. */
+function drawSkinGem(g, skin, x, y, r, glint){
+  g.save(); g.translate(x,y);
+  g.fillStyle=skin.trail+'.55)';
+  g.beginPath(); g.moveTo(0,-r); g.lineTo(r*.7,0); g.lineTo(0,r); g.lineTo(-r*.7,0); g.closePath(); g.fill();
+  g.strokeStyle=skin.trail+'.9)'; g.lineWidth=.35; g.stroke();
+  if(glint>0.02){
+    g.save(); g.globalCompositeOperation='lighter';
+    g.fillStyle='rgba(255,255,255,'+(glint*.95).toFixed(2)+')';
+    g.beginPath(); g.moveTo(0,-r); g.lineTo(r*.7,0); g.lineTo(0,r); g.lineTo(-r*.7,0); g.closePath(); g.fill();
+    g.strokeStyle='rgba(255,255,255,'+glint.toFixed(2)+')'; g.lineWidth=.4;
+    g.beginPath(); g.moveTo(-r*1.6,0); g.lineTo(r*1.6,0); g.moveTo(0,-r*1.6); g.lineTo(0,r*1.6); g.stroke();
+    g.restore();
+  }
+  g.restore();
+}
+const FACET_PARTS=[ // грани корпуса для fx:'facets' — координаты те же, что макет
+  { pts:[[0,-22],[-16,14],[-8,10]], base:'.10', cx:-8 },
+  { pts:[[0,-22],[-8,10],[0,6]],    base:'.22', cx:-2.7 },
+  { pts:[[0,-22],[0,6],[8,10]],     base:'.16', cx:2.7 },
+  { pts:[[0,-22],[8,10],[16,14]],   base:'.26', cx:8 },
+];
+const GEM_SLOTS=[ {x:0,y:-9,r:2.1,ph:0}, {x:-9,y:9,r:1.7,ph:2.4}, {x:9,y:9,r:1.7,ph:4.8} ]; // для fx:'inlay'
+const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев для fx:'filigree'
+  const edges=[ [[0,-22],[-16,14]], [[0,-22],[16,14]] ], marks=[];
+  edges.forEach(([a,b],ei)=>{
+    const n=6;
+    for(let i=1;i<n;i++){
+      const f=i/n;
+      const x=a[0]+(b[0]-a[0])*f, y=a[1]+(b[1]-a[1])*f;
+      const nx=-(b[1]-a[1]), ny=(b[0]-a[0]); const len=Math.hypot(nx,ny);
+      marks.push({x,y,ux:nx/len,uy:ny/len,ph:(ei*6+i)/12});
+    }
+  });
+  return marks;
+})();
 /* HD-поле туманностей: пред-рендер на весь экран (цветные пятна + млечная
    полоса + звёздная пыль). Кадр = один drawImage; пересоздаётся только при
    смене волны/размера/DPR. Свой LCG — глобальный RNG не трогаем (от него
@@ -1606,20 +1646,40 @@ function renderFlashPattern(c, style, p, col){
   };
   switch(style){
     case 'ring': ring(p,3.5,.5); break;
-    case 'star': rays(7,8,38,2,0); break;
+    case 'star': { // 04.09.2026: гранёные лепестки переменной длины вместо семи прямых лучей
+      const n=7;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n), len=(i%2===0)?(10+p*32):(7+p*20);
+        const w=1.6*(1-p*.3);
+        c.save(); c.rotate(ang);
+        c.fillStyle=col(1-p);
+        c.beginPath();
+        c.moveTo(0,-1.2); c.lineTo(len*.85,-w*.5); c.lineTo(len,0); c.lineTo(len*.85,w*.5); c.lineTo(0,1.2);
+        c.closePath(); c.fill();
+        c.restore();
+      }
+      break;
+    }
     case 'particles': dots(10,0); break;
     case 'spiral': dots(10,p*2.5); break;
     /* 29.08.2026 «14 разных, не 10 с дублями» — девять новых узоров, ни один не повторяет
        ни старые пять выше, ни друг друга по силуэту (см. коммент над FLASHES в game.js).
        04.09.2026: sphere/comet/saturn/wings убраны из FLASHES (владелец, не нравились) —
        их case здесь тоже удалён: физически недостижим без записи в FLASHES_BY_ID. */
-    case 'shards': { // залитые треугольники-обломки, развёрнутые наружу
-      c.fillStyle=col(1-p);
+    case 'shards': { // 04.09.2026 «Разлёт»: реальное вращение при разлёте вместо статичных треугольников
       const n=6;
       for(let i=0;i<n;i++){
-        const ang=i*(6.2832/n)+.3, r=6+p*32, sz=3.5*(1-p*.4);
-        c.save(); c.translate(Math.cos(ang)*r,Math.sin(ang)*r); c.rotate(ang);
-        c.beginPath(); c.moveTo(0,-sz); c.lineTo(sz*.6,sz); c.lineTo(-sz*.6,sz); c.closePath(); c.fill();
+        const ang0=i*(6.2832/n)+.3;
+        const r=6+p*34;
+        const spin=p*(i%2?2.4:-2.0);
+        const sz=5*(1-p*.3);
+        c.save();
+        c.translate(Math.cos(ang0)*r, Math.sin(ang0)*r);
+        c.rotate(ang0+spin);
+        c.fillStyle=col((1-p)*.9);
+        c.beginPath();
+        c.moveTo(0,-sz); c.lineTo(sz*.55,sz*.5); c.lineTo(-sz*.55,sz*.5);
+        c.closePath(); c.fill();
         c.restore();
       }
       break;
@@ -1648,23 +1708,27 @@ function renderFlashPattern(c, style, p, col){
       }
       break;
     }
-    case 'flower': { // залитые лепестки-эллипсы, не прямые лучи
-      c.fillStyle=col((1-p)*.85);
-      const n=6;
+    case 'flower': { // 04.09.2026: тоньше и легче (обводка вместо сплошной толстой заливки)
+      const n=6, r=6+p*26;
+      c.strokeStyle=col((1-p)*.9); c.lineWidth=1;
+      c.fillStyle=col((1-p)*.22);
       for(let i=0;i<n;i++){
-        const ang=i*(6.2832/n), r=6+p*26;
+        const ang=i*(6.2832/n);
         c.save(); c.translate(Math.cos(ang)*r*.5,Math.sin(ang)*r*.5); c.rotate(ang);
-        c.beginPath(); c.ellipse(0,0,r*.55,r*.22,0,0,6.2832); c.fill();
+        c.beginPath(); c.ellipse(0,0,r*.55,r*.14,0,0,6.2832); c.fill(); c.stroke();
         c.restore();
       }
       break;
     }
-    case 'corona': { // залитое волнистое пятно, не дискретные лучи/кольцо
-      c.fillStyle=col((1-p)*.7);
-      const n=24, baseR=6+p*24;
+    case 'corona': { // 04.09.2026: тонкое яркое кольцо + мягкое волнистое гало (двухслойно)
+      const baseR=6+p*22;
+      c.strokeStyle=col(1-p); c.lineWidth=1.3;
+      c.beginPath(); c.arc(0,0,baseR,0,6.2832); c.stroke();
+      c.fillStyle=col((1-p)*.35);
+      const n=28;
       c.beginPath();
       for(let i=0;i<=n;i++){
-        const ang=i*(6.2832/n), r=baseR*(1+.28*Math.sin(ang*7));
+        const ang=i*(6.2832/n), r=(baseR+5)*(1+.22*Math.sin(ang*8+p*6));
         const x=Math.cos(ang)*r, y=Math.sin(ang)*r;
         if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
       }
@@ -1685,6 +1749,625 @@ function renderFlashPattern(c, style, p, col){
       }
       break;
     }
+    /* 04.09.2026 «Небо месяца»→ нет, нет: «Ещё больше вспышек» (владелец, живая сессия
+       брейншторма в браузере) — 40 новых узоров, каждый отдельной формой/движением,
+       ни один не повторяет силуэт другого (проверено живьём, один за другим, десятками
+       скриншотов настоящего превью в Ангаре — не на глаз по коду). 'spiral' здесь называется
+       'swirl' — имя 'spiral' уже занято старым «Вихрём» (dots), не переименовывал старый
+       стиль, чтобы не задеть уже купивших его игроков. */
+    case 'pulsar': {
+      const rings=3;
+      c.lineWidth=1.4;
+      for(let i=0;i<rings;i++){
+        const t=Math.max(0, Math.min(1, p*1.6 - i*.28));
+        if(t<=0) continue;
+        const r=6+t*34;
+        c.strokeStyle=col((1-t)*.85);
+        c.beginPath(); c.arc(0,0,r,0,6.2832); c.stroke();
+      }
+      break;
+    }
+    case 'meteors': {
+      const n=7;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n)+(i%2?0.15:-0.15);
+        const rTip=10+p*36;
+        const tailLen=8+p*14*(1-p*.3);
+        const dx=Math.cos(ang), dy=Math.sin(ang);
+        const grad=c.createLinearGradient(dx*(rTip-tailLen), dy*(rTip-tailLen), dx*rTip, dy*rTip);
+        grad.addColorStop(0, col(0));
+        grad.addColorStop(1, col(1-p));
+        c.strokeStyle=grad; c.lineWidth=1.6;
+        c.beginPath();
+        c.moveTo(dx*(rTip-tailLen), dy*(rTip-tailLen));
+        c.lineTo(dx*rTip, dy*rTip);
+        c.stroke();
+      }
+      break;
+    }
+    case 'crystal': {
+      const n=5;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n);
+        const r=4+p*22;
+        const rot=p*1.2;
+        c.save();
+        c.translate(Math.cos(ang)*r, Math.sin(ang)*r);
+        c.rotate(ang+rot);
+        const sz=6*(0.4+p*.6);
+        c.fillStyle=col((1-p)*.8);
+        c.beginPath();
+        c.moveTo(0,-sz); c.lineTo(sz*.4,0); c.lineTo(0,sz); c.lineTo(-sz*.4,0);
+        c.closePath(); c.fill();
+        c.strokeStyle=col(1-p); c.lineWidth=.6; c.stroke();
+        c.restore();
+      }
+      break;
+    }
+    case 'orbit': {
+      const n=3;
+      for(let i=0;i<n;i++){
+        const rOrb = 12+i*8;
+        const speed = 2.4+i*0.7;
+        const ang = p*6.2832*speed + i*2.1;
+        const ex=Math.cos(ang)*rOrb, ey=Math.sin(ang)*rOrb*0.42;
+        const alpha=Math.sin(Math.min(1,p*1.15)*3.1416);
+        c.fillStyle=col(alpha*0.9);
+        c.beginPath(); c.arc(ex,ey,1.8,0,6.2832); c.fill();
+      }
+      c.strokeStyle=col(0.18*(1-p*.3));
+      c.lineWidth=0.6;
+      c.beginPath(); c.ellipse(0,0,20,20*0.42,0,0,6.2832); c.stroke();
+      break;
+    }
+    case 'fan': {
+      const n=4;
+      const spread = 0.4+p*1.5;
+      [-1,1].forEach(side=>{
+        for(let i=0;i<n;i++){
+          const ang = side*spread*(i/(n-1)) - 1.5708;
+          const len = 10+p*26;
+          c.save(); c.rotate(ang);
+          c.fillStyle = col((1-p)*.75);
+          c.beginPath();
+          c.moveTo(0,0); c.lineTo(-2.4,len); c.lineTo(2.4,len);
+          c.closePath(); c.fill();
+          c.restore();
+        }
+      });
+      break;
+    }
+    case 'beacon': {
+      const ang = p*6.2832*1.4;
+      const width = 0.55;
+      c.save(); c.rotate(ang);
+      c.fillStyle=col((1-p*.4)*.45);
+      c.beginPath();
+      c.moveTo(0,0);
+      c.arc(0,0,10+p*30,-width/2,width/2);
+      c.closePath(); c.fill();
+      c.restore();
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      c.beginPath(); c.arc(0,0,10+p*30,0,6.2832); c.stroke();
+      break;
+    }
+    case 'crack': {
+      const n=5;
+      c.strokeStyle=col(1-p); c.lineWidth=1.4;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n)+.6;
+        const len=10+p*32;
+        const segs=4;
+        c.save(); c.rotate(ang);
+        c.beginPath();
+        c.moveTo(0,0);
+        for(let s=1;s<=segs;s++){
+          const t=s/segs;
+          const jag = (s%2?1:-1)*2.2*(1-t*.3);
+          c.lineTo(len*t, jag);
+        }
+        c.stroke();
+        c.restore();
+      }
+      break;
+    }
+    case 'origami': {
+      const n=6;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n)+.5, r=8+p*30, sz=4.5*(1-p*.25);
+        c.save(); c.translate(Math.cos(ang)*r,Math.sin(ang)*r); c.rotate(ang+1.57);
+        c.fillStyle=col(1-p);
+        c.beginPath(); c.moveTo(0,-sz); c.lineTo(sz*.75,sz*.7); c.lineTo(0,sz*.25); c.closePath(); c.fill();
+        c.fillStyle=col((1-p)*.55);
+        c.beginPath(); c.moveTo(0,-sz); c.lineTo(-sz*.75,sz*.7); c.lineTo(0,sz*.25); c.closePath(); c.fill();
+        c.restore();
+      }
+      break;
+    }
+    case 'constellation': {
+      const pts=[[0,-1],[.8,-.3],[.5,.7],[-.5,.7],[-.8,-.3],[0,-1]].map(function(pt){
+        const rr=(10+p*26);
+        return [pt[0]*rr, pt[1]*rr];
+      });
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=1;
+      c.beginPath();
+      pts.forEach(function(pt,i){ if(i===0) c.moveTo(pt[0],pt[1]); else c.lineTo(pt[0],pt[1]); });
+      c.stroke();
+      c.fillStyle=col(1-p);
+      pts.forEach(function(pt){ c.beginPath(); c.arc(pt[0],pt[1],1.8,0,6.2832); c.fill(); });
+      break;
+    }
+    case 'compass': {
+      const n=16, len0=8;
+      c.strokeStyle=col(1-p);
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n);
+        const major=(i%4===0);
+        const lw=major?2:1, lenTo=len0+p*(major?32:18);
+        c.lineWidth=lw;
+        c.beginPath();
+        c.moveTo(Math.cos(ang)*len0,Math.sin(ang)*len0);
+        c.lineTo(Math.cos(ang)*lenTo,Math.sin(ang)*lenTo);
+        c.stroke();
+      }
+      break;
+    }
+    case 'gyro': {
+      const rings=3;
+      for(let i=0;i<rings;i++){
+        const tilt = i*(3.1416/rings);
+        const spin = p*6.2832*(1+i*.3);
+        const r = 8+p*24;
+        c.save();
+        c.rotate(tilt);
+        c.scale(1, 0.32);
+        c.rotate(spin);
+        c.strokeStyle=col((1-p)*.8);
+        c.lineWidth=1.1;
+        c.beginPath(); c.arc(0,0,r,0,6.2832); c.stroke();
+        c.restore();
+      }
+      break;
+    }
+    case 'figure8': {
+      const n=26;
+      c.strokeStyle=col((1-p)*.85); c.lineWidth=1.2;
+      const R=8+p*20;
+      c.beginPath();
+      for(let i=0;i<=n;i++){
+        const t=(i/n)*6.2832;
+        const x=Math.sin(t)*R;
+        const y=Math.sin(t)*Math.cos(t)*R;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.stroke();
+      const t=p*6.2832*2;
+      const hx=Math.sin(t)*R, hy=Math.sin(t)*Math.cos(t)*R;
+      c.fillStyle=col(1);
+      c.beginPath(); c.arc(hx,hy,2,0,6.2832); c.fill();
+      break;
+    }
+    case 'pendulum': {
+      const swing = Math.sin(p*6.2832*1.5)*1.0;
+      const len = 14+p*16;
+      const bx=Math.sin(swing)*len, by=Math.cos(swing)*len;
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=1;
+      c.beginPath(); c.moveTo(0,0); c.lineTo(bx,by); c.stroke();
+      c.fillStyle=col(1-p*.5);
+      c.beginPath(); c.arc(bx,by,2.6,0,6.2832); c.fill();
+      break;
+    }
+    case 'eclipse': {
+      const R=8+p*22;
+      c.strokeStyle=col(1-p); c.lineWidth=1.4;
+      c.beginPath(); c.arc(0,0,R,0,6.2832); c.stroke();
+      const ex = -R*1.6 + p*R*3.2;
+      c.fillStyle=col((1-p)*.9);
+      c.beginPath(); c.arc(ex,0,R*.55,0,6.2832); c.fill();
+      break;
+    }
+    case 'swarm': {
+      const n=9;
+      c.fillStyle=col(1-p);
+      for(let i=0;i<n;i++){
+        const seed=i*12.9898;
+        const baseAng=(seed%6.2832);
+        const baseR=6+((i*37)%20);
+        const jx=Math.sin(p*6.2832*(1.3+i*.11)+seed)*3;
+        const jy=Math.cos(p*6.2832*(1.1+i*.09)+seed)*3;
+        const r=baseR+p*14;
+        const x=Math.cos(baseAng)*r+jx, y=Math.sin(baseAng)*r+jy;
+        c.beginPath(); c.arc(x,y,1.4,0,6.2832); c.fill();
+      }
+      break;
+    }
+    case 'gear': {
+      const teeth=8;
+      const rot=p*6.2832*0.8;
+      const rOut=8+p*20, rIn=rOut*0.75;
+      const step=6.2832/teeth;
+      c.save(); c.rotate(rot);
+      c.strokeStyle=col(1-p); c.lineWidth=1.3;
+      c.beginPath();
+      for(let i=0;i<teeth;i++){
+        const a=i*step;
+        c.lineTo(Math.cos(a)*rIn, Math.sin(a)*rIn);
+        c.lineTo(Math.cos(a+step*.15)*rOut, Math.sin(a+step*.15)*rOut);
+        c.lineTo(Math.cos(a+step*.5)*rOut, Math.sin(a+step*.5)*rOut);
+        c.lineTo(Math.cos(a+step*.65)*rIn, Math.sin(a+step*.65)*rIn);
+      }
+      c.closePath(); c.stroke();
+      c.restore();
+      break;
+    }
+    case 'firework': {
+      const bursts=3;
+      for(let b=0;b<bursts;b++){
+        const t=Math.max(0, Math.min(1, p*1.8 - b*.32));
+        if(t<=0) continue;
+        const bang=(b*2.4+1)%6.2832;
+        const bdist = 5+b*4;
+        const bx=Math.cos(bang)*bdist, by=Math.sin(bang)*bdist;
+        const rays=8;
+        c.strokeStyle=col((1-t)); c.lineWidth=1.6;
+        for(let i=0;i<rays;i++){
+          const ang=i*(6.2832/rays)+b;
+          const len=3+t*17;
+          c.beginPath();
+          c.moveTo(bx+Math.cos(ang)*2,by+Math.sin(ang)*2);
+          c.lineTo(bx+Math.cos(ang)*len, by+Math.sin(ang)*len);
+          c.stroke();
+        }
+      }
+      break;
+    }
+    case 'frost': {
+      const branches=6;
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      for(let i=0;i<branches;i++){
+        const ang=i*(6.2832/branches);
+        const len=8+p*24;
+        c.save(); c.rotate(ang);
+        c.beginPath(); c.moveTo(0,0); c.lineTo(0,len); c.stroke();
+        const subs=3;
+        for(let s=1;s<=subs;s++){
+          const t=s/(subs+1);
+          const y=len*t;
+          const sublen=len*(1-t)*.5;
+          c.beginPath(); c.moveTo(0,y); c.lineTo(sublen*.7,y+sublen*.7); c.stroke();
+          c.beginPath(); c.moveTo(0,y); c.lineTo(-sublen*.7,y+sublen*.7); c.stroke();
+        }
+        c.restore();
+      }
+      break;
+    }
+    case 'web': {
+      const rings=3, spokes=8;
+      c.strokeStyle=col((1-p)*.8); c.lineWidth=.8;
+      for(let s=0;s<spokes;s++){
+        const ang=s*(6.2832/spokes);
+        c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(ang)*(8+p*24), Math.sin(ang)*(8+p*24)); c.stroke();
+      }
+      for(let r=1;r<=rings;r++){
+        const rr=(8+p*24)*(r/rings);
+        c.beginPath();
+        for(let s=0;s<=spokes;s++){
+          const ang=s*(6.2832/spokes);
+          const x=Math.cos(ang)*rr, y=Math.sin(ang)*rr;
+          if(s===0) c.moveTo(x,y); else c.lineTo(x,y);
+        }
+        c.stroke();
+      }
+      break;
+    }
+    case 'cradle': {
+      const n=5, spacing=6.5;
+      const startX=-((n-1)/2)*spacing;
+      const t=(p*2)%1;
+      const leftSwing = Math.floor(p*2)%2===0;
+      c.fillStyle=col(1-p*.4);
+      for(let i=0;i<n;i++){
+        let x=startX+i*spacing, y=6;
+        const isEdge = leftSwing ? i===0 : i===n-1;
+        if(isEdge){
+          const ang=Math.sin(t*3.1416)*1.1*(leftSwing?1:-1);
+          x += Math.sin(ang)*10;
+          y = 6-(10-Math.cos(ang)*10);
+        }
+        c.beginPath(); c.arc(x,y,2.2,0,6.2832); c.fill();
+      }
+      c.strokeStyle=col(.3); c.lineWidth=.6;
+      c.beginPath(); c.moveTo(startX-4,-6); c.lineTo(startX+(n-1)*spacing+4,-6); c.stroke();
+      break;
+    }
+    case 'field': {
+      const lines=4;
+      c.strokeStyle=col((1-p)*.75); c.lineWidth=1;
+      for(let i=1;i<=lines;i++){
+        const w=i*5;
+        const h=6+p*22;
+        [1,-1].forEach(dir=>{
+          c.beginPath();
+          c.moveTo(-w, 0);
+          c.quadraticCurveTo(0, dir*h, w, 0);
+          c.stroke();
+        });
+      }
+      break;
+    }
+    case 'lissajous': {
+      const n=40;
+      c.strokeStyle=col((1-p)*.85); c.lineWidth=1.1;
+      const R=8+p*20;
+      c.beginPath();
+      for(let i=0;i<=n;i++){
+        const t=(i/n)*6.2832;
+        const x=Math.sin(3*t+p*3)*R;
+        const y=Math.sin(2*t)*R;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.stroke();
+      break;
+    }
+    case 'interference': {
+      const centers=[[-6,0],[6,0]];
+      centers.forEach(([cx,cy])=>{
+        for(let i=0;i<3;i++){
+          const t=Math.max(0,Math.min(1,p*1.5-i*.25));
+          if(t<=0) return;
+          const r=4+t*22;
+          c.strokeStyle=col((1-t)*.55);
+          c.lineWidth=.8;
+          c.beginPath(); c.arc(cx,cy,r,0,6.2832); c.stroke();
+        }
+      });
+      break;
+    }
+    case 'turbine': {
+      const n=6;
+      const rot=p*6.2832*1.1;
+      c.save(); c.rotate(rot);
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n);
+        c.save(); c.rotate(ang);
+        c.strokeStyle=col(1-p); c.lineWidth=1.6;
+        const len=8+p*26;
+        c.beginPath();
+        c.moveTo(0,0);
+        c.quadraticCurveTo(len*.3, len*.5, len*.15, len);
+        c.stroke();
+        c.restore();
+      }
+      c.restore();
+      break;
+    }
+    case 'doublePendulum': {
+      const t=p*6.2832*2;
+      const l1=10, l2=9;
+      const a1=Math.sin(t*1.3)*1.6;
+      const a2=Math.sin(t*2.1+1)*2.2;
+      const x1=Math.sin(a1)*l1, y1=Math.cos(a1)*l1;
+      const x2=x1+Math.sin(a2)*l2, y2=y1+Math.cos(a2)*l2;
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=1;
+      c.beginPath(); c.moveTo(0,0); c.lineTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+      c.fillStyle=col(1-p*.4);
+      c.beginPath(); c.arc(x1,y1,1.8,0,6.2832); c.fill();
+      c.beginPath(); c.arc(x2,y2,2.4,0,6.2832); c.fill();
+      break;
+    }
+    case 'molecule': {
+      const pts=[[0,0],[1,-0.6],[0.7,0.8],[-0.9,0.5],[-0.6,-0.8]].map(([x,y])=>[x*(6+p*18),y*(6+p*18)]);
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=.8;
+      for(let i=1;i<pts.length;i++){
+        c.beginPath(); c.moveTo(pts[0][0],pts[0][1]); c.lineTo(pts[i][0],pts[i][1]); c.stroke();
+      }
+      c.fillStyle=col(1-p);
+      pts.forEach(([x,y],i)=>{
+        c.beginPath(); c.arc(x,y,i===0?2.4:1.6,0,6.2832); c.fill();
+      });
+      break;
+    }
+    case 'cube': {
+      const s=10+p*16;
+      const rot=p*6.2832*0.7;
+      const pts3d=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+      const cosr=Math.cos(rot), sinr=Math.sin(rot);
+      const proj = pts3d.map(([x,y,z])=>{
+        const x2=x*cosr - z*sinr, z2=x*sinr + z*cosr;
+        const scale = 1/(2.2 - z2*0.3);
+        return [x2*s*scale, y*s*scale*0.8];
+      });
+      const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+      c.strokeStyle=col(1-p*.5); c.lineWidth=1.4;
+      edges.forEach(([a,b])=>{
+        c.beginPath(); c.moveTo(proj[a][0],proj[a][1]); c.lineTo(proj[b][0],proj[b][1]); c.stroke();
+      });
+      break;
+    }
+    case 'feathers': {
+      const n=5;
+      c.strokeStyle=col((1-p)*.8); c.lineWidth=1;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n)+.4;
+        const len=10+p*24;
+        c.save(); c.rotate(ang);
+        c.beginPath(); c.moveTo(0,0); c.quadraticCurveTo(len*.3,len*.5,len*.1,len); c.stroke();
+        for(let b=1;b<=4;b++){
+          const t=b/5, y=len*t, spread=3*t;
+          c.beginPath(); c.moveTo(len*.1*t,y); c.lineTo(len*.1*t+spread,y-2); c.stroke();
+          c.beginPath(); c.moveTo(len*.1*t,y); c.lineTo(len*.1*t-spread,y-2); c.stroke();
+        }
+        c.restore();
+      }
+      break;
+    }
+    case 'barcode': {
+      const n=9;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n);
+        const t=((p*2+i*.15)%1);
+        const h=4+Math.sin(t*3.1416)*10;
+        c.save(); c.rotate(ang);
+        c.strokeStyle=col(1-p); c.lineWidth=1.6;
+        c.beginPath(); c.moveTo(0,10); c.lineTo(0,10+h); c.stroke();
+        c.restore();
+      }
+      break;
+    }
+    case 'starfish': {
+      const n=5;
+      c.fillStyle=col((1-p)*.75);
+      c.beginPath();
+      for(let i=0;i<=n*2;i++){
+        const ang=i*(3.1416/n);
+        const r=(i%2===0)?(8+p*24):(4+p*10);
+        const x=Math.cos(ang)*r, y=Math.sin(ang)*r;
+        if(i===0) c.moveTo(x,y); else c.quadraticCurveTo(Math.cos(ang-3.1416/n/2)*r*.7,Math.sin(ang-3.1416/n/2)*r*.7,x,y);
+      }
+      c.closePath(); c.fill();
+      break;
+    }
+    case 'sunrise': {
+      const n=7;
+      c.strokeStyle=col(1-p); c.lineWidth=1.4;
+      for(let i=0;i<n;i++){
+        const ang=-1.5708+(-0.9+1.8*(i/(n-1)));
+        const len=10+p*30;
+        c.beginPath();
+        c.moveTo(Math.cos(ang)*6,Math.sin(ang)*6);
+        c.lineTo(Math.cos(ang)*len,Math.sin(ang)*len);
+        c.stroke();
+      }
+      break;
+    }
+    case 'pixels': {
+      const n=10;
+      c.fillStyle=col(1-p);
+      for(let i=0;i<n;i++){
+        const ang=(i*2.4)%6.2832;
+        const r=6+((i*13)%20)*(0.3+p*0.9);
+        const x=Math.cos(ang)*r, y=Math.sin(ang)*r;
+        const sz=2+((i*7)%3);
+        c.fillRect(x-sz/2,y-sz/2,sz,sz);
+      }
+      break;
+    }
+    case 'supernova': {
+      const n=16;
+      c.strokeStyle=col(1-p); c.lineWidth=1.2;
+      c.beginPath();
+      for(let i=0;i<=n;i++){
+        const ang=i*(6.2832/n);
+        const jag=(i%2===0)?1:0.6;
+        const r=(6+p*30)*jag;
+        const x=Math.cos(ang)*r, y=Math.sin(ang)*r;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.closePath(); c.stroke();
+      break;
+    }
+    case 'needle': {
+      const spin=p*6.2832*2.2;
+      const len=8+p*22;
+      c.save(); c.rotate(spin);
+      c.fillStyle=col(1-p);
+      c.beginPath(); c.moveTo(0,-len); c.lineTo(2,0); c.lineTo(0,3); c.lineTo(-2,0); c.closePath(); c.fill();
+      c.fillStyle=col((1-p)*.4);
+      c.beginPath(); c.moveTo(0,len*.4); c.lineTo(2,0); c.lineTo(0,-3); c.lineTo(-2,0); c.closePath(); c.fill();
+      c.restore();
+      break;
+    }
+    case 'flare': {
+      const len=10+p*28;
+      c.strokeStyle=col((1-p)*.85); c.lineWidth=1.1;
+      [0,1.5708].forEach(ang=>{
+        c.save(); c.rotate(ang);
+        c.beginPath(); c.moveTo(-len,0); c.lineTo(len,0); c.stroke();
+        c.restore();
+      });
+      const n=4;
+      for(let i=0;i<n;i++){
+        const t=i/n;
+        c.strokeStyle=col((1-p)*.3);
+        c.beginPath(); c.arc(0,0,4+t*8,0,6.2832); c.stroke();
+      }
+      break;
+    }
+    case 'scanline': {
+      const y = -20 + p*40;
+      c.strokeStyle=col(1-p); c.lineWidth=1.3;
+      c.beginPath(); c.moveTo(-18,y); c.lineTo(18,y); c.stroke();
+      c.fillStyle=col((1-p)*.25);
+      c.fillRect(-18, y-6, 36, 6);
+      break;
+    }
+    case 'squares': {
+      const n=4;
+      for(let i=0;i<n;i++){
+        const t=i/n;
+        const sz=(10+p*30)*(0.4+t*.6);
+        const rot=p*6.2832*0.5+t*0.8;
+        c.save(); c.rotate(rot);
+        c.strokeStyle=col(1-p*.4); c.lineWidth=1.4;
+        c.strokeRect(-sz/2,-sz/2,sz,sz);
+        c.restore();
+      }
+      break;
+    }
+    case 'clock': {
+      const n=12;
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=1;
+      const R=10+p*22;
+      for(let i=0;i<n;i++){
+        const ang=i*(6.2832/n);
+        const major=(i%3===0);
+        const len=major?4:2;
+        c.beginPath();
+        c.moveTo(Math.cos(ang)*R, Math.sin(ang)*R);
+        c.lineTo(Math.cos(ang)*(R-len), Math.sin(ang)*(R-len));
+        c.stroke();
+      }
+      const hourAng=p*6.2832*0.6;
+      const minAng=p*6.2832*2.2;
+      c.strokeStyle=col(1-p);
+      c.lineWidth=2.2;
+      c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(hourAng-1.5708)*R*.5, Math.sin(hourAng-1.5708)*R*.5); c.stroke();
+      c.lineWidth=1.3;
+      c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(minAng-1.5708)*R*.85, Math.sin(minAng-1.5708)*R*.85); c.stroke();
+      c.fillStyle=col(1-p);
+      c.beginPath(); c.arc(0,0,1.6,0,6.2832); c.fill();
+      break;
+    }
+    case 'string': {
+      const n=30;
+      const len=10+p*28;
+      const freq=3;
+      const amp=3*Math.sin(p*6.2832*2)*(1-p*.3);
+      c.strokeStyle=col(1-p*.3); c.lineWidth=1.2;
+      c.beginPath();
+      for(let i=0;i<=n;i++){
+        const t=i/n;
+        const x=-len+t*len*2;
+        const y=Math.sin(t*3.1416*freq)*amp;
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.stroke();
+      break;
+    }
+    case 'swirl': {
+      const n=24;
+      c.fillStyle=col(1-p);
+      for(let i=0;i<n;i++){
+        const t=i/n;
+        const ang=t*12.566 + p*4;
+        const r=(4+t*34)*(0.3+p*0.7);
+        const sz=1.6*(1-t*.5);
+        c.beginPath();
+        c.arc(Math.cos(ang)*r, Math.sin(ang)*r, sz, 0, 6.2832);
+        c.fill();
+      }
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
@@ -1695,15 +2378,25 @@ function renderFlashPattern(c, style, p, col){
    самый очевидный «правильный» цвет для вспышки именно ЭТОГО борта. Без ctx.shadowBlur
    (дорого каждый кадр) — тот же класс дешёвого приёма, что уже проверен на decal-иконках
    (drawDecalSvg). */
+/* 04.09.2026 «Подороже — подольше»: раньше окно было одно на всех (.45с) — владелец
+   попросил, чтобы более дорогие вспышки держались чуть дольше. flashDur() — линейная
+   растяжка по цене (500→.45с, 1500→.75с, промежуточные тарифы 700/900/1200 —
+   .51/.57/.66с), проверено числовым скриптом до правки (не на глаз). Бесплатные (price:0,
+   ANGAR_FREEBIE) остаются на базовых .45с — та же формула, отрицательная доля клампится в 0. */
+function flashDur(price){
+  return .45 + Math.min(1, Math.max(0, ((price||0)-500)/1000))*.3;
+}
 function drawLaunchFlash(){
   // 29.08.2026: было S.flash — уже занято золотой вспышкой подбора звезды (см. выше в этом
   // файле, ~строка 1280), которая перетирала это значение каждый кадр. Переименовано.
-  if(!S.launchFx || S.time>=.45) return;
+  if(!S.launchFx) return;
   const fl=FLASHES_BY_ID.get(S.launchFx); if(!fl || fl.style==='none') return;
+  const dur=flashDur(fl.price);
+  if(S.time>=dur) return;
   const skin=SKINS[S.skin]||SKINS[0];
   const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что уже в drawPlane для ауры
   const col=a=>base+Math.max(0,a).toFixed(2)+')';
-  const p=clamp(S.time/.45,0,1);
+  const p=clamp(S.time/dur,0,1);
   ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
   renderFlashPattern(ctx, fl.style, p, col);
   ctx.restore();
@@ -1786,6 +2479,117 @@ function drawPlane(sh,nowMs){
     const sx=-34+((nowMs*.05)%68);
     ctx.drawImage(sheenSprite(),sx-9,-26,18,48); // v1.66.0: спрайт-полоса вместо градиента в кадре
     ctx.restore();
+  }
+  /* 04.09.2026 «Премиум-скины за Stars»: 6 приёмов корпуса, каждый под свой Stars-скин
+     (id ещё не назначены — см. project_premium_skins_visual_language в памяти). Отобраны
+     живьём владельцем через макет, гейтятся по hq той же дисциплиной, что Неон/Хром/Плазма
+     выше — на слабых устройствах (Q.level<2) премиум-скин по-прежнему покупается и носится,
+     просто без этой добавки, как и любой другой fx-скин сейчас. */
+  if(hq && fx==='satellites'){ // Спутники: 3 орбитальные точки + камень в носу + кромка вспыхивает при пролёте
+    let nearTop=0;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){
+      const ph=nowMs/900+i*2.094;
+      const ox=Math.cos(ph)*22, oy=-2+Math.sin(ph)*12;
+      const r=2.6+0.8*Math.sin(nowMs/300+i);
+      const g=ctx.createRadialGradient(ox,oy,0,ox,oy,r*2.2);
+      g.addColorStop(0,skin.trail+'.95)'); g.addColorStop(1,skin.trail+'0)');
+      ctx.fillStyle=g;
+      ctx.beginPath(); ctx.arc(ox,oy,r*2.2,0,6.283); ctx.fill();
+      const topDist=Math.abs(((ph%6.283)+6.283)%6.283-4.71);
+      nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
+    }
+    ctx.restore();
+    drawSkinGem(ctx,skin,0,-16,1.5,nearTop*.8);
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle='rgba(255,255,255,'+(nearTop*.7).toFixed(2)+')'; ctx.lineWidth=.6;
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14); ctx.stroke();
+    ctx.restore();
+  }
+  if(hq && fx==='facets'){ // Грани: огранка с бегущим бликом-разверткой + камень в точке схода
+    const cyc=2200;
+    const sweep=-26+((nowMs%cyc)/cyc)*52;
+    FACET_PARTS.forEach(f=>{
+      ctx.fillStyle=skin.trail+f.base+')';
+      ctx.beginPath(); ctx.moveTo(f.pts[0][0],f.pts[0][1]); ctx.lineTo(f.pts[1][0],f.pts[1][1]); ctx.lineTo(f.pts[2][0],f.pts[2][1]); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle=skin.trail+'.5)'; ctx.lineWidth=.5; ctx.stroke();
+      const glint=Math.max(0,1-Math.abs(f.cx-sweep)/7);
+      if(glint>0.02){
+        ctx.save(); ctx.globalCompositeOperation='lighter';
+        ctx.fillStyle='rgba(255,255,255,'+(glint*glint*0.9).toFixed(2)+')';
+        ctx.beginPath(); ctx.moveTo(f.pts[0][0],f.pts[0][1]); ctx.lineTo(f.pts[1][0],f.pts[1][1]); ctx.lineTo(f.pts[2][0],f.pts[2][1]); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    });
+    const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
+    drawSkinGem(ctx,skin,0,8,1.6,centerGlint*.9);
+  }
+  if(hq && fx==='inlay'){ // Инкрустация: 3 камня в корпусе, соединены гравированной оправой
+    ctx.strokeStyle='rgba(255,220,140,.4)'; ctx.lineWidth=.4;
+    ctx.beginPath(); ctx.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); ctx.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
+    ctx.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); ctx.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); ctx.stroke();
+    const cyc=2400;
+    GEM_SLOTS.forEach(gm=>{
+      const ph=((nowMs+gm.ph*400)%cyc)/cyc;
+      const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
+      drawSkinGem(ctx,skin,gm.x,gm.y,gm.r,glint);
+    });
+  }
+  if(hq && fx==='filigree'){ // Филигрань: гравировка по кромке с бегущей вспышкой + камень в носу
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    const cyc=1800;
+    FIL_MARKS.forEach(m=>{
+      ctx.strokeStyle='rgba(255,220,140,.4)'; ctx.lineWidth=.5;
+      ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); ctx.stroke();
+      const local=((nowMs/cyc+m.ph)%1);
+      const glint=Math.max(0,1-local/0.18);
+      if(glint>0.02){
+        ctx.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); ctx.fill();
+      }
+    });
+    ctx.restore();
+    const noseGlint=Math.max(0,1-((nowMs/1800)%1)/0.2);
+    drawSkinGem(ctx,skin,0,-16,1.4,noseGlint*.7);
+  }
+  if(hq && fx==='core'){ // Ядро: гранёный реактор в оправе-кольце, бьётся и даёт лучи на пике
+    ctx.save(); ctx.translate(0,2);
+    ctx.strokeStyle=skin.trail+'.45)'; ctx.lineWidth=.4;
+    ctx.beginPath(); ctx.arc(0,0,3.3,0,6.283); ctx.stroke();
+    ctx.globalCompositeOperation='lighter';
+    const pulse=0.5+0.5*Math.sin(nowMs/500);
+    const coreR=1.6+pulse*.5;
+    ctx.fillStyle='rgba(255,255,255,'+(0.5+0.4*pulse).toFixed(2)+')';
+    ctx.beginPath(); ctx.moveTo(0,-coreR); ctx.lineTo(coreR*.6,0); ctx.lineTo(0,coreR); ctx.lineTo(-coreR*.6,0); ctx.closePath(); ctx.fill();
+    if(pulse>0.85){
+      const rayA=(pulse-0.85)/0.15;
+      ctx.strokeStyle=skin.trail+(rayA*.8).toFixed(2)+')'; ctx.lineWidth=.5;
+      for(let i=0;i<4;i++){
+        const ang=i*(Math.PI/2)+Math.PI/4;
+        ctx.beginPath(); ctx.moveTo(Math.cos(ang)*2,Math.sin(ang)*2); ctx.lineTo(Math.cos(ang)*(4+rayA*3),Math.sin(ang)*(4+rayA*3)); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  if(hq && fx==='aim'){ // Прицел: HUD-скобки вращаются, на захвате сами фокусируются — подлетают ближе и раскрываются шире
+    let anyLock=0;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    const rot=nowMs/2600;
+    for(let i=0;i<4;i++){
+      const ang=rot+i*(Math.PI/2);
+      const top=((ang-Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      const distToTop=Math.min(top,Math.PI*2-top);
+      const lock=Math.max(0,1-distToTop/0.35);
+      const R=26-lock*7, spread=4+lock*3;
+      ctx.save(); ctx.rotate(ang);
+      ctx.strokeStyle=lock>0.02?'rgba(255,255,255,'+(0.8+lock*0.2).toFixed(2)+')':skin.trail+'.8)';
+      ctx.lineWidth=1+lock*.8;
+      ctx.beginPath(); ctx.moveTo(-R,-6); ctx.lineTo(-R,-6-spread); ctx.lineTo(-R+spread,-6-spread); ctx.stroke();
+      anyLock=Math.max(anyLock,lock);
+      ctx.restore();
+    }
+    ctx.restore();
+    drawSkinGem(ctx,skin,0,-16,1.4,anyLock*.6);
   }
   /* 28.08.2026 «Тюнинг, шаг 1: декаль на корпусе». Левая половина корпуса — плоская видимая
      грань (fold красит только правый треугольник, см. выше); декаль кладём в её центр масс —
