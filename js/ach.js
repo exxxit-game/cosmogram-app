@@ -193,9 +193,8 @@ function achNextLoc(){
 
 /* ---------- Экран «🏆 Достижения»: статистика + список ---------- */
 function favMode(){
-  const g=Stats.gGames||0, t=Stats.tGames||0, b=Stats.bGames||0, k=Stats.kGames||0; // v1.280.0: keys — своя честная категория, не тонет в touch
-  if(g===0&&t===0&&b===0&&k===0) return '—';
-  if(b>=g&&b>=t&&b>=k) return L.bullet;
+  const g=Stats.gGames||0, t=Stats.tGames||0, k=Stats.kGames||0; // v1.280.0: keys — своя честная категория, не тонет в touch
+  if(g===0&&t===0&&k===0) return '—';
   if(k>=g&&k>=t) return L.modeKeys;
   return g>=t?L.modeGyro:L.modeTouch;
 }
@@ -228,13 +227,12 @@ function renderAch(){
   elStats.innerHTML = '<div class="statGrid">'+statVals.map((v,i)=>statCell(v,statLbls[i],i)).join('')+'</div>';
   // «Управление» — та же голая пара иконка+число, что была всегда, но теперь подписана и
   // свёрнута (не главное для этого экрана, реюз .setGrp/.setPanel — тот же приём, что в Настройках)
-  const gN=Stats.gGames||0, tN=Stats.tGames||0, bN=Stats.bGames||0, kN=Stats.kGames||0;
-  elCtlSub.textContent = (gN+tN+bN+kN>0) ? favMode() : '';
+  const gN=Stats.gGames||0, tN=Stats.tGames||0, kN=Stats.kGames||0;
+  elCtlSub.textContent = (gN+tN+kN>0) ? favMode() : '';
   elCtlPanel.innerHTML =
     '<div class="ctlRow">'+ic('phone')+'<span class="ctlLbl">'+L.modeGyro+'</span><b>'+fmtN(gN)+'</b></div>'+
     '<div class="ctlRow">'+ic('hand')+'<span class="ctlLbl">'+L.modeTouch+'</span><b>'+fmtN(tN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('timer')+'<span class="ctlLbl">'+L.bullet+'</span><b>'+fmtN(bN)+'</b></div>';
+    '<div class="ctlRow">'+ic('keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>';
   if(!renderAch._ctlBound){ renderAch._ctlBound=1; // 30.08.2026-стиль: биндим один раз, не на каждый рендер
     elCtlGrp.addEventListener('click', ()=>{
       const willOpen=elCtlPanel.classList.contains('hidden');

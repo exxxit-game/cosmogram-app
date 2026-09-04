@@ -1994,24 +1994,6 @@ function draw(){
     ctx.restore();
   }
 
-  // Bullet Time: мир замедлен — холодные гало вокруг препятствий + лёгкая вуаль.
-  // Вместо shadowBlur — кэш-спрайт powGlow: тот же motion-glow без нагрузки на слабые устройства
-  if (S.bt>0 && S.timeScale<.95){
-    const k=1-S.timeScale; // 0..0.6 — сила эффекта, затухает вместе с таймером
-    ctx.save();
-    ctx.globalCompositeOperation='lighter';
-    ctx.globalAlpha=k*.9;
-    const g=powGlow('#8fd0ff');
-    for (const o of obstacles){
-      const r=o.r*3.2;
-      if(!inView(o.x,o.y,r,r)) continue;
-      ctx.drawImage(g,o.x-r,o.y-r,r*2,r*2);
-    }
-    ctx.restore();
-    ctx.fillStyle='rgba(110,160,255,'+(k*.14).toFixed(3)+')';
-    ctx.fillRect(0,0,W,H);
-  }
-
   // личный призрак: полупрозрачный силуэт рекордного забега (та же форма самолётика)
   if (ghostOn){
     const gCol=(ghostForeign && SKINS[ghostSkin]) ? SKINS[ghostSkin].body : '#bfe8ff'; // чужой призрак — цвета его скина (живая витрина ангара)

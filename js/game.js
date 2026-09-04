@@ -1584,7 +1584,7 @@ const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
-  shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, bullet:false, bt:0, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
+  shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
   mode:'classic', hits:0, bonuses:0, nearMiss:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
@@ -1616,7 +1616,7 @@ let lastDistKm=0; // v1.77.0: золотая вспышка цифры расс�
 
 /* ---------- Профиль игрока: счётчики для статистики и достижений (модуль ach.js) ---------- */
 let Stats = {games:0,deaths:0,totalStars:0,nearMiss:0,
-  totalDist:0,bestCombo:0,bestWave:0,bulletRuns:0,
+  totalDist:0,bestCombo:0,bestWave:0,
   perfectRuns:0,gGames:0,tGames:0,bGames:0,kGames:0,e42:0,e9000:0,e1337:0,recBeats:0,duelsSent:0,duelsWon:0}; // v1.282.5: kGames — своя же сегодняшняя регрессия, ++ на undefined давал NaN навсегда с первой игры на клавиатуре, найдена аудитом
 function saveStats(){ Store.set('stats',Stats); }
 
@@ -1672,9 +1672,8 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
    кого, кто не открывал новый экран настроек). Значение приходит из Store в ui.js — здесь
    только сам механизм и его чистая, проверяемая стражем логика. */
 let A11Y_SPEED=1;
-function baseTimeScale(slowmoOn, btOn, dying, pausing, a11ySpeed){
+function baseTimeScale(slowmoOn, dying, pausing, a11ySpeed){
   let ts = slowmoOn ? .45 : 1;
-  if (btOn) ts=Math.min(ts, (typeof BT_TS==='number')?BT_TS:.4); // 31.08.2026 «Стоп-кадр»: сила «Затишья» теперь настройкой (Мягко .4 / Сильно .2 / Стоп-кадр 0), было жёстко .4
   if (dying) ts=Math.min(ts,.12);
   if (pausing) ts=Math.min(ts,.05);
   ts=Math.min(ts, a11ySpeed);
@@ -2103,7 +2102,7 @@ function ghostLoad(){ // вызывается из startGame
          на всех» снова переставало существовать, а игрок неделями получал одну и ту же
          заученную трассу. Гонка с призраком имеет смысл только на общем поле; в зачётных
          режимах поле задаёт день, и призрак там просто тень. */
-      const ownSky = (runMode==='classic'||runMode==='bullet');
+      const ownSky = (runMode==='classic');
       if (ownSky && fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); mapSeedKey=String(fg.seed); mapSeqReset(); S.seed=fg.seed; } }
     return;
   }
@@ -2114,7 +2113,7 @@ function ghostLoad(){ // вызывается из startGame
   const g=ghostParse(grTrack);
   if (g){ ghost=g; ghostTagT=4; // первые 4 секунды — подпись «ЕЩЁ РАЗ?» (v1.87.0 отобрала у своей тени слова, 13.08.2026 вернула по просьбе владельца)
     // v1.282.20: то же правило для своего призрака — сид поднимаем только в личном небе
-    if ((runMode==='classic'||runMode==='bullet') && grSeed && typeof keyRNG==='function'){
+    if (runMode==='classic' && grSeed && typeof keyRNG==='function'){
       mapRNG=keyRNG(String(grSeed)); mapSeedKey=String(grSeed); mapSeqReset(); S.seed=grSeed; } }
 }
 function ghostStep(){ // призрак идёт по своей траектории синхронно с текущей дистанцией
@@ -2144,13 +2143,13 @@ function ghostStep(){ // призрак идёт по своей траекто�
   }
 }
 
-// Б1 «Оплата за страх» (v1.92.0): «впритык» — плата за риск. Под слоу-мо, Bullet Time или тараном
-// риска нет — сближение честно засчитывается (статистика, свист, триггер BT), но монет не приносит.
+// Б1 «Оплата за страх» (v1.92.0): «впритык» — плата за риск. Под слоу-мо или тараном
+// риска нет — сближение честно засчитывается (статистика, свист), но монет не приносит.
 // Неуязвимость и занавес смерти закрыты снаружи (S.invuln<=0): там впритык даже не регистрируется.
 // v1.282.20: щит добавлен к списку «риска нет». 14 секунд щита позволяли нырять в самую
 // гущу и снимать по 25×комбо за каждый пролёт впритык — до полутора тысяч очков с одного
 // бонуса, без единого шанса погибнуть. Остальные три страховки в списке уже были.
-function fullRisk(){ return S.slowmo<=0 && S.bt<=0 && S.dash<=0 && S.shield<=0; }
+function fullRisk(){ return S.slowmo<=0 && S.dash<=0 && S.shield<=0; }
 
 /* ================= UPDATE (fixed step 1/60) ================= */
 /* 22.08.2026 «Впритык только когда честно мимо»: жалоба владельца — «впритык»
@@ -2168,7 +2167,7 @@ function isReceding(dx,dy,dvx,dvy,pvx,pvy){
 }
 function update(dt){
   input.useGyro = gyroUnlocked() && performance.now()-input._t<600; // сторож + замок: гироскоп рулит только после «Полёта без рук», молчащий датчик не держит старый наклон
-  let ts = baseTimeScale(S.slowmo>0, S.bt>0, S.dying, S.pausing, A11Y_SPEED); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update()
+  let ts = baseTimeScale(S.slowmo>0, S.dying, S.pausing, A11Y_SPEED); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update()
   S.timeScale = RM ? ts : lerp(S.timeScale, ts, .1); // v1.99.2 «Бережное небо»: при системном флаге время не плавает — переключается сразу
   /* v1.284.10: `!S.dying` — тот же запрет, что стоит в pauseGame(), но там он проверялся
      только на входе. Если смерть начиналась ПОСЛЕ начала паузы, время мира падало ниже
@@ -2295,7 +2294,6 @@ function update(dt){
   if (S.slowmo>0) S.slowmo-=dt;
   if (S.dash>0) S.dash-=dt; // Таран: 4 секунды пробоя (v1.40.0)
   S.time += dt; // часы полёта — по ним сверхновая узнаёт, что старт позади
-  if (S.bt>0) S.bt-=dt; // Bullet Time: 0.5с реального времени (не растянутого)
   if (S.flash>0) S.flash-=dt; // вспышка — чисто визуальная (золотая секунда)
   if (ghostTagT>0) ghostTagT-=dt; // подпись призрака живёт первые 4 секунды
   S.dist += S.speed*dt*S.timeScale*8;
@@ -2402,7 +2400,6 @@ function update(dt){
           S.score+=pts;
           showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
-        if (S.bullet) S.bt=.5; // Bullet Time: триггер замедления (ворота)
       }
       if (runMode!=='theater' && !o.passed && o.y>plane.y){ // ворота пролетели — был ли самолётик в проходе (v1.94.0: в театре касса молчит)
         o.passed=true;
@@ -2441,7 +2438,6 @@ function update(dt){
           S.score+=pts;
           showPopup(L.nearMiss+' +'+pts, o.x, o.y, '#eef4ff'); // 22.08.2026: развели с щитом/воротами — нейтральный, не спорит с будущим лабрадоритом
         }
-        if (S.bullet) S.bt=.5; // Bullet Time: триггер замедления
       }
     }
   }

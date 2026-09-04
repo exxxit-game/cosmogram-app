@@ -43,7 +43,7 @@ function gyroOfferDue(){
   // открыта всегда, и это единственное место, где разговор возобновляется по воле игрока.
   if (typeof gyroRul==='function' && !gyroRul()) return false;
   if (GYRO.live || gyroUnlocked() || !gyroSensorThere()) return false;
-  if (!S.running || S.paused || S.dying || S.bullet) return false;
+  if (!S.running || S.paused || S.dying) return false;
   if (Store.get('gyroDeclines',0) >= GOFFER_MAX_DECLINES) return false; // v1.108.1: наспрашивались — тишина, дверь в Настройках открыта всегда
   return Store.get('playSec',0) >= (Store.get('gyroSnooze',0) || GOFFER_SEC);
 }
