@@ -1594,8 +1594,63 @@ const FLASHES=[
   {id:57, name:"Штрихкод", price:500, style:"barcode"},
   {id:58, name:"Фейерверк", price:500, style:"firework"},
   {id:59, name:"Струна", price:500, style:"string"},
+  /* 05.09.2026 «Живые вспышки»: шесть НОВЫХ отдельных пунктов (не один совмещённый товар —
+     первая версия плана была неверной, поправлено владельцем). Каждый реагирует на настоящие
+     данные игрока/календаря, не только рисует один и тот же узор. Названия/style нарочно не
+     «Метеоры»/«Затмение»/«Созвездие» — те id28/37/34 уже заняты обычными нереагирующими
+     узорами, дублировать имя нельзя. Цены — по существующей шкале каталога, подтверждены
+     владельцем построчно (не выдуманы). */
+  {id:60, name:"Звездопад", price:1200, style:"starfall"}, // особая версия — в день пика настоящего метеорного потока (проверенные даты, см. METEOR_SHOWERS ниже)
+  {id:61, name:"Веха пути", price:1500, style:"milestone"}, // золотой залп ОДИН раз — когда пожизненный налёт (Stats.totalDist) впервые пересекает круглые 100 км
+  {id:62, name:"Небесное затмение", price:1200, style:"realEclipse"}, // особая версия — в день настоящего затмения (проверенные даты, см. REAL_ECLIPSES ниже)
+  {id:63, name:"С возвращением", price:900, style:"comeback"}, // тёплая особая версия — если не заходил 7+ дней подряд
+  {id:64, name:"Созвездие наград", price:700, style:"achConstellation"}, // всегда честно по числу открытых достижений (ACH из ach.js)
+  {id:65, name:"Знак дня", price:500, style:"daysign"}, // число колец — от сегодняшнего общего сида (dailyRNG, тот же что у Трассы дня)
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
+/* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/
+   Britannica), не по памяти, тот же принцип, что у брендовых логотипов («проверь, не рисуй
+   на глаз»). METEOR_SHOWERS повторяется каждый год (пик плюс-минус сутки). REAL_ECLIPSES —
+   конечный список конкретных дат 2026-2027, на будущие годы список нужно будет дополнить
+   вручную (проверенными датами, не догадкой). */
+const METEOR_SHOWERS=[
+  {m:1,d:4},{m:4,d:22},{m:8,d:13},{m:10,d:21},{m:11,d:17},{m:12,d:14}
+];
+const REAL_ECLIPSES=[
+  '2026-02-17','2026-03-02','2026-03-03','2026-08-12','2026-08-27','2026-08-28',
+  '2027-02-06','2027-02-20','2027-02-21','2027-07-18','2027-08-02','2027-08-16','2027-08-17'
+];
+function isMeteorShowerDay(d){
+  d=d||new Date();
+  const today=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  return METEOR_SHOWERS.some(s=>{
+    const peak=new Date(d.getFullYear(),s.m-1,s.d);
+    return Math.abs(Math.round((today-peak)/86400000))<=1;
+  });
+}
+function isRealEclipseDay(d){
+  return typeof dateKey==='function' && REAL_ECLIPSES.includes(dateKey(d||new Date()));
+}
+/* «Веха пути»/«С возвращением» — разовые события, проверяются ОДИН раз на взлёте (тем же
+   моментом, что streakDayCheck/morseDayCheck в ui.js), не каждый кадр полёта — иначе легко
+   либо записать «уже показано» раньше показа, либо показывать вечно. ВАЖНО: должна
+   вызываться из ui.js СТРОГО ДО streakDayCheck() — читает streakDay, который streakDayCheck
+   тут же перезапишет на сегодня. */
+function livingFlashCheck(){
+  const prevMs=saneNumber(Store.get('flashMilestoneAck',0),0);
+  const curMs=Math.floor((Stats.totalDist||0)/100000); // шаг 100 км = 100000 м (Stats.totalDist уже в метрах, см. ui.js gameOver)
+  S.milestoneHit = curMs>prevMs;
+  if(S.milestoneHit) Store.set('flashMilestoneAck', curMs);
+
+  S.comebackHit=false;
+  const lastDay=Store.get('streakDay','');
+  if(lastDay){
+    const parts=lastDay.split('-').map(Number);
+    const last=new Date(parts[0],parts[1]-1,parts[2]), now=new Date();
+    const gapDays=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-last)/86400000);
+    S.comebackHit = gapDays>=7;
+  }
+}
 const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
@@ -1617,6 +1672,7 @@ const S = {
      каждый кадр затирал мой id надетой декоративной вспышки нулём — эффект не мог показаться
      физически. Переименовано в launchFx — не пересекается ни с чем (проверено grep). */
   launchFx:0, ownedLaunchFx:[0,1,2], // третий независимый слот — та же пара, что у decal/icon. id1,2 бесплатны — см. ANGAR_FREEBIE
+  milestoneHit:false, comebackHit:false, // 05.09.2026 «Живые вспышки»: разовые флаги ЭТОГО забега — выставляет livingFlashCheck() на взлёте (ui.js), читает renderFlashPattern (render.js)
   /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов с системой
      избранного): звёздочка-тоггл и favDecal/favIcon/favLaunchFx удалены целиком. Вместо
      выбора игроком — 2 фиксированных бесплатных, сразу во владении предмета на категорию
@@ -2563,12 +2619,12 @@ function update(dt){
     if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
     if (S.time>=CARAVAN_TIME && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
   }
-  else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0)
+  else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
     // из которого шьётся сама трасса. Здесь стоял todayKey() — личная дата: в UTC+3 вечером
     // игрок видел завтрашнее число при сегодняшней трассе. Закон №17. Страж 122.
     const elMH=elModeHud, tk=trackDayKey(); if (elMH && !elMH._t){ elMH._t=1;
-      elMH.textContent=L.modeDaily+' · '+tk.slice(8)+'.'+tk.slice(5,7); } }
+      elMH.textContent=(S.mode==='daily1cc'?'1CC':L.modeDaily)+' · '+tk.slice(8)+'.'+tk.slice(5,7); } } // 05.09.2026: 1CC — та же дата, своя метка
   else if (S.mode==='theater'){ // Театр призраков (v1.94.0): табло зрителя — не счёт, а название спектакля
     const elMH=elModeHud; if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }
   else if (S.mode==='custom'){ // Своя трасса (v1.68.0): имя автора + живой прогресс до финиша (шаг 5 м, как distHud)
@@ -2672,7 +2728,7 @@ function updateLives(){ // жизни = мини-модельки текущег
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
   const skin=SKINS[S.skin]||SKINS[0];
-  const maxLives=S.mode==='ironman'?1:3; // 05.09.2026: Ironman — один слот, не три с двумя пустыми контурами
+  const maxLives=(S.mode==='ironman'||S.mode==='daily1cc')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами
   for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
     if (i<S.lives){ // живая — полный корпус со свечением (v1.46.0: светятся только живые — потерянная не притворяется живой)
