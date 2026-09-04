@@ -638,11 +638,8 @@ const DECALS=[
   {id:570, name:'Пар из ушей', price:60, ch:'😤', cat:'faces'},
   {id:571, name:'Ярость', price:60, ch:'😡', cat:'faces'},
   {id:572, name:'Злость', price:60, ch:'😠', cat:'faces'},
-  {id:573, name:'Ругань', price:60, ch:'🤬', cat:'faces'},
-  {id:574, name:'Бесёнок', price:60, ch:'👿', cat:'faces'},
   {id:575, name:'Череп', price:60, ch:'💀', cat:'faces'},
-  {id:576, name:'Пиратский череп', price:60, ch:'☠️', cat:'faces'},
-  {id:577, name:'Какашка', price:60, ch:'💩', cat:'faces'},
+  {id:577, name:'Какашка', price:60, ch:'💩', cat:'faces'}, // 05.09.2026: id573 «Ругань»/id574 «Бесёнок»/id576 «Пиратский череп» убраны — политика 3+
   {id:578, name:'Клоун', price:60, ch:'🤡', cat:'faces'},
   {id:579, name:'Космический захватчик', price:60, ch:'👾', cat:'faces'},
   {id:580, name:'Робот', price:60, ch:'🤖', cat:'faces'},
