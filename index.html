@@ -650,10 +650,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #ffScrub { position:absolute; left:14px; right:14px; bottom:14px; display:flex; align-items:center; gap:8px; }
 /* 01.09.2026 «Момент полёта → карточка»: «Поделиться» — только у клипа рекорда (cinemaClipOpen),
    не у «Первого полёта» (firstFlightOpen) — та запись без реплики/категории, экспортировать
-   в карточку нечего. Тот же .btn ghost, что и у #cardShare — не новый визуальный язык. */
-#ffShareBtn { position:absolute; left:50%; bottom:58px; transform:translateX(-50%);
-  min-height:36px; padding:8px 22px; font-size:12px; }
-#ffShareBtn.hidden { display:none; }
+   в карточку нечего. Тот же .btn ghost, что и у #cardShare — не новый визуальный язык.
+   05.09.2026 «Доделать Кино полёта»: вторая кнопка «В сторис» (ffStoryBtn) встала рядом —
+   каждая по-прежнему прячется независимо (Story требует tg.shareToStory+версию 7.8+,
+   Поделиться требует navigator.share — на части устройств доступна только одна), поэтому
+   обе живут во flex-обёртке ffActions, а не в одиночной абсолютной позиции: если видна
+   только одна, gap просто не расходует место на вторую, и оставшаяся сама центрируется. */
+#ffActions { position:absolute; left:50%; bottom:58px; transform:translateX(-50%);
+  display:flex; gap:10px; }
+#ffStoryBtn, #ffShareBtn { min-height:36px; padding:8px 22px; font-size:12px; }
+#ffStoryBtn.hidden, #ffShareBtn.hidden { display:none; }
 #ffTimeCur, #ffTimeDur { font-family:var(--font-disp); font-size:10px; letter-spacing:.06em; flex:none;
   color:rgba(188,210,255,.75); text-shadow:0 1px 3px rgba(6,10,30,.7); font-variant-numeric:tabular-nums; }
 #ffScrubTrack { flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,.14);
@@ -2633,7 +2639,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div id="ffScrubTrack"><i id="ffScrubFill"></i></div>
       <span id="ffTimeDur">0:00</span>
     </div>
-    <button class="btn ghost hidden" id="ffShareBtn">Поделиться</button>
+    <div id="ffActions">
+      <button class="btn ghost hidden" id="ffStoryBtn">В сторис</button>
+      <button class="btn ghost hidden" id="ffShareBtn">Поделиться</button>
+    </div>
   </div>
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>

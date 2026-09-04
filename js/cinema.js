@@ -543,6 +543,7 @@ function firstFlightOpen(){
   const url=$('firstFlightThumb') && $('firstFlightThumb').src; if(!url) return;
   playerOpen(url, ''); // «Первый полёт» — без реплики, всегда
   const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку — только у клипа рекорда, не у этой записи
+  const st=$('ffStoryBtn'); if(st) st.classList.add('hidden'); // «В сторис» — тоже только у клипа
 }
 function firstFlightDelete(){
   const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof firstFlightRefresh==='function') firstFlightRefresh(); }); };
@@ -576,6 +577,8 @@ async function cinemaClipOpen(){
   const cap = cat ? cinemaPickLine(cat, n) : ''; // 'record' — без числа, 'nearrecord' — «не хватило N очков»
   playerOpen(_clipUrl, cap);
   const sb=$('ffShareBtn'); if(sb) sb.classList.remove('hidden'); // «Поделиться» — только у клипа, не у «Первого полёта»
+  if(typeof L!=='undefined' && L.cardStory){ const st=$('ffStoryBtn'); if(st) st.textContent=L.cardStory; } // тот же ключ, что у карточки — не заводим новый перевод
+  cinemaClipStoryGate(); // «В сторис» — тоже только у клипа, и только там, где мост это умеет
 }
 
 /* ---------- Экспорт клипа как карточки (01.09.2026) ----------
@@ -711,6 +714,49 @@ async function cinemaClipShare(){
   finally{ _cinemaShareBusy=false; if(b){ b.disabled=false; b.textContent=oldTxt; } }
 }
 
+/* «В сторис» на «Клипе» (05.09.2026, «Доделать Кино полёта») — тот же путь, что cardStory()
+   в card.js для картинки, только вместо PNG → mp4: экспортируем клип с вжатой рамкой
+   (cinemaExportHighlightCard — та же функция, что уже кормит системное «Поделиться» выше),
+   грузим на сервер (action:'clip_url', сервер уже готов — см. decodeAndUploadClipMp4 в
+   cosmogram-sync, был задеплоен 30.08.2026 вместе с «Моментом полёта», просто не был вызван
+   ни одной кнопкой до сих пор), получаем публичный URL, зовём tg.shareToStory(url, {widget_link}).
+   Дверь видна только там, где мост версии 7.8+ уже умеет shareToStory — тот же принцип
+   feature-gating, что у cardStoryGate(). */
+function blobToDataURL(blob){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(r.error||new Error('read_fail'));
+    r.readAsDataURL(blob);
+  });
+}
+function cinemaClipStoryGate(){
+  const b=$('ffStoryBtn'); if(!b) return;
+  const can=typeof tg!=='undefined' && tg && tg.shareToStory && tg.initData &&
+    typeof tgv==='function' && tgv('7.8') && typeof SYNC_URL!=='undefined';
+  b.classList.toggle('hidden', !can);
+}
+let _cinemaStoryBusy=false;
+async function cinemaClipStory(){
+  if (_cinemaStoryBusy) return; _cinemaStoryBusy=true;
+  const b=$('ffStoryBtn'); const oldTxt=b?b.textContent:'';
+  if(b){ b.disabled=true; b.textContent=(typeof L!=='undefined'&&L.cinemaShareBusy)||'Собираю…'; }
+  try{
+    const blob=await cinemaExportHighlightCard();
+    if(!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    const dataUrl=await blobToDataURL(blob);
+    const r=await syncFetch(SYNC_URL,{action:'clip_url',initData:tg.initData,mp4:dataUrl});
+    const ans=await r.json();
+    if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
+    tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:(typeof L!=='undefined'&&L.cardStoryBtn)||'Играть'}});
+    if (typeof haptic==='function') haptic('light');
+  }catch(e){
+    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_story_fail', String((e&&e.message)||e).slice(0,60));
+    if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)');
+  }
+  finally{ _cinemaStoryBusy=false; if(b){ b.disabled=false; b.textContent=oldTxt; } }
+}
+
 /* ---------- Общий плеер: свои кнопки вместо системных Android (31.08.2026, владелец) ----------
    Один плеер на «Первый полёт» и «Клип» — переиспользуется целиком, не два экрана.
    currentTime/duration — обычные свойства <video>, слушаем timeupdate/loadedmetadata, ничего
@@ -744,6 +790,7 @@ function playerToggle(){
   const close=$('firstFlightClose'); if(close) close.addEventListener('click', playerClose);
   const clipBtn=$('cinemaClipBtn'); if(clipBtn) clipBtn.addEventListener('click', cinemaClipOpen);
   const shareBtn=$('ffShareBtn'); if(shareBtn) shareBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipShare(); });
+  const storyBtn=$('ffStoryBtn'); if(storyBtn) storyBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipStory(); });
   const v=$('firstFlightVideo');
   if (v){
     v.addEventListener('click', playerToggle);
