@@ -2399,7 +2399,11 @@ function update(dt){
   if (S.dash>0 && RNG()<.7) burst(plane.x+rand(-9,9), plane.y+12+rand(0,18), '#a9bcff', 1); // плазменный след Пули (v1.43.1) (v1.40.0, логика v1.19.0)
 
   // счёт в DOM — только при изменении
-  const sc=Math.floor(S.score);
+  // 04.09.2026 (владелец): HUD показывал сырой S.score, а итоги (ui.js:gameOver) домножают
+  // его на штраф «Плавности» (0.5-1.0) — цифра в полёте была всегда ≥ настоящей, разница
+  // выяснялась только на итогах. Тот же множитель здесь — то, что видно в полёте, и есть
+  // честный будущий итог, без сюрприза в конце.
+  const sc=Math.floor(S.score*(0.5+S.smooth*0.5));
   if(sc!==lastScoreShown){ lastScoreShown=sc; elScore.textContent=sc; }
   const d5=Math.floor(S.dist/5); // расстояние в HUD: живой счётчик, шаг 5 м — без DOM-флуда
   if(d5!==lastDistShown){ lastDistShown=d5; elDistN.textContent=d5*5; }

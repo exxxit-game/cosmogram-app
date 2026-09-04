@@ -453,7 +453,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
-    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn]];
+    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
     // 02.09.2026: «Поделиться небом» вернулась в Конструктор — mapShare() существовала
     // с v1.87.0, но не была вызвана ни одной кнопкой (см. wireOnLocal ниже)
@@ -683,10 +683,20 @@ function mapOver(sc){
     requestAnimationFrame(function(){ f.style.transition='opacity .5s'; f.style.opacity=0; }); }
 }
 
+/* 04.09.2026 (владелец): выбрал готовый сценарий — вернуться к пустой трассе было нечем.
+   Тот же приём, что при выборе пресета (forgeCfg=клон .c), только явной кнопкой и без
+   сохранения имени автора — «сбросить всё» значит именно всё, не только состав/жар. */
+function forgeResetAll(){
+  forgeCfg=forgeSanitize(Object.assign({},FORGE_PRESETS[0].c));
+  forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
+  toast(L.forgeReset||'Сброшено','rgba(160,210,255,.5)'); haptic('light');
+}
+
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
 wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
 wireOnLocal('forgeLoad', 'click', forgeLoadCode);
+wireOnLocal('forgeResetBtn', 'click', forgeResetAll);
 wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); });
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
    меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой

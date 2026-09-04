@@ -270,6 +270,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #feedbackBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
 #settingsScreen { padding-top:calc(10px + var(--sat-menu) + 24px); }
 #settingsBackBtn { top:calc(10px + var(--sat-menu) + 24px); }
+/* 04.09.2026 (владелец, живое устройство): «Режимы» — единственный экран с «Назад», который
+   вообще не входил в эту группу (не было ни в базовом правиле выше, ни здесь) — заголовок
+   центрировался по всей высоте экрана вместо того, чтобы стоять вровень с «Назад», как на
+   остальных семи экранах. Тот же принцип 7 отчёта — применяю сразу, третьего сообщения не жду. */
+#modesScreen { justify-content:flex-start; padding-top:calc(10px + var(--sat-menu) + 24px); }
+#modesBack { top:calc(10px + var(--sat-menu) + 24px); }
 /* Настройки: «Назад» — обычная строка в конце последней панели, в потоке документа
    (так и было задумано с самого начала, см. коммент «Назад в потоке» у разметки) —
    поэтому весь экран целиком остаётся одной прокручиваемой лентой, как раньше. */
@@ -1038,8 +1044,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    даёт длинный игольчатый угол (miter), которым CSS не умеет управлять напрямую (нет
    stroke-linejoin у text-stroke) — тонкое размытие притупляет именно кончик шипа, не трогая
    толщину самой обводки на прямых и плавных участках буквы. */
-#brandName .wm-gold { color:#dba93c; -webkit-text-stroke:9px #dba93c; paint-order:stroke fill; filter:blur(.5px); }
-#brandName .wm-white { color:#fff; -webkit-text-stroke:5px #fff; paint-order:stroke fill; filter:blur(.4px); }
+#brandName .wm-gold { color:#dba93c; -webkit-text-stroke:9px #dba93c; paint-order:stroke fill; filter:blur(1.2px); }
+#brandName .wm-white { color:#fff; -webkit-text-stroke:5px #fff; paint-order:stroke fill; filter:blur(.9px); }
 #brandName .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
   -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
 /* 03.09.2026: полоски объёма под словом (владелец прислал фото с наброском линий) — тот же
@@ -1438,7 +1444,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    (сам лоток — единственная безсловесная подсказка, как со стикерами работать, прятать его
    значит терять её). auto-fit сам решает, сколько в ряд — 10 в одну строку на широкой карточке
    выше, 2 ряда на узкой — без двух отдельных breakpoint-ов. */
-.tray{display:grid;width:100%;grid-template-columns:repeat(auto-fit,minmax(46px,1fr));gap:8px;padding:8px 4px}
+/* 04.09.2026 (владелец): было auto-fit — на узком экране влезало 6 в первый ряд, 4 остаток
+   во второй, неровно. Стикеров ровно 10 (2 особых + 8 FORGE_KINDS) — фиксированные 5 колонок
+   дают ровно 2×5 всегда, а не «сколько поместится». */
+.tray{display:grid;width:100%;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 4px}
 .stickerItem{display:flex;flex-direction:column;align-items:center;gap:4px}
 .stickerCap{font-size:7.5px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.15}
 .sticker{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -1961,9 +1970,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.66"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.66"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.66"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.68"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.68"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.68"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2314,6 +2323,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="kzSub">Шаблоны для быстрого старта — необязательны</div>
     </div>
     <div class="forgePresets" id="forgePresets"></div>
+    <!-- 04.09.2026 (владелец): выбрал готовый сценарий — отменить/вернуться к пустой трассе
+         было нечем. Тихая ссылка-кнопка, тот же язык, что forgeLoad рядом. -->
+    <button class="btn ghost small" id="forgeResetBtn" style="margin:0 auto 10px">Сбросить всё</button>
     <div class="setPanel forgePanel" id="forgeCodePanel">
       <div class="forgeLblBlk" id="forgeCodeLbl">Трасса друга — вставь код или ссылку</div>
       <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" autocomplete="off"><!-- 02.09.2026: плейсхолдер «CG2....» был техническим префиксом формата, игроку ничего не говорил — подпись сверху уже всё объясняет (владелец вживую: «плейсхолдер с непонятным словом добавляет вопрос, не ответ») --><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
@@ -2605,25 +2617,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.66" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.66"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.66"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.66"></script>
-<script defer src="js/game.js?v=1.478.66" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.66"></script>
-<script defer src="js/sync.js?v=1.478.66"></script>
-<script defer src="js/render.js?v=1.478.66"></script>
-<script defer src="js/planetarium.js?v=1.478.66"></script>
-<script defer src="js/goldstar.js?v=1.478.66"></script>
-<script defer src="js/music.js?v=1.478.66"></script>
-<script defer src="js/gyro.js?v=1.478.66"></script>
-<script defer src="js/forge.js?v=1.478.66"></script>
-<script defer src="js/partitura.js?v=1.478.66"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.66"></script>
-<script defer src="js/card.js?v=1.478.66"></script>
-<script defer src="js/star.js?v=1.478.66"></script>
-<script defer src="js/cinema.js?v=1.478.66"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.66"></script>
+<script defer src="js/core.js?v=1.478.68" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.68"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.68"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.68"></script>
+<script defer src="js/game.js?v=1.478.68" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.68"></script>
+<script defer src="js/sync.js?v=1.478.68"></script>
+<script defer src="js/render.js?v=1.478.68"></script>
+<script defer src="js/planetarium.js?v=1.478.68"></script>
+<script defer src="js/goldstar.js?v=1.478.68"></script>
+<script defer src="js/music.js?v=1.478.68"></script>
+<script defer src="js/gyro.js?v=1.478.68"></script>
+<script defer src="js/forge.js?v=1.478.68"></script>
+<script defer src="js/partitura.js?v=1.478.68"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.68"></script>
+<script defer src="js/card.js?v=1.478.68"></script>
+<script defer src="js/star.js?v=1.478.68"></script>
+<script defer src="js/cinema.js?v=1.478.68"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.68"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
