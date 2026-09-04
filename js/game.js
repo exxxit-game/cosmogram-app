@@ -67,7 +67,48 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,'},  // Инкрустация — рубин, тон 340°
   {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,'},  // Филигрань — старое золото, тон 35°
   {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,'},  // Ядро — изумруд, тон 140°
-  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'}   // Прицел — электрик, тон 195°
+  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'},  // Прицел — электрик, тон 195°
+  /* 05.09.2026 «добавляй все скины в игру, и они будут временно бесплатные»: 30 доп.
+     скинов, отобраны владельцем через макеты этой сессии — render.js:PREM_FX_MAP (общий
+     рендерер, не 30 копий кода, тот файл грузится раньше). tempFree:true — маркер для
+     памяти/поиска, на логику не влияет: price:0 и отсутствие premium уже делают их
+     обычной ✦-покупкой за 0 (как id:11 Сияние-иконка), без Stars-потока. Владелец гоняет
+     каждый на слабом устройстве, время отрисовки — в BEACON('skin_perf', см. render.js:
+     premSkinPerfReport) при каждой посадке. После анализа — перевести на premium:true +
+     реальную цену в ⭐, tempFree убрать. */
+  // 17 материалов — весь корпус перекрашен целиком, не пятно на нейтральном листе
+  {id:15, name:15, price:0, tempFree:true, fx:'matGold',      body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)', trail:'rgba(230,180,70,'},  // Золото
+  {id:16, name:16, price:0, tempFree:true, fx:'matSilver',    body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,'}, // Серебро
+  {id:17, name:17, price:0, tempFree:true, fx:'matBronze',    body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)', trail:'rgba(200,128,66,'},  // Бронза
+  {id:18, name:18, price:0, tempFree:true, fx:'matIce',       body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,'},  // Лёд/Хрусталь
+  {id:19, name:19, price:0, tempFree:true, fx:'matEmerald',   body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',  trail:'rgba(60,210,130,'},  // Изумруд
+  {id:20, name:20, price:0, tempFree:true, fx:'matObsidian',  body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,'}, // Обсидиан
+  {id:21, name:21, price:0, tempFree:true, fx:'matMarble',    body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)', trail:'rgba(190,178,160,'}, // Мрамор (прямые лучи, v2 — см. feedback_macet_geometry_pitfalls)
+  {id:22, name:22, price:0, tempFree:true, fx:'matNebula',    body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',  trail:'rgba(140,110,220,'}, // Туманность/галактика
+  {id:23, name:23, price:0, tempFree:true, fx:'matOpal',      body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)', trail:'rgba(220,180,200,'}, // Опал
+  {id:24, name:24, price:0, tempFree:true, fx:'matVerdigris', body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',  trail:'rgba(80,160,130,'},  // Окисленная медь
+  {id:25, name:25, price:0, tempFree:true, fx:'matCarbon',    body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)', trail:'rgba(150,155,165,'}, // Карбон
+  {id:26, name:26, price:0, tempFree:true, fx:'matLava',      body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',  trail:'rgba(255,120,40,'},  // Лава
+  {id:27, name:27, price:0, tempFree:true, fx:'matRust',      body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',  trail:'rgba(150,70,30,'},   // Ржавое железо
+  {id:28, name:28, price:0, tempFree:true, fx:'matHoney',     body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)', trail:'rgba(214,150,50,'},  // Соты/янтарь
+  {id:29, name:29, price:0, tempFree:true, fx:'matPlasma',    body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)', trail:'rgba(130,90,220,'},  // Плазма (материал, не путать с id6 fx:'plasma')
+  {id:30, name:30, price:0, tempFree:true, fx:'matQuartz',    body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,'}, // Кварц
+  {id:31, name:31, price:0, tempFree:true, fx:'matWood',      body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)', trail:'rgba(180,130,70,'},  // Дерево
+  // 9 символов-сигилов — нейтральный борт + один гравированный знак строго по центру
+  {id:32, name:32, price:0, tempFree:true, fx:'sigPenta',     body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,'}, // Пентаграмма
+  {id:33, name:33, price:0, tempFree:true, fx:'sigHexa',      body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)', trail:'rgba(255,110,60,'},  // Гексаграмма
+  {id:34, name:34, price:0, tempFree:true, fx:'sigMandala',   body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)', trail:'rgba(60,220,180,'},  // Мандала-розетка
+  {id:35, name:35, price:0, tempFree:true, fx:'sigTriquetra', body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)', trail:'rgba(170,220,60,'},  // Трикветра
+  {id:36, name:36, price:0, tempFree:true, fx:'sigCompass',   body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,'}, // Роза ветров
+  {id:37, name:37, price:0, tempFree:true, fx:'sigYinyang',   body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,'}, // Инь-Янь
+  {id:38, name:38, price:0, tempFree:true, fx:'sigFlower',    body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)', trail:'rgba(80,220,110,'},  // Цветок жизни
+  {id:39, name:39, price:0, tempFree:true, fx:'sigMaltese',   body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)', trail:'rgba(240,70,100,'},  // Мальтийский крест
+  {id:40, name:40, price:0, tempFree:true, fx:'sigSnowflake', body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)', trail:'rgba(70,190,235,'},  // Кристалл-снежинка
+  // 4 приёма иллюзии формы — нейтральный борт + узор внутренними линиями
+  {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,'},  // Кожаная стёжка
+  {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,'},  // Топографические линии
+  {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,'},  // Оригами-заломы
+  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'}   // Плетёная решётка
 ];
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
    декаль поверх корпуса. Каждая — готовый символ Unicode (эмодзи), не нарисована нами:

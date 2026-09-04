@@ -291,6 +291,7 @@ function startGame(saved){
   input.tiltX=0; input.tiltY=0; // сброс low-pass — не тянет из меню
   tDown=false; tActive=false; input.touchX=null; input.touchY=null; // залипший жест (пропавший touchend в WebView) не паркует самолётик и не глушит гироскоп
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
+  if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
@@ -405,6 +406,7 @@ function startBullet(){ // отдельный режим: каждый near-miss
 }
 function retryRun(){ runMode==='bullet'?startBullet():startGame(); } // «ЕЩЁ РАЗ» — в той же дисциплине (v1.42.0)
 function gameOver(){
+  if (typeof premSkinPerfReport==='function') premSkinPerfReport(); // 05.09.2026: диагностика fx-времени 30 доп. премиум-скинов — одно сообщение на посадку, не каждый кадр
   if (typeof cinemaFirstFlightStop==='function') cinemaFirstFlightStop(); // 28.08.2026: стоп до любого раннего return ниже — первый полёт всегда должен сохраниться, каким бы ни оказался финиш
   if (typeof cinemaTestStop==='function') cinemaTestStop(); // 30.08.2026: тот же порядок — до любого раннего return
   if (typeof cinemaHighlightStop==='function') cinemaHighlightStop(); // 30.08.2026 «Момент полёта»: тот же порядок — до любого раннего return
@@ -944,9 +946,14 @@ function angarShip(x, sk, s, bolshoy){
      Тот же код, что там, только на большом борту (bolshoy) — на жетоне мелко, не разглядеть.
      drawSkinGem/FACET_PARTS/GEM_SLOTS/FIL_MARKS — общие с render.js, тот файл грузится раньше. */
   if(bolshoy && sk.fx){
+    // 04.09.2026, второй заход: витрина подтянута до того же вида, что и в реальном
+    // полёте (render.js) — металлический контраст, кристаллы на Спутниках, синхронизация
+    // Филиграни, хребет Ядра, наконечник Прицела, угловые камни у Граней/Прицела/Инкрустации.
+    // metalStroke/drawMightyCrystal/drawSpearGem/WINGTIP_SLOTS/CORNER_* — общие с render.js,
+    // тот файл грузится раньше.
     const pvNow = performance.now();
     if(sk.fx==='satellites'){
-      let nearTop=0;
+      let nearTop=0, nearBottom=0;
       x.save(); x.globalCompositeOperation='lighter';
       for(let i=0;i<3;i++){
         const ph=pvNow/900+i*2.094;
@@ -956,15 +963,15 @@ function angarShip(x, sk, s, bolshoy){
         g.addColorStop(0,sk.trail+'.95)'); g.addColorStop(1,sk.trail+'0)');
         x.fillStyle=g;
         x.beginPath(); x.arc(ox,oy,r*2.2,0,6.283); x.fill();
-        const topDist=Math.abs(((ph%6.283)+6.283)%6.283-4.71);
+        const a=((ph%6.283)+6.283)%6.283;
+        const topDist=Math.abs(a-4.71);
         nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
+        const botDist=Math.abs(a-1.5708);
+        nearBottom=Math.max(nearBottom, Math.max(0,1-botDist/0.4));
       }
       x.restore();
-      drawSkinGem(x,sk,0,-16,1.5,nearTop*.8);
-      x.save(); x.globalCompositeOperation='lighter';
-      x.strokeStyle='rgba(255,255,255,'+(nearTop*.7).toFixed(2)+')'; x.lineWidth=.6;
-      x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14); x.stroke();
-      x.restore();
+      drawMightyCrystal(x,sk.trail,0,-15,2.6,nearTop*.85);
+      drawMightyCrystal(x,sk.trail,0,7,2.2,nearBottom*.85);
     } else if(sk.fx==='facets'){
       const cyc=2200;
       const sweep=-26+((pvNow%cyc)/cyc)*52;
@@ -982,34 +989,53 @@ function angarShip(x, sk, s, bolshoy){
       });
       const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
       drawSkinGem(x,sk,0,8,1.6,centerGlint*.9);
+      drawSkinGem(x,sk,CORNER_NOSE[0],CORNER_NOSE[1],1.2,0);
+      drawSkinGem(x,sk,CORNER_LWING[0],CORNER_LWING[1],1.1,0);
+      drawSkinGem(x,sk,CORNER_RWING[0],CORNER_RWING[1],1.1,0);
     } else if(sk.fx==='inlay'){
-      x.strokeStyle='rgba(255,220,140,.4)'; x.lineWidth=.4;
-      x.beginPath(); x.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); x.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
-      x.moveTo(GEM_SLOTS[0].x,GEM_SLOTS[0].y); x.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); x.stroke();
+      metalStroke(x, c=>{
+        c.moveTo(0,-22); c.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
+        c.moveTo(0,-22); c.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y);
+      }, .75, .4);
       const cyc=2400;
-      GEM_SLOTS.forEach(gm=>{
+      GEM_SLOTS.concat(WINGTIP_SLOTS).forEach(gm=>{
         const ph=((pvNow+gm.ph*400)%cyc)/cyc;
         const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
         drawSkinGem(x,sk,gm.x,gm.y,gm.r,glint);
       });
     } else if(sk.fx==='filigree'){
       x.save(); x.globalCompositeOperation='lighter';
+      metalStroke(x, c=>{ c.moveTo(0,-22); c.lineTo(-16,14); c.moveTo(0,-22); c.lineTo(16,14); }, .55, .35);
       const cyc=1800;
+      const C=(pvNow/cyc)%1;
       FIL_MARKS.forEach(m=>{
-        x.strokeStyle='rgba(255,220,140,.4)'; x.lineWidth=.5;
-        x.beginPath(); x.moveTo(m.x,m.y); x.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); x.stroke();
-        const local=((pvNow/cyc+m.ph)%1);
-        const glint=Math.max(0,1-local/0.18);
+        metalStroke(x, c=>{ c.moveTo(m.x,m.y); c.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); }, .7, .4);
+        const local=C-m.f*0.5;
+        const glint=(local>=0&&local<0.18)?Math.max(0,1-local/0.18):0;
         if(glint>0.02){
           x.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
           x.beginPath(); x.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); x.fill();
         }
       });
       x.restore();
-      const noseGlint=Math.max(0,1-((pvNow/1800)%1)/0.2);
-      drawSkinGem(x,sk,0,-16,1.4,noseGlint*.7);
+      const noseGlint=Math.max(0,1-C/0.15);
+      drawSkinGem(x,sk,0,-16,1.4,noseGlint*.85);
     } else if(sk.fx==='core'){
+      metalStroke(x, c=>{ c.moveTo(0,-22); c.lineTo(0,6); }, .6, .4);
+      const spineT=(pvNow/2000)%1;
+      const sy=-22+28*spineT;
+      x.save(); x.globalCompositeOperation='lighter';
+      x.fillStyle='rgba(255,255,255,'+(Math.sin(spineT*Math.PI)*.8).toFixed(2)+')';
+      x.beginPath(); x.arc(0,sy,.9,0,6.283); x.fill();
+      x.restore();
+      const wingGlint=Math.max(0,1-(1-spineT)/0.15);
+      drawSkinGem(x,sk,-9,9,1.3,wingGlint);
+      drawSkinGem(x,sk,9,9,1.3,wingGlint);
       x.save(); x.translate(0,2);
+      metalStroke(x, c=>{
+        for(let i=0;i<6;i++){ const a=i*Math.PI/3; const px=Math.cos(a)*5.4, py=Math.sin(a)*5.4; i===0?c.moveTo(px,py):c.lineTo(px,py); }
+        c.closePath();
+      }, .7, .4);
       x.strokeStyle=sk.trail+'.45)'; x.lineWidth=.4;
       x.beginPath(); x.arc(0,0,3.3,0,6.283); x.stroke();
       x.globalCompositeOperation='lighter';
@@ -1044,7 +1070,11 @@ function angarShip(x, sk, s, bolshoy){
         x.restore();
       }
       x.restore();
-      drawSkinGem(x,sk,0,-16,1.4,anyLock*.6);
+      drawSkinGem(x,sk,-14,12,1.1,0);
+      drawSkinGem(x,sk,14,12,1.1,0);
+      drawSpearGem(x,sk.trail,0,-17,2.6,anyLock*.9);
+    } else if(typeof PREM_FX_MAP!=='undefined' && PREM_FX_MAP[sk.fx]){ // 05.09.2026: 30 доп. премиум-скинов — общий рендерер из render.js
+      PREM_FX_MAP[sk.fx](x, sk, pvNow);
     }
   }
   if(bolshoy){ // кромки крыльев — только на большом борту, в жетоне это каша
@@ -1054,7 +1084,10 @@ function angarShip(x, sk, s, bolshoy){
     // отдельная, скопированная функция рисования борта для витрины Ангара/Тюнинга, и
     // блик остался только в этой копии, непочищенным. Страж 149.
     x.strokeStyle='rgba(255,255,255,.32)'; x.lineWidth=1.1;
-    x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14); x.stroke();
+    x.beginPath();
+    x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14);
+    x.moveTo(-16,14); x.lineTo(0,6); x.moveTo(0,6); x.lineTo(16,14);
+    x.stroke();
   } else {
     x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();

@@ -308,12 +308,27 @@ const PLASMA_HUES=[]; for(let i=0;i<40;i++) PLASMA_HUES.push('hsl('+i+',95%,58%)
    Спутники/Грани/Инкрустация/Филигрань/Прицел ставят его в разных местах со своей логикой
    блика, сама форма камня одна и та же маленькая огранка. Отобрано владельцем живьём через
    макет (см. project_premium_skins_visual_language в памяти) — здесь тот же код, что там,
-   просто с skin.trail вместо демо-цвета. */
+   просто с skin.trail вместо демо-цвета.
+   04.09.2026, второй заход («сливается с корпусом»): камень и оправа красились в тот же
+   оттенок, что сам корпус (skin.trail), просто прозрачнее — на пастельных скинах разница
+   цвета физически низкая. METAL — тёплое старое золото, независимое от цвета борта,
+   держит контраст на любом скине; metalStroke — общий помощник для линий этим металлом.
+   Первая попытка контраста была тёмной бронзой (96,72,48) — владелец: «читается как
+   грязно-чёрное». Текущий оттенок — светлее и теплее, проверено живьём. */
+const METAL='rgba(198,152,74,';
+function metalStroke(ctx, drawPath, a, w, col){ // col: необязательный — своя окраска вместо METAL (нужно материалам ниже)
+  ctx.save(); ctx.globalCompositeOperation='source-over';
+  ctx.strokeStyle=col||(METAL+a+')'); ctx.lineWidth=w;
+  ctx.beginPath(); drawPath(ctx); ctx.stroke();
+  ctx.restore();
+}
 function drawSkinGem(g, skin, x, y, r, glint){
   g.save(); g.translate(x,y);
-  g.fillStyle=skin.trail+'.55)';
+  g.fillStyle=skin.trail+'.75)';
   g.beginPath(); g.moveTo(0,-r); g.lineTo(r*.7,0); g.lineTo(0,r); g.lineTo(-r*.7,0); g.closePath(); g.fill();
-  g.strokeStyle=skin.trail+'.9)'; g.lineWidth=.35; g.stroke();
+  g.fillStyle='rgba(255,255,255,.28)'; // всегда видимая белая сердцевина, не только на блике
+  g.beginPath(); g.moveTo(0,-r*.5); g.lineTo(r*.32,0); g.lineTo(0,r*.5); g.lineTo(-r*.32,0); g.closePath(); g.fill();
+  metalStroke(g, c=>{ c.moveTo(0,-r); c.lineTo(r*.7,0); c.lineTo(0,r); c.lineTo(-r*.7,0); c.closePath(); }, .8, .35);
   if(glint>0.02){
     g.save(); g.globalCompositeOperation='lighter';
     g.fillStyle='rgba(255,255,255,'+(glint*.95).toFixed(2)+')';
@@ -324,18 +339,73 @@ function drawSkinGem(g, skin, x, y, r, glint){
   }
   g.restore();
 }
+/* «мощный кристалл» вместо цветочка у Спутников — сросток из трёх шипов (главный +
+   два боковых поменьше), тот же металлический контур, что у остального. */
+function drawMightyCrystal(ctx, trail, x, y, r, glint){
+  ctx.save(); ctx.translate(x,y);
+  const shapes=[
+    [[-r*.15,-r*.35],[-r*.9,r*.1],[-r*.4,r*.55],[-r*.05,r*.15]],
+    [[r*.15,-r*.35],[r*.9,r*.1],[r*.4,r*.55],[r*.05,r*.15]],
+    [[0,-r*1.5],[r*.5,r*.15],[0,r*.85],[-r*.5,r*.15]],
+  ];
+  shapes.forEach((pts,i)=>{
+    ctx.fillStyle=trail+(i===2?'.8)':'.6)');
+    ctx.beginPath(); pts.forEach(([px,py],j)=>j===0?ctx.moveTo(px,py):ctx.lineTo(px,py)); ctx.closePath(); ctx.fill();
+    metalStroke(ctx, c=>{ pts.forEach(([px,py],j)=>j===0?c.moveTo(px,py):c.lineTo(px,py)); c.closePath(); }, .8, .3);
+  });
+  if(glint>0.02){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.fillStyle='rgba(255,255,255,'+(glint*.9).toFixed(2)+')';
+    const main=shapes[2];
+    ctx.beginPath(); main.forEach(([px,py],j)=>j===0?ctx.moveTo(px,py):ctx.lineTo(px,py)); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,'+glint.toFixed(2)+')'; ctx.lineWidth=.4;
+    ctx.beginPath(); ctx.moveTo(-r*1.4,0); ctx.lineTo(r*1.4,0); ctx.moveTo(0,-r*1.9); ctx.lineTo(0,r*1.1); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+/* «наконечник» Прицела — крупный, свой собственный силуэт (вытянутый, острее обычного
+   камня), не общий drawSkinGem: он один такой на весь борт, ему можно быть особенным. */
+function drawSpearGem(ctx, trail, x, y, r, glint){
+  ctx.save(); ctx.translate(x,y);
+  const pts=(c)=>{ c.moveTo(0,-r*1.3); c.lineTo(r*.55,0); c.lineTo(0,r*.75); c.lineTo(-r*.55,0); c.closePath(); };
+  ctx.fillStyle=trail+'.8)';
+  ctx.beginPath(); pts(ctx); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.32)';
+  ctx.beginPath(); ctx.moveTo(0,-r*.7); ctx.lineTo(r*.26,0); ctx.lineTo(0,r*.4); ctx.lineTo(-r*.26,0); ctx.closePath(); ctx.fill();
+  metalStroke(ctx, pts, .85, .4);
+  if(glint>0.02){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.fillStyle='rgba(255,255,255,'+(glint*.95).toFixed(2)+')';
+    ctx.beginPath(); pts(ctx); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,'+glint.toFixed(2)+')'; ctx.lineWidth=.45;
+    ctx.beginPath(); ctx.moveTo(-r*1.1,0); ctx.lineTo(r*1.1,0); ctx.moveTo(0,-r*1.7); ctx.lineTo(0,r*1.1); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
 const FACET_PARTS=[ // грани корпуса для fx:'facets' — координаты те же, что макет
   { pts:[[0,-22],[-16,14],[-8,10]], base:'.10', cx:-8 },
   { pts:[[0,-22],[-8,10],[0,6]],    base:'.22', cx:-2.7 },
   { pts:[[0,-22],[0,6],[8,10]],     base:'.16', cx:2.7 },
   { pts:[[0,-22],[8,10],[16,14]],   base:'.26', cx:8 },
 ];
+// углы корпуса (нос + оба кончика крыла) — общие точки для Граней/Прицела
+const CORNER_NOSE=[0,-22], CORNER_LWING=[-16,14], CORNER_RWING=[16,14];
 /* 04.09.2026 (владелец, живое устройство: «кривые линии»): координаты были на глаз, теперь
    считаны — [1] и [2] стоят РОВНО на серединах рёбер крыльев ((0,-22)-(-16,14) и
    (0,-22)-(16,14) → (-8,-4)/(8,-4)), оправа-«паутинка» рисуется от вершины носа (0,-22) до
    этих же точек — то есть буквально по кромке крыла, не наискось через корпус. [0] — на
    линии сгиба (x=0), в оправу не входит, отдельный камень. */
 const GEM_SLOTS=[ {x:0,y:-14,r:2.1,ph:0}, {x:-8,y:-4,r:1.7,ph:2.4}, {x:8,y:-4,r:1.7,ph:4.8} ]; // для fx:'inlay'
+// «на конце крыльев камни, что будут мигать» (владелец) — отдельные слоты на кончиках,
+// своя фаза мигания
+const WINGTIP_SLOTS=[ {x:-16,y:14,r:1.5,ph:1.2}, {x:16,y:14,r:1.5,ph:3.6} ];
+/* 04.09.2026, второй заход (владелец, живьём): формула поворота на 90° не знает, какая
+   сторона «внутрь» для конкретного ребра — для правого ребра (b-a=(16,36)) она честно
+   давала внутрь корпуса, для левого (b-a=(-16,36), другой знак dx) — по той же формуле,
+   но фактически НАРУЖУ (насечки торчали в пустое небо рядом с бортом). Разворачиваю
+   знак ТОЛЬКО у левой кромки (ei===0), правую не трогаю — она была верна с самого начала. */
 const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев для fx:'filigree'
   const edges=[ [[0,-22],[-16,14]], [[0,-22],[16,14]] ], marks=[];
   edges.forEach(([a,b],ei)=>{
@@ -343,12 +413,545 @@ const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев 
     for(let i=1;i<n;i++){
       const f=i/n;
       const x=a[0]+(b[0]-a[0])*f, y=a[1]+(b[1]-a[1])*f;
-      const nx=-(b[1]-a[1]), ny=(b[0]-a[0]); const len=Math.hypot(nx,ny);
-      marks.push({x,y,ux:nx/len,uy:ny/len,ph:(ei*6+i)/12});
+      let nx=-(b[1]-a[1]), ny=(b[0]-a[0]);
+      if(ei===0){ nx=-nx; ny=-ny; }
+      const len=Math.hypot(nx,ny);
+      marks.push({x,y,ux:nx/len,uy:ny/len,f});
     }
   });
   return marks;
 })();
+
+/* 05.09.2026 «добавляй все скины в игру»: 30 доп. премиум-скинов (id15-44 в SKINS,
+   game.js) — отобраны владельцем через макеты этой же сессии, 17 «материалов» (тело
+   перекрашено целиком, не пятно на нейтральном листе), 9 символов-сигилов (нейтральный
+   борт + один гравированный знак строго по центру, вписан в контур с запасом — тот же
+   SYM_R, что уже проверен по расстоянию до наклонной кромки в макете), 4 приёма
+   иллюзии формы. ВРЕМЕННО БЕСПЛАТНЫ (game.js: premium:false, price:0) — владелец сам
+   проверяет каждый на слабом устройстве, время отрисовки шлётся в диагностику отдельно
+   (см. premSkinPerfTick ниже) — после анализа переводятся на ⭐ и настоящую цену.
+   Единая точка входа — drawPremiumFx2(), общая для render.js:drawPlane и ui.js:angarShip
+   (тот файл грузится позже), чтобы не дублировать 30 блоков дважды, как пришлось бы
+   при повторении схемы первых шести. */
+function clipShipBody(ctx){ ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.clip(); }
+function edgeHalfWidth(y){ return Math.max(0,(y+22)/36*16); }
+
+/* --- материалы: Золото/Серебро/Бронза — веерная сеть прямых прожилок из 4 узлов --- */
+function genCracks(ox,oy,dirs,lenBase,segs){
+  const branches=[];
+  dirs.forEach((d,i)=>{
+    const len=lenBase+((i*37)%4);
+    const pts=[[ox,oy]];
+    let x=ox,y=oy, dx=d[0],dy=d[1];
+    for(let s=1;s<=segs;s++){
+      const jitter=((i*13+s*7)%5-2)*0.5;
+      x+=dx*(len/segs)+jitter*dy*0.3;
+      y+=dy*(len/segs)+jitter*dx*0.3;
+      pts.push([x,y]);
+    }
+    branches.push(pts);
+    if(i%2===0){
+      const forkFrom=pts[2];
+      branches.push([forkFrom,[forkFrom[0]+d[1]*2.4, forkFrom[1]-d[0]*2.4]]);
+    }
+  });
+  return branches;
+}
+const METAL_VEINS=[].concat(
+  genCracks(0,-15,[[-0.5,-1],[0.5,-1],[-0.9,0.4],[0.9,0.4]],5,3),
+  genCracks(-7,-2,[[-1,-0.3],[-0.6,1],[0.4,-0.9]],5,3),
+  genCracks(7,-2,[[1,-0.3],[0.6,1],[-0.4,-0.9]],5,3),
+  genCracks(0,7,[[-0.7,0.7],[0.7,0.7],[0,-1]],4.5,3)
+);
+function drawMetalVeins(ctx,col){
+  METAL_VEINS.forEach(pts=>{
+    metalStroke(ctx, c=>{ pts.forEach(([x,y],i)=>i===0?c.moveTo(x,y):c.lineTo(x,y)); }, .7, .4, col);
+  });
+}
+function fxMatGold(ctx){ drawMetalVeins(ctx,'rgba(198,152,74,.7)'); }
+function fxMatSilver(ctx){ drawMetalVeins(ctx,'rgba(140,155,175,.7)'); }
+function fxMatBronze(ctx){ drawMetalVeins(ctx,'rgba(150,88,44,.7)'); }
+
+/* --- материалы: огранка по всей площади (Лёд/Изумруд/Лава) --- */
+function buildFacets(rows){
+  const facets=[];
+  for(let r=0;r<rows.length-1;r++){
+    const y0=rows[r], y1=rows[r+1];
+    const hw0=edgeHalfWidth(y0), hw1=edgeHalfWidth(y1);
+    const n=r+2;
+    for(let i=0;i<n;i++){
+      const fx0=-hw0+(2*hw0*i/n), fx1=-hw0+(2*hw0*(i+1)/n);
+      const gx=-hw1+(2*hw1*(i+0.5)/(n+1));
+      facets.push([[fx0,y0],[fx1,y0],[gx,y1]]);
+    }
+  }
+  return facets;
+}
+const ICE_FACETS=buildFacets([-22,-15,-8,-1,6,14]);
+const GEM_FACETS=buildFacets([-22,-14,-6,2,10,14]);
+function fxFacetSweep(ctx,nowMs,facets,cyc,fillBase,strokeCol,glowSq){
+  ctx.save(); clipShipBody(ctx);
+  const sweepY=-22+((nowMs%cyc)/cyc)*36;
+  facets.forEach((pts,i)=>{
+    const cy=(pts[0][1]+pts[2][1])/2;
+    const shade=0.06+((i*13)%6)*0.025;
+    ctx.fillStyle=fillBase+shade.toFixed(2)+')';
+    ctx.beginPath(); pts.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+    metalStroke(ctx, c=>{ pts.forEach(([x,y],j)=>j===0?c.moveTo(x,y):c.lineTo(x,y)); c.closePath(); }, .3, .3, strokeCol);
+    const glint=Math.max(0,1-Math.abs(cy-sweepY)/6);
+    if(glint>0.05){
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      ctx.fillStyle='rgba(255,255,255,'+((glowSq?glint*glint:glint)*.85).toFixed(2)+')';
+      ctx.beginPath(); pts.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  });
+  ctx.restore();
+}
+function fxMatIce(ctx,sk,nowMs){ fxFacetSweep(ctx,nowMs,ICE_FACETS,2600,'rgba(90,180,225,','rgba(255,255,255,.35)',false); }
+function fxMatEmerald(ctx,sk,nowMs){ fxFacetSweep(ctx,nowMs,GEM_FACETS,2200,'rgba(60,210,130,','rgba(60,210,130,.5)',true); }
+
+/* --- материал: Лава — та же огранка, что Изумруд, но в трещинах пульсирует магма --- */
+function fxMatLava(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const pulse=0.5+0.5*Math.sin(nowMs/900);
+  GEM_FACETS.forEach((pts,i)=>{
+    const shade=0.03+((i*11)%5)*0.02;
+    ctx.fillStyle='rgba(60,45,38,'+shade.toFixed(2)+')';
+    ctx.beginPath(); pts.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle='rgba(255,120,40,'+(0.35+0.25*pulse).toFixed(2)+')'; ctx.lineWidth=.4;
+    ctx.beginPath(); pts.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+/* --- материал: Обсидиан — одна точка удара, 8 прямых трещин строго через 45° --- */
+const OBSIDIAN_ORIGIN=[0,-2], OBSIDIAN_R=42, OBSIDIAN_RAYS=8;
+function fxMatObsidian(ctx){
+  ctx.save(); clipShipBody(ctx);
+  const [ox,oy]=OBSIDIAN_ORIGIN;
+  for(let i=0;i<OBSIDIAN_RAYS;i++){
+    const a0=(i/OBSIDIAN_RAYS)*6.2832, a1=((i+1)/OBSIDIAN_RAYS)*6.2832;
+    ctx.fillStyle='rgba(10,8,16,'+(i%2===0?'.10':'.22')+')';
+    ctx.beginPath(); ctx.moveTo(ox,oy); ctx.arc(ox,oy,OBSIDIAN_R,a0,a1); ctx.closePath(); ctx.fill();
+  }
+  for(let i=0;i<OBSIDIAN_RAYS;i++){
+    const a=(i/OBSIDIAN_RAYS)*6.2832;
+    metalStroke(ctx, c=>{ c.moveTo(ox,oy); c.lineTo(ox+Math.cos(a)*OBSIDIAN_R, oy+Math.sin(a)*OBSIDIAN_R); }, .8, .4, 'rgba(220,225,240,.55)');
+  }
+  for(let i=0;i<OBSIDIAN_RAYS;i+=2){
+    const a=(i/OBSIDIAN_RAYS)*6.2832, b=((i+1)/OBSIDIAN_RAYS)*6.2832;
+    const p1=[ox+Math.cos(a)*OBSIDIAN_R*0.6, oy+Math.sin(a)*OBSIDIAN_R*0.6];
+    const p2=[ox+Math.cos(b)*OBSIDIAN_R*0.6, oy+Math.sin(b)*OBSIDIAN_R*0.6];
+    metalStroke(ctx, c=>{ c.moveTo(p1[0],p1[1]); c.lineTo(p2[0],p2[1]); }, .6, .3, 'rgba(220,225,240,.4)');
+  }
+  ctx.restore();
+}
+
+/* --- материал: Мрамор v2 — одна точка на осевой линии, прямые лучи строго через
+   равный угол (05.09.2026: первая попытка с раскиданными узлами читалась как «кривая»,
+   хотя технически была прямыми линиями — исправлено на формулу Обсидиана, см.
+   feedback_macet_geometry_pitfalls в памяти, пункт 6). --- */
+function fxMatMarble(ctx){
+  ctx.save(); clipShipBody(ctx);
+  const ox=0, oy=-3, n=10;
+  for(let i=0;i<n;i++){
+    const ang=i*(Math.PI*2/n);
+    const len=i%2===0?30:20;
+    const x2=ox+Math.cos(ang)*len, y2=oy+Math.sin(ang)*len;
+    metalStroke(ctx, c=>{ c.moveTo(ox,oy); c.lineTo(x2,y2); }, .5, .34, 'rgba(115,112,120,.34)');
+    metalStroke(ctx, c=>{ c.moveTo(ox+.14,oy-.14); c.lineTo(x2+.14,y2-.14); }, .18, .18, 'rgba(255,255,255,.45)');
+  }
+  ctx.fillStyle='rgba(140,138,148,.4)';
+  ctx.beginPath(); ctx.arc(ox,oy,.4,0,6.283); ctx.fill();
+  ctx.restore();
+}
+
+/* --- материал: Туманность/галактика — цветные облака + звёздная пыль, без единой линии --- */
+const NEB_STARS=(()=>{ const s=[]; for(let i=0;i<60;i++){ const x=((i*37)%32)-16, y=((i*53)%36)-22; s.push({x,y,ph:(i*17)%100/100}); } return s; })();
+const NEB_CLOUDS=[ [-6,-8,10,'110,80,220'], [6,4,11,'40,150,190'], [-2,10,9,'200,70,140'], [3,-14,8,'90,60,180'] ];
+function fxMatNebula(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  NEB_CLOUDS.forEach(([x,y,r,rgb])=>{
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,'rgba('+rgb+',.55)'); g.addColorStop(1,'rgba('+rgb+',0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill();
+  });
+  NEB_STARS.forEach(s=>{
+    const tw=0.4+0.6*Math.max(0,Math.sin(nowMs/900+s.ph*6.283));
+    ctx.fillStyle='rgba(255,255,255,'+(tw*.85).toFixed(2)+')';
+    ctx.beginPath(); ctx.arc(s.x,s.y,.35+.2*tw,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* --- материал: Опал — бегущая радужная полоса на молочном фоне, без линий --- */
+function fxMatOpal(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const bandY=-22+((nowMs%3200)/3200)*44;
+  for(let i=0;i<3;i++){
+    const y=bandY-14+i*14;
+    const hue=((nowMs/12)+i*70)%360;
+    const g=ctx.createLinearGradient(0,y-6,0,y+6);
+    g.addColorStop(0,'hsla('+hue+',75%,72%,0)');
+    g.addColorStop(.5,'hsla('+hue+',75%,72%,.4)');
+    g.addColorStop(1,'hsla('+hue+',75%,72%,0)');
+    ctx.fillStyle=g; ctx.fillRect(-20,y-8,40,16);
+  }
+  ctx.restore();
+}
+
+/* --- материал: Окисленная медь — пятна патины, не линии --- */
+const PATINA=(()=>{ const p=[]; for(let i=0;i<9;i++){ const x=((i*29)%26)-13, y=((i*41)%34)-20; p.push({x,y,r:2.4+((i*13)%4)}); } return p; })();
+function fxMatVerdigris(ctx){
+  ctx.save(); clipShipBody(ctx);
+  PATINA.forEach(p=>{
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,'rgba(80,160,130,.55)'); g.addColorStop(.7,'rgba(80,160,130,.3)'); g.addColorStop(1,'rgba(80,160,130,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* --- материал: Ржавое железо — пятна + питтинг + прямые потёки вниз --- */
+const RUST_SPOTS=(()=>{ const p=[]; for(let i=0;i<11;i++){ const x=((i*31)%28)-14, y=((i*47)%36)-20; p.push({x,y,r:1.8+((i*17)%5)}); } return p; })();
+const RUST_PITS=(()=>{ const p=[]; for(let i=0;i<26;i++){ const x=((i*13)%30)-15, y=((i*23)%36)-20; p.push({x,y}); } return p; })();
+const RUST_STREAKS=[[-4,-14,10],[6,-8,16],[-9,2,8],[2,-2,20]];
+function fxMatRust(ctx){
+  ctx.save(); clipShipBody(ctx);
+  RUST_SPOTS.forEach(p=>{
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+    g.addColorStop(0,'rgba(150,70,30,.6)'); g.addColorStop(.7,'rgba(120,55,25,.35)'); g.addColorStop(1,'rgba(120,55,25,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+  });
+  RUST_STREAKS.forEach(([x,y0,len])=>{
+    const g=ctx.createLinearGradient(x,y0,x,y0+len);
+    g.addColorStop(0,'rgba(90,45,20,.5)'); g.addColorStop(1,'rgba(90,45,20,0)');
+    ctx.fillStyle=g; ctx.fillRect(x-.6,y0,1.2,len);
+  });
+  ctx.fillStyle='rgba(60,32,16,.55)';
+  RUST_PITS.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,.35,0,6.283); ctx.fill(); });
+  ctx.restore();
+}
+
+/* --- материал: Карбон — частое плетение + бегущий блик --- */
+function fxMatCarbon(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  for(let k=-40;k<=40;k+=2.2){
+    ctx.strokeStyle='rgba(70,75,85,.5)'; ctx.lineWidth=.35;
+    ctx.beginPath(); ctx.moveTo(-24+k,-24); ctx.lineTo(24+k,24); ctx.stroke();
+  }
+  for(let k=-40;k<=40;k+=2.2){
+    ctx.strokeStyle='rgba(45,48,55,.5)'; ctx.lineWidth=.35;
+    ctx.beginPath(); ctx.moveTo(-24+k,24); ctx.lineTo(24+k,-24); ctx.stroke();
+  }
+  const sx=-30+((nowMs*0.06)%60);
+  const g=ctx.createLinearGradient(sx-6,0,sx+6,0);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,.22)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(sx-6,-24,12,48);
+  ctx.restore();
+}
+
+/* --- материал: Соты/янтарь — гексагональная сетка на весь борт --- */
+const HONEY_CELLS=(()=>{
+  const cells=[]; const r=2.6; const w=r*Math.sqrt(3);
+  for(let row=-9;row<=6;row++){
+    const cy=row*r*1.5; const off=(row%2===0)?0:w/2;
+    for(let col=-6;col<=6;col++) cells.push([col*w+off,cy]);
+  }
+  return cells;
+})();
+function hexPath(ctx,cx,cy,r){
+  for(let i=0;i<6;i++){ const a=Math.PI/6+i*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.closePath();
+}
+function fxMatHoney(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  HONEY_CELLS.forEach(([cx,cy],i)=>{
+    const shade=0.5+0.25*Math.sin((i*1.7)+0.3);
+    ctx.fillStyle='rgba(214,150,50,'+shade.toFixed(2)+')';
+    ctx.beginPath(); hexPath(ctx,cx,cy,2.55); ctx.fill();
+    ctx.strokeStyle='rgba(90,55,15,.7)'; ctx.lineWidth=.22;
+    ctx.beginPath(); hexPath(ctx,cx,cy,2.55); ctx.stroke();
+  });
+  const glow=0.15+0.1*Math.sin(nowMs/1100);
+  ctx.fillStyle='rgba(255,220,140,'+glow.toFixed(2)+')';
+  ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* --- материал: Плазма — широкие текущие полосы света на тёмном ядре --- */
+const PLASMA_BANDS=[ {sp:0.00,w:9,hue:280,sc:0.05}, {sp:0.33,w:7,hue:200,sc:0.07}, {sp:0.66,w:8,hue:320,sc:0.045} ];
+function fxMatPlasma(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  PLASMA_BANDS.forEach(b=>{
+    const cyc=((nowMs*b.sc/1000)+b.sp)%1;
+    const y=-26+cyc*52;
+    const g=ctx.createLinearGradient(0,y-b.w,0,y+b.w);
+    g.addColorStop(0,'hsla('+b.hue+',85%,60%,0)');
+    g.addColorStop(.5,'hsla('+b.hue+',85%,60%,.42)');
+    g.addColorStop(1,'hsla('+b.hue+',85%,60%,0)');
+    ctx.fillStyle=g; ctx.fillRect(-20,y-b.w,40,b.w*2);
+  });
+  ctx.restore();
+}
+
+/* --- материал: Кварц — огранка ромбами, другая решётка, чем у Льда/Изумруда --- */
+const QUARTZ_CELLS=(()=>{
+  const cells=[]; const s=4.2;
+  for(let row=-8;row<=6;row++) for(let col=-6;col<=6;col++) cells.push([col*s+(row%2?s/2:0), row*s*0.72, s*0.72]);
+  return cells;
+})();
+function rhombPath(ctx,cx,cy,s){ ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s*0.72,cy); ctx.lineTo(cx,cy+s); ctx.lineTo(cx-s*0.72,cy); ctx.closePath(); }
+function fxMatQuartz(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  QUARTZ_CELLS.forEach(([cx,cy,s],i)=>{
+    const shade=0.08+((i*37)%9)*0.02;
+    ctx.fillStyle='rgba(200,150,175,'+shade.toFixed(2)+')';
+    ctx.beginPath(); rhombPath(ctx,cx,cy,s); ctx.fill();
+    ctx.strokeStyle='rgba(150,100,130,.4)'; ctx.lineWidth=.22;
+    ctx.beginPath(); rhombPath(ctx,cx,cy,s); ctx.stroke();
+  });
+  const sp=(nowMs/900)%(Math.PI*2);
+  [0.25,0.6].forEach((f,i)=>{
+    const yy=-22+f*36+2*Math.sin(sp+i*2);
+    const g=ctx.createLinearGradient(-16,yy,16,yy);
+    g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,.5)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.fillRect(-16,yy-.6,32,1.2);
+  });
+  ctx.restore();
+}
+
+/* --- материал: Дерево — прямые слои волокна + два сучка-кольца --- */
+const WOOD_GRAIN=(()=>{ const l=[]; for(let i=0;i<15;i++) l.push(-16+i*2.3+(i%3)*0.4); return l; })();
+function fxMatWood(ctx){
+  ctx.save(); clipShipBody(ctx);
+  WOOD_GRAIN.forEach((x,i)=>{
+    ctx.strokeStyle='rgba(110,65,25,'+(0.25+((i*7)%4)*0.08).toFixed(2)+')';
+    ctx.lineWidth=.45+((i*3)%3)*0.15;
+    ctx.beginPath(); ctx.moveTo(x,-24); ctx.lineTo(x,24); ctx.stroke();
+  });
+  [[-4,-6,2.6],[5,7,1.9]].forEach(([x,y,r])=>{
+    for(let k=3;k>=1;k--){
+      ctx.strokeStyle='rgba(90,50,18,'+(0.55/k).toFixed(2)+')'; ctx.lineWidth=.35;
+      ctx.beginPath(); ctx.ellipse(x,y,r*k/3*1.4,r*k/3,0,0,6.283); ctx.stroke();
+    }
+  });
+  const g=ctx.createLinearGradient(-16,-22,16,22);
+  g.addColorStop(0,'rgba(255,220,170,.1)'); g.addColorStop(.5,'rgba(255,220,170,0)'); g.addColorStop(1,'rgba(60,30,10,.15)');
+  ctx.fillStyle=g; ctx.fillRect(-20,-24,40,48);
+  ctx.restore();
+}
+
+/* --- символы-сигилы: 9 штук, общий центр/радиус, вписаны в контур с запасом
+   (расстояние до наклонной кромки 9x+4y+88=0 от (0,-3) ≈7.72, взят SYM_R=7.3) --- */
+const SYM_CX=0, SYM_CY=-3, SYM_R=7.3;
+function sigGlow(ctx,a){ ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle='rgba(255,255,255,'+a.toFixed(2)+')'; }
+const PENTA_PTS=(()=>{ const pts=[]; for(let k=0;k<10;k++){ const ang=-Math.PI/2+k*(Math.PI/5); const r=k%2===0?SYM_R:SYM_R*0.382; pts.push([SYM_CX+Math.cos(ang)*r, SYM_CY+Math.sin(ang)*r]); } return pts; })();
+function fxSigPenta(ctx,sk,nowMs){
+  const glow=0.5+0.5*Math.sin(nowMs/1200);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R,0,6.283); }, .5, .35);
+  metalStroke(ctx, c=>{ PENTA_PTS.forEach(([x,y],i)=>i===0?c.moveTo(x,y):c.lineTo(x,y)); c.closePath(); }, .85, .5);
+  sigGlow(ctx,0.12+0.06*glow);
+  ctx.beginPath(); PENTA_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function triPts(cx,cy,r,rot){ const pts=[]; for(let k=0;k<3;k++){ const ang=rot+k*(Math.PI*2/3); pts.push([cx+Math.cos(ang)*r, cy+Math.sin(ang)*r]); } return pts; }
+function fxSigHexa(ctx,sk,nowMs){
+  const glow=0.5+0.5*Math.sin(nowMs/1200);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R,0,6.283); }, .5, .35);
+  const tri1=triPts(SYM_CX,SYM_CY,SYM_R,-Math.PI/2), tri2=triPts(SYM_CX,SYM_CY,SYM_R,Math.PI/2);
+  [tri1,tri2].forEach(tri=>metalStroke(ctx, c=>{ tri.forEach(([x,y],i)=>i===0?c.moveTo(x,y):c.lineTo(x,y)); c.closePath(); }, .85, .5));
+  sigGlow(ctx,0.1+0.06*glow);
+  [tri1,tri2].forEach(tri=>{ ctx.beginPath(); tri.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); });
+  ctx.restore();
+}
+function fxSigMandala(ctx,sk,nowMs){
+  const petals=8, glow=0.5+0.5*Math.sin(nowMs/1000);
+  for(let i=0;i<petals;i++){
+    const ang=i*(6.2832/petals);
+    ctx.save(); ctx.translate(SYM_CX,SYM_CY); ctx.rotate(ang);
+    metalStroke(ctx, c=>{ c.moveTo(0,0); c.quadraticCurveTo(SYM_R*.3,-SYM_R*.35,0,-SYM_R*.92); c.quadraticCurveTo(-SYM_R*.3,-SYM_R*.35,0,0); }, .8, .4);
+    ctx.restore();
+  }
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R*.22,0,6.283); }, .9, .45);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R*1.02,0,6.283); }, .4, .3);
+  sigGlow(ctx,0.4+0.3*glow);
+  ctx.beginPath(); ctx.arc(SYM_CX,SYM_CY,SYM_R*.13,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxSigTriquetra(ctx,sk,nowMs){
+  const glow=0.5+0.5*Math.sin(nowMs/1200), R=SYM_R*0.85;
+  for(let i=0;i<3;i++){
+    const ang=-Math.PI/2+i*(Math.PI*2/3);
+    const lx=SYM_CX+Math.cos(ang)*R*0.58, ly=SYM_CY+Math.sin(ang)*R*0.58;
+    ctx.save(); ctx.translate(lx,ly); ctx.rotate(ang+Math.PI/2);
+    metalStroke(ctx, c=>{ c.moveTo(0,-R*0.62); c.quadraticCurveTo(R*0.62,-R*0.1,0,R*0.62); c.quadraticCurveTo(-R*0.62,-R*0.1,0,-R*0.62); }, .85, .5);
+    ctx.restore();
+  }
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,R*0.62,0,6.283); }, .35, .3);
+  sigGlow(ctx,0.15+0.08*glow);
+  for(let i=0;i<3;i++){
+    const ang=-Math.PI/2+i*(Math.PI*2/3);
+    const lx=SYM_CX+Math.cos(ang)*R*0.58, ly=SYM_CY+Math.sin(ang)*R*0.58;
+    ctx.save(); ctx.translate(lx,ly); ctx.rotate(ang+Math.PI/2);
+    ctx.beginPath(); ctx.moveTo(0,-R*0.62); ctx.quadraticCurveTo(R*0.62,-R*0.1,0,R*0.62); ctx.quadraticCurveTo(-R*0.62,-R*0.1,0,-R*0.62); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function fxSigCompass(ctx,sk,nowMs){
+  const glow=0.5+0.5*Math.sin(nowMs/1200);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R*0.3,0,6.283); }, .5, .3);
+  for(let i=0;i<8;i++){
+    const ang=-Math.PI/2+i*(Math.PI/4);
+    const len=i%2===0?SYM_R:SYM_R*0.5, w=i%2===0?.5:.35;
+    metalStroke(ctx, c=>{ c.moveTo(SYM_CX,SYM_CY); c.lineTo(SYM_CX+Math.cos(ang)*len, SYM_CY+Math.sin(ang)*len); }, .85, w);
+  }
+  sigGlow(ctx,0.3+0.25*glow);
+  ctx.beginPath(); ctx.arc(SYM_CX,SYM_CY,SYM_R*0.14,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxSigYinyang(ctx){
+  const R=SYM_R*0.9;
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,R,0,6.283); }, .5, .35);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY-R/2,R/2,Math.PI*0.5,Math.PI*1.5,true); c.arc(SYM_CX,SYM_CY+R/2,R/2,Math.PI*1.5,Math.PI*0.5,true); }, .85, .45);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY-R/2,R*0.15,0,6.283); }, .85, .35);
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY+R/2,R*0.15,0,6.283); }, .85, .35);
+  ctx.save(); ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle=METAL+'.14)';
+  ctx.beginPath();
+  ctx.arc(SYM_CX,SYM_CY,R,-Math.PI/2,Math.PI/2);
+  ctx.arc(SYM_CX,SYM_CY+R/2,R/2,Math.PI/2,-Math.PI/2,true);
+  ctx.arc(SYM_CX,SYM_CY-R/2,R/2,Math.PI/2,-Math.PI/2,false);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function fxSigFlower(ctx){
+  const r=SYM_R*0.42;
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,r,0,6.283); }, .7, .35);
+  for(let i=0;i<6;i++){
+    const ang=i*(Math.PI/3), cx=SYM_CX+Math.cos(ang)*r, cy=SYM_CY+Math.sin(ang)*r;
+    metalStroke(ctx, c=>{ c.arc(cx,cy,r,0,6.283); }, .6, .32);
+  }
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,r*2,0,6.283); }, .35, .3);
+}
+function malteseArm(ctx,r0,r1,halfw){
+  ctx.moveTo(-halfw,r0); ctx.quadraticCurveTo(0,r0+(r1-r0)*0.35,halfw,r0);
+  ctx.lineTo(halfw*1.6,r1); ctx.quadraticCurveTo(0,r1-(r1-r0)*0.15,-halfw*1.6,r1); ctx.closePath();
+}
+function fxSigMaltese(ctx){
+  const r0=SYM_R*0.22, r1=SYM_R*0.95;
+  for(let i=0;i<4;i++){
+    const ang=i*(Math.PI/2);
+    ctx.save(); ctx.translate(SYM_CX,SYM_CY); ctx.rotate(ang);
+    ctx.fillStyle=METAL+'.14)';
+    ctx.beginPath(); malteseArm(ctx,r0,r1,SYM_R*0.26); ctx.fill();
+    metalStroke(ctx, c=>malteseArm(c,r0,r1,SYM_R*0.26), .85, .4);
+    ctx.restore();
+  }
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,r0*0.9,0,6.283); }, .6, .3);
+}
+function fxSigSnowflake(ctx){
+  for(let i=0;i<6;i++){
+    const ang=i*(Math.PI/3)-Math.PI/2;
+    ctx.save(); ctx.translate(SYM_CX,SYM_CY); ctx.rotate(ang);
+    metalStroke(ctx, c=>{ c.moveTo(0,0); c.lineTo(0,-SYM_R); }, .85, .45);
+    [0.42,0.62,0.82].forEach(f=>{
+      const y=-SYM_R*f, bw=SYM_R*(0.34-f*0.18);
+      metalStroke(ctx, c=>{ c.moveTo(0,y); c.lineTo(bw,y-bw*0.55); }, .7, .32);
+      metalStroke(ctx, c=>{ c.moveTo(0,y); c.lineTo(-bw,y-bw*0.55); }, .7, .32);
+    });
+    ctx.restore();
+  }
+  metalStroke(ctx, c=>{ c.arc(SYM_CX,SYM_CY,SYM_R*0.12,0,6.283); }, .9, .35);
+}
+
+/* --- иллюзия формы: Кожаная стёжка / Топография / Оригами / Плетёная решётка --- */
+const QUILT_NODES=(()=>{ const nodes=[]; for(let row=-18;row<=12;row+=8){ for(let col=-16;col<=16;col+=8){ const off=((Math.round((row+18)/8))%2)*4; nodes.push([col+off,row]); } } return nodes; })();
+function fxIllLeather(ctx){
+  ctx.save(); clipShipBody(ctx);
+  QUILT_NODES.forEach(([x,y])=>{ metalStroke(ctx, c=>{ c.moveTo(x-8,y); c.lineTo(x,y-8); c.lineTo(x+8,y); c.lineTo(x,y+8); c.closePath(); }, .35, .3); });
+  QUILT_NODES.forEach(([x,y])=>{
+    const g=ctx.createRadialGradient(x,y,0,x,y,1.6);
+    g.addColorStop(0,'rgba(255,255,255,.35)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,1.6,0,6.283); ctx.fill();
+    metalStroke(ctx, c=>{ c.arc(x,y,.6,0,6.283); }, .8, .3);
+  });
+  ctx.restore();
+}
+function blobPath(ctx,cx,cy,scale){
+  const pts=[[0,-9],[7,-5],[8,3],[2,9],[-6,6],[-9,-2],[-4,-8]];
+  ctx.moveTo(cx+pts[0][0]*scale, cy+pts[0][1]*scale);
+  for(let i=1;i<pts.length;i++){
+    const [px,py]=pts[i], [qx,qy]=pts[(i+1)%pts.length];
+    ctx.quadraticCurveTo(cx+px*scale, cy+py*scale, cx+((px+qx)/2)*scale, cy+((py+qy)/2)*scale);
+  }
+  ctx.closePath();
+}
+const TOPO_LEVELS=[1.7,1.4,1.1,.8,.5,.25];
+function fxIllTopo(ctx){
+  ctx.save(); clipShipBody(ctx);
+  TOPO_LEVELS.forEach(s=>metalStroke(ctx, c=>blobPath(c,0,-2,s), .55, .35));
+  ctx.restore();
+}
+const ORIGAMI_TRIS=(()=>{
+  const tris=[]; const rows=[-22,-14,-6,2,10,14];
+  for(let r=0;r<rows.length-1;r++){
+    const y0=rows[r], y1=rows[r+1], hw0=edgeHalfWidth(y0), hw1=edgeHalfWidth(y1), n=r+2;
+    for(let i=0;i<n;i++){
+      const fx0=-hw0+(2*hw0*i/n), fx1=-hw0+(2*hw0*(i+1)/n);
+      const gx0=-hw1+(2*hw1*i/(n+1)), gx1=-hw1+(2*hw1*(i+1)/(n+1));
+      tris.push({pts:[[fx0,y0],[fx1,y0],[(gx0+gx1)/2,y1]], shade:(i%2===0)?'.10':'.22'});
+    }
+  }
+  return tris;
+})();
+function fxIllOrigami(ctx,sk){
+  ctx.save(); clipShipBody(ctx);
+  ORIGAMI_TRIS.forEach(tri=>{
+    ctx.fillStyle=sk.trail+tri.shade+')';
+    ctx.beginPath(); tri.pts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+    metalStroke(ctx, c=>{ tri.pts.forEach(([x,y],i)=>i===0?c.moveTo(x,y):c.lineTo(x,y)); c.closePath(); }, .35, .25);
+  });
+  ctx.restore();
+}
+function fxIllLattice(ctx){
+  ctx.save(); clipShipBody(ctx);
+  for(let k=-40;k<=40;k+=5){ const bold=(Math.round((k+40)/5))%2===0; metalStroke(ctx, c=>{ c.moveTo(-24+k,-24); c.lineTo(24+k,24); }, bold?.65:.35, bold?.7:.4); }
+  for(let k=-40;k<=40;k+=5){ const bold=(Math.round((k+40)/5))%2===1; metalStroke(ctx, c=>{ c.moveTo(-24+k,24); c.lineTo(24+k,-24); }, bold?.65:.35, bold?.7:.4); }
+  ctx.restore();
+}
+
+const PREM_FX_MAP={
+  matGold:fxMatGold, matSilver:fxMatSilver, matBronze:fxMatBronze, matIce:fxMatIce, matEmerald:fxMatEmerald,
+  matObsidian:fxMatObsidian, matMarble:fxMatMarble, matNebula:fxMatNebula, matOpal:fxMatOpal, matVerdigris:fxMatVerdigris,
+  matCarbon:fxMatCarbon, matLava:fxMatLava, matRust:fxMatRust, matHoney:fxMatHoney, matPlasma:fxMatPlasma,
+  matQuartz:fxMatQuartz, matWood:fxMatWood,
+  sigPenta:fxSigPenta, sigHexa:fxSigHexa, sigMandala:fxSigMandala, sigTriquetra:fxSigTriquetra, sigCompass:fxSigCompass,
+  sigYinyang:fxSigYinyang, sigFlower:fxSigFlower, sigMaltese:fxSigMaltese, sigSnowflake:fxSigSnowflake,
+  illLeather:fxIllLeather, illTopo:fxIllTopo, illOrigami:fxIllOrigami, illLattice:fxIllLattice,
+};
+/* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
+   мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
+   один сигнал на весь полёт (при посадке), не каждый кадр — не спамить BEACON. */
+let premFxAccum=0, premFxN=0, premFxKey=null;
+function drawPremiumFx2(ctx, sk, fx, nowMs){
+  const fn=PREM_FX_MAP[fx]; if(!fn) return;
+  const t0=performance.now();
+  fn(ctx, sk, nowMs);
+  const dt=performance.now()-t0;
+  if(premFxKey!==fx){ premFxAccum=0; premFxN=0; premFxKey=fx; }
+  premFxAccum+=dt; premFxN++;
+}
+function premSkinPerfReport(){ // вызывается один раз при посадке/окончании забега (game.js)
+  if(premFxN<10 || !premFxKey) return;
+  try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('skin_perf', premFxKey+':'+(premFxAccum/premFxN).toFixed(3)+'ms:'+premFxN+'n:Q'+Q.level); }catch(_){}
+  premFxAccum=0; premFxN=0; premFxKey=null;
+}
+
 /* HD-поле туманностей: пред-рендер на весь экран (цветные пятна + млечная
    полоса + звёздная пыль). Кадр = один drawImage; пересоздаётся только при
    смене волны/размера/DPR. Свой LCG — глобальный RNG не трогаем (от него
@@ -1517,6 +2120,38 @@ function draw(){
   }
 }
 
+/* 04.09.2026 «Эксклюзивные скины за Stars»: связные следы (Лента→Ядро, Нить-жемчуг→Грани) —
+   им нужна ИСТОРИЯ позиций корабля, не независимая частица из общего пула (particles),
+   тот же приём, что уже есть у echoBuf ниже, только рисуем не копии корабля, а линию/цепочку. */
+const trailHistBuf=[];
+function trailHistReset(){ trailHistBuf.length=0; }
+function drawStructuredTrail(skin,nowMs){
+  const n=trailHistBuf.length;
+  if(n<2) return;
+  if(skin.trailFx==='ribbon'){ // Лента: сплошная лента переменной ширины, тает с возрастом
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    for(let i=1;i<n;i++){
+      const a0=trailHistBuf[i-1], a1=trailHistBuf[i];
+      const age=i/n; // 0 у хвоста → 1 у самолётика
+      ctx.strokeStyle=skin.trail+(age*.55).toFixed(2)+')';
+      ctx.lineWidth=Math.max(.5, 6*age);
+      ctx.beginPath(); ctx.moveTo(a0.x,a0.y); ctx.lineTo(a1.x,a1.y); ctx.stroke();
+    }
+    ctx.restore();
+  } else if(skin.trailFx==='pearls'){ // Нить-жемчуг: связная цепочка бусин постоянной длины
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle=skin.trail+'.3)'; ctx.lineWidth=.6;
+    ctx.beginPath();
+    for(let i=0;i<n;i++){ const p=trailHistBuf[i]; if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }
+    ctx.stroke();
+    for(let i=0;i<n;i+=3){ // не каждая позиция — иначе бусины сольются в кашу
+      const p=trailHistBuf[i], age=i/n;
+      ctx.fillStyle=skin.trail+(age*.85).toFixed(2)+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,1.4*age+.3,0,6.283); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
 /* Эхо-шлейф Призрака: кольцевой буфер недавних позиций (рисуем 2 копии с задержкой) */
 const echoBuf=[];
 function echoReset(){ echoBuf.length=0; }
@@ -2462,6 +3097,11 @@ function drawPlane(sh,nowMs){
   const ghostA=(fx==='ghost'&&hq)? .65+.1*Math.sin(nowMs/300) : 1;
   if(fx==='ghost'&&hq){ drawEchoTrail(skin);
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
+  const trailFx=skin.trailFx||'';
+  if(hq && (trailFx==='ribbon'||trailFx==='pearls')){ // 04.09.2026: связные следы премиум-скинов
+    drawStructuredTrail(skin,nowMs);
+    if(S.running&&!S.paused){ trailHistBuf.push({x:p.x,y:p.y}); if(trailHistBuf.length>28) trailHistBuf.shift(); }
+  }
   ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
   if (S.invuln>0 && S.invuln<1e8 && invulnDim()) ctx.globalAlpha=(RM?.6:.35)*ghostA; // v1.94.0: театральное бессмертие (1e9) — без мигания, спектакль идёт ровно
   else if(ghostA<1) ctx.globalAlpha=ghostA;
@@ -2498,8 +3138,14 @@ function drawPlane(sh,nowMs){
   ctx.fillStyle=skin.fold;
   ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
   if(sh){ // кромки крыльев — хрусткая бумага (со средней ступени)
+    // 04.09.2026 (владелец, живьём): обводка шла только по 2 верхним рёбрам (нос→крыло),
+    // нижние два (крыло→вырез хвоста) не обводились вообще — контур «обрывался» на глаз.
+    // Добавлены все 4 ребра, касается ВСЕХ скинов, не только премиум.
     ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
-    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+    ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+    ctx.stroke();
   }
   /* 31.08.2026: блик-эллипс у носа (владелец обвёл жёлтым: «я думал ранее это какая-то
      ошибка... он мешает») — убран целиком. Огонёк двигателя владельцу, наоборот,
@@ -2538,8 +3184,8 @@ function drawPlane(sh,nowMs){
      живьём владельцем через макет, гейтятся по hq той же дисциплиной, что Неон/Хром/Плазма
      выше — на слабых устройствах (Q.level<2) премиум-скин по-прежнему покупается и носится,
      просто без этой добавки, как и любой другой fx-скин сейчас. */
-  if(hq && fx==='satellites'){ // Спутники: 3 орбитальные точки + камень в носу + кромка вспыхивает при пролёте
-    let nearTop=0;
+  if(hq && fx==='satellites'){ // Спутники: 3 орбитальные точки + мощный кристалл на носу и на хвосте
+    let nearTop=0, nearBottom=0;
     ctx.save(); ctx.globalCompositeOperation='lighter';
     for(let i=0;i<3;i++){
       const ph=nowMs/900+i*2.094;
@@ -2549,15 +3195,19 @@ function drawPlane(sh,nowMs){
       g.addColorStop(0,skin.trail+'.95)'); g.addColorStop(1,skin.trail+'0)');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.arc(ox,oy,r*2.2,0,6.283); ctx.fill();
-      const topDist=Math.abs(((ph%6.283)+6.283)%6.283-4.71);
+      const a=((ph%6.283)+6.283)%6.283;
+      // верх орбиты (ph≈4.71) — рядом с носом; низ (ph≈1.5708) — рядом с хвостом
+      const topDist=Math.abs(a-4.71);
       nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
+      const botDist=Math.abs(a-1.5708);
+      nearBottom=Math.max(nearBottom, Math.max(0,1-botDist/0.4));
     }
     ctx.restore();
-    drawSkinGem(ctx,skin,0,-16,1.5,nearTop*.8);
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.strokeStyle='rgba(255,255,255,'+(nearTop*.7).toFixed(2)+')'; ctx.lineWidth=.6;
-    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14); ctx.stroke();
-    ctx.restore();
+    // «меняем цветочек на мощный кристалл, на нос и назад... пусть оба мигают, когда шары
+    // мимо проходят» (владелец) — два кристалла на точках орбиты, где реально пролетают
+    // шары, каждый мигает от СВОЕГО прохода
+    drawMightyCrystal(ctx,skin.trail,0,-15,2.6,nearTop*.85);
+    drawMightyCrystal(ctx,skin.trail,0,7,2.2,nearBottom*.85);
   }
   if(hq && fx==='facets'){ // Грани: огранка с бегущим бликом-разверткой + камень в точке схода
     const cyc=2200;
@@ -2576,38 +3226,71 @@ function drawPlane(sh,nowMs){
     });
     const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
     drawSkinGem(ctx,skin,0,8,1.6,centerGlint*.9);
+    // «по задним граням будут драгоценности, в дополнение к той что уже по середине, и на
+    // острие носа добавится» (владелец) — камни в носу и на обоих кончиках крыльев
+    drawSkinGem(ctx,skin,CORNER_NOSE[0],CORNER_NOSE[1],1.2,0);
+    drawSkinGem(ctx,skin,CORNER_LWING[0],CORNER_LWING[1],1.1,0);
+    drawSkinGem(ctx,skin,CORNER_RWING[0],CORNER_RWING[1],1.1,0);
   }
-  if(hq && fx==='inlay'){ // Инкрустация: 3 камня в корпусе; оправа идёт от вершины носа
+  if(hq && fx==='inlay'){ // Инкрустация: камни в корпусе + на кончиках крыльев; оправа от вершины носа
     // (0,-22) ровно по кромке крыла до камней [1]/[2] — не наискось через корпус.
-    ctx.strokeStyle='rgba(255,220,140,.4)'; ctx.lineWidth=.4;
-    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
-    ctx.moveTo(0,-22); ctx.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y); ctx.stroke();
+    metalStroke(ctx, c=>{
+      c.moveTo(0,-22); c.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
+      c.moveTo(0,-22); c.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y);
+    }, .75, .4);
     const cyc=2400;
-    GEM_SLOTS.forEach(gm=>{
+    // «на конце крыльев камни, что будут мигать» — WINGTIP_SLOTS добавлены к основным
+    GEM_SLOTS.concat(WINGTIP_SLOTS).forEach(gm=>{
       const ph=((nowMs+gm.ph*400)%cyc)/cyc;
       const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
       drawSkinGem(ctx,skin,gm.x,gm.y,gm.r,glint);
     });
   }
-  if(hq && fx==='filigree'){ // Филигрань: гравировка по кромке с бегущей вспышкой + камень в носу
+  if(hq && fx==='filigree'){ // Филигрань: гравировка по кромке, искра бежит от камня в носу по обеим сторонам разом
+    /* 04.09.2026 (владелец, живьём — «доходит, камень не загорается»): проверено расчётом
+       фаз, не на глаз — старая формула ph=(ei*6+i)/12 давала правой и левой кромке РАЗНЫЕ
+       несовпадающие окна, а камень в носу мигал по своей отдельной формуле (nowMs/1800%1<
+       0.2), никак не привязанной к пробегу вообще: правая кромка «доходила» до носа на
+       42% цикла, камень к этому моменту уже гас на 20% раньше — разрыв в 22% цикла.
+       Починка: искра стартует ИЗ камня (C=0) и одновременно бежит по обеим кромкам
+       наружу — один физический источник времени (C) на всё, задержка насечки = f*0.5. */
     ctx.save(); ctx.globalCompositeOperation='lighter';
+    metalStroke(ctx, c=>{ c.moveTo(0,-22); c.lineTo(-16,14); c.moveTo(0,-22); c.lineTo(16,14); }, .55, .35);
     const cyc=1800;
+    const C=(nowMs/cyc)%1;
     FIL_MARKS.forEach(m=>{
-      ctx.strokeStyle='rgba(255,220,140,.4)'; ctx.lineWidth=.5;
-      ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); ctx.stroke();
-      const local=((nowMs/cyc+m.ph)%1);
-      const glint=Math.max(0,1-local/0.18);
+      metalStroke(ctx, c=>{ c.moveTo(m.x,m.y); c.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); }, .7, .4);
+      const local=C-m.f*0.5;
+      const glint=(local>=0&&local<0.18)?Math.max(0,1-local/0.18):0;
       if(glint>0.02){
         ctx.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
         ctx.beginPath(); ctx.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); ctx.fill();
       }
     });
     ctx.restore();
-    const noseGlint=Math.max(0,1-((nowMs/1800)%1)/0.2);
-    drawSkinGem(ctx,skin,0,-16,1.4,noseGlint*.7);
+    const noseGlint=Math.max(0,1-C/0.15);
+    drawSkinGem(ctx,skin,0,-16,1.4,noseGlint*.85);
   }
-  if(hq && fx==='core'){ // Ядро: гранёный реактор в оправе-кольце, бьётся и даёт лучи на пике
+  if(hq && fx==='core'){ // Ядро: гранёный реактор в оправе-кольце + хребет от хвоста до носа + камни на крыльях
+    // хребет от хвоста (0,6) до самого носа (0,-22) с бегущей точкой
+    metalStroke(ctx, c=>{ c.moveTo(0,-22); c.lineTo(0,6); }, .6, .4);
+    const spineT=(nowMs/2000)%1;
+    const sy=-22+28*spineT;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.fillStyle='rgba(255,255,255,'+(Math.sin(spineT*Math.PI)*.8).toFixed(2)+')';
+    ctx.beginPath(); ctx.arc(0,sy,.9,0,6.283); ctx.fill();
+    ctx.restore();
+    // камни на крыльях вспыхивают ровно в момент, когда бегущая точка доходит до конца хребта
+    const wingGlint=Math.max(0,1-(1-spineT)/0.15);
+    drawSkinGem(ctx,skin,-9,9,1.3,wingGlint);
+    drawSkinGem(ctx,skin,9,9,1.3,wingGlint);
     ctx.save(); ctx.translate(0,2);
+    // гранёная оправа-кольцо вокруг реактора — тёплый металл, не тон скина (была та же
+    // ошибка «сливается», что у Инкрустации)
+    metalStroke(ctx, c=>{
+      for(let i=0;i<6;i++){ const a=i*Math.PI/3; const px=Math.cos(a)*5.4, py=Math.sin(a)*5.4; i===0?c.moveTo(px,py):c.lineTo(px,py); }
+      c.closePath();
+    }, .7, .4);
     ctx.strokeStyle=skin.trail+'.45)'; ctx.lineWidth=.4;
     ctx.beginPath(); ctx.arc(0,0,3.3,0,6.283); ctx.stroke();
     ctx.globalCompositeOperation='lighter';
@@ -2643,8 +3326,13 @@ function drawPlane(sh,nowMs){
       ctx.restore();
     }
     ctx.restore();
-    drawSkinGem(ctx,skin,0,-16,1.4,anyLock*.6);
+    // по камню на каждом углу крыла + свой «наконечник» в носу (не общий камень со всеми
+    // остальными), крупнее и ярче отзывается на скобку, когда та проходит мимо
+    drawSkinGem(ctx,skin,-14,12,1.1,0);
+    drawSkinGem(ctx,skin,14,12,1.1,0);
+    drawSpearGem(ctx,skin.trail,0,-17,2.6,anyLock*.9);
   }
+  if(hq) drawPremiumFx2(ctx, skin, fx, nowMs); // 05.09.2026: 30 доп. премиум-скинов, единая точка входа — см. определение выше
   /* 28.08.2026 «Тюнинг, шаг 1: декаль на корпусе». Левая половина корпуса — плоская видимая
      грань (fold красит только правый треугольник, см. выше); декаль кладём в её центр масс —
      геометрический центроид треугольника носа/крыла/хвоста (0,-22)/(-16,14)/(0,6):
