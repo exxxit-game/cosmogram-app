@@ -1651,7 +1651,7 @@ const S = {
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
   shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
-  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, starsSpawned:0, hundredDone:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
     // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
@@ -1718,6 +1718,9 @@ const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — п�
   // фиксированное время вместо «пока не умер» — Score Attack на таймер. Оригинал — 5 минут, у нас средний
   // забег ~30с, поэтому 60с (владелец выбрал сам, не решение по умолчанию) — короткий, напряжённый отрезок
   // на весь отведённый срок, а не растянутая копия оригинала не по темпу игры.
+const HUNDRED_DIST=200; // 05.09.2026 «100%»: короткий фиксированный отрезок из каталога идей
+  // (.knowledge/GAME-MODES.md «Загадка неба» — 200м) — достаточно короткий, чтобы каждую
+  // звезду было видно и помнить, достаточно длинный, чтобы обычные преграды успели пройти волну.
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -1945,6 +1948,7 @@ function spawnStar(){
      это же число. */
   s.x=fieldL()+mapRand(40,fieldW()-40); s.y=-50; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
   stars.push(s);
+  S.starsSpawned++; // 05.09.2026 «100%»: сколько звёзд появилось за забег — база для проверки полного сбора
 }
 function powGap(){ return lerp(12,7,difficulty()) * mapRand(.85,1.2); } // v1.36.0 «Щедрое небо»: темп следует за сложностью — чем горячее небо, тем чаще подмога
 /* 22.08.2026 «Честный коридор для бонуса»: жалоба владельца — бонус мог оказаться внутри
@@ -2613,6 +2617,11 @@ function update(dt){
     const elMH=elModeHud, left=Math.max(0,CARAVAN_TIME-S.time), tSec=Math.floor(left*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
     if (S.time>=CARAVAN_TIME && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
+  }
+  else if (S.mode==='hundred'){ // 100% (v1.478.80): фиксированный отрезок — цель не выжить, а долететь и собрать всё
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent='100% · '+Math.min(distI,HUNDRED_DIST)+'/'+HUNDRED_DIST+(L.unitM||'м'); }
+    if (S.dist>=HUNDRED_DIST && !S.dying){ startDying(); S.hundredDone=1; } // долетаешь до конца всегда — 100% отдельно проверяется на итогах по starsSpawned/starsCollected
   }
   else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,

@@ -54,6 +54,7 @@ const I18N = {
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
     modeIronman:'Ironman', modeIronmanD:'1 жизнь, 0 бонусов, ×4 очков', ironmanNewBest:'Новый рекорд Ironman', // 05.09.2026: имя дисциплины не переводится, как Speedrun/Caravan
     mode1CC:'1CC', mode1CCD:'Небо месяца на 1 жизни', oneCCNewBest:'Новый рекорд 1CC', // 05.09.2026: тот же замок/попытка, что у Небо месяца
+    mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца/1CC
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
@@ -208,6 +209,7 @@ const I18N = {
     noMiss:'Not a single hit', pacifist:'Evasion only',
     modeIronman:'Ironman', modeIronmanD:'1 life, 0 power-ups, ×4 score', ironmanNewBest:'New Ironman record',
     mode1CC:'1CC', mode1CCD:'Track of the month, 1 life', oneCCNewBest:'New 1CC record',
+    mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
@@ -355,6 +357,7 @@ const I18N = {
     noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bonos, ×4 puntos', ironmanNewBest:'Nuevo récord de Ironman',
     mode1CC:'1CC', mode1CCD:'Pista del mes, 1 vida', oneCCNewBest:'Nuevo récord de 1CC',
+    mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
@@ -517,6 +520,7 @@ const I18N = {
     noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bônus, ×4 pontos', ironmanNewBest:'Novo recorde de Ironman',
     mode1CC:'1CC', mode1CCD:'Pista do mês, 1 vida', oneCCNewBest:'Novo recorde de 1CC',
+    mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
@@ -677,6 +681,7 @@ const I18N = {
     noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
     modeIronman:'Ironman', modeIronmanD:'1 vie, 0 bonus, ×4 points', ironmanNewBest:'Nouveau record Ironman',
     mode1CC:'1CC', mode1CCD:'Trace du mois, 1 vie', oneCCNewBest:'Nouveau record 1CC',
+    mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
