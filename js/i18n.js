@@ -52,6 +52,7 @@ const I18N = {
     srGoal:'Цель', srFinish:'Финиш!', srNewBest:'Новый рекорд времени',
     modeDaily:'Небо месяца', modeDailyD:'Одно небо на всех игроков — весь месяц, поставь рекорд', dlNewBest:'Новый рекорд неба месяца',
     dailyOnce:'2 попытки', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'На сегодня попытки кончились · твой полёт: '+s+' · новые попытки завтра, небо то же весь месяц',
+    modeCaravan:'Caravan', modeCaravanD:'60 секунд на очки — время решает, не жизни', caravanNewBest:'Новый рекорд Caravan', // 05.09.2026: имя дисциплины (Cave, аркады) не переводится, как Speedrun
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
@@ -205,6 +206,7 @@ const I18N = {
     srGoal:'Goal', srFinish:'Finish!', srNewBest:'New time record',
     modeDaily:'Track of the month', modeDailyD:'One track for every player, all month — set the record', dlNewBest:'New track of the month record',
     dailyOnce:'2 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'Out of attempts for today · your flight: '+s+' · new attempts tomorrow, same sky all month',
+    modeCaravan:'Caravan', modeCaravanD:'60 seconds for points — the clock decides, not your lives', caravanNewBest:'New Caravan record',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
@@ -350,6 +352,7 @@ const I18N = {
     modeDaily:'Pista del mes', modeDailyD:'Una pista para todos los jugadores, todo el mes — marca el récord',
     dlNewBest:'Nuevo récord de la pista del mes', dailyOnce:'2 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sin intentos por hoy · tu vuelo: '+s+' · nuevos intentos mañana, mismo cielo todo el mes',
+    modeCaravan:'Caravan', modeCaravanD:'60 segundos para puntos — decide el reloj, no las vidas', caravanNewBest:'Nuevo récord de Caravan',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
@@ -510,6 +513,7 @@ const I18N = {
     modeDaily:'Pista do mês', modeDailyD:'Uma pista para todos os jogadores, o mês inteiro — bata o recorde',
     dlNewBest:'Novo recorde da pista do mês', dailyOnce:'2 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sem tentativas por hoje · seu voo: '+s+' · novas tentativas amanhã, mesmo céu o mês todo',
+    modeCaravan:'Caravan', modeCaravanD:'60 segundos para pontos — o relógio decide, não as vidas', caravanNewBest:'Novo recorde de Caravan',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
@@ -669,6 +673,7 @@ const I18N = {
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
     modeDaily:'Trace du mois', modeDailyD:'Une trace pour tous les joueurs, tout le mois — décroche le record', dlNewBest:'Nouveau record de la Trace du mois',
     dailyOnce:'2 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Plus de tentatives aujourd’hui · ton vol : '+s+' · nouvelles tentatives demain, même ciel tout le mois',
+    modeCaravan:'Caravan', modeCaravanD:'60 secondes pour marquer des points — l’horloge décide, pas tes vies', caravanNewBest:'Nouveau record Caravan',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',

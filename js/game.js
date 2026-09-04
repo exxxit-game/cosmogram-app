@@ -1647,6 +1647,10 @@ function difficulty(){ // волна + полёт; ранний ramp делае�
   const opening=.62*(1-Math.exp(-S.dist/100))*Math.exp(-S.dist/900); // к ~5с даёт живой темп, к поздней игре почти исчезает
   return Math.min(1, base+opening); }
 const SR_GOAL=10000; // Спидран: цель по очкам — решение режиссёра (v1.42.0)
+const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — прочный жанровый термин, не выдумка):
+  // фиксированное время вместо «пока не умер» — Score Attack на таймер. Оригинал — 5 минут, у нас средний
+  // забег ~30с, поэтому 60с (владелец выбрал сам, не решение по умолчанию) — короткий, напряжённый отрезок
+  // на весь отведённый срок, а не растянутая копия оригинала не по темпу игры.
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -2540,6 +2544,11 @@ function update(dt){
     if (elMH && elMH._t!==tSec){ elMH._t=tSec;
       elMH.textContent=fmtTime(S.time)+' · '+L.srGoal+' '+fmtN(SR_GOAL); }
     if (S.score>=SR_GOAL && !S.dying){ startDying(); S.srWin=1; } // занавес как при смерти, но это победа
+  }
+  else if (S.mode==='caravan'){ // Caravan (v1.478.74): обратный отсчёт вместо «пока не умер» — время решает, не смерть
+    const elMH=elModeHud, left=Math.max(0,CARAVAN_TIME-S.time), tSec=Math.floor(left*10)/10;
+    if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
+    if (S.time>=CARAVAN_TIME && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
   }
   else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0)
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
