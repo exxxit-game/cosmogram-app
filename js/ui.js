@@ -231,7 +231,8 @@ function runPassFill(){ // 30.08.2026 «Единый паспорт забега
   grid.innerHTML=statCell(Math.floor(S.dist)+' '+(L.unitM||'м'),L.dist)+statCell(fmtTime(S.time),L.passTime)+
     statCell(S.starsCollected,L.stars)+statCell('×'+S.comboMax,L.maxCombo)+
     statCell(S.mission,L.missionLbl)+statCell(S.hits,L.passHits)+
-    statCell(S.bonuses,L.passBonus)+statCell(Math.round(S.smooth*100)+'%',L.passSmooth);
+    statCell(S.bonuses,L.passBonus)+statCell(Math.round(S.smooth*100)+'%',L.passSmooth)+
+    statCell(S.nearMiss,L.nearMiss); // 05.09.2026: девятая ячейка — не додумывал точное место в сетке, владелец сам решит после первого показа (потом разберёмся)
 }
 /* ============================================================
    ПОКОЛЕНИЕ ЗАБЕГА (v1.282.20 «Ответ из прошлого»)
@@ -295,7 +296,7 @@ function startGame(saved){
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
-    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,srWin:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
+    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,bullet:false,bt:0,mode:runMode,hits:0,bonuses:0,nearMiss:0,srWin:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
@@ -675,6 +676,7 @@ function ghostUpload(category, track, skin, best, seed){
       bestPill('keys',saneNumber(Store.get('bestKeys',0),0))+
       bestPill('timer',saneNumber(Store.get('bestBullet',0),0))+
       bestPill('ruler',saneNumber(Store.get('bestDist',0),0)+' '+(L.unitM||'м'))+
+      bestPill('nearmiss',saneNumber(Stats.nearMiss,0))+ // 05.09.2026: пожизненный счётчик уже копился (game.js), но нигде не показывался игроку — i-nearmiss в SVG-наборе уже был, просто не подключён
     '</div>');
   runPassFill(); // паспорт забега (v1.42.0)
   tryOnRevert(); // примерка: забег окончен — возвращаем свой скин (нет «ЕЩЁ РАЗ» с чужим)

@@ -1585,7 +1585,10 @@ const S = {
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
   shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, bullet:false, bt:0, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
-  mode:'classic', hits:0, bonuses:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+  mode:'classic', hits:0, bonuses:0, nearMiss:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+    // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
+    // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
+    // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
   dying:0, dyingT:0, pausing:0, // «Склейка»: slow-mo занавес смерти / плавная остановка паузы
   smooth:1, // Smooth Flight: плавность пилотирования 0.5..1.0 → финальный множитель 0.75..1.0
   hueShift:0, skin:0, ownedSkins:[0],
@@ -2387,7 +2390,7 @@ function update(dt){
         continue;
       }
       if (S.invuln<=0 && gnm){ // впритык к пилону — обычный near-miss
-        o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1;
+        o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1; S.nearMiss++; // 05.09.2026: Stats — пожизненно, S — паспорт этого забега (см. init в ui.js:298)
         sfx.nearMiss();
         haptic('light');
         if (fullRisk()){ // Б1: монеты — только за настоящий риск
@@ -2426,7 +2429,7 @@ function update(dt){
           if (S.lives<=0){ if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':'+S.lastHitKind); startDying(); return; } // v1.108.1: волна+причина, анонимно — балансовая телеметрия
         }
       } else if (!o.nm && d2 < (rr+24)*(rr+24) && isReceding(dx,dy,o.vx||0,o.vy,plane.vx,plane.vy)){ // near miss: пролетел вплотную и уже уходит — не летит на таран
-        o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1;
+        o.nm=true; Stats.nearMiss=(Stats.nearMiss||0)+1; S.nearMiss++; // 05.09.2026: Stats — пожизненно, S — паспорт этого забега (см. init в ui.js:298)
         sfx.nearMiss(); // свист пролёта
         haptic('light');
         if (fullRisk()){ // Б1: под бонусом — честь и свист, монет нет
