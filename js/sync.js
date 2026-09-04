@@ -512,6 +512,7 @@ function syncLocalScores(){
     bullet: saneScore(Store.get('bestBullet',0)),
     dist: saneScore(Store.get('bestDist',0)),
     keys: saneScore(Store.get('bestKeys',0)),
-    caravan: saneScore(Store.get('bestCaravan',0)) // 05.09.2026: единая таблица Caravan, не по управлению
+    caravan: saneScore(Store.get('bestCaravan',0)), // 05.09.2026: единая таблица Caravan, не по управлению
+    ironman: saneScore(Store.get('bestIronman',0)) // 05.09.2026: единая таблица Ironman, не по управлению
   };
 }

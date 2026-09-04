@@ -208,6 +208,7 @@ function modesFill(){ // подписи + отметка выбранного р
   toggleCls('modeDaily','locked',dl);
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
   put('modeCaravan',L.modeCaravan,L.modeCaravanD); // 05.09.2026
+  put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
   const fl=Store.get('forgeLast',null); // v1.90.0: дверь помнит гостя — трасса ждёт за ней по имени (как последний курс в Course World)
   /* v1.282.13: имя чистим и на чтении. Все нынешние пути записи forgeLast уже проходят
      forgeSanitize, так что боевого вектора нет — но эта строка кладёт значение из Store
@@ -215,14 +216,14 @@ function modesFill(){ // подписи + отметка выбранного р
      Санация на чтении стоит один вызов и снимает целый класс «а если туда попало не то». */
   const flName=(fl&&fl.n&&typeof sanitizeTrackName==='function')?sanitizeTrackName(fl.n):(fl&&fl.n?String(fl.n).replace(/[<>&"'\\]/g,''):'');
   put('modeForge',L.modeForge,L.modeForgeD+(flName?' · «'+flName+'»':''));
-  const sel={daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan'};
+  const sel={daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
   // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
   const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
-  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,custom:L.modeForge,caravan:L.modeCaravan}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan
+  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman
   const mode=(typeof controlMode==='function')?controlMode():'touch';
   const ctlName=mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch);
   head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
@@ -294,9 +295,9 @@ function startGame(saved){
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
   if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
-  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:3,invuln:1.5,speed:3.4,dist:0,
+  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»: 1 жизнь вместо 3 — часть цены за ×4 очков
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
-    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,srWin:0,caravanTimeUp:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
+    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
@@ -389,8 +390,9 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='custom'||runMode==='theater'||runMode==='caravan')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan)
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman)
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
+  if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
   sfx.launch(SKINS[S.skin]||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
   music.start('game'); // адаптивный полёт: дрон сразу, слои — по волнам/жизням
   engine.start(); // голос самолётика: шелест следует за скоростью
@@ -413,7 +415,8 @@ function gameOver(){
   releaseAwake();
   if(typeof BB!=='undefined') BB.log('landing','score '+Math.floor(S.score)+' · '+S.mode); // v1.99.7 «Чёрный ящик»
   if (typeof playSecFlush==='function') playSecFlush(); // v1.66.1: секунды неба — в хранилище разом, не по одной
-  const sc=Math.floor(S.score*(0.5+S.smooth*0.5)); // Smooth Flight: итог × плавность (0.75..1.0)
+  let sc=Math.floor(S.score*(0.5+S.smooth*0.5)); // Smooth Flight: итог × плавность (0.75..1.0)
+  if (S.mode==='ironman') sc*=4; // 05.09.2026 «Ironman»: ×4 поверх уже честного счёта — плата за 1 жизнь и 0 бонусов
   if (S.mode==='custom' && typeof mapOver==='function'){ // Своя трасса: не в зачёт — иначе лёгкие карты стали бы фермой звёзд (v1.68.0); v1.94.0: театр здесь не ставится — занавес опущен
     /* v1.282.13: автосейв обязан сгореть ЗДЕСЬ. Ранний выход стоит выше общего
        Store.del('savedRun') в конце функции, а mapOver его не трогает — и автосейв
@@ -429,10 +432,10 @@ function gameOver(){
     theaterTrack=null; toggleCls('watchBtn','hidden',true); mapOver(sc); return;
   }
   const mode=controlMode(); // категория управления: gyro / touch / keys
-  // 05.09.2026 «Caravan»: одна общая таблица, не по управлению (владелец выбрал явно — мало
-  // игроков, дробить рано) — тот же приём переопределения cat/modeKey, что раньше стоял у Bullet.
-  const cat=S.mode==='caravan'?'caravan':mode;
-  const modeKey=S.mode==='caravan'?'bestCaravan':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // v1.280.0: добавлена ветка keys
+  // 05.09.2026 «Caravan»/«Ironman»: одна общая таблица на каждую дисциплину, не по управлению
+  // (владелец выбрал так для Caravan явно — мало игроков, дробить рано; тот же приём для Ironman).
+  const cat=S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':mode);
+  const modeKey=S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'))); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
   const isRecord = sc>prevCat && sc>0;
   const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
@@ -461,6 +464,16 @@ function gameOver(){
   if(S.smooth>=0.99)Stats.perfectRuns++;
   if(mode==='gyro')Stats.gGames++; else if(mode==='keys')Stats.kGames++; else Stats.tGames++;
   if(distM===42)Stats.e42=1; if(sc>9000)Stats.e9000=1; if(sc===1337)Stats.e1337=1; // пасхалки
+  /* 05.09.2026 «No-Miss / Pacifist»: бейджи поверх обычных забегов, не отдельные режимы.
+     No-Miss честно достижим только там, где есть финиш БЕЗ смерти — gameOver() в остальных
+     режимах (Классика/Небо месяца) вызывается исключительно через S.lives<=0, то есть
+     «0 попаданий» на итогах там противоречиво по конструкции самого кода. */
+  const noMissNow = ((S.mode==='speedrun'&&S.srWin) || (S.mode==='caravan'&&S.caravanTimeUp)) && S.hits===0;
+  // Pacifist: ни разу не подобрал Таран/Сверхновую — только уклонение. bonuses>0 требует хотя бы
+  // одного взятого бонуса — иначе флаг был бы честен формально, но бессмысленен (не было выбора).
+  const pacifistNow = !S.everDash && !S.everNova && S.bonuses>0;
+  if (noMissNow) Stats.noMissRuns=(Stats.noMissRuns||0)+1;
+  if (pacifistNow) Stats.pacifistRuns=(Stats.pacifistRuns||0)+1;
   saveStats();
   Store.del('savedRun');
   setText('myRank',''); // ранг прошлого забега не течёт в этот
@@ -497,10 +510,10 @@ function gameOver(){
       +'</div>';
   }
   const medals=[];
-  // Caravan (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
-  // проекта визуал идёт только через макет. Рекорд Caravan объявляется текстовой плашкой
+  // Caravan/Ironman (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
+  // проекта визуал идёт только через макет. Рекорд объявляется текстовой плашкой
   // ниже (recChips), как уже сделано для Спидрана, а не золотой медалью с иконкой.
-  if (isRecord && S.mode!=='caravan') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0));
+  if (isRecord && S.mode!=='caravan' && S.mode!=='ironman') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0));
   if (isDistRecord) medals.push(medalHTML('dist', medals.length*80));
   setHTML('recordMedals', medals.join(''));
 
@@ -508,6 +521,7 @@ function gameOver(){
   const recChips=[];
   if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
   if (S.mode==='caravan' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('target')+L.caravanNewBest+'</span>'); // 05.09.2026: текстовый рекорд вместо новой медали-иконки
+  if (S.mode==='ironman' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('crown')+L.ironmanNewBest+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
     const dd=S.dailyDay||trackDayKey();
     const prevDl=Store.get('dailyBest',null), prevDlSc=(prevDl && prevDl.d===dd)?prevDl.s:0;
@@ -515,6 +529,8 @@ function gameOver(){
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
   }
   if (S.mode==='daily'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic
+  if (noMissNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('checkbadge')+L.noMiss+'</span>');
+  if (pacifistNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('shield')+L.pacifist+'</span>');
   if (ghostBeatNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ghost')+' '+L.ghostBeat(ghostName,sc,ghostBest)+'</span>');
   // v1.108.1 «Пасхалки заговорили»: e42/e9000/e1337 взводились в Stats и молчали — теперь есть момент
   if (distM===42) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg42+'</span>');
@@ -1201,7 +1217,8 @@ const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
   decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' },
   icon:  { list:ICONS,  ownedKey:'ownedIcons',  selKey:'icon' },
-  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx' } // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
+  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
+  trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
 };
 /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
    тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
@@ -1332,27 +1349,31 @@ function angarBuildTabs(){
      потом (тем же заходом) — одной нерабочей вкладкой «Цвет». 28.08.2026: вторая вкладка
      «Декаль» с реальным переключением. 29.08.2026: третья — «Иконки» (правая сторона
      борта, носится вместе с декалью, не вместо), четвёртая — «Вспышка» (не на борту,
-     проигрывается на старте). След/Аура/Звук — сюда же позже. */
+     проигрывается на старте). 05.09.2026: пятая — «След», независимый от скина. Аура/Звук —
+     сюда же позже. */
   if(angarTabsBuilt) return;
   const tabs=$('angarTabs');
   if(tabs){
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
                       '<button class="angarTab" id="angarTabDecal"></button>'+
                       '<button class="angarTab" id="angarTabIcon"></button>'+
-                      '<button class="angarTab" id="angarTabFlash"></button>';
+                      '<button class="angarTab" id="angarTabFlash"></button>'+
+                      '<button class="angarTab" id="angarTabTrail"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
     $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
     $('angarTabIcon').addEventListener('click',()=>angarSwitchCat('icon'));
     $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
+    $('angarTabTrail').addEventListener('click',()=>angarSwitchCat('trail'));
   }
   angarTabsBuilt=true;
 }
 function angarRenderTabsSel(){
-  const tc=$('angarTabColor'), td=$('angarTabDecal'), ti=$('angarTabIcon'), tf=$('angarTabFlash');
+  const tc=$('angarTabColor'), td=$('angarTabDecal'), ti=$('angarTabIcon'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
   if(tc) tc.classList.toggle('sel', angarCat==='color');
   if(td) td.classList.toggle('sel', angarCat==='decal');
   if(ti) ti.classList.toggle('sel', angarCat==='icon');
   if(tf) tf.classList.toggle('sel', angarCat==='flash');
+  if(tr) tr.classList.toggle('sel', angarCat==='trail');
 }
 function angarSwitchCat(cat){
   if(angarCat===cat) return;
@@ -1437,6 +1458,7 @@ function renderHangar(){
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
   const tabIcon=$('angarTabIcon'); if(tabIcon) tabIcon.textContent=L.angarTabIcon;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
+  const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
@@ -1825,7 +1847,7 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan']].forEach(function(pair){
+[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
     if (pair[1]==='daily'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
@@ -2310,7 +2332,7 @@ wireOn('accOutBtn', 'click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); S
    таблицу из витрины чужих успехов в разговор о твоём месте в ней. */
 function myBestFor(cat){
   const k = cat==='gyro'?'bestGyro' : cat==='touch'?'bestTouch' : cat==='keys'?'bestKeys'
-          : cat==='dist'?'bestDist' : cat==='caravan'?'bestCaravan' : null;
+          : cat==='dist'?'bestDist' : cat==='caravan'?'bestCaravan' : cat==='ironman'?'bestIronman' : null;
   return k ? saneNumber(Store.get(k,0),0) : 0;
 }
 /* ============================================================
@@ -2578,9 +2600,9 @@ function applyLang(){
   setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
   /* 04.09.2026 (владелец): вкладки категорий в «Топ» были без подписей — неясно, что означает
      каждая иконка. Переиспользую уже готовые ключи (те же слова, что у выбора управления и
-     режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan), новых
-     переводов не завожу. */
-  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan};
+     режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan/modeIronman),
+     новых переводов не завожу. */
+  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,ironman:L.modeIronman};
   document.querySelectorAll('.topCat').forEach(function(b){
     const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
   });
@@ -2621,6 +2643,8 @@ Store.init(()=>{
   S.icon = saneNumber(Store.get('icon',0),0);
   S.ownedLaunchFx = Array.from(new Set(saneArray(Store.get('ownedLaunchFx',[0]),[0]).concat(ANGAR_FREEBIE.flash)));
   S.launchFx = saneNumber(Store.get('launchFx',0),0); // 29.08.2026: было S.flash/Store-ключ 'flash' — переименовано, см. game.js
+  S.ownedTrails = saneArray(Store.get('ownedTrails',[0]),[0]); // 05.09.2026: след — независимый от скина, все стартуют с «Нет», без ANGAR_FREEBIE (владелец: старая пара скин→след не переносится)
+  S.trail = saneNumber(Store.get('trail',0),0);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);

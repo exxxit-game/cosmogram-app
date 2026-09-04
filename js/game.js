@@ -110,6 +110,22 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,'},  // Оригами-заломы
   {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'}   // Плетёная решётка
 ];
+/* 05.09.2026 «След — 5-я вкладка» (владелец, после разбора): раньше след жил ВНУТРИ
+   skin.trailFx (id 9-14 выше) и переключался только вместе со скином. Теперь это отдельный,
+   независимый выбор — те же 6 языков следа, но выбираются отдельно от цвета и надеваются
+   на любой скин. Явное решение владельца: старая пара скин→след НЕ переносится — все игроки
+   стартуют с id:0 «Нет», сами выбирают заново. price:0 у всех шести — это не новый платный
+   контент, просто те же 6 языков следа, что уже были в игре, ставшие независимыми. */
+const TRAILS=[
+  {id:0, name:'Нет',              price:0, style:''},
+  {id:1, name:'Обломки-спутники', price:0, style:'debris'},
+  {id:2, name:'Нить-жемчуг',      price:0, style:'pearls'},
+  {id:3, name:'Искры',            price:0, style:'sparks'},
+  {id:4, name:'Кометная пыль',    price:0, style:'cometdust'},
+  {id:5, name:'Лента',            price:0, style:'ribbon'},
+  {id:6, name:'Метки пути',       price:0, style:'waypoints'},
+];
+const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
    декаль поверх корпуса. Каждая — готовый символ Unicode (эмодзи), не нарисована нами:
    ноль художественной работы, ноль решений «что правильно» — то, что уже есть в стандарте.
@@ -1585,7 +1601,7 @@ const S = {
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
   shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
-  mode:'classic', hits:0, bonuses:0, nearMiss:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
     // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
@@ -2224,7 +2240,7 @@ function update(dt){
   if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
   powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
-    if (!(S.mode==='custom' && S.customB===0)) spawnPowerup();
+    if (!(S.mode==='custom' && S.customB===0) && S.mode!=='ironman') spawnPowerup(); // 05.09.2026: Ironman — 0 бонусов, часть цены за ×4 очков
     return powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1); }); } // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
 
   // ---- движение самолётика + учёт способа руления (категория рекорда) ----
@@ -2476,8 +2492,8 @@ function update(dt){
       // v1.282.20: потолок жизней авторский, как и на спавне — иначе две одновременно
       // висящие в небе жизни пробивали «Ад на одну жизнь» (customLv=1) до трёх.
       if (p.kind==='life'){ S.lives=Math.min((S.mode==='custom')?(S.customLv||3):3, S.lives+1); showPopup(L.life,p.x,p.y,'#ffa1d9'); updateLives(); } // жизнь существует только для раненого: страж спавна (v1.46.0) не пускает её в небо при полном корпусе — никаких лишних жизней; v1.105.0: розовая, вне красной семьи тревоги
-      if (p.kind==='dash'){ S.dash=4; showPopup(L.dash,p.x,p.y,'#a9bcff'); } // Таран: 4 секунды пробоя (v1.40.0)
-      if (p.kind==='nova'){ if (typeof music!=='undefined'&&music.kick) music.kick(); // взрыв — музыка приседает (v1.48.0)
+      if (p.kind==='dash'){ S.dash=4; S.everDash=1; showPopup(L.dash,p.x,p.y,'#a9bcff'); } // Таран: 4 секунды пробоя (v1.40.0); everDash — 05.09.2026 «Pacifist»: взял хоть раз — не в зачёт
+      if (p.kind==='nova'){ S.everNova=1; if (typeof music!=='undefined'&&music.kick) music.kick(); // взрыв — музыка приседает (v1.48.0)
         // Сверхновая: вспышка сжигает все опасности на экране — каждая в очки (вес 1, редкий праздник, v1.40.0)
         const mult=1+Math.min(S.combo,10)*.3;
         let pts=0;
@@ -2503,21 +2519,22 @@ function update(dt){
   const fxK = (Q.mode==='auto' && Q.fps<48) ? (Q.fps<40 ? .55 : .75) : 1;
   if (RNG()<(thrusterP*fxK) && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
     const sk=SKINS[S.skin]||SKINS[0];
+    const tr=TRAILS_BY_ID.get(S.trail)||TRAILS[0]; // 05.09.2026: след — независимый выбор, не от скина
     // 04.09.2026: Метки пути — редкие, не на каждый тик тягача (иначе слипнутся в пятно
     // под кораблём) — свой интервал поверх общего тягача, тот же приём, что MIN_INTERVAL_MS.
-    const waypointsBlocked = sk.trailFx==='waypoints' && (performance.now()-lastWaypointSpawn<450);
+    const waypointsBlocked = tr.style==='waypoints' && (performance.now()-lastWaypointSpawn<450);
     if(!waypointsBlocked){
     const t=poolPart.take();
     t.x=plane.x+rand(-3,3); t.y=plane.y+16; t.vx=rand(-.3,.3); t.vy=rand(1,2.4);
     t.life=rand(.4,.8); t.color=sk.trail; t.size=rand(1,2.5);
     t.fx=sk.fx||''; // фирменный след скина (читается в drawFx)
-    t.trailFx=sk.trailFx||''; // 04.09.2026: второй слой — язык частиц премиум-скина, отдельно от fx корпуса
+    t.trailFx=tr.style||''; // 05.09.2026: язык частиц — от независимого выбора след, не от скина
     if(sk.fx==='plasma'){ t.life=rand(.6,1.05); t.size=rand(1.5,3); t.vy=rand(1.4,2.8); } // длинный огненный шлейф
     else if(sk.fx==='neon'){ t.life=rand(.3,.6); t.size=rand(.8,2); } // короткие искры
-    else if(sk.trailFx==='sparks'){ t.life=rand(.35,.65); t.size=rand(.7,1.8); t.flashAt=RNG()<.3?rand(.3,.7):null; }
-    else if(sk.trailFx==='cometdust'){ t.life=rand(.5,.9); t.size=rand(1.2,2.4); t.rot=rand(0,6.283); t.spin=rand(-.3,.3); }
-    else if(sk.trailFx==='debris'){ t.life=rand(.7,1.1); t.size=rand(1,1.8); t.jx=rand(0,6.283); t.jy=rand(0,6.283); }
-    else if(sk.trailFx==='waypoints'){ t.vx=0; t.vy=1.6; t.life=rand(1.0,1.2); t.size=1.6; lastWaypointSpawn=performance.now(); } // почти не летит, гаснет на месте
+    else if(tr.style==='sparks'){ t.life=rand(.35,.65); t.size=rand(.7,1.8); t.flashAt=RNG()<.3?rand(.3,.7):null; }
+    else if(tr.style==='cometdust'){ t.life=rand(.5,.9); t.size=rand(1.2,2.4); t.rot=rand(0,6.283); t.spin=rand(-.3,.3); }
+    else if(tr.style==='debris'){ t.life=rand(.7,1.1); t.size=rand(1,1.8); t.jx=rand(0,6.283); t.jy=rand(0,6.283); }
+    else if(tr.style==='waypoints'){ t.vx=0; t.vy=1.6; t.life=rand(1.0,1.2); t.size=1.6; lastWaypointSpawn=performance.now(); } // почти не летит, гаснет на месте
     particles.push(t);
     }
   }
@@ -2655,7 +2672,8 @@ function updateLives(){ // жизни = мини-модельки текущег
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
   const skin=SKINS[S.skin]||SKINS[0];
-  for(let i=0;i<3;i++){
+  const maxLives=S.mode==='ironman'?1:3; // 05.09.2026: Ironman — один слот, не три с двумя пустыми контурами
+  for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
     if (i<S.lives){ // живая — полный корпус со свечением (v1.46.0: светятся только живые — потерянная не притворяется живой)
       x.shadowColor=skin.glow; x.shadowBlur=6;
