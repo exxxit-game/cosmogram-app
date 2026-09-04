@@ -1457,15 +1457,17 @@ const FLASHES=[
   {id:2, name:'Звёздный всплеск', price:0, style:'star'}, // 29.08.2026: бесплатна — см. ANGAR_FREEBIE (ui.js)
   {id:3, name:'Всплеск частиц', price:500, style:'particles'},
   {id:6, name:'Вихрь', price:650, style:'spiral'},
-  {id:8, name:'Сфера-вспышка', price:800, style:'sphere'},
-  {id:11, name:'Комета', price:500, style:'comet'},
-  {id:12, name:'Кольца Сатурна', price:650, style:'saturn'},
+  // 04.09.2026 (владелец, живое устройство): id 8/11/12/18 (sphere/comet/saturn/wings)
+  // убраны целиком — не нравятся, не «каркас на доработку», а совсем не то. Осиротевший
+  // FLASHES_BY_ID.get(id) у уже владеющих игроков вернёт undefined — все места чтения уже
+  // защищены `if(fl && fl.style...)` (см. renderFlashPattern/angarShip), просто не рисуют
+  // ничего, не падают. Дыры в номерах — уже была такая же (3→6) до этой правки, ничего
+  // нового не переизобретаем.
   {id:13, name:'Осколки', price:500, style:'shards'},
   {id:14, name:'Галактика', price:650, style:'galaxy'},
   {id:15, name:'Снежинка', price:500, style:'snowflake'},
   {id:16, name:'Цветок', price:500, style:'flower'},
   {id:17, name:'Корона', price:650, style:'corona'},
-  {id:18, name:'Крылья', price:800, style:'wings'},
   {id:19, name:'Соты', price:650, style:'honeycomb'},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование

@@ -915,6 +915,25 @@ function angarShip(x, sk, s, bolshoy){
     gg.addColorStop(0,base+'.40)'); gg.addColorStop(.55,base+'.14)'); gg.addColorStop(1,base+'0)');
     x.fillStyle=gg; x.fillRect(-32,-36,64,64);
   }
+  /* 29.08.2026 «показывать Вспышку тоже»: раньше окно предпросмотра вообще не знало о
+     вспышке — её было видно только первые 0.45с настоящего полёта. Здесь — тот же узор
+     (renderFlashPattern, общая с полётом и с плиткой каталога), зациклен по кругу (не
+     застывший кадр, как на плитке) — витрина живая, а на плитке достаточно одного кадра.
+     Только на большом борту (bolshoy) — на мелких квадратиках цвета вспышке не место.
+     04.09.2026 (владелец, живое устройство): рисовалась ПОСЛЕ борта — ложилась поверх
+     корпуса вместо подложки под ним. Перенесена сюда, до заливки корпуса — тот же порядок,
+     что теперь и в render.js:drawScene (drawLaunchFlash до drawPlane). */
+  if(bolshoy){
+    const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
+    if(pvFlash){ const fl=FLASHES_BY_ID.get(pvFlash);
+      if(fl && fl.style && fl.style!=='none'){
+        const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
+        const col=a=>base+Math.max(0,a).toFixed(2)+')';
+        const p=(performance.now()%1600)/1600;
+        x.save(); x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
+      }
+    }
+  }
   x.fillStyle=sk.body;
   x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
   x.fillStyle=sk.fold;
@@ -953,22 +972,6 @@ function angarShip(x, sk, s, bolshoy){
   // render.js (грузится раньше ui.js, см. sw.js JS_FILES), превью совпадает с полётом.
   if(pvIcon){ const ic=ICONS_BY_ID.get(pvIcon);
     if(ic && ic.svg) drawDecalSvg(x, ic, 5.3, -0.7, sk);
-  }
-  /* 29.08.2026 «показывать Вспышку тоже»: раньше окно предпросмотра вообще не знало о
-     вспышке — её было видно только первые 0.45с настоящего полёта. Здесь — тот же узор
-     (renderFlashPattern, общая с полётом и с плиткой каталога), зациклен по кругу (не
-     застывший кадр, как на плитке) — витрина живая, а на плитке достаточно одного кадра.
-     Только на большом борту (bolshoy) — на мелких квадратиках цвета вспышке не место. */
-  if(bolshoy){
-    const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
-    if(pvFlash){ const fl=FLASHES_BY_ID.get(pvFlash);
-      if(fl && fl.style && fl.style!=='none'){
-        const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
-        const col=a=>base+Math.max(0,a).toFixed(2)+')';
-        const p=(performance.now()%1600)/1600;
-        x.save(); x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
-      }
-    }
   }
   x.restore();
 }

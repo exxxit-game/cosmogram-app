@@ -1365,8 +1365,13 @@ function draw(){
 
   drawMorse(); // морзянка: позывной в шлейфе (v1.53.0)
 
+  /* 04.09.2026 (владелец, явное разрешение трогать ядро): вспышка рисовалась ПОСЛЕ самолёта —
+     ложилась поверх борта, а должна быть под ним (как подсветка/подложка старта, не поверх
+     корпуса). Порядок был такой с 29.08.2026, никто не замечал на скорости настоящего полёта —
+     нашли на спокойном превью Тюнинга, но правка касается обоих мест (см. тот же порядок в
+     angarShip(), js/ui.js). */
+  drawLaunchFlash(); // первые 0.45с забега — если куплена и надета
   drawPlane(sh,nowMs);
-  drawLaunchFlash(); // 29.08.2026: первые 0.45с забега — если куплена и надета
   planetPlaneFx(nowS); // v1.100.0 «Планетарий»: вспышка крыла при крене + искры звезды
 
   drawFx(hq,sh); // частицы + попапы (общий блок, в оверлеях тоже)
@@ -1604,26 +1609,10 @@ function renderFlashPattern(c, style, p, col){
     case 'star': rays(7,8,38,2,0); break;
     case 'particles': dots(10,0); break;
     case 'spiral': dots(10,p*2.5); break;
-    case 'sphere': c.fillStyle=col((1-p)*(1-p)); c.beginPath(); c.arc(0,0,4+p*18,0,6.2832); c.fill(); break;
     /* 29.08.2026 «14 разных, не 10 с дублями» — девять новых узоров, ни один не повторяет
-       ни старые пять выше, ни друг друга по силуэту (см. коммент над FLASHES в game.js). */
-    case 'comet': { // единственный несимметричный: хвост-полоса в одну сторону (за кормой), не кольцом вокруг
-      const n=8, tailLen=10+p*40;
-      for(let i=0;i<n;i++){
-        const t=i/(n-1), r=t*tailLen;
-        c.fillStyle=col((1-p)*(1-t*.75));
-        c.beginPath(); c.arc(0,r,(1-t)*4*(1-p*.3),0,6.2832); c.fill();
-      }
-      break;
-    }
-    case 'saturn': { // наклонный эллипс, не окружность
-      c.strokeStyle=col(1-p); c.lineWidth=2.5;
-      const rx=10+p*30;
-      c.save(); c.rotate(-.35);
-      c.beginPath(); c.ellipse(0,0,rx,rx*.35,0,0,6.2832); c.stroke();
-      c.restore();
-      break;
-    }
+       ни старые пять выше, ни друг друга по силуэту (см. коммент над FLASHES в game.js).
+       04.09.2026: sphere/comet/saturn/wings убраны из FLASHES (владелец, не нравились) —
+       их case здесь тоже удалён: физически недостижим без записи в FLASHES_BY_ID. */
     case 'shards': { // залитые треугольники-обломки, развёрнутые наружу
       c.fillStyle=col(1-p);
       const n=6;
@@ -1680,17 +1669,6 @@ function renderFlashPattern(c, style, p, col){
         if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
       }
       c.closePath(); c.fill();
-      break;
-    }
-    case 'wings': { // два крыла по бокам — единственная двусторонняя, не радиальная симметрия
-      c.fillStyle=col((1-p)*.8);
-      const len=8+p*30;
-      [-1,1].forEach(side=>{
-        c.beginPath(); c.moveTo(0,0);
-        c.quadraticCurveTo(side*len*.5,-len*.3, side*len,-len*.1);
-        c.quadraticCurveTo(side*len*.6,len*.15, 0,0);
-        c.fill();
-      });
       break;
     }
     case 'honeycomb': { // маленькие шестиугольники по кругу — не окружности/точки
