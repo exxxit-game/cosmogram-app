@@ -475,8 +475,10 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    класс независимо от специфичности CSS. #feedbackCount.feedbackCountLow (ID+класс)
    обгоняет одиночный #feedbackCount ровно так же надёжно, как раньше это делал inline. */
 #feedbackCount.feedbackCountLow { color:#ff9fb0; }
-.achTab .ic, .topCat .ic { width:1.15em; height:1.15em; vertical-align:-0.2em; margin-right:.35em; }
-.topCat .ic:only-child { margin-right:0; width:19px; height:19px; }
+.achTab .ic { width:1.15em; height:1.15em; vertical-align:-0.2em; margin-right:.35em; }
+/* 04.09.2026: .topCat теперь flex-column (иконка над подписью, gap у родителя держит зазор) —
+   margin-right отсюда убран, раньше был нужен только для горизонтального .ic+текст в одну строку. */
+.topCat .ic { width:19px; height:19px; }
 
 /* ============================================================
    HUD — игровой полёт. ВНЕ редизайна: работает, не трогаем.
@@ -883,10 +885,15 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   border-radius:12px; padding:8px 18px; font-size:14px; cursor:pointer; }
 .achTab.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
 #achTopWrap { width:min(92%,380px); pointer-events:auto; }
-#topCats { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
-.topCat { border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
-  border-radius:12px; padding:7px 16px; font-size:16px; cursor:pointer; }
+/* 04.09.2026: было display:flex без wrap — 7 вкладок не помещались в одну строку на узком
+   экране, обрезались по краям без подписи. flex-wrap сам разводит на нужное число строк
+   (обычно 2 на телефоне), justify-content:center держит каждую строку по центру. */
+#topCats { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:8px; }
+.topCat { display:flex; flex-direction:column; align-items:center; gap:3px;
+  border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+  border-radius:12px; padding:7px 12px; font-size:16px; cursor:pointer; }
 .topCat.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
+.topCatLbl { font-size:9.5px; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap; }
 #topMe { color:rgba(143,255,159,.85); font-size:13px; text-align:center; min-height:18px; margin-bottom:6px; }
 /* 13.08.2026: «твои N — это M-е место» и приглашение под таблицей — тот же материал, что панели */
 #topWouldBe { margin-top:10px; text-align:center; font-size:13px; color:var(--gold-hi); letter-spacing:.03em; }
@@ -1978,9 +1985,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.69"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.69"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.69"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.70"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.70"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.70"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2507,15 +2514,21 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     </div>
     <div id="achTopWrap" class="hidden">
       <div id="topCats">
-        <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg></button>
-        <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg></button>
-        <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg></button>
-        <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg></button>
-        <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg></button>
+        <!-- 04.09.2026 (владелец, живое устройство): 7 вкладок без подписей в один
+             прокручиваемый ряд — непонятно, что означает каждая иконка, обрезается по краям.
+             Подпись — <span class="topCatLbl"> под иконкой, текст берёт fillLang() ниже из
+             уже существующих ключей (modeTouch/modeGyro/... — те же, что у выбора управления
+             и режимов, не завожу новых переводов). Раскладка — .topCat теперь flex-column,
+             #topCats — flex-wrap, сама решает, сколько строк нужно при своей ширине экрана. -->
+        <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="bullet"><svg class="ic"><use href="#i-timer"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg><span class="topCatLbl"></span></button>
         <!-- 03.09.2026: «Трасса дня» — временно i-trophy, настоящую иконку выбираем на шаге 3 (макет) -->
-        <button class="topCat" data-cat="daily"><svg class="ic"><use href="#i-trophy"></use></svg></button>
+        <button class="topCat" data-cat="daily"><svg class="ic"><use href="#i-trophy"></use></svg><span class="topCatLbl"></span></button>
         <!-- 03.09.2026: «Спидран» — временно i-star4 (отдельно от i-trophy выше, чтобы вкладки не путались), настоящая иконка — тем же макетом -->
-        <button class="topCat" data-cat="speedrun"><svg class="ic"><use href="#i-star4"></use></svg></button>
+        <button class="topCat" data-cat="speedrun"><svg class="ic"><use href="#i-star4"></use></svg><span class="topCatLbl"></span></button>
       </div>
       <div id="topMe"></div>
       <div id="topList"></div>
@@ -2625,25 +2638,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.69" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.69"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.69"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.69"></script>
-<script defer src="js/game.js?v=1.478.69" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.69"></script>
-<script defer src="js/sync.js?v=1.478.69"></script>
-<script defer src="js/render.js?v=1.478.69"></script>
-<script defer src="js/planetarium.js?v=1.478.69"></script>
-<script defer src="js/goldstar.js?v=1.478.69"></script>
-<script defer src="js/music.js?v=1.478.69"></script>
-<script defer src="js/gyro.js?v=1.478.69"></script>
-<script defer src="js/forge.js?v=1.478.69"></script>
-<script defer src="js/partitura.js?v=1.478.69"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.69"></script>
-<script defer src="js/card.js?v=1.478.69"></script>
-<script defer src="js/star.js?v=1.478.69"></script>
-<script defer src="js/cinema.js?v=1.478.69"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.69"></script>
+<script defer src="js/core.js?v=1.478.70" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.70"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.70"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.70"></script>
+<script defer src="js/game.js?v=1.478.70" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.70"></script>
+<script defer src="js/sync.js?v=1.478.70"></script>
+<script defer src="js/render.js?v=1.478.70"></script>
+<script defer src="js/planetarium.js?v=1.478.70"></script>
+<script defer src="js/goldstar.js?v=1.478.70"></script>
+<script defer src="js/music.js?v=1.478.70"></script>
+<script defer src="js/gyro.js?v=1.478.70"></script>
+<script defer src="js/forge.js?v=1.478.70"></script>
+<script defer src="js/partitura.js?v=1.478.70"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.70"></script>
+<script defer src="js/card.js?v=1.478.70"></script>
+<script defer src="js/star.js?v=1.478.70"></script>
+<script defer src="js/cinema.js?v=1.478.70"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.70"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

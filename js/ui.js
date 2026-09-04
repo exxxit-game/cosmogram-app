@@ -2394,6 +2394,14 @@ function applyLang(){
   setText('achTitle',L.achTitle);
   setText('achBtnTxt',L.achTitle);
   setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
+  /* 04.09.2026 (владелец): вкладки категорий в «Топ» были без подписей — неясно, что означает
+     каждая иконка. Переиспользую уже готовые ключи (те же слова, что у выбора управления и
+     режимов — modeTouch/modeGyro/modeKeys/bullet/dist/modeDaily/modeSpeedrun), новых
+     переводов не завожу. */
+  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,bullet:L.bullet,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun};
+  document.querySelectorAll('.topCat').forEach(function(b){
+    const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
+  });
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
