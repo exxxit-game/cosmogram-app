@@ -231,8 +231,20 @@ const music = (()=>{
     return 1;
   }
   function tick(){
-    if(!theme||!mg) return;
-    const ac=AC; if(!ac) return;
+    /* 05.09.2026: было `if(!theme||!mg) return; const ac=AC;` — читало свежий глобальный AC,
+       но подключало новые ноты к СТАРОМУ mg, застрявшему в замыкании от прежнего контекста,
+       если тот умер и пересоздался между тиками (ensureChain() чинит это в start()/sting(),
+       но tick() эту проверку не звал — единственная точка, где реально роняло звук, живой
+       сигнал прямо в этой же сессии). ensureChain() делает ровно то же обнаружение
+       mg.context!==ac + пересборку, что уже проверено в start() — просто вызывается и здесь. */
+    if(!theme) return;
+    /* ensureChain() при обнаруженной смене контекста сбрасывает theme/pendingTheme заодно с
+       mg/conv/wet (расчёт на то, что зовущий — start()/sting() — тут же назначит их заново
+       сам). tick() зовущий не start(), сама тема тут ничья воля — ту же самую, что уже играла,
+       нужно просто продолжить, а не потерять молча. */
+    const hadTheme=theme, hadPending=pendingTheme;
+    const ac=ensureChain(); if(!ac||!mg) return;
+    if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
     layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false,kickAmt:0};
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой, начинаем с чистого такта (v1.20.0)
     while(nextBar < ac.currentTime + .9){
@@ -319,7 +331,9 @@ const music = (()=>{
     _mix:()=>({...MIX}),
     _jitterFreq:jitterFreq, _jitterPan:jitterPan, // партия 24 — стенд проверяет разброс напрямую
     _droneRoot:()=>DRONE_ROOTS[droneRootIx],
-    _kickDrift(dir){ droneRootIx=Math.max(0,Math.min(DRONE_ROOTS.length-1,droneRootIx+(dir||1))); } // партия 24 — принудительный шаг для теста, минуя случайность
+    _kickDrift(dir){ droneRootIx=Math.max(0,Math.min(DRONE_ROOTS.length-1,droneRootIx+(dir||1))); }, // партия 24 — принудительный шаг для теста, минуя случайность
+    _tick:()=>tick(), // 05.09.2026 — прямой вызов планировщика такта, минуя setInterval и суспенднутые часы AudioContext в headless-стенде
+    _forceNextBarDue(){ nextBar=-1; } // 05.09.2026 — гарантирует, что ближайший _tick() реально дойдёт до scheduleBar(), не завязываясь на currentTime
   };
 })();
 
