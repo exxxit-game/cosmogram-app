@@ -38,17 +38,17 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      авторские тир-цены: 150/400/800 — стандартные (только цвет), 1500/2500/4000 — яркие
      (фирменная фишка), 7000/12000 — легендарные (уникальное поведение корпуса). */
   // Тир 1 — стандартные: только цвет (никаких фишек — правило №1)
-  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,'}, // Бумажный — нейтральная бумага
-  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,'},   // Лазурь — чистый синий (не циан!)
-  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,'},  // Золото — жёлтое золото (тон 50°)
-  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,'},    // Алый — настоящий красный
+  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,', cat:'classic'}, // Бумажный — нейтральная бумага
+  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,', cat:'classic'},   // Лазурь — чистый синий (не циан!)
+  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,', cat:'classic'},  // Золото — жёлтое золото (тон 50°)
+  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,', cat:'classic'},    // Алый — настоящий красный
   // Тир 2 — яркие: фирменная фишка + богатый след (только визуал, никаких бонусов!)
-  {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,'}, // Неон — кислотно-зелёный
-  {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,'}, // Аврора — фиолет
-  {id:6,name:6,price:4000,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,'}, // Плазма — глубокий апельсин (тон 23°)
+  {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,', cat:'bright'}, // Неон — кислотно-зелёный
+  {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,', cat:'bright'}, // Аврора — фиолет
+  {id:6,name:6,price:4000,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,', cat:'bright'}, // Плазма — глубокий апельсин (тон 23°)
   // Тир 3 — легендарные: уникальное поведение корпуса
-  {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'}, // Хром — нейтральная сталь
-  {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,'}, // Призрак — ледяной циан (тон 185°, единственный!)
+  {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,', cat:'legendary'}, // Хром — нейтральная сталь
+  {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,', cat:'legendary'}, // Призрак — ледяной циан (тон 185°, единственный!)
   /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец): 6 приёмов корпуса отобраны живьём
      через макет (project_premium_skins_visual_language в памяти) — satellites/facets/inlay/
      filigree/core/aim, реализованы в render.js:drawPlane(). premium:true — метка для
@@ -62,12 +62,12 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      можно перетасовать): спутники↔обломки-спутники, грани-кристалл↔нить-жемчуг,
      самоцветы↔искры, золото-гравировка↔кометная пыль, реактор-ядро↔лента-энергия,
      слежение-прицел↔метки пути. */
-  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,'}, // Спутники — синь тона 230°
-  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,'}, // Грани — почти белый хрусталь
-  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,'},  // Инкрустация — рубин, тон 340°
-  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,'},  // Филигрань — старое золото, тон 35°
-  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,'},  // Ядро — изумруд, тон 140°
-  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'},  // Прицел — электрик, тон 195°
+  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,', cat:'stars'}, // Спутники — синь тона 230°
+  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,', cat:'stars'}, // Грани — почти белый хрусталь
+  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,', cat:'stars'},  // Инкрустация — рубин, тон 340°
+  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,', cat:'stars'},  // Филигрань — старое золото, тон 35°
+  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,', cat:'stars'},  // Ядро — изумруд, тон 140°
+  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,', cat:'stars'},  // Прицел — электрик, тон 195°
   /* 05.09.2026 «добавляй все скины в игру, и они будут временно бесплатные»: 30 доп.
      скинов, отобраны владельцем через макеты этой сессии — render.js:PREM_FX_MAP (общий
      рендерер, не 30 копий кода, тот файл грузится раньше). tempFree:true — маркер для
@@ -77,44 +77,44 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      premSkinPerfReport) при каждой посадке. После анализа — перевести на premium:true +
      реальную цену в ⭐, tempFree убрать. */
   // 17 материалов — весь корпус перекрашен целиком, не пятно на нейтральном листе
-  {id:15, name:15, price:0, tempFree:true, fx:'matGold',      body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)', trail:'rgba(230,180,70,'},  // Золото
-  {id:16, name:16, price:0, tempFree:true, fx:'matSilver',    body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,'}, // Серебро
-  {id:17, name:17, price:0, tempFree:true, fx:'matBronze',    body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)', trail:'rgba(200,128,66,'},  // Бронза
-  {id:18, name:18, price:0, tempFree:true, fx:'matIce',       body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,'},  // Лёд/Хрусталь
-  {id:19, name:19, price:0, tempFree:true, fx:'matEmerald',   body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',  trail:'rgba(60,210,130,'},  // Изумруд
-  {id:20, name:20, price:0, tempFree:true, fx:'matObsidian',  body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,'}, // Обсидиан
-  {id:21, name:21, price:0, tempFree:true, fx:'matMarble',    body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)', trail:'rgba(190,178,160,'}, // Мрамор (прямые лучи, v2 — см. feedback_macet_geometry_pitfalls)
-  {id:22, name:22, price:0, tempFree:true, fx:'matNebula',    body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',  trail:'rgba(140,110,220,'}, // Туманность/галактика
-  {id:23, name:23, price:0, tempFree:true, fx:'matOpal',      body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)', trail:'rgba(220,180,200,'}, // Опал
-  {id:24, name:24, price:0, tempFree:true, fx:'matVerdigris', body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',  trail:'rgba(80,160,130,'},  // Окисленная медь
-  {id:25, name:25, price:0, tempFree:true, fx:'matCarbon',    body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)', trail:'rgba(150,155,165,'}, // Карбон
-  {id:26, name:26, price:0, tempFree:true, fx:'matLava',      body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',  trail:'rgba(255,120,40,'},  // Лава
-  {id:27, name:27, price:0, tempFree:true, fx:'matRust',      body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',  trail:'rgba(150,70,30,'},   // Ржавое железо
-  {id:28, name:28, price:0, tempFree:true, fx:'matHoney',     body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)', trail:'rgba(214,150,50,'},  // Соты/янтарь
-  {id:29, name:29, price:0, tempFree:true, fx:'matPlasma',    body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)', trail:'rgba(130,90,220,'},  // Плазма (материал, не путать с id6 fx:'plasma')
-  {id:30, name:30, price:0, tempFree:true, fx:'matQuartz',    body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,'}, // Кварц
-  {id:31, name:31, price:0, tempFree:true, fx:'matWood',      body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)', trail:'rgba(180,130,70,'},  // Дерево
+  {id:15, name:15, price:0, tempFree:true, fx:'matGold',      body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)', trail:'rgba(230,180,70,', cat:'materials'},  // Золото
+  {id:16, name:16, price:0, tempFree:true, fx:'matSilver',    body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,', cat:'materials'}, // Серебро
+  {id:17, name:17, price:0, tempFree:true, fx:'matBronze',    body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)', trail:'rgba(200,128,66,', cat:'materials'},  // Бронза
+  {id:18, name:18, price:0, tempFree:true, fx:'matIce',       body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,', cat:'materials'},  // Лёд/Хрусталь
+  {id:19, name:19, price:0, tempFree:true, fx:'matEmerald',   body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',  trail:'rgba(60,210,130,', cat:'materials'},  // Изумруд
+  {id:20, name:20, price:0, tempFree:true, fx:'matObsidian',  body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,', cat:'materials'}, // Обсидиан
+  {id:21, name:21, price:0, tempFree:true, fx:'matMarble',    body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)', trail:'rgba(190,178,160,', cat:'materials'}, // Мрамор (прямые лучи, v2 — см. feedback_macet_geometry_pitfalls)
+  {id:22, name:22, price:0, tempFree:true, fx:'matNebula',    body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',  trail:'rgba(140,110,220,', cat:'materials'}, // Туманность/галактика
+  {id:23, name:23, price:0, tempFree:true, fx:'matOpal',      body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)', trail:'rgba(220,180,200,', cat:'materials'}, // Опал
+  {id:24, name:24, price:0, tempFree:true, fx:'matVerdigris', body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',  trail:'rgba(80,160,130,', cat:'materials'},  // Окисленная медь
+  {id:25, name:25, price:0, tempFree:true, fx:'matCarbon',    body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)', trail:'rgba(150,155,165,', cat:'materials'}, // Карбон
+  {id:26, name:26, price:0, tempFree:true, fx:'matLava',      body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',  trail:'rgba(255,120,40,', cat:'materials'},  // Лава
+  {id:27, name:27, price:0, tempFree:true, fx:'matRust',      body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',  trail:'rgba(150,70,30,', cat:'materials'},   // Ржавое железо
+  {id:28, name:28, price:0, tempFree:true, fx:'matHoney',     body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)', trail:'rgba(214,150,50,', cat:'materials'},  // Соты/янтарь
+  {id:29, name:29, price:0, tempFree:true, fx:'matPlasma',    body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)', trail:'rgba(130,90,220,', cat:'materials'},  // Плазма (материал, не путать с id6 fx:'plasma')
+  {id:30, name:30, price:0, tempFree:true, fx:'matQuartz',    body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,', cat:'materials'}, // Кварц
+  {id:31, name:31, price:0, tempFree:true, fx:'matWood',      body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)', trail:'rgba(180,130,70,', cat:'materials'},  // Дерево
   // 9 символов-сигилов — нейтральный борт + один гравированный знак строго по центру
-  {id:32, name:32, price:0, tempFree:true, fx:'sigPenta',     body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,'}, // Пентаграмма
-  {id:33, name:33, price:0, tempFree:true, fx:'sigHexa',      body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)', trail:'rgba(255,110,60,'},  // Гексаграмма
-  {id:34, name:34, price:0, tempFree:true, fx:'sigMandala',   body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)', trail:'rgba(60,220,180,'},  // Мандала-розетка
-  {id:35, name:35, price:0, tempFree:true, fx:'sigTriquetra', body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)', trail:'rgba(170,220,60,'},  // Трикветра
-  {id:36, name:36, price:0, tempFree:true, fx:'sigCompass',   body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,'}, // Роза ветров
-  {id:37, name:37, price:0, tempFree:true, fx:'sigYinyang',   body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,'}, // Инь-Янь
-  {id:38, name:38, price:0, tempFree:true, fx:'sigFlower',    body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)', trail:'rgba(80,220,110,'},  // Цветок жизни
-  {id:39, name:39, price:0, tempFree:true, fx:'sigMaltese',   body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)', trail:'rgba(240,70,100,'},  // Мальтийский крест
-  {id:40, name:40, price:0, tempFree:true, fx:'sigSnowflake', body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)', trail:'rgba(70,190,235,'},  // Кристалл-снежинка
+  {id:32, name:32, price:0, tempFree:true, fx:'sigPenta',     body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,', cat:'sigils'}, // Пентаграмма
+  {id:33, name:33, price:0, tempFree:true, fx:'sigHexa',      body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)', trail:'rgba(255,110,60,', cat:'sigils'},  // Гексаграмма
+  {id:34, name:34, price:0, tempFree:true, fx:'sigMandala',   body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)', trail:'rgba(60,220,180,', cat:'sigils'},  // Мандала-розетка
+  {id:35, name:35, price:0, tempFree:true, fx:'sigTriquetra', body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)', trail:'rgba(170,220,60,', cat:'sigils'},  // Трикветра
+  {id:36, name:36, price:0, tempFree:true, fx:'sigCompass',   body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,', cat:'sigils'}, // Роза ветров
+  {id:37, name:37, price:0, tempFree:true, fx:'sigYinyang',   body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,', cat:'sigils'}, // Инь-Янь
+  {id:38, name:38, price:0, tempFree:true, fx:'sigFlower',    body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)', trail:'rgba(80,220,110,', cat:'sigils'},  // Цветок жизни
+  {id:39, name:39, price:0, tempFree:true, fx:'sigMaltese',   body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)', trail:'rgba(240,70,100,', cat:'sigils'},  // Мальтийский крест
+  {id:40, name:40, price:0, tempFree:true, fx:'sigSnowflake', body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)', trail:'rgba(70,190,235,', cat:'sigils'},  // Кристалл-снежинка
   // 4 приёма иллюзии формы — нейтральный борт + узор внутренними линиями
-  {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,'},  // Кожаная стёжка
-  {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,'},  // Топографические линии
-  {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,'},  // Оригами-заломы
-  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'},  // Плетёная решётка
+  {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,', cat:'illusion'},  // Кожаная стёжка
+  {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,', cat:'illusion'},  // Топографические линии
+  {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,', cat:'illusion'},  // Оригами-заломы
+  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,', cat:'illusion'},  // Плетёная решётка
   // 05.09.2026 «Из макета в игру»: 4 новых материала. Цена 2500 — тот же тир, что «Аврора»
   // (fx-эффект, не просто цвет), проставлена сразу, не додумана втихую.
-  {id:45, name:45, price:10, fx:'patPenrose',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Пенроуз — настоящая мозаика де Брёйна, проверена скриптом (одна длина стороны, 2 угла у всех 40 ромбов)
-  {id:46, name:46, price:10, fx:'patLattice2',  body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Цветочная решётка
-  {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Плед из кругов
-  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
+  {id:45, name:45, price:10, fx:'patPenrose',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Пенроуз — настоящая мозаика де Брёйна, проверена скриптом (одна длина стороны, 2 угла у всех 40 ромбов)
+  {id:46, name:46, price:10, fx:'patLattice2',  body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Цветочная решётка
+  {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Плед из кругов
+  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
 ];
 /* 05.09.2026 «След — 5-я вкладка» (владелец, после разбора): раньше след жил ВНУТРИ
    skin.trailFx (id 9-14 выше) и переключался только вместе со скином. Теперь это отдельный,
