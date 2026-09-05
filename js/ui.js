@@ -1344,7 +1344,9 @@ function emojiSupported(ch){
 }
 function angarVisibleList(){ // список жетонов активной вкладки — у декалей это уже весь каталог разом
   const cfg = ANGAR_CATS[angarCat];
-  if(angarCat==='color') return cfg.list;
+  // 05.09.2026: раньше 'color' сразу возвращала cfg.list как есть, в обход категорий/поиска —
+  // работало только потому, что id уже шли подряд по разделам (Классика/Яркие/...) случайно
+  // совпадая с порядком массива. Теперь идёт тем же общим путём, что декали/иконки/вспышка/след.
   // 29.08.2026 «полный каталог, не кучей вкладок»: раньше фильтровали по одной активной
   // angarSubCat — теперь отдаём всё сразу, сгруппированное по категориям в том же порядке,
   // что раньше был у ленты вкладок (ANGAR_DECAL_CATS). «Нет» (id0) не входит ни в одну
@@ -1370,7 +1372,13 @@ function angarVisibleList(){ // список жетонов активной в�
   // 29.08.2026: у декалей ch — эмодзи-глиф, у иконок (icon) его нет вообще (там svg) —
   // emojiSupported(undefined) сама возвращает true, фильтр для иконок безвреден и не нужен,
   // но не мешает оставить его общим для обеих вкладок.
-  return none.concat(freebies, rest).filter(d=>emojiSupported(d.ch));
+  const visible = none.concat(freebies, rest).filter(d=>emojiSupported(d.ch));
+  // 05.09.2026 «Поиск по имени»: применяется последним, после категорий/фрибутов — при
+  // активном поиске подзаголовки разделов просто не появятся перед первым же непустым
+  // совпадением (тот же lastCat-механизм в angarBuildGrid, ничего отдельно чинить не нужно).
+  if(!angarSearchQ) return visible;
+  const q = angarSearchQ.toLowerCase();
+  return visible.filter(d=>d.id===0 || (typeof d.name==='string' && d.name.toLowerCase().indexOf(q)>=0));
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
@@ -1382,6 +1390,12 @@ function angarBuyFill(){
 }
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый/выбранный элемент)
 let angarBuilt = false;    // жетоны построены — второй раз не строим (сбрасывается при смене вкладки)
+let angarSearchQ = '';     // 05.09.2026: текст поиска — сбрасывается при смене вкладки, чтобы не путать разделы
+function verNewer(a,b){ // 05.09.2026: простое посегментное сравнение версий «1.478.83» — для метки «новое»
+  const pa=String(a).split('.').map(Number), pb=String(b).split('.').map(Number);
+  for(let i=0;i<Math.max(pa.length,pb.length);i++){ const x=pa[i]||0, y=pb[i]||0; if(x!==y) return x>y; }
+  return false;
+}
 
 let angarTabsBuilt = false;
 function angarBuildTabs(){
@@ -1418,9 +1432,13 @@ function angarRenderTabsSel(){
 function angarSwitchCat(cat){
   if(angarCat===cat) return;
   angarCat=cat; angarBuilt=false; angarSel=S[ANGAR_CATS[cat].selKey];
+  angarSearchQ=''; const si=$('angarSearch'); if(si) si.value=''; // 05.09.2026: чистый поиск на каждом разделе
   sfx.click(); haptic('light');
   angarRenderTabsSel(); angarBuildGrid(); angarPvDraw(performance.now());
 }
+if(typeof $==='function' && $('angarSearch')) $('angarSearch').addEventListener('input', e=>{
+  angarSearchQ = e.target.value; angarBuilt=false; angarBuildGrid();
+});
 function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
@@ -1500,6 +1518,23 @@ function angarBuildGrid(){
         }
         el.setAttribute('aria-label', item.name); // без видимой подписи (эмодзи и так понятен) — имя остаётся для скринридера
       }
+      /* 05.09.2026 «Метка нового» + «Подсказка-факт»: общие для всех веток выше — обе живут
+         внутри .dot/.ch (первый span тайла), одна в углу, другая в другом, не пересекаются.
+         item.since сравнивается с сохранённой версией последнего выхода из Тюнинга (Store) —
+         не разовый флаг «видел/не видел», а честное сравнение версий. item.fact — только у
+         предметов с реальной задокументированной историей (не выдумано для остальных). */
+      const box = el.querySelector('.dot, .ch');
+      if(box){
+        if(item.since && verNewer(item.since, Store.get('angarSeenVersion','0'))){
+          const dot=document.createElement('span'); dot.className='angarNew'; box.appendChild(dot);
+        }
+        if(item.fact){
+          const fb=document.createElement('button'); fb.type='button'; fb.className='angarFact';
+          fb.textContent='i'; fb.setAttribute('aria-label', L.angarFactBtn||'Факт');
+          fb.addEventListener('click', e=>{ e.stopPropagation(); toast(item.fact, 'rgba(140,170,255,.5)', 3200); });
+          box.appendChild(fb);
+        }
+      }
       el.addEventListener('click',()=>{ angarPick(item.id); });
       grid.appendChild(el);
     });
@@ -1516,6 +1551,7 @@ function renderHangar(){
   const tabIcon=$('angarTabIcon'); if(tabIcon) tabIcon.textContent=L.angarTabIcon;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
+  const searchEl=$('angarSearch'); if(searchEl) searchEl.placeholder=L.angarSearchPh||'';
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
@@ -2327,7 +2363,10 @@ wireOn('hangarBtn', 'click', ()=>{
     if(changed){ Store.set('ownedSkins', S.ownedSkins); if(angarCat==='color') angarBuyFill(); }
   });
 });
-wireOn('hangarBackBtn', 'click', toMenu); // 28.08.2026: вернулась — экран был без единой видимой кнопки назад вне Telegram
+/* 05.09.2026 «Метка нового»: выходя из Тюнинга — считаем, что игрок пролистал каталог,
+   точки «новое» гаснут до следующей реально новой партии (сравнение версий, не разовый флаг). */
+function hangarLeave(){ Store.set('angarSeenVersion', GAME_VERSION); toMenu(); }
+wireOn('hangarBackBtn', 'click', hangarLeave); // 28.08.2026: вернулась — экран был без единой видимой кнопки назад вне Telegram
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
 function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }
 function closeAch(){ toMenu(); }

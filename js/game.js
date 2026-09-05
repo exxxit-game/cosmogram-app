@@ -141,8 +141,8 @@ const TRAILS=[
   /* 05.09.2026 «Кельтский плетёный жгут» — проекция спирали сбоку: y_k=sin(θ+k·2π/N),
      глубина z_k=cos(θ+k·2π/N) даёт честный перед/зад (совпадают только в точке
      пересечения) — та же математика, что у витой верёвки/косы в 3D. См. HUMAN-SYMBOLS.md. */
-  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist', cat:'celtic'},
-  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid', cat:'celtic'},
+  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у витой верёвки'},
+  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у настоящей косы'},
 ];
 const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
@@ -1650,19 +1650,19 @@ const FLASHES=[
   {id:87, name:"Объёмный шар", price:10, style:"shadedBall", cat:'classic'},
   {id:88, name:"Бант из колец", price:10, style:"ringBow", cat:'classic'},
   {id:89, name:"Кристалл-огранка", price:10, style:"gemFacet", cat:'classic'},
-  {id:90, name:"Кубооктаэдр", price:10, style:"cuboctahedron", cat:'sacred'}, // Vector Equilibrium — 12 вершин, 24 ребра длины √2, проверено скриптом
-  {id:91, name:"Шри-Янтра", price:10, style:"sriYantra", cat:'sacred'}, // раньше Sri Yantra — реальные опубликованные координаты, 18 подлинных тройных пересечений, проверено скриптом
-  {id:92, name:"Печать", price:10, style:"sealNested", cat:'sacred'}, // наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° посчитаны, не подобраны
-  {id:93, name:"Звезда гириха", price:10, style:"girihDecagon", cat:'sacred'}, // раньше «Гирих: декагон» — угол 54° выведен и проверен на всех 10 рёбрах
-  {id:94, name:"Шляпа", price:10, style:"hatTile", cat:'sacred'}, // раньше Hat-тайл — координаты из настоящего кода автора (isohedral/hatviz), Einstein-плитка 2023 года
-  {id:95, name:"Шляпа и Метатрон", price:10, style:"hatMetatron", cat:'sacred'}, // раньше «Composite: Hat + Метатрон»
-  {id:96, name:"Рыбий пузырь", price:10, style:"vesicaPiscis", cat:'sacred'}, // раньше Vesica Piscis
-  {id:97, name:"Инь-Янь", price:10, style:"yinyangFlash", cat:'sacred'},
-  {id:98, name:"Золотая спираль", price:10, style:"goldenSpiral", cat:'sacred'}, // квадраты Фибоначчи, проверено скриптом на стыковку без щелей
-  {id:99, name:"Аполлониева прокладка", price:10, style:"apollonian", cat:'sacred'}, // теорема Декарта, все касания проверены скриптом
+  {id:90, name:"Кубооктаэдр", price:10, style:"cuboctahedron", cat:'sacred', fact:'Vector Equilibrium — 12 вершин, 24 ребра длины √2'}, // Vector Equilibrium — 12 вершин, 24 ребра длины √2, проверено скриптом
+  {id:91, name:"Шри-Янтра", price:10, style:"sriYantra", cat:'sacred', fact:'Настоящие опубликованные координаты — 18 подлинных тройных пересечений'}, // раньше Sri Yantra — реальные опубликованные координаты, 18 подлинных тройных пересечений, проверено скриптом
+  {id:92, name:"Печать", price:10, style:"sealNested", cat:'sacred', fact:'Наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° на слой'}, // наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° посчитаны, не подобраны
+  {id:93, name:"Звезда гириха", price:10, style:"girihDecagon", cat:'sacred', fact:'Исламский геометрический узор — угол 54°, декаграмма {10/3}'}, // раньше «Гирих: декагон» — угол 54° выведен и проверен на всех 10 рёбрах
+  {id:94, name:"Шляпа", price:10, style:"hatTile", cat:'sacred', fact:'Hat-тайл (Einstein, 2023) — первая известная апериодическая мозаика ОДНОЙ плиткой'}, // раньше Hat-тайл — координаты из настоящего кода автора (isohedral/hatviz), Einstein-плитка 2023 года
+  {id:95, name:"Шляпа и Метатрон", price:10, style:"hatMetatron", cat:'sacred', fact:'Композиция Hat-тайла (2023) и Куба Метатрона'}, // раньше «Composite: Hat + Метатрон»
+  {id:96, name:"Рыбий пузырь", price:10, style:"vesicaPiscis", cat:'sacred', fact:'Vesica Piscis — пересечение двух равных кругов через центр друг друга, древний символ'}, // раньше Vesica Piscis
+  {id:97, name:"Инь-Янь", price:10, style:"yinyangFlash", cat:'sacred', fact:'Тайцзиту — классический даосский символ баланса'},
+  {id:98, name:"Золотая спираль", price:10, style:"goldenSpiral", cat:'sacred', fact:'Квадраты Фибоначчи 1,1,2,3,5,8,13 — стыкуются без щелей'}, // квадраты Фибоначчи, проверено скриптом на стыковку без щелей
+  {id:99, name:"Аполлониева прокладка", price:10, style:"apollonian", cat:'sacred', fact:'Теорема Декарта — каждый круг касается всех трёх соседей'}, // теорема Декарта, все касания проверены скриптом
   {id:100, name:"Октаграмма", price:10, style:"octagram", cat:'classic'},
-  {id:101, name:"Куб Метатрона", price:10, style:"metatronCube", cat:'sacred'}, // 13 точек Fruit of Life, ровно 78 линий (C(13,2)) — проверено скриптом
-  {id:102, name:"Цветок жизни", price:10, style:"flowerOfLife", cat:'sacred'}, // 19 кругов на настоящей треугольной решётке, шаг = радиус — проверено скриптом
+  {id:101, name:"Куб Метатрона", price:10, style:"metatronCube", cat:'sacred', fact:'13 точек Fruit of Life, все 78 связей (C(13,2))'}, // 13 точек Fruit of Life, ровно 78 линий (C(13,2)) — проверено скриптом
+  {id:102, name:"Цветок жизни", price:10, style:"flowerOfLife", cat:'sacred', fact:'19 кругов на треугольной решётке — шаг узла равен радиусу'}, // 19 кругов на настоящей треугольной решётке, шаг = радиус — проверено скриптом
   {id:103, name:"Бант-треугольники", price:10, style:"bowtieTri", cat:'classic'},
   /* 05.09.2026 — 13 «спорных» из этой же партии: владелец сам проверит вживую и решит по
      каждой отдельно (оставить/убрать), поэтому цены здесь ниже — самый дешёвый тир каталога. */
@@ -1685,24 +1685,24 @@ const FLASHES=[
      честно НЕ может (настоящая шестерня, «почти круг») — в .knowledge/GENERATIVE-GEOMETRY.md.
      Владелец одобрил все 8 после того, как первая партия («звезда»/«капля»/«шестерня»)
      не прошла живую проверку глазами и была честно переделана/снята. */
-  {id:117, name:"Ромб", price:10, style:"sfRomb", cat:'superformula'},
-  {id:118, name:"Морская звезда", price:10, style:"sfStarfish", cat:'superformula'},
-  {id:119, name:"Соцветие", price:10, style:"sfBlossom", cat:'superformula'},
-  {id:120, name:"Морской ёж", price:10, style:"sfUrchin", cat:'superformula'},
-  {id:121, name:"Галька", price:10, style:"sfPebble", cat:'superformula'},
-  {id:122, name:"Плита", price:10, style:"sfSlab", cat:'superformula'},
-  {id:123, name:"Щит", price:10, style:"sfShield", cat:'superformula'},
-  {id:124, name:"Венец", price:10, style:"sfCrown", cat:'superformula'},
+  {id:117, name:"Ромб", price:10, style:"sfRomb", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:118, name:"Морская звезда", price:10, style:"sfStarfish", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:119, name:"Соцветие", price:10, style:"sfBlossom", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:120, name:"Морской ёж", price:10, style:"sfUrchin", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:121, name:"Галька", price:10, style:"sfPebble", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:122, name:"Плита", price:10, style:"sfSlab", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:123, name:"Щит", price:10, style:"sfShield", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:124, name:"Венец", price:10, style:"sfCrown", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
   /* 05.09.2026 «Розы Родонеи» — r=cos(k·θ), k нечётное → k лепестков, k чётное → 2k
      (Гвидо Гранди, 1723-28). Одна общая функция в render.js, отличаются только k.
      Проверено численно (замкнутость) и визуально до вставки — см. GENERATIVE-GEOMETRY.md. */
-  {id:125, name:"Клевер", price:10, style:"roseClover", cat:'roses'},
-  {id:126, name:"Трилистник", price:10, style:"roseTrefoil", cat:'roses'},
-  {id:127, name:"Розетка", price:10, style:"roseRosette", cat:'roses'},
-  {id:128, name:"Пятилистник", price:10, style:"rosePetals5", cat:'roses'},
-  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses'},
-  {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses'},
-  {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses'},
+  {id:125, name:"Клевер", price:10, style:"roseClover", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:126, name:"Трилистник", price:10, style:"roseTrefoil", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:127, name:"Розетка", price:10, style:"roseRosette", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:128, name:"Пятилистник", price:10, style:"rosePetals5", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/

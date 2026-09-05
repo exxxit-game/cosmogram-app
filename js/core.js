@@ -200,13 +200,13 @@ const deadzone=v=>Math.abs(v)<.07?0:v*1.08;
 /* ---------- Тост: сообщение поверх ЛЮБОГО экрана ----------
    (canvas-попапы под оверлеями не видны — используем DOM) */
 let toastTimer=null;
-function toast(txt,color){
+function toast(txt,color,ms){ // 05.09.2026: третий необязательный параметр — подсказки-факты (Тюнинг) длиннее обычных тостов, читать нужно дольше 1.5с
   const t=$('toast'); if(!t) return;
   t.textContent=txt;
   t.style.borderColor=color||'rgba(140,170,255,.3)';
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),1500);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),ms||1500);
 }
 /* v1.103.0 «Тихий нуль»: сервисный сорт тоста. В полёте молчит — в небе только
    небо, калибровка не кричит посреди трассы (бывало ×5 за заезд). Но молчание
@@ -498,7 +498,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.85'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.86'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
