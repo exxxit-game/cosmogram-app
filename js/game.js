@@ -1710,6 +1710,13 @@ const FLASHES=[
   {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
   {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
   {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  /* 05.09.2026 «L-система» — F→F[+F]F[-F]F, угол 25.7°, Prusinkiewicz & Lindenmayer, «The
+     Algorithmic Beauty of Plants» (1990), fig. 1.24(a). Не кривая — порождающая грамматика:
+     строка переписывается n раз, потом читается черепашкой (F=шаг вперёд, +/-=поворот,
+     []=запомнить/вернуть точку). n=4+ сливается в кашу на размере Вспышки — проверено
+     визуально, не вставлено. См. .knowledge/GENERATIVE-GEOMETRY.md. */
+  {id:132, name:"Ветвление", price:10, style:"lsysBranch", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
+  {id:133, name:"Папоротник", price:10, style:"lsysFern", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/

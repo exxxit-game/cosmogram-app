@@ -3799,6 +3799,33 @@ function renderFlashPattern(c, style, p, col){
       c.closePath(); c.stroke();
       break;
     }
+    /* 05.09.2026 «L-система» — F→F[+F]F[-F]F, угол 25.7° (Prusinkiewicz & Lindenmayer, «The
+       Algorithmic Beauty of Plants», 1990, fig. 1.24а). Не кривая, а порождающая грамматика:
+       строка переписывается n раз (LSYS_N — 2 для «Ветвление», 3 для «Папоротник», n≥4 уже
+       проверено визуально и отклонено — сливается в кашу на размере Вспышки). Черепашка читает
+       результат: F — шаг вперёд, +/- — поворот на угол, [ ] — запомнить/вернуть точку и
+       направление (это и даёт ветвление, не только зигзаг). Масштаб — как у остальных Вспышек,
+       через p, а не через прогрессивное дорисовывание пути. */
+    case 'lsysBranch': case 'lsysFern': {
+      const LSYS_N = style==='lsysBranch' ? 2 : 3;
+      const LSYS_STEP = style==='lsysBranch' ? 9 : 3.6; // без учёта p — сам масштаб применяется только при отрисовке точки, ниже
+      const ANGLE = 25.7*Math.PI/180;
+      let str='F';
+      for(let i=0;i<LSYS_N;i++) str=str.split('').map(ch=>ch==='F'?'F[+F]F[-F]F':ch).join('');
+      let x=0,y=0,dir=Math.PI/2; // вверх, как в примере источника
+      const stack=[];
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.beginPath(); c.moveTo(0,0);
+      for(const ch of str){
+        if(ch==='F'){ x+=Math.cos(dir)*LSYS_STEP; y-=Math.sin(dir)*LSYS_STEP; c.lineTo(x*p,y*p); }
+        else if(ch==='+'){ dir+=ANGLE; }
+        else if(ch==='-'){ dir-=ANGLE; }
+        else if(ch==='['){ stack.push([x,y,dir]); }
+        else if(ch===']'){ [x,y,dir]=stack.pop(); c.moveTo(x*p,y*p); }
+      }
+      c.stroke();
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
