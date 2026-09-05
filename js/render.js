@@ -3715,6 +3715,32 @@ function renderFlashPattern(c, style, p, col){
       c.closePath(); c.stroke();
       break;
     }
+    /* 05.09.2026 «Суперформула Гилиса» — r(φ)=(|cos(m·φ/4)|^n2+|sin(m·φ/4)|^n3)^(-1/n1).
+       ОДНА функция на все 8 записей каталога — отличаются только 4 числа в SFP. Источник
+       чисел — Paul Bourke (paulbourke.net/geometry/supershape), не подобраны на глаз; полная
+       теория и честные пределы формулы (что она физически не может нарисовать) — в
+       .knowledge/GENERATIVE-GEOMETRY.md. Каждая фигура проверена глазами (не только
+       численно на незамкнутость/NaN) до попадания сюда — тот самый урок этой же партии. */
+    case 'sfRomb': case 'sfStarfish': case 'sfBlossom': case 'sfUrchin':
+    case 'sfPebble': case 'sfSlab': case 'sfShield': case 'sfCrown': {
+      const SFP={sfRomb:[4,1,1,1], sfStarfish:[5,0.1,1.7,1.7], sfBlossom:[6,3,8,8],
+        sfUrchin:[8,0.3,0.3,0.3], sfPebble:[6,40,10,10], sfSlab:[4,1000,1000,1000],
+        sfShield:[3,60,55,30], sfCrown:[14,30,30,30]};
+      const [sm,sn1,sn2,sn3]=SFP[style];
+      const N=64, R=30*p;
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.beginPath();
+      for(let i=0;i<=N;i++){
+        const phi=i/N*6.2832;
+        const t1=Math.pow(Math.abs(Math.cos(sm*phi/4)),sn2);
+        const t2=Math.pow(Math.abs(Math.sin(sm*phi/4)),sn3);
+        const r=Math.pow(t1+t2,-1/sn1)*R;
+        const x=r*Math.cos(phi), y=r*Math.sin(phi);
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.closePath(); c.stroke();
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,

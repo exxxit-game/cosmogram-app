@@ -1674,6 +1674,20 @@ const FLASHES=[
   {id:114, name:"Треугольная мандала", price:10, style:"triMandala"},
   {id:115, name:"Треугольник Рёло", price:10, style:"reuleaux"},
   {id:116, name:"Додекаграмма", price:10, style:"dodecagram"},
+  /* 05.09.2026 «Суперформула Гилиса» — восемь новых Вспышек, ОДНА общая функция на все
+     (render.js), отличаются только 4 числа на запись здесь. Параметры — из реального
+     источника (Paul Bourke), не подобраны на глаз; полная теория и то, что формула
+     честно НЕ может (настоящая шестерня, «почти круг») — в .knowledge/GENERATIVE-GEOMETRY.md.
+     Владелец одобрил все 8 после того, как первая партия («звезда»/«капля»/«шестерня»)
+     не прошла живую проверку глазами и была честно переделана/снята. */
+  {id:117, name:"Ромб", price:10, style:"sfRomb"},
+  {id:118, name:"Морская звезда", price:10, style:"sfStarfish"},
+  {id:119, name:"Соцветие", price:10, style:"sfBlossom"},
+  {id:120, name:"Морской ёж", price:10, style:"sfUrchin"},
+  {id:121, name:"Галька", price:10, style:"sfPebble"},
+  {id:122, name:"Плита", price:10, style:"sfSlab"},
+  {id:123, name:"Щит", price:10, style:"sfShield"},
+  {id:124, name:"Венец", price:10, style:"sfCrown"},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/
