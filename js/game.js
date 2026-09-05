@@ -138,6 +138,11 @@ const TRAILS=[
   {id:12, name:'Скрепка',         price:10, style:'paperclip'},
   {id:13, name:'Радуга-арка',     price:10, style:'rainbowArc'}, // спорный — на проверку
   {id:14, name:'Волны',           price:10, style:'waterWaves'}, // спорный — на проверку
+  /* 05.09.2026 «Кельтский плетёный жгут» — проекция спирали сбоку: y_k=sin(θ+k·2π/N),
+     глубина z_k=cos(θ+k·2π/N) даёт честный перед/зад (совпадают только в точке
+     пересечения) — та же математика, что у витой верёвки/косы в 3D. См. HUMAN-SYMBOLS.md. */
+  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist'},
+  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid'},
 ];
 const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
@@ -1688,6 +1693,16 @@ const FLASHES=[
   {id:122, name:"Плита", price:10, style:"sfSlab"},
   {id:123, name:"Щит", price:10, style:"sfShield"},
   {id:124, name:"Венец", price:10, style:"sfCrown"},
+  /* 05.09.2026 «Розы Родонеи» — r=cos(k·θ), k нечётное → k лепестков, k чётное → 2k
+     (Гвидо Гранди, 1723-28). Одна общая функция в render.js, отличаются только k.
+     Проверено численно (замкнутость) и визуально до вставки — см. GENERATIVE-GEOMETRY.md. */
+  {id:125, name:"Клевер", price:10, style:"roseClover"},
+  {id:126, name:"Трилистник", price:10, style:"roseTrefoil"},
+  {id:127, name:"Розетка", price:10, style:"roseRosette"},
+  {id:128, name:"Пятилистник", price:10, style:"rosePetals5"},
+  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum"},
+  {id:130, name:"Семицветик", price:10, style:"roseSeven"},
+  {id:131, name:"Веер", price:10, style:"roseFan"},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/

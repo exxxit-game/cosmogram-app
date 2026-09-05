@@ -2256,6 +2256,27 @@ function drawStructuredTrail(trailStyle,trailColor,nowMs){
       ctx.stroke();
     }
     ctx.restore();
+  } else if(trailStyle==='celticTwist' || trailStyle==='celticBraid'){ // 05.09.2026 «Кельтский плетёный жгут/коса» — проекция спирали сбоку по реальным точкам хвоста (trailHistBuf), не рисунок «по мотивам». z=cos(фаза) даёт честный перед/зад — см. HUMAN-SYMBOLS.md
+    const N=trailStyle==='celticTwist'?2:3, A=3.6;
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    for(let i=1;i<n;i++){
+      const a0=trailHistBuf[i-1], a1=trailHistBuf[i], age=i/n;
+      const nx=-(a1.y-a0.y), ny=(a1.x-a0.x), nl=Math.hypot(nx,ny)||1;
+      const ux=nx/nl, uy=ny/nl;
+      const strands=[];
+      for(let k=0;k<N;k++){
+        const phase=i*.4+k*Math.PI*2/N;
+        const off=A*Math.sin(phase), z=Math.cos(phase);
+        strands.push({x0:a0.x+ux*off,y0:a0.y+uy*off, x1:a1.x+ux*off,y1:a1.y+uy*off, z});
+      }
+      strands.sort((s1,s2)=>s1.z-s2.z);
+      strands.forEach(s=>{
+        ctx.strokeStyle=trailColor+((0.25+0.3*((s.z+1)/2))*age).toFixed(2)+')';
+        ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.moveTo(s.x0,s.y0); ctx.lineTo(s.x1,s.y1); ctx.stroke();
+      });
+    }
+    ctx.restore();
   }
 }
 /* Эхо-шлейф Призрака: кольцевой буфер недавних позиций (рисуем 2 копии с задержкой) */
@@ -2457,6 +2478,21 @@ function renderTrailPattern(c, style, col){
       c.strokeStyle=col(a); c.beginPath();
       c.moveTo(x-3,y); c.lineTo(x+3,y); c.moveTo(x,y-3); c.lineTo(x,y+3); c.stroke();
     });
+  } else if(style==='celticTwist' || style==='celticBraid'){ // 05.09.2026: статичная заморозка той же формулы, что в drawStructuredTrail ниже — см. HUMAN-SYMBOLS.md
+    const N=style==='celticTwist'?2:3, A=3.6;
+    for(let i=1;i<=12;i++){
+      const y0=8+(i-1)*4, y1=8+i*4;
+      const strands=[];
+      for(let k=0;k<N;k++){
+        const phase=i*.4+k*Math.PI*2/N;
+        strands.push({off:A*Math.sin(phase), z:Math.cos(phase)});
+      }
+      strands.sort((s1,s2)=>s1.z-s2.z);
+      strands.forEach(s=>{
+        c.strokeStyle=col(0.35+0.4*((s.z+1)/2)); c.lineWidth=1.6;
+        c.beginPath(); c.moveTo(s.off,y0); c.lineTo(s.off,y1); c.stroke();
+      });
+    }
   }
 }
 function renderFlashPattern(c, style, p, col){
@@ -3741,6 +3777,28 @@ function renderFlashPattern(c, style, p, col){
       c.closePath(); c.stroke();
       break;
     }
+    /* 05.09.2026 «Розы Родонеи» — r=cos(k·θ) в полярных координатах (Гвидо Гранди,
+       1723-28). k нечётное даёт k лепестков за один оборот, k чётное — 2k лепестков за
+       два оборота (иначе половина лепестков не дорисуется — проверено численно, замыкание
+       ровно при 2 периодах для чётных k). ОДНА функция на все 7 записей — отличается
+       только k в ROSE_K. См. .knowledge/GENERATIVE-GEOMETRY.md. */
+    case 'roseClover': case 'roseTrefoil': case 'roseRosette': case 'rosePetals5':
+    case 'roseChrysanthemum': case 'roseSeven': case 'roseFan': {
+      const ROSE_K={roseClover:2, roseTrefoil:3, roseRosette:4, rosePetals5:5,
+        roseChrysanthemum:6, roseSeven:7, roseFan:8};
+      const k=ROSE_K[style];
+      const N=90, R=32*p, periods=(k%2===0?2:1);
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.beginPath();
+      for(let i=0;i<=N*periods;i++){
+        const theta=i/N*Math.PI*2;
+        const r=Math.cos(k*theta)*R;
+        const x=r*Math.cos(theta), y=r*Math.sin(theta);
+        if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+      }
+      c.closePath(); c.stroke();
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
@@ -3784,7 +3842,7 @@ function drawPlane(sh,nowMs){
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
   const tr=(typeof TRAILS_BY_ID!=='undefined'?TRAILS_BY_ID.get(S.trail):null)||{style:''}; // 05.09.2026: след — независимый выбор, не от скина
   const trailFx=tr.style||'';
-  const STRUCTURED_TRAILS=['ribbon','pearls','loopKnot','snakeWave','heartKnot','trailConstellation','paperclip','rainbowArc','waterWaves']; // 05.09.2026: расширено — связные следы, не только 2 премиум
+  const STRUCTURED_TRAILS=['ribbon','pearls','loopKnot','snakeWave','heartKnot','trailConstellation','paperclip','rainbowArc','waterWaves','celticTwist','celticBraid']; // 05.09.2026: расширено — связные следы, не только 2 премиум
   if(hq && STRUCTURED_TRAILS.includes(trailFx)){
     drawStructuredTrail(trailFx,skin.trail,nowMs);
     if(S.running&&!S.paused){ trailHistBuf.push({x:p.x,y:p.y}); if(trailHistBuf.length>28) trailHistBuf.shift(); }
