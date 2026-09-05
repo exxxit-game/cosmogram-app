@@ -2390,16 +2390,18 @@ document.querySelectorAll('.topCat').forEach(b=>b.addEventListener('click',()=>{
    Гость играет полноценно, рекорд ждёт локально; вход — Telegram Login Widget (только браузер).
    Анонимных записей нет: без подписи Telegram в таблицу не встать — доверие дороже охвата. */
 function accFill(){ // настройки: статус входа + кнопки (гость) / «Выйти» (веб-сессия)
-  const st=$('accStatus'), out=$('accOutBtn');
+  const st=$('accStatus'), out=$('accOutBtn'), del=$('accDeleteBtn');
   if(!st || typeof syncAvailable!=='function') return;
   const dw=$('dcWidget'), gw=$('gWidget');
   if (syncAvailable()){
     st.textContent=L.accIn(typeof syncAuthName==='function'?(syncAuthName()||''):'');
     if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
     out.classList.toggle('hidden', !!syncInitData()); // из мини-аппа «выходить» нечего — ты дома
+    if(del) del.classList.remove('hidden'); // 05.09.2026: в отличие от «Выйти», удалить есть что всегда, если вошёл — хоть из мини-аппа, хоть с веб-сессии
   } else {
     st.textContent=L.accGuest;
     out.classList.add('hidden');
+    if(del) del.classList.add('hidden'); // гостю нечего удалять — ничего ещё не сохранял под личностью
     if(!syncInitData()){ if(dw) dcMount(dw); if(gw) gMount(gw); } else { if(dw) dw.innerHTML=''; if(gw) gw.innerHTML=''; }
   }
 }
@@ -2422,6 +2424,30 @@ function syncAuthChanged(){ // зовёт sync.js после входа видж
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
 }
 wireOn('accOutBtn', 'click',()=>{ Store.del('tgWebAuth'); Store.del('dcAuth'); Store.del('gAuth'); sfx.click(); haptic('light'); syncAuthChanged(); });
+
+/* 05.09.2026 «Удалить мои данные»: макет macet-udalit-dannye.html, одобрено. Тот же tg.showConfirm,
+   что уже используется для замены вызова на дуэль (ui.js, duelBanner) — родной диалог, не свой поверх
+   чужого. В отличие от того места, здесь НЕ применяем действие, если спросить не удалось никак —
+   там тихое применение было безопаснее (потеря дуэли-вызова), тут цена ошибки не та же самая. */
+wireOn('accDeleteBtn', 'click',()=>{
+  sfx.click(); haptic('medium');
+  if(typeof deleteMyData!=='function') return;
+  const msg=L.accDeleteConfirm||'Это навсегда удалит все ваши данные: рекорды, покупки, трассы Мастерской. Отменить нельзя.';
+  const go=()=>{
+    deleteMyData().then(res=>{
+      if(res && res.ok){
+        Store.del('tgWebAuth'); Store.del('dcAuth'); Store.del('gAuth');
+        toast(L.accDeleted||'Данные удалены', 'rgba(255,159,176,.5)');
+        syncAuthChanged();
+      } else {
+        toast(L.accDeleteFail||'Не удалось, попробуйте ещё раз', 'rgba(255,159,176,.5)');
+      }
+    });
+  };
+  if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); }); }
+  else if(typeof confirm==='function'){ if(confirm(msg)) go(); }
+  else toast(L.accDeleteNoConfirm||'Подтверждение недоступно', 'rgba(255,159,176,.5)');
+});
 
 /* Свой рекорд в этой категории — тот, что лежит на устройстве. Нужен гостю: сервер про него
    не знает и знать не может, а «ты был бы 9-м из 15» — единственное, что превращает чужую
@@ -2667,6 +2693,7 @@ function applyLang(){
   setText('settingsTitle',L.settingsTitle);
   setText('setCalibTxt',L.calib); // v1.103.0: текст отдельно от диода — локализация лампу не стирает
   setText('accOutBtn',L.accOut); // v1.51.0: вход в общую таблицу — на языке игрока
+  setText('accDeleteBtn',L.accDelete); // 05.09.2026
   if(screenName==='settings') accFill(); if(screenName==='over') webJoinFill(); // виджет монтируется лениво — только на открытом экране
   setText('restartBtn',L.restart);
   setText('pauseMenuBtn',L.menu);

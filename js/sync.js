@@ -546,6 +546,18 @@ function workshopModerate(code, status){ // 05.09.2026: закрепить/ск�
   });
 }
 
+/* 05.09.2026 «Удалить мои данные»: отдельная комната cosmogram-privacy, тот же приём, что
+   у Мастерской — своё identity-подтверждение, необратимое действие держим подальше от
+   большого cosmogram-sync. Требует настоящую личность — без входа стирать нечего и некому. */
+const PRIVACY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-privacy';
+function deleteMyData(){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncFetch(PRIVACY_URL, Object.assign({action:'delete_me'}, syncAuth())).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
    средство восстановления после офлайна. Правдоподобие проверять обязан сервер, но
