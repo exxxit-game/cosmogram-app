@@ -68,6 +68,7 @@ const I18N = {
     workshopSignInFirst:'войди через Telegram, чтобы увидеть свои трассы',
     workshopSort_new:'Новые', workshopSort_top:'Лучшие', workshopSort_plays:'Играли больше всех', workshopSort_mine:'Мои',
     workshopPlay:'Играть', workshopEdit:'В Кузницу',
+    workshopReport:'Пожаловаться', workshopReported:'Спасибо, посмотрим', // 05.09.2026: EN/ES/PT/FR ниже ещё без этих ключей
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', // v1.69.0; 02.09.2026: «Настроение»→«Туман» переехало в Расстановку, «Состав» переехал сюда же — обе больше не отдельные группы

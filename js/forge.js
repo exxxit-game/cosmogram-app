@@ -783,7 +783,8 @@ function workshopRenderList(){
       '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
       '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
       '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
-      '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button></div></div>'; }).join('');
+      '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button>'+
+      '<button class="wReport" data-act="report">⚑</button></div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
       const cfg=forgeDecode(t.code);
@@ -795,6 +796,7 @@ function workshopRenderList(){
       row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
       row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
       row.querySelector('.wEdit').textContent=L.workshopEdit||'В Кузницу';
+      row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
 }
@@ -817,6 +819,12 @@ wireOnLocal('workshopList','click',function(e){
       const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent='★ '+(res.hearts||0);
     });
     haptic('light');
+  }
+  if(act.dataset.act==='report'){
+    // 05.09.2026: сервер сам не даёт накрутить счётчик повторной жалобой (unique код+игрок) —
+    // здесь достаточно погасить кнопку визуально, чтобы не звать снова с этого же экрана без толку.
+    act.disabled=true; act.textContent='✓';
+    workshopReport(code); haptic('light'); toast(L.workshopReported||'Спасибо, посмотрим', 'rgba(255,159,176,.5)');
   }
 });
 

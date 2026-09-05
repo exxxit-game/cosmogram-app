@@ -531,6 +531,13 @@ function workshopPlayed(code){ // «выстрелил и забыл» — не 
   if(!syncAvailable()) return;
   workshopPost(Object.assign({action:'played', code:code}, syncAuth())).catch(()=>{});
 }
+function workshopReport(code){ // 05.09.2026: жалоба — владелец смотрит только этот список, не всю Мастерскую подряд
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'report', code:code}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
