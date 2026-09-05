@@ -1277,6 +1277,13 @@ const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d
    каждая иконка предлагалась и одобрялась группами), не придуманы заново задним числом.
    Тот же приём построения списка категорий, что и у ANGAR_DECAL_CATS. */
 const ANGAR_ICON_CATS = (()=>{ const seen=[]; ICONS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+/* 05.09.2026 «Комфорт большого каталога» (владелец: «огромные каталоги получились» —
+   131 Вспышка/16 Следов одной стеной): тот же приём построения списка категорий, что уже
+   был у ANGAR_DECAL_CATS/ANGAR_ICON_CATS выше, просто раньше не был подключён к Вспышке/
+   Следу — старый комментарий про «10 штук, не нужны категории» устарел. Живой макет (was/
+   became) показан и одобрен владельцем перед этой правкой. */
+const ANGAR_FLASH_CATS = (()=>{ const seen=[]; FLASHES.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+const ANGAR_TRAIL_CATS = (()=>{ const seen=[]; TRAILS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
 
 /* 28.08.2026 «Один общий, не франкенштейн»: отдельная строка-кнопка под небом снята —
    владелец увидел её как чужеродную деталь и лишнее место. Действие (надеть/купить)
@@ -1352,7 +1359,8 @@ function angarVisibleList(){ // список жетонов активной в�
   const freebies = freebieIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
   // 29.08.2026: иконки получили реальные категории (ANGAR_ICON_CATS) тем же приёмом, что
   // декали — вкладка «Вспышка» своих подкатегорий не имеет (10 штук, не нужны), остаётся плоской.
-  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS : angarCat==='icon' ? ANGAR_ICON_CATS : null;
+  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS : angarCat==='icon' ? ANGAR_ICON_CATS
+    : angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS : null;
   const restBase = subCats
     ? subCats.flatMap(cat=>cfg.list.filter(d=>d.cat===cat))
     : cfg.list.filter(d=>d.id!==0);
@@ -1422,7 +1430,7 @@ function angarBuildGrid(){
          у них есть свой item.cat от оригинала (например 'space'), без исключения заголовок
          той категории ошибочно всплыл бы прямо над ними, а не над её настоящим первым
          предметом дальше по списку. */
-      if((angarCat==='decal'||angarCat==='icon') && item.cat && item.cat!=='none' && item.cat!==lastCat
+      if((angarCat==='decal'||angarCat==='icon'||angarCat==='flash'||angarCat==='trail') && item.cat && item.cat!=='none' && item.cat!==lastCat
          && (ANGAR_FREEBIE[angarCat]||[]).indexOf(item.id)<0){
         const head=document.createElement('div');
         head.className='angarCatHead';
