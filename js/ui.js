@@ -137,6 +137,7 @@ function setScreen(name){
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('modesScreen','hidden', name!=='modes');
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы
+  toggleCls('workshopScreen','hidden', name!=='workshop'); // 05.09.2026 «Мастерская»: витрина трасс
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
   // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
   // БЕСКОНЕЧНО до конца всей сессии, даже часы спустя, соревнуясь за кадр с настоящей игрой.
@@ -219,13 +220,9 @@ function modesFill(){ // подписи + отметка выбранного р
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
   put('modeCaravan',L.modeCaravan,L.modeCaravanD); // 05.09.2026
   put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
-  const fl=Store.get('forgeLast',null); // v1.90.0: дверь помнит гостя — трасса ждёт за ней по имени (как последний курс в Course World)
-  /* v1.282.13: имя чистим и на чтении. Все нынешние пути записи forgeLast уже проходят
-     forgeSanitize, так что боевого вектора нет — но эта строка кладёт значение из Store
-     прямо в innerHTML, а Store зеркалится из облака Telegram и переживает смену версий.
-     Санация на чтении стоит один вызов и снимает целый класс «а если туда попало не то». */
-  const flName=(fl&&fl.n&&typeof sanitizeTrackName==='function')?sanitizeTrackName(fl.n):(fl&&fl.n?String(fl.n).replace(/[<>&"'\\]/g,''):'');
-  put('modeForge',L.modeForge,L.modeForgeD+(flName?' · «'+flName+'»':''));
+  // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
+  // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
+  // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
   const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
@@ -1904,7 +1901,7 @@ wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
-wireOn('modeForge', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы
+wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
 wireOn('menuBtn', 'click', toMenu);
 wireOn('pauseBtn', 'click', pauseGame);
 wireOn('resumeBtn', 'click', resumeGame);
@@ -2599,6 +2596,7 @@ function applyLang(){
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
   setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
+  if (typeof workshopFillLabels==='function') workshopFillLabels(); // 05.09.2026 «Мастерская» — свой язык, тот же приём
   if (typeof ptFill==='function') ptFill(); // 01.09.2026: Партитура — своя лента, тот же вызов смены языка
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном

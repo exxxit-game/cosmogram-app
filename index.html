@@ -1386,6 +1386,32 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgePresetTile.sel{border-color:rgba(190,225,255,.55);background:rgba(120,170,255,.10);color:#eaf2ff;
   box-shadow:0 0 14px rgba(120,170,255,.12)} /* выбранная программа светится вполголоса */
 .forgePresetTile:active{transform:scale(.97)}
+/* 05.09.2026 «Мастерская»: витрина трасс — карточки шире forgePresetTile (имя+автор+мета+
+   действия), свотч крупнее (52px, живое небо А, статично — см. forgeMiniSwatchPaint в forge.js).
+   Цвета — те же переменные игры, ничего не выдумано заново. Макет: macet-masterskaya.html. */
+.workshopList{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.wRow{display:flex;gap:11px;align-items:center;padding:10px 11px;border:1px solid var(--line);
+  border-radius:var(--r-card);background:rgba(22,38,56,.45)}
+.wSwatch{flex:none;width:52px;height:52px;border-radius:12px;position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.wSwatch canvas{width:100%;height:100%;display:block}
+.wHeart{position:absolute;top:4px;right:4px;font-size:11px;filter:drop-shadow(0 0 2px rgba(0,0,0,.6));
+  cursor:pointer;pointer-events:auto}
+.wBody{flex:1;min-width:0}
+.wTop{display:flex;align-items:baseline;gap:6px}
+.wName{font-size:14px;font-weight:600;color:#eaf2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wAuthor{font-size:10.5px;color:var(--muted)}
+.wMeta{display:flex;align-items:center;gap:9px;margin-top:4px;font-size:11px;color:var(--muted)}
+.wMeta .m{display:flex;align-items:center;gap:3px}
+.wMeta .wStars{color:var(--gold-hi)}
+.wActions{flex:none;display:flex;flex-direction:column;gap:5px;align-items:stretch}
+.wPlay{font-family:var(--font-ui);font-weight:700;font-size:11.5px;color:#0b1626;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));border:none;border-radius:9px;
+  padding:6px 12px;white-space:nowrap;cursor:pointer;pointer-events:auto}
+.wEdit{font-family:var(--font-ui);font-size:10px;color:var(--muted);background:transparent;
+  border:1px solid var(--line);border-radius:9px;padding:4px 10px;white-space:nowrap;
+  cursor:pointer;pointer-events:auto}
+
 /* 01.09.2026 «Конструктор»/Партитура — перенесено из macet-31-08-kuznica-partitura.html
    (владелец подтвердил как цель), цвета сведены к реальным переменным игры (--gold/--gold-hi/
    --line), не выдуманы заново. */
@@ -1991,9 +2017,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.80"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.80"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.80"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.81"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.81"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.81"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2108,7 +2134,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div class="scrMid">
     <div class="stack">
       <button class="btn pri hero" id="startBtn">Начать полёт</button>
-      <button class="btn sec" id="modesBtn">Режимы</button>
+      <button class="btn sec" id="modesBtn">Соревнования</button>
+      <!-- 05.09.2026 (владелец): Конструктор — не дисциплина, ему не место внутри «Соревнований»;
+           переехал на главный экран отдельной кнопкой, рядом по важности со стартом забега. -->
+      <button class="btn sec" id="konstruktorBtn">Конструктор</button>
     </div>
     <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
     <div class="grid2" id="menuRow">
@@ -2303,10 +2332,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div></div>
 </div>
 
-<!-- РЕЖИМЫ (v1.42.0): дисциплины под одной кнопкой -->
+<!-- СОРЕВНОВАНИЯ (v1.42.0, переименовано 05.09.2026): только дисциплины — Конструктор
+     переехал на главный экран отдельной кнопкой (он не дисциплина, см. modeIt ниже). -->
 <div id="modesScreen" class="overlay hidden">
   <button class="menuBack" id="modesBack" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="modesTitle">Режимы</div>
+  <div class="screenTitle" id="modesTitle">Соревнования</div>
   <div class="setPanel">
     <button class="btn ghost modeIt" id="modeDaily"><span class="modeName">Небо дня</span><span class="modeDesc">Одно небо на всех игроков</span></button>
     <button class="btn ghost modeIt" id="mode1CC"><span class="modeName">1CC</span><span class="modeDesc">Небо месяца на 1 жизни</span></button>
@@ -2314,7 +2344,6 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <button class="btn ghost modeIt" id="modeSpeedrun"><span class="modeName">Спидран</span><span class="modeDesc">10 000 очков на время — чистый хронометраж</span></button>
     <button class="btn ghost modeIt" id="modeCaravan"><span class="modeName">Caravan</span><span class="modeDesc">60 секунд на очки — время решает, не жизни</span></button>
     <button class="btn ghost modeIt" id="modeIronman"><span class="modeName">Ironman</span><span class="modeDesc">1 жизнь, 0 бонусов, ×4 очков</span></button>
-    <button class="btn ghost modeIt" id="modeForge"><span class="modeName">Конструктор</span><span class="modeDesc">Собери свой забег и поделись кодом</span></button>
   </div>
 </div>
 
@@ -2428,6 +2457,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          только картинкой счёта, про код трассы не знает. Кнопка нужна прямо здесь, не после
          полёта: делиться можно сразу после сборки. Макет: macet-02-09-podelitsya-nebom.html. -->
     <button class="btn ghost" id="forgeShareMapBtn" style="margin-top:10px">Поделиться небом</button>
+    <!-- 05.09.2026 «Мастерская»: витрина трасс других игроков поверх уже готового шаринга
+         выше — тот же код, что уходит в mapShare(), теперь ещё и попадает в общий список. -->
+    <button class="btn ghost" id="forgeWorkshopBtn" style="margin-top:8px">Мастерская</button>
     <button class="btn ghost small spoiler" id="forgeFineBtn" style="margin-top:12px">Тонкая настройка</button>
     <div id="forgeFine" class="setPanel forgePanel hidden">
       <!-- 31.08.2026: maxlength — мягкая узда по символам (защита от вставки простыни текста);
@@ -2467,6 +2499,19 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            тоже атмосфера неба), «Небо друга» переехало в Ярус 1 (тот же вопрос «дай готовое»,
            что и у сценариев, просто с другого конца). Тонкая настройка сжалась до одной группы. -->
     </div>
+  </div>
+</div>
+
+<!-- WORKSHOP: витрина трасс Конструктора (05.09.2026 «Мастерская») — механизм шаринга по
+     ссылке (forge.js, mapShare/forgeDecode) не тронут, это только публичный список поверх него. -->
+<div id="workshopScreen" class="overlay hidden">
+  <button class="menuBack" id="workshopBack" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
+  <div class="screenTitle" id="workshopTitle">Мастерская</div>
+  <div class="scrBody">
+    <div class="kzSub" id="workshopSub" style="text-align:center;margin-bottom:10px">трассы других игроков — сыграй или открой в Кузнице</div>
+    <div class="forgeChips" id="workshopSort"></div>
+    <div id="workshopList" class="workshopList"></div>
+    <div class="hint hidden" id="workshopEmpty" style="text-align:center;margin-top:14px">пока пусто — поделись своей трассой в Кузнице, и она появится здесь</div>
   </div>
 </div>
 
@@ -2649,25 +2694,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.80" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.80"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.80"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.80"></script>
-<script defer src="js/game.js?v=1.478.80" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.80"></script>
-<script defer src="js/sync.js?v=1.478.80"></script>
-<script defer src="js/render.js?v=1.478.80"></script>
-<script defer src="js/planetarium.js?v=1.478.80"></script>
-<script defer src="js/goldstar.js?v=1.478.80"></script>
-<script defer src="js/music.js?v=1.478.80"></script>
-<script defer src="js/gyro.js?v=1.478.80"></script>
-<script defer src="js/forge.js?v=1.478.80"></script>
-<script defer src="js/partitura.js?v=1.478.80"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.80"></script>
-<script defer src="js/card.js?v=1.478.80"></script>
-<script defer src="js/star.js?v=1.478.80"></script>
-<script defer src="js/cinema.js?v=1.478.80"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.80"></script>
+<script defer src="js/core.js?v=1.478.81" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.81"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.81"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.81"></script>
+<script defer src="js/game.js?v=1.478.81" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.81"></script>
+<script defer src="js/sync.js?v=1.478.81"></script>
+<script defer src="js/render.js?v=1.478.81"></script>
+<script defer src="js/planetarium.js?v=1.478.81"></script>
+<script defer src="js/goldstar.js?v=1.478.81"></script>
+<script defer src="js/music.js?v=1.478.81"></script>
+<script defer src="js/gyro.js?v=1.478.81"></script>
+<script defer src="js/forge.js?v=1.478.81"></script>
+<script defer src="js/partitura.js?v=1.478.81"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.81"></script>
+<script defer src="js/card.js?v=1.478.81"></script>
+<script defer src="js/star.js?v=1.478.81"></script>
+<script defer src="js/cinema.js?v=1.478.81"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.81"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

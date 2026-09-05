@@ -496,6 +496,42 @@ function syncSpeedrunTop(day){ // {ok,day,top:[{pid,name,username,provider,best,
   });
 }
 
+/* 05.09.2026 «Мастерская»: витрина трасс Конструктора (cosmogram-workshop) — отдельная
+   комната на сервере, тот же приём, что у cosmogram-daily выше: таблица рекордов и Небо
+   месяца её не касаются. Сам механизм шаринга (mapShare()/forgeDecode() в forge.js,
+   CG2-код в deep-link) не меняется — эта комната только даёт уже существующим кодам
+   первую публичную витрину + сердечко (голос) поверх track_votes. */
+const WORKSHOP_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-workshop';
+function workshopPost(payload){
+  return syncFetch(WORKSHOP_URL,payload).catch(()=>null);
+}
+function workshopList(sort){ // sort: 'new'|'top'|'plays'|'mine' — витрина публична, 'mine' одна требует личность
+  if(sort==='mine' && !syncAvailable()) return Promise.resolve(null);
+  const body = sort==='mine' ? Object.assign({action:'list', sort:sort}, syncAuth()) : {action:'list', sort:sort};
+  return workshopPost(body).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopSubmit(code, name){ // публикация уже готового кода трассы — без личности некому её подписать
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'submit', code:code, name:name||''}, syncAuth())).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopVote(code){ // сердечко-переключатель: тап ещё раз — снять
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'vote', code:code}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopPlayed(code){ // «выстрелил и забыл» — не задерживает старт забега ни на кадр
+  if(!syncAvailable()) return;
+  workshopPost(Object.assign({action:'played', code:code}, syncAuth())).catch(()=>{});
+}
+
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
    средство восстановления после офлайна. Правдоподобие проверять обязан сервер, но

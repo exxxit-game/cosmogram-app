@@ -462,7 +462,9 @@ function forgeFill(){ // подписи + состояние виджетов п
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } };
   grpT('forgeGrpHard',L.forgeGrpHard);
-  const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
+  // 05.09.2026: #modeForge убран из «Соревнований» вместе с самой кнопкой (Конструктор
+  // переехал на главный экран, id="konstruktorBtn") — строка, что красила её подпись,
+  // больше не на что указывать, снята вместе с ней.
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
   const pre=$('forgePresets');
@@ -615,6 +617,10 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   const code=forgeEncode(cfg);
   const link='https://t.me/realcosmogrambot/app?startapp=map_'+code; // тот же мост, что и у дуэлей (v1.68.0)
   const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
+  // 05.09.2026 «Мастерская»: тот же тап «Поделиться» одновременно кладёт код в публичную
+  // витрину (owner подтвердил именно эту связку в макете) — не блокирует и не мешает самому
+  // шарингу, если сеть недоступна/игрок не вошёл, ссылка другу всё равно уходит как раньше.
+  if(typeof workshopSubmit==='function') workshopSubmit(code, cfg.n).catch(()=>{});
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
@@ -638,6 +644,49 @@ function forgeLoadCode(){
      forgeBoot (тот же путь через deep-link) давно записывает — здесь просто не хватало. */
   Store.set('forgeLast',cfg);
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
+}
+
+/* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
+function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины
+  const cfg=forgeDecode(code);
+  if(!cfg) return false;
+  forgeCfg=cfg; Store.set('forgeLast',cfg);
+  return true;
+}
+function forgeWorkshopEdit(code){ // «В Кузницу»: открыть чужую трассу под себя, не в зачёт (как и любой чужой код)
+  if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
+  forgeSyncWidgets();
+  toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
+}
+function forgeWorkshopPlay(code){ // «Играть»: применить + честно засчитать «сыграли» + взлёт, тот же незачётный забег, что у любой чужой трассы
+  if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
+  if(typeof workshopPlayed==='function') workshopPlayed(code);
+  forgePlay();
+}
+// Маленький статичный свотч карточки Мастерской — тот же язык (звёзды/дальняя стая/туман/
+// фонарик), что forgeSkyPaint() выше, но БЕЗ requestAnimationFrame: список может показывать
+// десятки карточек разом, а живому дышащему небу там не место (никто не просил анимировать
+// список, дёшево и правильно нарисовать один раз). Сид детерминирован от самих цветов неба —
+// одна и та же трасса всегда даёт один и тот же узор звёзд, не дрожит между перерисовками.
+function forgeMiniSwatchPaint(cv, cfg){
+  if(!cv || !cv.getContext) return;
+  const x=cv.getContext('2d'); const W=cv.width, H=cv.height;
+  const psl=forgePreviewMoodSL(cfg.mood);
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'hsl('+cfg.h1+','+psl.S0+'%,'+psl.L0+'%)'); g.addColorStop(1,'hsl('+cfg.h2+','+psl.S1+'%,'+psl.L1+'%)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  let seed=((cfg.h1|0)*7+(cfg.h2|0)*3+1)>>>0;
+  const rnd=function(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
+  for(let i=0;i<16;i++){ x.globalAlpha=.3+rnd()*.5; x.fillStyle=rnd()>.85?'#ffe9b8':'#dfe8ff';
+    x.beginPath(); x.arc(rnd()*W,rnd()*H,rnd()*1.1+.3,0,6.283); x.fill(); }
+  x.globalAlpha=1;
+  for(let i=0;i<3;i++){ const ox=(i*19+7)%W, oy=(i*23+11)%H, r=4+(i%2)*2;
+    x.fillStyle='rgba(6,10,20,.7)'; x.strokeStyle='rgba(150,180,240,.4)'; x.lineWidth=1;
+    x.beginPath(); x.arc(ox,oy,r,0,6.283); x.fill(); x.stroke(); }
+  if(cfg.fog){ const v=x.createRadialGradient(W/2,H/2,4,W/2,H/2,W*.6);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.55)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
+  if(cfg.fl){ const v=x.createRadialGradient(W/2,H/2,6,W/2,H/2,W*.5);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.8)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
 }
 
 /* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
@@ -691,6 +740,85 @@ function forgeResetAll(){
   forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
   toast(L.forgeReset||'Сброшено','rgba(160,210,255,.5)'); haptic('light');
 }
+
+/* ---------- 05.09.2026 «Мастерская»: экран-витрина — подписи, сортировка, список ---------- */
+let workshopSortMode='new';
+const WORKSHOP_SORTS=['new','top','plays','mine'];
+function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
+  if(typeof L==='undefined'||!L.workshopTitle) return;
+  const LBL=[['workshopTitle',L.workshopTitle],['workshopSub',L.workshopSub],
+    ['workshopEmpty',L.workshopEmpty],['forgeWorkshopBtn',L.workshopTitle]];
+  for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
+  const sortEl=$('workshopSort');
+  if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
+    sortEl.innerHTML='';
+    WORKSHOP_SORTS.forEach(function(s){
+      const b=document.createElement('button'); b.className='forgeChip';
+      b.addEventListener('click', function(){ workshopSortMode=s; workshopRenderList(); sfx.click(); haptic('light'); });
+      sortEl.appendChild(b);
+    });
+  }
+  if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
+    sortEl.children[i].textContent = L['workshopSort_'+s] || s;
+    sortEl.children[i].classList.toggle('sel', s===workshopSortMode);
+  });
+}
+function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
+function workshopRenderList(){
+  const listEl=$('workshopList'), emptyEl=$('workshopEmpty');
+  if(!listEl) return;
+  if(workshopSortMode==='mine' && !syncAvailable()){
+    listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); emptyEl.textContent=L.workshopSignInFirst||L.workshopEmpty; }
+    return;
+  }
+  listEl.innerHTML='<div class="hint" style="text-align:center">…</div>';
+  const requestedSort=workshopSortMode; // 05.09.2026: защита от гонки — быстрый тап по двум чипам подряд не должен дать ответу первого перезаписать второй
+  workshopList(requestedSort).then(function(res){
+    if(requestedSort!==workshopSortMode) return; // пока летал запрос, игрок уже переключил сортировку — этот ответ больше не актуален
+    const tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
+    if(!tracks.length){ listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty; } return; }
+    if(emptyEl) emptyEl.classList.add('hidden');
+    const mine=workshopMyVotes();
+    listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
+      '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
+      '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
+      '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
+      '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button></div></div>'; }).join('');
+    tracks.forEach(function(t,i){
+      const row=listEl.children[i]; row.dataset.code=t.code;
+      const cfg=forgeDecode(t.code);
+      if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
+      row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
+      row.querySelector('.wAuthor').textContent=t.author_name||'';
+      row.querySelector('[data-role="hearts"]').textContent='★ '+(t.hearts||0);
+      row.querySelector('[data-role="plays"]').textContent='▶ '+(t.plays||0);
+      row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
+      row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
+      row.querySelector('.wEdit').textContent=L.workshopEdit||'В Кузницу';
+    });
+  }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
+}
+function workshopOpen(){ setScreen('workshop'); workshopFillLabels(); workshopRenderList(); }
+wireOnLocal('forgeWorkshopBtn','click',function(){ sfx.click(); haptic('light'); workshopOpen(); });
+wireOnLocal('workshopBack','click',function(){ sfx.click(); setScreen('forge'); });
+wireOnLocal('workshopList','click',function(e){
+  const row=e.target.closest('.wRow'); if(!row) return;
+  const code=row.dataset.code; if(!code) return;
+  const act=e.target.closest('[data-act]'); if(!act) return;
+  if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
+  if(act.dataset.act==='edit'){ setScreen('forge'); forgeWorkshopEdit(code); return; }
+  if(act.dataset.act==='vote'){
+    workshopVote(code).then(function(res){
+      if(!res || !res.ok) return;
+      const mine=workshopMyVotes(); const idx=mine.indexOf(code);
+      if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
+      Store.set('workshopMyVotes',mine);
+      act.textContent = res.hearted ? '♥' : '♡';
+      const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent='★ '+(res.hearts||0);
+    });
+    haptic('light');
+  }
+});
 
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
