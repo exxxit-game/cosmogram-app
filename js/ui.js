@@ -136,8 +136,7 @@ function setScreen(name){
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('modesScreen','hidden', name!=='modes');
-  toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы
-  toggleCls('workshopScreen','hidden', name!=='workshop'); // 05.09.2026 «Мастерская»: витрина трасс
+  toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
   // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
   // БЕСКОНЕЧНО до конца всей сессии, даже часы спустя, соревнуясь за кадр с настоящей игрой.

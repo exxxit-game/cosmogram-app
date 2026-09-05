@@ -93,6 +93,13 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
     {at:950,type:'kind',kind:0},{at:1000,type:'pause'},{at:1250,type:'kind',kind:4},{at:1300,type:'kind',kind:0},
     {at:1350,type:'pause'},{at:1600,type:'kind',kind:0},{at:1650,type:'kind',kind:4},{at:1700,type:'pause'},{at:1900,type:'kind',kind:7}]}}
 ];
+/* 06.09.2026 «Играть/Создать» (владелец): 8 плиток на видном месте — перегружали первый взгляд
+   на вкладку «Играть». Оставлены 2 быстрых примера («тапнул — увидел, как это делается») — один
+   мягкий, один сложный; остальные 6 переехали в Мастерскую как трассы автора (seed-migration,
+   см. .knowledge/PRODUCTION-MINES.md-соседний коммит) — играть/загрузить их можно тем же путём,
+   что и любую чужую трассу. FORGE_PRESETS сам остаётся полным (8) — им пользуется кодирование
+   ссылок и forgePresetMatch(), только видимая сетка сужена. */
+const FORGE_PRESETS_VISIBLE = FORGE_PRESETS.filter(function(p){ return p.k==='fpWarm'||p.k==='fpHell'; });
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
@@ -401,7 +408,10 @@ function forgeSkyKick(){
 let forgeCfg=forgeSanitize(Store.get('forgeLast',null)||Object.assign({},FORGE_PRESETS[0].c)); // последняя трасса переживает перезапуск; свежая кухня — «Разминка» уже выбрана, ноль обязательных решений (v1.86.0)
 function forgeCfgGet(){ return forgeCfg; }
 function forgePresetMatch(){ // светится ровно та программа, что сейчас в небе (v1.86.0)
-  for(let i=0;i<FORGE_PRESETS.length;i++){ const c=FORGE_PRESETS[i].c;
+  // 06.09.2026: сетка сузилась до FORGE_PRESETS_VISIBLE (2 плитки) — индекс должен указывать
+  // на позицию В НЕЙ, не в полном FORGE_PRESETS (8), иначе подсветка попадёт не в тот ребёнок
+  // DOM-узла (их теперь только 2) или вовсе не найдёт совпадения для скрытых сценариев, что и надо.
+  for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const c=FORGE_PRESETS_VISIBLE[i].c;
     if(forgeCfg.d===c.d&&forgeCfg.s===c.s&&forgeCfg.e===c.e&&forgeCfg.l===c.l&&forgeCfg.lv===c.lv&&
        forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog&&
        forgeCfg.hs===(c.hs||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно
@@ -468,9 +478,9 @@ function forgeFill(){ // подписи + состояние виджетов п
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
   const pre=$('forgePresets');
-  if(pre && pre.children.length!==FORGE_PRESETS.length){
+  if(pre && pre.children.length!==FORGE_PRESETS_VISIBLE.length){
     pre.innerHTML='';
-    FORGE_PRESETS.forEach(function(p){
+    FORGE_PRESETS_VISIBLE.forEach(function(p){
       const b=document.createElement('button');
       b.className='forgePresetTile';
       b.innerHTML='<i class="sw"></i><span class="nm"></span>';
@@ -481,11 +491,12 @@ function forgeFill(){ // подписи + состояние виджетов п
         const keepName=forgeCfg.n;
         forgeCfg=forgeSanitize(Object.assign({},p.c)); forgeCfg.n=keepName; // имя автора не затираем
         forgeSyncWidgets(); sfx.click(); haptic('medium');
+        forgeTabSet('create'); // 06.09.2026: «тапнул — сразу летишь» — «Лететь» теперь по вкладке
       });
       pre.appendChild(b);
     });
   }
-  if(pre) for(let i=0;i<FORGE_PRESETS.length;i++){ const nm=pre.children[i].querySelector('.nm'); if(nm) nm.textContent=L[FORGE_PRESETS[i].k]||''; }
+  if(pre) for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const nm=pre.children[i].querySelector('.nm'); if(nm) nm.textContent=L[FORGE_PRESETS_VISIBLE[i].k]||''; }
   // враги
   const names=[L.fkRock,L.fkDebris,L.fkDrift,L.fkMine,L.fkSat,L.fkComet,L.fkSeeker,L.fkGate];
   const chips=$('forgeChips');
@@ -593,7 +604,27 @@ function forgeGrpSubSync(){ // «Тонкая настройка»: подпис
       (forgeCfg.hs?' · '+(L.forgeHS||''):''); // 31.08.2026: закрытая группа не молчит про включённую ставку; 02.09.2026: L.forgeHS уже кончается на «×4» сам по себе — приписанное здесь ещё одно «×4» дублировало текст («…очки ×4 ×4», владелец поймал вживую)
   }
 }
-function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
+function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill();
+  forgeTabSet('play'); workshopFillLabels(); workshopRenderList(); // 06.09.2026: «Играть/Создать» — вход всегда на «Играть», Мастерская больше не отдельный экран
+} // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
+
+/* 06.09.2026 «Играть/Создать» (владелец: «два разных мира — это тупо, нужен плавный переход»):
+   один экран, тап по вкладке вместо ухода на отдельный экран Мастерской. Тап по готовому
+   сценарию/успешная загрузка кода друга/«В Кузницу» из Мастерской сами переводят на «Создать» —
+   обещание пресетов «тапнул — сразу летишь» остаётся честным, «Лететь» просто рядом по вкладке. */
+let forgeTab='play';
+function forgeTabSet(t){
+  forgeTab=(t==='create')?'create':'play';
+  const playBtn=$('forgeTabPlayBtn'), createBtn=$('forgeTabCreateBtn');
+  if(playBtn) playBtn.classList.toggle('sel', forgeTab==='play');
+  if(createBtn) createBtn.classList.toggle('sel', forgeTab==='create');
+  const playEl=$('forgeTabPlay'), createEl=$('forgeTabCreate');
+  if(playEl) playEl.classList.toggle('hidden', forgeTab!=='play');
+  if(createEl) createEl.classList.toggle('hidden', forgeTab!=='create');
+  if(forgeTab==='play') workshopRenderList(); // список мог устареть, пока игрок был на «Создать»
+}
+wireOnLocal('forgeTabPlayBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('play'); });
+wireOnLocal('forgeTabCreateBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('create'); });
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
@@ -644,6 +675,7 @@ function forgeLoadCode(){
      forgeBoot (тот же путь через deep-link) давно записывает — здесь просто не хватало. */
   Store.set('forgeLast',cfg);
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
+  forgeTabSet('create'); // 06.09.2026: код принят — сразу к «Лететь», как и у сценариев
 }
 
 /* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
@@ -751,7 +783,7 @@ const WORKSHOP_SORTS=['new','top','plays','mine'];
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopTitle) return;
   const LBL=[['workshopTitle',L.workshopTitle],['workshopSub',L.workshopSub],
-    ['workshopEmpty',L.workshopEmpty],['forgeWorkshopBtn',L.workshopTitle]];
+    ['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Мастерская теперь вкладка «Играть»
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   const sortEl=$('workshopSort');
   if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
@@ -819,15 +851,16 @@ function workshopRenderList(){
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
 }
-function workshopOpen(){ setScreen('workshop'); workshopFillLabels(); workshopRenderList(); }
-wireOnLocal('forgeWorkshopBtn','click',function(){ sfx.click(); haptic('light'); workshopOpen(); });
-wireOnLocal('workshopBack','click',function(){ sfx.click(); setScreen('forge'); });
+// 06.09.2026: workshopOpen()/forgeWorkshopBtn/workshopBack убраны — Мастерская больше не
+// отдельный экран, заполняется прямо при входе в Конструктор (forgeOpen()) и при возврате
+// на вкладку «Играть» (forgeTabSet()); «назад» из неё больше нет — это уже вкладка Конструктора,
+// назад отсюда ведёт та же кнопка forgeBack, что и всегда.
 wireOnLocal('workshopList','click',function(e){
   const row=e.target.closest('.wRow'); if(!row) return;
   const code=row.dataset.code; if(!code) return;
   const act=e.target.closest('[data-act]'); if(!act) return;
   if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
-  if(act.dataset.act==='edit'){ setScreen('forge'); forgeWorkshopEdit(code); return; }
+  if(act.dataset.act==='edit'){ forgeWorkshopEdit(code); forgeTabSet('create'); return; } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
   if(act.dataset.act==='vote'){
     workshopVote(code).then(function(res){
       if(!res || !res.ok) return;
