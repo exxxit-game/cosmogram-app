@@ -295,12 +295,28 @@ const music = (()=>{
       if(timer){ clearInterval(timer); timer=null; }
     },
     duck(on){
+      /* 05.09.2026: та же дыра, что чинили в tick() — duck() проверял только mg&&theme, но
+         никогда не звал ensureChain(). Если AudioContext умер и пересоздался (закрытие
+         браузером/iOS под памятью — см. audio() в core.js) МЕЖДУ вызовом start()/sting() и
+         паузой, mg молча указывал на мёртвый узел: пауза не приглушала звук, никакой ошибки
+         в консоли не было — тихий баг, воспроизведён вживую (закрыл AC, вызвал duck() мимо
+         tick(), эффект не сработал). Сохраняем/восстанавливаем theme вокруг ensureChain() —
+         та же причина, что в tick(): при смене контекста ensureChain() сама обнуляет theme,
+         рассчитывая, что start()/sting() тут же назначат заново — duck() этого не делает. */
       if(ducked===on) return; ducked=on;
-      if(mg&&theme) fadeTo((MG[theme]||MG_GAME)*(on?.3:1),.4);
+      const hadTheme=theme, hadPending=pendingTheme;
+      const ac=ensureChain();
+      if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
+      if(!ac||!mg||!theme) return;
+      fadeTo((MG[theme]||MG_GAME)*(on?.3:1),.4);
     },
     kick(){ // сайдчейн (v1.48.0 «Микс»): удар/Сверхновая прижимают музыку на 0.8с — эффекту не нужно кричать, чтобы пробиться
-      if(!mg||!theme||!AC) return;
-      const base=MG[theme]||MG_GAME, now=AC.currentTime;
+      // 05.09.2026: та же дыра и тот же фикс, что у duck() выше — воспроизведено вживую тем же тестом.
+      const hadTheme=theme, hadPending=pendingTheme;
+      const ac=ensureChain();
+      if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
+      if(!ac||!mg||!theme) return;
+      const base=MG[theme]||MG_GAME, now=ac.currentTime;
       mg.gain.cancelScheduledValues(now);
       mg.gain.setValueAtTime(Math.max(mg.gain.value,base*.34),now);
       mg.gain.linearRampToValueAtTime(base*.32,now+.05);
