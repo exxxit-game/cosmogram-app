@@ -925,6 +925,42 @@ function fxIllLattice(ctx){
   ctx.restore();
 }
 
+/* 05.09.2026 «Из макета в игру» — 4 новых материала. Координаты Пенроуза — тот же кусок,
+   что уже проверен скриптом (одна длина стороны, 2 угла) в макете, просто уменьшен под
+   размер корпуса (S=0.5) вместо холста 100×100. */
+function fxPatCircles(ctx, sk){ // Плед из кругов
+  ctx.save(); clipShipBody(ctx);
+  [[-8,-8],[8,-8],[-8,6],[8,6],[0,-16]].forEach(([x,y],i)=>{
+    ctx.fillStyle=sk.trail+(i%2===0?'.18)':'.3)');
+    ctx.beginPath(); ctx.arc(x,y,8,0,6.2832); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxPatLattice2(ctx, sk){ // Цветочная решётка
+  ctx.save(); clipShipBody(ctx);
+  [-16,-4,8].forEach(x=>{ [-14,0,10].forEach(y=>{
+    metalStroke(ctx, c=>{ c.moveTo(x-6,y); c.quadraticCurveTo(x,y-8,x+6,y); c.quadraticCurveTo(x,y+8,x-6,y); }, .4, .35, sk.trail+'.5)');
+  }); });
+  ctx.restore();
+}
+const PAT_PENROSE=[{type:'thin',pts:[[-16.23,0],[-10.03,0],[-8.12,5.9],[-14.32,5.9]]},{type:'thin',pts:[[-3.1,-21.33],[3.1,-21.33],[5.02,-15.44],[-1.18,-15.44]]},{type:'thick',pts:[[-14.32,5.9],[-8.12,5.9],[-13.13,9.54],[-19.33,9.54]]},{type:'thick',pts:[[1.92,5.9],[8.12,5.9],[3.1,9.54],[-3.1,9.54]]},{type:'thin',pts:[[-3.1,2.25],[3.1,2.25],[5.02,-3.64],[-1.18,-3.64]]},{type:'thick',pts:[[-5.02,-3.64],[-3.1,2.25],[-1.18,-3.64],[-3.1,-9.54]]}];
+function fxPatPenrose(ctx, sk){ // Пенроуз — компактный кусок уже проверенной мозаики (де Брёйн), масштаб 0.5 под корпус
+  ctx.save(); clipShipBody(ctx);
+  PAT_PENROSE.forEach(r=>{
+    ctx.fillStyle=sk.trail+(r.type==='thick'?'.4)':'.2)');
+    ctx.beginPath(); r.pts.forEach(([x,y],i)=>{ const xx=x*.5, yy=y*.5-4; if(i===0)ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }); ctx.closePath(); ctx.fill();
+    metalStroke(ctx, c=>{ r.pts.forEach(([x,y],i)=>{ const xx=x*.5, yy=y*.5-4; if(i===0)c.moveTo(xx,yy); else c.lineTo(xx,yy); }); c.closePath(); }, .2, .2);
+  });
+  ctx.restore();
+}
+function fxIllCrystal(ctx){ // Кристалл — гранёный корпус, тот же приём, что «Кристалл-огранка» во Вспышке
+  ctx.save(); clipShipBody(ctx);
+  metalStroke(ctx, c=>{ c.moveTo(0,-20); c.lineTo(10,-8); c.lineTo(10,6); c.lineTo(0,16); c.lineTo(-10,6); c.lineTo(-10,-8); c.closePath(); }, .6, .5);
+  metalStroke(ctx, c=>{ c.moveTo(-10,-8); c.lineTo(10,-8); }, .3, .3);
+  metalStroke(ctx, c=>{ c.moveTo(-10,6); c.lineTo(10,6); }, .3, .3);
+  metalStroke(ctx, c=>{ c.moveTo(0,-20); c.lineTo(0,16); }, .25, .25);
+  ctx.restore();
+}
 const PREM_FX_MAP={
   matGold:fxMatGold, matSilver:fxMatSilver, matBronze:fxMatBronze, matIce:fxMatIce, matEmerald:fxMatEmerald,
   matObsidian:fxMatObsidian, matMarble:fxMatMarble, matNebula:fxMatNebula, matOpal:fxMatOpal, matVerdigris:fxMatVerdigris,
@@ -933,6 +969,7 @@ const PREM_FX_MAP={
   sigPenta:fxSigPenta, sigHexa:fxSigHexa, sigMandala:fxSigMandala, sigTriquetra:fxSigTriquetra, sigCompass:fxSigCompass,
   sigYinyang:fxSigYinyang, sigFlower:fxSigFlower, sigMaltese:fxSigMaltese, sigSnowflake:fxSigSnowflake,
   illLeather:fxIllLeather, illTopo:fxIllTopo, illOrigami:fxIllOrigami, illLattice:fxIllLattice,
+  patPenrose:fxPatPenrose, patLattice2:fxPatLattice2, patCircles:fxPatCircles, illCrystal:fxIllCrystal,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -2107,29 +2144,116 @@ function draw(){
    тот же приём, что уже есть у echoBuf ниже, только рисуем не копии корабля, а линию/цепочку. */
 const trailHistBuf=[];
 function trailHistReset(){ trailHistBuf.length=0; }
-function drawStructuredTrail(skin,nowMs){
+function drawStructuredTrail(trailStyle,trailColor,nowMs){
+  // 05.09.2026: раньше принимала skin и читала skin.trailFx/skin.trail — след теперь
+  // независимый выбор (TRAILS, game.js), цвет по-прежнему берётся от надетого скина.
   const n=trailHistBuf.length;
   if(n<2) return;
-  if(skin.trailFx==='ribbon'){ // Лента: сплошная лента переменной ширины, тает с возрастом
+  if(trailStyle==='ribbon'){ // Лента: сплошная лента переменной ширины, тает с возрастом
     ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
     for(let i=1;i<n;i++){
       const a0=trailHistBuf[i-1], a1=trailHistBuf[i];
       const age=i/n; // 0 у хвоста → 1 у самолётика
-      ctx.strokeStyle=skin.trail+(age*.55).toFixed(2)+')';
+      ctx.strokeStyle=trailColor+(age*.55).toFixed(2)+')';
       ctx.lineWidth=Math.max(.5, 6*age);
       ctx.beginPath(); ctx.moveTo(a0.x,a0.y); ctx.lineTo(a1.x,a1.y); ctx.stroke();
     }
     ctx.restore();
-  } else if(skin.trailFx==='pearls'){ // Нить-жемчуг: связная цепочка бусин постоянной длины
+  } else if(trailStyle==='pearls'){ // Нить-жемчуг: связная цепочка бусин постоянной длины
     ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.strokeStyle=skin.trail+'.3)'; ctx.lineWidth=.6;
+    ctx.strokeStyle=trailColor+'.3)'; ctx.lineWidth=.6;
     ctx.beginPath();
     for(let i=0;i<n;i++){ const p=trailHistBuf[i]; if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }
     ctx.stroke();
     for(let i=0;i<n;i+=3){ // не каждая позиция — иначе бусины сольются в кашу
       const p=trailHistBuf[i], age=i/n;
-      ctx.fillStyle=skin.trail+(age*.85).toFixed(2)+')';
+      ctx.fillStyle=trailColor+(age*.85).toFixed(2)+')';
       ctx.beginPath(); ctx.arc(p.x,p.y,1.4*age+.3,0,6.283); ctx.fill();
+    }
+    ctx.restore();
+  } else if(trailStyle==='loopKnot'){ // Узел-петля: лента, ширина пульсирует волной — читается как затянутый бант
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    for(let i=1;i<n;i++){
+      const a0=trailHistBuf[i-1], a1=trailHistBuf[i], age=i/n;
+      ctx.strokeStyle=trailColor+(age*.55).toFixed(2)+')';
+      ctx.lineWidth=Math.max(.5, (2+4*Math.abs(Math.sin(i*.35)))*age);
+      ctx.beginPath(); ctx.moveTo(a0.x,a0.y); ctx.lineTo(a1.x,a1.y); ctx.stroke();
+    }
+    ctx.restore();
+  } else if(trailStyle==='snakeWave'){ // Волна-змейка: путь колышется перпендикулярно направлению полёта
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    ctx.strokeStyle=trailColor+'.5)'; ctx.lineWidth=2.2;
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const p=trailHistBuf[i];
+      const nx = i>0? -(trailHistBuf[i].y-trailHistBuf[i-1].y) : 0, ny = i>0? (trailHistBuf[i].x-trailHistBuf[i-1].x) : 0;
+      const nl=Math.hypot(nx,ny)||1, off=Math.sin(i*.4)*4;
+      const x=p.x+(nx/nl)*off, y=p.y+(ny/nl)*off;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke(); ctx.restore();
+  } else if(trailStyle==='heartKnot'){ // Сердце-узел: жемчужная нить, но тёплым цветом и с мягкими бусинами-сердечками
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle=trailColor+'.4)'; ctx.lineWidth=.7;
+    ctx.beginPath();
+    for(let i=0;i<n;i++){ const p=trailHistBuf[i]; if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }
+    ctx.stroke();
+    for(let i=0;i<n;i+=4){
+      const p=trailHistBuf[i], age=i/n, r=1.6*age+.4;
+      ctx.fillStyle=trailColor+(age*.9).toFixed(2)+')';
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y+r*.6);
+      ctx.arc(p.x-r*.5,p.y,r*.5,Math.PI*.9,Math.PI*2.4);
+      ctx.arc(p.x+r*.5,p.y,r*.5,Math.PI*1.6,Math.PI*3.1);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  } else if(trailStyle==='trailConstellation'){ // Созвездие-след: редкие точки, соединённые тонкими линиями — растущее созвездие позади борта
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle=trailColor+'.35)'; ctx.lineWidth=.5;
+    let prev=null;
+    for(let i=0;i<n;i+=Math.max(1,Math.floor(n/9))){
+      const p=trailHistBuf[i];
+      if(prev){ ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(p.x,p.y); ctx.stroke(); }
+      const age=i/n;
+      ctx.fillStyle=trailColor+(age*.9).toFixed(2)+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,1.8*age+.5,0,6.283); ctx.fill();
+      prev=p;
+    }
+    ctx.restore();
+  } else if(trailStyle==='paperclip'){ // Скрепка: лента с двойным нахлёстом ширины — реже и резче, чем «Узел-петля»
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    for(let i=1;i<n;i++){
+      const a0=trailHistBuf[i-1], a1=trailHistBuf[i], age=i/n;
+      const w=(i%14<7)? 5 : 1.2;
+      ctx.strokeStyle=trailColor+(age*.55).toFixed(2)+')';
+      ctx.lineWidth=Math.max(.5,w*age);
+      ctx.beginPath(); ctx.moveTo(a0.x,a0.y); ctx.lineTo(a1.x,a1.y); ctx.stroke();
+    }
+    ctx.restore();
+  } else if(trailStyle==='rainbowArc'){ // Радуга-арка: основной путь + пара тонких дуг-эхо со сдвигом — на проверку
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    [0,-3,3].forEach((off,k)=>{
+      ctx.strokeStyle=trailColor+(k===0?'.5)':'.22)');
+      ctx.lineWidth=k===0?2:1;
+      ctx.beginPath();
+      for(let i=0;i<n;i++){ const p=trailHistBuf[i]; if(i===0) ctx.moveTo(p.x,p.y+off); else ctx.lineTo(p.x,p.y+off); }
+      ctx.stroke();
+    });
+    ctx.restore();
+  } else if(trailStyle==='waterWaves'){ // Волны: несколько параллельных линий рядом, как рябь за кормой — на проверку
+    ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.lineCap='round';
+    for(let k=-2;k<=2;k++){
+      ctx.strokeStyle=trailColor+(0.4-Math.abs(k)*.08).toFixed(2)+')'; ctx.lineWidth=1;
+      ctx.beginPath();
+      for(let i=0;i<n;i++){
+        const p=trailHistBuf[i];
+        const nx = i>0? -(trailHistBuf[i].y-trailHistBuf[i-1].y) : 1, ny = i>0? (trailHistBuf[i].x-trailHistBuf[i-1].x) : 0;
+        const nl=Math.hypot(nx,ny)||1, off=k*3;
+        const x=p.x+(nx/nl)*off, y=p.y+(ny/nl)*off;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -2291,6 +2415,50 @@ function drawDecalSvg(c, dc, cx, cy, skin){
    (число альфы → строка rgba). Так драка полёта (drawLaunchFlash ниже) и честное превью
    плитки в ui.js:angarBuildGrid() зовут ровно один и тот же код — жетон не врёт о том,
    как это выглядит на самом деле. */
+/* renderTrailPattern — 05.09.2026, тот же приём, что renderFlashPattern выше: одна функция,
+   которую зовут и жетон в Ангаре (angarBuildGrid), и — в будущем, когда понадобится — сама
+   игра, чтобы плитка никогда не врала о виде следа. Формы — дословно те же координаты, что
+   в самом полёте (см. p.trailFx-ветки в частицах выше и drawStructuredTrail): не рисунок
+   «по мотивам», а честная заморозка. Самолётик на плитке рисует сам вызывающий код (ui.js),
+   эта функция кладёт только сам след, начиная чуть ниже носа (y≈8) и вниз-назад. */
+function renderTrailPattern(c, style, col){
+  if(style==='debris'){ // Обломки-спутники: рыхлый дрейфующий рой
+    [[-3,8,3.2,.75],[4,16,2.6,.65],[-5,24,3.6,.55],[2,32,2.8,.4],[-4,40,2.2,.25]].forEach(([x,y,r,a])=>{
+      c.fillStyle=col(a); c.beginPath(); c.arc(x,y,r,0,6.2832); c.fill();
+    });
+  } else if(style==='pearls'){ // Нить-жемчуг: связная нить + бусины
+    const pts=[[0,8,2.8,.85],[-.5,20,2.3,.65],[1,32,1.8,.45],[1.5,44,1.3,.28],[0,56,.9,.15]];
+    c.strokeStyle=col(.35); c.lineWidth=.6; c.beginPath();
+    pts.forEach(([x,y],i)=>{ if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); c.stroke();
+    pts.forEach(([x,y,r,a])=>{ c.fillStyle=col(a); c.beginPath(); c.arc(x,y,r,0,6.2832); c.fill(); });
+  } else if(style==='sparks'){ // Искры: точки + одна яркая вспышка
+    c.fillStyle='rgba(255,255,255,.9)'; c.beginPath(); c.arc(2,10,4.5,0,6.2832); c.fill();
+    [[-3,18,1.6,.7],[3,26,1.3,.55],[-4,34,1.8,.4],[1,44,1.1,.25]].forEach(([x,y,r,a])=>{
+      c.fillStyle=col(a); c.beginPath(); c.arc(x,y,r,0,6.2832); c.fill();
+    });
+  } else if(style==='cometdust'){ // Кометная пыль: вытянутые «зёрнышки» под разными углами
+    [[1,10,15,.75],[-1,22,-25,.6],[2,34,40,.4],[-1,46,-10,.22]].forEach(([x,y,rot,a])=>{
+      c.save(); c.translate(x,y); c.rotate(rot*Math.PI/180); c.fillStyle=col(a);
+      c.beginPath(); c.moveTo(-5,0); c.lineTo(1.5,-1.8); c.lineTo(5,0); c.lineTo(1.5,1.8); c.closePath(); c.fill();
+      c.restore();
+    });
+  } else if(style==='ribbon'){ // Лента: сужается и тает к хвосту
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    const seg=[[0,8],[-1,20],[1,32],[1,42],[0,50]];
+    for(let i=1;i<seg.length;i++){
+      const age=1-(i-1)/(seg.length-1);
+      c.strokeStyle=col(age*.75); c.lineWidth=Math.max(.6,5*age);
+      c.beginPath(); c.moveTo(seg[i-1][0],seg[i-1][1]); c.lineTo(seg[i][0],seg[i][1]); c.stroke();
+    }
+    c.restore();
+  } else if(style==='waypoints'){ // Метки пути: редкие гаснущие крестики
+    c.lineWidth=1.1;
+    [[0,16,.7],[-1,30,.45],[1,44,.22]].forEach(([x,y,a])=>{
+      c.strokeStyle=col(a); c.beginPath();
+      c.moveTo(x-3,y); c.lineTo(x+3,y); c.moveTo(x,y-3); c.lineTo(x,y+3); c.stroke();
+    });
+  }
+}
 function renderFlashPattern(c, style, p, col){
   const ring=(rp,widthFrom,widthTo)=>{
     if(rp<=0) return;
@@ -3038,6 +3206,515 @@ function renderFlashPattern(c, style, p, col){
       }
       break;
     }
+    /* 05.09.2026 «Живые вспышки» — 6 новых узоров ниже читают настоящие данные (game.js:
+       isMeteorShowerDay/isRealEclipseDay/S.milestoneHit/S.comebackHit/achUnlockedSet/
+       dailyRNG), а не только p (прогресс 0→1 за окно вспышки). 'milestone' рисует золотым
+       напрямую (не через col — тот красит в цвет скина, а веха должна быть одинаково
+       золотой на любом скине, это её опознавательный цвет). */
+    case 'starfall': { // Звездопад: обычно — редкие короткие штрихи, в день пика потока — густой ливень
+      const special = typeof isMeteorShowerDay==='function' && isMeteorShowerDay();
+      const n = special?9:3;
+      c.lineCap='round'; c.strokeStyle=col(1-p); c.lineWidth=special?1.6:1.1;
+      for(let i=0;i<n;i++){
+        const t=n>1?i/(n-1):0.5;
+        const ang=-1.05+t*.5;
+        const len=(special?24:13)+p*(special?22:9);
+        const x0=(t-.5)*(special?68:26), y0=-28+t*8;
+        c.beginPath();
+        c.moveTo(x0,y0);
+        c.lineTo(x0+Math.cos(ang)*len, y0+Math.sin(ang)*len);
+        c.stroke();
+      }
+      break;
+    }
+    case 'milestone': { // Веха пути: обычно — едва заметное кольцо, в момент новых круглых 100 км — золотой залп один раз
+      if(typeof S!=='undefined' && S.milestoneHit){
+        const gcol=a=>'rgba(255,215,106,'+Math.max(0,a).toFixed(2)+')';
+        const n=12;
+        c.strokeStyle=gcol(1-p); c.lineWidth=1.4;
+        for(let i=0;i<n;i++){
+          const ang=i*(6.2832/n), r0=14+p*4, r1=14+p*22;
+          c.beginPath();
+          c.moveTo(Math.cos(ang)*r0,Math.sin(ang)*r0);
+          c.lineTo(Math.cos(ang)*r1,Math.sin(ang)*r1);
+          c.stroke();
+        }
+        c.strokeStyle=gcol((1-p)*.8); c.lineWidth=1;
+        c.beginPath(); c.arc(0,0,10+p*4,0,6.2832); c.stroke();
+        c.fillStyle=gcol((1-p)*.9);
+        c.beginPath(); c.arc(0,0,4,0,6.2832); c.fill();
+      } else {
+        ring(p*.5,1,1);
+      }
+      break;
+    }
+    case 'realEclipse': { // Небесное затмение: обычно — тихое кольцо, в день настоящего затмения — тёмный диск с огненным ободком
+      const special = typeof isRealEclipseDay==='function' && isRealEclipseDay();
+      if(special){
+        c.fillStyle='rgba(6,10,20,'+(0.9*(1-p*.3)).toFixed(2)+')';
+        c.beginPath(); c.arc(0,0,10+p*14,0,6.2832); c.fill();
+        c.strokeStyle='rgba(255,157,74,'+(1-p).toFixed(2)+')'; c.lineWidth=2.2;
+        c.beginPath(); c.arc(0,0,10+p*14,0,6.2832); c.stroke();
+      } else {
+        ring(p*.6,1,1);
+      }
+      break;
+    }
+    case 'comeback': { // С возвращением: обычно — едва заметное кольцо, после 7+ дней перерыва — тёплый тройной всплеск
+      if(typeof S!=='undefined' && S.comebackHit){
+        ring(p,2,2); ring(Math.max(0,p-.15),2,2); ring(Math.max(0,p-.3),2,2);
+        c.fillStyle='rgba(255,207,138,'+(1-p).toFixed(2)+')';
+        c.beginPath(); c.arc(0,0,4,0,6.2832); c.fill();
+      } else {
+        ring(p*.4,1,1);
+      }
+      break;
+    }
+    case 'achConstellation': { // Созвездие наград: всегда честно по числу открытых достижений (0..6 точек, фиксированные позиции)
+      const n = typeof achUnlockedSet==='function' ? Math.min(6,achUnlockedSet().length) : 0;
+      const pts=[[0,-26],[14,-10],[-16,2],[10,16],[-6,28],[18,30]];
+      const shown = n>0?n:1;
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=.8;
+      c.fillStyle=col(1-p);
+      for(let i=0;i<shown;i++){
+        const gx=pts[i][0]*(1+p*.15), gy=pts[i][1]*(1+p*.15);
+        if(i>0 && n>0){
+          const px=pts[i-1][0]*(1+p*.15), py=pts[i-1][1]*(1+p*.15);
+          c.beginPath(); c.moveTo(px,py); c.lineTo(gx,gy); c.stroke();
+        }
+        c.beginPath(); c.arc(gx,gy, n>0?2.2:1.4, 0,6.2832); c.fill();
+      }
+      break;
+    }
+    case 'daysign': { // Знак дня: число колец честно от сегодняшнего общего сида (dailyRNG — тот же, что у Трассы дня)
+      let rings=1;
+      if(typeof dailyRNG==='function'){ const r=dailyRNG(); rings=1+Math.floor(r()*3); }
+      for(let i=0;i<rings;i++) ring(Math.max(0,p-i*.12),1.6,.6);
+      break;
+    }
+    /* 05.09.2026 «Из макета в игру» — большая партия ниже, перенесена из HTML-макетов (клип N'to,
+       Vecteezy/Envato/Behance, сакральная геометрия). Координаты для проверенных фигур
+       (Flower of Life/Metatron/Sri Yantra/Hat/Кубооктаэдр/Печать/гирих) взяты из уже посчитанных
+       и проверенных короткими скриптами массивов — не нарисованы на глаз заново. */
+    case 'spokes': {
+      const n=24; c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      for(let i=0;i<n;i++){ const a=i*(6.2832/n);
+        c.beginPath(); c.moveTo(Math.cos(a)*8,Math.sin(a)*8); c.lineTo(Math.cos(a)*(8+p*24),Math.sin(a)*(8+p*24)); c.stroke(); }
+      break;
+    }
+    case 'nestedShapes': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.beginPath(); c.arc(0,0,p*30,0,6.2832); c.stroke();
+      c.save(); c.rotate(0.35); c.strokeRect(-p*24,-p*24,p*48,p*48); c.restore();
+      c.beginPath(); c.arc(0,0,p*18,0,6.2832); c.stroke();
+      c.save(); c.rotate(-0.26); c.strokeRect(-p*14,-p*14,p*28,p*28); c.restore();
+      break;
+    }
+    case 'blendCircles': {
+      c.fillStyle=col((1-p)*.35);
+      [[-10,-8],[8,-8],[-1,8]].forEach(([x,y])=>{ c.beginPath(); c.arc(x*p,y*p,17*p,0,6.2832); c.fill(); });
+      break;
+    }
+    case 'rippleDot': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.6;
+      [9,18,27,36].forEach(r=>{ c.beginPath(); c.arc(0,0,r*p,0,6.2832); c.stroke(); });
+      c.fillStyle=col(1-p); c.beginPath(); c.arc(0,0,3.2,0,6.2832); c.fill();
+      break;
+    }
+    case 'grooveDisc': {
+      c.fillStyle=col((1-p)*.18); c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.fill();
+      c.strokeStyle=col((1-p)*.55); c.lineWidth=0.5;
+      for(let i=0;i<9;i++){ c.beginPath(); c.arc(0,0,(4+i*2.6)*p,0,6.2832); c.stroke(); }
+      break;
+    }
+    case 'fillLevel': {
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=1;
+      c.beginPath(); c.moveTo(0,-28*p); c.lineTo(-24*p,26*p); c.lineTo(24*p,26*p); c.closePath(); c.stroke();
+      c.fillStyle=col((1-p)*.35);
+      c.beginPath(); c.moveTo(0,-12*p); c.lineTo(-16*p,26*p); c.lineTo(16*p,26*p); c.closePath(); c.fill();
+      break;
+    }
+    case 'weavedBands': {
+      c.strokeStyle=col(1-p); c.lineWidth=2.2*p;
+      c.beginPath(); c.moveTo(-36*p,-20*p); c.quadraticCurveTo(0,5*p,36*p,-20*p); c.stroke();
+      c.beginPath(); c.moveTo(-36*p,20*p); c.quadraticCurveTo(0,-5*p,36*p,20*p); c.stroke();
+      c.lineWidth=1; c.beginPath(); c.arc(0,4*p,10*p,0,6.2832); c.stroke();
+      break;
+    }
+    case 'ringCluster': {
+      const pts=[[-18,-22,4],[-4,-30,3.4],[-26,-8,3],[-12,2,4.6],[8,-6,3.2],[0,-16,3.6],[-20,12,3],[-6,16,4],[12,8,3.4]];
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      pts.forEach(([x,y,r])=>{ c.beginPath(); c.arc(x*p,y*p,r*p,0,6.2832); c.stroke(); });
+      break;
+    }
+    case 'moonGrid': {
+      c.strokeStyle=col(1-p); c.fillStyle=col(1-p); c.lineWidth=0.6;
+      for(let i=0;i<16;i++){ const cl=i%4, row=Math.floor(i/4), x=(cl*16-24)*p, y=(row*16-24)*p, ph=(i%4)/4;
+        c.beginPath(); c.arc(x,y,6*p,0,6.2832); c.stroke();
+        c.beginPath(); c.arc(x,y,Math.max(0.5,(6-ph*12)*p),0,6.2832); c.fill();
+      }
+      break;
+    }
+    case 'diagStairs': {
+      for(let i=0;i<6;i++){ const x=(i*10-25)*p, y=(24-i*10)*p, sz=(6+i*1.2)*p;
+        if(i%2===0){ c.fillStyle=col((1-p)*.5); c.save(); c.translate(x,y); c.rotate(0.7854); c.fillRect(-sz/2,-sz/2,sz,sz); c.restore(); }
+        else { c.strokeStyle=col((1-p)*.6); c.lineWidth=1; c.save(); c.translate(x,y); c.rotate(0.7854); c.strokeRect(-sz/2,-sz/2,sz,sz); c.restore(); }
+      }
+      break;
+    }
+    case 'eqBars': {
+      c.strokeStyle=col(1-p); c.lineCap='round';
+      [0,1,2,3,4,3,2,1,0].forEach((v,i)=>{ const y=(i*6-24)*p, len=(6+v*7)*p;
+        c.lineWidth=2.4; c.beginPath(); c.moveTo(-len,y); c.lineTo(len,y); c.stroke(); });
+      break;
+    }
+    case 'isoTriangle': {
+      const a=(1-p)*.85;
+      c.fillStyle='rgba(255,157,138,'+a.toFixed(2)+')'; c.beginPath(); c.moveTo(0,-16*p); c.lineTo(6*p,-4*p); c.lineTo(-6*p,-4*p); c.closePath(); c.fill();
+      c.fillStyle='rgba(107,63,74,'+a.toFixed(2)+')'; c.beginPath(); c.moveTo(6*p,-4*p); c.lineTo(12*p,4*p); c.lineTo(0,4*p); c.closePath(); c.fill();
+      c.fillStyle='rgba(63,168,154,'+a.toFixed(2)+')'; c.beginPath(); c.moveTo(-6*p,-4*p); c.lineTo(0,4*p); c.lineTo(-12*p,4*p); c.closePath(); c.fill();
+      break;
+    }
+    case 'shapeCollage': {
+      const a=(1-p)*.55;
+      c.save(); c.translate(-15*p,-13*p); c.rotate(-0.14); c.fillStyle='rgba(108,212,255,'+a.toFixed(2)+')'; c.fillRect(-13*p,-13*p,26*p,26*p); c.restore();
+      c.save(); c.translate(4*p,-19*p); c.rotate(0.21); c.fillStyle='rgba(255,179,122,'+a.toFixed(2)+')'; c.fillRect(-12*p,-12*p,24*p,24*p); c.restore();
+      c.fillStyle='rgba(157,124,255,'+a.toFixed(2)+')'; c.beginPath(); c.moveTo(20*p,5*p); c.lineTo(2*p,18*p); c.lineTo(-20*p,12*p); c.closePath(); c.fill();
+      break;
+    }
+    case 'spiralClip': {
+      c.save(); c.beginPath(); c.moveTo(0,-30*p); c.lineTo(26*p,18*p); c.lineTo(-26*p,18*p); c.closePath(); c.clip();
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      for(let i=0;i<8;i++){ c.beginPath(); c.arc(0,5*p,(4+i*4.2)*p,0,6.2832); c.stroke(); }
+      c.restore();
+      c.strokeStyle=col((1-p)*.4); c.lineWidth=0.6;
+      c.beginPath(); c.moveTo(0,-30*p); c.lineTo(26*p,18*p); c.lineTo(-26*p,18*p); c.closePath(); c.stroke();
+      break;
+    }
+    case 'starTunnel': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      for(let i=0;i<5;i++){ const r=(8+i*7)*p, rot=i*11*Math.PI/180, n=8, w=1-i*.15;
+        c.globalAlpha=Math.max(0,w);
+        c.beginPath();
+        for(let k=0;k<n*2;k++){ const a=(k*Math.PI/n)+rot, rr=k%2===0?r:r*.45; const x=Math.cos(a)*rr, y=Math.sin(a)*rr; if(k===0)c.moveTo(x,y); else c.lineTo(x,y); }
+        c.closePath(); c.stroke();
+      }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'spiralWeb': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.6;
+      for(let i=0;i<16;i++){ const a=i*(6.2832/16), a2=a+1.1;
+        c.beginPath(); c.moveTo(0,0); c.lineTo(Math.cos(a)*36*p,Math.sin(a)*36*p); c.stroke();
+        c.beginPath(); c.moveTo(Math.cos(a)*10*p,Math.sin(a)*10*p); c.lineTo(Math.cos(a2)*36*p,Math.sin(a2)*36*p); c.stroke();
+      }
+      break;
+    }
+    case 'crossBeam': {
+      c.strokeStyle=col(1-p); c.lineCap='round';
+      c.lineWidth=1; c.beginPath(); c.moveTo(-40*p,-40*p); c.lineTo(40*p,40*p); c.stroke();
+      c.beginPath(); c.moveTo(40*p,-40*p); c.lineTo(-40*p,40*p); c.stroke();
+      c.lineWidth=0.6; c.globalAlpha=0.6;
+      c.beginPath(); c.moveTo(-32*p,-36*p); c.lineTo(32*p,36*p); c.stroke();
+      c.beginPath(); c.moveTo(32*p,-36*p); c.lineTo(-32*p,36*p); c.stroke();
+      c.globalAlpha=1;
+      break;
+    }
+    case 'arcFan': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.globalAlpha=0.3; c.beginPath(); c.arc(0,0,30*p,0,6.2832); c.stroke(); c.globalAlpha=1;
+      for(let i=0;i<6;i++){ const h=(6+i*7)*p;
+        c.beginPath(); c.moveTo(-25*p,12*p); c.quadraticCurveTo(0,12*p-h*2,25*p,12*p); c.stroke(); }
+      break;
+    }
+    case 'diamondSphere': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.6; c.globalAlpha=0.85;
+      c.beginPath(); c.ellipse(0,0,26*p,26*p,0,0,6.2832); c.stroke();
+      c.beginPath(); c.ellipse(0,0,10*p,26*p,0,0,6.2832); c.stroke();
+      c.beginPath(); c.ellipse(0,0,18*p,26*p,0,0,6.2832); c.stroke();
+      c.beginPath(); c.moveTo(-24*p,0); c.lineTo(24*p,0); c.stroke();
+      c.beginPath(); c.moveTo(-24*p,-16*p); c.lineTo(24*p,-16*p); c.stroke();
+      c.beginPath(); c.moveTo(-24*p,16*p); c.lineTo(24*p,16*p); c.stroke();
+      c.globalAlpha=1;
+      break;
+    }
+    case 'twistedSphere': {
+      c.fillStyle=col((1-p)*.12); c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.fill();
+      c.fillStyle=col(1-p);
+      for(let i=0;i<7;i++){ const a0=i*(180/7)*Math.PI/180;
+        c.globalAlpha=0.25+((i%2)*.3);
+        c.beginPath(); c.moveTo(0,0);
+        c.quadraticCurveTo(Math.cos(a0)*26*p,-26*p, Math.cos(a0+.3)*26*p,-24*p);
+        c.quadraticCurveTo(Math.cos(a0+.15)*15*p,0,0,0);
+        c.closePath(); c.fill();
+      }
+      c.globalAlpha=1;
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=0.8; c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.stroke();
+      break;
+    }
+    case 'lensPetals': {
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      for(let i=0;i<4;i++){ const a=i*90*Math.PI/180;
+        c.save(); c.rotate(a);
+        c.beginPath(); c.moveTo(0,-24*p); c.quadraticCurveTo(16*p,0,0,24*p); c.quadraticCurveTo(-16*p,0,0,-24*p); c.stroke();
+        c.restore();
+      }
+      break;
+    }
+    case 'shadedBall': {
+      const R=26*p;
+      c.fillStyle=col((1-p)*.15); c.beginPath(); c.arc(0,0,R,0,6.2832); c.fill();
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=0.5;
+      for(let i=0;i<12;i++){ const x=-R+(i+0.5)*(2*R/12); const hy=Math.sqrt(Math.max(0,R*R-x*x));
+        c.beginPath(); c.moveTo(x,-hy); c.lineTo(x,hy); c.stroke(); }
+      break;
+    }
+    case 'ringBow': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      for(let i=0;i<5;i++){ const r=(6+i*5)*p; c.globalAlpha=Math.max(0,0.8-i*.12);
+        c.beginPath(); c.arc(-r*0.3,-r*0.95,r,Math.PI*1.25,Math.PI*1.75); c.stroke();
+        c.beginPath(); c.arc(r*0.3,-r*0.95,r,Math.PI*1.25,Math.PI*1.75); c.stroke();
+        c.beginPath(); c.arc(-r*0.3,r*0.95,r,Math.PI*0.25,Math.PI*0.75); c.stroke();
+        c.beginPath(); c.arc(r*0.3,r*0.95,r,Math.PI*0.25,Math.PI*0.75); c.stroke();
+      }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'gemFacet': {
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      c.beginPath(); c.moveTo(0,-32*p); c.lineTo(18*p,-18*p); c.lineTo(18*p,8*p); c.lineTo(0,32*p); c.lineTo(-18*p,8*p); c.lineTo(-18*p,-18*p); c.closePath(); c.stroke();
+      c.globalAlpha=0.5;
+      c.beginPath(); c.moveTo(-18*p,-18*p); c.lineTo(18*p,-18*p); c.stroke();
+      c.beginPath(); c.moveTo(-18*p,8*p); c.lineTo(18*p,8*p); c.stroke();
+      c.beginPath(); c.moveTo(0,-32*p); c.lineTo(0,32*p); c.stroke();
+      c.globalAlpha=1;
+      break;
+    }
+    case 'cuboctahedron': {
+      const V=[[-11.31,-6.53],[-11.31,19.6],[11.31,-19.6],[11.31,6.53],[11.31,-6.53],[11.31,19.6],[-11.31,-19.6],[-11.31,6.53],[0,13.06],[22.63,0],[-22.63,0],[0,-13.06]];
+      const E=[[0,4],[0,6],[0,8],[0,10],[1,5],[1,7],[1,8],[1,10],[2,4],[2,6],[2,9],[2,11],[3,5],[3,7],[3,9],[3,11],[4,8],[4,9],[5,8],[5,9],[6,10],[6,11],[7,10],[7,11]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.7;
+      E.forEach(([i,j])=>{ c.beginPath(); c.moveTo(V[i][0]*p,V[i][1]*p); c.lineTo(V[j][0]*p,V[j][1]*p); c.stroke(); });
+      break;
+    }
+    case 'sriYantra': {
+      const SRI=[[[-34.68,-9.65],[34.68,-9.65],[0,36]],[[-34.93,8.73],[34.93,8.73],[0,-36]],[[-18.46,25.21],[18.46,25.21],[0,-9.65]],[[-25.82,17.25],[25.82,17.25],[0,-25.88]],[[-21.43,-25.88],[21.43,-25.88],[0,3.84]],[[-24.85,-16.88],[24.85,-16.88],[0,25.21]],[[-12.62,3.84],[12.62,3.84],[0,-16.88]],[[-12.11,-5.65],[12.11,-5.65],[0,17.25]],[[-9.14,-1.87],[9.14,-1.87],[0,8.73]]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.45; c.globalAlpha=0.7;
+      SRI.forEach(t=>{ c.beginPath(); t.forEach(([x,y],i)=>{ if(i===0)c.moveTo(x*p,y*p); else c.lineTo(x*p,y*p); }); c.closePath(); c.stroke(); });
+      c.globalAlpha=1; c.fillStyle=col(1-p); c.beginPath(); c.arc(0,0,1.3,0,6.2832); c.fill();
+      break;
+    }
+    case 'sealNested': {
+      const T=[[[0,-34],[29.44,17],[-29.44,17]],[[0,34],[-29.44,-17],[29.44,-17]],[[9.81,-17],[9.81,17],[-19.63,0]],[[-9.81,17],[-9.81,-17],[19.63,0]],[[9.81,-5.67],[0,11.33],[-9.81,-5.67]],[[-9.81,5.67],[0,-11.33],[9.81,5.67]]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.7; c.globalAlpha=0.75;
+      T.forEach(t=>{ c.beginPath(); t.forEach(([x,y],i)=>{ if(i===0)c.moveTo(x*p,y*p); else c.lineTo(x*p,y*p); }); c.closePath(); c.stroke(); });
+      c.globalAlpha=1;
+      break;
+    }
+    case 'girihDecagon': {
+      const DEC=[[0,-32],[18.81,-25.89],[30.43,-9.89],[30.43,9.89],[18.81,25.89],[0,32],[-18.81,25.89],[-30.43,9.89],[-30.43,-9.89],[-18.81,-25.89]];
+      const MID=[[9.4,-28.94],[24.62,-17.89],[30.43,0],[24.62,17.89],[9.4,28.94],[-9.4,28.94],[-24.62,17.89],[-30.43,0],[-24.62,-17.89],[-9.4,-28.94]];
+      c.strokeStyle=col((1-p)*.4); c.lineWidth=0.5;
+      c.beginPath(); DEC.forEach(([x,y],i)=>{ if(i===0)c.moveTo(x*p,y*p); else c.lineTo(x*p,y*p); }); c.closePath(); c.stroke();
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      for(let i=0;i<10;i++){ const a=MID[i], b=MID[(i+3)%10];
+        c.beginPath(); c.moveTo(a[0]*p,a[1]*p); c.lineTo(b[0]*p,b[1]*p); c.stroke(); }
+      break;
+    }
+    case 'hatTile': {
+      const H=[[-17,-4.91],[-34,-14.72],[-28.33,-24.54],[-5.67,-24.54],[0,-14.72],[17,-24.54],[34,-14.72],[28.33,-4.91],[17,-4.91],[17,14.72],[0,24.54],[-5.67,14.72],[-17,14.72]];
+      c.fillStyle=col((1-p)*.4);
+      c.beginPath(); H.forEach(([x,y],i)=>{ if(i===0)c.moveTo(x*p,y*p); else c.lineTo(x*p,y*p); }); c.closePath(); c.fill();
+      c.strokeStyle=col(1-p); c.lineWidth=1; c.stroke();
+      c.globalAlpha=.65; c.lineWidth=0.4;
+      H.forEach(([x,y])=>{ c.beginPath(); c.moveTo(0,0); c.lineTo(x*p,y*p); c.stroke(); });
+      c.globalAlpha=1;
+      break;
+    }
+    case 'hatMetatron': {
+      const H=[[-17,-4.91],[-34,-14.72],[-28.33,-24.54],[-5.67,-24.54],[0,-14.72],[17,-24.54],[34,-14.72],[28.33,-4.91],[17,-4.91],[17,14.72],[0,24.54],[-5.67,14.72],[-17,14.72]];
+      const M=[[0,0],[14,0],[28,0],[7,12.12],[14,24.25],[-7,12.12],[-14,24.25],[-14,0],[-28,0],[-7,-12.12],[-14,-24.25],[7,-12.12],[14,-24.25]];
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=0.7;
+      c.beginPath(); H.forEach(([x,y],i)=>{ if(i===0)c.moveTo(x*p,y*p); else c.lineTo(x*p,y*p); }); c.closePath(); c.stroke();
+      c.lineWidth=0.15; c.globalAlpha=0.6;
+      for(let i=0;i<M.length;i++) for(let j=i+1;j<M.length;j++){ c.beginPath(); c.moveTo(M[i][0]*p*.55,M[i][1]*p*.55); c.lineTo(M[j][0]*p*.55,M[j][1]*p*.55); c.stroke(); }
+      c.globalAlpha=1; c.fillStyle=col(1-p);
+      M.forEach(([x,y])=>{ c.beginPath(); c.arc(x*p*.55,y*p*.55,1,0,6.2832); c.fill(); });
+      break;
+    }
+    case 'vesicaPiscis': {
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      c.beginPath(); c.arc(-14*p,0,24*p,0,6.2832); c.stroke();
+      c.beginPath(); c.arc(14*p,0,24*p,0,6.2832); c.stroke();
+      break;
+    }
+    case 'yinyangFlash': {
+      const R=30*p;
+      c.strokeStyle=col((1-p)*.7); c.lineWidth=0.8; c.beginPath(); c.arc(0,0,R,0,6.2832); c.stroke();
+      c.fillStyle=col((1-p)*.7);
+      c.beginPath();
+      c.arc(0,0,R,Math.PI*0.5,Math.PI*1.5,false);
+      c.arc(0,-R/2,R/2,Math.PI*1.5,Math.PI*0.5,true);
+      c.arc(0,R/2,R/2,Math.PI*1.5,Math.PI*0.5,false);
+      c.closePath(); c.fill();
+      break;
+    }
+    case 'goldenSpiral': {
+      const FIB=[{x:0,y:0,s:1},{x:-1,y:0,s:1},{x:-1,y:1,s:2},{x:-4,y:0,s:3},{x:-4,y:-5,s:5},{x:1,y:-5,s:8},{x:-4,y:3,s:13}];
+      const SC=1.6*p;
+      c.strokeStyle=col(1-p); c.lineWidth=1;
+      FIB.forEach(s=>{ const r=s.s*SC, x=s.x*SC, y=-s.y*SC;
+        c.beginPath(); c.arc(x,y,r,-Math.PI/2,0); c.stroke(); });
+      break;
+    }
+    case 'apollonian': {
+      const A=[{r:33,x:0,y:0},{r:16.5,x:-16.5,y:0},{r:16.5,x:16.5,y:0},{r:11,x:0,y:22},{r:11,x:0,y:-22},{r:5.5,x:16.5,y:22},{r:2.2,x:0,y:8.8},{r:5.5,x:16.5,y:-22},{r:3,x:24,y:18},{r:2.36,x:11.79,y:28.29},{r:1.43,x:11.48,y:17.22},{r:0.94,x:0,y:5.66},{r:0.87,x:2.61,y:10.42},{r:3,x:24,y:-18},{r:2.36,x:11.79,y:-28.29},{r:1.43,x:11.48,y:-17.22}];
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=0.5;
+      c.beginPath(); c.arc(0,0,A[0].r*p,0,6.2832); c.stroke();
+      c.fillStyle=col(1-p); c.globalAlpha=0.35;
+      for(let i=1;i<A.length;i++){ c.beginPath(); c.arc(A[i].x*p,A[i].y*p,A[i].r*p,0,6.2832); c.fill(); }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'octagram': {
+      const OCT=[[0,-32],[22.63,-22.63],[32,0],[22.63,22.63],[0,32],[-22.63,22.63],[-32,0],[-22.63,-22.63]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.8;
+      c.beginPath();
+      for(let i=0;i<8;i++){ const q=OCT[(i*3)%8]; if(i===0)c.moveTo(q[0]*p,q[1]*p); else c.lineTo(q[0]*p,q[1]*p); }
+      c.closePath(); c.stroke();
+      break;
+    }
+    case 'metatronCube': {
+      const M=[[0,0],[14,0],[28,0],[7,12.12],[14,24.25],[-7,12.12],[-14,24.25],[-14,0],[-28,0],[-7,-12.12],[-14,-24.25],[7,-12.12],[14,-24.25]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.25;
+      for(let i=0;i<M.length;i++) for(let j=i+1;j<M.length;j++){ c.beginPath(); c.moveTo(M[i][0]*p,M[i][1]*p); c.lineTo(M[j][0]*p,M[j][1]*p); c.stroke(); }
+      c.fillStyle=col(1-p);
+      M.forEach(([x,y])=>{ c.beginPath(); c.arc(x*p,y*p,1.6,0,6.2832); c.fill(); });
+      break;
+    }
+    case 'flowerOfLife': {
+      const F19=[[-28,0],[-21,12.12],[-14,24.25],[-21,-12.12],[-14,0],[-7,12.12],[0,24.25],[-14,-24.25],[-7,-12.12],[0,0],[7,12.12],[14,24.25],[0,-24.25],[7,-12.12],[14,0],[21,12.12],[14,-24.25],[21,-12.12],[28,0]];
+      c.strokeStyle=col((1-p)*.55); c.lineWidth=0.6;
+      F19.forEach(([x,y])=>{ c.beginPath(); c.arc(x*p,y*p,14*p,0,6.2832); c.stroke(); });
+      break;
+    }
+    case 'bowtieTri': {
+      c.fillStyle=col((1-p)*.8);
+      c.beginPath(); c.moveTo(-20*p,-25*p); c.lineTo(-20*p,25*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(20*p,-25*p); c.lineTo(20*p,25*p); c.lineTo(0,0); c.closePath(); c.fill();
+      break;
+    }
+    /* 13 «спорных» из этой же партии — владелец проверит вживую и решит по каждой отдельно */
+    case 'denseSpokes': {
+      c.strokeStyle=col((1-p)*.7); c.lineWidth=0.6;
+      for(let i=0;i<11;i++){ const a=i*(180/11)*Math.PI/180;
+        c.beginPath(); c.moveTo(-Math.cos(a)*35*p,-Math.sin(a)*35*p); c.lineTo(Math.cos(a)*35*p,Math.sin(a)*35*p); c.stroke(); }
+      break;
+    }
+    case 'convergeBeam': {
+      c.strokeStyle=col(1-p); c.lineWidth=0.8; c.globalAlpha=0.75;
+      const tip=[22*p,-20*p];
+      [[-32,22],[-26,28],[-20,32],[-36,10],[-30,36]].forEach(([x,y])=>{ c.beginPath(); c.moveTo(x*p,y*p); c.lineTo(tip[0],tip[1]); c.stroke(); });
+      c.globalAlpha=1;
+      break;
+    }
+    case 'grooveClusters': {
+      c.fillStyle=col((1-p)*.12); c.beginPath(); c.arc(0,0,30*p,0,6.2832); c.fill();
+      c.strokeStyle=col((1-p)*.6); c.lineWidth=0.4;
+      [[-10,-8],[8,-10],[-4,8]].forEach(([cx,cy])=>{ for(let i=0;i<4;i++){ c.beginPath(); c.arc(cx*p,cy*p,(3+i*2.6)*p,0,6.2832); c.stroke(); } });
+      break;
+    }
+    case 'crescentGrooves': {
+      c.save();
+      c.beginPath(); c.arc(0,0,26*p,Math.PI*0.5,Math.PI*1.5); c.closePath(); c.clip();
+      c.strokeStyle=col((1-p)*.7); c.lineWidth=0.6;
+      for(let i=0;i<7;i++){ c.beginPath(); c.arc((-6+i*1.5)*p,0,(26-i)*p,0,6.2832); c.stroke(); }
+      c.restore();
+      c.strokeStyle=col((1-p)*.3); c.lineWidth=1; c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.stroke();
+      break;
+    }
+    case 'gearBurst': {
+      c.fillStyle=col((1-p)*.75);
+      c.beginPath();
+      for(let i=0;i<24;i++){ const a=i*15*Math.PI/180, r=(i%2===0?30:21)*p; const x=Math.cos(a)*r, y=Math.sin(a)*r; if(i===0)c.moveTo(x,y); else c.lineTo(x,y); }
+      c.closePath(); c.fill();
+      break;
+    }
+    case 'pinwheelFlower': {
+      c.fillStyle=col((1-p)*.8);
+      for(let i=0;i<5;i++){ const a=i*72*Math.PI/180;
+        c.save(); c.rotate(a);
+        c.beginPath(); c.moveTo(0,0); c.quadraticCurveTo(16*p,-10*p,12*p,-26*p); c.quadraticCurveTo(4*p,-12*p,0,0); c.closePath(); c.fill();
+        c.restore();
+      }
+      break;
+    }
+    case 'pieMill': {
+      c.fillStyle=col((1-p)*.65);
+      for(let i=0;i<8;i+=2){ const a0=i*45*Math.PI/180, a1=a0+45*Math.PI/180;
+        c.beginPath(); c.moveTo(0,0); c.arc(0,0,30*p,a0,a1); c.closePath(); c.fill(); }
+      c.strokeStyle=col((1-p)*.4); c.lineWidth=0.6; c.beginPath(); c.arc(0,0,30*p,0,6.2832); c.stroke();
+      break;
+    }
+    case 'plainHex': {
+      c.fillStyle=col((1-p)*.7);
+      c.beginPath();
+      for(let i=0;i<6;i++){ const a=i*60*Math.PI/180; const x=Math.cos(a)*22*p, y=Math.sin(a)*22*p; if(i===0)c.moveTo(x,y); else c.lineTo(x,y); }
+      c.closePath(); c.fill();
+      break;
+    }
+    case 'diamondWave': {
+      c.fillStyle=col(1-p);
+      for(let i=0;i<7;i++){ const x=(i*9-20)*p, y=(26-i*8)*p, sz=9*p;
+        c.globalAlpha=Math.max(0,0.3+i*.09);
+        c.save(); c.translate(x,y); c.rotate(0.7854); c.fillRect(-sz/2,-sz/2,sz,sz); c.restore();
+      }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'barMosaic': {
+      c.strokeStyle=col(1-p); c.lineCap='round';
+      for(let i=0;i<11;i++){ const t=i/10, x=(i*6-30)*p, h=(6+Math.sin(t*Math.PI)*22)*p;
+        c.globalAlpha=Math.max(0,0.45+Math.sin(t*Math.PI)*.4); c.lineWidth=2.6;
+        c.beginPath(); c.moveTo(x,-h/2); c.lineTo(x,h/2); c.stroke();
+      }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'triMandala': {
+      c.fillStyle=col(1-p);
+      [10,17,24,31].forEach((r,ri)=>{ const cnt=8+ri*4;
+        c.globalAlpha=Math.max(0,0.75-ri*.13);
+        for(let i=0;i<cnt;i++){ const a=i*(6.2832/cnt);
+          c.beginPath();
+          c.moveTo(Math.cos(a)*r*p,Math.sin(a)*r*p);
+          c.lineTo(Math.cos(a+.25)*(r+5)*p,Math.sin(a+.25)*(r+5)*p);
+          c.lineTo(Math.cos(a-.25)*(r+5)*p,Math.sin(a-.25)*(r+5)*p);
+          c.closePath(); c.fill();
+        }
+      });
+      c.globalAlpha=1;
+      break;
+    }
+    case 'reuleaux': {
+      const T=[[0,-28.8],[24.94,14.4],[-24.94,14.4]];
+      c.strokeStyle=col(1-p); c.lineWidth=1; c.globalAlpha=0.85;
+      for(let i=0;i<3;i++){
+        const a=T[(i+1)%3], b=T[(i+2)%3], cx=T[i][0]*p, cy=T[i][1]*p;
+        const ang1=Math.atan2(a[1]*p-cy,a[0]*p-cx), ang2=Math.atan2(b[1]*p-cy,b[0]*p-cx);
+        c.beginPath(); c.arc(cx,cy,49.88*p,ang1,ang2); c.stroke();
+      }
+      c.globalAlpha=1;
+      break;
+    }
+    case 'dodecagram': {
+      const DOD=[[0,-32],[16,-27.71],[27.71,-16],[32,0],[27.71,16],[16,27.71],[0,32],[-16,27.71],[-27.71,16],[-32,0],[-27.71,-16],[-16,-27.71]];
+      c.strokeStyle=col(1-p); c.lineWidth=0.6;
+      c.beginPath();
+      for(let i=0;i<12;i++){ const q=DOD[(i*5)%12]; if(i===0)c.moveTo(q[0]*p,q[1]*p); else c.lineTo(q[0]*p,q[1]*p); }
+      c.closePath(); c.stroke();
+      break;
+    }
   }
 }
 /* 29.08.2026 «Вспышка при старте» — третий независимый слот тюнинга (FLASHES/S.launchFx,
@@ -3079,9 +3756,11 @@ function drawPlane(sh,nowMs){
   const ghostA=(fx==='ghost'&&hq)? .65+.1*Math.sin(nowMs/300) : 1;
   if(fx==='ghost'&&hq){ drawEchoTrail(skin);
     if(S.running&&!S.paused){ echoBuf.push({x:p.x,y:p.y,bank:p.bank}); if(echoBuf.length>40) echoBuf.shift(); } }
-  const trailFx=skin.trailFx||'';
-  if(hq && (trailFx==='ribbon'||trailFx==='pearls')){ // 04.09.2026: связные следы премиум-скинов
-    drawStructuredTrail(skin,nowMs);
+  const tr=(typeof TRAILS_BY_ID!=='undefined'?TRAILS_BY_ID.get(S.trail):null)||{style:''}; // 05.09.2026: след — независимый выбор, не от скина
+  const trailFx=tr.style||'';
+  const STRUCTURED_TRAILS=['ribbon','pearls','loopKnot','snakeWave','heartKnot','trailConstellation','paperclip','rainbowArc','waterWaves']; // 05.09.2026: расширено — связные следы, не только 2 премиум
+  if(hq && STRUCTURED_TRAILS.includes(trailFx)){
+    drawStructuredTrail(trailFx,skin.trail,nowMs);
     if(S.running&&!S.paused){ trailHistBuf.push({x:p.x,y:p.y}); if(trailHistBuf.length>28) trailHistBuf.shift(); }
   }
   ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);

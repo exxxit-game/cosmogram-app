@@ -108,7 +108,13 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,'},  // Кожаная стёжка
   {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,'},  // Топографические линии
   {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,'},  // Оригами-заломы
-  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'}   // Плетёная решётка
+  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'},  // Плетёная решётка
+  // 05.09.2026 «Из макета в игру»: 4 новых материала. Цена 2500 — тот же тир, что «Аврора»
+  // (fx-эффект, не просто цвет), проставлена сразу, не додумана втихую.
+  {id:45, name:45, price:10, fx:'patPenrose',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Пенроуз — настоящая мозаика де Брёйна, проверена скриптом (одна длина стороны, 2 угла у всех 40 ромбов)
+  {id:46, name:46, price:10, fx:'patLattice2',  body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Цветочная решётка
+  {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}, // Плед из кругов
+  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
 ];
 /* 05.09.2026 «След — 5-я вкладка» (владелец, после разбора): раньше след жил ВНУТРИ
    skin.trailFx (id 9-14 выше) и переключался только вместе со скином. Теперь это отдельный,
@@ -124,6 +130,14 @@ const TRAILS=[
   {id:4, name:'Кометная пыль',    price:0, style:'cometdust'},
   {id:5, name:'Лента',            price:0, style:'ribbon'},
   {id:6, name:'Метки пути',       price:0, style:'waypoints'},
+  {id:7, name:'Морзянка',         price:0, style:'morse'}, // 05.09.2026: доделан хвост с прошлого раза — тумблер из Настроек убран, morseOn() уже проверяет именно этот стиль следа (core.js)
+  {id:8, name:'Узел-петля',       price:10, style:'loopKnot'},
+  {id:9, name:'Волна-змейка',     price:10, style:'snakeWave'},
+  {id:10, name:'Сердце-узел',     price:10, style:'heartKnot'},
+  {id:11, name:'Созвездие-след',  price:10, style:'trailConstellation'},
+  {id:12, name:'Скрепка',         price:10, style:'paperclip'},
+  {id:13, name:'Радуга-арка',     price:10, style:'rainbowArc'}, // спорный — на проверку
+  {id:14, name:'Волны',           price:10, style:'waterWaves'}, // спорный — на проверку
 ];
 const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
@@ -1601,6 +1615,65 @@ const FLASHES=[
   {id:63, name:"С возвращением", price:900, style:"comeback"}, // тёплая особая версия — если не заходил 7+ дней подряд
   {id:64, name:"Созвездие наград", price:700, style:"achConstellation"}, // всегда честно по числу открытых достижений (ACH из ach.js)
   {id:65, name:"Знак дня", price:500, style:"daysign"}, // число колец — от сегодняшнего общего сида (dailyRNG, тот же что у Трассы дня)
+  /* 05.09.2026 «Из макета в игру» — большая партия, собранная за один долгий заход (клип N'to,
+     Vecteezy/Envato/Behance, сакральная геометрия — Flower of Life/Metatron/Sri Yantra/Hat-тайл
+     проверены численно короткими скриптами до вставки сюда, не нарисованы на глаз, см. .knowledge
+     при желании свериться). Цены — по той же шкале каталога (500→1500 по редкости/сложности),
+     проставлены сразу, не додуманы втихую — видно в этом же коммите. 15 похожих/спорных вариантов
+     из макета сюда НЕ включены — ждут отдельного решения владельца по каждому. */
+  {id:66, name:"Спицы", price:10, style:"spokes"},
+  {id:67, name:"Матрёшка", price:10, style:"nestedShapes"},
+  {id:68, name:"Слияние", price:10, style:"blendCircles"},
+  {id:69, name:"Рябь", price:10, style:"rippleDot"},
+  {id:70, name:"Пластинка", price:10, style:"grooveDisc"},
+  {id:71, name:"Уровень", price:10, style:"fillLevel"},
+  {id:72, name:"Плетение", price:10, style:"weavedBands"},
+  {id:73, name:"Созвездие колец", price:10, style:"ringCluster"},
+  {id:74, name:"Лунные фазы", price:10, style:"moonGrid"},
+  {id:75, name:"Лестница", price:10, style:"diagStairs"},
+  {id:76, name:"Эквалайзер", price:10, style:"eqBars"},
+  {id:77, name:"Изо-треугольник", price:10, style:"isoTriangle"},
+  {id:78, name:"Коллаж", price:10, style:"shapeCollage"},
+  {id:79, name:"Спираль в треугольнике", price:10, style:"spiralClip"},
+  {id:80, name:"Тоннель звёзд", price:10, style:"starTunnel"},
+  {id:81, name:"Спиральная паутина", price:10, style:"spiralWeb"},
+  {id:82, name:"Крест-луч", price:10, style:"crossBeam"},
+  {id:83, name:"Веер дуг", price:10, style:"arcFan"},
+  {id:84, name:"Ромб-сфера", price:10, style:"diamondSphere"},
+  {id:85, name:"Скрученный шар", price:10, style:"twistedSphere"},
+  {id:86, name:"Лепестки-линзы", price:10, style:"lensPetals"},
+  {id:87, name:"Объёмный шар", price:10, style:"shadedBall"},
+  {id:88, name:"Бант из колец", price:10, style:"ringBow"},
+  {id:89, name:"Кристалл-огранка", price:10, style:"gemFacet"},
+  {id:90, name:"Кубооктаэдр", price:10, style:"cuboctahedron"}, // Vector Equilibrium — 12 вершин, 24 ребра длины √2, проверено скриптом
+  {id:91, name:"Шри-Янтра", price:10, style:"sriYantra"}, // раньше Sri Yantra — реальные опубликованные координаты, 18 подлинных тройных пересечений, проверено скриптом
+  {id:92, name:"Печать", price:10, style:"sealNested"}, // наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° посчитаны, не подобраны
+  {id:93, name:"Звезда гириха", price:10, style:"girihDecagon"}, // раньше «Гирих: декагон» — угол 54° выведен и проверен на всех 10 рёбрах
+  {id:94, name:"Шляпа", price:10, style:"hatTile"}, // раньше Hat-тайл — координаты из настоящего кода автора (isohedral/hatviz), Einstein-плитка 2023 года
+  {id:95, name:"Шляпа и Метатрон", price:10, style:"hatMetatron"}, // раньше «Composite: Hat + Метатрон»
+  {id:96, name:"Рыбий пузырь", price:10, style:"vesicaPiscis"}, // раньше Vesica Piscis
+  {id:97, name:"Инь-Янь", price:10, style:"yinyangFlash"},
+  {id:98, name:"Золотая спираль", price:10, style:"goldenSpiral"}, // квадраты Фибоначчи, проверено скриптом на стыковку без щелей
+  {id:99, name:"Аполлониева прокладка", price:10, style:"apollonian"}, // теорема Декарта, все касания проверены скриптом
+  {id:100, name:"Октаграмма", price:10, style:"octagram"},
+  {id:101, name:"Куб Метатрона", price:10, style:"metatronCube"}, // 13 точек Fruit of Life, ровно 78 линий (C(13,2)) — проверено скриптом
+  {id:102, name:"Цветок жизни", price:10, style:"flowerOfLife"}, // 19 кругов на настоящей треугольной решётке, шаг = радиус — проверено скриптом
+  {id:103, name:"Бант-треугольники", price:10, style:"bowtieTri"},
+  /* 05.09.2026 — 13 «спорных» из этой же партии: владелец сам проверит вживую и решит по
+     каждой отдельно (оставить/убрать), поэтому цены здесь ниже — самый дешёвый тир каталога. */
+  {id:104, name:"Компас-звезда", price:10, style:"denseSpokes"},
+  {id:105, name:"Сноп линий", price:10, style:"convergeBeam"},
+  {id:106, name:"Кластер пластинок", price:10, style:"grooveClusters"},
+  {id:107, name:"Полумесяц колец", price:10, style:"crescentGrooves"},
+  {id:108, name:"Зубчатый круг", price:10, style:"gearBurst"},
+  {id:109, name:"Цветок-вихрь", price:10, style:"pinwheelFlower"},
+  {id:110, name:"Мельница", price:10, style:"pieMill"},
+  {id:111, name:"Гексагон", price:10, style:"plainHex"},
+  {id:112, name:"Волна ромбов", price:10, style:"diamondWave"},
+  {id:113, name:"Мозаика", price:10, style:"barMosaic"},
+  {id:114, name:"Треугольная мандала", price:10, style:"triMandala"},
+  {id:115, name:"Треугольник Рёло", price:10, style:"reuleaux"},
+  {id:116, name:"Додекаграмма", price:10, style:"dodecagram"},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/
