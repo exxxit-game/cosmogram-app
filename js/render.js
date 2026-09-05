@@ -2033,7 +2033,7 @@ function draw(){
 
   // личный призрак: полупрозрачный силуэт рекордного забега (та же форма самолётика)
   if (ghostOn){
-    const gCol=(ghostForeign && SKINS[ghostSkin]) ? SKINS[ghostSkin].body : '#bfe8ff'; // чужой призрак — цвета его скина (живая витрина ангара)
+    const gCol=(ghostForeign && SKINS_BY_ID.get(ghostSkin)) ? SKINS_BY_ID.get(ghostSkin).body : '#bfe8ff'; // чужой призрак — цвета его скина (живая витрина ангара)
     ctx.save(); ctx.translate(ghostX,ghostY); ctx.globalAlpha=ghostA;
     if(hq){ ctx.globalAlpha=ghostA*.9; ctx.drawImage(powGlow(gCol),-24,-24,48,48); ctx.globalAlpha=ghostA; } // холодная ауреола
     ctx.fillStyle=gCol;
@@ -2357,7 +2357,7 @@ function morseCol(prefix, v){
 }
 function drawMorse(){
   if (!S.running || typeof morseBuf==='undefined' || typeof morseElems==='undefined') return; // микс версий из кэша — молчим, не падаем
-  const skin=SKINS[S.skin]||SKINS[0];
+  const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
   morseGlyphs(morseBuf, morseElems, morsePat.length, f=>morseCol(skin.trail, 0.18+0.6*f));
   if (ghostOn && ghostA>0)
     morseGlyphs(ghostMorseBuf, ghostMorseElems, ghostMorsePat.length, f=>morseCol('rgba(190,220,255,', ghostA*(0.5+2*f)));
@@ -3824,7 +3824,7 @@ function drawLaunchFlash(){
   const fl=FLASHES_BY_ID.get(S.launchFx); if(!fl || fl.style==='none') return;
   const dur=flashDur(fl.price);
   if(S.time>=dur) return;
-  const skin=SKINS[S.skin]||SKINS[0];
+  const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
   const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что уже в drawPlane для ауры
   const col=a=>base+Math.max(0,a).toFixed(2)+')';
   const p=clamp(S.time/dur,0,1);
@@ -3833,7 +3833,7 @@ function drawLaunchFlash(){
   ctx.restore();
 }
 function drawPlane(sh,nowMs){
-  const p=plane, skin=SKINS[S.skin]||SKINS[0], hq=Q.level>=2, uq=Q.level>=3; // v1.37.0: ультра-штрихи
+  const p=plane, skin=SKINS_BY_ID.get(S.skin)||SKINS[0], hq=Q.level>=2, uq=Q.level>=3; // v1.37.0: ультра-штрихи
   const fx=skin.fx||'';
   nowMs=typeof nowMs==='number'?nowMs:performance.now();
   // Призрак: полупрозрачность с дыханием (hq) — себя терять нельзя, минимум .65

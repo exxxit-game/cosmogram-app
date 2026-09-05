@@ -190,7 +190,7 @@ function cardDraw(){
   });
 
   // --- самолёт в разрыве лучей — настоящий скин игрока, не всегда бумажный
-  const skin=(typeof SKINS!=='undefined' && SKINS[S.skin])||(typeof SKINS!=='undefined' && SKINS[0])||{body:'#efeee9',fold:'#cdcabf',trail:'rgba(200,198,190,'};
+  const skin=(typeof SKINS_BY_ID!=='undefined' && SKINS_BY_ID.get(S.skin))||(typeof SKINS!=='undefined' && SKINS[0])||{body:'#efeee9',fold:'#cdcabf',trail:'rgba(200,198,190,'};
   cardDrawReveal(x,W/2,238,tierGlow);
   cardDrawPlane(x,W/2,244,1.7,skin);
 

@@ -498,7 +498,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.86'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.87'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -806,7 +806,7 @@ function playerProfile(){
     };
     // потрачено звёзд = цена всего купленного (кроме бесплатного стартового)
     try{ if(Array.isArray(owned) && typeof SKINS!=='undefined')
-      p.spent = owned.reduce((a,id)=>{ const s=SKINS[id]; return a+((s&&s.price)||0); },0); }catch(e){}
+      p.spent = owned.reduce((a,id)=>{ const s=SKINS_BY_ID.get(id); return a+((s&&s.price)||0); },0); }catch(e){}
     if (Store.get('beaconOn',1)===1){ // наблюдательная часть — только с разрешения
       p.obs = {
         tier:(typeof gfxTier==='function')?gfxTier():'?',

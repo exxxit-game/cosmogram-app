@@ -352,7 +352,7 @@ const engine=(()=>{
     src=sub=flt=g=null;
   }
   function profile(){ // характер по скину
-    const fx=(typeof SKINS!=='undefined'&&typeof S!=='undefined'&&SKINS[S.skin]&&SKINS[S.skin].fx)||'';
+    const fx=(typeof SKINS!=='undefined'&&typeof S!=='undefined'&&SKINS_BY_ID.get(S.skin)&&SKINS_BY_ID.get(S.skin).fx)||'';
     if(fx==='ghost') return {gm:.35, sub:0};      // шёпот
     if(fx==='plasma') return {gm:1.25, sub:.012}; // грубее, с рокочущим сабом
     if(fx==='neon') return {gm:.9, sub:0};

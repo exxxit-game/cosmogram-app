@@ -401,7 +401,7 @@ function startGame(saved){
   toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%)
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
   if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
-  sfx.launch(SKINS[S.skin]||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
+  sfx.launch(SKINS_BY_ID.get(S.skin)||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
   music.start('game'); // адаптивный полёт: дрон сразу, слои — по волнам/жизням
   engine.start(); // голос самолётика: шелест следует за скоростью
   if (runMode!=='theater'){ Stats.games++; saveStats(); } // v1.70.0: разведки Пакта больше нет — каждый старт считается; v1.94.0: просмотр в театре — не забег, счётчик молчит
@@ -1175,7 +1175,7 @@ function angarPvDraw(t){
      предпросмотр ещё не купленного скина). 29.08.2026: то же самое теперь и у Декали/
      Иконок/Вспышки — angarShip() сама подменяет надетое на angarSel на своей активной
      вкладке (см. её собственный комментарий) — здесь только скин, остальное уже внутри. */
-  const sk = (angarCat==='color') ? (SKINS[angarSel]||SKINS[0]) : (SKINS[S.skin]||SKINS[0]);
+  const sk = (angarCat==='color') ? (SKINS_BY_ID.get(angarSel)||SKINS[0]) : (SKINS_BY_ID.get(S.skin)||SKINS[0]);
   const W=380, H=130, d=(window.devicePixelRatio||1); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
   const x=cv.getContext('2d'); if(!x) return;
@@ -1479,7 +1479,7 @@ function angarBuildGrid(){
         el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span>';
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
-          const skin=SKINS[S.skin]||SKINS[0];
+          const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
           const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
           const col=a=>base+Math.max(0,a).toFixed(2)+')';
           x.setTransform(2,0,0,2,26,26); x.scale(.28,.28);
@@ -1492,7 +1492,7 @@ function angarBuildGrid(){
            сама плитка (маленький треугольник сверху), сам след — вызванная функция. */
         el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span>';
         const x=el.querySelector('canvas').getContext('2d');
-        const skin=SKINS[S.skin]||SKINS[0];
+        const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
         x.fillStyle='#eaf2ff'; x.globalAlpha=.9;
         x.beginPath(); x.moveTo(26,14); x.lineTo(21,25); x.lineTo(26,22); x.lineTo(31,25); x.closePath(); x.fill();
         x.globalAlpha=1;

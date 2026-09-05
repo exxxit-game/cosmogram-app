@@ -116,6 +116,13 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Плед из кругов
   {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
 ];
+/* 05.09.2026 «SKINS[id] тихо ломается при пропусках в id»: та же ловушка, что FLASHES/TRAILS/
+   DECALS уже решили через X_BY_ID (прямая индексация по массиву верна ТОЛЬКО пока id идут
+   подряд с нуля — стоит удалить/переставить один скин или добавить их не по порядку, и
+   SKINS[id] тихо вернёт чужой скин или undefined, без единой ошибки в консоли). Заведено
+   превентивно, пока в этой ветке id ещё случайно совпадают с позицией — не дожидаясь того
+   же падения, что уже поймала параллельная сессия на своей ветке (id49+). */
+const SKINS_BY_ID = new Map(SKINS.map(d=>[d.id,d]));
 /* 05.09.2026 «След — 5-я вкладка» (владелец, после разбора): раньше след жил ВНУТРИ
    skin.trailFx (id 9-14 выше) и переключался только вместе со скином. Теперь это отдельный,
    независимый выбор — те же 6 языков следа, но выбираются отдельно от цвета и надеваются
@@ -2675,7 +2682,7 @@ function update(dt){
   const thrusterP = Q.level>=3 ? .8 : Q.level===2 ? .6 : Q.level===1 ? .35 : .18; // v1.38.0: «Ультра» — самый густой след (был перекос: получала минимум)
   const fxK = (Q.mode==='auto' && Q.fps<48) ? (Q.fps<40 ? .55 : .75) : 1;
   if (RNG()<(thrusterP*fxK) && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
-    const sk=SKINS[S.skin]||SKINS[0];
+    const sk=SKINS_BY_ID.get(S.skin)||SKINS[0];
     const tr=TRAILS_BY_ID.get(S.trail)||TRAILS[0]; // 05.09.2026: след — независимый выбор, не от скина
     // 04.09.2026: Метки пути — редкие, не на каждый тик тягача (иначе слипнутся в пятно
     // под кораблём) — свой интервал поверх общего тягача, тот же приём, что MIN_INTERVAL_MS.
@@ -2833,7 +2840,7 @@ function updateLives(){ // жизни = мини-модельки текущег
   const x=c.getContext('2d');
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
-  const skin=SKINS[S.skin]||SKINS[0];
+  const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
   const maxLives=(S.mode==='ironman'||S.mode==='daily1cc')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами
   for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
