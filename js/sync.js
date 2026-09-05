@@ -538,6 +538,13 @@ function workshopReport(code){ // 05.09.2026: жалоба — владелец 
     return r.json().catch(()=>null);
   });
 }
+function workshopModerate(code, status){ // 05.09.2026: закрепить/скрыть — сервер сам проверяет OWNER_ID, кнопка лишь скрыта для остальных
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'moderate', code:code, status:status}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь

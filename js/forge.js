@@ -779,14 +779,20 @@ function workshopRenderList(){
     if(!tracks.length){ listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty; } return; }
     if(emptyEl) emptyEl.classList.add('hidden');
     const mine=workshopMyVotes();
+    // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
+    // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
+    const isOwner = !!(res && res.isOwner);
     listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
       '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
       '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
       '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
       '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button>'+
-      '<button class="wReport" data-act="report">⚑</button></div></div>'; }).join('');
+      '<button class="wReport" data-act="report">⚑</button>'+
+      (isOwner ? '<button class="wPin" data-act="pin"></button><button class="wHide" data-act="hide"></button>' : '')+
+      '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
+      const status=t.status||'normal'; row.dataset.status=status;
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
@@ -797,6 +803,15 @@ function workshopRenderList(){
       row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
       row.querySelector('.wEdit').textContent=L.workshopEdit||'В Кузницу';
       row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
+      if(isOwner){
+        const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
+        pinBtn.textContent = status==='pinned' ? '📌' : '📍';
+        pinBtn.classList.toggle('active', status==='pinned');
+        pinBtn.setAttribute('aria-label', L.workshopPin||'Закрепить');
+        hideBtn.textContent = status==='hidden' ? '🚫' : '👁';
+        hideBtn.classList.toggle('active', status==='hidden');
+        hideBtn.setAttribute('aria-label', L.workshopHide||'Скрыть');
+      }
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
 }
@@ -825,6 +840,28 @@ wireOnLocal('workshopList','click',function(e){
     // здесь достаточно погасить кнопку визуально, чтобы не звать снова с этого же экрана без толку.
     act.disabled=true; act.textContent='✓';
     workshopReport(code); haptic('light'); toast(L.workshopReported||'Спасибо, посмотрим', 'rgba(255,159,176,.5)');
+  }
+  if(act.dataset.act==='pin'){
+    // 05.09.2026: один статус на трассу — закрепить снимает «скрыто», если было; сервер
+    // всё равно проверяет OWNER_ID сам, кнопка здесь лишь скрыта для остальных игроков.
+    const next = row.dataset.status==='pinned' ? 'normal' : 'pinned';
+    workshopModerate(code, next).then(function(res){
+      if(!res || !res.ok) return;
+      row.dataset.status=next;
+      act.textContent = next==='pinned' ? '📌' : '📍';
+      act.classList.toggle('active', next==='pinned');
+    });
+    haptic('light');
+  }
+  if(act.dataset.act==='hide'){
+    const next = row.dataset.status==='hidden' ? 'normal' : 'hidden';
+    workshopModerate(code, next).then(function(res){
+      if(!res || !res.ok) return;
+      row.dataset.status=next;
+      act.textContent = next==='hidden' ? '🚫' : '👁';
+      act.classList.toggle('active', next==='hidden');
+    });
+    haptic('light');
   }
 });
 
