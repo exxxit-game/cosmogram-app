@@ -2201,6 +2201,22 @@ function collectStar(x,y){ // единственное место, где зве
   updateCombo(); updateStarsHud();
   elScore.classList.remove('pop'); void elScore.offsetWidth; elScore.classList.add('pop'); // v1.77.0: пульс счёта — награда видна без слов
 }
+/* 06.09.2026, очередь 05.09 п.3 (владелец, живая находка): «повтор полёта не показывает
+   захват звёзд/бонусов — самолётик пролетает мимо, будто их не берёт, хотя забег их
+   засчитал». Причина: ghostDrivenWorld гасил весь блок сбора целиком, не только очки —
+   звезда/бонус просто оставались висеть в небе, хотя в РЕАЛЬНОМ полёте на этом самом месте
+   (тот же сид, тот же путь) она честно исчезала. Раз путь при повторе идентичен записи,
+   попадание в тот же радиус в тот же момент неизбежно — визуальный эффект здесь безопасно
+   включить обратно, только очки/кошелёк/статус-эффекты остаются выключены. */
+function collectStarVisual(x,y){
+  burst(x,y,juicy('#ffd76a','color(display-p3 1 .86 .44)'), Q.level>=3?12:(Q.level>=2?10:8));
+  planetSpark(x,y);
+  sfx.coin(1);
+}
+function collectPowerupVisual(p){
+  sfx.power(p.kind);
+  burst(p.x,p.y,'#fff',12);
+}
 
 /* ---------- Smooth Flight: резкость активного способа руления ---------- */
 let prevTiltX=0, prevTiltY=0, prevTX=null, prevTY=null;
@@ -2780,8 +2796,9 @@ function update(dt){
       if (dd<170){ s.x+=dx/dd*6; s.y+=dy/dd*6; }
     }
     const dx=s.x-plane.x, dy=s.y-plane.y;
-    if (!S.dying && !ghostDrivenWorld && dx*dx+dy*dy < (plane.r+s.r+6)**2){ // занавес: звёзды пролетают мимо; v1.94.0: в театре — тоже мимо; 06.09.2026: + просмотр в Эстафете (иначе зритель повторно собирает чужие звёзды)
-      collectStar(s.x,s.y);
+    if (!S.dying && dx*dx+dy*dy < (plane.r+s.r+6)**2){ // занавес: звёзды пролетают мимо
+      if (ghostDrivenWorld) collectStarVisual(s.x,s.y); // театр/просмотр Эстафеты: та же звезда, тот же момент — но без очков (иначе зритель повторно собирает чужие)
+      else collectStar(s.x,s.y);
       killIdx(stars,i,poolStar);
       continue;
     }
@@ -2796,7 +2813,11 @@ function update(dt){
   for (let i=powerups.length-1;i>=0;i--){
     const p=powerups[i]; p.y+=p.vy*S.timeScale; p.ph+=dt*3;
     const dx=p.x-plane.x, dy=p.y-plane.y;
-    if (!S.dying && !ghostDrivenWorld && dx*dx+dy*dy < (plane.r+p.r+8)**2){ // v1.94.0: в театре бонусы пролетают мимо — мир чистый, как в записи; 06.09.2026: + просмотр в Эстафете (иначе зритель получает чужой щит/магнит бесплатно)
+    if (!S.dying && ghostDrivenWorld && dx*dx+dy*dy < (plane.r+p.r+8)**2){ // театр/просмотр Эстафеты: та же звезда-бонус, тот же момент — но без статус-эффектов и очков (иначе зритель получает чужой щит/магнит бесплатно)
+      collectPowerupVisual(p);
+      killIdx(powerups,i,poolPow); continue;
+    }
+    if (!S.dying && !ghostDrivenWorld && dx*dx+dy*dy < (plane.r+p.r+8)**2){ // v1.94.0: в реальном полёте — полный эффект
       sfx.power(p.kind); haptic('medium'); // у каждого бонуса — свой тембр
       S.bonuses++; // v1.42.0: взятые бонусы — в паспорт забега
       if (p.kind==='shield'){ S.shield=14; showPopup(L.shield,p.x,p.y,'#7fd8ff'); }
