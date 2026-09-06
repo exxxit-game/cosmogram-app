@@ -454,6 +454,13 @@ function syncDailyStats(day){ // v1.100.2: {ok, flyers, catchers} — «звез
     return r.json().catch(()=>null);
   });
 }
+function syncDailyCrowd(day){ // 06.09.2026 «Толпа Неба месяца»: {ok,day,ghosts:[{skin,track}]} — без имени/счёта, не спойлер (доступно с первого полёта)
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'daily_crowd', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 
 /* 03.09.2026 «Спидран получает свою таблицу» — зеркало очереди daily_submit выше, но СВОЯ
    очередь (Store 'speedrunQ', свой _speedrunFlying): если переиспользовать dailyQ, забег дня

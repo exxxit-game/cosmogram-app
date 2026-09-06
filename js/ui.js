@@ -399,6 +399,19 @@ function startGame(saved){
     ghost=relayPrevGhost; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0; ghostTagT=0;
     ghostForeign=true; ghostName=relayPrevName||''; ghostSkin=(relayPrevSkin!=null)?relayPrevSkin:-1; }
   else if (typeof ghostLoad==='function') ghostLoad(); // v1.280.0 «Воскрешение»: определена с самого начала, но никогда не звалась — «Призрак из топа» и свой рекорд первых 7 игр молчали физически, не из-за сида
+  /* 06.09.2026 «Толпа Неба месяца»: чистим на КАЖДЫЙ взлёт (не только Небо месяца) — иначе
+     толпа с прошлого полёта в Небе месяца пережила бы смену режима и летела бы дальше в
+     Классике/Спидране/где угодно. Загружаем только для 'daily' и только не восстановленный
+     автосейв (тот же приём, что у наследования очков Эстафеты выше — свежая толпа на каждый
+     настоящий взлёт). Асинхронно, полёт не ждёт ответа сервера — силуэты появятся, когда придут.*/
+  if (typeof crowdGhostsClear==='function') crowdGhostsClear();
+  if (runMode==='daily' && !saved && typeof syncDailyCrowd==='function'){
+    const crowdDay=trackDayKey(), crowdRunMode=runMode;
+    syncDailyCrowd(crowdDay).then(r=>{
+      if (runMode!==crowdRunMode || S.dailyDay!==crowdDay) return; // забег уже сменился, пока летел ответ — не подсаживаем толпу не в тот полёт
+      if (r && r.ok && Array.isArray(r.ghosts) && typeof crowdGhostsLoad==='function') crowdGhostsLoad(r.ghosts);
+    }).catch(()=>{});
+  }
   if(saved){ // восстановление автосейва (Блок 8)
     S.score=saneNumber(saved.score,0); S.mission=saneNumber(saved.mission,1);
     S.lives=clamp(saneNumber(saved.lives,3),1,3); S.dist=saneNumber(saved.dist,0);

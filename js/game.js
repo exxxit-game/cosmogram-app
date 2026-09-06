@@ -2248,6 +2248,44 @@ let rec=[], recFrame=0, ghost=null, ghostIdx=0, ghostX=0, ghostY=0, ghostOn=fals
     ghostFade=0, ghostA=0, ghostTagT=0, ghostForeign=false, ghostSkin=-1, ghostName='',
     ghostPid=0, ghostBest=0, ghostCat=''; // чей призрак (месть): владелец, его рекорд, категория
 const GHOST_CAP=1300;
+/* 06.09.2026 «Толпа Неба месяца»: отдельный, лёгкий, ПАРАЛЛЕЛЬНЫЙ слой — не трогает ни одно
+   поле выше (ghost/ghostX/...), которое уже используют Театр/Эстафета/Топ-призрак/Трибуна.
+   До CROWD_CAP силуэтов прошлых игроков этого месяца, без имени/следа-морзянки/ауреолы —
+   владелец выбрал так явно на макете. Каждая запись несёт свою мини-копию интерполяции
+   ghostStep(), только по ленте, никогда по обычному самолётику (crowdGhosts не читает и не
+   пишет S.invuln/hitPlane — чисто декоративный слой, столкновений с ним в принципе нет). */
+let crowdGhosts=[];
+const CROWD_CAP=10;
+function crowdGhostsClear(){ crowdGhosts=[]; }
+function crowdGhostsLoad(list){ // list: [{skin,track}] — уже отфильтровано сервером (share_ghost, не свой pid)
+  crowdGhosts=[];
+  if (!Array.isArray(list)) return;
+  for (const it of list){
+    if (crowdGhosts.length>=CROWD_CAP) break;
+    const g=(it && typeof ghostParse==='function') ? ghostParse(it.track) : null;
+    if (!g) continue; // битая/короткая лента — тихо пропускаем, не рушим остальную толпу
+    crowdGhosts.push({g:g, idx:0, x:0, y:0, on:false, fade:0, skin:(isFinite(it.skin)?it.skin:0)});
+  }
+}
+function crowdGhostsStep(){
+  if (!crowdGhosts.length) return;
+  for (const c of crowdGhosts){
+    const ds=c.g.ds, n=ds.length;
+    while (c.idx<n-1 && ds[c.idx+1]<S.dist) c.idx++;
+    if (S.dist>=ds[n-1]){ c.on=false; continue; } // долетела до конца своей ленты — тихо гаснет, не перезапускаем по кругу (не карусель, честный слепок месяца)
+    const i=c.idx, d0=i?ds[i-1]:0, d1=ds[i];
+    const f=d1>d0?clamp((S.dist-d0)/(d1-d0),0,1):0;
+    const xf=lerp(i?c.g.xs[i-1]:c.g.xs[i], c.g.xs[i], f);
+    // все ленты толпы — только чужие daily_runs.track (ghostPackDaily(), коридорные координаты),
+    // своей несжатой (rec, W-координаты) тут никогда не бывает — в отличие от одиночного ghost.cx,
+    // ветвление не нужно, формула всегда одна.
+    const tx=fieldL()+xf*fieldW();
+    const ty=lerp(i?c.g.ys[i-1]:c.g.ys[i], c.g.ys[i], f)*(fieldH()*.78-50)+fieldT()+fieldH()*.22;
+    if (!c.on){ c.x=tx; c.y=ty; } else { c.x=lerp(c.x,tx,.18); c.y=lerp(c.y,ty,.18); }
+    c.on=true;
+    c.fade=clamp(c.fade+.04,0,1);
+  }
+}
 function ghostRec(){
   if (++recFrame%10!==0 || rec.length>=GHOST_CAP) return;
   const xq=clamp(Math.round(plane.x/W*91),0,91);   // 92 уровня по X (~4px) — без видимых скачков
@@ -2526,6 +2564,7 @@ function update(dt){
   ghostRec();  // призрак: запись сэмпла (каждый 10-й кадр внутри)
   morseRec();  // морзянка: точка шлейфа (каждый кадр, буфер короткий)
   ghostStep(); // призрак: позиция по текущей дистанции
+  if (runMode==='daily') crowdGhostsStep(); // 06.09.2026 «Толпа Неба месяца»: только в этом режиме — в остальных массив просто пуст (crowdGhostsClear() на взлёте)
 
   if (runMode==='theater'){ // v1.94.0 «Театр призраков» Т1: зрительский автопилот — самолётик идёт по ленте дня, руки со штурвала убраны
     if (ghost && ghost.ds){

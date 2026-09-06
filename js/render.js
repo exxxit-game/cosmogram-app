@@ -2033,6 +2033,20 @@ function draw(){
     ctx.restore();
   }
 
+  // 06.09.2026 «Толпа Неба месяца»: до 10 лёгких силуэтов прошлых игроков — отдельный,
+  // облегчённый рисунок (без ауреолы/подписи/следа), не трогает систему одного соперника ниже.
+  // Цвет — настоящий цвет ИХ скина (владелец подтвердил на макете), альфа фиксированная низкая.
+  if (crowdGhosts.length) for (const c of crowdGhosts){
+    if (!c.on) continue;
+    const ccol=(SKINS_BY_ID.get(c.skin)||SKINS[0]).body;
+    ctx.save(); ctx.translate(c.x,c.y); ctx.globalAlpha=.34*c.fade;
+    ctx.fillStyle=ccol;
+    ctx.beginPath();
+    ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
   // личный призрак: полупрозрачный силуэт рекордного забега (та же форма самолётика)
   if (ghostOn){
     const gCol=(ghostForeign && SKINS_BY_ID.get(ghostSkin)) ? SKINS_BY_ID.get(ghostSkin).body : '#bfe8ff'; // чужой призрак — цвета его скина (живая витрина ангара)
