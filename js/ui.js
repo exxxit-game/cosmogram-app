@@ -1639,8 +1639,10 @@ function angarBuildGrid(){
         // 02.09.2026: глиф/svg переехал в свой .chGlyph — раньше писался прямо в .ch через
         // textContent/innerHTML, а .pr теперь тоже живёт внутри .ch (плашка поверх низа
         // квадрата); textContent=item.ch стёр бы .pr, если бы она осталась соседкой глифа.
+        // 06.09.2026 (владелец): квадрат у «Нет» всё равно пуст (ch:'') — подпись переехала
+        // внутрь него самого (.noneLbl), вместо отдельной строки .nm под пустой коробкой.
         const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '') : '';
-        el.innerHTML='<span class="ch"><span class="chGlyph"></span><span class="pr"></span></span>'+(nmText?'<span class="nm">'+nmText+'</span>':'');
+        el.innerHTML='<span class="ch"><span class="chGlyph"></span>'+(nmText?'<span class="noneLbl">'+nmText+'</span>':'')+'<span class="pr"></span></span>';
         const chEl=el.querySelector('.chGlyph');
         if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
           chEl.innerHTML='<svg viewBox="'+item.vb.join(' ')+'" width="26" height="26"><path d="'+item.svg+'" fill="#eaf2ff"/></svg>';
