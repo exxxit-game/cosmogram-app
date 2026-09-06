@@ -178,6 +178,7 @@ let theaterDay='';      // v1.94.0 «Театр призраков» Т1: ден
 let theaterTrack=null;  // лента твоего прыжка ({xs,ys,ds} — призраковый формат), живёт до конца сессии
 let theaterChamp=null;  // v1.100.1 «Трибуна чемпиона»: {name,skin} гостя на сцене — null, когда идёт твой собственный повтор
 let champTrack=null;    // v1.100.1: лента чемпиона — отдельный моток: твой билет (theaterTrack) спектакль не съедает
+let relayPrevGhost=null, relayPrevName='', relayPrevSkin=-1; // 06.09.2026 «Эстафета»: лента этапа, который сейчас смотрим перед тем, как взять руль
 let theaterRecord=false; // v1.284.4: сцена — повтор чужого рекорда, а не спектакль дня. Читает goldstar (страж 126)
 Store.del('runMode'); // v1.92.1: старая прописка любой дисциплины снимается — большая кнопка священна
 Store.del('pact'); // v1.70.0: модификаторы удалённого режима больше не нужны
@@ -222,17 +223,18 @@ function modesFill(){ // подписи + отметка выбранного р
   put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
+  put('modeRelay',L.modeRelay,L.modeRelayD); // 06.09.2026
   // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
   // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
   // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
-  const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom',biathlon:'modeBiathlon'};
+  const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
   // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
   const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
-  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,daily1cc:L.mode1CC,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон
+  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,daily1cc:L.mode1CC,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon,relay:L.modeRelay}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон/Эстафета
   const mode=(typeof controlMode==='function')?controlMode():'touch';
   const ctlName=mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch);
   head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
@@ -290,6 +292,7 @@ function startGame(saved){
     : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
     : runMode==='slalom' ? (SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: та же трасса навсегда — честное сравнение времени между игроками
     : runMode==='biathlon' ? (BIATHLON_ETERNAL_DAY+'·biathlon') // 06.09.2026: тот же приём — одна трасса навсегда
+    : runMode==='relay' ? (S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg)) // 06.09.2026: во время просмотра — сид ЭТАПА, который показываем; дальше relayHandoffToLive() в game.js переставит на сид своего этапа
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
     : String(freshSeed);
   mapSeqReset();
@@ -299,6 +302,7 @@ function startGame(saved){
     : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
     : runMode==='slalom' ? keyRNG(SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: тот же приём — одна трасса навсегда
     : runMode==='biathlon' ? keyRNG(BIATHLON_ETERNAL_DAY+'·biathlon') // 06.09.2026: тот же приём — одна трасса навсегда
+    : runMode==='relay' ? keyRNG(S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg))
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
     : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
@@ -311,7 +315,7 @@ function startGame(saved){
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='daily1cc'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»/«1CC»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
-    biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,seed:freshSeed,
+    biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,relayLegDone:0,seed:freshSeed,
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
@@ -351,6 +355,13 @@ function startGame(saved){
     const fogEl=document.getElementById('fog');
     if(fogEl){ fogEl.classList.toggle('f1',fc.fog===1); fogEl.classList.toggle('f2',fc.fog===2); }
   } else { const fogEl=document.getElementById('fog'); if(fogEl){ fogEl.classList.remove('f1'); fogEl.classList.remove('f2'); } }
+  // 06.09.2026 «Эстафета»: очки/жизни — не с нуля (Object.assign выше уже поставил 0/3), а
+  // унаследованные от предыдущего этапа цепочки (relay_get_open/relay_start, ui.js click).
+  // Только не при восстановлении автосейва — тот уже несёт свои честные числа этого же этапа.
+  if (runMode==='relay' && !saved){
+    S.score=saneNumber(S.relayInheritScore,0);
+    S.lives=clamp(saneNumber(S.relayInheritLives,3),1,3);
+  }
   /* v1.282.20 «Ничего не течёт из прошлого забега». Три утечки, найденные разбором:
      — plane.bank: занавес смерти доводит крен до 1.15, и новый забег стартовал с завалом на 36°;
      — prevKX/prevKY: положение клавиш переживало забег, и первый же кадр ронял плавность на 0.03
@@ -382,6 +393,11 @@ function startGame(saved){
     ghost=(theaterChamp&&champTrack)?champTrack:theaterTrack; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0; ghostTagT=0; ghostForeign=false; ghostName='';
     if (theaterChamp){ ghostForeign=true; ghostName=theaterChamp.name; ghostSkin=theaterChamp.skin; } // v1.100.1 «Трибуна чемпиона»: гость назван по имени и одет в свой скин
     else ghostSkin=-1; }
+  // 06.09.2026 «Эстафета»: тот же приём, что у Театра — но только когда правда есть, что смотреть
+  // (relayWatching взводится в клике по кнопке только если предыдущий этап дал валидную ленту).
+  else if (runMode==='relay' && S.relayWatching && relayPrevGhost){
+    ghost=relayPrevGhost; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0; ghostTagT=0;
+    ghostForeign=true; ghostName=relayPrevName||''; ghostSkin=(relayPrevSkin!=null)?relayPrevSkin:-1; }
   else if (typeof ghostLoad==='function') ghostLoad(); // v1.280.0 «Воскрешение»: определена с самого начала, но никогда не звалась — «Призрак из топа» и свой рекорд первых 7 игр молчали физически, не из-за сида
   if(saved){ // восстановление автосейва (Блок 8)
     S.score=saneNumber(saved.score,0); S.mission=saneNumber(saved.mission,1);
@@ -406,7 +422,7 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom'||runMode==='biathlon')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom'||runMode==='biathlon'||runMode==='relay')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон/Эстафета
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
   if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
   sfx.launch(SKINS_BY_ID.get(S.skin)||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
@@ -450,8 +466,12 @@ function gameOver(){
   const mode=controlMode(); // категория управления: gyro / touch / keys
   // 05.09.2026 «Caravan»/«Ironman»: одна общая таблица на каждую дисциплину, не по управлению
   // (владелец выбрал так для Caravan явно — мало игроков, дробить рано; тот же приём для Ironman).
-  const cat=S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':mode);
-  const modeKey=S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'))); // v1.280.0: добавлена ветка keys
+  // 06.09.2026 «Эстафета»: своя изолированная локальная категория (bestRelayLeg), не
+  // touch/gyro/keys — счёт этапа несёт унаследованные очки чужих этапов цепочки, писать его
+  // в личный рекорд СПОСОБА управления было бы нечестно (тот же принцип, что увёл Caravan/Ironman
+  // в свои ключи ниже).
+  const cat=S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':(S.mode==='relay'?'relay':mode));
+  const modeKey=S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')))); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
   const isRecord = sc>prevCat && sc>0;
   const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
@@ -494,7 +514,7 @@ function gameOver(){
      No-Miss честно достижим только там, где есть финиш БЕЗ смерти — gameOver() в остальных
      режимах (Классика/Небо месяца) вызывается исключительно через S.lives<=0, то есть
      «0 попаданий» на итогах там противоречиво по конструкции самого кода. */
-  const noMissNow = ((S.mode==='speedrun'&&S.srWin) || (S.mode==='caravan'&&S.caravanTimeUp) || (S.mode==='slalom'&&S.slalomWin) || (S.mode==='biathlon'&&S.biathlonWin)) && S.hits===0; // 06.09.2026: победа в Слаломе/Биатлоне — тоже честный триггер (S.hits — про столкновения, не про промахи по звёздам)
+  const noMissNow = ((S.mode==='speedrun'&&S.srWin) || (S.mode==='caravan'&&S.caravanTimeUp) || (S.mode==='slalom'&&S.slalomWin) || (S.mode==='biathlon'&&S.biathlonWin) || (S.mode==='relay'&&S.relayLegDone)) && S.hits===0; // 06.09.2026: победа в Слаломе/Биатлоне/сдача этапа Эстафеты — тоже честный триггер (S.hits — про столкновения, не про промахи по звёздам)
   // Pacifist: ни разу не подобрал Таран/Сверхновую — только уклонение. bonuses>0 требует хотя бы
   // одного взятого бонуса — иначе флаг был бы честен формально, но бессмысленен (не было выбора).
   const pacifistNow = !S.everDash && !S.everNova && S.bonuses>0;
@@ -544,7 +564,7 @@ function gameOver(){
   // Caravan/Ironman (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
   // проекта визуал идёт только через макет. Рекорд объявляется текстовой плашкой
   // ниже (recChips), как уже сделано для Спидрана, а не золотой медалью с иконкой.
-  if (isRecord && S.mode!=='caravan' && S.mode!=='ironman') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0));
+  if (isRecord && S.mode!=='caravan' && S.mode!=='ironman' && S.mode!=='relay') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0)); // 06.09.2026: Эстафета — своя изолированная категория, та же логика, что уже исключает Caravan/Ironman из медали по способу управления
   if (isDistRecord) medals.push(medalHTML('dist', medals.length*80));
   setHTML('recordMedals', medals.join(''));
 
@@ -556,6 +576,10 @@ function gameOver(){
     else if (S.slalomFail) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.slalomDQ+'</span>');
   }
   if (S.mode==='biathlon' && S.biathlonWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(biathlonNewBest?L.biathlonNewBest:L.biathlonFinish)+' '+fmtTime(S.time)+(S.biathlonMisses?' ('+L.biathlonMisses(S.biathlonMisses)+')':'')+'</span>');
+  if (S.mode==='relay'){ // 06.09.2026: сдал — плашка с номером этапа (сеть решает, дошла ли она — см. дальше в этой функции), сорвался — плашка без сети, как slalomDQ
+    if (S.relayLegDone) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('plane')+L.relayLegSent(S.relayLeg)+'</span>');
+    else recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.relayFail+'</span>');
+  }
   if (S.mode==='caravan' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('target')+L.caravanNewBest+'</span>'); // 05.09.2026: текстовый рекорд вместо новой медали-иконки
   if (S.mode==='ironman' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('crown')+L.ironmanNewBest+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
@@ -579,7 +603,7 @@ function gameOver(){
     const prevH=Store.get('hundredBest',null), prevHOk=!!(prevH && prevH.d===dd && prevH.ok);
     if (hundredNow && !prevHOk) Store.set('hundredBest',{d:dd,ok:true});
   }
-  if (S.mode==='daily'||S.mode==='daily1cc'||S.mode==='hundred'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic; 05.09.2026: + 1CC/100%
+  if (S.mode==='daily'||S.mode==='daily1cc'||S.mode==='hundred'||S.mode==='relay'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic; 05.09.2026: + 1CC/100%; 06.09.2026: + Эстафета — «Ещё раз» после этапа улетает в обычный полёт, новую цепочку/этап игрок выбирает заново через кнопку режима
   if (noMissNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('checkbadge')+L.noMiss+'</span>');
   if (pacifistNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('shield')+L.pacifist+'</span>');
   if (hundredNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('star4')+L.hundredBadge+'</span>');
@@ -706,6 +730,17 @@ function ghostUpload(category, track, skin, best, seed){
     typeof syncBiathlonSubmit==='function' && typeof ghostPackDaily==='function')
     syncBiathlonSubmit({ day:BIATHLON_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
       track: ghostPackDaily() });
+  /* 06.09.2026 «Эстафета»: сдача этапа — только настоящая (relayLegDone), сорванный этап
+     на сервер вообще не идёт (владелец: «цепочка остаётся открытой на том же этапе, ничего
+     не пишем») — relayLegDone уже гарантирует это условие, отдельная проверка тут не нужна.
+     chain_id хранится в S с момента входа (relayEnterFromChain) — без него отправлять некуда. */
+  if (S.mode==='relay' && S.relayLegDone && S.relayChainId && rec.length>=20 &&
+    typeof syncRelaySubmitLeg==='function' && typeof ghostPackDaily==='function'){
+    const relayLegAtSubmit=S.relayLeg;
+    syncRelaySubmitLeg({ chain_id:S.relayChainId, leg:relayLegAtSubmit, track: ghostPackDaily(),
+      time_sec:Math.round(S.time), score_end:sc, lives_end:S.lives, skin:S.skin
+    }).then(d=>{ if (d && d.ok) toast(d.done?L.relayChainDone:L.relayLegSent(relayLegAtSubmit),'rgba(150,255,190,.5)'); });
+  }
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
     const rankCat=cat; // v1.280.0: та же категория, что и везде — раньше здесь отдельно повторялась своя логика, включая пропущенную ветку keys
@@ -895,7 +930,7 @@ function autosave(){
      свернувший приложение в те 0.9с, пока идёт занавес последней жизни, получал записанный
      забег с lives=0 → при восстановлении clamp поднимал их до 1, и смерть просто не
      случалась: ни статистики, ни submit, а счёт целиком на месте. Детерминированный обход. */
-  if(S.running && runMode!=='theater' && !S.dying && S.lives>0){ // v1.94.0: театр не оставляет автосейва — из просмотра не рождается «второй шанс»
+  if(S.running && runMode!=='theater' && runMode!=='relay' && !S.dying && S.lives>0){ // v1.94.0: театр не оставляет автосейва — из просмотра не рождается «второй шанс»; 06.09.2026: Эстафета туда же — chain_id/seed/лента предыдущего этапа живут вне S (relayChainId и т.п. не входят в этот снимок), восстановление без них пересеяло бы трассу мусорным ключом (undefined·relay·N) и потеряло бы возможность сдать этап; честнее считать закрытое приложение сорванным этапом — цепочка просто ждёт снова, как и от столкновения
     /* v1.282.20: в автосейв кладём и то, что раньше терялось. Прежде восстанавливались
        только счёт/волна/жизни/дистанция/звёзды — а плавность, часы полёта и паспорт
        начинались с чистого листа. Это был готовый приём: перед неизбежным ударом закрыть
@@ -1978,13 +2013,41 @@ wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
     if (pair[1]==='daily'||pair[1]==='daily1cc'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 1CC/100% жгут ту же попытку
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
+/* 06.09.2026 «Эстафета»: единственная кнопка режима с асинхронной логикой перед стартом —
+   не влезает в общий массив выше (тому просто меняет runMode и тут же летит). Здесь сначала
+   нужно спросить сервер: есть открытая цепочка, ждущая следующий этап (не от меня последнего),
+   или начать свою. relay_get_open/relay_start уже несут семя, счёт/жизни для наследования и
+   (если есть) ленту предыдущего этапа — её раскладываем в relayPrevGhost для просмотра. */
+function relayEnterFromChain(chain){
+  if (!chain) return false;
+  S.relayChainId=chain.id; S.relayLeg=chain.leg;
+  S.relaySeed=String(chain.seed);
+  S.relayInheritScore=saneNumber(chain.score,0);
+  S.relayInheritLives=clamp(saneNumber(chain.lives,3),1,3);
+  const g=(chain.prevTrack && typeof ghostParse==='function') ? ghostParse(chain.prevTrack) : null;
+  if (g){ g.cx=true; relayPrevGhost=g; relayPrevName=chain.prevName||''; relayPrevSkin=(chain.prevSkin!=null)?chain.prevSkin:0; S.relayWatching=true; }
+  else { relayPrevGhost=null; relayPrevName=''; relayPrevSkin=-1; S.relayWatching=false; }
+  return true;
+}
+wireOn('modeRelay', 'click', ()=>{
+  if (!syncAvailable()){ toast(L.relaySignInFirst,'rgba(191,232,255,.45)'); haptic('light'); return; }
+  sfx.click(); haptic('light');
+  if (typeof syncRelayGetOpen!=='function' || typeof syncRelayStart!=='function') return;
+  syncRelayGetOpen().then(r=>{
+    if (r && r.ok && r.chain) return r.chain;
+    return syncRelayStart({skin:S.skin}).then(r2=>(r2&&r2.ok&&r2.chain)?r2.chain:null);
+  }).then(chain=>{
+    if (!relayEnterFromChain(chain)){ toast(L.relayFailStart,'rgba(255,150,150,.5)'); return; }
+    setRunMode('relay'); runStart();
+  }).catch(()=>{ toast(L.relayFailStart,'rgba(255,150,150,.5)'); });
+});
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
 wireOn('menuBtn', 'click', toMenu);
 wireOn('pauseBtn', 'click', pauseGame);
 wireOn('resumeBtn', 'click', resumeGame);
-wireOn('restartBtn', 'click', ()=>{ if((runMode==='daily'||runMode==='daily1cc'||runMode==='hundred')&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами; 05.09.2026: то же правило для 1CC/100%
+wireOn('restartBtn', 'click', ()=>{ if((runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='relay')&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами; 05.09.2026: то же правило для 1CC/100%; 06.09.2026: + Эстафета — рестарт середины этапа честно считается несдачей, не тихим сбросом
 wireOn('pauseMenuBtn', 'click', toMenu);
 wireOn('settingsBtn', 'click', ()=>openSettings('menu'));
 wireOn('pauseSettingsBtn', 'click', ()=>openSettings('pause'));

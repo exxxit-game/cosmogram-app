@@ -1851,6 +1851,37 @@ const BIATHLON_R2_START=BIATHLON_R1_END+BIATHLON_LEG;    // 800
 const BIATHLON_R2_END=BIATHLON_R2_START+BIATHLON_RANGE;  // 1000
 const BIATHLON_DIST=BIATHLON_R2_END;
 const BIATHLON_PENALTY_SEC=3; // штраф за каждую не собранную звезду рубежа — владелец выбрал сам
+// 06.09.2026 «Эстафета»: открытая цепочка на всех (в игре ещё нет системы друзей/команд —
+// владелец выбрал так сам), 4 этапа по 300м. Каждый этап — свой сид (relaySeed+'·relay·'+leg),
+// не один непрерывный сид на все 1200м: непрерывность здесь — в счёте/жизнях, которые
+// переходят из этапа в этап, а не в буквально одной трассе (иначе пришлось бы на лету мотать
+// поток случайных чисел вперёд на месте передачи — рискованно, реального выигрыша не даёт).
+const RELAY_LEG_DIST=300;
+const RELAY_LEGS_TOTAL=4;
+/* 06.09.2026 «Эстафета»: конец ленты предыдущего этапа — вместо занавеса (как в Театре)
+   передаём управление живому игроку тем же canvas'ом, тем же забегом. Дёшево, потому что
+   это ровно то же самое, что уже делает обычный взлёт (startGame, ui.js) — очистка полей,
+   свой сид, свои таймеры спавна — просто вызвано посреди сессии, а не с чистого листа.
+   Счёт/жизни НЕ трогаем — они уже несут унаследованное значение с прошлого этапа плюс то,
+   что накопилось за просмотр (ничего, просмотр очков не даёт — near-miss тоже молчит:
+   S.invuln=1e9 весь просмотр, а fullRisk()/очки near-miss физически не читаются в кадрах
+   Театра/просмотра — тот же путь кода, что уже работал для Театра). */
+function relayHandoffToLive(){
+  S.relayWatching=false;
+  for(const o of obstacles) poolOb.give(o); obstacles=[];
+  for(const s of stars) poolStar.give(s); stars=[];
+  for(const p of powerups) poolPow.give(p); powerups=[];
+  for(const p of particles) poolPart.give(p); particles=[];
+  for(const p of popups) poolPop.give(p); popups=[];
+  mapSeedKey = S.relaySeed+'·relay·'+S.relayLeg;
+  mapRNG = keyRNG(mapSeedKey);
+  mapSeqReset();
+  S.dist=0; spawnT=0; starT=0; powT=0;
+  S.time=0; // 06.09.2026: часы этапа считают только живой полёт — время просмотра повтора в сдаваемый time_sec не идёт
+  S.invuln=1.5; // обычная благодать взлёта — бесконечная (1e9) была только на время показа
+  ghost=null; ghostOn=false; ghostForeign=false; // тень выключена — дальше игрок правда сам
+  plane.vx=0; plane.vy=0; // позиция остаётся, где её оставила лента — руль с нуля, не телепорт
+}
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -2511,6 +2542,18 @@ function update(dt){
        билет. Закон v1.94.0 «в театре касса молчит» должен держаться и в этом углу. */
     else { endTheater(); return; }
   }
+  // 06.09.2026 «Эстафета»: тот же приём, что у Театра выше (самолётик по ленте, invuln=1e9) —
+  // но в конце ленты НЕ занавес, а живая передача управления (relayHandoffToLive), тот же
+  // забег продолжается тем же canvas'ом, без перезагрузки экрана.
+  else if (runMode==='relay' && S.relayWatching){
+    if (ghost && ghost.ds){
+      const dxT=ghostX-plane.x; plane.x=ghostX; plane.y=ghostY; plane.vx=0; plane.vy=0;
+      plane.bank=lerp(plane.bank,clamp(dxT/8,-1,1),.3);
+      ghostA=0; S.invuln=1e9;
+      if (S.dist>=ghost.ds[ghost.ds.length-1]) relayHandoffToLive();
+    }
+    else relayHandoffToLive(); // ленты нет (битый трек и т.п.) — сразу отдаём управление, не топим этап пустым занавесом
+  }
 
   if (S.invuln>0) S.invuln-=dt;
   if (S.shield>0) S.shield-=dt;
@@ -2799,6 +2842,16 @@ function update(dt){
       const missed=Math.max(0,(S.starsSpawned-S.biathlonSnapSpawned)-(S.starsCollected-S.biathlonSnapCollected));
       if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
       startDying(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
+    }
+  }
+  else if (S.mode==='relay'){
+    const elMH=elModeHud;
+    if (S.relayWatching){
+      if (elMH && elMH._t!==-1){ elMH._t=-1; elMH.textContent=L.relayWatching(S.relayLeg-1); } // смотрим этап N-1 один раз, текст не дёргается каждый кадр
+    } else {
+      const distI=Math.floor(S.dist);
+      if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=L.modeRelay+' '+S.relayLeg+'/'+RELAY_LEGS_TOTAL+' · '+Math.min(distI,RELAY_LEG_DIST)+'/'+RELAY_LEG_DIST+(L.unitM||'м'); }
+      if (S.dist>=RELAY_LEG_DIST && !S.dying){ startDying(); S.relayLegDone=1; } // долетел до конца своего этапа — сдаём эстафету (ui.js gameOver)
     }
   }
   else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой

@@ -57,6 +57,10 @@ const I18N = {
     modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
     modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
+    modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 300м, лети свой — передавай следующему', // 06.09.2026
+    relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
+    relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войди через Telegram, чтобы лететь в эстафете',
+    relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     mode1CC:'1CC', mode1CCD:'Небо месяца на 1 жизни', oneCCNewBest:'Новый рекорд 1CC', // 05.09.2026: тот же замок/попытка, что у Небо месяца
     mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца/1CC
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
@@ -230,6 +234,10 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
     modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
     biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
+    modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 300m, fly yours — hand off to the next pilot',
+    relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
+    relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in via Telegram to fly in the relay',
+    relayFailStart:'Could not start the relay — try again',
     mode1CC:'1CC', mode1CCD:'Track of the month, 1 life', oneCCNewBest:'New 1CC record',
     mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
@@ -384,6 +392,10 @@ const I18N = {
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
     modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
     biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
+    modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 300m, vuela el tuyo — pásaselo al siguiente',
+    relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
+    relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión con Telegram para volar en los relevos',
+    relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
     mode1CC:'1CC', mode1CCD:'Pista del mes, 1 vida', oneCCNewBest:'Nuevo récord de 1CC',
     mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
@@ -554,6 +566,10 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
     modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
     biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
+    modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 300m, voe o seu — passe para o próximo',
+    relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
+    relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre com o Telegram para voar no revezamento',
+    relayFailStart:'Não deu para começar o revezamento — tente de novo',
     mode1CC:'1CC', mode1CCD:'Pista do mês, 1 vida', oneCCNewBest:'Novo recorde de 1CC',
     mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
@@ -722,6 +738,10 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
     modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
     biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
+    modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 300m, vole la tienne — passe le relais',
+    relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
+    relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi via Telegram pour voler dans le relais',
+    relayFailStart:'Impossible de démarrer le relais — réessaie',
     mode1CC:'1CC', mode1CCD:'Trace du mois, 1 vie', oneCCNewBest:'Nouveau record 1CC',
     mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»

@@ -572,6 +572,60 @@ function syncBiathlonTop(day){ // {ok,day,top:[{pid,name,username,provider,best,
   });
 }
 
+/* 06.09.2026 «Эстафета»: открытая цепочка — свой Edge Function (cosmogram-relay), не
+   cosmogram-daily — своя комната. relay_get_open/relay_start отдают текущее состояние сразу
+   (клиенту нужно решить, смотреть повтор или лететь), очередь нужна только у relay_submit_leg —
+   тот же приём, что у Слалома/Биатлона выше (сеть чаще всего подводит именно на посадке), но
+   флаг успеха и «цепочка кончилась» читаем из ТЕЛА ответа (d.ok/d.done), не только из HTTP-статуса. */
+const RELAY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-relay';
+function relayPost(payload){ return syncFetch(RELAY_URL,payload).catch(()=>null); }
+function syncRelayGetOpen(){ // {ok,chain:{id,seed,leg,score,lives,prevTrack,prevSkin,prevName}|null}
+  if(!syncAvailable()) return Promise.resolve(null);
+  return relayPost(Object.assign({action:'relay_get_open'}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function syncRelayStart(o){ // {skin} → {ok,chain:{...}}
+  if(!syncAvailable()) return Promise.resolve(null);
+  return relayPost(Object.assign({action:'relay_start'}, syncAuth(), o||{})).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function syncRelayQueue(){ return saneArray(Store.get('relayQ',[]),[]); }
+function syncRelayEnqueue(o){
+  if(!o || !o.chain_id || !o.leg) return;
+  const q=syncRelayQueue().filter(x=>!(x && x.chain_id===o.chain_id && x.leg===o.leg));
+  q.push(Object.assign({},o));
+  Store.set('relayQ',q.slice(-14));
+}
+let _relayFlying=null;
+function syncRelayFlush(){
+  if(_relayFlying) return (_relayFlying = _relayFlying.catch(()=>{}).then(()=>syncRelayFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncRelayQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=relayPost(Object.assign({action:'relay_submit_leg'},syncAuth(),item)).then(r=>{
+    if(!r) return null;
+    // 06.09.2026: тело читаем при ЛЮБОМ HTTP-статусе — stale_or_own_leg (409, «меня опередили»)
+    // тоже несёт полезный код в теле, а ранний выход по r.ok его бы никогда не увидел.
+    return r.json().catch(()=>null).then(d=>{
+      if((d && d.ok) || (d && d.error==='stale_or_own_leg')) Store.set('relayQ',syncRelayQueue().filter(x=>x!==item)); // успех — сдано; stale_or_own_leg — шанс ушёл, повторять нечего
+      return d;
+    });
+  }).catch(()=>null).finally(()=>{ _relayFlying=null; });
+  _relayFlying=p; return p;
+}
+function syncRelaySubmitLeg(o){ // {chain_id, leg, track, time_sec, score_end, lives_end, skin} → {ok,done,leg}|null
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(null);
+  syncRelayEnqueue(o);
+  return syncRelayFlush();
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncRelayFlush());
+  setTimeout(()=>syncRelayFlush(),4000);
+}
+
 /* 05.09.2026 «Мастерская»: витрина трасс Конструктора (cosmogram-workshop) — отдельная
    комната на сервере, тот же приём, что у cosmogram-daily выше: таблица рекордов и Небо
    месяца её не касаются. Сам механизм шаринга (mapShare()/forgeDecode() в forge.js,
