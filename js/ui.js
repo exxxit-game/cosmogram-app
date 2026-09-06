@@ -136,6 +136,7 @@ function setScreen(name){
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('modesScreen','hidden', name!=='modes');
+  toggleCls('modesTopScreen','hidden', name!=='modesTop'); // 06.09.2026: Топ соревнований — свой экран, не вкладка внутри Достижений
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
   // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
@@ -2406,6 +2407,7 @@ wireOn('achBtn', 'click', openAch);
 wireOn('achBackBtn', 'click', closeAch); // 28.08.2026: вернулась, см. коммент у hangarBackBtn
 /* Вкладка «🌍 Топ»: честная таблица (модуль sync.js) */
 let topCat='touch';
+let topCatComp='daily'; // 06.09.2026: «Топ соревнований» — своя категория по умолчанию, свой экран
 function achTabSel(mine){
   toggleCls('tabMine','sel',mine); toggleCls('tabTop','sel',!mine);
   toggleCls('achMineWrap','hidden',!mine); toggleCls('achTopWrap','hidden',mine);
@@ -2413,11 +2415,20 @@ function achTabSel(mine){
 }
 wireOn('tabMine', 'click',()=>{ achTabSel(true); sfx.click(); });
 wireOn('tabTop', 'click',()=>{ achTabSel(false); sfx.click(); });
-document.querySelectorAll('.topCat').forEach(b=>b.addEventListener('click',()=>{
+// 06.09.2026: два независимых набора вкладок (личный #topCats, соревновательный #compTopCats) —
+// область поиска сужена до своего контейнера, иначе клик в одном экране снял бы .sel в другом.
+document.querySelectorAll('#topCats .topCat').forEach(b=>b.addEventListener('click',()=>{
   topCat=b.dataset.cat;
-  document.querySelectorAll('.topCat').forEach(x=>x.classList.toggle('sel',x===b));
+  document.querySelectorAll('#topCats .topCat').forEach(x=>x.classList.toggle('sel',x===b));
   renderTop(); sfx.click();
 }));
+document.querySelectorAll('#compTopCats .topCat').forEach(b=>b.addEventListener('click',()=>{
+  topCatComp=b.dataset.cat;
+  document.querySelectorAll('#compTopCats .topCat').forEach(x=>x.classList.toggle('sel',x===b));
+  renderTopComp(); sfx.click();
+}));
+wireOn('modesTopBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('modesTop'); renderTopComp(); });
+wireOn('modesTopBackBtn', 'click', ()=>{ sfx.click(); setScreen('modes'); });
 /* ---------- Одна таблица, много входов (v1.51.0) ----------
    Гость играет полноценно, рекорд ждёт локально; вход — Telegram Login Widget (только браузер).
    Анонимных записей нет: без подписи Telegram в таблицу не встать — доверие дороже охвата. */
@@ -2497,9 +2508,14 @@ function myBestFor(cat){
    Стало: таблицу видят все. Приглашение стоит ПОД ней и говорит о возможности.
    Своё место гостю считает экран — по уже полученному списку, без второго запроса к серверу.
    ============================================================ */
-function renderTop(){
-  const list=$('topList'), me=$('topMe');
-  const wb=$('topWouldBe'), jn=$('topJoin'), dl=$('dcLogin');
+/* 06.09.2026 «Топ соревнований»: раньше renderTop() жёстко знал свои id (topList/topMe/...)
+   и свой единственный экран ('ach'). Когда 6 соревновательных категорий переехали на новый
+   экран (modesTopScreen), понадобился второй, независимый набор id и своя переменная
+   категории (topCatComp) — вместо копии функции renderTopFor() принимает экран/категорию/id
+   параметрами, сама функция ниже (renderTop/renderTopComp) — тонкие обёртки под старые имена. */
+function renderTopFor(screen, getCat, ids){
+  const list=$(ids.list), me=$(ids.me);
+  const wb=$(ids.wouldBe), jn=$(ids.join), dl=$(ids.dcLogin);
   const gost = (typeof syncAvailable!=='function') || !syncAvailable();
   me.textContent=''; list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
   if(wb) wb.classList.add('hidden');
@@ -2512,7 +2528,7 @@ function renderTop(){
   } else {
     if (dl){ dl.classList.add('hidden'); dl.innerHTML=''; }
   }
-  const askCat=topCat; // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком
+  const askCat=getCat(); // v1.282.20: медленный ответ прошлой вкладки больше не рисуется под нынешним заголовком
   /* 03.09.2026: «Трасса дня»/«Спидран» — свои двери (cosmogram-daily, action daily_top/
      speedrun_top), не общая scores/CATS таблица (у обоих честное «одно небо на всех»,
      у остальных пяти — нет). Ответ нарочно того же вида ({ok,top,me}), рендер ниже не знает разницы. */
@@ -2529,7 +2545,7 @@ function renderTop(){
   // обоих местах, где счёт показывается («твоё место» и сама строка), одной функцией, не копиями branch'а.
   const topFmt = v => (askCat==='speedrun'||askCat==='slalom'||askCat==='biathlon') ? fmtTime(v) : fmtN(v)+(askCat==='dist'?' '+(L.unitM||'м'):'');
   topPromise.then(d=>{
-    if(screenName!=='ach' || topCat!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
+    if(screenName!==screen || getCat()!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
     if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
     me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+topFmt(d.me.best)) : '';
     /* Гостю — его собственное место в чужой таблице и приглашение. Считаем здесь, а не на
@@ -2547,8 +2563,11 @@ function renderTop(){
         } else wb.classList.add('hidden');
       }
       if (jn){
-        setText('topJoinTitle', L.topJoinTitle);
-        setText('topJoinSub', L.topJoinSub);
+        // 06.09.2026: было setText('topJoinTitle'/'topJoinSub', ...) — id фиксированный, значит
+        // писал бы в личный экран, даже когда jn на самом деле #compTopJoin. jn.children[0/1] —
+        // позиционно, оба контейнера (index.html) держат тот же порядок (título, потом sub).
+        if (jn.children[0]) jn.children[0].textContent = L.topJoinTitle;
+        if (jn.children[1]) jn.children[1].textContent = L.topJoinSub;
         jn.classList.remove('hidden');
       }
     }
@@ -2574,8 +2593,10 @@ function renderTop(){
          вторая — «смотреть» (увидеть полёт целиком, как трибуну чемпиона). До этой партии
          рекорд был числом в таблице: посмотреть его было нельзя ни одним способом. Страж 126. */
       (!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
-  }).catch(()=>{ if(screenName==='ach' && topCat===askCat) list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; }); // 22.08.2026: сбой сети — честное сообщение вместо зависшего «Загрузка…»
+  }).catch(()=>{ if(screenName===screen && getCat()===askCat) list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; }); // 22.08.2026: сбой сети — честное сообщение вместо зависшего «Загрузка…»
 }
+function renderTop(){ renderTopFor('ach', ()=>topCat, {list:'topList',me:'topMe',wouldBe:'topWouldBe',join:'topJoin',dcLogin:'dcLogin'}); }
+function renderTopComp(){ renderTopFor('modesTop', ()=>topCatComp, {list:'compTopList',me:'compTopMe',wouldBe:'compTopWouldBe',join:'compTopJoin',dcLogin:'compDcLogin'}); }
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
    Учимся тактике и манёврам рекордсмена + живая витрина скинов (его самолётик виден в полёте). */
 let foreignGhost=null;
@@ -2604,46 +2625,54 @@ function ghostTakeForeign(){ const f=foreignGhost; foreignGhost=null; return f; 
    cx=true: лента пишется в долях ЭКРАНА (ghostRec: plane.x/W), а коридор чести — 390 мер
    по центру. На телефоне W=390 и это одно и то же, на широком экране — нет: без коридорной
    укладки чужой полёт ушёл бы за стены. Тот же приём, что у Трибуны чемпиона. */
-wireOn('topList', 'click', e=>{
-  const b=e.target.closest('.topWatch'); if(!b) return;
-  const pid=Math.floor(Number(b.dataset.wt));
-  if(!pid || typeof syncGhostGet!=='function' || b._busy) return;
-  sfx.click(); haptic('light'); b._busy=1; b.textContent='…';
-  const gen=runNow(), cat0=topCat; // то же поколение, что у соседней двери: медленный ответ не должен запускать игру задним числом
-  syncGhostGet(pid, cat0).then(d=>{
-    b._busy=0; b.innerHTML=ic('play');
-    if(!runSame(gen) || screenName!=='ach') return; // зритель ушёл, пока летел ответ
-    if(!d || !d.ok){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
-    if(d.seed==null || !isFinite(Number(d.seed))){ // небо того полёта неизвестно — показывать нечего, и врать не будем
-      toast(L.topWatchNoSky,'rgba(255,159,176,.5)'); haptic('error'); return; }
-    const g=ghostParse(d.track);
-    if(!g){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
-    g.cx=true;
-    champTrack=g; theaterDay=String(Math.floor(Number(d.seed))); theaterRecord=true;
-    theaterChamp={ name:String(d.name||'').slice(0,64), skin:Math.floor(Number(d.skin))||0 };
-    runMode='theater'; startGame();
-  }).catch(()=>{ b._busy=0; b.innerHTML=ic('play'); });
-});
-wireOn('topList', 'click', e=>{
-  const b=e.target.closest('.topGh'); if(!b) return;
-  const pid=Math.floor(Number(b.dataset.gh));
-  if(!pid || typeof syncGhostGet!=='function') return;
-  sfx.click(); haptic('light'); b.textContent='…';
-  const gen=runNow(), cat0=topCat; // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку
-  syncGhostGet(pid, cat0).then(d=>{
-    /* v1.282.20: этот колбэк ЗАПУСКАЕТ игру. Медленный ответ (до 10с) перезапускал забег
-       прямо посреди полёта: состояние стиралось без посадки, очки и лента уходили в никуда,
-       а счётчик игр накручивался дважды. Сверяем поколение и экран. */
-    if(!runSame(gen) || screenName!=='ach') return;
-    // v1.103.0 «Тихий нуль»: знак результата рисуется ПОСЛЕ результата — неудача возвращает призрака, галочка не врёт
-    if(!d || !d.ok){ b.innerHTML=ic('ghost'); toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; } // владелец скрыл трек
-    b.innerHTML=ic('check');
-    ghostSetForeign({track:d.track, skin:d.skin, name:d.name, pid:pid, cat:cat0, best:Math.floor(Number(b.dataset.best))||0, seed:d.seed});
-    foreignFrom='top';
-    toast(L.ghostWith(d.name||''),'rgba(191,232,255,.45)');
-    startGame(); // призрак подхватится в ghostLoad — окно онбординга его не трогает
-  }).catch(()=>{ if(runSame(gen) && screenName==='ach') b.innerHTML=ic('ghost'); }); // 22.08.2026: сбой сети — кнопка не виснет на «…» вечно
-});
+// 06.09.2026 «Топ соревнований»: было жёстко #topList/topCat/'ach' — второй экран
+// (#compTopList/topCatComp/'modesTop') нуждается в тех же двух дверях (призрак/смотреть),
+// иначе кнопки в соревновательных строках были бы нарисованы, но мертвы. Тело функций не
+// менялось, только topCat→getCat(), 'ach'→screen — параметрами, как и renderTopFor выше.
+function wireTopGhostButtons(listId, getCat, screen){
+  wireOn(listId, 'click', e=>{
+    const b=e.target.closest('.topWatch'); if(!b) return;
+    const pid=Math.floor(Number(b.dataset.wt));
+    if(!pid || typeof syncGhostGet!=='function' || b._busy) return;
+    sfx.click(); haptic('light'); b._busy=1; b.textContent='…';
+    const gen=runNow(), cat0=getCat(); // то же поколение, что у соседней двери: медленный ответ не должен запускать игру задним числом
+    syncGhostGet(pid, cat0).then(d=>{
+      b._busy=0; b.innerHTML=ic('play');
+      if(!runSame(gen) || screenName!==screen) return; // зритель ушёл, пока летел ответ
+      if(!d || !d.ok){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      if(d.seed==null || !isFinite(Number(d.seed))){ // небо того полёта неизвестно — показывать нечего, и врать не будем
+        toast(L.topWatchNoSky,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      const g=ghostParse(d.track);
+      if(!g){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      g.cx=true;
+      champTrack=g; theaterDay=String(Math.floor(Number(d.seed))); theaterRecord=true;
+      theaterChamp={ name:String(d.name||'').slice(0,64), skin:Math.floor(Number(d.skin))||0 };
+      runMode='theater'; startGame();
+    }).catch(()=>{ b._busy=0; b.innerHTML=ic('play'); });
+  });
+  wireOn(listId, 'click', e=>{
+    const b=e.target.closest('.topGh'); if(!b) return;
+    const pid=Math.floor(Number(b.dataset.gh));
+    if(!pid || typeof syncGhostGet!=='function') return;
+    sfx.click(); haptic('light'); b.textContent='…';
+    const gen=runNow(), cat0=getCat(); // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку
+    syncGhostGet(pid, cat0).then(d=>{
+      /* v1.282.20: этот колбэк ЗАПУСКАЕТ игру. Медленный ответ (до 10с) перезапускал забег
+         прямо посреди полёта: состояние стиралось без посадки, очки и лента уходили в никуда,
+         а счётчик игр накручивался дважды. Сверяем поколение и экран. */
+      if(!runSame(gen) || screenName!==screen) return;
+      // v1.103.0 «Тихий нуль»: знак результата рисуется ПОСЛЕ результата — неудача возвращает призрака, галочка не врёт
+      if(!d || !d.ok){ b.innerHTML=ic('ghost'); toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; } // владелец скрыл трек
+      b.innerHTML=ic('check');
+      ghostSetForeign({track:d.track, skin:d.skin, name:d.name, pid:pid, cat:cat0, best:Math.floor(Number(b.dataset.best))||0, seed:d.seed});
+      foreignFrom='top';
+      toast(L.ghostWith(d.name||''),'rgba(191,232,255,.45)');
+      startGame(); // призрак подхватится в ghostLoad — окно онбординга его не трогает
+    }).catch(()=>{ if(runSame(gen) && screenName===screen) b.innerHTML=ic('ghost'); }); // 22.08.2026: сбой сети — кнопка не виснет на «…» вечно
+  });
+}
+wireTopGhostButtons('topList', ()=>topCat, 'ach');
+wireTopGhostButtons('compTopList', ()=>topCatComp, 'modesTop');
 
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */
 function morseHapLabel(){ rowSw('setMorseHapBtn', typeof morseHapOn==='function'&&morseHapOn()); setWellFill(); }
@@ -2761,6 +2790,9 @@ function applyLang(){
   document.querySelectorAll('.topCat').forEach(function(b){
     const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
   });
+  // 06.09.2026 «Топ соревнований»: новый экран + кнопка-вход на «Соревнованиях», тот же текст на обоих
+  setText('modesTopTitle', L.topCompTitle);
+  setText('modesTopBtnLbl', L.topCompTitle);
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
