@@ -1249,6 +1249,7 @@ const ANGAR_PV_SON = 20000;  // 20 секунд без касания — пре
 const ANGAR_PV_SHAG = 33;    // ~30 кадров в секунду, а не 60
 
 function angarPvDraw(t){
+  angarPvNameSync(); // 06.09.2026: текст под витриной — та же периодичность и то же условие, что у самой картинки
   const cv=$('angarPv'); if(!cv) return;
   /* 27.08.2026: было SKINS[S.skin] — превью показывало НАДЕТЫЙ борт, а не тот, что игрок
      только что тронул в сетке. angarBuyFill() (кнопка «Купить») рядом уже честно смотрит
@@ -1281,6 +1282,20 @@ function angarPvDraw(t){
   x.beginPath(); x.arc(0,11*1.6,3.0*1.6,0,6.283); x.fill();
   x.globalAlpha=1; x.restore();
   ANGAR_PV.kadrov++;
+}
+/* 06.09.2026 «Полное имя у витрины»: та же логика «на что сейчас смотрит игрок», что уже
+   есть у самой картинки витрины (angarSel на активной вкладке) — только текст, не рисунок.
+   Кэш последнего (cat,sel) — не пишем в DOM 30 раз в секунду впустую, angarPvDraw() зовёт
+   это на каждом кадре, но реального обновления текста в 99% кадров не требуется. */
+let angarPvNameLast=null;
+function angarPvNameSync(){
+  const key=angarCat+':'+angarSel;
+  if(key===angarPvNameLast) return;
+  angarPvNameLast=key;
+  const el=$('angarPvName'); if(!el) return;
+  const cfg=ANGAR_CATS[angarCat];
+  const item=cfg && cfg.list.find(d=>d.id===angarSel);
+  el.textContent = item ? (angarCat==='color' ? (L.skinNames[item.name]||'') : (item.name||'')) : '';
 }
 
 /* «Умное живое»: 30 кадров в секунду вместо 60, засыпает через 20 секунд без касания
