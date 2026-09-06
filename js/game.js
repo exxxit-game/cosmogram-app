@@ -1840,6 +1840,17 @@ const HUNDRED_DIST=200; // 05.09.2026 «100%»: короткий фиксиро�
 const SLALOM_DIST=4500; // 06.09.2026 «Слалом»: длина того же порядка, что у пресета fpSlalom
   // Конструктора (forge.js) — не переиспользуем сам пресет (это утащило бы систему авторской
   // расстановки внутрь дисциплины), только ориентир по метражу для похожего ощущения дистанции.
+// 06.09.2026 «Биатлон»: скорость+точность в одном забеге, реальный формат Sprint (2 рубежа) —
+// владелец выбрал числа сам. Скоростной 300м → рубеж (собери всё) 200м → скоростной 300м →
+// рубеж 200м → финиш на 1000м. Штраф — как в настоящем Individual-формате (флэт-время),
+// не штрафной круг (Sprint) — тот потребовал бы новой геометрии трассы, владелец выбрал проще.
+const BIATHLON_LEG=300, BIATHLON_RANGE=200;
+const BIATHLON_R1_START=BIATHLON_LEG;                    // 300
+const BIATHLON_R1_END=BIATHLON_R1_START+BIATHLON_RANGE;  // 500
+const BIATHLON_R2_START=BIATHLON_R1_END+BIATHLON_LEG;    // 800
+const BIATHLON_R2_END=BIATHLON_R2_START+BIATHLON_RANGE;  // 1000
+const BIATHLON_DIST=BIATHLON_R2_END;
+const BIATHLON_PENALTY_SEC=3; // штраф за каждую не собранную звезду рубежа — владелец выбрал сам
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -2419,7 +2430,12 @@ function update(dt){
      ~15-17% меньше звёзд/бонусов на метр, чем пальцевику — тот же класс ошибки, что и
      у преград (страж 60), просто раньше не всплывал в тексте страж, потому что страж
      останавливается на первой упавшей проверке (dObs), не доходя до dStars/dPows. */
-  if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
+  if (starT<=0){ starT = withTrack('st', function(){
+    // 06.09.2026 «Биатлон»: звёзды идут только внутри рубежа (300-500м, 800-1000м) — скоростные
+    // отрезки нарочно пустые от них, как в реальном биатлоне лыжня пуста от мишеней.
+    const biathlonGate = S.mode!=='biathlon' || (S.dist>=BIATHLON_R1_START&&S.dist<BIATHLON_R1_END) || (S.dist>=BIATHLON_R2_START&&S.dist<BIATHLON_R2_END);
+    if (biathlonGate) spawnStar();
+    return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
   powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
     if (!(S.mode==='custom' && S.customB===0) && S.mode!=='ironman' && S.mode!=='slalom') spawnPowerup(); // 05.09.2026: Ironman — 0 бонусов, часть цены за ×4 очков; 06.09.2026: Слалом — тоже без бонусов, они бы позволили пройти ворота без срыва
@@ -2769,6 +2785,21 @@ function update(dt){
     const elMH=elModeHud, distI=Math.floor(S.dist);
     if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,SLALOM_DIST)+'/'+SLALOM_DIST+(L.unitM||'м'); }
     if (S.dist>=SLALOM_DIST && !S.dying){ startDying(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
+  }
+  else if (S.mode==='biathlon'){ // 06.09.2026: скорость+рубежи — штраф прибавляется к S.time на выходе из каждого рубежа
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,BIATHLON_DIST)+'/'+BIATHLON_DIST+(L.unitM||'м')+(S.biathlonMisses?' · +'+(S.biathlonMisses*BIATHLON_PENALTY_SEC)+'с':''); }
+    if (S.dist>=BIATHLON_R1_END && !S.biathlonR1Done){
+      S.biathlonR1Done=1;
+      const missed=Math.max(0,S.starsSpawned-S.starsCollected);
+      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
+      S.biathlonSnapSpawned=S.starsSpawned; S.biathlonSnapCollected=S.starsCollected; // 1й рубеж закрыт — со 2го считаем только новые звёзды
+    }
+    if (S.dist>=BIATHLON_DIST && !S.dying){
+      const missed=Math.max(0,(S.starsSpawned-S.biathlonSnapSpawned)-(S.starsCollected-S.biathlonSnapCollected));
+      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
+      startDying(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
+    }
   }
   else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,

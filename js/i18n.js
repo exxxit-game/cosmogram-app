@@ -55,6 +55,8 @@ const I18N = {
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
     modeIronman:'Ironman', modeIronmanD:'1 жизнь, 0 бонусов, ×4 очков', ironmanNewBest:'Новый рекорд Ironman', // 05.09.2026: имя дисциплины не переводится, как Speedrun/Caravan
     modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
+    modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
+    biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
     mode1CC:'1CC', mode1CCD:'Небо месяца на 1 жизни', oneCCNewBest:'Новый рекорд 1CC', // 05.09.2026: тот же замок/попытка, что у Небо месяца
     mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца/1CC
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
@@ -226,6 +228,8 @@ const I18N = {
     noMiss:'Not a single hit', pacifist:'Evasion only',
     modeIronman:'Ironman', modeIronmanD:'1 life, 0 power-ups, ×4 score', ironmanNewBest:'New Ironman record',
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
+    modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
+    biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
     mode1CC:'1CC', mode1CCD:'Track of the month, 1 life', oneCCNewBest:'New 1CC record',
     mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
@@ -378,6 +382,8 @@ const I18N = {
     noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bonos, ×4 puntos', ironmanNewBest:'Nuevo récord de Ironman',
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
+    modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
+    biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
     mode1CC:'1CC', mode1CCD:'Pista del mes, 1 vida', oneCCNewBest:'Nuevo récord de 1CC',
     mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
@@ -546,6 +552,8 @@ const I18N = {
     noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bônus, ×4 pontos', ironmanNewBest:'Novo recorde de Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
+    modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
+    biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
     mode1CC:'1CC', mode1CCD:'Pista do mês, 1 vida', oneCCNewBest:'Novo recorde de 1CC',
     mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
@@ -712,6 +720,8 @@ const I18N = {
     noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
     modeIronman:'Ironman', modeIronmanD:'1 vie, 0 bonus, ×4 points', ironmanNewBest:'Nouveau record Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
+    modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
+    biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
     mode1CC:'1CC', mode1CCD:'Trace du mois, 1 vie', oneCCNewBest:'Nouveau record 1CC',
     mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»

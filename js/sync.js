@@ -535,6 +535,43 @@ function syncSlalomTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me
   });
 }
 
+/* 06.09.2026 «Биатлон»: тот же приём Set Seed/очередь, что у Слалома/Спидрана выше. */
+function syncBiathlonQueue(){ return saneArray(Store.get('biathlonQ',[]),[]); }
+function syncBiathlonEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncBiathlonQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('biathlonQ',q.slice(-14));
+}
+let _biathlonFlying=null;
+function syncBiathlonFlush(){
+  if(_biathlonFlying) return (_biathlonFlying = _biathlonFlying.catch(()=>{}).then(()=>syncBiathlonFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncBiathlonQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'biathlon_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _biathlonFlying=null; });
+  _biathlonFlying=p; return p;
+}
+function syncBiathlonSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncBiathlonEnqueue(o);
+  return syncBiathlonFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncBiathlonFlush());
+  setTimeout(()=>syncBiathlonFlush(),4000);
+}
+function syncBiathlonTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null}
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'biathlon_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
 /* 05.09.2026 «Мастерская»: витрина трасс Конструктора (cosmogram-workshop) — отдельная
    комната на сервере, тот же приём, что у cosmogram-daily выше: таблица рекордов и Небо
    месяца её не касаются. Сам механизм шаринга (mapShare()/forgeDecode() в forge.js,
