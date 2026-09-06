@@ -169,6 +169,20 @@ function setScreen(name){
   else if(calLampT){ clearInterval(calLampT); calLampT=null; }
   if(name==='settings') accFill(); // ленивый монтаж виджета входа: сторонний скрипт не летит при загрузке игры (v1.51.0)
   if(typeof duelBanner==='function') duelBanner(); // дуэль: плашка в меню, планка в HUD — по текущему экрану
+  /* 07.09.2026, владелец (скрин): «ТОП СОРЕВНОВАНИЙ» — единственный ДВУхсловный заголовок
+     экрана, переносится на 2 строки на узком экране и накрывает круглую кнопку «Назад»
+     (та стоит одной и той же абсолютной высотой, не знает о переносе). Тот же приём, что
+     syncScoreHudGap (core.js) — меряем настоящую высоту после реального рендера кадром
+     позже, не гадаем числом заранее. Только этот экран: у остальных заголовок однословный
+     и до кнопки не достаёт даже с переносом (короче/у'же по глифам). */
+  if(name==='modesTop'){
+    requestAnimationFrame(function(){
+      const t=$('modesTopTitle'), b=$('modesTopBackBtn'); if(!t||!b) return;
+      t.style.marginTop='';
+      const need=Math.round(b.getBoundingClientRect().bottom+6-t.getBoundingClientRect().top);
+      t.style.marginTop = need>0 ? need+'px' : '';
+    });
+  }
 }
 
 /* ---------- Потоки ---------- */

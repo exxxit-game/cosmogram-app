@@ -686,8 +686,16 @@ window.addEventListener('mousedown',e=>{ if(tId!==null) return; input.byMouse=tr
      включая кнопки меню — курсор пропадал и в меню, мешая кликать. Теперь только во время
      самого полёта. Голое screenName здесь нельзя (страж 117, живая ReferenceError на 1.284.0 —
      screenName объявлен в ui.js, который грузится ПОСЛЕ input.js) — берём через ekran(),
-     который уже безопасно оборачивает это try/catch. */
-  if(canvas.requestPointerLock && ekran()==='game'){
+     который уже безопасно оборачивает это try/catch.
+     07.09.2026 (владелец, живое устройство: «курсор пропадает, кнопку не нажать»): одного
+     ekran()==='game' было мало — кнопка «Пауза»/меню-оверлеи лежат HTML-элементами ПОВЕРХ
+     канваса, а этот слушатель висит на всём window. Клик по самой кнопке паузы происходит,
+     пока экран технически ещё 'game' (setScreen('pause') срабатывает только ПОСЛЕ обработки
+     этого же mousedown) — лock успевал включиться на долю секунды раньше, чем экран сменится.
+     e.target===canvas — теперь лock просят только когда палец/мышь реально попали в сам
+     канвас, а не в HTML-кнопку/оверлей поверх него, независимо от того, что сейчас говорит
+     ekran(). */
+  if(canvas.requestPointerLock && e.target===canvas && ekran()==='game'){
     const p=canvas.requestPointerLock(); if(p&&p.catch) p.catch(()=>{}); } }); // v1.99.0, v1.478.59: iframe/встраивание может честно отказать — не шумим в консоль
 window.addEventListener('mousemove',e=>{
   if(tId!==null) return;

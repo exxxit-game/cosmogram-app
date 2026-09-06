@@ -465,8 +465,9 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
-    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn],
-    ['forgeStartOverLbl',L.forgeStartOverLbl]]; // 06.09.2026 «Переосмысление»: подпись над сгруппированным «Сбросить всё»/«Небо друга»
+    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
+  // 07.09.2026: «Начать по-другому»/forgeStartOverLbl снята вместе с общей рамкой — «Сбросить
+  // всё» и «Небо друга» разъехались по разным местам экрана, общей подписи над ними больше нет.
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
     // 02.09.2026: «Поделиться небом» вернулась в Конструктор — mapShare() существовала
     // с v1.87.0, но не была вызвана ни одной кнопкой (см. wireOnLocal ниже)

@@ -1375,8 +1375,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .duelX:active{color:var(--ink)}
 #duelHud{position:absolute;top:max(118px, calc(28px + var(--sat)));left:50%;transform:translateX(-50%); /* v1.68.0: под шапкой, не на ней */
   color:var(--gold-hi);font-family:var(--font-disp);font-size:13px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
-#modeHud{position:absolute;top:max(142px, calc(52px + var(--sat)));left:50%;transform:translateX(-50%);white-space:nowrap;
+#modeHud{position:absolute;top:var(--modeHudTop, max(142px, calc(52px + var(--sat))));left:50%;transform:translateX(-50%);white-space:nowrap;
   color:#dce9ff;font-family:var(--font-disp);font-size:13px;letter-spacing:.06em;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+  /* 07.09.2026, владелец (скрин из «Загадки неба»): 142px — забитое руками число, отдельное
+     от настоящей высоты #telemHud (Расстояние/Плавность/Комбо) — на этом экране между ними
+     оказалась дыра. --modeHudTop меряет реальный низ #telemHud (syncScoreHudGap, core.js),
+     тем же приёмом, что уже держит --telemHudTop/--corrEdgeTop чуть выше по этому же файлу;
+     max(142px,...) остаётся запасным числом на случай, если JS ещё не успел отработать. */
 /* 28.08.2026 «Добро пожаловать»: раз в день, не на каждый забег (см. welcomeDayCheck в core.js) */
 /* 04.09.2026: единственное место в самой игре, где осталась Jura — короткое слово на всех 5 языках
    (Привет/Hi/Hola/Olá/Salut) без Ю/Б/Ь, той самой проблемы здесь физически нет; владелец явно попросил
@@ -1426,7 +1431,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    стали аккордеоном (.setGrp.spoiler, тот же класс что в Настройках), правило больше нигде не используется */
 /* 06.09.2026 «Играть/Создать»: тот же визуальный язык, что .achTab на Достижениях — не
    изобретаем новый, экран и так получает новую структуру. */
-.forgeTabs{display:flex;gap:8px;justify-content:center;width:min(94%,560px);margin-bottom:2px;pointer-events:auto}
+.forgeTabs{display:flex;gap:8px;justify-content:center;width:min(94%,560px);margin-bottom:2px;pointer-events:auto;
+  margin-left:auto;margin-right:auto} /* 07.09.2026: #forgeTabs (Играть/Создать) — прямой ребёнок
+  .scrBody, .scrBody сам его центрирует (align-items:center) — этому явный margin не был нужен.
+  Но #forgeSubTabs (Расстановка/Небо/Сложность) тем же классом лежит на уровень глубже, .scrBody
+  до него не достаёт — 0px слева/23px справа, замерено вживую. Явный margin:auto работает
+  одинаково в обоих случаях, не только там, где повезло с глубиной вложенности. */
 .forgeTab{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);
   border-radius:12px;padding:9px 22px;font-size:13.5px;font-weight:700;cursor:pointer;pointer-events:auto}
 .forgeTab.sel{background:rgba(120,170,255,.10);border-color:rgba(190,225,255,.45);color:#eaf2ff}
@@ -1522,10 +1532,18 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    него — обычные блочные дети, прижатые к левому краю без auto-центрирования. Трек/лента стикеров
    не ломается — они сами задают width:100%, растягиваются как и раньше. */
 #ptPanel{padding-top:8px; display:flex; flex-direction:column; align-items:center;
-  width:min(94%,560px)} /* 01.09.2026: владелец — «окно узкое для стикеров», лента+лоток
-  и так помещаются в свой .setPanel (min(92%,380px)), но на широких экранах пустуют.
-  Собственная ширина (не унаследованная) — тот же приём, что у .forgePresets ниже. */
-#ptGrp{width:min(94%,560px)} /* 01.09.2026: заголовок «Расстановка» (.setGrp, min(92%,380px)
+  width:min(94%,560px); margin-left:auto; margin-right:auto} /* 01.09.2026: владелец — «окно узкое
+  для стикеров», лента+лоток и так помещаются в свой .setPanel (min(92%,380px)), но на широких
+  экранах пустуют. Собственная ширина (не унаследованная) — тот же приём, что у .forgePresets ниже.
+  07.09.2026, владелец (замер вживую — 0px слева, 23px справа): align-items:center у .scrBody
+  центрирует только ПРЯМЫХ детей — #ptPanel лежит на уровень глубже (внутри #forgeSubArrange,
+  тот на всю ширину без своего margin), поэтому 6% незанятого места целиком уезжали направо,
+  а не делились поровну. margin:auto по бокам — тот же приём, что у .forgeTabs ниже, только
+  добавлен сюда только сейчас: у #ptPanel до сих пор центрировались только ЕГО дети (align-items),
+  сам он — нет. */
+#ptGrp{width:min(94%,560px); margin-left:auto; margin-right:auto} /* 07.09.2026: то же самое
+  добавлено сюда же — заголовок «Расстановка» страдал той же бедой, что и панель под ним.
+  01.09.2026: заголовок «Расстановка» (.setGrp, min(92%,380px)
   по умолчанию) остался у́же панели под ним после её расширения — карточки разъехались по
   краю. Тот же потолок ширины, что и у #ptPanel, чтобы заголовок и содержимое читались как
   один блок, а не два разных по ширине. */
@@ -1667,18 +1685,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   на широком разъезжалось почти во весь экран (774px), тогда как каждая другая карточка игры
   держит min(92%,380px). Сначала поставлен тот же min(92%,380px) — потом владелец захотел весь
   экран Конструктора одной ширины с Расстановкой (560px), не только саму Расстановку. */
-#forgeHeatPanel{width:min(94%,560px)} /* 02.09.2026: блок с кнопкой «Лететь» — та же ширина, весь экран одна */
-/* 06.09.2026 «Переосмысление»: «Готовые сценарии» (#forgePresetsGrp) убраны из разметки —
-   их 2 сценария теперь живут в Мастерской как ещё 2 закреплённые записи, отдельной витрины
-   не осталось. #forgeCodePanel вместе с ней потерял свой самостоятельный вид (width/setPanel) —
-   теперь простой узкий столбец внутри .forgeStartOverRow, не отдельная широкая карточка. */
-.forgeStartOver{width:min(94%,560px);border:1px solid var(--line);border-radius:var(--r-card);
-  padding:11px 14px 13px;margin:2px 0 12px;opacity:.82}
-.forgeStartOverLbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
-  text-align:center;margin-bottom:9px}
-.forgeStartOverRow{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
-.forgeStartOverRow #forgeResetBtn{margin:0;flex:none}
-#forgeCodePanel{display:flex;flex-direction:column;align-items:stretch;flex:1;min-width:190px}
+/* 07.09.2026, владелец (скрин + разметка): «Начать по-другому» разъехалась на два разных
+   места («Сбросить всё» — под список точек, «Небо друга» — в общий подвал действий рядом
+   с «Лететь»/«Поделиться») — общая рамка/подпись/ряд, что их держали вместе, больше не нужны.
+   #forgeCodePanel сжат — прежде тянулся на всю ширину общего подвала (был заметно крупнее
+   самой кнопки «Лететь» рядом), теперь узкий, под стать соседним кнопкам. */
+#forgeCodePanel{display:flex;flex-direction:column;align-items:center;max-width:280px;margin:12px auto 0}
 /* 30.08.2026 «Тонкая настройка — аккордеон»: forgeRow/forgeLblBlk/forgeChips/forgeSeg/forgeSky
    центрировались раньше только за счёт align-items:center у #forgeFine (были его прямыми
    детьми) — переехали на уровень глубже, в .setPanel-панели групп (не flex по умолчанию).
@@ -1689,8 +1701,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   pointer-events:auto;transition:all .15s;padding:0}
 .forgeSkyBtn.sel{border-color:rgba(190,225,255,.7);box-shadow:0 0 8px rgba(140,170,255,.35)}
 .forgeCodeRow{display:flex;gap:8px;width:100%}
-.forgeCodeRow .forgeName{text-align:left;flex:1}
-.forgeLoadBtn{flex:none;padding-left:16px;padding-right:16px}
+.forgeCodeRow .forgeName{text-align:left;flex:1;padding:6px 10px;font-size:12px}
+.forgeLoadBtn{flex:none;padding:6px 14px;font-size:12px}
 /* 30.08.2026: .setPanel .btn{width:100%} (index.html:684) — два класса, специфичность выше одного
    .forgeLoadBtn — width:auto там же не сработал (проверено живьём, осталось 373.6px). #forgeFine
    (id) поднимает специфичность выше .setPanel (класс), только так побеждает. Измерено: было
@@ -2113,9 +2125,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.112"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.112"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.112"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.113"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.113"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.113"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2566,19 +2578,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       </div>
       <div class="setGrp spoiler" id="ptListGrp"><span class="setGrpT">Список точек</span><span class="setGrpSub" id="ptListSub">пусто</span></div>
       <div class="setPanel hidden" id="ptListPanel"></div>
-    </div>
-    <!-- 06.09.2026 «Переосмысление, часть 2»: «Начать по-другому» переехало прямо после
-         Расстановки (тот же порядок, что был одобрен раньше), просто теперь внутри своей
-         саб-вкладки, а не в общей ленте. -->
-    <div class="forgeStartOver" id="forgeStartOverGrp">
-      <div class="forgeStartOverLbl" id="forgeStartOverLbl">Начать по-другому</div>
-      <div class="forgeStartOverRow">
-        <button class="btn ghost small" id="forgeResetBtn">Сбросить всё</button>
-        <div id="forgeCodePanel">
-          <div class="forgeLblBlk" id="forgeCodeLbl">Небо друга — код или ссылка</div>
-          <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
-        </div>
-      </div>
+      <!-- 07.09.2026, владелец (скрин + разметка): «Сбросить всё» — редкое, служебное
+           действие, не должно стоять НАД «Начать полёт»/«Поделиться» и спорить с ними
+           за внимание. Переехало вниз, сразу под список точек — тише, но под рукой. -->
+      <button class="btn ghost small" id="forgeResetBtn" style="margin-top:10px">Сбросить всё</button>
     </div>
     </div>
     <div id="forgeSubSky" class="hidden">
@@ -2641,11 +2644,19 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     </div>
     <!-- 06.09.2026 «Переосмысление, часть 2»: «Лететь»/«Поделиться» — общее действие для всех
          трёх саб-вкладок сразу (полёт не зависит от того, какая вкладка сейчас открыта), стоят
-         одним блоком после них, а не внутри одной конкретной вкладки. -->
-    <div class="setPanel forgePanel" id="forgeHeatPanel">
-      <button class="btn pri forgeHeroBtn" id="forgePlay">Лететь</button>
-    </div>
+         одним блоком после них, а не внутри одной конкретной вкладки.
+         07.09.2026, владелец (скрин): рамка вокруг «Лететь» была случайным пережитком старой
+         вёрстки («Жар» когда-то жил в этом же .setPanel) — у соседней «Поделиться» рамки
+         никогда не было, разнобой сразу бросался в глаза. Кнопка теперь голая, как соседка. -->
+    <button class="btn pri forgeHeroBtn" id="forgePlay">Лететь</button>
     <button class="btn ghost" id="forgeShareMapBtn" style="margin-top:10px">Поделиться небом</button>
+    <!-- 07.09.2026, владелец: «Небо друга» переехало сюда же, к общим действиям — загрузка
+         чужого кода не привязана к тому, на какой саб-вкладке ты сейчас стоишь, точно так же,
+         как «Лететь»/«Поделиться». Поле сжато — было заметно крупнее самой кнопки «Лететь». -->
+    <div id="forgeCodePanel">
+      <div class="forgeLblBlk" id="forgeCodeLbl">Небо друга — код или ссылка</div>
+      <div class="forgeCodeRow"><input class="forgeName" id="forgeCode" autocomplete="off"><button class="btn ghost forgeLoadBtn" id="forgeLoad">ОК</button></div>
+    </div>
   </div>
   </div>
 </div>
@@ -2868,25 +2879,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.112" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.112"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.112"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.112"></script>
-<script defer src="js/game.js?v=1.478.112" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.112"></script>
-<script defer src="js/sync.js?v=1.478.112"></script>
-<script defer src="js/render.js?v=1.478.112"></script>
-<script defer src="js/planetarium.js?v=1.478.112"></script>
-<script defer src="js/goldstar.js?v=1.478.112"></script>
-<script defer src="js/music.js?v=1.478.112"></script>
-<script defer src="js/gyro.js?v=1.478.112"></script>
-<script defer src="js/forge.js?v=1.478.112"></script>
-<script defer src="js/partitura.js?v=1.478.112"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.112"></script>
-<script defer src="js/card.js?v=1.478.112"></script>
-<script defer src="js/star.js?v=1.478.112"></script>
-<script defer src="js/cinema.js?v=1.478.112"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.112"></script>
+<script defer src="js/core.js?v=1.478.113" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.113"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.113"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.113"></script>
+<script defer src="js/game.js?v=1.478.113" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.113"></script>
+<script defer src="js/sync.js?v=1.478.113"></script>
+<script defer src="js/render.js?v=1.478.113"></script>
+<script defer src="js/planetarium.js?v=1.478.113"></script>
+<script defer src="js/goldstar.js?v=1.478.113"></script>
+<script defer src="js/music.js?v=1.478.113"></script>
+<script defer src="js/gyro.js?v=1.478.113"></script>
+<script defer src="js/forge.js?v=1.478.113"></script>
+<script defer src="js/partitura.js?v=1.478.113"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.113"></script>
+<script defer src="js/card.js?v=1.478.113"></script>
+<script defer src="js/star.js?v=1.478.113"></script>
+<script defer src="js/cinema.js?v=1.478.113"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.113"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
