@@ -148,8 +148,8 @@ const TRAILS=[
   /* 05.09.2026 «Кельтский плетёный жгут» — проекция спирали сбоку: y_k=sin(θ+k·2π/N),
      глубина z_k=cos(θ+k·2π/N) даёт честный перед/зад (совпадают только в точке
      пересечения) — та же математика, что у витой верёвки/косы в 3D. См. HUMAN-SYMBOLS.md. */
-  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у витой верёвки'},
-  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у настоящей косы'},
+  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist', cat:'celtic', since:'1.478.83', fact:'Та же математика, что у витой верёвки — проекция спирали сбоку: y=sin(θ+k·2π/N)'},
+  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid', cat:'celtic', since:'1.478.83', fact:'Та же математика, что у настоящей косы — проекция спирали сбоку: y=sin(θ+k·2π/N)'},
 ];
 const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
@@ -1692,31 +1692,31 @@ const FLASHES=[
      честно НЕ может (настоящая шестерня, «почти круг») — в .knowledge/GENERATIVE-GEOMETRY.md.
      Владелец одобрил все 8 после того, как первая партия («звезда»/«капля»/«шестерня»)
      не прошла живую проверку глазами и была честно переделана/снята. */
-  {id:117, name:"Ромб", price:10, style:"sfRomb", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:118, name:"Морская звезда", price:10, style:"sfStarfish", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:119, name:"Соцветие", price:10, style:"sfBlossom", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:120, name:"Морской ёж", price:10, style:"sfUrchin", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:121, name:"Галька", price:10, style:"sfPebble", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:122, name:"Плита", price:10, style:"sfSlab", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:123, name:"Щит", price:10, style:"sfShield", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
-  {id:124, name:"Венец", price:10, style:"sfCrown", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:117, name:"Ромб", price:10, style:"sfRomb", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:118, name:"Морская звезда", price:10, style:"sfStarfish", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:119, name:"Соцветие", price:10, style:"sfBlossom", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:120, name:"Морской ёж", price:10, style:"sfUrchin", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:121, name:"Галька", price:10, style:"sfPebble", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:122, name:"Плита", price:10, style:"sfSlab", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:123, name:"Щит", price:10, style:"sfShield", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
+  {id:124, name:"Венец", price:10, style:"sfCrown", cat:'superformula', since:'1.478.82', fact:'Йохан Гилис, 2003, из ботаники — r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1)'},
   /* 05.09.2026 «Розы Родонеи» — r=cos(k·θ), k нечётное → k лепестков, k чётное → 2k
      (Гвидо Гранди, 1723-28). Одна общая функция в render.js, отличаются только k.
      Проверено численно (замкнутость) и визуально до вставки — см. GENERATIVE-GEOMETRY.md. */
-  {id:125, name:"Клевер", price:10, style:"roseClover", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:126, name:"Трилистник", price:10, style:"roseTrefoil", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:127, name:"Розетка", price:10, style:"roseRosette", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:128, name:"Пятилистник", price:10, style:"rosePetals5", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
-  {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:125, name:"Клевер", price:10, style:"roseClover", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:126, name:"Трилистник", price:10, style:"roseTrefoil", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:127, name:"Розетка", price:10, style:"roseRosette", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:128, name:"Пятилистник", price:10, style:"rosePetals5", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
+  {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses', since:'1.478.83', fact:'«Родонея» = роза по-гречески (Гвидо Гранди, 1723-28) — r=cos(k·θ)'},
   /* 05.09.2026 «L-система» — F→F[+F]F[-F]F, угол 25.7°, Prusinkiewicz & Lindenmayer, «The
      Algorithmic Beauty of Plants» (1990), fig. 1.24(a). Не кривая — порождающая грамматика:
      строка переписывается n раз, потом читается черепашкой (F=шаг вперёд, +/-=поворот,
      []=запомнить/вернуть точку). n=4+ сливается в кашу на размере Вспышки — проверено
      визуально, не вставлено. См. .knowledge/GENERATIVE-GEOMETRY.md. */
-  {id:132, name:"Ветвление", price:10, style:"lsysBranch", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
-  {id:133, name:"Папоротник", price:10, style:"lsysFern", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
+  {id:132, name:"Ветвление", price:10, style:"lsysBranch", cat:'lsystem', since:'1.478.88', fact:'Prusinkiewicz & Lindenmayer, 1990 — F→F[+F]F[-F]F, угол 25.7°'},
+  {id:133, name:"Папоротник", price:10, style:"lsysFern", cat:'lsystem', since:'1.478.88', fact:'Prusinkiewicz & Lindenmayer, 1990 — F→F[+F]F[-F]F, угол 25.7°'},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
 /* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/

@@ -1542,6 +1542,14 @@ function angarSwitchCat(cat){
    между языками (набрал «star» на английской раскладке — «Звезда» в русском интерфейсе не
    найдёт). Категории уже решают навигацию; чипы «Все/Новое/Куплено/Не куплено» не требуют
    ни печатать, ни помнить название — тот же приём, что уже есть в Мастерской (workshopSort). */
+/* 06.09.2026 «Подсказки понятны и доступны»: карточка вместо тоста, гаснет по тапу
+   (в любом месте), не по таймеру — тот, кто читает медленно, дочитывает в своём темпе. */
+function angarFactOpen(text){
+  const pop=$('angarFactPop'); if(!pop) return;
+  $('angarFactPopText').textContent=text;
+  pop.classList.remove('hidden');
+}
+wireOn('angarFactPop','click',()=>{ const pop=$('angarFactPop'); if(pop) pop.classList.add('hidden'); });
 let angarFilterMode='all';
 /* 'hasfact' — временный чип (владелец, 06.09.2026): пока описания (item.fact) есть не у всех
    200+ предметов, помогает видеть, что уже объяснено. Убрать, когда fact будет у всех. */
@@ -1653,7 +1661,7 @@ function angarBuildGrid(){
         if(item.fact){
           const fb=document.createElement('button'); fb.type='button'; fb.className='angarFact';
           fb.textContent='i'; fb.setAttribute('aria-label', L.angarFactBtn||'Факт');
-          fb.addEventListener('click', e=>{ e.stopPropagation(); toast(item.fact, 'rgba(140,170,255,.5)', 3200); });
+          fb.addEventListener('click', e=>{ e.stopPropagation(); angarFactOpen(item.fact); });
           box.appendChild(fb);
         }
       }
