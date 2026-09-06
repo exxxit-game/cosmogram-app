@@ -1226,7 +1226,6 @@ function angarShip(x, sk, s, bolshoy){
      игрок (angarSel), подменяет надетый — на всех остальных вкладках показывается то, что
      реально надето, как и раньше. Тот же приём, что уже был только у Цвета. */
   const pvDecal = angarCat==='decal' ? angarSel : S.decal;
-  const pvIcon  = angarCat==='icon'  ? angarSel : S.icon;
   /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
      render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
      выше, отдельно пересчитывать не нужно. */
@@ -1236,12 +1235,8 @@ function angarShip(x, sk, s, bolshoy){
       x.fillText(dc.ch,-5.3,-0.7);
     }
   }
-  // 29.08.2026 «правая сторона, отдельная категория»: иконка — свой слот (S.icon, ICONS),
-  // рисуется всегда вместе с декалью выше, не вместо неё; drawDecalSvg — общая функция из
-  // render.js (грузится раньше ui.js, см. sw.js JS_FILES), превью совпадает с полётом.
-  if(pvIcon){ const ic=ICONS_BY_ID.get(pvIcon);
-    if(ic && ic.svg) drawDecalSvg(x, ic, 5.3, -0.7, sk);
-  }
+  // 06.09.2026: вкладка «Иконки» (ICONS, S.icon/ownedIcons, правая половина борта) убрана
+  // из игры целиком (владелец) — держали слишком много места, мешали новым анимациям скина.
   x.restore();
 }
 
@@ -1323,31 +1318,26 @@ function starJewelWake(){
 }
 /* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга —
    Цвет (было, поведение не меняется) и Декаль (новое, символ вместо канваса корабля).
-   29.08.2026: третья — Иконки (ICONS, свой слот S.icon/ownedIcons) — не подкатегория
-   декали, а независимая вещь: садится на правую половину борта, носится одновременно
-   с декалью, не вместо неё (см. render.js). Четвёртая — Вспышка (FLASHES, S.launchFx/
-   ownedLaunchFx — НЕ S.flash, тот уже занят золотой вспышкой подбора звезды) — тоже
-   независимая, но НЕ рисуется на самом борту постоянно, а
-   проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). След/Аура/
-   Звук — сюда же отдельным заходом, когда до них дойдёт очередь — не копипастом всей
-   секции ещё раз. */
+   06.09.2026: вкладка «Иконки» (была тут третьей, ICONS/S.icon/ownedIcons) убрана из игры
+   целиком (владелец) — 268 штук держали слишком много места и мешали новым анимациям
+   скина. Вспышка (FLASHES, S.launchFx/ownedLaunchFx — НЕ S.flash, тот уже занят золотой
+   вспышкой подбора звезды) — независимая, но НЕ рисуется на самом борту постоянно, а
+   проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). */
 const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
   decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' },
-  icon:  { list:ICONS,  ownedKey:'ownedIcons',  selKey:'icon' },
   flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
   trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
 };
 /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
    тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
-   владении (см. game.js: ownedDecals/ownedIcons/ownedLaunchFx, price:0 у самих записей).
+   владении (см. game.js: ownedDecals/ownedLaunchFx, price:0 у самих записей).
    Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
    состав каталога, не действие игрока. */
-// 04.09.2026 (владелец, живая сессия): decal/icon поменяны местами со своими старыми
-// бесплатными — Ракета/Тарелка(decal) и Ракета/Медаль(icon, вектор) теперь платные,
-// вместо них бесплатны Звезда/Сотка(decal) и Сетевой узел/Сияние(icon) — выбраны
+// 04.09.2026 (владелец, живая сессия): decal поменян местами со старым бесплатным —
+// Ракета/Тарелка теперь платные, вместо них бесплатны Звезда/Сотка — выбраны
 // владельцем вживую (клик-ловушка в консоли, не на глаз по коду). flash не менялся.
-const ANGAR_FREEBIE = { decal:[3,30], icon:[28,11], flash:[1,2] };
+const ANGAR_FREEBIE = { decal:[3,30], flash:[1,2] };
 let angarCat = 'color';   // активная вкладка тюнинга
 /* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
    потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
@@ -1358,18 +1348,13 @@ let angarCat = 'color';   // активная вкладка тюнинга
    в отдельной ленте вкладок; сама лента снята, список теперь всегда показывает все
    подкатегории подряд, фильтровать стало нечем. */
 const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
-/* 29.08.2026 «как с эмодзи, по категориям» (владелец): у иконок 267 штук одним списком
-   без разделения — то же самое «кучей», от чего уже уходили с декалями. Категории
-   реальные (26 штук, cat у каждой записи ICONS — не общий 'icons', как было раньше),
-   восстановлены из собственных черновиков этой же сессии (gen_icons*.js — там, где
-   каждая иконка предлагалась и одобрялась группами), не придуманы заново задним числом.
-   Тот же приём построения списка категорий, что и у ANGAR_DECAL_CATS. */
-const ANGAR_ICON_CATS = (()=>{ const seen=[]; ICONS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+// 06.09.2026: ANGAR_ICON_CATS убран вместе со всей вкладкой «Иконки» (владелец) — 268 штук
+// держали слишком много места, мешали новым анимациям скина.
 /* 05.09.2026 «Комфорт большого каталога» (владелец: «огромные каталоги получились» —
    131 Вспышка/16 Следов одной стеной): тот же приём построения списка категорий, что уже
-   был у ANGAR_DECAL_CATS/ANGAR_ICON_CATS выше, просто раньше не был подключён к Вспышке/
-   Следу — старый комментарий про «10 штук, не нужны категории» устарел. Живой макет (was/
-   became) показан и одобрен владельцем перед этой правкой. */
+   был у ANGAR_DECAL_CATS выше, просто раньше не был подключён к Вспышке/Следу — старый
+   комментарий про «10 штук, не нужны категории» устарел. Живой макет (was/became) показан
+   и одобрен владельцем перед этой правкой. */
 const ANGAR_FLASH_CATS = (()=>{ const seen=[]; FLASHES.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
 const ANGAR_TRAIL_CATS = (()=>{ const seen=[]; TRAILS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
 const ANGAR_SKIN_CATS = (()=>{ const seen=[]; SKINS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
@@ -1448,9 +1433,7 @@ function angarVisibleList(){ // список жетонов активной в�
      чтобы не быть на экране дважды. */
   const freebieIds = ANGAR_FREEBIE[angarCat] || [];
   const freebies = freebieIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
-  // 29.08.2026: иконки получили реальные категории (ANGAR_ICON_CATS) тем же приёмом, что
-  // декали — вкладка «Вспышка» своих подкатегорий не имеет (10 штук, не нужны), остаётся плоской.
-  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS : angarCat==='icon' ? ANGAR_ICON_CATS
+  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS
     : angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
     : angarCat==='color' ? ANGAR_SKIN_CATS : null;
   /* 06.09.2026, найдено живьём (владелец: «плитка Бумажный дублируется»): у скинов (color)
@@ -1511,22 +1494,19 @@ function angarBuildTabs(){
   if(tabs){
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
                       '<button class="angarTab" id="angarTabDecal"></button>'+
-                      '<button class="angarTab" id="angarTabIcon"></button>'+
                       '<button class="angarTab" id="angarTabFlash"></button>'+
                       '<button class="angarTab" id="angarTabTrail"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
     $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
-    $('angarTabIcon').addEventListener('click',()=>angarSwitchCat('icon'));
     $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
     $('angarTabTrail').addEventListener('click',()=>angarSwitchCat('trail'));
   }
   angarTabsBuilt=true;
 }
 function angarRenderTabsSel(){
-  const tc=$('angarTabColor'), td=$('angarTabDecal'), ti=$('angarTabIcon'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
+  const tc=$('angarTabColor'), td=$('angarTabDecal'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
   if(tc) tc.classList.toggle('sel', angarCat==='color');
   if(td) td.classList.toggle('sel', angarCat==='decal');
-  if(ti) ti.classList.toggle('sel', angarCat==='icon');
   if(tf) tf.classList.toggle('sel', angarCat==='flash');
   if(tr) tr.classList.toggle('sel', angarCat==='trail');
 }
@@ -1580,7 +1560,7 @@ function angarBuildGrid(){
          у них есть свой item.cat от оригинала (например 'space'), без исключения заголовок
          той категории ошибочно всплыл бы прямо над ними, а не над её настоящим первым
          предметом дальше по списку. */
-      if((angarCat==='decal'||angarCat==='icon'||angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
+      if((angarCat==='decal'||angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
          && (ANGAR_FREEBIE[angarCat]||[]).indexOf(item.id)<0){
         const head=document.createElement('div');
         head.className='angarCatHead';
@@ -1678,7 +1658,6 @@ function renderHangar(){
   angarRenderTabsSel();
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
-  const tabIcon=$('angarTabIcon'); if(tabIcon) tabIcon.textContent=L.angarTabIcon;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
   angarFillFilterChips();
@@ -2956,8 +2935,8 @@ Store.init(()=>{
   // игрока без вообще сохранённого массива, а не для уже игравших без этих двух id).
   S.ownedDecals = Array.from(new Set(saneArray(Store.get('ownedDecals',[0]),[0]).concat(ANGAR_FREEBIE.decal)));
   S.decal = saneNumber(Store.get('decal',0),0);
-  S.ownedIcons = Array.from(new Set(saneArray(Store.get('ownedIcons',[0]),[0]).concat(ANGAR_FREEBIE.icon)));
-  S.icon = saneNumber(Store.get('icon',0),0);
+  // 06.09.2026: S.ownedIcons/S.icon убраны вместе со всей вкладкой «Иконки» — старое
+  // сохранённое значение в Store просто больше никем не читается, безопасно.
   S.ownedLaunchFx = Array.from(new Set(saneArray(Store.get('ownedLaunchFx',[0]),[0]).concat(ANGAR_FREEBIE.flash)));
   S.launchFx = saneNumber(Store.get('launchFx',0),0); // 29.08.2026: было S.flash/Store-ключ 'flash' — переименовано, см. game.js
   S.ownedTrails = saneArray(Store.get('ownedTrails',[0]),[0]); // 05.09.2026: след — независимый от скина, все стартуют с «Нет», без ANGAR_FREEBIE (владелец: старая пара скин→след не переносится)

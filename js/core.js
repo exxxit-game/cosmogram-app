@@ -299,7 +299,7 @@ const Store = {
      Лимит облака — 4096 байт на ЗНАЧЕНИЕ, а не на весь список; каждый из добавленных
      ключей на порядки меньше. Тяжёлое (лента самописца, очередь писем) сюда по-прежнему
      не входит — см. правку v1.282.13. */
-  CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedDecals','decal','ownedIcons','icon','ownedLaunchFx','launchFx',
+  CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedDecals','decal','ownedLaunchFx','launchFx',
               'savedRun','stats','refBy',
               'ach','achQ','callsign','gyroUnlocked','bestGyro','bestTouch','bestKeys','bestDist','bestBullet','srBest'],
   /* v1.282.13: переполнение больше не проходит молча. Всё хранилище — один ключ, поэтому
@@ -359,7 +359,7 @@ const Store = {
         continue;
       }
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
-      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedIcons'||k==='ownedLaunchFx'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
       else this.mem[k]=nv;
     }
   },
@@ -370,7 +370,7 @@ const Store = {
       let nv; try{ nv=JSON.parse(v); }catch(e){ nv=v; }
       const cur=this.mem[k];
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv); // рекорд не крадём ни в одну сторону
-      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedIcons'||k==='ownedLaunchFx') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
+      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
       else if(k==='ach' && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // и открытые достижения тоже
       else this.mem[k]=nv;
     }
@@ -503,7 +503,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.106'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.107'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
