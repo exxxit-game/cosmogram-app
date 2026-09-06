@@ -738,6 +738,11 @@ function mapOver(sc){
   const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
   tryOnRevert(); music.sting(S.mapWin?'record':'death'); music.stop(2); engine.stop();
   ['stats','runPass','runHead'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
+  /* 06.09.2026, живая находка (очередь 05.09 п.1 — «подробности полёта пустые»): эта функция
+     прятала цифры внутри спойлера, но не сам контейнер #overMore — если игрок держал спойлер
+     открытым во время забега, после финиша он оставался открытым и пустым. gameOver() рядом
+     всегда гасит #overMore explicitly — здесь это тоже нужно, тем же приёмом. */
+  toggleCls('overMore','hidden',true);
   const odbEl=$('overDetailsBtn'); if(odbEl) odbEl.classList.remove('open');
   setScreen('over');
   const f=$('flash');
