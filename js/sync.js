@@ -496,6 +496,144 @@ function syncSpeedrunTop(day){ // {ok,day,top:[{pid,name,username,provider,best,
   });
 }
 
+/* 06.09.2026 «Слалом»: тот же приём Set Seed/очередь, что у Спидрана выше — тот же Edge
+   Function (cosmogram-daily), свои действия в payload (slalom_submit/slalom_top), своя
+   очередь на диске (slalomQ), чтобы не столкнуться со спидраном по дедупу-полю day. */
+function syncSlalomQueue(){ return saneArray(Store.get('slalomQ',[]),[]); }
+function syncSlalomEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncSlalomQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('slalomQ',q.slice(-14));
+}
+let _slalomFlying=null;
+function syncSlalomFlush(){
+  if(_slalomFlying) return (_slalomFlying = _slalomFlying.catch(()=>{}).then(()=>syncSlalomFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncSlalomQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'slalom_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('slalomQ',syncSlalomQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _slalomFlying=null; });
+  _slalomFlying=p; return p;
+}
+function syncSlalomSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncSlalomEnqueue(o);
+  return syncSlalomFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncSlalomFlush());
+  setTimeout(()=>syncSlalomFlush(),4000);
+}
+function syncSlalomTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null} — тот же контракт, что у syncSpeedrunTop()
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'slalom_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
+/* 06.09.2026 «Биатлон»: тот же приём Set Seed/очередь, что у Слалома/Спидрана выше. */
+function syncBiathlonQueue(){ return saneArray(Store.get('biathlonQ',[]),[]); }
+function syncBiathlonEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncBiathlonQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('biathlonQ',q.slice(-14));
+}
+let _biathlonFlying=null;
+function syncBiathlonFlush(){
+  if(_biathlonFlying) return (_biathlonFlying = _biathlonFlying.catch(()=>{}).then(()=>syncBiathlonFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncBiathlonQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'biathlon_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _biathlonFlying=null; });
+  _biathlonFlying=p; return p;
+}
+function syncBiathlonSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncBiathlonEnqueue(o);
+  return syncBiathlonFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncBiathlonFlush());
+  setTimeout(()=>syncBiathlonFlush(),4000);
+}
+function syncBiathlonTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null}
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'biathlon_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
+/* 05.09.2026 «Мастерская»: витрина трасс Конструктора (cosmogram-workshop) — отдельная
+   комната на сервере, тот же приём, что у cosmogram-daily выше: таблица рекордов и Небо
+   месяца её не касаются. Сам механизм шаринга (mapShare()/forgeDecode() в forge.js,
+   CG2-код в deep-link) не меняется — эта комната только даёт уже существующим кодам
+   первую публичную витрину + сердечко (голос) поверх track_votes. */
+const WORKSHOP_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-workshop';
+function workshopPost(payload){
+  return syncFetch(WORKSHOP_URL,payload).catch(()=>null);
+}
+function workshopList(sort){ // sort: 'new'|'top'|'plays'|'mine' — витрина публична, 'mine' одна требует личность
+  if(sort==='mine' && !syncAvailable()) return Promise.resolve(null);
+  const body = sort==='mine' ? Object.assign({action:'list', sort:sort}, syncAuth()) : {action:'list', sort:sort};
+  return workshopPost(body).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopSubmit(code, name){ // публикация уже готового кода трассы — без личности некому её подписать
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'submit', code:code, name:name||''}, syncAuth())).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopVote(code){ // сердечко-переключатель: тап ещё раз — снять
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'vote', code:code}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopPlayed(code){ // «выстрелил и забыл» — не задерживает старт забега ни на кадр
+  if(!syncAvailable()) return;
+  workshopPost(Object.assign({action:'played', code:code}, syncAuth())).catch(()=>{});
+}
+function workshopReport(code){ // 05.09.2026: жалоба — владелец смотрит только этот список, не всю Мастерскую подряд
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'report', code:code}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function workshopModerate(code, status){ // 05.09.2026: закрепить/скрыть — сервер сам проверяет OWNER_ID, кнопка лишь скрыта для остальных
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'moderate', code:code, status:status}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
+/* 05.09.2026 «Удалить мои данные»: отдельная комната cosmogram-privacy, тот же приём, что
+   у Мастерской — своё identity-подтверждение, необратимое действие держим подальше от
+   большого cosmogram-sync. Требует настоящую личность — без входа стирать нечего и некому. */
+const PRIVACY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-privacy';
+function deleteMyData(){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncFetch(PRIVACY_URL, Object.assign({action:'delete_me'}, syncAuth())).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+
 /* Текущие локальные рекорды пакетом — для отправки */
 /* v1.282.20 «Заявка с потолком». Хранилище — не источник правды о забеге, а лишь
    средство восстановления после офлайна. Правдоподобие проверять обязан сервер, но
@@ -512,6 +650,7 @@ function syncLocalScores(){
     bullet: saneScore(Store.get('bestBullet',0)),
     dist: saneScore(Store.get('bestDist',0)),
     keys: saneScore(Store.get('bestKeys',0)),
-    caravan: saneScore(Store.get('bestCaravan',0)) // 05.09.2026: единая таблица Caravan, не по управлению
+    caravan: saneScore(Store.get('bestCaravan',0)), // 05.09.2026: единая таблица Caravan, не по управлению
+    ironman: saneScore(Store.get('bestIronman',0)) // 05.09.2026: единая таблица Ironman, не по управлению
   };
 }

@@ -29,8 +29,8 @@ function cardCapture(sc,opts){ // вызывается из gameOver/mapOver, к
 
 function cardModeName(){
   const names={ classic:function(){return L.modeClassic;},
-    speedrun:function(){return L.modeSpeedrun;}, daily:function(){return L.modeDaily;},
-    caravan:function(){return L.modeCaravan;} }; // 05.09.2026
+    speedrun:function(){return L.modeSpeedrun;}, daily:function(){return L.modeDaily;}, daily1cc:function(){return L.mode1CC;}, hundred:function(){return L.mode100;},
+    caravan:function(){return L.modeCaravan;}, ironman:function(){return L.modeIronman;} }; // 05.09.2026
   if(cardData.mode==='custom') return '«'+(cardData.custom||L.forgeDefName)+'»';
   return names[cardData.mode]?names[cardData.mode]():names.classic();
 }
@@ -190,7 +190,7 @@ function cardDraw(){
   });
 
   // --- самолёт в разрыве лучей — настоящий скин игрока, не всегда бумажный
-  const skin=(typeof SKINS!=='undefined' && SKINS[S.skin])||(typeof SKINS!=='undefined' && SKINS[0])||{body:'#efeee9',fold:'#cdcabf',trail:'rgba(200,198,190,'};
+  const skin=(typeof SKINS_BY_ID!=='undefined' && SKINS_BY_ID.get(S.skin))||(typeof SKINS!=='undefined' && SKINS[0])||{body:'#efeee9',fold:'#cdcabf',trail:'rgba(200,198,190,'};
   cardDrawReveal(x,W/2,238,tierGlow);
   cardDrawPlane(x,W/2,244,1.7,skin);
 

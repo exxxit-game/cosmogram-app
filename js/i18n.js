@@ -43,7 +43,8 @@ const I18N = {
     hangar:'ТЮНИНГ', best:'Рекорд', // 30.08.2026: было «Ангар» — владелец: звучит как место для работы руками, а тут просто выбор готового (цвет/декаль/иконка/вспышка)
     recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     topVerified:'Результат подтверждён забегом', unitM:'м', dist:'Дистанция', recordDist:'Рекорд дистанции',
-    modes:'Режимы полёта', modesBack:'Назад',
+    modes:'Соревнования', modesBack:'Назад', // 05.09.2026 (владелец): экран сузился до одних дисциплин — Конструктор переехал на главный отдельной кнопкой; EN/ES/PT/FR ниже ещё говорят старое «Flight modes», не тронуты
+
     modeClassic:'Классика',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
     // v1.70.0: Пакт и «Без ударов» удалены — их ручки переехали в конструктор «Своя трасса»
@@ -51,12 +52,27 @@ const I18N = {
     modeDaily:'Небо месяца', modeDailyD:'Одно небо на всех игроков — весь месяц, поставь рекорд', dlNewBest:'Новый рекорд неба месяца',
     dailyOnce:'2 попытки', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'На сегодня попытки кончились · твой полёт: '+s+' · новые попытки завтра, небо то же весь месяц',
     modeCaravan:'Caravan', modeCaravanD:'60 секунд на очки — время решает, не жизни', caravanNewBest:'Новый рекорд Caravan', // 05.09.2026: имя дисциплины (Cave, аркады) не переводится, как Speedrun
+    noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
+    modeIronman:'Ironman', modeIronmanD:'1 жизнь, 0 бонусов, ×4 очков', ironmanNewBest:'Новый рекорд Ironman', // 05.09.2026: имя дисциплины не переводится, как Speedrun/Caravan
+    modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
+    modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
+    biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
+    mode1CC:'1CC', mode1CCD:'Небо месяца на 1 жизни', oneCCNewBest:'Новый рекорд 1CC', // 05.09.2026: тот же замок/попытка, что у Небо месяца
+    mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца/1CC
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
-    forgeDen:'Плотность', forgeSpd:'Скорость', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
+    forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
     forgeCodeLbl:'Небо друга — вставь код или ссылку', forgeShareMapBtn:'Поделиться небом',
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
     forgeGuest:'Небо друга загружено — жми «Лететь»', forgeReset:'Сброшено', forgeResetBtn:'Сбросить всё', forgeShareTxt:'Лети в моё небо «%s» в Cosmogram!',
+    // 05.09.2026 «Мастерская»: только RU — EN/ES/PT/FR ещё не сделаны, отмечено явно, не молчаливый пробел
+    workshopTitle:'Мастерская', workshopSub:'трассы других игроков — сыграй или открой в Кузнице',
+    workshopEmpty:'пока пусто — поделись своей трассой в Кузнице, и она появится здесь',
+    workshopSignInFirst:'войди через Telegram, чтобы увидеть свои трассы',
+    workshopSort_new:'Новые', workshopSort_top:'Лучшие', workshopSort_plays:'Играли больше всех', workshopSort_mine:'Мои',
+    workshopPlay:'Играть', workshopEdit:'В Кузницу',
+    workshopReport:'Пожаловаться', workshopReported:'Спасибо, посмотрим', // 05.09.2026: EN/ES/PT/FR ниже ещё без этих ключей
+    workshopPin:'Закрепить', workshopHide:'Скрыть', // 05.09.2026: видны только владельцу, EN/ES/PT/FR тоже ещё нет
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', // v1.69.0; 02.09.2026: «Настроение»→«Туман» переехало в Расстановку, «Состав» переехал сюда же — обе больше не отдельные группы
@@ -104,7 +120,7 @@ const I18N = {
     feedbackSent:'Отправлено, спасибо!', feedbackRate:'Уже отправили — подождите немного',
     feedbackSpam:'Похоже, это не текст — напишите своими словами',
     feedbackFail:'Не получилось отправить, попробуйте позже',
-    shield:'Щит', magnet:'Магнит', slowmo:'Замедление', life:'+Жизнь', dash:'Таран', nova:'Сверхновая', shieldDown:'Щит снят', nearMiss:'Впритык', gate:'Ворота', smoothPerfect:'Плавный полёт',
+    shield:'Щит', magnet:'Магнит', slowmo:'Замедление', life:'+Жизнь', dash:'Таран', nova:'Сверхновая', freeze:'Стоп-кадр', shieldDown:'Щит снят', nearMiss:'Впритык', gate:'Ворота', smoothPerfect:'Плавный полёт',
     overDetails:'Подробности полёта',
     combo:'Комбо', notEnough:'Не хватает звёзд', owned:'Выбран', buy:ic('star4','i-s4'),
     authFailed:'Вход не удался — попробуйте ещё раз',
@@ -146,7 +162,11 @@ const I18N = {
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться · t.me/realcosmogrambot/app',
     tutGyroBody:'Телефон умеет быть штурвалом. Наклоняй — самолётик слушается. Передумаешь — вернёшь палец одним касанием.', tutGyroBtn:'Попробовать без рук', tutTouchBtn:'Остаться на пальце',
     missionLbl:'Волна', angarTabColor:'Цвет', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак','Спутники','Грани','Инкрустация','Филигрань','Ядро','Прицел'],
-    angarTabDecal:'Эмодзи', decalCatNames:{none:'Без украшений',space:'Космос',zodiac:'Зодиак',weather:'Погода',faces:'Смайлы',nature:'Природа',games:'Игры',crafts:'Творчество',animals:'Животные',moon:'Луна',music:'Музыка',myth:'Мифы',status:'Статус',vehicles:'Транспорт',food:'Еда',sport:'Спорт',tech:'Техника',fashion:'Мода',symbols:'Символы',landscape:'Ландшафт',holidays:'Праздники',landmarks:'Ориентиры',science:'Наука',flags:'Флаги',hearts:'Сердца',fx:'Эффекты',sealife:'Морские жители',bugs:'Насекомые',iBasic:'Основное',iSpace:'Космос',iStatus:'Статус',iElem:'Стихии',iTech:'Технологии',iSpecial:'Особенное',iSecrets:'Защита и тайны',iParty:'Праздник и подарки',iSea:'Море и берег',iNature:'Природа',iFlight:'Полёт',iSky:'Небо',iExplore:'Разведка и путь',iMagic:'Магия и цвет',iNight:'Ночь и тайна',iTime:'Время',iSignals:'Сигналы',iTools:'Инструменты',iAbstract:'Абстракция',iHomes:'Дома',iMind:'Разум и знание',iSound:'Звук',iVehicles:'Транспорт',iGames:'Игры',iAdventure:'Зима и приключения',iTravel:'Путешествия'}, angarTabIcon:'Иконки', angarTabFlash:'Вспышка',
+    angarTabDecal:'Эмодзи', decalCatNames:{none:'Без украшений',space:'Космос',zodiac:'Зодиак',weather:'Погода',faces:'Смайлы',nature:'Природа',games:'Игры',crafts:'Творчество',animals:'Животные',moon:'Луна',music:'Музыка',myth:'Мифы',status:'Статус',vehicles:'Транспорт',food:'Еда',sport:'Спорт',tech:'Техника',fashion:'Мода',symbols:'Символы',landscape:'Ландшафт',holidays:'Праздники',landmarks:'Ориентиры',science:'Наука',flags:'Флаги',hearts:'Сердца',fx:'Эффекты',sealife:'Морские жители',bugs:'Насекомые',iBasic:'Основное',iSpace:'Космос',iStatus:'Статус',iElem:'Стихии',iTech:'Технологии',iSpecial:'Особенное',iSecrets:'Защита и тайны',iParty:'Праздник и подарки',iSea:'Море и берег',iNature:'Природа',iFlight:'Полёт',iSky:'Небо',iExplore:'Разведка и путь',iMagic:'Магия и цвет',iNight:'Ночь и тайна',iTime:'Время',iSignals:'Сигналы',iTools:'Инструменты',iAbstract:'Абстракция',iHomes:'Дома',iMind:'Разум и знание',iSound:'Звук',iVehicles:'Транспорт',iGames:'Игры',iAdventure:'Зима и приключения',iTravel:'Путешествия',
+    classic:'Классика', live:'Живые', sacred:'Сакральная геометрия', superformula:'Суперформула Гилиса', roses:'Розы Родонеи', premium:'Премиум', celtic:'Кельтское плетение',
+    bright:'Яркие', legendary:'Легендарные', stars:'Звёзды', materials:'Материалы', sigils:'Символы', illusion:'Иллюзии', patterns:'Узоры'}, // 05.09.2026: разделы Вспышки/Следа/Скина — EN/ES/PT/FR ниже ещё без этих ключей
+    angarSearchPh:'Поиск по названию', angarFactBtn:'Факт', // 05.09.2026: EN/ES/PT/FR ниже ещё без этих ключей
+    angarTabIcon:'Иконки', angarTabFlash:'Вспышка', angarTabTrail:'След',
     achTitle:'Достижения', achOf:'Открыто',
     achClsB:'Бронзовая награда', achClsS:'Серебряная награда', achClsG:'Золотая награда', achClaim:'Забрать', achDone:'Готово',
     statFlights:'Полётов', statDist:'Дистанция всего', statStars:'Звёзд всего', statCombo:'Лучшее комбо',
@@ -159,7 +179,7 @@ const I18N = {
     duelWin:(n,b)=>'Вызов побит! Планка '+fmtN(b)+' м от '+escapeHtml(n)+' — твоя.',
     duelLose:(n,b)=>'Не побито: у '+escapeHtml(n)+' — '+fmtN(b)+' м. Реванш?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' м на Волне '+w+' в Cosmogram. Сможешь лучше? ⚔️',
-    mineTab:'Мои', topTab:'Топ', topMe:'Твоё место: ', topLoading:'Загрузка…',
+    mineTab:'Мои', topTab:'Топ', topMe:'Твоё место: ', topLoading:'Загрузка…', topCompTitle:'Топ соревнований',
     topEmpty:'Пока пусто — будь первым!', topTgOnly:'Таблица пока не отвечает — попробуй позже',
     /* 13.08.2026 «Витрина, а не клуб». Гость видит таблицу целиком; приглашение стоит ПОД ней
        и говорит о возможности, а не об условии. Прежний topTgOnly («войди через Telegram —
@@ -170,6 +190,9 @@ const I18N = {
     webJoin:'Войдите, чтобы ваш полёт попал в таблицу рекордов',
     accGuest:'Общая таблица одна на всех — войдите',
     accIn:n=>n?('Ты в общей таблице как '+n):'Ты в общей таблице', accOut:'Выйти',
+    accDelete:'Удалить мои данные', // 05.09.2026
+    accDeleteConfirm:'Это навсегда удалит все ваши данные: рекорды, покупки, трассы Мастерской. Отменить нельзя.',
+    accDeleted:'Данные удалены', accDeleteFail:'Не удалось, попробуйте ещё раз', accDeleteNoConfirm:'Подтверждение недоступно',
     dcLogin:'Войти через Discord', gLogin:'Войти через Google',
     setMorse:'Морзянка', csDefault:'Пилот',
     setMorseHap:'Позывной вибрацией', // 29.08.2026 «семантика, не загадка»: было «Виброэфир» — придуманное слово без опоры на знакомое
@@ -202,9 +225,16 @@ const I18N = {
     modeDaily:'Track of the month', modeDailyD:'One track for every player, all month — set the record', dlNewBest:'New track of the month record',
     dailyOnce:'2 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'Out of attempts for today · your flight: '+s+' · new attempts tomorrow, same sky all month',
     modeCaravan:'Caravan', modeCaravanD:'60 seconds for points — the clock decides, not your lives', caravanNewBest:'New Caravan record',
+    noMiss:'Not a single hit', pacifist:'Evasion only',
+    modeIronman:'Ironman', modeIronmanD:'1 life, 0 power-ups, ×4 score', ironmanNewBest:'New Ironman record',
+    modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
+    modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
+    biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
+    mode1CC:'1CC', mode1CCD:'Track of the month, 1 life', oneCCNewBest:'New 1CC record',
+    mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
-    forgeDen:'Density', forgeSpd:'Speed', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
+    forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
     forgeCodeLbl:"Friend's track — paste the code or link", forgeShareMapBtn:'Share this sky',
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
     forgeGuest:"Friend's track loaded — hit Fly", forgeReset:'Reset', forgeResetBtn:'Reset all', forgeShareTxt:'Fly my track «%s» in Cosmogram!',
@@ -255,7 +285,7 @@ const I18N = {
     feedbackSpam:'That doesn’t look like text — try writing it out',
     feedbackFail:'Could not send, try again later',
     home:'Add to Home',
-    shield:'Shield', magnet:'Magnet', slowmo:'Slow-mo', life:'+Life', dash:'Ram', nova:'Supernova', shieldDown:'Shield down', nearMiss:'Close call', gate:'Gate', smoothPerfect:'Smooth flight',
+    shield:'Shield', magnet:'Magnet', slowmo:'Slow-mo', life:'+Life', dash:'Ram', nova:'Supernova', freeze:'Freeze frame', shieldDown:'Shield down', nearMiss:'Close call', gate:'Gate', smoothPerfect:'Smooth flight',
     overDetails:'Flight details',
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     authFailed:'Sign-in failed — try again',
@@ -292,7 +322,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me · t.me/realcosmogrambot/app',
     tutGyroBody:'Your phone can be the yoke. Tilt it — the plane follows. Change your mind and one tap brings the finger back.', tutGyroBtn:'Try hands-free', tutTouchBtn:'Stick with finger',
     missionLbl:'Wave', angarTabColor:'Color', skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost','Satellites','Facets','Inlay','Filigree','Core','Aim'],
-    angarTabDecal:'Emoji', decalCatNames:{none:'No decal',space:'Space',zodiac:'Zodiac',weather:'Weather',faces:'Faces',nature:'Nature',games:'Games',crafts:'Crafts',animals:'Animals',moon:'Moon',music:'Music',myth:'Myth',status:'Status',vehicles:'Vehicles',food:'Food',sport:'Sport',tech:'Tech',fashion:'Fashion',symbols:'Symbols',landscape:'Landscape',holidays:'Holidays',landmarks:'Landmarks',science:'Science',flags:'Flags',hearts:'Hearts',fx:'Effects',sealife:'Sea life',bugs:'Bugs',iBasic:'Basics',iSpace:'Space',iStatus:'Status',iElem:'Elements',iTech:'Technology',iSpecial:'Special',iSecrets:'Security & secrets',iParty:'Party & gifts',iSea:'Sea & shore',iNature:'Nature',iFlight:'Flight',iSky:'Sky',iExplore:'Explore',iMagic:'Magic & color',iNight:'Night & mystery',iTime:'Time',iSignals:'Signals',iTools:'Tools',iAbstract:'Abstract',iHomes:'Homes',iMind:'Mind & knowledge',iSound:'Sound',iVehicles:'Vehicles',iGames:'Games',iAdventure:'Winter & adventure',iTravel:'Travel'}, angarTabIcon:'Icons', angarTabFlash:'Flash',
+    angarTabDecal:'Emoji', decalCatNames:{none:'No decal',space:'Space',zodiac:'Zodiac',weather:'Weather',faces:'Faces',nature:'Nature',games:'Games',crafts:'Crafts',animals:'Animals',moon:'Moon',music:'Music',myth:'Myth',status:'Status',vehicles:'Vehicles',food:'Food',sport:'Sport',tech:'Tech',fashion:'Fashion',symbols:'Symbols',landscape:'Landscape',holidays:'Holidays',landmarks:'Landmarks',science:'Science',flags:'Flags',hearts:'Hearts',fx:'Effects',sealife:'Sea life',bugs:'Bugs',iBasic:'Basics',iSpace:'Space',iStatus:'Status',iElem:'Elements',iTech:'Technology',iSpecial:'Special',iSecrets:'Security & secrets',iParty:'Party & gifts',iSea:'Sea & shore',iNature:'Nature',iFlight:'Flight',iSky:'Sky',iExplore:'Explore',iMagic:'Magic & color',iNight:'Night & mystery',iTime:'Time',iSignals:'Signals',iTools:'Tools',iAbstract:'Abstract',iHomes:'Homes',iMind:'Mind & knowledge',iSound:'Sound',iVehicles:'Vehicles',iGames:'Games',iAdventure:'Winter & adventure',iTravel:'Travel'}, angarTabIcon:'Icons', angarTabFlash:'Flash', angarTabTrail:'Trail',
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
     statFlights:'Flights', statDist:'Total distance', statStars:'Total stars', statCombo:'Best combo',
@@ -305,7 +335,7 @@ const I18N = {
     duelWin:(n,b)=>'Challenge beaten! The '+fmtN(b)+' m bar from '+escapeHtml(n)+' is yours.',
     duelLose:(n,b)=>'Not beaten: '+escapeHtml(n)+' holds '+fmtN(b)+' m. Rematch?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m on Wave '+w+' in Cosmogram. Beat that! ⚔️',
-    mineTab:'Mine', topTab:'Top', topMe:'Your rank: ', topLoading:'Loading…',
+    mineTab:'Mine', topTab:'Top', topMe:'Your rank: ', topLoading:'Loading…', topCompTitle:'Competitive Top',
     topEmpty:'Empty so far — be the first!', topTgOnly:'The board is not answering — try later',
     topWouldBe:(s,r,t)=>'Your '+s+' would be #'+r+' of '+t,
     topJoinTitle:'Want to be on the board?',
@@ -313,6 +343,9 @@ const I18N = {
     webJoin:'Sign in, and your flight joins the leaderboard',
     accGuest:'One leaderboard for everyone — sign in',
     accIn:n=>n?('You are on the leaderboard as '+n):'You are on the leaderboard', accOut:'Sign out',
+    accDelete:'Delete my data',
+    accDeleteConfirm:'This will permanently delete all your data: records, purchases, Workshop tracks. Cannot be undone.',
+    accDeleted:'Data deleted', accDeleteFail:"Couldn't delete it, try again", accDeleteNoConfirm:'Confirmation unavailable',
     dcLogin:'Sign in with Discord', gLogin:'Sign in with Google',
     setMorse:'Morse trail', csDefault:'Pilot',
     setMorseHap:'Haptic morse',
@@ -346,9 +379,16 @@ const I18N = {
     dlNewBest:'Nuevo récord de la pista del mes', dailyOnce:'2 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sin intentos por hoy · tu vuelo: '+s+' · nuevos intentos mañana, mismo cielo todo el mes',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para puntos — decide el reloj, no las vidas', caravanNewBest:'Nuevo récord de Caravan',
+    noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
+    modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bonos, ×4 puntos', ironmanNewBest:'Nuevo récord de Ironman',
+    modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
+    modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
+    biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
+    mode1CC:'1CC', mode1CCD:'Pista del mes, 1 vida', oneCCNewBest:'Nuevo récord de 1CC',
+    mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
-    forgeDen:'Densidad', forgeSpd:'Velocidad', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
+    forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
     forgeCodeLbl:'Pista de un amigo — pega el código o el enlace', forgeShareMapBtn:'Compartir este cielo',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
     forgeWin:'¡Meta!', forgeGuest:'Pista de un amigo cargada — pulsa Volar', forgeReset:'Restablecido', forgeResetBtn:'Restablecer todo',
@@ -394,7 +434,7 @@ const I18N = {
     feedbackSent:'¡Enviado, gracias!', feedbackRate:'Ya enviaste uno — espera un poco',
     feedbackSpam:'Eso no parece texto — inténtalo de nuevo con palabras',
     feedbackFail:'No se pudo enviar, inténtalo más tarde',
-    shield:'Escudo', magnet:'Imán', slowmo:'Cámara lenta', life:'+Vida', dash:'Embestida', nova:'Supernova',
+    shield:'Escudo', magnet:'Imán', slowmo:'Cámara lenta', life:'+Vida', dash:'Embestida', nova:'Supernova', freeze:'Fotograma congelado',
     shieldDown:'Escudo caído', nearMiss:'Al límite', gate:'Puerta', smoothPerfect:'Vuelo suave',
     overDetails:'Detalles del vuelo', combo:'Combo',
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
@@ -442,7 +482,7 @@ const I18N = {
     tutGyroBody:'El teléfono puede ser el timón. Inclínalo y el avión obedece. Si cambias de idea, un toque devuelve el dedo.', tutGyroBtn:'Probar sin manos', tutTouchBtn:'Quedarme con el dedo',
     missionLbl:'Oleada', angarTabColor:'Color',
     skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustación','Filigrana','Núcleo','Mira'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
-    angarTabDecal:'Emoji', decalCatNames:{none:'Sin decoración',space:'Espacio',zodiac:'Zodíaco',weather:'Clima',faces:'Caras',nature:'Naturaleza',games:'Juegos',crafts:'Manualidades',animals:'Animales',moon:'Luna',music:'Música',myth:'Mito',status:'Estatus',vehicles:'Vehículos',food:'Comida',sport:'Deporte',tech:'Tecnología',fashion:'Moda',symbols:'Símbolos',landscape:'Paisaje',holidays:'Fiestas',landmarks:'Monumentos',science:'Ciencia',flags:'Banderas',hearts:'Corazones',fx:'Efectos',sealife:'Vida marina',bugs:'Insectos',iBasic:'Básico',iSpace:'Espacio',iStatus:'Estatus',iElem:'Elementos',iTech:'Tecnología',iSpecial:'Especial',iSecrets:'Seguridad y secretos',iParty:'Fiesta y regalos',iSea:'Mar y costa',iNature:'Naturaleza',iFlight:'Vuelo',iSky:'Cielo',iExplore:'Explorar',iMagic:'Magia y color',iNight:'Noche y misterio',iTime:'Tiempo',iSignals:'Señales',iTools:'Herramientas',iAbstract:'Abstracto',iHomes:'Hogares',iMind:'Mente y saber',iSound:'Sonido',iVehicles:'Vehículos',iGames:'Juegos',iAdventure:'Invierno y aventura',iTravel:'Viajes'}, angarTabIcon:'Íconos', angarTabFlash:'Destello',
+    angarTabDecal:'Emoji', decalCatNames:{none:'Sin decoración',space:'Espacio',zodiac:'Zodíaco',weather:'Clima',faces:'Caras',nature:'Naturaleza',games:'Juegos',crafts:'Manualidades',animals:'Animales',moon:'Luna',music:'Música',myth:'Mito',status:'Estatus',vehicles:'Vehículos',food:'Comida',sport:'Deporte',tech:'Tecnología',fashion:'Moda',symbols:'Símbolos',landscape:'Paisaje',holidays:'Fiestas',landmarks:'Monumentos',science:'Ciencia',flags:'Banderas',hearts:'Corazones',fx:'Efectos',sealife:'Vida marina',bugs:'Insectos',iBasic:'Básico',iSpace:'Espacio',iStatus:'Estatus',iElem:'Elementos',iTech:'Tecnología',iSpecial:'Especial',iSecrets:'Seguridad y secretos',iParty:'Fiesta y regalos',iSea:'Mar y costa',iNature:'Naturaleza',iFlight:'Vuelo',iSky:'Cielo',iExplore:'Explorar',iMagic:'Magia y color',iNight:'Noche y misterio',iTime:'Tiempo',iSignals:'Señales',iTools:'Herramientas',iAbstract:'Abstracto',iHomes:'Hogares',iMind:'Mente y saber',iSound:'Sonido',iVehicles:'Vehículos',iGames:'Juegos',iAdventure:'Invierno y aventura',iTravel:'Viajes'}, angarTabIcon:'Íconos', angarTabFlash:'Destello', angarTabTrail:'Estela',
     achTitle:'Logros', achOf:'Desbloqueado',
     achClsB:'Premio de bronce', achClsS:'Premio de plata', achClsG:'Premio de oro',
     achClaim:'Reclamar', achDone:'Hecho',
@@ -460,7 +500,7 @@ const I18N = {
     duelWin:(n,b)=>'¡Reto superado! La marca de '+fmtN(b)+' m de '+escapeHtml(n)+' es tuya.',
     duelLose:(n,b)=>'No superado: '+escapeHtml(n)+' tiene '+fmtN(b)+' m. ¿Revancha?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m en la Oleada '+w+' en Cosmogram. ¿Puedes hacerlo mejor? ⚔️',
-    mineTab:'Mías', topTab:'Top', topMe:'Tu puesto: ', topLoading:'Cargando…',
+    mineTab:'Mías', topTab:'Top', topMe:'Tu puesto: ', topLoading:'Cargando…', topCompTitle:'Top de competiciones',
     topEmpty:'Vacío por ahora — ¡sé el primero!',
     topTgOnly:'La tabla no responde — inténtalo más tarde',
     topWouldBe:(s,r,t)=>'Tus '+s+' serían el puesto '+r+' de '+t,
@@ -469,7 +509,11 @@ const I18N = {
     webJoin:'Inicia sesión para que tu vuelo entre en la tabla',
     accGuest:'Una tabla para todos — inicia sesión',
     accIn:n=>n?('Estás en la tabla común como '+n):'Estás en la tabla común',
-    accOut:'Cerrar sesión', dcLogin:'Iniciar sesión con Discord', gLogin:'Iniciar sesión con Google',
+    accOut:'Cerrar sesión',
+    accDelete:'Eliminar mis datos',
+    accDeleteConfirm:'Esto eliminará permanentemente todos tus datos: récords, compras, pistas del Taller. No se puede deshacer.',
+    accDeleted:'Datos eliminados', accDeleteFail:'No se pudo, inténtalo de nuevo', accDeleteNoConfirm:'Confirmación no disponible',
+    dcLogin:'Iniciar sesión con Discord', gLogin:'Iniciar sesión con Google',
     setMorse:'Estela Morse', csDefault:'Piloto', setMorseHap:'Distintivo por vibración',
     setGrpSound:'Sonido y vibración', setGrpGame:'Juego y pantalla', setGrpProf:'Perfil',
     moreLbl:'Más',
@@ -505,9 +549,16 @@ const I18N = {
     dlNewBest:'Novo recorde da pista do mês', dailyOnce:'2 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sem tentativas por hoje · seu voo: '+s+' · novas tentativas amanhã, mesmo céu o mês todo',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para pontos — o relógio decide, não as vidas', caravanNewBest:'Novo recorde de Caravan',
+    noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
+    modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bônus, ×4 pontos', ironmanNewBest:'Novo recorde de Ironman',
+    modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
+    modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
+    biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
+    mode1CC:'1CC', mode1CCD:'Pista do mês, 1 vida', oneCCNewBest:'Novo recorde de 1CC',
+    mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
-    forgeDen:'Densidade', forgeSpd:'Velocidade', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
+    forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
     forgeCodeLbl:'Pista de um amigo — cole o código ou o link', forgeShareMapBtn:'Compartilhar este céu',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
     forgeWin:'Chegada!', forgeGuest:'Pista de um amigo carregada — toque em Voar', forgeReset:'Redefinido', forgeResetBtn:'Redefinir tudo',
@@ -553,7 +604,7 @@ const I18N = {
     feedbackSent:'Enviado, obrigado!', feedbackRate:'Já enviou um — espere um pouco',
     feedbackSpam:'Isso não parece texto — tente escrever com palavras',
     feedbackFail:'Não foi possível enviar, tente mais tarde',
-    shield:'Escudo', magnet:'Ímã', slowmo:'Câmera lenta', life:'+Vida', dash:'Investida', nova:'Supernova',
+    shield:'Escudo', magnet:'Ímã', slowmo:'Câmera lenta', life:'+Vida', dash:'Investida', nova:'Supernova', freeze:'Quadro congelado',
     shieldDown:'Escudo caído', nearMiss:'Por pouco', gate:'Portal', smoothPerfect:'Voo suave',
     overDetails:'Detalhes do voo', combo:'Combo',
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
@@ -601,7 +652,7 @@ const I18N = {
     tutGyroBody:'O telefone pode ser o leme. Incline-o e o avião obedece. Se mudar de ideia, um toque devolve o dedo.', tutGyroBtn:'Tentar sem mãos', tutTouchBtn:'Ficar com o dedo',
     missionLbl:'Onda', angarTabColor:'Cor',
     skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustação','Filigrana','Núcleo','Mira'], // v1.282.14: то же — единственное расхождение типов во всём словаре
-    angarTabDecal:'Emoji', decalCatNames:{none:'Sem decoração',space:'Espaço',zodiac:'Zodíaco',weather:'Clima',faces:'Rostos',nature:'Natureza',games:'Jogos',crafts:'Artesanato',animals:'Animais',moon:'Lua',music:'Música',myth:'Mito',status:'Status',vehicles:'Veículos',food:'Comida',sport:'Esporte',tech:'Tecnologia',fashion:'Moda',symbols:'Símbolos',landscape:'Paisagem',holidays:'Festas',landmarks:'Marcos',science:'Ciência',flags:'Bandeiras',hearts:'Corações',fx:'Efeitos',sealife:'Vida marinha',bugs:'Insetos',iBasic:'Básico',iSpace:'Espaço',iStatus:'Status',iElem:'Elementos',iTech:'Tecnologia',iSpecial:'Especial',iSecrets:'Segurança e segredos',iParty:'Festa e presentes',iSea:'Mar e litoral',iNature:'Natureza',iFlight:'Voo',iSky:'Céu',iExplore:'Explorar',iMagic:'Magia e cor',iNight:'Noite e mistério',iTime:'Tempo',iSignals:'Sinais',iTools:'Ferramentas',iAbstract:'Abstrato',iHomes:'Casas',iMind:'Mente e saber',iSound:'Som',iVehicles:'Veículos',iGames:'Jogos',iAdventure:'Inverno e aventura',iTravel:'Viagens'}, angarTabIcon:'Ícones', angarTabFlash:'Clarão',
+    angarTabDecal:'Emoji', decalCatNames:{none:'Sem decoração',space:'Espaço',zodiac:'Zodíaco',weather:'Clima',faces:'Rostos',nature:'Natureza',games:'Jogos',crafts:'Artesanato',animals:'Animais',moon:'Lua',music:'Música',myth:'Mito',status:'Status',vehicles:'Veículos',food:'Comida',sport:'Esporte',tech:'Tecnologia',fashion:'Moda',symbols:'Símbolos',landscape:'Paisagem',holidays:'Festas',landmarks:'Marcos',science:'Ciência',flags:'Bandeiras',hearts:'Corações',fx:'Efeitos',sealife:'Vida marinha',bugs:'Insetos',iBasic:'Básico',iSpace:'Espaço',iStatus:'Status',iElem:'Elementos',iTech:'Tecnologia',iSpecial:'Especial',iSecrets:'Segurança e segredos',iParty:'Festa e presentes',iSea:'Mar e litoral',iNature:'Natureza',iFlight:'Voo',iSky:'Céu',iExplore:'Explorar',iMagic:'Magia e cor',iNight:'Noite e mistério',iTime:'Tempo',iSignals:'Sinais',iTools:'Ferramentas',iAbstract:'Abstrato',iHomes:'Casas',iMind:'Mente e saber',iSound:'Som',iVehicles:'Veículos',iGames:'Jogos',iAdventure:'Inverno e aventura',iTravel:'Viagens'}, angarTabIcon:'Ícones', angarTabFlash:'Clarão', angarTabTrail:'Rasto',
     achTitle:'Conquistas', achOf:'Desbloqueado',
     achClsB:'Prêmio de bronze', achClsS:'Prêmio de prata', achClsG:'Prêmio de ouro',
     achClaim:'Resgatar', achDone:'Concluído',
@@ -619,7 +670,7 @@ const I18N = {
     duelWin:(n,b)=>'Desafio superado! A marca de '+fmtN(b)+' m de '+escapeHtml(n)+' é sua.',
     duelLose:(n,b)=>'Não superado: '+escapeHtml(n)+' tem '+fmtN(b)+' m. Revanche?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m na Onda '+w+' no Cosmogram. Consegue fazer melhor? ⚔️',
-    mineTab:'Minhas', topTab:'Top', topMe:'Sua posição: ', topLoading:'Carregando…',
+    mineTab:'Minhas', topTab:'Top', topMe:'Sua posição: ', topLoading:'Carregando…', topCompTitle:'Top das competições',
     topEmpty:'Vazio por enquanto — seja o primeiro!',
     topTgOnly:'A tabela não responde — tente mais tarde',
     topWouldBe:(s,r,t)=>'Seus '+s+' seriam o '+r+'º de '+t,
@@ -628,7 +679,11 @@ const I18N = {
     webJoin:'Entre, e este voo entra na tabela geral',
     accGuest:'Uma tabela para todos — entre',
     accIn:n=>n?('Você está na tabela geral como '+n):'Você está na tabela geral',
-    accOut:'Sair', dcLogin:'Entrar com Discord', gLogin:'Entrar com Google',
+    accOut:'Sair',
+    accDelete:'Excluir meus dados',
+    accDeleteConfirm:'Isso excluirá permanentemente todos os seus dados: recordes, compras, pistas da Oficina. Não pode ser desfeito.',
+    accDeleted:'Dados excluídos', accDeleteFail:'Não foi possível, tente novamente', accDeleteNoConfirm:'Confirmação indisponível',
+    dcLogin:'Entrar com Discord', gLogin:'Entrar com Google',
     setMorse:'Rastro Morse', csDefault:'Piloto', setMorseHap:'Codinome por vibração',
     setGrpSound:'Som e vibração', setGrpGame:'Jogo e tela', setGrpProf:'Perfil',
     moreLbl:'Mais',
@@ -662,9 +717,16 @@ const I18N = {
     modeDaily:'Trace du mois', modeDailyD:'Une trace pour tous les joueurs, tout le mois — décroche le record', dlNewBest:'Nouveau record de la Trace du mois',
     dailyOnce:'2 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Plus de tentatives aujourd’hui · ton vol : '+s+' · nouvelles tentatives demain, même ciel tout le mois',
     modeCaravan:'Caravan', modeCaravanD:'60 secondes pour marquer des points — l’horloge décide, pas tes vies', caravanNewBest:'Nouveau record Caravan',
+    noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
+    modeIronman:'Ironman', modeIronmanD:'1 vie, 0 bonus, ×4 points', ironmanNewBest:'Nouveau record Ironman',
+    modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
+    modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
+    biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
+    mode1CC:'1CC', mode1CCD:'Trace du mois, 1 vie', oneCCNewBest:'Nouveau record 1CC',
+    mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
-    forgeDen:'Densité', forgeSpd:'Vitesse', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
+    forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
     forgeCodeLbl:"Trace d'un ami — colle le code ou le lien", forgeShareMapBtn:'Partager ce ciel',
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
     forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeReset:'Réinitialisé', forgeResetBtn:'Tout réinitialiser', forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
@@ -715,7 +777,7 @@ const I18N = {
     feedbackSpam:'Ça ne ressemble pas à du texte — réessaie avec des mots',
     feedbackFail:'Échec de l’envoi, réessaie plus tard',
     home:'Ajouter à l\u2019accueil',
-    shield:'Bouclier', magnet:'Aimant', slowmo:'Ralenti', life:'+Vie', dash:'Percussion', nova:'Supernova', shieldDown:'Bouclier tombé', nearMiss:'Frôlement', gate:'Portail', smoothPerfect:'Vol fluide',
+    shield:'Bouclier', magnet:'Aimant', slowmo:'Ralenti', life:'+Vie', dash:'Percussion', nova:'Supernova', freeze:'Arrêt sur image', shieldDown:'Bouclier tombé', nearMiss:'Frôlement', gate:'Portail', smoothPerfect:'Vol fluide',
     overDetails:'Détails du vol',
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
     authFailed:'Échec de la connexion — réessayez',
@@ -752,7 +814,7 @@ const I18N = {
     shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper · t.me/realcosmogrambot/app',
     tutGyroBody:'Le téléphone peut être le manche. Incline-le, l\'avion suit. Si tu changes d\'avis, une touche rend le doigt.', tutGyroBtn:'Essayer mains libres', tutTouchBtn:'Rester au doigt',
     missionLbl:'Vague', angarTabColor:'Couleur', skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme','Satellites','Facettes','Incrustation','Filigrane','Noyau','Viseur'],
-    angarTabDecal:'Emoji', decalCatNames:{none:'Sans décoration',space:'Espace',zodiac:'Zodiaque',weather:'Météo',faces:'Visages',nature:'Nature',games:'Jeux',crafts:'Loisirs créatifs',animals:'Animaux',moon:'Lune',music:'Musique',myth:'Mythe',status:'Statut',vehicles:'Véhicules',food:'Nourriture',sport:'Sport',tech:'Technologie',fashion:'Mode',symbols:'Symboles',landscape:'Paysage',holidays:'Fêtes',landmarks:'Monuments',science:'Science',flags:'Drapeaux',hearts:'Cœurs',fx:'Effets',sealife:'Vie marine',bugs:'Insectes',iBasic:'Basique',iSpace:'Espace',iStatus:'Statut',iElem:'Éléments',iTech:'Technologie',iSpecial:'Spécial',iSecrets:'Sécurité et secrets',iParty:'Fête et cadeaux',iSea:'Mer et rivage',iNature:'Nature',iFlight:'Vol',iSky:'Ciel',iExplore:'Exploration',iMagic:'Magie et couleur',iNight:'Nuit et mystère',iTime:'Temps',iSignals:'Signaux',iTools:'Outils',iAbstract:'Abstrait',iHomes:'Maisons',iMind:'Esprit et savoir',iSound:'Son',iVehicles:'Véhicules',iGames:'Jeux',iAdventure:'Hiver et aventure',iTravel:'Voyages'}, angarTabIcon:'Icônes', angarTabFlash:'Éclat',
+    angarTabDecal:'Emoji', decalCatNames:{none:'Sans décoration',space:'Espace',zodiac:'Zodiaque',weather:'Météo',faces:'Visages',nature:'Nature',games:'Jeux',crafts:'Loisirs créatifs',animals:'Animaux',moon:'Lune',music:'Musique',myth:'Mythe',status:'Statut',vehicles:'Véhicules',food:'Nourriture',sport:'Sport',tech:'Technologie',fashion:'Mode',symbols:'Symboles',landscape:'Paysage',holidays:'Fêtes',landmarks:'Monuments',science:'Science',flags:'Drapeaux',hearts:'Cœurs',fx:'Effets',sealife:'Vie marine',bugs:'Insectes',iBasic:'Basique',iSpace:'Espace',iStatus:'Statut',iElem:'Éléments',iTech:'Technologie',iSpecial:'Spécial',iSecrets:'Sécurité et secrets',iParty:'Fête et cadeaux',iSea:'Mer et rivage',iNature:'Nature',iFlight:'Vol',iSky:'Ciel',iExplore:'Exploration',iMagic:'Magie et couleur',iNight:'Nuit et mystère',iTime:'Temps',iSignals:'Signaux',iTools:'Outils',iAbstract:'Abstrait',iHomes:'Maisons',iMind:'Esprit et savoir',iSound:'Son',iVehicles:'Véhicules',iGames:'Jeux',iAdventure:'Hiver et aventure',iTravel:'Voyages'}, angarTabIcon:'Icônes', angarTabFlash:'Éclat', angarTabTrail:'Traînée',
     achTitle:'Succès', achOf:'Débloqué',
     achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',
     statFlights:'Vols', statDist:'Distance totale', statStars:'Étoiles totales', statCombo:'Meilleur combo',
@@ -765,7 +827,7 @@ const I18N = {
     duelWin:(n,b)=>'Défi battu ! La barre de '+fmtN(b)+' m de '+escapeHtml(n)+' est à toi.',
     duelLose:(n,b)=>'Pas battu : '+escapeHtml(n)+' tient '+fmtN(b)+' m. Revanche ?',
     duelShareText:(d,w)=>myCallsign()+' : '+fmtN(d)+' m Vague '+w+' dans Cosmogram. Fais mieux ! ⚔️',
-    mineTab:'Moi', topTab:'Classement', topMe:'Ton rang : ', topLoading:'Chargement…',
+    mineTab:'Moi', topTab:'Classement', topMe:'Ton rang : ', topLoading:'Chargement…', topCompTitle:'Top des compétitions',
     topEmpty:'Vide pour l\u2019instant — sois le premier !', topTgOnly:'Le classement ne répond pas — réessaie plus tard',
     topWouldBe:(s,r,t)=>'Tes '+s+' seraient '+r+'e sur '+t,
     topJoinTitle:'Envie d\u2019être au classement ?',
@@ -773,6 +835,9 @@ const I18N = {
     webJoin:'Connecte-toi et ce vol rejoint le classement',
     accGuest:'Un classement pour tous — connecte-toi',
     accIn:n=>n?('Tu es sur le classement sous le nom '+n):'Tu es sur le classement', accOut:'Se déconnecter',
+    accDelete:'Supprimer mes données',
+    accDeleteConfirm:"Cela supprimera définitivement toutes vos données : records, achats, pistes de l'Atelier. Impossible à annuler.",
+    accDeleted:'Données supprimées', accDeleteFail:'Échec, réessayez', accDeleteNoConfirm:'Confirmation indisponible',
     dcLogin:'Connecte-toi avec Discord', gLogin:'Connecte-toi avec Google',
     setMorse:'Traînée morse', csDefault:'Pilote',
     setMorseHap:'Morse haptique',
@@ -788,6 +853,10 @@ const I18N = {
     ghostBeat:(n,sc,b)=>'Fantôme de '+escapeHtml(n||'joueur')+' battu : '+fmtN(sc)+' contre '+fmtN(b)
   }
 };
+/* 05.09.2026 «Из макета в игру»: 4 новых скина (id45-48, name:45..48) — skinNames обрывался на
+   индексе 14, добавляю точечно поверх массива (не трогая существующий пробел 15-44 — тот не мой,
+   чинить отдельно). Пока только русский — остальные 4 языка ждут перевода, честно не выдаю за готово. */
+I18N.ru.skinNames[45]='Пенроуз'; I18N.ru.skinNames[46]='Цветочная решётка'; I18N.ru.skinNames[47]='Плед из кругов'; I18N.ru.skinNames[48]='Кристалл';
 const SUPPORTED_LANGS = ['ru','en','es','pt','fr']; // v1.108.1: добавляются сюда по мере перевода I18N — порядок не важен
 const LANG = (()=>{
   const _tgw = window.Telegram && window.Telegram.WebApp; // свой, независимый взгляд на тот же мост — core.js грузится ПОСЛЕ этого файла (глобальный const tg переопределять нельзя), а языку нужно решение ДО core.js

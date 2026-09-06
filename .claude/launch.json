@@ -7,6 +7,13 @@
       "runtimeArgs": ["C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/57e44689-35a5-4df4-8e86-a4456fa81c67/scratchpad/static-server.js", "C:/Users/admin/Documents/GitHub/cosmogram-app"],
       "port": 8934,
       "autoPort": true
+    },
+    {
+      "name": "cosmogram-skins-worktree",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/57e44689-35a5-4df4-8e86-a4456fa81c67/scratchpad/static-server.js", "C:/Users/admin/Documents/GitHub/cosmogram-app/.claude/worktrees/skins-batch"],
+      "port": 8935,
+      "autoPort": true
     }
   ]
 }

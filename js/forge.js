@@ -93,6 +93,13 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
     {at:950,type:'kind',kind:0},{at:1000,type:'pause'},{at:1250,type:'kind',kind:4},{at:1300,type:'kind',kind:0},
     {at:1350,type:'pause'},{at:1600,type:'kind',kind:0},{at:1650,type:'kind',kind:4},{at:1700,type:'pause'},{at:1900,type:'kind',kind:7}]}}
 ];
+/* 06.09.2026 «Играть/Создать» (владелец): 8 плиток на видном месте — перегружали первый взгляд
+   на вкладку «Играть». Оставлены 2 быстрых примера («тапнул — увидел, как это делается») — один
+   мягкий, один сложный; остальные 6 переехали в Мастерскую как трассы автора (seed-migration,
+   см. .knowledge/PRODUCTION-MINES.md-соседний коммит) — играть/загрузить их можно тем же путём,
+   что и любую чужую трассу. FORGE_PRESETS сам остаётся полным (8) — им пользуется кодирование
+   ссылок и forgePresetMatch(), только видимая сетка сужена. */
+const FORGE_PRESETS_VISIBLE = FORGE_PRESETS.filter(function(p){ return p.k==='fpWarm'||p.k==='fpHell'; });
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
@@ -129,6 +136,9 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // трёх разных оттенках (macet-01-09-nastroenie-neba.html) до этой правки.
   o.mood=clamp(Math.round(isFinite(+c.mood)?+c.mood:50),0,100);
   o.fog=clamp(Math.round(isFinite(+c.fog)?+c.fog:0),0,2);
+  // 06.09.2026 «Солнечный ветер»: 0-100, по умолчанию 0 (выкл — старые коды/пресеты без поля
+  // ничего не почувствуют). Сила порывов, не постоянный снос — сама механика в game.js.
+  o.wind=clamp(Math.round(isFinite(+c.wind)?+c.wind:0),0,100);
   // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
   o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
@@ -227,11 +237,15 @@ function forgeBitsPack(cfg){
   // 2б h2, 1б густота), бит2 = настроение (1б, 0-100). Все три бита сейчас всегда 1 — новый
   // интерфейс всегда пишет все поля. Проверено численно (verify-len2.js, verify-color2.js,
   // verify-mood.js) до правки.
-  const extFlags=[1|2|4];
+  // 06.09.2026 «Солнечный ветер»: бит3 extFlags — 1 байт силы порывов (0-100), тем же приёмом,
+  // что уже трижды применён выше (сложи хвост на хвост, не переделывай нижние слои). Всегда 1 —
+  // новый интерфейс всегда пишет поле, старые коды без этого бита читаются как wind=0 (выкл).
+  const extFlags=[1|2|4|8];
   const lenTail=[(cfg.l>>8)&255, cfg.l&255];
   const colorTail=[(cfg.h1>>8)&255, cfg.h1&255, (cfg.h2>>8)&255, cfg.h2&255, cfg.dens&255];
   const moodTail=[cfg.mood&255];
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail));
+  const windTail=[cfg.wind&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail, windTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -262,7 +276,7 @@ function forgeBitsUnpack(bytes){
   // «Непрерывная длина» / «Свой фон»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто
   // не доходит сюда — l остаётся старым приближением из lIdx, h1/h2 выводятся из legacy sky
   // в forgeSanitize (та же формула, что уже рисовала это небо раньше), ровно как читалось раньше.
-  let l=FORGE_LENS[lIdx], h1, h2, dens, mood;
+  let l=FORGE_LENS[lIdx], h1, h2, dens, mood, wind;
   if(cursor<bytes.length){
     const extFlags=bytes[cursor]||0;
     let p=cursor+1;
@@ -273,8 +287,11 @@ function forgeBitsUnpack(bytes){
       dens=bytes[p]; p+=1;
     }
     if((extFlags&4) && p<bytes.length){ mood=bytes[p]; p+=1; }
+    // 06.09.2026 «Солнечный ветер»: бит3, 1 байт — код без него (розданный до этой правки)
+    // просто не доходит сюда, wind остаётся undefined → forgeSanitize подставит 0 (выкл).
+    if((extFlags&8) && p<bytes.length){ wind=bytes[p]; p+=1; }
   }
-  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wg:0, sc:sc };
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wind, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -401,10 +418,13 @@ function forgeSkyKick(){
 let forgeCfg=forgeSanitize(Store.get('forgeLast',null)||Object.assign({},FORGE_PRESETS[0].c)); // последняя трасса переживает перезапуск; свежая кухня — «Разминка» уже выбрана, ноль обязательных решений (v1.86.0)
 function forgeCfgGet(){ return forgeCfg; }
 function forgePresetMatch(){ // светится ровно та программа, что сейчас в небе (v1.86.0)
-  for(let i=0;i<FORGE_PRESETS.length;i++){ const c=FORGE_PRESETS[i].c;
+  // 06.09.2026: сетка сузилась до FORGE_PRESETS_VISIBLE (2 плитки) — индекс должен указывать
+  // на позицию В НЕЙ, не в полном FORGE_PRESETS (8), иначе подсветка попадёт не в тот ребёнок
+  // DOM-узла (их теперь только 2) или вовсе не найдёт совпадения для скрытых сценариев, что и надо.
+  for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const c=FORGE_PRESETS_VISIBLE[i].c;
     if(forgeCfg.d===c.d&&forgeCfg.s===c.s&&forgeCfg.e===c.e&&forgeCfg.l===c.l&&forgeCfg.lv===c.lv&&
        forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog&&
-       forgeCfg.hs===(c.hs||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно
+       forgeCfg.hs===(c.hs||0)&&forgeCfg.wind===(c.wind||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно; 06.09.2026: то же для wind
   return -1;
 }
 
@@ -449,7 +469,7 @@ function forgeFill(){ // подписи + состояние виджетов п
      $(id) напрямую, отсутствие любого одного элемента (устаревший кэш index.html) обрывало
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
-  const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],
+  const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
@@ -462,13 +482,15 @@ function forgeFill(){ // подписи + состояние виджетов п
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } };
   grpT('forgeGrpHard',L.forgeGrpHard);
-  const mf=$('modeForge'); if(mf) mf.innerHTML='<span class="modeName">'+L.modeForge+'</span><span class="modeDesc">'+L.modeForgeD+'</span>';
+  // 05.09.2026: #modeForge убран из «Соревнований» вместе с самой кнопкой (Конструктор
+  // переехал на главный экран, id="konstruktorBtn") — строка, что красила её подпись,
+  // больше не на что указывать, снята вместе с ней.
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
   // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
   const pre=$('forgePresets');
-  if(pre && pre.children.length!==FORGE_PRESETS.length){
+  if(pre && pre.children.length!==FORGE_PRESETS_VISIBLE.length){
     pre.innerHTML='';
-    FORGE_PRESETS.forEach(function(p){
+    FORGE_PRESETS_VISIBLE.forEach(function(p){
       const b=document.createElement('button');
       b.className='forgePresetTile';
       b.innerHTML='<i class="sw"></i><span class="nm"></span>';
@@ -479,11 +501,12 @@ function forgeFill(){ // подписи + состояние виджетов п
         const keepName=forgeCfg.n;
         forgeCfg=forgeSanitize(Object.assign({},p.c)); forgeCfg.n=keepName; // имя автора не затираем
         forgeSyncWidgets(); sfx.click(); haptic('medium');
+        forgeTabSet('create'); // 06.09.2026: «тапнул — сразу летишь» — «Лететь» теперь по вкладке
       });
       pre.appendChild(b);
     });
   }
-  if(pre) for(let i=0;i<FORGE_PRESETS.length;i++){ const nm=pre.children[i].querySelector('.nm'); if(nm) nm.textContent=L[FORGE_PRESETS[i].k]||''; }
+  if(pre) for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const nm=pre.children[i].querySelector('.nm'); if(nm) nm.textContent=L[FORGE_PRESETS_VISIBLE[i].k]||''; }
   // враги
   const names=[L.fkRock,L.fkDebris,L.fkDrift,L.fkMine,L.fkSat,L.fkComet,L.fkSeeker,L.fkGate];
   const chips=$('forgeChips');
@@ -563,6 +586,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const nmEl=$('forgeName'); if(nmEl && document.activeElement!==nmEl) nmEl.value=forgeCfg.n;
   const denEl=$('forgeDen'), denVEl=$('forgeDenV'); if(denEl) denEl.value=forgeCfg.d; if(denVEl) denVEl.textContent=forgeCfg.d;
   const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.textContent=forgeCfg.s;
+  const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.textContent=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
@@ -591,7 +615,27 @@ function forgeGrpSubSync(){ // «Тонкая настройка»: подпис
       (forgeCfg.hs?' · '+(L.forgeHS||''):''); // 31.08.2026: закрытая группа не молчит про включённую ставку; 02.09.2026: L.forgeHS уже кончается на «×4» сам по себе — приписанное здесь ещё одно «×4» дублировало текст («…очки ×4 ×4», владелец поймал вживую)
   }
 }
-function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
+function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill();
+  forgeTabSet('play'); workshopFillLabels(); workshopRenderList(); // 06.09.2026: «Играть/Создать» — вход всегда на «Играть», Мастерская больше не отдельный экран
+} // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
+
+/* 06.09.2026 «Играть/Создать» (владелец: «два разных мира — это тупо, нужен плавный переход»):
+   один экран, тап по вкладке вместо ухода на отдельный экран Мастерской. Тап по готовому
+   сценарию/успешная загрузка кода друга/«В Кузницу» из Мастерской сами переводят на «Создать» —
+   обещание пресетов «тапнул — сразу летишь» остаётся честным, «Лететь» просто рядом по вкладке. */
+let forgeTab='play';
+function forgeTabSet(t){
+  forgeTab=(t==='create')?'create':'play';
+  const playBtn=$('forgeTabPlayBtn'), createBtn=$('forgeTabCreateBtn');
+  if(playBtn) playBtn.classList.toggle('sel', forgeTab==='play');
+  if(createBtn) createBtn.classList.toggle('sel', forgeTab==='create');
+  const playEl=$('forgeTabPlay'), createEl=$('forgeTabCreate');
+  if(playEl) playEl.classList.toggle('hidden', forgeTab!=='play');
+  if(createEl) createEl.classList.toggle('hidden', forgeTab!=='create');
+  if(forgeTab==='play') workshopRenderList(); // список мог устареть, пока игрок был на «Создать»
+}
+wireOnLocal('forgeTabPlayBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('play'); });
+wireOnLocal('forgeTabCreateBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('create'); });
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
@@ -615,6 +659,10 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   const code=forgeEncode(cfg);
   const link='https://t.me/realcosmogrambot/app?startapp=map_'+code; // тот же мост, что и у дуэлей (v1.68.0)
   const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
+  // 05.09.2026 «Мастерская»: тот же тап «Поделиться» одновременно кладёт код в публичную
+  // витрину (owner подтвердил именно эту связку в макете) — не блокирует и не мешает самому
+  // шарингу, если сеть недоступна/игрок не вошёл, ссылка другу всё равно уходит как раньше.
+  if(typeof workshopSubmit==='function') workshopSubmit(code, cfg.n).catch(()=>{});
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
@@ -638,6 +686,50 @@ function forgeLoadCode(){
      forgeBoot (тот же путь через deep-link) давно записывает — здесь просто не хватало. */
   Store.set('forgeLast',cfg);
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
+  forgeTabSet('create'); // 06.09.2026: код принят — сразу к «Лететь», как и у сценариев
+}
+
+/* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
+function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины
+  const cfg=forgeDecode(code);
+  if(!cfg) return false;
+  forgeCfg=cfg; Store.set('forgeLast',cfg);
+  return true;
+}
+function forgeWorkshopEdit(code){ // «В Кузницу»: открыть чужую трассу под себя, не в зачёт (как и любой чужой код)
+  if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
+  forgeSyncWidgets();
+  toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
+}
+function forgeWorkshopPlay(code){ // «Играть»: применить + честно засчитать «сыграли» + взлёт, тот же незачётный забег, что у любой чужой трассы
+  if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
+  if(typeof workshopPlayed==='function') workshopPlayed(code);
+  forgePlay();
+}
+// Маленький статичный свотч карточки Мастерской — тот же язык (звёзды/дальняя стая/туман/
+// фонарик), что forgeSkyPaint() выше, но БЕЗ requestAnimationFrame: список может показывать
+// десятки карточек разом, а живому дышащему небу там не место (никто не просил анимировать
+// список, дёшево и правильно нарисовать один раз). Сид детерминирован от самих цветов неба —
+// одна и та же трасса всегда даёт один и тот же узор звёзд, не дрожит между перерисовками.
+function forgeMiniSwatchPaint(cv, cfg){
+  if(!cv || !cv.getContext) return;
+  const x=cv.getContext('2d'); const W=cv.width, H=cv.height;
+  const psl=forgePreviewMoodSL(cfg.mood);
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'hsl('+cfg.h1+','+psl.S0+'%,'+psl.L0+'%)'); g.addColorStop(1,'hsl('+cfg.h2+','+psl.S1+'%,'+psl.L1+'%)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  let seed=((cfg.h1|0)*7+(cfg.h2|0)*3+1)>>>0;
+  const rnd=function(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
+  for(let i=0;i<16;i++){ x.globalAlpha=.3+rnd()*.5; x.fillStyle=rnd()>.85?'#ffe9b8':'#dfe8ff';
+    x.beginPath(); x.arc(rnd()*W,rnd()*H,rnd()*1.1+.3,0,6.283); x.fill(); }
+  x.globalAlpha=1;
+  for(let i=0;i<3;i++){ const ox=(i*19+7)%W, oy=(i*23+11)%H, r=4+(i%2)*2;
+    x.fillStyle='rgba(6,10,20,.7)'; x.strokeStyle='rgba(150,180,240,.4)'; x.lineWidth=1;
+    x.beginPath(); x.arc(ox,oy,r,0,6.283); x.fill(); x.stroke(); }
+  if(cfg.fog){ const v=x.createRadialGradient(W/2,H/2,4,W/2,H/2,W*.6);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.55)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
+  if(cfg.fl){ const v=x.createRadialGradient(W/2,H/2,6,W/2,H/2,W*.5);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.8)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
 }
 
 /* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
@@ -684,13 +776,142 @@ function mapOver(sc){
 }
 
 /* 04.09.2026 (владелец): выбрал готовый сценарий — вернуться к пустой трассе было нечем.
-   Тот же приём, что при выборе пресета (forgeCfg=клон .c), только явной кнопкой и без
-   сохранения имени автора — «сбросить всё» значит именно всё, не только состав/жар. */
+   06.09.2026 (владелец, живая находка): раньше сюда клали клон FORGE_PRESETS[0] («Разминка») —
+   технически «сброс», но подсветка пресета в сетке честно показывала «Разминка» выбрана,
+   хотя игрок ничего не выбирал — путало. forgeSanitize({}) даёт настоящее пустое поле:
+   те же умолчания, что уже проверяет сама валидация (не новые числа), и по 11 полям, что
+   сравнивает forgePresetMatch(), это сочетание не совпадает ни с одним из 8 пресетов —
+   подсветка гаснет сама, без отдельного флага «сброшено вручную». */
 function forgeResetAll(){
-  forgeCfg=forgeSanitize(Object.assign({},FORGE_PRESETS[0].c));
+  forgeCfg=forgeSanitize({});
   forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
   toast(L.forgeReset||'Сброшено','rgba(160,210,255,.5)'); haptic('light');
 }
+
+/* ---------- 05.09.2026 «Мастерская»: экран-витрина — подписи, сортировка, список ---------- */
+let workshopSortMode='new';
+const WORKSHOP_SORTS=['new','top','plays','mine'];
+function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
+  if(typeof L==='undefined'||!L.workshopTitle) return;
+  const LBL=[['workshopTitle',L.workshopTitle],['workshopSub',L.workshopSub],
+    ['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Мастерская теперь вкладка «Играть»
+  for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
+  const sortEl=$('workshopSort');
+  if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
+    sortEl.innerHTML='';
+    WORKSHOP_SORTS.forEach(function(s){
+      const b=document.createElement('button'); b.className='forgeChip';
+      b.addEventListener('click', function(){ workshopSortMode=s; workshopRenderList(); sfx.click(); haptic('light'); });
+      sortEl.appendChild(b);
+    });
+  }
+  if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
+    sortEl.children[i].textContent = L['workshopSort_'+s] || s;
+    sortEl.children[i].classList.toggle('sel', s===workshopSortMode);
+  });
+}
+function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
+function workshopRenderList(){
+  const listEl=$('workshopList'), emptyEl=$('workshopEmpty');
+  if(!listEl) return;
+  if(workshopSortMode==='mine' && !syncAvailable()){
+    listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); emptyEl.textContent=L.workshopSignInFirst||L.workshopEmpty; }
+    return;
+  }
+  listEl.innerHTML='<div class="hint" style="text-align:center">…</div>';
+  const requestedSort=workshopSortMode; // 05.09.2026: защита от гонки — быстрый тап по двум чипам подряд не должен дать ответу первого перезаписать второй
+  workshopList(requestedSort).then(function(res){
+    if(requestedSort!==workshopSortMode) return; // пока летал запрос, игрок уже переключил сортировку — этот ответ больше не актуален
+    const tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
+    if(!tracks.length){ listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty; } return; }
+    if(emptyEl) emptyEl.classList.add('hidden');
+    const mine=workshopMyVotes();
+    // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
+    // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
+    const isOwner = !!(res && res.isOwner);
+    listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
+      '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
+      '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
+      '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
+      '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button>'+
+      '<button class="wReport" data-act="report">⚑</button>'+
+      (isOwner ? '<button class="wPin" data-act="pin"></button><button class="wHide" data-act="hide"></button>' : '')+
+      '</div></div>'; }).join('');
+    tracks.forEach(function(t,i){
+      const row=listEl.children[i]; row.dataset.code=t.code;
+      const status=t.status||'normal'; row.dataset.status=status;
+      const cfg=forgeDecode(t.code);
+      if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
+      row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
+      row.querySelector('.wAuthor').textContent=t.author_name||'';
+      row.querySelector('[data-role="hearts"]').textContent='★ '+(t.hearts||0);
+      row.querySelector('[data-role="plays"]').textContent='▶ '+(t.plays||0);
+      row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
+      row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
+      row.querySelector('.wEdit').textContent=L.workshopEdit||'В Кузницу';
+      row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
+      if(isOwner){
+        const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
+        pinBtn.textContent = status==='pinned' ? '📌' : '📍';
+        pinBtn.classList.toggle('active', status==='pinned');
+        pinBtn.setAttribute('aria-label', L.workshopPin||'Закрепить');
+        hideBtn.textContent = status==='hidden' ? '🚫' : '👁';
+        hideBtn.classList.toggle('active', status==='hidden');
+        hideBtn.setAttribute('aria-label', L.workshopHide||'Скрыть');
+      }
+    });
+  }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
+}
+// 06.09.2026: workshopOpen()/forgeWorkshopBtn/workshopBack убраны — Мастерская больше не
+// отдельный экран, заполняется прямо при входе в Конструктор (forgeOpen()) и при возврате
+// на вкладку «Играть» (forgeTabSet()); «назад» из неё больше нет — это уже вкладка Конструктора,
+// назад отсюда ведёт та же кнопка forgeBack, что и всегда.
+wireOnLocal('workshopList','click',function(e){
+  const row=e.target.closest('.wRow'); if(!row) return;
+  const code=row.dataset.code; if(!code) return;
+  const act=e.target.closest('[data-act]'); if(!act) return;
+  if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
+  if(act.dataset.act==='edit'){ forgeWorkshopEdit(code); forgeTabSet('create'); return; } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
+  if(act.dataset.act==='vote'){
+    workshopVote(code).then(function(res){
+      if(!res || !res.ok) return;
+      const mine=workshopMyVotes(); const idx=mine.indexOf(code);
+      if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
+      Store.set('workshopMyVotes',mine);
+      act.textContent = res.hearted ? '♥' : '♡';
+      const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent='★ '+(res.hearts||0);
+    });
+    haptic('light');
+  }
+  if(act.dataset.act==='report'){
+    // 05.09.2026: сервер сам не даёт накрутить счётчик повторной жалобой (unique код+игрок) —
+    // здесь достаточно погасить кнопку визуально, чтобы не звать снова с этого же экрана без толку.
+    act.disabled=true; act.textContent='✓';
+    workshopReport(code); haptic('light'); toast(L.workshopReported||'Спасибо, посмотрим', 'rgba(255,159,176,.5)');
+  }
+  if(act.dataset.act==='pin'){
+    // 05.09.2026: один статус на трассу — закрепить снимает «скрыто», если было; сервер
+    // всё равно проверяет OWNER_ID сам, кнопка здесь лишь скрыта для остальных игроков.
+    const next = row.dataset.status==='pinned' ? 'normal' : 'pinned';
+    workshopModerate(code, next).then(function(res){
+      if(!res || !res.ok) return;
+      row.dataset.status=next;
+      act.textContent = next==='pinned' ? '📌' : '📍';
+      act.classList.toggle('active', next==='pinned');
+    });
+    haptic('light');
+  }
+  if(act.dataset.act==='hide'){
+    const next = row.dataset.status==='hidden' ? 'normal' : 'hidden';
+    workshopModerate(code, next).then(function(res){
+      if(!res || !res.ok) return;
+      row.dataset.status=next;
+      act.textContent = next==='hidden' ? '🚫' : '👁';
+      act.classList.toggle('active', next==='hidden');
+    });
+    haptic('light');
+  }
+});
 
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
@@ -705,6 +926,7 @@ wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); }
    forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
 wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.textContent=this.value; forgeSkyKick(); });
 wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.textContent=this.value; forgeSkyKick(); });
+wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.textContent=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика
 wireOnLocal('forgeCode', 'keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.

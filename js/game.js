@@ -38,17 +38,17 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      авторские тир-цены: 150/400/800 — стандартные (только цвет), 1500/2500/4000 — яркие
      (фирменная фишка), 7000/12000 — легендарные (уникальное поведение корпуса). */
   // Тир 1 — стандартные: только цвет (никаких фишек — правило №1)
-  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,'}, // Бумажный — нейтральная бумага
-  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,'},   // Лазурь — чистый синий (не циан!)
-  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,'},  // Золото — жёлтое золото (тон 50°)
-  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,'},    // Алый — настоящий красный
+  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,', cat:'classic'}, // Бумажный — нейтральная бумага
+  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,', cat:'classic'},   // Лазурь — чистый синий (не циан!)
+  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,', cat:'classic'},  // Золото — жёлтое золото (тон 50°)
+  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,', cat:'classic'},    // Алый — настоящий красный
   // Тир 2 — яркие: фирменная фишка + богатый след (только визуал, никаких бонусов!)
-  {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,'}, // Неон — кислотно-зелёный
-  {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,'}, // Аврора — фиолет
-  {id:6,name:6,price:4000,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,'}, // Плазма — глубокий апельсин (тон 23°)
+  {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,', cat:'bright'}, // Неон — кислотно-зелёный
+  {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,', cat:'bright'}, // Аврора — фиолет
+  {id:6,name:6,price:4000,   fx:'plasma', body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)', trail:'rgba(255,125,55,', cat:'bright'}, // Плазма — глубокий апельсин (тон 23°)
   // Тир 3 — легендарные: уникальное поведение корпуса
-  {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'}, // Хром — нейтральная сталь
-  {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,'}, // Призрак — ледяной циан (тон 185°, единственный!)
+  {id:7,name:7,price:7000,   fx:'chrome', body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,', cat:'legendary'}, // Хром — нейтральная сталь
+  {id:8,name:8,price:12000,  fx:'ghost',  body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)', trail:'rgba(120,225,240,', cat:'legendary'}, // Призрак — ледяной циан (тон 185°, единственный!)
   /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец): 6 приёмов корпуса отобраны живьём
      через макет (project_premium_skins_visual_language в памяти) — satellites/facets/inlay/
      filigree/core/aim, реализованы в render.js:drawPlane(). premium:true — метка для
@@ -62,12 +62,12 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      можно перетасовать): спутники↔обломки-спутники, грани-кристалл↔нить-жемчуг,
      самоцветы↔искры, золото-гравировка↔кометная пыль, реактор-ядро↔лента-энергия,
      слежение-прицел↔метки пути. */
-  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,'}, // Спутники — синь тона 230°
-  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,'}, // Грани — почти белый хрусталь
-  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,'},  // Инкрустация — рубин, тон 340°
-  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,'},  // Филигрань — старое золото, тон 35°
-  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,'},  // Ядро — изумруд, тон 140°
-  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,'},  // Прицел — электрик, тон 195°
+  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,', cat:'stars'}, // Спутники — синь тона 230°
+  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,', cat:'stars'}, // Грани — почти белый хрусталь
+  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,', cat:'stars'},  // Инкрустация — рубин, тон 340°
+  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,', cat:'stars'},  // Филигрань — старое золото, тон 35°
+  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,', cat:'stars'},  // Ядро — изумруд, тон 140°
+  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,', cat:'stars'},  // Прицел — электрик, тон 195°
   /* 05.09.2026 «добавляй все скины в игру, и они будут временно бесплатные»: 30 доп.
      скинов, отобраны владельцем через макеты этой сессии — render.js:PREM_FX_MAP (общий
      рендерер, не 30 копий кода, тот файл грузится раньше). tempFree:true — маркер для
@@ -77,39 +77,81 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      premSkinPerfReport) при каждой посадке. После анализа — перевести на premium:true +
      реальную цену в ⭐, tempFree убрать. */
   // 17 материалов — весь корпус перекрашен целиком, не пятно на нейтральном листе
-  {id:15, name:15, price:0, tempFree:true, fx:'matGold',      body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)', trail:'rgba(230,180,70,'},  // Золото
-  {id:16, name:16, price:0, tempFree:true, fx:'matSilver',    body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,'}, // Серебро
-  {id:17, name:17, price:0, tempFree:true, fx:'matBronze',    body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)', trail:'rgba(200,128,66,'},  // Бронза
-  {id:18, name:18, price:0, tempFree:true, fx:'matIce',       body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,'},  // Лёд/Хрусталь
-  {id:19, name:19, price:0, tempFree:true, fx:'matEmerald',   body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',  trail:'rgba(60,210,130,'},  // Изумруд
-  {id:20, name:20, price:0, tempFree:true, fx:'matObsidian',  body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,'}, // Обсидиан
-  {id:21, name:21, price:0, tempFree:true, fx:'matMarble',    body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)', trail:'rgba(190,178,160,'}, // Мрамор (прямые лучи, v2 — см. feedback_macet_geometry_pitfalls)
-  {id:22, name:22, price:0, tempFree:true, fx:'matNebula',    body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',  trail:'rgba(140,110,220,'}, // Туманность/галактика
-  {id:23, name:23, price:0, tempFree:true, fx:'matOpal',      body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)', trail:'rgba(220,180,200,'}, // Опал
-  {id:24, name:24, price:0, tempFree:true, fx:'matVerdigris', body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',  trail:'rgba(80,160,130,'},  // Окисленная медь
-  {id:25, name:25, price:0, tempFree:true, fx:'matCarbon',    body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)', trail:'rgba(150,155,165,'}, // Карбон
-  {id:26, name:26, price:0, tempFree:true, fx:'matLava',      body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',  trail:'rgba(255,120,40,'},  // Лава
-  {id:27, name:27, price:0, tempFree:true, fx:'matRust',      body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',  trail:'rgba(150,70,30,'},   // Ржавое железо
-  {id:28, name:28, price:0, tempFree:true, fx:'matHoney',     body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)', trail:'rgba(214,150,50,'},  // Соты/янтарь
-  {id:29, name:29, price:0, tempFree:true, fx:'matPlasma',    body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)', trail:'rgba(130,90,220,'},  // Плазма (материал, не путать с id6 fx:'plasma')
-  {id:30, name:30, price:0, tempFree:true, fx:'matQuartz',    body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,'}, // Кварц
-  {id:31, name:31, price:0, tempFree:true, fx:'matWood',      body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)', trail:'rgba(180,130,70,'},  // Дерево
+  {id:15, name:15, price:0, tempFree:true, fx:'matGold',      body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)', trail:'rgba(230,180,70,', cat:'materials'},  // Золото
+  {id:16, name:16, price:0, tempFree:true, fx:'matSilver',    body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,', cat:'materials'}, // Серебро
+  {id:17, name:17, price:0, tempFree:true, fx:'matBronze',    body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)', trail:'rgba(200,128,66,', cat:'materials'},  // Бронза
+  {id:18, name:18, price:0, tempFree:true, fx:'matIce',       body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,', cat:'materials'},  // Лёд/Хрусталь
+  {id:19, name:19, price:0, tempFree:true, fx:'matEmerald',   body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',  trail:'rgba(60,210,130,', cat:'materials'},  // Изумруд
+  {id:20, name:20, price:0, tempFree:true, fx:'matObsidian',  body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,', cat:'materials'}, // Обсидиан
+  {id:21, name:21, price:0, tempFree:true, fx:'matMarble',    body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)', trail:'rgba(190,178,160,', cat:'materials'}, // Мрамор (прямые лучи, v2 — см. feedback_macet_geometry_pitfalls)
+  {id:22, name:22, price:0, tempFree:true, fx:'matNebula',    body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',  trail:'rgba(140,110,220,', cat:'materials'}, // Туманность/галактика
+  {id:23, name:23, price:0, tempFree:true, fx:'matOpal',      body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)', trail:'rgba(220,180,200,', cat:'materials'}, // Опал
+  {id:24, name:24, price:0, tempFree:true, fx:'matVerdigris', body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',  trail:'rgba(80,160,130,', cat:'materials'},  // Окисленная медь
+  {id:25, name:25, price:0, tempFree:true, fx:'matCarbon',    body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)', trail:'rgba(150,155,165,', cat:'materials'}, // Карбон
+  {id:26, name:26, price:0, tempFree:true, fx:'matLava',      body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',  trail:'rgba(255,120,40,', cat:'materials'},  // Лава
+  {id:27, name:27, price:0, tempFree:true, fx:'matRust',      body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',  trail:'rgba(150,70,30,', cat:'materials'},   // Ржавое железо
+  {id:28, name:28, price:0, tempFree:true, fx:'matHoney',     body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)', trail:'rgba(214,150,50,', cat:'materials'},  // Соты/янтарь
+  {id:29, name:29, price:0, tempFree:true, fx:'matPlasma',    body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)', trail:'rgba(130,90,220,', cat:'materials'},  // Плазма (материал, не путать с id6 fx:'plasma')
+  {id:30, name:30, price:0, tempFree:true, fx:'matQuartz',    body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,', cat:'materials'}, // Кварц
+  {id:31, name:31, price:0, tempFree:true, fx:'matWood',      body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)', trail:'rgba(180,130,70,', cat:'materials'},  // Дерево
   // 9 символов-сигилов — нейтральный борт + один гравированный знак строго по центру
-  {id:32, name:32, price:0, tempFree:true, fx:'sigPenta',     body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,'}, // Пентаграмма
-  {id:33, name:33, price:0, tempFree:true, fx:'sigHexa',      body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)', trail:'rgba(255,110,60,'},  // Гексаграмма
-  {id:34, name:34, price:0, tempFree:true, fx:'sigMandala',   body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)', trail:'rgba(60,220,180,'},  // Мандала-розетка
-  {id:35, name:35, price:0, tempFree:true, fx:'sigTriquetra', body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)', trail:'rgba(170,220,60,'},  // Трикветра
-  {id:36, name:36, price:0, tempFree:true, fx:'sigCompass',   body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,'}, // Роза ветров
-  {id:37, name:37, price:0, tempFree:true, fx:'sigYinyang',   body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,'}, // Инь-Янь
-  {id:38, name:38, price:0, tempFree:true, fx:'sigFlower',    body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)', trail:'rgba(80,220,110,'},  // Цветок жизни
-  {id:39, name:39, price:0, tempFree:true, fx:'sigMaltese',   body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)', trail:'rgba(240,70,100,'},  // Мальтийский крест
-  {id:40, name:40, price:0, tempFree:true, fx:'sigSnowflake', body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)', trail:'rgba(70,190,235,'},  // Кристалл-снежинка
+  {id:32, name:32, price:0, tempFree:true, fx:'sigPenta',     body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,', cat:'sigils'}, // Пентаграмма
+  {id:33, name:33, price:0, tempFree:true, fx:'sigHexa',      body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)', trail:'rgba(255,110,60,', cat:'sigils'},  // Гексаграмма
+  {id:34, name:34, price:0, tempFree:true, fx:'sigMandala',   body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)', trail:'rgba(60,220,180,', cat:'sigils'},  // Мандала-розетка
+  {id:35, name:35, price:0, tempFree:true, fx:'sigTriquetra', body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)', trail:'rgba(170,220,60,', cat:'sigils'},  // Трикветра
+  {id:36, name:36, price:0, tempFree:true, fx:'sigCompass',   body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,', cat:'sigils'}, // Роза ветров
+  {id:37, name:37, price:0, tempFree:true, fx:'sigYinyang',   body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,', cat:'sigils'}, // Инь-Янь
+  {id:38, name:38, price:0, tempFree:true, fx:'sigFlower',    body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)', trail:'rgba(80,220,110,', cat:'sigils'},  // Цветок жизни
+  {id:39, name:39, price:0, tempFree:true, fx:'sigMaltese',   body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)', trail:'rgba(240,70,100,', cat:'sigils'},  // Мальтийский крест
+  {id:40, name:40, price:0, tempFree:true, fx:'sigSnowflake', body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)', trail:'rgba(70,190,235,', cat:'sigils'},  // Кристалл-снежинка
   // 4 приёма иллюзии формы — нейтральный борт + узор внутренними линиями
-  {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,'},  // Кожаная стёжка
-  {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,'},  // Топографические линии
-  {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,'},  // Оригами-заломы
-  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,'}   // Плетёная решётка
+  {id:41, name:41, price:0, tempFree:true, fx:'illLeather',   body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)', trail:'rgba(220,150,60,', cat:'illusion'},  // Кожаная стёжка
+  {id:42, name:42, price:0, tempFree:true, fx:'illTopo',      body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)', trail:'rgba(70,210,120,', cat:'illusion'},  // Топографические линии
+  {id:43, name:43, price:0, tempFree:true, fx:'illOrigami',   body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)', trail:'rgba(230,90,170,', cat:'illusion'},  // Оригами-заломы
+  {id:44, name:44, price:0, tempFree:true, fx:'illLattice',   body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)', trail:'rgba(70,170,220,', cat:'illusion'},  // Плетёная решётка
+  // 05.09.2026 «Из макета в игру»: 4 новых материала. Цена 2500 — тот же тир, что «Аврора»
+  // (fx-эффект, не просто цвет), проставлена сразу, не додумана втихую.
+  {id:45, name:45, price:10, fx:'patPenrose',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Пенроуз — настоящая мозаика де Брёйна, проверена скриптом (одна длина стороны, 2 угла у всех 40 ромбов)
+  {id:46, name:46, price:10, fx:'patLattice2',  body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Цветочная решётка
+  {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Плед из кругов
+  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
 ];
+/* 05.09.2026 «SKINS[id] тихо ломается при пропусках в id»: та же ловушка, что FLASHES/TRAILS/
+   DECALS уже решили через X_BY_ID (прямая индексация по массиву верна ТОЛЬКО пока id идут
+   подряд с нуля — стоит удалить/переставить один скин или добавить их не по порядку, и
+   SKINS[id] тихо вернёт чужой скин или undefined, без единой ошибки в консоли). Заведено
+   превентивно, пока в этой ветке id ещё случайно совпадают с позицией — не дожидаясь того
+   же падения, что уже поймала параллельная сессия на своей ветке (id49+). */
+const SKINS_BY_ID = new Map(SKINS.map(d=>[d.id,d]));
+/* 05.09.2026 «След — 5-я вкладка» (владелец, после разбора): раньше след жил ВНУТРИ
+   skin.trailFx (id 9-14 выше) и переключался только вместе со скином. Теперь это отдельный,
+   независимый выбор — те же 6 языков следа, но выбираются отдельно от цвета и надеваются
+   на любой скин. Явное решение владельца: старая пара скин→след НЕ переносится — все игроки
+   стартуют с id:0 «Нет», сами выбирают заново. price:0 у всех шести — это не новый платный
+   контент, просто те же 6 языков следа, что уже были в игре, ставшие независимыми. */
+const TRAILS=[
+  {id:0, name:'Нет',              price:0, style:''},
+  {id:1, name:'Обломки-спутники', price:0, style:'debris', cat:'classic'},
+  {id:2, name:'Нить-жемчуг',      price:0, style:'pearls', cat:'classic'},
+  {id:3, name:'Искры',            price:0, style:'sparks', cat:'classic'},
+  {id:4, name:'Кометная пыль',    price:0, style:'cometdust', cat:'classic'},
+  {id:5, name:'Лента',            price:0, style:'ribbon', cat:'classic'},
+  {id:6, name:'Метки пути',       price:0, style:'waypoints', cat:'classic'},
+  {id:7, name:'Морзянка',         price:0, style:'morse', cat:'classic'}, // 05.09.2026: доделан хвост с прошлого раза — тумблер из Настроек убран, morseOn() уже проверяет именно этот стиль следа (core.js)
+  {id:8, name:'Узел-петля',       price:10, style:'loopKnot', cat:'premium'},
+  {id:9, name:'Волна-змейка',     price:10, style:'snakeWave', cat:'premium'},
+  {id:10, name:'Сердце-узел',     price:10, style:'heartKnot', cat:'premium'},
+  {id:11, name:'Созвездие-след',  price:10, style:'trailConstellation', cat:'premium'},
+  {id:12, name:'Скрепка',         price:10, style:'paperclip', cat:'premium'},
+  {id:13, name:'Радуга-арка',     price:10, style:'rainbowArc', cat:'premium'}, // спорный — на проверку
+  {id:14, name:'Волны',           price:10, style:'waterWaves', cat:'premium'}, // спорный — на проверку
+  /* 05.09.2026 «Кельтский плетёный жгут» — проекция спирали сбоку: y_k=sin(θ+k·2π/N),
+     глубина z_k=cos(θ+k·2π/N) даёт честный перед/зад (совпадают только в точке
+     пересечения) — та же математика, что у витой верёвки/косы в 3D. См. HUMAN-SYMBOLS.md. */
+  {id:15, name:'Кельтский жгут',  price:10, style:'celticTwist', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у витой верёвки'},
+  {id:16, name:'Кельтская коса',  price:10, style:'celticBraid', cat:'celtic', since:'1.478.83', fact:'Проекция спирали сбоку: y=sin(θ+k·2π/N), та же математика, что у настоящей косы'},
+];
+const TRAILS_BY_ID = new Map(TRAILS.map(d=>[d.id,d]));
 /* 28.08.2026 «Тюнинг, шаг 1»: первая независимая категория кастомизации, кроме цвета —
    декаль поверх корпуса. Каждая — готовый символ Unicode (эмодзи), не нарисована нами:
    ноль художественной работы, ноль решений «что правильно» — то, что уже есть в стандарте.
@@ -128,8 +170,8 @@ const DECALS=[
   {id:3, name:'Звезда', price:0, ch:'🌟', cat:'space'}, {id:4, name:'Комета', price:60, ch:'☄️', cat:'space'}, // 04.09.2026: Звезда теперь бесплатна — см. ANGAR_FREEBIE
    {id:6, name:'Полумесяц', price:60, ch:'🌙', cat:'space'},
   {id:7, name:'Пришелец', price:60, ch:'👽', cat:'space'}, {id:8, name:'Искра', price:60, ch:'✨', cat:'space'},
-  {id:62, name:'Спутник', price:60, ch:'🛰️', cat:'space'}, {id:63, name:'Падающая звезда', price:60, ch:'🌠', cat:'space'},
-  {id:64, name:'Телескоп', price:60, ch:'🔭', cat:'space'}, {id:65, name:'Млечный Путь', price:60, ch:'🌌', cat:'space'},
+  {id:62, name:'Спутник', price:60, ch:'🛰️', cat:'space'},
+  {id:64, name:'Телескоп', price:60, ch:'🔭', cat:'space'}, // 05.09.2026: id63 «Падающая звезда»/id65 «Млечный Путь» убраны владельцем
   // Зодиак
    
    
@@ -141,10 +183,8 @@ const DECALS=[
   {id:21, name:'Молния', price:60, ch:'⚡', cat:'weather'}, {id:22, name:'Радуга', price:60, ch:'🌈', cat:'weather'},
   {id:23, name:'Снежинка', price:60, ch:'❄️', cat:'weather'}, {id:24, name:'Волна', price:60, ch:'🌊', cat:'weather'},
   {id:25, name:'Смерч', price:60, ch:'🌪️', cat:'weather'}, {id:26, name:'Солнце', price:60, ch:'☀️', cat:'weather'},
-  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'}, 
-   
-  {id:121, name:'Туман', price:60, ch:'🌫️', cat:'weather'},
-  {id:181, name:'Термометр', price:60, ch:'🌡️', cat:'weather'},
+  {id:66, name:'Циклон', price:60, ch:'🌀', cat:'weather'},
+  {id:181, name:'Термометр', price:60, ch:'🌡️', cat:'weather'}, // 05.09.2026: id121 «Туман» убран владельцем
   // Смайлики
   {id:27, name:'Улыбка', price:60, ch:'😀', cat:'faces'}, {id:28, name:'Стиль', price:60, ch:'😎', cat:'faces'},
   {id:29, name:'Огонь', price:60, ch:'🔥', cat:'faces'}, {id:30, name:'Сотка', price:0, ch:'💯', cat:'faces'}, // 04.09.2026: бесплатна — см. ANGAR_FREEBIE (ui.js)
@@ -624,11 +664,8 @@ const DECALS=[
   {id:570, name:'Пар из ушей', price:60, ch:'😤', cat:'faces'},
   {id:571, name:'Ярость', price:60, ch:'😡', cat:'faces'},
   {id:572, name:'Злость', price:60, ch:'😠', cat:'faces'},
-  {id:573, name:'Ругань', price:60, ch:'🤬', cat:'faces'},
-  {id:574, name:'Бесёнок', price:60, ch:'👿', cat:'faces'},
   {id:575, name:'Череп', price:60, ch:'💀', cat:'faces'},
-  {id:576, name:'Пиратский череп', price:60, ch:'☠️', cat:'faces'},
-  {id:577, name:'Какашка', price:60, ch:'💩', cat:'faces'},
+  {id:577, name:'Какашка', price:60, ch:'💩', cat:'faces'}, // 05.09.2026: id573 «Ругань»/id574 «Бесёнок»/id576 «Пиратский череп» убраны — политика 3+
   {id:578, name:'Клоун', price:60, ch:'🤡', cat:'faces'},
   {id:579, name:'Космический захватчик', price:60, ch:'👾', cat:'faces'},
   {id:580, name:'Робот', price:60, ch:'🤖', cat:'faces'},
@@ -1522,70 +1559,215 @@ const ICONS_BY_ID = new Map(ICONS.map(d=>[d.id,d])); // см. DECALS_BY_ID вы�
    старте тоже растёт с ценой (см. flashDur() в render.js, тот же диапазон .45→.75с). */
 const FLASHES=[
   {id:0, name:'Нет', price:0, style:'none'},
-  {id:1, name:'Кольцо', price:0, style:'ring'}, // 29.08.2026: бесплатна — см. ANGAR_FREEBIE (ui.js)
-  {id:2, name:'Звёздный всплеск', price:0, style:'star'}, // 29.08.2026: бесплатна — см. ANGAR_FREEBIE (ui.js); узор переделан 04.09.2026, цена не менялась
-  {id:3, name:'Всплеск частиц', price:500, style:'particles'},
-  {id:6, name:'Вихрь', price:500, style:'spiral'}, // 04.09.2026: было 650 — простой тир при переоценке всего каталога
+  {id:1, name:'Кольцо', price:0, style:'ring', cat:'classic'}, // 29.08.2026: бесплатна — см. ANGAR_FREEBIE (ui.js)
+  {id:2, name:'Звёздный всплеск', price:0, style:'star', cat:'classic'}, // 29.08.2026: бесплатна — см. ANGAR_FREEBIE (ui.js); узор переделан 04.09.2026, цена не менялась
+  {id:3, name:'Всплеск частиц', price:500, style:'particles', cat:'classic'},
+  {id:6, name:'Вихрь', price:500, style:'spiral', cat:'classic'}, // 04.09.2026: было 650 — простой тир при переоценке всего каталога
   // 04.09.2026 (владелец, живое устройство): id 8/11/12/18 (sphere/comet/saturn/wings)
   // убраны целиком — не нравятся, не «каркас на доработку», а совсем не то. Осиротевший
   // FLASHES_BY_ID.get(id) у уже владеющих игроков вернёт undefined — все места чтения уже
   // защищены `if(fl && fl.style...)` (см. renderFlashPattern/angarShip), просто не рисуют
   // ничего, не падают. Дыры в номерах — уже была такая же (3→6) до этой правки, ничего
   // нового не переизобретаем.
-  {id:13, name:'Разлёт', price:1200, style:'shards'}, // 04.09.2026: было «Осколки», 500 — переделан (реальное вращение при разлёте), вау-тир
-  {id:14, name:'Галактика', price:700, style:'galaxy'}, // 04.09.2026: было 650
-  {id:15, name:'Снежинка', price:500, style:'snowflake'},
-  {id:16, name:'Цветок', price:1200, style:'flower'}, // 04.09.2026: было 500 — переделан (тоньше, обводка вместо заливки), вау-тир
-  {id:17, name:'Корона', price:1200, style:'corona'}, // 04.09.2026: было 650 — переделана (кольцо+гало вместо одного пятна), вау-тир
-  {id:19, name:'Соты', price:500, style:'honeycomb'}, // 04.09.2026: было 650 — простой тир при переоценке всего каталога
-  {id:20, name:"Орбита", price:1500, style:"orbit"},
-  {id:21, name:"Квадраты", price:1500, style:"squares"},
-  {id:22, name:"Двойной маятник", price:1500, style:"doublePendulum"},
-  {id:23, name:"Кристалл", price:1500, style:"crystal"},
-  {id:24, name:"Маятник", price:1200, style:"pendulum"},
-  {id:25, name:"Гироскоп", price:1200, style:"gyro"},
-  {id:26, name:"Лиссажу", price:1200, style:"lissajous"},
-  {id:27, name:"Пульсар", price:1200, style:"pulsar"},
-  {id:28, name:"Метеоры", price:1200, style:"meteors"},
-  {id:29, name:"Маятник Ньютона", price:1200, style:"cradle"},
-  {id:30, name:"Спираль", price:900, style:"swirl"},
-  {id:31, name:"Веер", price:900, style:"fan"},
-  {id:32, name:"Маяк", price:900, style:"beacon"},
-  {id:33, name:"Оригами", price:900, style:"origami"},
-  {id:34, name:"Созвездие", price:900, style:"constellation"},
-  {id:35, name:"Компас", price:900, style:"compass"},
-  {id:36, name:"Восьмёрка", price:900, style:"figure8"},
-  {id:37, name:"Затмение", price:900, style:"eclipse"},
-  {id:38, name:"Шестерня", price:900, style:"gear"},
-  {id:39, name:"Иней", price:900, style:"frost"},
-  {id:40, name:"Сеть", price:900, style:"web"},
-  {id:41, name:"Турбина", price:900, style:"turbine"},
-  {id:42, name:"Молекула", price:900, style:"molecule"},
-  {id:43, name:"Разряд", price:700, style:"crack"},
-  {id:44, name:"Рой", price:700, style:"swarm"},
-  {id:45, name:"Магнитное поле", price:700, style:"field"},
-  {id:46, name:"Интерференция", price:700, style:"interference"},
-  {id:47, name:"Куб", price:700, style:"cube"},
-  {id:48, name:"Перья", price:700, style:"feathers"},
-  {id:49, name:"Морская звезда", price:700, style:"starfish"},
-  {id:50, name:"Рассвет", price:700, style:"sunrise"},
-  {id:51, name:"Пиксели", price:700, style:"pixels"},
-  {id:52, name:"Сверхновая", price:700, style:"supernova"},
-  {id:53, name:"Стрелка", price:700, style:"needle"},
-  {id:54, name:"Блик", price:700, style:"flare"},
-  {id:55, name:"Часы", price:700, style:"clock"},
-  {id:56, name:"Скан-линия", price:500, style:"scanline"},
-  {id:57, name:"Штрихкод", price:500, style:"barcode"},
-  {id:58, name:"Фейерверк", price:500, style:"firework"},
-  {id:59, name:"Струна", price:500, style:"string"},
+  {id:13, name:'Разлёт', price:1200, style:'shards', cat:'classic'}, // 04.09.2026: было «Осколки», 500 — переделан (реальное вращение при разлёте), вау-тир
+  {id:14, name:'Галактика', price:700, style:'galaxy', cat:'classic'}, // 04.09.2026: было 650
+  {id:15, name:'Снежинка', price:500, style:'snowflake', cat:'classic'},
+  {id:16, name:'Цветок', price:1200, style:'flower', cat:'classic'}, // 04.09.2026: было 500 — переделан (тоньше, обводка вместо заливки), вау-тир
+  {id:17, name:'Корона', price:1200, style:'corona', cat:'classic'}, // 04.09.2026: было 650 — переделана (кольцо+гало вместо одного пятна), вау-тир
+  {id:19, name:'Соты', price:500, style:'honeycomb', cat:'classic'}, // 04.09.2026: было 650 — простой тир при переоценке всего каталога
+  {id:20, name:"Орбита", price:1500, style:"orbit", cat:'classic'},
+  {id:21, name:"Квадраты", price:1500, style:"squares", cat:'classic'},
+  {id:22, name:"Двойной маятник", price:1500, style:"doublePendulum", cat:'classic'},
+  {id:23, name:"Кристалл", price:1500, style:"crystal", cat:'classic'},
+  {id:24, name:"Маятник", price:1200, style:"pendulum", cat:'classic'},
+  {id:25, name:"Гироскоп", price:1200, style:"gyro", cat:'classic'},
+  {id:26, name:"Лиссажу", price:1200, style:"lissajous", cat:'classic'},
+  {id:27, name:"Пульсар", price:1200, style:"pulsar", cat:'classic'},
+  {id:28, name:"Метеоры", price:1200, style:"meteors", cat:'classic'},
+  {id:29, name:"Маятник Ньютона", price:1200, style:"cradle", cat:'classic'},
+  {id:30, name:"Спираль", price:900, style:"swirl", cat:'classic'},
+  {id:31, name:"Веер", price:900, style:"fan", cat:'classic'},
+  {id:32, name:"Маяк", price:900, style:"beacon", cat:'classic'},
+  {id:33, name:"Оригами", price:900, style:"origami", cat:'classic'},
+  {id:34, name:"Созвездие", price:900, style:"constellation", cat:'classic'},
+  {id:35, name:"Компас", price:900, style:"compass", cat:'classic'},
+  {id:36, name:"Восьмёрка", price:900, style:"figure8", cat:'classic'},
+  {id:37, name:"Затмение", price:900, style:"eclipse", cat:'classic'},
+  {id:38, name:"Шестерня", price:900, style:"gear", cat:'classic'},
+  {id:39, name:"Иней", price:900, style:"frost", cat:'classic'},
+  {id:40, name:"Сеть", price:900, style:"web", cat:'classic'},
+  {id:41, name:"Турбина", price:900, style:"turbine", cat:'classic'},
+  {id:42, name:"Молекула", price:900, style:"molecule", cat:'classic'},
+  {id:43, name:"Разряд", price:700, style:"crack", cat:'classic'},
+  {id:44, name:"Рой", price:700, style:"swarm", cat:'classic'},
+  {id:45, name:"Магнитное поле", price:700, style:"field", cat:'classic'},
+  {id:46, name:"Интерференция", price:700, style:"interference", cat:'classic'},
+  {id:47, name:"Куб", price:700, style:"cube", cat:'classic'},
+  {id:48, name:"Перья", price:700, style:"feathers", cat:'classic'},
+  {id:49, name:"Морская звезда", price:700, style:"starfish", cat:'classic'},
+  {id:50, name:"Рассвет", price:700, style:"sunrise", cat:'classic'},
+  {id:51, name:"Пиксели", price:700, style:"pixels", cat:'classic'},
+  {id:52, name:"Сверхновая", price:700, style:"supernova", cat:'classic'},
+  {id:53, name:"Стрелка", price:700, style:"needle", cat:'classic'},
+  {id:54, name:"Блик", price:700, style:"flare", cat:'classic'},
+  {id:55, name:"Часы", price:700, style:"clock", cat:'classic'},
+  {id:56, name:"Скан-линия", price:500, style:"scanline", cat:'classic'},
+  {id:57, name:"Штрихкод", price:500, style:"barcode", cat:'classic'},
+  {id:58, name:"Фейерверк", price:500, style:"firework", cat:'classic'},
+  {id:59, name:"Струна", price:500, style:"string", cat:'classic'},
+  /* 05.09.2026 «Живые вспышки»: шесть НОВЫХ отдельных пунктов (не один совмещённый товар —
+     первая версия плана была неверной, поправлено владельцем). Каждый реагирует на настоящие
+     данные игрока/календаря, не только рисует один и тот же узор. Названия/style нарочно не
+     «Метеоры»/«Затмение»/«Созвездие» — те id28/37/34 уже заняты обычными нереагирующими
+     узорами, дублировать имя нельзя. Цены — по существующей шкале каталога, подтверждены
+     владельцем построчно (не выдуманы). */
+  {id:60, name:"Звездопад", price:1200, style:"starfall", cat:'live'}, // особая версия — в день пика настоящего метеорного потока (проверенные даты, см. METEOR_SHOWERS ниже)
+  {id:61, name:"Веха пути", price:1500, style:"milestone", cat:'live'}, // золотой залп ОДИН раз — когда пожизненный налёт (Stats.totalDist) впервые пересекает круглые 100 км
+  {id:62, name:"Небесное затмение", price:1200, style:"realEclipse", cat:'live'}, // особая версия — в день настоящего затмения (проверенные даты, см. REAL_ECLIPSES ниже)
+  {id:63, name:"С возвращением", price:900, style:"comeback", cat:'live'}, // тёплая особая версия — если не заходил 7+ дней подряд
+  {id:64, name:"Созвездие наград", price:700, style:"achConstellation", cat:'live'}, // всегда честно по числу открытых достижений (ACH из ach.js)
+  {id:65, name:"Знак дня", price:500, style:"daysign", cat:'live'}, // число колец — от сегодняшнего общего сида (dailyRNG, тот же что у Трассы дня)
+  /* 05.09.2026 «Из макета в игру» — большая партия, собранная за один долгий заход (клип N'to,
+     Vecteezy/Envato/Behance, сакральная геометрия — Flower of Life/Metatron/Sri Yantra/Hat-тайл
+     проверены численно короткими скриптами до вставки сюда, не нарисованы на глаз, см. .knowledge
+     при желании свериться). Цены — по той же шкале каталога (500→1500 по редкости/сложности),
+     проставлены сразу, не додуманы втихую — видно в этом же коммите. 15 похожих/спорных вариантов
+     из макета сюда НЕ включены — ждут отдельного решения владельца по каждому. */
+  {id:66, name:"Спицы", price:10, style:"spokes", cat:'classic'},
+  {id:67, name:"Матрёшка", price:10, style:"nestedShapes", cat:'classic'},
+  {id:68, name:"Слияние", price:10, style:"blendCircles", cat:'classic'},
+  {id:69, name:"Рябь", price:10, style:"rippleDot", cat:'classic'},
+  {id:70, name:"Пластинка", price:10, style:"grooveDisc", cat:'classic'},
+  {id:71, name:"Уровень", price:10, style:"fillLevel", cat:'classic'},
+  {id:72, name:"Плетение", price:10, style:"weavedBands", cat:'classic'},
+  {id:73, name:"Созвездие колец", price:10, style:"ringCluster", cat:'classic'},
+  {id:74, name:"Лунные фазы", price:10, style:"moonGrid", cat:'classic'},
+  {id:75, name:"Лестница", price:10, style:"diagStairs", cat:'classic'},
+  {id:76, name:"Эквалайзер", price:10, style:"eqBars", cat:'classic'},
+  {id:77, name:"Изо-треугольник", price:10, style:"isoTriangle", cat:'classic'},
+  {id:78, name:"Коллаж", price:10, style:"shapeCollage", cat:'classic'},
+  {id:79, name:"Спираль в треугольнике", price:10, style:"spiralClip", cat:'classic'},
+  {id:80, name:"Тоннель звёзд", price:10, style:"starTunnel", cat:'classic'},
+  {id:81, name:"Спиральная паутина", price:10, style:"spiralWeb", cat:'classic'},
+  {id:82, name:"Крест-луч", price:10, style:"crossBeam", cat:'classic'},
+  {id:83, name:"Веер дуг", price:10, style:"arcFan", cat:'classic'},
+  {id:84, name:"Ромб-сфера", price:10, style:"diamondSphere", cat:'classic'},
+  {id:85, name:"Скрученный шар", price:10, style:"twistedSphere", cat:'classic'},
+  {id:86, name:"Лепестки-линзы", price:10, style:"lensPetals", cat:'classic'},
+  {id:87, name:"Объёмный шар", price:10, style:"shadedBall", cat:'classic'},
+  {id:88, name:"Бант из колец", price:10, style:"ringBow", cat:'classic'},
+  {id:89, name:"Кристалл-огранка", price:10, style:"gemFacet", cat:'classic'},
+  {id:90, name:"Кубооктаэдр", price:10, style:"cuboctahedron", cat:'sacred', fact:'Vector Equilibrium — 12 вершин, 24 ребра длины √2'}, // Vector Equilibrium — 12 вершин, 24 ребра длины √2, проверено скриптом
+  {id:91, name:"Шри-Янтра", price:10, style:"sriYantra", cat:'sacred', fact:'Настоящие опубликованные координаты — 18 подлинных тройных пересечений'}, // раньше Sri Yantra — реальные опубликованные координаты, 18 подлинных тройных пересечений, проверено скриптом
+  {id:92, name:"Печать", price:10, style:"sealNested", cat:'sacred', fact:'Наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° на слой'}, // наша конструкция — 3 звезды Давида, масштаб ×1/√3 и поворот +30° посчитаны, не подобраны
+  {id:93, name:"Звезда гириха", price:10, style:"girihDecagon", cat:'sacred', fact:'Исламский геометрический узор — угол 54°, декаграмма {10/3}'}, // раньше «Гирих: декагон» — угол 54° выведен и проверен на всех 10 рёбрах
+  {id:94, name:"Шляпа", price:10, style:"hatTile", cat:'sacred', fact:'Hat-тайл (Einstein, 2023) — первая известная апериодическая мозаика ОДНОЙ плиткой'}, // раньше Hat-тайл — координаты из настоящего кода автора (isohedral/hatviz), Einstein-плитка 2023 года
+  {id:95, name:"Шляпа и Метатрон", price:10, style:"hatMetatron", cat:'sacred', fact:'Композиция Hat-тайла (2023) и Куба Метатрона'}, // раньше «Composite: Hat + Метатрон»
+  {id:96, name:"Рыбий пузырь", price:10, style:"vesicaPiscis", cat:'sacred', fact:'Vesica Piscis — пересечение двух равных кругов через центр друг друга, древний символ'}, // раньше Vesica Piscis
+  {id:97, name:"Инь-Янь", price:10, style:"yinyangFlash", cat:'sacred', fact:'Тайцзиту — классический даосский символ баланса'},
+  {id:98, name:"Золотая спираль", price:10, style:"goldenSpiral", cat:'sacred', fact:'Квадраты Фибоначчи 1,1,2,3,5,8,13 — стыкуются без щелей'}, // квадраты Фибоначчи, проверено скриптом на стыковку без щелей
+  {id:99, name:"Аполлониева прокладка", price:10, style:"apollonian", cat:'sacred', fact:'Теорема Декарта — каждый круг касается всех трёх соседей'}, // теорема Декарта, все касания проверены скриптом
+  {id:100, name:"Октаграмма", price:10, style:"octagram", cat:'classic'},
+  {id:101, name:"Куб Метатрона", price:10, style:"metatronCube", cat:'sacred', fact:'13 точек Fruit of Life, все 78 связей (C(13,2))'}, // 13 точек Fruit of Life, ровно 78 линий (C(13,2)) — проверено скриптом
+  {id:102, name:"Цветок жизни", price:10, style:"flowerOfLife", cat:'sacred', fact:'19 кругов на треугольной решётке — шаг узла равен радиусу'}, // 19 кругов на настоящей треугольной решётке, шаг = радиус — проверено скриптом
+  {id:103, name:"Бант-треугольники", price:10, style:"bowtieTri", cat:'classic'},
+  /* 05.09.2026 — 13 «спорных» из этой же партии: владелец сам проверит вживую и решит по
+     каждой отдельно (оставить/убрать), поэтому цены здесь ниже — самый дешёвый тир каталога. */
+  {id:104, name:"Компас-звезда", price:10, style:"denseSpokes", cat:'classic'},
+  {id:105, name:"Сноп линий", price:10, style:"convergeBeam", cat:'classic'},
+  {id:106, name:"Кластер пластинок", price:10, style:"grooveClusters", cat:'classic'},
+  {id:107, name:"Полумесяц колец", price:10, style:"crescentGrooves", cat:'classic'},
+  {id:108, name:"Зубчатый круг", price:10, style:"gearBurst", cat:'classic'},
+  {id:109, name:"Цветок-вихрь", price:10, style:"pinwheelFlower", cat:'classic'},
+  {id:110, name:"Мельница", price:10, style:"pieMill", cat:'classic'},
+  {id:111, name:"Гексагон", price:10, style:"plainHex", cat:'classic'},
+  {id:112, name:"Волна ромбов", price:10, style:"diamondWave", cat:'classic'},
+  {id:113, name:"Мозаика", price:10, style:"barMosaic", cat:'classic'},
+  {id:114, name:"Треугольная мандала", price:10, style:"triMandala", cat:'classic'},
+  {id:115, name:"Треугольник Рёло", price:10, style:"reuleaux", cat:'classic'},
+  {id:116, name:"Додекаграмма", price:10, style:"dodecagram", cat:'classic'},
+  /* 05.09.2026 «Суперформула Гилиса» — восемь новых Вспышек, ОДНА общая функция на все
+     (render.js), отличаются только 4 числа на запись здесь. Параметры — из реального
+     источника (Paul Bourke), не подобраны на глаз; полная теория и то, что формула
+     честно НЕ может (настоящая шестерня, «почти круг») — в .knowledge/GENERATIVE-GEOMETRY.md.
+     Владелец одобрил все 8 после того, как первая партия («звезда»/«капля»/«шестерня»)
+     не прошла живую проверку глазами и была честно переделана/снята. */
+  {id:117, name:"Ромб", price:10, style:"sfRomb", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:118, name:"Морская звезда", price:10, style:"sfStarfish", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:119, name:"Соцветие", price:10, style:"sfBlossom", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:120, name:"Морской ёж", price:10, style:"sfUrchin", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:121, name:"Галька", price:10, style:"sfPebble", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:122, name:"Плита", price:10, style:"sfSlab", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:123, name:"Щит", price:10, style:"sfShield", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  {id:124, name:"Венец", price:10, style:"sfCrown", cat:'superformula', since:'1.478.82', fact:'r=(|cos(mφ/4)|^n2+|sin(mφ/4)|^n3)^(-1/n1) — Йохан Гилис, 2003, из ботаники'},
+  /* 05.09.2026 «Розы Родонеи» — r=cos(k·θ), k нечётное → k лепестков, k чётное → 2k
+     (Гвидо Гранди, 1723-28). Одна общая функция в render.js, отличаются только k.
+     Проверено численно (замкнутость) и визуально до вставки — см. GENERATIVE-GEOMETRY.md. */
+  {id:125, name:"Клевер", price:10, style:"roseClover", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:126, name:"Трилистник", price:10, style:"roseTrefoil", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:127, name:"Розетка", price:10, style:"roseRosette", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:128, name:"Пятилистник", price:10, style:"rosePetals5", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:129, name:"Хризантема", price:10, style:"roseChrysanthemum", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:130, name:"Семицветик", price:10, style:"roseSeven", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  {id:131, name:"Веер", price:10, style:"roseFan", cat:'roses', since:'1.478.83', fact:'r=cos(k·θ) — Гвидо Гранди, 1723-28, «родонея» = роза по-гречески'},
+  /* 05.09.2026 «L-система» — F→F[+F]F[-F]F, угол 25.7°, Prusinkiewicz & Lindenmayer, «The
+     Algorithmic Beauty of Plants» (1990), fig. 1.24(a). Не кривая — порождающая грамматика:
+     строка переписывается n раз, потом читается черепашкой (F=шаг вперёд, +/-=поворот,
+     []=запомнить/вернуть точку). n=4+ сливается в кашу на размере Вспышки — проверено
+     визуально, не вставлено. См. .knowledge/GENERATIVE-GEOMETRY.md. */
+  {id:132, name:"Ветвление", price:10, style:"lsysBranch", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
+  {id:133, name:"Папоротник", price:10, style:"lsysFern", cat:'lsystem', since:'1.478.88', fact:'F→F[+F]F[-F]F, угол 25.7° — Prusinkiewicz & Lindenmayer, 1990'},
 ];
 const FLASHES_BY_ID = new Map(FLASHES.map(d=>[d.id,d])); // см. DECALS_BY_ID выше — тот же приём и то же обоснование
+/* 05.09.2026 «Живые вспышки», данные календаря — сверены поиском (AMS/IMO/timeanddate/
+   Britannica), не по памяти, тот же принцип, что у брендовых логотипов («проверь, не рисуй
+   на глаз»). METEOR_SHOWERS повторяется каждый год (пик плюс-минус сутки). REAL_ECLIPSES —
+   конечный список конкретных дат 2026-2027, на будущие годы список нужно будет дополнить
+   вручную (проверенными датами, не догадкой). */
+const METEOR_SHOWERS=[
+  {m:1,d:4},{m:4,d:22},{m:8,d:13},{m:10,d:21},{m:11,d:17},{m:12,d:14}
+];
+const REAL_ECLIPSES=[
+  '2026-02-17','2026-03-02','2026-03-03','2026-08-12','2026-08-27','2026-08-28',
+  '2027-02-06','2027-02-20','2027-02-21','2027-07-18','2027-08-02','2027-08-16','2027-08-17'
+];
+function isMeteorShowerDay(d){
+  d=d||new Date();
+  const today=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  return METEOR_SHOWERS.some(s=>{
+    const peak=new Date(d.getFullYear(),s.m-1,s.d);
+    return Math.abs(Math.round((today-peak)/86400000))<=1;
+  });
+}
+function isRealEclipseDay(d){
+  return typeof dateKey==='function' && REAL_ECLIPSES.includes(dateKey(d||new Date()));
+}
+/* «Веха пути»/«С возвращением» — разовые события, проверяются ОДИН раз на взлёте (тем же
+   моментом, что streakDayCheck/morseDayCheck в ui.js), не каждый кадр полёта — иначе легко
+   либо записать «уже показано» раньше показа, либо показывать вечно. ВАЖНО: должна
+   вызываться из ui.js СТРОГО ДО streakDayCheck() — читает streakDay, который streakDayCheck
+   тут же перезапишет на сегодня. */
+function livingFlashCheck(){
+  const prevMs=saneNumber(Store.get('flashMilestoneAck',0),0);
+  const curMs=Math.floor((Stats.totalDist||0)/100000); // шаг 100 км = 100000 м (Stats.totalDist уже в метрах, см. ui.js gameOver)
+  S.milestoneHit = curMs>prevMs;
+  if(S.milestoneHit) Store.set('flashMilestoneAck', curMs);
+
+  S.comebackHit=false;
+  const lastDay=Store.get('streakDay','');
+  if(lastDay){
+    const parts=lastDay.split('-').map(Number);
+    const last=new Date(parts[0],parts[1]-1,parts[2]), now=new Date();
+    const gapDays=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-last)/86400000);
+    S.comebackHit = gapDays>=7;
+  }
+}
 const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
-  shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
-  mode:'classic', hits:0, bonuses:0, nearMiss:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+  shield:0, magnet:0, slowmo:0, dash:0, freeze:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи; freeze — 06.09.2026 «Стоп-кадр», седьмой
+  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, starsSpawned:0, hundredDone:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
     // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
@@ -1601,6 +1783,7 @@ const S = {
      каждый кадр затирал мой id надетой декоративной вспышки нулём — эффект не мог показаться
      физически. Переименовано в launchFx — не пересекается ни с чем (проверено grep). */
   launchFx:0, ownedLaunchFx:[0,1,2], // третий независимый слот — та же пара, что у decal/icon. id1,2 бесплатны — см. ANGAR_FREEBIE
+  milestoneHit:false, comebackHit:false, // 05.09.2026 «Живые вспышки»: разовые флаги ЭТОГО забега — выставляет livingFlashCheck() на взлёте (ui.js), читает renderFlashPattern (render.js)
   /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов с системой
      избранного): звёздочка-тоггл и favDecal/favIcon/favLaunchFx удалены целиком. Вместо
      выбора игроком — 2 фиксированных бесплатных, сразу во владении предмета на категорию
@@ -1651,6 +1834,23 @@ const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — п�
   // фиксированное время вместо «пока не умер» — Score Attack на таймер. Оригинал — 5 минут, у нас средний
   // забег ~30с, поэтому 60с (владелец выбрал сам, не решение по умолчанию) — короткий, напряжённый отрезок
   // на весь отведённый срок, а не растянутая копия оригинала не по темпу игры.
+const HUNDRED_DIST=200; // 05.09.2026 «100%»: короткий фиксированный отрезок из каталога идей
+  // (.knowledge/GAME-MODES.md «Загадка неба» — 200м) — достаточно короткий, чтобы каждую
+  // звезду было видно и помнить, достаточно длинный, чтобы обычные преграды успели пройти волну.
+const SLALOM_DIST=4500; // 06.09.2026 «Слалом»: длина того же порядка, что у пресета fpSlalom
+  // Конструктора (forge.js) — не переиспользуем сам пресет (это утащило бы систему авторской
+  // расстановки внутрь дисциплины), только ориентир по метражу для похожего ощущения дистанции.
+// 06.09.2026 «Биатлон»: скорость+точность в одном забеге, реальный формат Sprint (2 рубежа) —
+// владелец выбрал числа сам. Скоростной 300м → рубеж (собери всё) 200м → скоростной 300м →
+// рубеж 200м → финиш на 1000м. Штраф — как в настоящем Individual-формате (флэт-время),
+// не штрафной круг (Sprint) — тот потребовал бы новой геометрии трассы, владелец выбрал проще.
+const BIATHLON_LEG=300, BIATHLON_RANGE=200;
+const BIATHLON_R1_START=BIATHLON_LEG;                    // 300
+const BIATHLON_R1_END=BIATHLON_R1_START+BIATHLON_RANGE;  // 500
+const BIATHLON_R2_START=BIATHLON_R1_END+BIATHLON_LEG;    // 800
+const BIATHLON_R2_END=BIATHLON_R2_START+BIATHLON_RANGE;  // 1000
+const BIATHLON_DIST=BIATHLON_R2_END;
+const BIATHLON_PENALTY_SEC=3; // штраф за каждую не собранную звезду рубежа — владелец выбрал сам
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -1672,11 +1872,15 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
    кого, кто не открывал новый экран настроек). Значение приходит из Store в ui.js — здесь
    только сам механизм и его чистая, проверяемая стражем логика. */
 let A11Y_SPEED=1;
-function baseTimeScale(slowmoOn, dying, pausing, a11ySpeed){
+function baseTimeScale(slowmoOn, dying, pausing, a11ySpeed, freezing){
   let ts = slowmoOn ? .45 : 1;
   if (dying) ts=Math.min(ts,.12);
   if (pausing) ts=Math.min(ts,.05);
   ts=Math.min(ts, a11ySpeed);
+  // 06.09.2026 «Стоп-кадр» (новый 7-й бонус): та же цепочка потолков — мир замирает
+  // (ts=0, преграды/звёзды не двигаются), самолёт по-прежнему летит на raw dt (см. update()
+  // ниже — управление НЕ умножается на timeScale), значит остаётся управляемым в застывшем мире.
+  if (freezing) ts=0;
   return ts;
 }
 // физически короче. Пока рулишь гироскопом — мир на 15% медленнее, преграды реже на ту же долю
@@ -1761,7 +1965,7 @@ function spawnObstacle(forceKind, forceDir){
      ВРЕМЕННЫЙ ПОРОГ: S.mission>=8 — для проверки механики прямо сейчас, до того как
      весь биом 2 (переход, «Первый рубеж пройден», семь новых волн) будет построен.
      Когда биом 2 появится как отдельная система — этот порог заменяется на вход в биом. */
-  if (!forceKind && S.mission>=8 && obstacles.length<MAXOB-1 && mapRand(0,1)<.05){
+  if (!forceKind && S.mode!=='slalom' && S.mission>=8 && obstacles.length<MAXOB-1 && mapRand(0,1)<.05){
     const px1=fl+mapRand(60,fw*.4), px2=fl+fw*.6+mapRand(0,fw*.4-60);
     const o1=poolOb.take(), o2=poolOb.take();
     for (const oo of [o1,o2]){
@@ -1790,6 +1994,10 @@ function spawnObstacle(forceKind, forceDir){
       else if(w[i][1]===0 && !S.customWG) w[i][1]=BASE[i]||0; // автор позвал этот вид явно — гейт снят. v1.282.15: только для кодов поколения 3; у розданных раньше расстановка обязана остаться прежней. BASE[i]||0 — страховка на случай, если в w добавят вид, а сюда забудут
     }
     if(!w.some(e=>e[1]>0)) w[0][1]=42; // страховка: всё выключено автором — летит базовый камень
+  }
+  if (S.mode==='slalom'){ // 06.09.2026: дисциплина — только ворота, ничего кроме них
+    for (const e of w) e[1]=0;
+    const g=w.find(e=>e[0]==='gate'); if (g) g[1]=1;
   }
   let kind;
   if (forceKind) kind=forceKind;
@@ -1878,6 +2086,7 @@ function spawnStar(){
      это же число. */
   s.x=fieldL()+mapRand(40,fieldW()-40); s.y=-50; s.r=11; s.vy=S.speed*mapRand(.95,1.1); s.ph=mapRand(0,6.28);
   stars.push(s);
+  S.starsSpawned++; // 05.09.2026 «100%»: сколько звёзд появилось за забег — база для проверки полного сбора
 }
 function powGap(){ return lerp(12,7,difficulty()) * mapRand(.85,1.2); } // v1.36.0 «Щедрое небо»: темп следует за сложностью — чем горячее небо, тем чаще подмога
 /* 22.08.2026 «Честный коридор для бонуса»: жалоба владельца — бонус мог оказаться внутри
@@ -1898,9 +2107,9 @@ let _lastPowerupKind=null; // 30.08.2026 (владелец: «два щита п
   // не с чем сравнивать (null не совпадёт ни с одним kind), дальше сама себя поддерживает по флайту.
 function spawnPowerup(forceKind){ // forceKind — урок III «Ловец бонусов»: бонус по расписанию
   // слот спавна один (пауза ~10-14с на старте, ~6-8с на пике) — новые бонусы делят его со старыми, поле не переполняется
-  const kinds=['shield','magnet','slowmo','life','dash','nova']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая
+  const kinds=['shield','magnet','slowmo','life','dash','nova','freeze']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая; freeze — 06.09.2026 «Стоп-кадр», седьмой
   const lifeCap=(S.mode==='custom')?(S.customLv||3):3; // v1.70.0: потолок жизней — у своей трассы он авторский, иначе бонус ломал бы «Ад на одну жизнь»
-  const weights=[3,3,2,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток
+  const weights=[3,3,2,1,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток; freeze весом 1 — редкий, как Таран/Сверхновая (владелец, 06.09.2026)
   // 30.08.2026: множитель был жёстко зашит *9 вместо суммы весов (3+3+2+1+1+1=11) — тот же
   // приём, что уже верно сделан в spawnObstacle() чуть выше в этом файле (tot считается из
   // массива, не вписан числом). При *9 цикл гарантированно останавливался не позже «life»
@@ -2149,7 +2358,7 @@ function ghostStep(){ // призрак идёт по своей траекто�
 // v1.282.20: щит добавлен к списку «риска нет». 14 секунд щита позволяли нырять в самую
 // гущу и снимать по 25×комбо за каждый пролёт впритык — до полутора тысяч очков с одного
 // бонуса, без единого шанса погибнуть. Остальные три страховки в списке уже были.
-function fullRisk(){ return S.slowmo<=0 && S.dash<=0 && S.shield<=0; }
+function fullRisk(){ return S.slowmo<=0 && S.dash<=0 && S.shield<=0 && S.freeze<=0; } // 06.09.2026: заморозка мира — тоже не «полный риск»
 
 /* ================= UPDATE (fixed step 1/60) ================= */
 /* 22.08.2026 «Впритык только когда честно мимо»: жалоба владельца — «впритык»
@@ -2167,7 +2376,7 @@ function isReceding(dx,dy,dvx,dvy,pvx,pvy){
 }
 function update(dt){
   input.useGyro = gyroUnlocked() && performance.now()-input._t<600; // сторож + замок: гироскоп рулит только после «Полёта без рук», молчащий датчик не держит старый наклон
-  let ts = baseTimeScale(S.slowmo>0, S.dying, S.pausing, A11Y_SPEED); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update()
+  let ts = baseTimeScale(S.slowmo>0, S.dying, S.pausing, A11Y_SPEED, S.freeze>0); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update(); 06.09.2026: freeze — новый бонус «Стоп-кадр»
   S.timeScale = RM ? ts : lerp(S.timeScale, ts, .1); // v1.99.2 «Бережное небо»: при системном флаге время не плавает — переключается сразу
   /* v1.284.10: `!S.dying` — тот же запрет, что стоит в pauseGame(), но там он проверялся
      только на входе. Если смерть начиналась ПОСЛЕ начала паузы, время мира падало ниже
@@ -2221,10 +2430,15 @@ function update(dt){
      ~15-17% меньше звёзд/бонусов на метр, чем пальцевику — тот же класс ошибки, что и
      у преград (страж 60), просто раньше не всплывал в тексте страж, потому что страж
      останавливается на первой упавшей проверке (dObs), не доходя до dStars/dPows. */
-  if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
+  if (starT<=0){ starT = withTrack('st', function(){
+    // 06.09.2026 «Биатлон»: звёзды идут только внутри рубежа (300-500м, 800-1000м) — скоростные
+    // отрезки нарочно пустые от них, как в реальном биатлоне лыжня пуста от мишеней.
+    const biathlonGate = S.mode!=='biathlon' || (S.dist>=BIATHLON_R1_START&&S.dist<BIATHLON_R1_END) || (S.dist>=BIATHLON_R2_START&&S.dist<BIATHLON_R2_END);
+    if (biathlonGate) spawnStar();
+    return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
   powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
-    if (!(S.mode==='custom' && S.customB===0)) spawnPowerup();
+    if (!(S.mode==='custom' && S.customB===0) && S.mode!=='ironman' && S.mode!=='slalom') spawnPowerup(); // 05.09.2026: Ironman — 0 бонусов, часть цены за ×4 очков; 06.09.2026: Слалом — тоже без бонусов, они бы позволили пройти ворота без срыва
     return powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1); }); } // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
 
   // ---- движение самолётика + учёт способа руления (категория рекорда) ----
@@ -2264,7 +2478,17 @@ function update(dt){
     if (S.dyingT<=0){ S.dying=0; gameOver(); return; }
   }
   const flPlane=fieldL(); // v1.99.9: в коридоре чести нет безопасной полосы у края
-  plane.x = clamp(plane.x + plane.vx, 20+flPlane, W-20-flPlane);
+  // 06.09.2026 «Солнечный ветер»: порыв как function(дистанция) — не постоянный снос, качается
+  // туда-сюда, период ~7854 условных единиц S.dist. Только у своих трасс (S.customWind), обычные
+  // режимы этот код не выполняют вообще. Толкает ПОЗИЦИЮ напрямую (после руления, до ограничения
+  // полем) — одинаково действует на любой штурвал (тач/мышь считают vx иначе, чем гиро/клавиатура,
+  // общей точки в ax/ay для них нет). Проверено численно (короткий скрипт): при wind=100
+  // максимум ~2.6px/кадр, ~35% от maxV=7.5 — заметно, не рвёт управление.
+  let windPush=0;
+  if (S.mode==='custom' && S.customWind>0){
+    windPush = Math.sin(S.dist*0.0008) * (S.customWind/100) * 2.6;
+  }
+  plane.x = clamp(plane.x + plane.vx + windPush, 20+flPlane, W-20-flPlane);
   plane.y = clamp(plane.y + plane.vy, fieldT()+fieldH()*.22, fieldT()+fieldH()-50); // v1.282.20: потолок и пол — от коридора, не от высоты экрана
   if (!S.dying) plane.bank = lerp(plane.bank, clamp(plane.vx/maxV,-1,1), .15); // при занавесе крен задаёт падение
   smoothStep(); // Smooth Flight: замер резкости после обработки ввода
@@ -2293,6 +2517,7 @@ function update(dt){
   if (S.magnet>0) S.magnet-=dt;
   if (S.slowmo>0) S.slowmo-=dt;
   if (S.dash>0) S.dash-=dt; // Таран: 4 секунды пробоя (v1.40.0)
+  if (S.freeze>0) S.freeze-=dt; // 06.09.2026 «Стоп-кадр»: 2 секунды, тоже в реальном времени — та же логика, что у слоумо (длительность самого эффекта не тянется вместе с замедленным миром)
   S.time += dt; // часы полёта — по ним сверхновая узнаёт, что старт позади
   if (S.flash>0) S.flash-=dt; // вспышка — чисто визуальная (золотая секунда)
   if (ghostTagT>0) ghostTagT-=dt; // подпись призрака живёт первые 4 секунды
@@ -2384,6 +2609,9 @@ function update(dt){
           S.shield=0; killIdx(obstacles,i,poolOb);
           burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90);
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
+        } else if (S.mode==='slalom'){ // 06.09.2026: реальное правило слалома — любое касание рамки срывает заезд целиком, не отнимает жизнь
+          if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':slalom_dq');
+          S.slalomFail=1; startDying(); return;
         } else {
           hitPlane('gate');
           killIdx(obstacles,i,poolOb);
@@ -2473,11 +2701,12 @@ function update(dt){
       if (p.kind==='shield'){ S.shield=14; showPopup(L.shield,p.x,p.y,'#7fd8ff'); }
       if (p.kind==='magnet'){ S.magnet=12; showPopup(L.magnet,p.x,p.y,'#c58fff'); }
       if (p.kind==='slowmo'){ S.slowmo=6; showPopup(L.slowmo,p.x,p.y,'#8fff9f'); }
+      if (p.kind==='freeze'){ S.freeze=2; showPopup(L.freeze,p.x,p.y,'#dff3ff'); } // 06.09.2026 «Стоп-кадр»: 2с, мир замирает (baseTimeScale), самолёт остаётся управляемым
       // v1.282.20: потолок жизней авторский, как и на спавне — иначе две одновременно
       // висящие в небе жизни пробивали «Ад на одну жизнь» (customLv=1) до трёх.
       if (p.kind==='life'){ S.lives=Math.min((S.mode==='custom')?(S.customLv||3):3, S.lives+1); showPopup(L.life,p.x,p.y,'#ffa1d9'); updateLives(); } // жизнь существует только для раненого: страж спавна (v1.46.0) не пускает её в небо при полном корпусе — никаких лишних жизней; v1.105.0: розовая, вне красной семьи тревоги
-      if (p.kind==='dash'){ S.dash=4; showPopup(L.dash,p.x,p.y,'#a9bcff'); } // Таран: 4 секунды пробоя (v1.40.0)
-      if (p.kind==='nova'){ if (typeof music!=='undefined'&&music.kick) music.kick(); // взрыв — музыка приседает (v1.48.0)
+      if (p.kind==='dash'){ S.dash=4; S.everDash=1; showPopup(L.dash,p.x,p.y,'#a9bcff'); } // Таран: 4 секунды пробоя (v1.40.0); everDash — 05.09.2026 «Pacifist»: взял хоть раз — не в зачёт
+      if (p.kind==='nova'){ S.everNova=1; if (typeof music!=='undefined'&&music.kick) music.kick(); // взрыв — музыка приседает (v1.48.0)
         // Сверхновая: вспышка сжигает все опасности на экране — каждая в очки (вес 1, редкий праздник, v1.40.0)
         const mult=1+Math.min(S.combo,10)*.3;
         let pts=0;
@@ -2502,22 +2731,23 @@ function update(dt){
   const thrusterP = Q.level>=3 ? .8 : Q.level===2 ? .6 : Q.level===1 ? .35 : .18; // v1.38.0: «Ультра» — самый густой след (был перекос: получала минимум)
   const fxK = (Q.mode==='auto' && Q.fps<48) ? (Q.fps<40 ? .55 : .75) : 1;
   if (RNG()<(thrusterP*fxK) && particles.length<(Q.level>=3?340:PARTICLE_CAP)){
-    const sk=SKINS[S.skin]||SKINS[0];
+    const sk=SKINS_BY_ID.get(S.skin)||SKINS[0];
+    const tr=TRAILS_BY_ID.get(S.trail)||TRAILS[0]; // 05.09.2026: след — независимый выбор, не от скина
     // 04.09.2026: Метки пути — редкие, не на каждый тик тягача (иначе слипнутся в пятно
     // под кораблём) — свой интервал поверх общего тягача, тот же приём, что MIN_INTERVAL_MS.
-    const waypointsBlocked = sk.trailFx==='waypoints' && (performance.now()-lastWaypointSpawn<450);
+    const waypointsBlocked = tr.style==='waypoints' && (performance.now()-lastWaypointSpawn<450);
     if(!waypointsBlocked){
     const t=poolPart.take();
     t.x=plane.x+rand(-3,3); t.y=plane.y+16; t.vx=rand(-.3,.3); t.vy=rand(1,2.4);
     t.life=rand(.4,.8); t.color=sk.trail; t.size=rand(1,2.5);
     t.fx=sk.fx||''; // фирменный след скина (читается в drawFx)
-    t.trailFx=sk.trailFx||''; // 04.09.2026: второй слой — язык частиц премиум-скина, отдельно от fx корпуса
+    t.trailFx=tr.style||''; // 05.09.2026: язык частиц — от независимого выбора след, не от скина
     if(sk.fx==='plasma'){ t.life=rand(.6,1.05); t.size=rand(1.5,3); t.vy=rand(1.4,2.8); } // длинный огненный шлейф
     else if(sk.fx==='neon'){ t.life=rand(.3,.6); t.size=rand(.8,2); } // короткие искры
-    else if(sk.trailFx==='sparks'){ t.life=rand(.35,.65); t.size=rand(.7,1.8); t.flashAt=RNG()<.3?rand(.3,.7):null; }
-    else if(sk.trailFx==='cometdust'){ t.life=rand(.5,.9); t.size=rand(1.2,2.4); t.rot=rand(0,6.283); t.spin=rand(-.3,.3); }
-    else if(sk.trailFx==='debris'){ t.life=rand(.7,1.1); t.size=rand(1,1.8); t.jx=rand(0,6.283); t.jy=rand(0,6.283); }
-    else if(sk.trailFx==='waypoints'){ t.vx=0; t.vy=1.6; t.life=rand(1.0,1.2); t.size=1.6; lastWaypointSpawn=performance.now(); } // почти не летит, гаснет на месте
+    else if(tr.style==='sparks'){ t.life=rand(.35,.65); t.size=rand(.7,1.8); t.flashAt=RNG()<.3?rand(.3,.7):null; }
+    else if(tr.style==='cometdust'){ t.life=rand(.5,.9); t.size=rand(1.2,2.4); t.rot=rand(0,6.283); t.spin=rand(-.3,.3); }
+    else if(tr.style==='debris'){ t.life=rand(.7,1.1); t.size=rand(1,1.8); t.jx=rand(0,6.283); t.jy=rand(0,6.283); }
+    else if(tr.style==='waypoints'){ t.vx=0; t.vy=1.6; t.life=rand(1.0,1.2); t.size=1.6; lastWaypointSpawn=performance.now(); } // почти не летит, гаснет на месте
     particles.push(t);
     }
   }
@@ -2546,12 +2776,37 @@ function update(dt){
     if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
     if (S.time>=CARAVAN_TIME && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
   }
-  else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0)
+  else if (S.mode==='hundred'){ // 100% (v1.478.80): фиксированный отрезок — цель не выжить, а долететь и собрать всё
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent='100% · '+Math.min(distI,HUNDRED_DIST)+'/'+HUNDRED_DIST+(L.unitM||'м'); }
+    if (S.dist>=HUNDRED_DIST && !S.dying){ startDying(); S.hundredDone=1; } // долетаешь до конца всегда — 100% отдельно проверяется на итогах по starsSpawned/starsCollected
+  }
+  else if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,SLALOM_DIST)+'/'+SLALOM_DIST+(L.unitM||'м'); }
+    if (S.dist>=SLALOM_DIST && !S.dying){ startDying(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
+  }
+  else if (S.mode==='biathlon'){ // 06.09.2026: скорость+рубежи — штраф прибавляется к S.time на выходе из каждого рубежа
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,BIATHLON_DIST)+'/'+BIATHLON_DIST+(L.unitM||'м')+(S.biathlonMisses?' · +'+(S.biathlonMisses*BIATHLON_PENALTY_SEC)+'с':''); }
+    if (S.dist>=BIATHLON_R1_END && !S.biathlonR1Done){
+      S.biathlonR1Done=1;
+      const missed=Math.max(0,S.starsSpawned-S.starsCollected);
+      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
+      S.biathlonSnapSpawned=S.starsSpawned; S.biathlonSnapCollected=S.starsCollected; // 1й рубеж закрыт — со 2го считаем только новые звёзды
+    }
+    if (S.dist>=BIATHLON_DIST && !S.dying){
+      const missed=Math.max(0,(S.starsSpawned-S.biathlonSnapSpawned)-(S.starsCollected-S.biathlonSnapCollected));
+      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
+      startDying(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
+    }
+  }
+  else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
     // из которого шьётся сама трасса. Здесь стоял todayKey() — личная дата: в UTC+3 вечером
     // игрок видел завтрашнее число при сегодняшней трассе. Закон №17. Страж 122.
     const elMH=elModeHud, tk=trackDayKey(); if (elMH && !elMH._t){ elMH._t=1;
-      elMH.textContent=L.modeDaily+' · '+tk.slice(8)+'.'+tk.slice(5,7); } }
+      elMH.textContent=(S.mode==='daily1cc'?'1CC':L.modeDaily)+' · '+tk.slice(8)+'.'+tk.slice(5,7); } } // 05.09.2026: 1CC — та же дата, своя метка
   else if (S.mode==='theater'){ // Театр призраков (v1.94.0): табло зрителя — не счёт, а название спектакля
     const elMH=elModeHud; if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }
   else if (S.mode==='custom'){ // Своя трасса (v1.68.0): имя автора + живой прогресс до финиша (шаг 5 м, как distHud)
@@ -2654,8 +2909,9 @@ function updateLives(){ // жизни = мини-модельки текущег
   const x=c.getContext('2d');
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
-  const skin=SKINS[S.skin]||SKINS[0];
-  for(let i=0;i<3;i++){
+  const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
+  const maxLives=(S.mode==='ironman'||S.mode==='daily1cc'||S.mode==='slalom')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами; 06.09.2026: Слалом тоже — любое касание и так срывает заезд целиком
+  for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
     if (i<S.lives){ // живая — полный корпус со свечением (v1.46.0: светятся только живые — потерянная не притворяется живой)
       x.shadowColor=skin.glow; x.shadowBlur=6;
