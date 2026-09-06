@@ -1054,7 +1054,10 @@ function angarShip(x, sk, s, bolshoy){
      что теперь и в render.js:drawScene (drawLaunchFlash до drawPlane). */
   if(bolshoy){
     const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
-    if(pvFlash){ const fl=FLASHES_BY_ID.get(pvFlash);
+    /* 07.09.2026, владелец: «Нет» (id0) явным исключением — раньше полагались на то, что
+       0 сам по себе ложный в if(pvFlash) (работало и так), но владелец просил явное «для
+       Нет вообще не смотрим в каталог вспышек», не полагаться на совпадение с ложным нулём. */
+    if(pvFlash!==0 && pvFlash){ const fl=FLASHES_BY_ID.get(pvFlash);
       if(fl && fl.style && fl.style!=='none'){
         const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
         const col=a=>base+Math.max(0,a).toFixed(2)+')';
@@ -1605,8 +1608,13 @@ function angarBuildGrid(){
            узнаётся с одного взгляда на маленькой плитке (та же причина, по которой название
            уже есть у Цвета — там тоже один и тот же силуэт, отличается только узором/цветом).
            Правило теперь общее: эмодзи — исключение (картинка сама объясняет себя), у всех
-           остальных категорий название видно под плиткой. Тот же .nm, что у Цвета. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span><span class="nm">'+item.name+'</span>';
+           остальных категорий название видно под плиткой. Тот же .nm, что у Цвета.
+           07.09.2026, владелец (тот же скрин, что у Эмодзи): у «Нет» канвас всё равно пуст
+           (item.style==='') — название переезжает внутрь коробки (.noneLbl), тем же приёмом,
+           что уже сделан у Эмодзи, а не отдельной строкой под пустотой. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas>'+
+          (item.id===0?'<span class="noneLbl">'+item.name+'</span>':'')+'<span class="pr"></span></span>'+
+          (item.id===0?'':'<span class="nm">'+item.name+'</span>');
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
           const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
@@ -1620,14 +1628,21 @@ function angarBuildGrid(){
         /* 05.09.2026: тот же приём, что у Вспышки — честная заморозка настоящей формы следа
            (renderTrailPattern, render.js), не рисунок «по мотивам». Самолётик-ориентир рисует
            сама плитка (маленький треугольник сверху), сам след — вызванная функция.
-           06.09.2026: + название под плиткой, тем же правилом, что у Вспышки выше. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span><span class="nm">'+item.name+'</span>';
+           06.09.2026: + название под плиткой, тем же правилом, что у Вспышки выше.
+           07.09.2026, владелец: «Нет» — тоже переезжает внутрь коробки (.noneLbl), тем же
+           приёмом, что у Вспышки/Эмодзи. Самолётик-ориентир для «Нет» больше не рисуем —
+           след всё равно не к чему привязывать, одинокий треугольник только мешал бы подписи. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas>'+
+          (item.id===0?'<span class="noneLbl">'+item.name+'</span>':'')+'<span class="pr"></span></span>'+
+          (item.id===0?'':'<span class="nm">'+item.name+'</span>');
         const x=el.querySelector('canvas').getContext('2d');
         const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
-        x.fillStyle='#eaf2ff'; x.globalAlpha=.9;
-        x.beginPath(); x.moveTo(26,14); x.lineTo(21,25); x.lineTo(26,22); x.lineTo(31,25); x.closePath(); x.fill();
-        x.globalAlpha=1;
-        if(item.style){
+        if(item.id!==0){
+          x.fillStyle='#eaf2ff'; x.globalAlpha=.9;
+          x.beginPath(); x.moveTo(26,14); x.lineTo(21,25); x.lineTo(26,22); x.lineTo(31,25); x.closePath(); x.fill();
+          x.globalAlpha=1;
+        }
+        if(item.style && item.style!=='none'){
           const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
           const col=a=>base+Math.max(0,a).toFixed(2)+')';
           x.setTransform(1.55,0,0,1.55,26,4);
@@ -1641,7 +1656,10 @@ function angarBuildGrid(){
         // квадрата); textContent=item.ch стёр бы .pr, если бы она осталась соседкой глифа.
         // 06.09.2026 (владелец): квадрат у «Нет» всё равно пуст (ch:'') — подпись переехала
         // внутрь него самого (.noneLbl), вместо отдельной строки .nm под пустой коробкой.
-        const nmText = item.id===0 ? ((L.decalCatNames && L.decalCatNames.none) || '') : '';
+        // 07.09.2026 (владелец, живьём): подпись была через отдельный L.decalCatNames.none
+        // («Без украшений») — длиннее и не похоже на «Нет» у Вспышки/Следа того же самого
+        // предмета (id0 везде). Теперь везде один и тот же item.name («Нет»), не два разных слова.
+        const nmText = item.id===0 ? item.name : '';
         el.innerHTML='<span class="ch"><span class="chGlyph"></span>'+(nmText?'<span class="noneLbl">'+nmText+'</span>':'')+'<span class="pr"></span></span>';
         const chEl=el.querySelector('.chGlyph');
         if(item.svg){ // векторная декаль — своя иконка вместо текстового глифа, тот же короб .ch
