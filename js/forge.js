@@ -93,13 +93,16 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
     {at:950,type:'kind',kind:0},{at:1000,type:'pause'},{at:1250,type:'kind',kind:4},{at:1300,type:'kind',kind:0},
     {at:1350,type:'pause'},{at:1600,type:'kind',kind:0},{at:1650,type:'kind',kind:4},{at:1700,type:'pause'},{at:1900,type:'kind',kind:7}]}}
 ];
-/* 06.09.2026 «Играть/Создать» (владелец): 8 плиток на видном месте — перегружали первый взгляд
-   на вкладку «Играть». Оставлены 2 быстрых примера («тапнул — увидел, как это делается») — один
-   мягкий, один сложный; остальные 6 переехали в Мастерскую как трассы автора (seed-migration,
-   см. .knowledge/PRODUCTION-MINES.md-соседний коммит) — играть/загрузить их можно тем же путём,
-   что и любую чужую трассу. FORGE_PRESETS сам остаётся полным (8) — им пользуется кодирование
-   ссылок и forgePresetMatch(), только видимая сетка сужена. */
-const FORGE_PRESETS_VISIBLE = FORGE_PRESETS.filter(function(p){ return p.k==='fpWarm'||p.k==='fpHell'; });
+/* 06.09.2026 «Переосмысление» (владелец, живой скриншот: «Готовые сценарии»/Мастерская —
+   зачем разделять, это одно и то же): раньше здесь оставались 2 быстрых примера отдельной
+   витриной (FORGE_PRESETS_VISIBLE), 6 остальных уже жили в Мастерской как трассы автора
+   (seed-migration, см. .knowledge/PRODUCTION-MINES.md-соседний коммит). Теперь все 8 — там же,
+   тем же приёмом (fpWarm/fpHell вставлены в forge_workshop, author_name='Cosmogram',
+   status='pinned' — те же 2 живых кода, что forgeEncode() уже даёт для их конфигов). Отдельной
+   сетки-витрины и forgePresetMatch()/подсветки выбранной программы больше нет — играть/
+   загрузить любой из 8 можно тем же путём, что и любую чужую трассу. FORGE_PRESETS сам
+   остаётся полным (8) — им по-прежнему пользуется кодирование ссылок и стартовый forgeCfg
+   по умолчанию (FORGE_PRESETS[0].c, «Разминка»). */
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
@@ -417,16 +420,6 @@ function forgeSkyKick(){
 /* ---------- Состояние конструктора ---------- */
 let forgeCfg=forgeSanitize(Store.get('forgeLast',null)||Object.assign({},FORGE_PRESETS[0].c)); // последняя трасса переживает перезапуск; свежая кухня — «Разминка» уже выбрана, ноль обязательных решений (v1.86.0)
 function forgeCfgGet(){ return forgeCfg; }
-function forgePresetMatch(){ // светится ровно та программа, что сейчас в небе (v1.86.0)
-  // 06.09.2026: сетка сузилась до FORGE_PRESETS_VISIBLE (2 плитки) — индекс должен указывать
-  // на позицию В НЕЙ, не в полном FORGE_PRESETS (8), иначе подсветка попадёт не в тот ребёнок
-  // DOM-узла (их теперь только 2) или вовсе не найдёт совпадения для скрытых сценариев, что и надо.
-  for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const c=FORGE_PRESETS_VISIBLE[i].c;
-    if(forgeCfg.d===c.d&&forgeCfg.s===c.s&&forgeCfg.e===c.e&&forgeCfg.l===c.l&&forgeCfg.lv===c.lv&&
-       forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog&&
-       forgeCfg.hs===(c.hs||0)&&forgeCfg.wind===(c.wind||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно; 06.09.2026: то же для wind
-  return -1;
-}
 
 /* ---------- Виджеты: сегменты, чипы, свотчи ---------- */
 function forgeSegBuild(el,items,get,set){ // items: [{v,t}] — значение и текст
@@ -473,7 +466,8 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
-    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
+    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn],
+    ['forgeStartOverLbl',L.forgeStartOverLbl]]; // 06.09.2026 «Переосмысление»: подпись над сгруппированным «Сбросить всё»/«Небо друга»
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
     // 02.09.2026: «Поделиться небом» вернулась в Конструктор — mapShare() существовала
     // с v1.87.0, но не была вызвана ни одной кнопкой (см. wireOnLocal ниже)
@@ -486,27 +480,6 @@ function forgeFill(){ // подписи + состояние виджетов п
   // переехал на главный экран, id="konstruktorBtn") — строка, что красила её подпись,
   // больше не на что указывать, снята вместе с ней.
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
-  // пресеты — программы мультиварки: тихие плитки со свотчем неба, выбранная мягко светится (v1.86.0)
-  const pre=$('forgePresets');
-  if(pre && pre.children.length!==FORGE_PRESETS_VISIBLE.length){
-    pre.innerHTML='';
-    FORGE_PRESETS_VISIBLE.forEach(function(p){
-      const b=document.createElement('button');
-      b.className='forgePresetTile';
-      b.innerHTML='<i class="sw"></i><span class="nm"></span>';
-      b.querySelector('.sw').style.background='linear-gradient(180deg, hsl('+(232+p.c.sky*.3)+',60%,30%), hsl('+(200+p.c.sky*.3)+',65%,14%))';
-      b.querySelector('.nm').textContent=L[p.k]||p.k;
-      if(p.c.fog>0) b.classList.add('misty'); // туманная программа — дымка на свотче
-      b.addEventListener('click',function(){
-        const keepName=forgeCfg.n;
-        forgeCfg=forgeSanitize(Object.assign({},p.c)); forgeCfg.n=keepName; // имя автора не затираем
-        forgeSyncWidgets(); sfx.click(); haptic('medium');
-        forgeTabSet('create'); // 06.09.2026: «тапнул — сразу летишь» — «Лететь» теперь по вкладке
-      });
-      pre.appendChild(b);
-    });
-  }
-  if(pre) for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const nm=pre.children[i].querySelector('.nm'); if(nm) nm.textContent=L[FORGE_PRESETS_VISIBLE[i].k]||''; }
   // враги
   const names=[L.fkRock,L.fkDebris,L.fkDrift,L.fkMine,L.fkSat,L.fkComet,L.fkSeeker,L.fkGate];
   const chips=$('forgeChips');
@@ -599,9 +572,6 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeHSChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
-  const pre=$('forgePresets'); // выбранная программа мягко светится — видно, что сейчас в небе (v1.86.0)
-  if(pre&&pre.children.length===FORGE_PRESETS.length){ const m=forgePresetMatch();
-    for(let i=0;i<FORGE_PRESETS.length;i++) pre.children[i].classList.toggle('sel',i===m); }
   forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
   if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); if(typeof ptSyncColorUI==='function') ptSyncColorUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l/.h1/.h2/.dens — лента и ползунки Партитуры должны это увидеть
@@ -696,7 +666,7 @@ function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode
   forgeCfg=cfg; Store.set('forgeLast',cfg);
   return true;
 }
-function forgeWorkshopEdit(code){ // «В Кузницу»: открыть чужую трассу под себя, не в зачёт (как и любой чужой код)
+function forgeWorkshopEdit(code){ // «Открыть»: открыть чужое небо под себя, не в зачёт (как и любой чужой код)
   if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
   forgeSyncWidgets();
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
@@ -778,10 +748,10 @@ function mapOver(sc){
 /* 04.09.2026 (владелец): выбрал готовый сценарий — вернуться к пустой трассе было нечем.
    06.09.2026 (владелец, живая находка): раньше сюда клали клон FORGE_PRESETS[0] («Разминка») —
    технически «сброс», но подсветка пресета в сетке честно показывала «Разминка» выбрана,
-   хотя игрок ничего не выбирал — путало. forgeSanitize({}) даёт настоящее пустое поле:
-   те же умолчания, что уже проверяет сама валидация (не новые числа), и по 11 полям, что
-   сравнивает forgePresetMatch(), это сочетание не совпадает ни с одним из 8 пресетов —
-   подсветка гаснет сама, без отдельного флага «сброшено вручную». */
+   хотя игрок ничего не выбирал — путало. forgeSanitize({}) даёт настоящее пустое поле — те же
+   умолчания, что уже проверяет сама валидация (не новые числа). (Сама сетка-витрина и
+   forgePresetMatch() убраны позже, в «Переосмыслении» того же дня — обоснование выше больше
+   не про подсветку тайла, но forgeSanitize({}) остаётся правильным сбросом сам по себе.) */
 function forgeResetAll(){
   forgeCfg=forgeSanitize({});
   forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
@@ -848,7 +818,7 @@ function workshopRenderList(){
       row.querySelector('[data-role="plays"]').textContent='▶ '+(t.plays||0);
       row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
       row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
-      row.querySelector('.wEdit').textContent=L.workshopEdit||'В Кузницу';
+      row.querySelector('.wEdit').textContent=L.workshopEdit||'Открыть';
       row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');

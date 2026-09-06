@@ -69,12 +69,13 @@ const I18N = {
     forgeCodeLbl:'Небо друга — вставь код или ссылку', forgeShareMapBtn:'Поделиться небом',
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
     forgeGuest:'Небо друга загружено — жми «Лететь»', forgeReset:'Сброшено', forgeResetBtn:'Сбросить всё', forgeShareTxt:'Лети в моё небо «%s» в Cosmogram!',
+    forgeStartOverLbl:'Начать по-другому', // 06.09.2026 «Переосмысление»: подпись над «Сбросить всё»/«Небо друга» — оба сгруппированы, один смысл
     // 05.09.2026 «Мастерская»: только RU — EN/ES/PT/FR ещё не сделаны, отмечено явно, не молчаливый пробел
-    workshopTitle:'Мастерская', workshopSub:'трассы других игроков — сыграй или открой в Кузнице',
-    workshopEmpty:'пока пусто — поделись своей трассой в Кузнице, и она появится здесь',
-    workshopSignInFirst:'войди через Telegram, чтобы увидеть свои трассы',
+    workshopTitle:'Мастерская', workshopSub:'небеса других игроков — сыграй или открой', // 06.09.2026 «Переосмысление»: «трасса»/«в Кузнице» — слова 01.09.2026 (Кузница→Конструктор) сюда не докатились, поправлено
+    workshopEmpty:'пока пусто — поделись своим небом, и оно появится здесь',
+    workshopSignInFirst:'войди через Telegram, чтобы увидеть свои небеса',
     workshopSort_new:'Новые', workshopSort_top:'Лучшие', workshopSort_plays:'Играли больше всех', workshopSort_mine:'Мои',
-    workshopPlay:'Играть', workshopEdit:'В Кузницу',
+    workshopPlay:'Играть', workshopEdit:'Открыть', // 06.09.2026: «В Кузницу» — Кузница как отдельное место больше не существует
     workshopReport:'Пожаловаться', workshopReported:'Спасибо, посмотрим', // 05.09.2026: EN/ES/PT/FR ниже ещё без этих ключей
     workshopPin:'Закрепить', workshopHide:'Скрыть', // 05.09.2026: видны только владельцу, EN/ES/PT/FR тоже ещё нет
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
@@ -246,6 +247,7 @@ const I18N = {
     forgeCodeLbl:"Friend's track — paste the code or link", forgeShareMapBtn:'Share this sky',
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
     forgeGuest:"Friend's track loaded — hit Fly", forgeReset:'Reset', forgeResetBtn:'Reset all', forgeShareTxt:'Fly my track «%s» in Cosmogram!',
+    forgeStartOverLbl:'Start over',
     fkRock:'Asteroid', fkDebris:'Debris', fkDrift:'Drifter', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comet', fkSeeker:'Seeker', fkGate:'Gate',
     forgeGrpHard:'Difficulty', // v1.69.0
@@ -404,6 +406,7 @@ const I18N = {
     forgeCodeLbl:'Pista de un amigo — pega el código o el enlace', forgeShareMapBtn:'Compartir este cielo',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
     forgeWin:'¡Meta!', forgeGuest:'Pista de un amigo cargada — pulsa Volar', forgeReset:'Restablecido', forgeResetBtn:'Restablecer todo',
+    forgeStartOverLbl:'Empezar de otra forma',
     forgeShareTxt:'¡Vuela mi pista «%s» en Cosmogram!',
     fkRock:'Asteroide', fkDebris:'Escombro', fkDrift:'Vagabundo', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Buscador', fkGate:'Puerta',
@@ -578,6 +581,7 @@ const I18N = {
     forgeCodeLbl:'Pista de um amigo — cole o código ou o link', forgeShareMapBtn:'Compartilhar este céu',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
     forgeWin:'Chegada!', forgeGuest:'Pista de um amigo carregada — toque em Voar', forgeReset:'Redefinido', forgeResetBtn:'Redefinir tudo',
+    forgeStartOverLbl:'Começar diferente',
     forgeShareTxt:'Voe na minha pista «%s» no Cosmogram!',
     fkRock:'Asteroide', fkDebris:'Destroço', fkDrift:'Errante', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Perseguidor', fkGate:'Portal',
@@ -750,6 +754,7 @@ const I18N = {
     forgeCodeLbl:"Trace d'un ami — colle le code ou le lien", forgeShareMapBtn:'Partager ce ciel',
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
     forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeReset:'Réinitialisé', forgeResetBtn:'Tout réinitialiser', forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
+    forgeStartOverLbl:'Recommencer autrement',
     fkRock:'Astéroïde', fkDebris:'Débris', fkDrift:'Dériveur', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comète', fkSeeker:'Chercheur', fkGate:'Portail',
     forgeGrpHard:'Difficulté',

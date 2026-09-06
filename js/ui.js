@@ -1446,8 +1446,13 @@ function angarVisibleList(){ // список жетонов активной в�
   const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS : angarCat==='icon' ? ANGAR_ICON_CATS
     : angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
     : angarCat==='color' ? ANGAR_SKIN_CATS : null;
+  /* 06.09.2026, найдено живьём (владелец: «плитка Бумажный дублируется»): у скинов (color)
+     id0 несёт настоящую категорию (cat:'classic'), не 'none' как у декалей/иконок — ветка
+     subCats.flatMap ниже фильтрует только по d.cat, без исключения id0 (в отличие от соседней
+     ветки cfg.list.filter(d=>d.id!==0)). «Бумажный» уже стоит первым через `none` (строка выше)
+     и второй раз всплывал здесь же, внутри категории «Классика» — два DOM-узла, оба «выбран». */
   const restBase = subCats
-    ? subCats.flatMap(cat=>cfg.list.filter(d=>d.cat===cat))
+    ? subCats.flatMap(cat=>cfg.list.filter(d=>d.cat===cat && d.id!==0))
     : cfg.list.filter(d=>d.id!==0);
   const rest = restBase.filter(d=>freebieIds.indexOf(d.id)<0);
   // 29.08.2026: у декалей ch — эмодзи-глиф, у иконок (icon) его нет вообще (там svg) —
