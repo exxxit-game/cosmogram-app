@@ -496,6 +496,45 @@ function syncSpeedrunTop(day){ // {ok,day,top:[{pid,name,username,provider,best,
   });
 }
 
+/* 06.09.2026 «Слалом»: тот же приём Set Seed/очередь, что у Спидрана выше — тот же Edge
+   Function (cosmogram-daily), свои действия в payload (slalom_submit/slalom_top), своя
+   очередь на диске (slalomQ), чтобы не столкнуться со спидраном по дедупу-полю day. */
+function syncSlalomQueue(){ return saneArray(Store.get('slalomQ',[]),[]); }
+function syncSlalomEnqueue(o){
+  if(!o || !o.day) return;
+  const q=syncSlalomQueue().filter(x=>x&&x.day!==o.day);
+  q.push(Object.assign({},o));
+  Store.set('slalomQ',q.slice(-14));
+}
+let _slalomFlying=null;
+function syncSlalomFlush(){
+  if(_slalomFlying) return (_slalomFlying = _slalomFlying.catch(()=>{}).then(()=>syncSlalomFlush()));
+  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  const q=syncSlalomQueue(), item=q[0]; if(!item) return Promise.resolve(null);
+  const p=syncDailyPost(Object.assign({action:'slalom_submit'},syncAuth(),item)).then(r=>{
+    if(!r || !r.ok) return null;
+    Store.set('slalomQ',syncSlalomQueue().filter(x=>x!==item));
+    return r;
+  }).catch(()=>null).finally(()=>{ _slalomFlying=null; });
+  _slalomFlying=p; return p;
+}
+function syncSlalomSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
+  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
+  syncSlalomEnqueue(o);
+  return syncSlalomFlush().then(r=>!!(r&&r.ok));
+}
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>syncSlalomFlush());
+  setTimeout(()=>syncSlalomFlush(),4000);
+}
+function syncSlalomTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null} — тот же контракт, что у syncSpeedrunTop()
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncDailyPost(Object.assign({action:'slalom_top', day:day}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
 /* 05.09.2026 «Мастерская»: витрина трасс Конструктора (cosmogram-workshop) — отдельная
    комната на сервере, тот же приём, что у cosmogram-daily выше: таблица рекордов и Небо
    месяца её не касаются. Сам механизм шаринга (mapShare()/forgeDecode() в forge.js,

@@ -1552,6 +1552,8 @@ function fillGlyphPath(x,kind){
       for(let i=0;i<16;i++){ const a=i/16*6.283, rad=(i%2?2.2:6.6)*k;
         i?x.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):x.moveTo(Math.cos(a)*rad,Math.sin(a)*rad); }
       x.closePath(); } break;
+    case 'freeze': // 06.09.2026 «Стоп-кадр»: два вертикальных бруска — пауза, макет macet-stopkadr-bokovik.html
+      x.rect(-4.6,-6.2,3.2,12.4); x.rect(1.4,-6.2,3.2,12.4); break;
   }
 }
 function drawGlyph(ctx,kind){
@@ -1596,7 +1598,7 @@ function inView(x,y,mx,my){
 
 /* v1.66.0 «Лёгкий кадр»: цвета бонусов — константы модуля (раньше объект собирался заново
    на каждый бонус в каждом кадре); кольца — готовые строки, лениво после загрузки game.js */
-const POW_COLORS={shield:'#7fd8ff',magnet:'#c58fff',slowmo:'#8fff9f',life:'#ffa1d9',dash:'#a9bcff',nova:'#fff0a8'}; // v1.105.0: жизнь — розовая, вне красной семьи тревоги (мина/ловец): «лови» больше не читается как «бойся»
+const POW_COLORS={shield:'#7fd8ff',magnet:'#c58fff',slowmo:'#8fff9f',life:'#ffa1d9',dash:'#a9bcff',nova:'#fff0a8',freeze:'#dff3ff'}; // v1.105.0: жизнь — розовая, вне красной семьи тревоги (мина/ловец): «лови» больше не читается как «бойся»; freeze — 06.09.2026, морозный бело-голубой, светлее и холоднее уже занятого голубого у щита
 let POW_RING=null;
 function powRing(){
   if(!POW_RING){ POW_RING={}; for(const k in POW_COLORS)

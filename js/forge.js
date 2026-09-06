@@ -136,6 +136,9 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // трёх разных оттенках (macet-01-09-nastroenie-neba.html) до этой правки.
   o.mood=clamp(Math.round(isFinite(+c.mood)?+c.mood:50),0,100);
   o.fog=clamp(Math.round(isFinite(+c.fog)?+c.fog:0),0,2);
+  // 06.09.2026 «Солнечный ветер»: 0-100, по умолчанию 0 (выкл — старые коды/пресеты без поля
+  // ничего не почувствуют). Сила порывов, не постоянный снос — сама механика в game.js.
+  o.wind=clamp(Math.round(isFinite(+c.wind)?+c.wind:0),0,100);
   // v1.108.1 «Честный жар»: seed теперь часть конфига — тот же код у друга даёт ту же расстановку,
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
   o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
@@ -234,11 +237,15 @@ function forgeBitsPack(cfg){
   // 2б h2, 1б густота), бит2 = настроение (1б, 0-100). Все три бита сейчас всегда 1 — новый
   // интерфейс всегда пишет все поля. Проверено численно (verify-len2.js, verify-color2.js,
   // verify-mood.js) до правки.
-  const extFlags=[1|2|4];
+  // 06.09.2026 «Солнечный ветер»: бит3 extFlags — 1 байт силы порывов (0-100), тем же приёмом,
+  // что уже трижды применён выше (сложи хвост на хвост, не переделывай нижние слои). Всегда 1 —
+  // новый интерфейс всегда пишет поле, старые коды без этого бита читаются как wind=0 (выкл).
+  const extFlags=[1|2|4|8];
   const lenTail=[(cfg.l>>8)&255, cfg.l&255];
   const colorTail=[(cfg.h1>>8)&255, cfg.h1&255, (cfg.h2>>8)&255, cfg.h2&255, cfg.dens&255];
   const moodTail=[cfg.mood&255];
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail));
+  const windTail=[cfg.wind&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail, windTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -269,7 +276,7 @@ function forgeBitsUnpack(bytes){
   // «Непрерывная длина» / «Свой фон»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто
   // не доходит сюда — l остаётся старым приближением из lIdx, h1/h2 выводятся из legacy sky
   // в forgeSanitize (та же формула, что уже рисовала это небо раньше), ровно как читалось раньше.
-  let l=FORGE_LENS[lIdx], h1, h2, dens, mood;
+  let l=FORGE_LENS[lIdx], h1, h2, dens, mood, wind;
   if(cursor<bytes.length){
     const extFlags=bytes[cursor]||0;
     let p=cursor+1;
@@ -280,8 +287,11 @@ function forgeBitsUnpack(bytes){
       dens=bytes[p]; p+=1;
     }
     if((extFlags&4) && p<bytes.length){ mood=bytes[p]; p+=1; }
+    // 06.09.2026 «Солнечный ветер»: бит3, 1 байт — код без него (розданный до этой правки)
+    // просто не доходит сюда, wind остаётся undefined → forgeSanitize подставит 0 (выкл).
+    if((extFlags&8) && p<bytes.length){ wind=bytes[p]; p+=1; }
   }
-  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wg:0, sc:sc };
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wind, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -414,7 +424,7 @@ function forgePresetMatch(){ // светится ровно та програм�
   for(let i=0;i<FORGE_PRESETS_VISIBLE.length;i++){ const c=FORGE_PRESETS_VISIBLE[i].c;
     if(forgeCfg.d===c.d&&forgeCfg.s===c.s&&forgeCfg.e===c.e&&forgeCfg.l===c.l&&forgeCfg.lv===c.lv&&
        forgeCfg.w===c.w&&forgeCfg.fl===c.fl&&forgeCfg.b===c.b&&forgeCfg.sky===c.sky&&forgeCfg.fog===c.fog&&
-       forgeCfg.hs===(c.hs||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно
+       forgeCfg.hs===(c.hs||0)&&forgeCfg.wind===(c.wind||0)) return i; } // 31.08.2026: hs — 8 пресетов его не носят (все 0), но приравнивает совпадение честно; 06.09.2026: то же для wind
   return -1;
 }
 
@@ -459,7 +469,7 @@ function forgeFill(){ // подписи + состояние виджетов п
      $(id) напрямую, отсутствие любого одного элемента (устаревший кэш index.html) обрывало
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
-  const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],
+  const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
@@ -576,6 +586,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const nmEl=$('forgeName'); if(nmEl && document.activeElement!==nmEl) nmEl.value=forgeCfg.n;
   const denEl=$('forgeDen'), denVEl=$('forgeDenV'); if(denEl) denEl.value=forgeCfg.d; if(denVEl) denVEl.textContent=forgeCfg.d;
   const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.textContent=forgeCfg.s;
+  const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.textContent=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
@@ -915,6 +926,7 @@ wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); }
    forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
 wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.textContent=this.value; forgeSkyKick(); });
 wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.textContent=this.value; forgeSkyKick(); });
+wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.textContent=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика
 wireOnLocal('forgeCode', 'keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.

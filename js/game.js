@@ -1766,7 +1766,7 @@ const S = {
   running:false, paused:false, score:0, best:0, wallet:0,
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
-  shield:0, magnet:0, slowmo:0, dash:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи
+  shield:0, magnet:0, slowmo:0, dash:0, freeze:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи; freeze — 06.09.2026 «Стоп-кадр», седьмой
   mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, starsSpawned:0, hundredDone:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
@@ -1837,6 +1837,9 @@ const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — п�
 const HUNDRED_DIST=200; // 05.09.2026 «100%»: короткий фиксированный отрезок из каталога идей
   // (.knowledge/GAME-MODES.md «Загадка неба» — 200м) — достаточно короткий, чтобы каждую
   // звезду было видно и помнить, достаточно длинный, чтобы обычные преграды успели пройти волну.
+const SLALOM_DIST=4500; // 06.09.2026 «Слалом»: длина того же порядка, что у пресета fpSlalom
+  // Конструктора (forge.js) — не переиспользуем сам пресет (это утащило бы систему авторской
+  // расстановки внутрь дисциплины), только ориентир по метражу для похожего ощущения дистанции.
 function fmtTime(t){ const m=Math.floor(t/60), sec=t-m*60; return m+':'+(sec<10?'0':'')+sec.toFixed(1); } // хронометраж паспорта и спидрана
 /* v1.282.24 (партия 23): волна на минуте была 6, стала 5 после честных правок партий 8
    (волну общего неба двигает только дистанция) и 10 (убрана дыра — щит давал бесплатные
@@ -1858,11 +1861,15 @@ const GYRO_ASSIST=.85; // «Страховка штурвала» (v1.31.0): н�
    кого, кто не открывал новый экран настроек). Значение приходит из Store в ui.js — здесь
    только сам механизм и его чистая, проверяемая стражем логика. */
 let A11Y_SPEED=1;
-function baseTimeScale(slowmoOn, dying, pausing, a11ySpeed){
+function baseTimeScale(slowmoOn, dying, pausing, a11ySpeed, freezing){
   let ts = slowmoOn ? .45 : 1;
   if (dying) ts=Math.min(ts,.12);
   if (pausing) ts=Math.min(ts,.05);
   ts=Math.min(ts, a11ySpeed);
+  // 06.09.2026 «Стоп-кадр» (новый 7-й бонус): та же цепочка потолков — мир замирает
+  // (ts=0, преграды/звёзды не двигаются), самолёт по-прежнему летит на raw dt (см. update()
+  // ниже — управление НЕ умножается на timeScale), значит остаётся управляемым в застывшем мире.
+  if (freezing) ts=0;
   return ts;
 }
 // физически короче. Пока рулишь гироскопом — мир на 15% медленнее, преграды реже на ту же долю
@@ -1947,7 +1954,7 @@ function spawnObstacle(forceKind, forceDir){
      ВРЕМЕННЫЙ ПОРОГ: S.mission>=8 — для проверки механики прямо сейчас, до того как
      весь биом 2 (переход, «Первый рубеж пройден», семь новых волн) будет построен.
      Когда биом 2 появится как отдельная система — этот порог заменяется на вход в биом. */
-  if (!forceKind && S.mission>=8 && obstacles.length<MAXOB-1 && mapRand(0,1)<.05){
+  if (!forceKind && S.mode!=='slalom' && S.mission>=8 && obstacles.length<MAXOB-1 && mapRand(0,1)<.05){
     const px1=fl+mapRand(60,fw*.4), px2=fl+fw*.6+mapRand(0,fw*.4-60);
     const o1=poolOb.take(), o2=poolOb.take();
     for (const oo of [o1,o2]){
@@ -1976,6 +1983,10 @@ function spawnObstacle(forceKind, forceDir){
       else if(w[i][1]===0 && !S.customWG) w[i][1]=BASE[i]||0; // автор позвал этот вид явно — гейт снят. v1.282.15: только для кодов поколения 3; у розданных раньше расстановка обязана остаться прежней. BASE[i]||0 — страховка на случай, если в w добавят вид, а сюда забудут
     }
     if(!w.some(e=>e[1]>0)) w[0][1]=42; // страховка: всё выключено автором — летит базовый камень
+  }
+  if (S.mode==='slalom'){ // 06.09.2026: дисциплина — только ворота, ничего кроме них
+    for (const e of w) e[1]=0;
+    const g=w.find(e=>e[0]==='gate'); if (g) g[1]=1;
   }
   let kind;
   if (forceKind) kind=forceKind;
@@ -2085,9 +2096,9 @@ let _lastPowerupKind=null; // 30.08.2026 (владелец: «два щита п
   // не с чем сравнивать (null не совпадёт ни с одним kind), дальше сама себя поддерживает по флайту.
 function spawnPowerup(forceKind){ // forceKind — урок III «Ловец бонусов»: бонус по расписанию
   // слот спавна один (пауза ~10-14с на старте, ~6-8с на пике) — новые бонусы делят его со старыми, поле не переполняется
-  const kinds=['shield','magnet','slowmo','life','dash','nova']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая
+  const kinds=['shield','magnet','slowmo','life','dash','nova','freeze']; // v1.40.0 «Шесть жестов»: классика + Таран + Сверхновая; freeze — 06.09.2026 «Стоп-кадр», седьмой
   const lifeCap=(S.mode==='custom')?(S.customLv||3):3; // v1.70.0: потолок жизней — у своей трассы он авторский, иначе бонус ломал бы «Ад на одну жизнь»
-  const weights=[3,3,2,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток
+  const weights=[3,3,2,1,1,1,1]; // фиксированный диапазон: состояние игрока не сдвигает весь seed-поток; freeze весом 1 — редкий, как Таран/Сверхновая (владелец, 06.09.2026)
   // 30.08.2026: множитель был жёстко зашит *9 вместо суммы весов (3+3+2+1+1+1=11) — тот же
   // приём, что уже верно сделан в spawnObstacle() чуть выше в этом файле (tot считается из
   // массива, не вписан числом). При *9 цикл гарантированно останавливался не позже «life»
@@ -2336,7 +2347,7 @@ function ghostStep(){ // призрак идёт по своей траекто�
 // v1.282.20: щит добавлен к списку «риска нет». 14 секунд щита позволяли нырять в самую
 // гущу и снимать по 25×комбо за каждый пролёт впритык — до полутора тысяч очков с одного
 // бонуса, без единого шанса погибнуть. Остальные три страховки в списке уже были.
-function fullRisk(){ return S.slowmo<=0 && S.dash<=0 && S.shield<=0; }
+function fullRisk(){ return S.slowmo<=0 && S.dash<=0 && S.shield<=0 && S.freeze<=0; } // 06.09.2026: заморозка мира — тоже не «полный риск»
 
 /* ================= UPDATE (fixed step 1/60) ================= */
 /* 22.08.2026 «Впритык только когда честно мимо»: жалоба владельца — «впритык»
@@ -2354,7 +2365,7 @@ function isReceding(dx,dy,dvx,dvy,pvx,pvy){
 }
 function update(dt){
   input.useGyro = gyroUnlocked() && performance.now()-input._t<600; // сторож + замок: гироскоп рулит только после «Полёта без рук», молчащий датчик не держит старый наклон
-  let ts = baseTimeScale(S.slowmo>0, S.dying, S.pausing, A11Y_SPEED); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update()
+  let ts = baseTimeScale(S.slowmo>0, S.dying, S.pausing, A11Y_SPEED, S.freeze>0); // v1.476.0: та же цепочка потолков, что раньше жила прямо здесь — вынесена, чтобы её можно было проверить стражем отдельно от всего update(); 06.09.2026: freeze — новый бонус «Стоп-кадр»
   S.timeScale = RM ? ts : lerp(S.timeScale, ts, .1); // v1.99.2 «Бережное небо»: при системном флаге время не плавает — переключается сразу
   /* v1.284.10: `!S.dying` — тот же запрет, что стоит в pauseGame(), но там он проверялся
      только на входе. Если смерть начиналась ПОСЛЕ начала паузы, время мира падало ниже
@@ -2411,7 +2422,7 @@ function update(dt){
   if (starT<=0){ starT = withTrack('st', function(){ spawnStar(); return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
   powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
-    if (!(S.mode==='custom' && S.customB===0) && S.mode!=='ironman') spawnPowerup(); // 05.09.2026: Ironman — 0 бонусов, часть цены за ×4 очков
+    if (!(S.mode==='custom' && S.customB===0) && S.mode!=='ironman' && S.mode!=='slalom') spawnPowerup(); // 05.09.2026: Ironman — 0 бонусов, часть цены за ×4 очков; 06.09.2026: Слалом — тоже без бонусов, они бы позволили пройти ворота без срыва
     return powGap() * (S.mode==='custom'?forgeBonusGapMul(S.customB):1); }); } // бонусы интуитивны (v1.16.0); темп — за сложностью (v1.36.0); Своя трасса: частота автора, «выкл» = пустое небо (v1.69.0)
 
   // ---- движение самолётика + учёт способа руления (категория рекорда) ----
@@ -2451,7 +2462,17 @@ function update(dt){
     if (S.dyingT<=0){ S.dying=0; gameOver(); return; }
   }
   const flPlane=fieldL(); // v1.99.9: в коридоре чести нет безопасной полосы у края
-  plane.x = clamp(plane.x + plane.vx, 20+flPlane, W-20-flPlane);
+  // 06.09.2026 «Солнечный ветер»: порыв как function(дистанция) — не постоянный снос, качается
+  // туда-сюда, период ~7854 условных единиц S.dist. Только у своих трасс (S.customWind), обычные
+  // режимы этот код не выполняют вообще. Толкает ПОЗИЦИЮ напрямую (после руления, до ограничения
+  // полем) — одинаково действует на любой штурвал (тач/мышь считают vx иначе, чем гиро/клавиатура,
+  // общей точки в ax/ay для них нет). Проверено численно (короткий скрипт): при wind=100
+  // максимум ~2.6px/кадр, ~35% от maxV=7.5 — заметно, не рвёт управление.
+  let windPush=0;
+  if (S.mode==='custom' && S.customWind>0){
+    windPush = Math.sin(S.dist*0.0008) * (S.customWind/100) * 2.6;
+  }
+  plane.x = clamp(plane.x + plane.vx + windPush, 20+flPlane, W-20-flPlane);
   plane.y = clamp(plane.y + plane.vy, fieldT()+fieldH()*.22, fieldT()+fieldH()-50); // v1.282.20: потолок и пол — от коридора, не от высоты экрана
   if (!S.dying) plane.bank = lerp(plane.bank, clamp(plane.vx/maxV,-1,1), .15); // при занавесе крен задаёт падение
   smoothStep(); // Smooth Flight: замер резкости после обработки ввода
@@ -2480,6 +2501,7 @@ function update(dt){
   if (S.magnet>0) S.magnet-=dt;
   if (S.slowmo>0) S.slowmo-=dt;
   if (S.dash>0) S.dash-=dt; // Таран: 4 секунды пробоя (v1.40.0)
+  if (S.freeze>0) S.freeze-=dt; // 06.09.2026 «Стоп-кадр»: 2 секунды, тоже в реальном времени — та же логика, что у слоумо (длительность самого эффекта не тянется вместе с замедленным миром)
   S.time += dt; // часы полёта — по ним сверхновая узнаёт, что старт позади
   if (S.flash>0) S.flash-=dt; // вспышка — чисто визуальная (золотая секунда)
   if (ghostTagT>0) ghostTagT-=dt; // подпись призрака живёт первые 4 секунды
@@ -2571,6 +2593,9 @@ function update(dt){
           S.shield=0; killIdx(obstacles,i,poolOb);
           burst(o.x,o.y,'#7fd8ff',14); sfx.shieldBlock(); haptic('medium'); if(typeof gamepadRumble==='function') gamepadRumble(.4,90);
           showPopup(L.shieldDown, plane.x, plane.y-40, '#7fd8ff');
+        } else if (S.mode==='slalom'){ // 06.09.2026: реальное правило слалома — любое касание рамки срывает заезд целиком, не отнимает жизнь
+          if(typeof BEACON!=='undefined') BEACON.signal('death', S.mission+':slalom_dq');
+          S.slalomFail=1; startDying(); return;
         } else {
           hitPlane('gate');
           killIdx(obstacles,i,poolOb);
@@ -2660,6 +2685,7 @@ function update(dt){
       if (p.kind==='shield'){ S.shield=14; showPopup(L.shield,p.x,p.y,'#7fd8ff'); }
       if (p.kind==='magnet'){ S.magnet=12; showPopup(L.magnet,p.x,p.y,'#c58fff'); }
       if (p.kind==='slowmo'){ S.slowmo=6; showPopup(L.slowmo,p.x,p.y,'#8fff9f'); }
+      if (p.kind==='freeze'){ S.freeze=2; showPopup(L.freeze,p.x,p.y,'#dff3ff'); } // 06.09.2026 «Стоп-кадр»: 2с, мир замирает (baseTimeScale), самолёт остаётся управляемым
       // v1.282.20: потолок жизней авторский, как и на спавне — иначе две одновременно
       // висящие в небе жизни пробивали «Ад на одну жизнь» (customLv=1) до трёх.
       if (p.kind==='life'){ S.lives=Math.min((S.mode==='custom')?(S.customLv||3):3, S.lives+1); showPopup(L.life,p.x,p.y,'#ffa1d9'); updateLives(); } // жизнь существует только для раненого: страж спавна (v1.46.0) не пускает её в небо при полном корпусе — никаких лишних жизней; v1.105.0: розовая, вне красной семьи тревоги
@@ -2738,6 +2764,11 @@ function update(dt){
     const elMH=elModeHud, distI=Math.floor(S.dist);
     if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent='100% · '+Math.min(distI,HUNDRED_DIST)+'/'+HUNDRED_DIST+(L.unitM||'м'); }
     if (S.dist>=HUNDRED_DIST && !S.dying){ startDying(); S.hundredDone=1; } // долетаешь до конца всегда — 100% отдельно проверяется на итогах по starsSpawned/starsCollected
+  }
+  else if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
+    const elMH=elModeHud, distI=Math.floor(S.dist);
+    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,SLALOM_DIST)+'/'+SLALOM_DIST+(L.unitM||'м'); }
+    if (S.dist>=SLALOM_DIST && !S.dying){ startDying(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
   }
   else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
@@ -2848,7 +2879,7 @@ function updateLives(){ // жизни = мини-модельки текущег
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
   const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
-  const maxLives=(S.mode==='ironman'||S.mode==='daily1cc')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами
+  const maxLives=(S.mode==='ironman'||S.mode==='daily1cc'||S.mode==='slalom')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами; 06.09.2026: Слалом тоже — любое касание и так срывает заезд целиком
   for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
     if (i<S.lives){ // живая — полный корпус со свечением (v1.46.0: светятся только живые — потерянная не притворяется живой)

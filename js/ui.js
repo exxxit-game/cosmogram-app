@@ -219,17 +219,18 @@ function modesFill(){ // подписи + отметка выбранного р
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
   put('modeCaravan',L.modeCaravan,L.modeCaravanD); // 05.09.2026
   put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
+  put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
   // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
   // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
-  const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman'};
+  const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
   // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
   const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
-  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,daily1cc:L.mode1CC,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/1CC/100%
+  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,daily1cc:L.mode1CC,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом
   const mode=(typeof controlMode==='function')?controlMode():'touch';
   const ctlName=mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch);
   head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
@@ -285,6 +286,7 @@ function startGame(saved){
   mapSeedKey = (runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') ? trackDayKey() // v1.282.20: ключ трассы — по общему времени; 05.09.2026: 1CC/100% летят по тому же небу месяца
     : runMode==='theater' ? String(theaterDay||trackDayKey())
     : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
+    : runMode==='slalom' ? (SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: та же трасса навсегда — честное сравнение времени между игроками
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
     : String(freshSeed);
   mapSeqReset();
@@ -292,6 +294,7 @@ function startGame(saved){
   mapRNG = (runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
     : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
+    : runMode==='slalom' ? keyRNG(SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: тот же приём — одна трасса навсегда
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
     : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
@@ -301,9 +304,9 @@ function startGame(saved){
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
   if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
-  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='daily1cc'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»/«1CC»: 1 жизнь вместо 3
+  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='daily1cc'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»/«1CC»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
-    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
+    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,slalomWin:0,slalomFail:0,seed:freshSeed, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
@@ -329,6 +332,7 @@ function startGame(saved){
        к S.speed напрямую и была верна, её не трогаем. */
     S.customE=fc.e; S.customD=forgeDensityMul(fc.d)/(am.d||1); S.customS=forgeSpeedMul(fc.s)*am.s; S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
     S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; S.customWG=fc.wg?1:0; S.customHS=fc.hs?1:0; // v1.282.15: старые коды (v1/v2) летят со старой раскладкой преград // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0); 31.08.2026: «Высокая ставка»
+    S.customWind=fc.wind||0; // 06.09.2026 «Солнечный ветер» — 0 у старых кодов без поля, обычные режимы этот флаг вообще не читают
     S.customH1=fc.h1; S.customH2=fc.h2; // 01.09.2026 «Свой фон»: forgeSanitize уже гарантирует оба поля (выводит из legacy sky, если автор не трогал свободный цвет явно)
     S.customMood=fc.mood; // 01.09.2026 «Настроение неба»: forgeSanitize гарантирует поле (50 по умолчанию — сегодняшний вид)
     S.customSc=Array.isArray(fc.sc)?fc.sc:[]; S.customScIdx=0; // 01.09.2026 «Расстановка — реальный эффект»: точки Партитуры едут на борт тем же приёмом, что и весь остальной авторский конфиг — game.js читает их через spawnObstacle()
@@ -397,7 +401,7 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%)
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
   if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
   sfx.launch(SKINS_BY_ID.get(S.skin)||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
@@ -461,6 +465,11 @@ function gameOver(){
     const prevSr=saneNumber(Store.get('srBest',0),0);
     if (!prevSr || S.time<prevSr){ Store.set('srBest',S.time); srNewBest=true; }
   }
+  let slalomNewBest=false; // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — рекорд считается только на настоящей победе
+  if (S.mode==='slalom' && S.slalomWin && !S.wasRestored){
+    const prevSl=saneNumber(Store.get('slalomBest',0),0);
+    if (!prevSl || S.time<prevSl){ Store.set('slalomBest',S.time); slalomNewBest=true; }
+  }
   S.wallet += S.starsCollected;
   Store.set('wallet', S.wallet);
   if (ghostBeatNow) Stats.ghostBeats=(Stats.ghostBeats||0)+1; // сколько чужих призраков повержено (ачивка gv1)
@@ -475,7 +484,7 @@ function gameOver(){
      No-Miss честно достижим только там, где есть финиш БЕЗ смерти — gameOver() в остальных
      режимах (Классика/Небо месяца) вызывается исключительно через S.lives<=0, то есть
      «0 попаданий» на итогах там противоречиво по конструкции самого кода. */
-  const noMissNow = ((S.mode==='speedrun'&&S.srWin) || (S.mode==='caravan'&&S.caravanTimeUp)) && S.hits===0;
+  const noMissNow = ((S.mode==='speedrun'&&S.srWin) || (S.mode==='caravan'&&S.caravanTimeUp) || (S.mode==='slalom'&&S.slalomWin)) && S.hits===0; // 06.09.2026: победа в Слаломе и так требует нуля касаний ворот — третий честный триггер того же бейджа
   // Pacifist: ни разу не подобрал Таран/Сверхновую — только уклонение. bonuses>0 требует хотя бы
   // одного взятого бонуса — иначе флаг был бы честен формально, но бессмысленен (не было выбора).
   const pacifistNow = !S.everDash && !S.everNova && S.bonuses>0;
@@ -532,6 +541,10 @@ function gameOver(){
   // остальные особые моменты — золотые плашки в ряд с иконками категорий (не строки текста)
   const recChips=[];
   if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
+  if (S.mode==='slalom'){ // 06.09.2026: победа — время финиша (как Спидран), срыв — отдельная плашка, без времени (нечестно сравнивать недоезд)
+    if (S.slalomWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(slalomNewBest?L.slalomNewBest:L.slalomFinish)+' '+fmtTime(S.time)+'</span>');
+    else if (S.slalomFail) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.slalomDQ+'</span>');
+  }
   if (S.mode==='caravan' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('target')+L.caravanNewBest+'</span>'); // 05.09.2026: текстовый рекорд вместо новой медали-иконки
   if (S.mode==='ironman' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('crown')+L.ironmanNewBest+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
@@ -671,6 +684,11 @@ function ghostUpload(category, track, skin, best, seed){
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
     syncSpeedrunSubmit({ day:SPEEDRUN_ETERNAL_DAY, time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed»: постоянный ключ
+      track: ghostPackDaily() });
+  // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — только настоящая победа (slalomWin), не срыв
+  if (S.mode==='slalom' && S.slalomWin && !S.wasRestored && rec.length>=20 &&
+    typeof syncSlalomSubmit==='function' && typeof ghostPackDaily==='function')
+    syncSlalomSubmit({ day:SLALOM_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
       track: ghostPackDaily() });
   // живой ранг: своё место в мире (только Telegram; прилетит асинхронно, экран не ждёт)
   if (typeof syncTop==='function' && syncAvailable()){
@@ -1939,7 +1957,7 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman'],['mode1CC','daily1cc'],['mode100','hundred']].forEach(function(pair){
+[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman'],['mode1CC','daily1cc'],['mode100','hundred'],['modeSlalom','slalom']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
     if (pair[1]==='daily'||pair[1]==='daily1cc'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 1CC/100% жгут ту же попытку
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
@@ -2487,10 +2505,12 @@ function renderTop(){
     ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'')
     : (askCat==='speedrun' && typeof syncSpeedrunTop==='function')
     ? syncSpeedrunTop(typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?SPEEDRUN_ETERNAL_DAY:'') // 03.09.2026 «Set Seed»: постоянный ключ
+    : (askCat==='slalom' && typeof syncSlalomTop==='function')
+    ? syncSlalomTop(typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'') // 06.09.2026: тот же приём, что у Спидрана
     : syncTop(askCat);
-  // Спидран меряет секунды (меньше — лучше), не очки/метры — своё форматирование в обоих местах,
-  // где счёт показывается («твоё место» и сама строка), одной функцией, не двумя копиями branch'а.
-  const topFmt = v => askCat==='speedrun' ? fmtTime(v) : fmtN(v)+(askCat==='dist'?' '+(L.unitM||'м'):'');
+  // Спидран/Слалом меряют секунды (меньше — лучше), не очки/метры — своё форматирование в обоих
+  // местах, где счёт показывается («твоё место» и сама строка), одной функцией, не двумя копиями branch'а.
+  const topFmt = v => (askCat==='speedrun'||askCat==='slalom') ? fmtTime(v) : fmtN(v)+(askCat==='dist'?' '+(L.unitM||'м'):'');
   topPromise.then(d=>{
     if(screenName!=='ach' || topCat!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
     if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
@@ -2502,8 +2522,8 @@ function renderTop(){
       const spisok = (d.top||[]);
       if (wb){
         if (moy>0 && spisok.length){
-          // Спидран: «выше тебя» — у кого время МЕНЬШЕ твоего, не больше (зеркально от остальных)
-          const vyshe = askCat==='speedrun' ? spisok.filter(r=>Number(r.best)<moy).length
+          // Спидран/Слалом: «выше тебя» — у кого время МЕНЬШЕ твоего, не больше (зеркально от остальных)
+          const vyshe = (askCat==='speedrun'||askCat==='slalom') ? spisok.filter(r=>Number(r.best)<moy).length
             : spisok.filter(r=>Number(r.best)>moy).length;
           wb.textContent = L.topWouldBe(topFmt(moy), vyshe+1, spisok.length);
           wb.classList.remove('hidden');
@@ -2720,7 +2740,7 @@ function applyLang(){
      каждая иконка. Переиспользую уже готовые ключи (те же слова, что у выбора управления и
      режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan/modeIronman),
      новых переводов не завожу. */
-  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,ironman:L.modeIronman};
+  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom};
   document.querySelectorAll('.topCat').forEach(function(b){
     const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
   });
