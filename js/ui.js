@@ -1466,12 +1466,21 @@ function angarVisibleList(){ // список жетонов активной в�
   // emojiSupported(undefined) сама возвращает true, фильтр для иконок безвреден и не нужен,
   // но не мешает оставить его общим для обеих вкладок.
   const visible = none.concat(freebies, rest).filter(d=>emojiSupported(d.ch));
-  // 05.09.2026 «Поиск по имени»: применяется последним, после категорий/фрибутов — при
-  // активном поиске подзаголовки разделов просто не появятся перед первым же непустым
-  // совпадением (тот же lastCat-механизм в angarBuildGrid, ничего отдельно чинить не нужно).
-  if(!angarSearchQ) return visible;
-  const q = angarSearchQ.toLowerCase();
-  return visible.filter(d=>d.id===0 || (typeof d.name==='string' && d.name.toLowerCase().indexOf(q)>=0));
+  /* 06.09.2026 «Чипы вместо поиска по имени»: применяется последним, после категорий/фрибутов —
+     тот же lastCat-механизм в angarBuildGrid не путается, подзаголовки просто не появятся перед
+     первым непустым совпадением, как раньше у текстового поиска. id0 («Нет») не имеет владения/
+     версии — оставляем видимым всегда, как и было у поиска. */
+  if(angarFilterMode==='all') return visible;
+  const cfg2 = ANGAR_CATS[angarCat];
+  if(angarFilterMode==='new') return visible.filter(d=>d.id===0 || (d.since && verNewer(d.since, Store.get('angarSeenVersion','0'))));
+  const owned = d=>S[cfg2.ownedKey].includes(d.id);
+  if(angarFilterMode==='owned') return visible.filter(d=>d.id===0 || owned(d));
+  /* id0 («Нет») исключение здесь НЕ нужно, в отличие от соседних веток: id0 всегда куплен/
+     бесплатен по определению — принудительно показывать его в «Не куплено» значило бы
+     противоречить самому фильтру (найдено живой проверкой, не по чтению кода). */
+  if(angarFilterMode==='unowned') return visible.filter(d=>!owned(d));
+  if(angarFilterMode==='hasfact') return visible.filter(d=>!!d.fact);
+  return visible;
 }
 function angarBuyFill(){
   const grid=$('angarGrid');
@@ -1483,7 +1492,6 @@ function angarBuyFill(){
 }
 let angarSel = 0;          // на какой жетон смотрит игрок (не то же, что надетый/выбранный элемент)
 let angarBuilt = false;    // жетоны построены — второй раз не строим (сбрасывается при смене вкладки)
-let angarSearchQ = '';     // 05.09.2026: текст поиска — сбрасывается при смене вкладки, чтобы не путать разделы
 function verNewer(a,b){ // 05.09.2026: простое посегментное сравнение версий «1.478.83» — для метки «новое»
   const pa=String(a).split('.').map(Number), pb=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(pa.length,pb.length);i++){ const x=pa[i]||0, y=pb[i]||0; if(x!==y) return x>y; }
@@ -1525,13 +1533,34 @@ function angarRenderTabsSel(){
 function angarSwitchCat(cat){
   if(angarCat===cat) return;
   angarCat=cat; angarBuilt=false; angarSel=S[ANGAR_CATS[cat].selKey];
-  angarSearchQ=''; const si=$('angarSearch'); if(si) si.value=''; // 05.09.2026: чистый поиск на каждом разделе
+  angarFilterMode='all'; angarFillFilterChips(); // 06.09.2026: чистый фильтр на каждом разделе, тот же принцип, что был у поиска
   sfx.click(); haptic('light');
   angarRenderTabsSel(); angarBuildGrid(); angarPvDraw(performance.now());
 }
-if(typeof $==='function' && $('angarSearch')) $('angarSearch').addEventListener('input', e=>{
-  angarSearchQ = e.target.value; angarBuilt=false; angarBuildGrid();
-});
+/* 06.09.2026 «Чипы вместо поиска по имени»: текстовый поиск искал только по d.name текущего
+   языка — бесполезен для ~30 скинов без имени вообще ни на одном языке, и не совпадает
+   между языками (набрал «star» на английской раскладке — «Звезда» в русском интерфейсе не
+   найдёт). Категории уже решают навигацию; чипы «Все/Новое/Куплено/Не куплено» не требуют
+   ни печатать, ни помнить название — тот же приём, что уже есть в Мастерской (workshopSort). */
+let angarFilterMode='all';
+/* 'hasfact' — временный чип (владелец, 06.09.2026): пока описания (item.fact) есть не у всех
+   200+ предметов, помогает видеть, что уже объяснено. Убрать, когда fact будет у всех. */
+const ANGAR_FILTERS=['all','new','owned','unowned','hasfact'];
+function angarFillFilterChips(){
+  const box=$('angarFilter'); if(!box) return;
+  if(box.children.length!==ANGAR_FILTERS.length){
+    box.innerHTML='';
+    ANGAR_FILTERS.forEach(function(f){
+      const b=document.createElement('button'); b.type='button'; b.className='forgeChip';
+      b.addEventListener('click', function(){ angarFilterMode=f; angarBuilt=false; angarFillFilterChips(); angarBuildGrid(); sfx.click(); haptic('light'); });
+      box.appendChild(b);
+    });
+  }
+  ANGAR_FILTERS.forEach(function(f,i){
+    box.children[i].textContent = L['angarFilter_'+f] || f;
+    box.children[i].classList.toggle('sel', f===angarFilterMode);
+  });
+}
 function angarBuildGrid(){
   const grid=$('angarGrid'); if(!grid) return;
   if(!angarBuilt){
@@ -1644,7 +1673,7 @@ function renderHangar(){
   const tabIcon=$('angarTabIcon'); if(tabIcon) tabIcon.textContent=L.angarTabIcon;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
-  const searchEl=$('angarSearch'); if(searchEl) searchEl.placeholder=L.angarSearchPh||'';
+  angarFillFilterChips();
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
 }
@@ -2829,6 +2858,7 @@ function applyLang(){
   setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof workshopFillLabels==='function') workshopFillLabels(); // 05.09.2026 «Мастерская» — свой язык, тот же приём
+  angarFillFilterChips(); // 06.09.2026: чипы Тюнинга — свой язык, тот же приём (no-op, если экран сейчас не открыт — box отсутствует в DOM только у скрытых частей своей же разметки, сама разметка всегда в DOM)
   if (typeof ptFill==='function') ptFill(); // 01.09.2026: Партитура — своя лента, тот же вызов смены языка
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
   if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
