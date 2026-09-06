@@ -1601,7 +1601,12 @@ function angarBuildGrid(){
            (render.js) — плитка не врёт о том, как это будет выглядеть на самом деле.
            Цвет — от НАДЕТОГО сейчас скина (S.skin), как и остальные превью в ангаре.
            02.09.2026: .pr — внутрь .ch, тем же приёмом, что у .dot выше. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span>';
+        /* 06.09.2026, владелец: узор вспышки — абстрактный, в отличие от эмодзи-декали не
+           узнаётся с одного взгляда на маленькой плитке (та же причина, по которой название
+           уже есть у Цвета — там тоже один и тот же силуэт, отличается только узором/цветом).
+           Правило теперь общее: эмодзи — исключение (картинка сама объясняет себя), у всех
+           остальных категорий название видно под плиткой. Тот же .nm, что у Цвета. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span><span class="nm">'+item.name+'</span>';
         if(item.style && item.style!=='none'){
           const x=el.querySelector('canvas').getContext('2d');
           const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
@@ -1614,8 +1619,9 @@ function angarBuildGrid(){
       } else if(angarCat==='trail'){
         /* 05.09.2026: тот же приём, что у Вспышки — честная заморозка настоящей формы следа
            (renderTrailPattern, render.js), не рисунок «по мотивам». Самолётик-ориентир рисует
-           сама плитка (маленький треугольник сверху), сам след — вызванная функция. */
-        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span>';
+           сама плитка (маленький треугольник сверху), сам след — вызванная функция.
+           06.09.2026: + название под плиткой, тем же правилом, что у Вспышки выше. */
+        el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas><span class="pr"></span></span><span class="nm">'+item.name+'</span>';
         const x=el.querySelector('canvas').getContext('2d');
         const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
         x.fillStyle='#eaf2ff'; x.globalAlpha=.9;

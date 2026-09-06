@@ -23,7 +23,6 @@ function wireOnLocal(id, ev, fn){
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
 const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
-const FORGE_GRPS=[['forgeGrpHard','forgePanelHard']]; // 30.08.2026: спойлер «Тонкой настройки»; 02.09.2026: «Туман» переехал в Расстановку, «Состав» переехал внутрь «Сложности» — осталась одна группа, не аккордеон
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
    кадре, пока «Своя трасса» открыта — тот же класс, что уже чинили для HUD (game.js,
    v1.282.21). Узел статичный (из index.html), forge.js — defer, значит DOM уже разобран
@@ -474,8 +473,6 @@ function forgeFill(){ // подписи + состояние виджетов п
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   // 30.08.2026: три заголовка групп стали .setGrp (аккордеон) — текст живёт в дочернем .setGrpT,
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
-  const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } };
-  grpT('forgeGrpHard',L.forgeGrpHard);
   // 05.09.2026: #modeForge убран из «Соревнований» вместе с самой кнопкой (Конструктор
   // переехал на главный экран, id="konstruktorBtn") — строка, что красила её подпись,
   // больше не на что указывать, снята вместе с ней.
@@ -528,27 +525,6 @@ function forgeFill(){ // подписи + состояние виджетов п
   const heat=$('forgeHeat');
   if(heat&&!heat._bound){ heat._bound=1; heat.addEventListener('input',function(){
     forgeHeatSet(+heat.value); forgeSyncWidgets(); }); }
-  const fb=$('forgeFineBtn');
-  if(fb){ fb.textContent=L.forgeFine;
-    if(!fb._bound){ fb._bound=1; fb.addEventListener('click',function(){
-      const ff=$('forgeFine');
-      const hid = ff ? !ff.classList.contains('hidden') : true; // новое состояние — считаем сами, не полагаемся на return classList.toggle()
-      if(ff) ff.classList.toggle('hidden', hid);
-      fb.classList.toggle('open',!hid); sfx.click(); haptic('light'); }); } }
-  // 30.08.2026 «Тонкая настройка — аккордеон»: три группы, открыта максимум одна — тот же
-  // приём (SET_GRPS), что уже в Настройках (ui.js). Биндим один раз — forgeFill зовётся
-  // и на смену языка, дублировать слушатели незачем.
-  if(!forgeFill._grpBound){ forgeFill._grpBound=1;
-    FORGE_GRPS.forEach(function(pair){
-      const g=$(pair[0]), p=$(pair[1]); if(!g||!p) return;
-      g.addEventListener('click',function(){
-        const willOpen=p.classList.contains('hidden');
-        FORGE_GRPS.forEach(function(pp){ const G=$(pp[0]),P=$(pp[1]); if(!G||!P) return; P.classList.add('hidden'); G.classList.remove('open'); });
-        if(willOpen){ p.classList.remove('hidden'); g.classList.add('open'); try{ g.scrollIntoView({block:'nearest'}); }catch(e){} }
-        sfx.click(); haptic('light');
-      });
-    });
-  }
   forgeSyncWidgets();
 }
 function forgeSyncWidgets(){ // конфиг → виджеты
@@ -572,18 +548,9 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeHSChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
-  forgeGrpSubSync(); // 30.08.2026: закрытая группа шёпотом отвечает, как себя чувствует — тот же приём, что уже в Настройках
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
   if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); if(typeof ptSyncColorUI==='function') ptSyncColorUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l/.h1/.h2/.dens — лента и ползунки Партитуры должны это увидеть
   if(typeof ptSyncTrayAvailability==='function') ptSyncTrayAvailability(); // 02.09.2026: «Состав» мог включить/выключить вид — лоток стикеров должен это честно показать
-}
-function forgeGrpSubSync(){ // «Тонкая настройка»: подпись под заголовком закрытой группы — её текущее состояние
-  const hsEl=$('forgeGrpHardSub');
-  if(hsEl){
-    let n=0; for(let i=0;i<FORGE_KINDS.length;i++) if(forgeCfg.e>>i&1) n++; // 02.09.2026: «Состав» переехал сюда же — счётчик видов теперь в общей подписи
-    hsEl.textContent=(L.forgeDen||'')+' '+forgeCfg.d+' · '+(L.forgeSpd||'')+' '+forgeCfg.s+' · '+(L.forgeLives||'')+' '+forgeCfg.lv+' · '+n+'/'+FORGE_KINDS.length+
-      (forgeCfg.hs?' · '+(L.forgeHS||''):''); // 31.08.2026: закрытая группа не молчит про включённую ставку; 02.09.2026: L.forgeHS уже кончается на «×4» сам по себе — приписанное здесь ещё одно «×4» дублировало текст («…очки ×4 ×4», владелец поймал вживую)
-  }
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill();
   forgeTabSet('play'); workshopFillLabels(); workshopRenderList(); // 06.09.2026: «Играть/Создать» — вход всегда на «Играть», Мастерская больше не отдельный экран
@@ -603,9 +570,29 @@ function forgeTabSet(t){
   if(playEl) playEl.classList.toggle('hidden', forgeTab!=='play');
   if(createEl) createEl.classList.toggle('hidden', forgeTab!=='create');
   if(forgeTab==='play') workshopRenderList(); // список мог устареть, пока игрок был на «Создать»
+  if(forgeTab==='create') forgeSubTabSet('arrange'); // 06.09.2026 «Переосмысление, часть 2»: вход в «Создать» всегда начинается с Расстановки
 }
 wireOnLocal('forgeTabPlayBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('play'); });
 wireOnLocal('forgeTabCreateBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('create'); });
+
+/* 06.09.2026 «Переосмысление, часть 2»: три саб-вкладки внутри «Создать» — тот же приём
+   переключения, что у forgeTabSet() выше, просто на уровень ниже (Расстановка/Небо/Сложность
+   вместо Играть/Создать). */
+let forgeSub='arrange';
+function forgeSubTabSet(s){
+  forgeSub=(s==='sky')?'sky':(s==='hard')?'hard':'arrange';
+  const arrangeBtn=$('forgeSubArrangeBtn'), skyBtn=$('forgeSubSkyBtn'), hardBtn=$('forgeSubHardBtn');
+  if(arrangeBtn) arrangeBtn.classList.toggle('sel', forgeSub==='arrange');
+  if(skyBtn) skyBtn.classList.toggle('sel', forgeSub==='sky');
+  if(hardBtn) hardBtn.classList.toggle('sel', forgeSub==='hard');
+  const arrangeEl=$('forgeSubArrange'), skyEl=$('forgeSubSky'), hardEl=$('forgeSubHard');
+  if(arrangeEl) arrangeEl.classList.toggle('hidden', forgeSub!=='arrange');
+  if(skyEl) skyEl.classList.toggle('hidden', forgeSub!=='sky');
+  if(hardEl) hardEl.classList.toggle('hidden', forgeSub!=='hard');
+}
+wireOnLocal('forgeSubArrangeBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('arrange'); });
+wireOnLocal('forgeSubSkyBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('sky'); });
+wireOnLocal('forgeSubHardBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('hard'); });
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
