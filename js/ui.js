@@ -960,7 +960,14 @@ function autosave(){
 /* ---------- Настройки (звук, язык, гироскоп, помощь) ---------- */
 let settingsFrom='menu'; // куда вернуться: меню или пауза
 let langPref='auto';
-function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw('setBeaconBtn', Store.get('beaconOn',1)===1); againLabel(); setScreen('settings'); gyroStatus(); setWellFill(); sfx.click(); } // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
+function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw('setBeaconBtn', Store.get('beaconOn',1)===1); againLabel(); setScreen('settings'); gyroStatus(); setWellFill(); sfx.click();
+  /* 06.09.2026, найдено попутно: contrastLabel()/colorblindLabel() нигде не звались при
+     открытии экрана — тумблеры «Высокий контраст»/«Для дальтоников» всегда рисовались
+     выключенными на свежий вход, даже если фильтр реально активен со прошлой сессии
+     (сам CONTRAST/COLORBLIND читается верно, canvasFilterSync() применяет фильтр к
+     канвасу — расходился только вид строки). calmFxLabel() — новый тумблер, тот же приём. */
+  contrastLabel(); colorblindLabel(); calmFxLabel();
+} // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
 function closeSettings(){ setScreen(settingsFrom); sfx.click(); }
 function rowV(btnId,val,on){ // v1.63.0: строка настроек «параметр — значение» (цикл-значения)
   const b=$(btnId); if(!b) return; const v=b.querySelector('.setV'); if(!v) return;
@@ -2093,6 +2100,7 @@ wireOn('setSoundBtn', 'click', ()=>{
 function musicLabel(){ rowSw('setMusicBtn', MUSIC_ON); setWellFill(); }
 function contrastLabel(){ rowSw('setContrastBtn', CONTRAST); }
 function colorblindLabel(){ rowSw('setColorblindBtn', COLORBLIND); }
+function calmFxLabel(){ rowSw('setReduceShakeBtn', CALM_FX); }
 /* Скоростные полосы удалены полностью, чтобы не оставлять пустой переключатель и не
    держать эффект в активном состоянии. Остальные настройки не зависят от этого флага. */
 /* v1.284.20 «Выключатель руля» (партия 47). Строка гасит не только себя: «Чувствительность»
@@ -2118,6 +2126,9 @@ wireOn('setContrastBtn', 'click', ()=>{
 });
 wireOn('setColorblindBtn', 'click', ()=>{
   COLORBLIND=!COLORBLIND; Store.set('colorblind',COLORBLIND?1:0); colorblindLabel(); canvasFilterSync(); haptic('light'); sfx.click();
+});
+wireOn('setReduceShakeBtn', 'click', ()=>{
+  CALM_FX=!CALM_FX; Store.set('calmFx',CALM_FX?1:0); calmFxLabel(); haptic('light'); sfx.click();
 });
 wireOn('setGyroBtn', 'click', ()=>{
   const budet = !((typeof gyroRul==='function') ? gyroRul() : true);
@@ -2884,7 +2895,7 @@ function applyLang(){
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
-   ['setColorblindBtn','setColorblind'],['setLangBtn','setLang'],
+   ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   setText('diagVibroBtn',L.diagVibro);
 }
@@ -2927,6 +2938,7 @@ Store.init(()=>{
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
+  CALM_FX = Store.get('calmFx',1)===1; // 06.09.2026 «Смягчить тряску и вспышки», по умолчанию включён
   // Скоростные полосы полностью вырезаны: чтение флага хранилища удалено, чтобы не
   // восстанавливать отключённый эффект при старом сохранённом значении.
   MUSIC_ON = Store.get('music',1)!==0; // музыка — отдельная настройка от звуков

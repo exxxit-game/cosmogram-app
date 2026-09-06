@@ -1654,7 +1654,7 @@ function draw(){
   const nowS=nowMs/1000;
   const profileOn=true; // 22.08.2026: замер всегда включён — экран (fpsPill) по-прежнему только под ?debug, см. profileReport()
   let profileMark=nowMs;
-  const shk = RM?0:S.shake; // v1.99.2 «Бережное небо»: при системном флаге экран не трясём
+  const shk = RM?0:(CALM_FX?S.shake*.4:S.shake); // v1.99.2 «Бережное небо»: при системном флаге экран не трясём; 06.09.2026: ручной тумблер приглушает до 40%, не убирает совсем
   const shx = shk>0?rand(-6,6)*shk:0, shy = shk>0?rand(-6,6)*shk:0;
   ctx.save(); ctx.translate(shx,shy);
 
@@ -2134,7 +2134,7 @@ function draw(){
 
   // вспышка сверхновой — золотая заливка + расходящееся кольцо от самолётика (v1.18.0)
   if (S.flash>0 && !RM){ // v1.99.2 «Бережное небо»: при системном флаге вспышку заменяет тишина
-    const fk=S.flash/.45;
+    const fk=(CALM_FX?S.flash*.4:S.flash)/.45; // 06.09.2026: ручной тумблер приглушает до 40%, тот же приём, что у тряски выше
     ctx.fillStyle=juicy('rgba(255,240,168,'+(fk*.3).toFixed(3)+')','color(display-p3 1 .96 .7 / '+(fk*.3).toFixed(3)+')'); ctx.fillRect(0,0,W,H); // v1.99.3 «Сочные чернила»: вспышка рекорда
     ctx.save(); ctx.globalCompositeOperation='lighter';
     ctx.strokeStyle=juicy('rgba(255,240,168,'+(fk*.75).toFixed(3)+')','color(display-p3 1 .96 .7 / '+(fk*.75).toFixed(3)+')'); ctx.lineWidth=2+5*fk;
