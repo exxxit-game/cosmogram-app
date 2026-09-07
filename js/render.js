@@ -274,6 +274,23 @@ function trailGlow(skin){
   }
   return trailGlowCache[skin.id];
 }
+/* 07.09.2026: тот же приём, что trailGlow() выше — спрайт-кружок вместо CanvasGradient
+   в кадре. У «Спутники» (fx==='satellites') раньше 3 createRadialGradient пересоздавались
+   каждый кадр (позиция/радиус орбиты меняются, но сам градиент — нет, только цвет skin.trail
+   и он один на скин): рисуем единичный спрайт один раз на skin.id, дальше drawImage с
+   нужным размером/позицией — тот же класс фикса, что уже применён у sheenSprite(). */
+const satGlowCache={};
+function satGlowSprite(skin){
+  if(!satGlowCache[skin.id]){
+    const c=document.createElement('canvas'); c.width=c.height=32;
+    const x=ctx2d(c);
+    const g=x.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,skin.trail+'.95)'); g.addColorStop(1,skin.trail+'0)');
+    x.fillStyle=g; x.beginPath(); x.arc(16,16,16,0,6.283); x.fill();
+    satGlowCache[skin.id]=c;
+  }
+  return satGlowCache[skin.id];
+}
 /* v1.66.0: корпусное свечение скина — кэш-спрайт вместо shadowBlur в каждом кадре */
 const planeGlowCache={};
 function planeGlow(skin){
@@ -2617,6 +2634,52 @@ function renderTrailPattern(c, style, col){
     }
   }
 }
+/* 07.09.2026 «Прожорливость Тюнинга»: три семейства Вспышек (Суперформула×8, Розы×7,
+   L-система×2) пересчитывали свою геометрию ЗАНОВО каждый кадр — 64/90 итераций
+   Math.pow/cos/sin, а у L-системы ещё и string.split/map/join на каждый кадр — хотя
+   сама форма зависит только от style (фиксированные числа SFP/ROSE_K/LSYS_N), не от
+   времени и не от p (p входит только линейным масштабом). Тот же класс бага, что уже
+   ловили у Планетария/Золотой звезды (страж 89) — фигура считается один раз на style,
+   кэш хранит уже единичный (без масштаба p) контур, отрисовка домножает на p. */
+const SF_UNIT_CACHE={};
+function sfUnitPts(style){
+  if(SF_UNIT_CACHE[style]) return SF_UNIT_CACHE[style];
+  const SFP={sfRomb:[4,1,1,1], sfStarfish:[5,0.1,1.7,1.7], sfBlossom:[6,3,8,8],
+    sfUrchin:[8,0.3,0.3,0.3], sfPebble:[6,40,10,10], sfSlab:[4,1000,1000,1000],
+    sfShield:[3,60,55,30], sfCrown:[14,30,30,30]};
+  const [sm,sn1,sn2,sn3]=SFP[style];
+  const N=64, R=30, pts=[];
+  for(let i=0;i<=N;i++){
+    const phi=i/N*6.2832;
+    const t1=Math.pow(Math.abs(Math.cos(sm*phi/4)),sn2);
+    const t2=Math.pow(Math.abs(Math.sin(sm*phi/4)),sn3);
+    const r=Math.pow(t1+t2,-1/sn1)*R;
+    pts.push([r*Math.cos(phi), r*Math.sin(phi)]);
+  }
+  return SF_UNIT_CACHE[style]=pts;
+}
+const ROSE_UNIT_CACHE={};
+function roseUnitPts(style){
+  if(ROSE_UNIT_CACHE[style]) return ROSE_UNIT_CACHE[style];
+  const ROSE_K={roseClover:2, roseTrefoil:3, roseRosette:4, rosePetals5:5,
+    roseChrysanthemum:6, roseSeven:7, roseFan:8};
+  const k=ROSE_K[style];
+  const N=90, R=32, periods=(k%2===0?2:1), pts=[];
+  for(let i=0;i<=N*periods;i++){
+    const theta=i/N*Math.PI*2;
+    const r=Math.cos(k*theta)*R;
+    pts.push([r*Math.cos(theta), r*Math.sin(theta)]);
+  }
+  return ROSE_UNIT_CACHE[style]=pts;
+}
+const LSYS_STR_CACHE={};
+function lsysString(style){
+  if(LSYS_STR_CACHE[style]) return LSYS_STR_CACHE[style];
+  const LSYS_N = style==='lsysBranch' ? 2 : 3;
+  let str='F';
+  for(let i=0;i<LSYS_N;i++) str=str.split('').map(ch=>ch==='F'?'F[+F]F[-F]F':ch).join('');
+  return LSYS_STR_CACHE[style]=str;
+}
 function renderFlashPattern(c, style, p, col){
   const ring=(rp,widthFrom,widthTo)=>{
     if(rp<=0) return;
@@ -3310,10 +3373,13 @@ function renderFlashPattern(c, style, p, col){
       }
       break;
     }
-    case 'clock': {
+    case 'clock': { // 07.09.2026 «Аудит вспышек»: добавлен обод циферблата — без него фигура на
+      // мелкой плитке читалась как «просто стрелка», путалась со «Стрелкой» (needle)
       const n=12;
-      c.strokeStyle=col((1-p)*.5); c.lineWidth=1;
       const R=10+p*22;
+      c.strokeStyle=col((1-p)*.35); c.lineWidth=0.8;
+      c.beginPath(); c.arc(0,0,R,0,6.2832); c.stroke();
+      c.strokeStyle=col((1-p)*.5); c.lineWidth=1;
       for(let i=0;i<n;i++){
         const ang=i*(6.2832/n);
         const major=(i%3===0);
@@ -3479,10 +3545,16 @@ function renderFlashPattern(c, style, p, col){
       c.fillStyle=col(1-p); c.beginPath(); c.arc(0,0,3.2,0,6.2832); c.fill();
       break;
     }
-    case 'grooveDisc': {
+    case 'grooveDisc': { // 07.09.2026 «Аудит вспышек»: добавлена бумажная этикетка пластинки —
+      // жирное, устойчивое к уменьшению пятно в центре, которого нет ни у одной другой вспышки
+      // этой партии («Объёмный шар» и т.д. — тоже «круг+штрихи», путались на мелкой плитке)
       c.fillStyle=col((1-p)*.18); c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.fill();
       c.strokeStyle=col((1-p)*.55); c.lineWidth=0.5;
       for(let i=0;i<9;i++){ c.beginPath(); c.arc(0,0,(4+i*2.6)*p,0,6.2832); c.stroke(); }
+      c.fillStyle=col((1-p)*.7);
+      c.beginPath(); c.arc(0,0,7*p,0,6.2832); c.fill();
+      c.fillStyle=col((1-p)*.95);
+      c.beginPath(); c.arc(0,0,1.6*p,0,6.2832); c.fill();
       break;
     }
     case 'fillLevel': {
@@ -3585,26 +3657,33 @@ function renderFlashPattern(c, style, p, col){
         c.beginPath(); c.moveTo(-25*p,12*p); c.quadraticCurveTo(0,12*p-h*2,25*p,12*p); c.stroke(); }
       break;
     }
-    case 'diamondSphere': {
+    case 'diamondSphere': { // 07.09.2026 «Аудит вспышек»: сама решётка меридианов/параллелей тонет
+      // в 0.6px на мелкой плитке (не читалась как «ромб», путалась с соседним «Кристалл-огранка»
+      // — тоже тонкая проволочная фигура без заливки) — добавлены жирные точки ровно в узлах
+      // решётки (пересечение эллипса и параллели, x=rx·sqrt(1-(y/26)²), проверено численно),
+      // сами узлы и образуют настоящие ромбы, устойчивы к уменьшению в отличие от тонких линий
+      const RX=[26,10,18], RY=[0,16,-16];
       c.strokeStyle=col(1-p); c.lineWidth=0.6; c.globalAlpha=0.85;
-      c.beginPath(); c.ellipse(0,0,26*p,26*p,0,0,6.2832); c.stroke();
-      c.beginPath(); c.ellipse(0,0,10*p,26*p,0,0,6.2832); c.stroke();
-      c.beginPath(); c.ellipse(0,0,18*p,26*p,0,0,6.2832); c.stroke();
-      c.beginPath(); c.moveTo(-24*p,0); c.lineTo(24*p,0); c.stroke();
-      c.beginPath(); c.moveTo(-24*p,-16*p); c.lineTo(24*p,-16*p); c.stroke();
-      c.beginPath(); c.moveTo(-24*p,16*p); c.lineTo(24*p,16*p); c.stroke();
-      c.globalAlpha=1;
+      RX.forEach(rx=>{ c.beginPath(); c.ellipse(0,0,rx*p,26*p,0,0,6.2832); c.stroke(); });
+      RY.forEach(ry=>{ c.beginPath(); c.moveTo(-24*p,ry*p); c.lineTo(24*p,ry*p); c.stroke(); });
+      c.globalAlpha=1; c.fillStyle=col((1-p)*.9);
+      RX.forEach(rx=>{ RY.forEach(ry=>{
+        const x=rx*p*Math.sqrt(Math.max(0,1-(ry/26)**2));
+        c.beginPath(); c.arc(x,ry*p,1.3,0,6.2832); c.fill();
+        if(x>0.01){ c.beginPath(); c.arc(-x,ry*p,1.3,0,6.2832); c.fill(); }
+      }); });
       break;
     }
-    case 'twistedSphere': {
+    case 'twistedSphere': { // 07.09.2026 «Аудит вспышек»: обводка по контуру лепестков — сам твист
+      // читался только по мягкой разнице заливки (0.25/0.55), терялся среди других «кругов»
       c.fillStyle=col((1-p)*.12); c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.fill();
-      c.fillStyle=col(1-p);
+      c.fillStyle=col(1-p); c.strokeStyle=col((1-p)*.9); c.lineWidth=0.7;
       for(let i=0;i<7;i++){ const a0=i*(180/7)*Math.PI/180;
         c.globalAlpha=0.25+((i%2)*.3);
         c.beginPath(); c.moveTo(0,0);
         c.quadraticCurveTo(Math.cos(a0)*26*p,-26*p, Math.cos(a0+.3)*26*p,-24*p);
         c.quadraticCurveTo(Math.cos(a0+.15)*15*p,0,0,0);
-        c.closePath(); c.fill();
+        c.closePath(); c.fill(); c.stroke();
       }
       c.globalAlpha=1;
       c.strokeStyle=col((1-p)*.5); c.lineWidth=0.8; c.beginPath(); c.arc(0,0,26*p,0,6.2832); c.stroke();
@@ -3619,12 +3698,16 @@ function renderFlashPattern(c, style, p, col){
       }
       break;
     }
-    case 'shadedBall': {
+    case 'shadedBall': { // 07.09.2026 «Аудит вспышек»: добавлен блик — единственный жирный, устойчивый
+      // к уменьшению признак «объёма» (шар под светом), которого не было ни у одной из
+      // тонких меридиан; без него силуэт совпадал с «Пластинкой» на мелкой плитке
       const R=26*p;
       c.fillStyle=col((1-p)*.15); c.beginPath(); c.arc(0,0,R,0,6.2832); c.fill();
       c.strokeStyle=col((1-p)*.6); c.lineWidth=0.5;
       for(let i=0;i<12;i++){ const x=-R+(i+0.5)*(2*R/12); const hy=Math.sqrt(Math.max(0,R*R-x*x));
         c.beginPath(); c.moveTo(x,-hy); c.lineTo(x,hy); c.stroke(); }
+      c.fillStyle=col((1-p)*.8);
+      c.beginPath(); c.ellipse(-R*.38,-R*.42,R*.22,R*.14,-0.6,0,6.2832); c.fill();
       break;
     }
     case 'ringBow': {
@@ -3638,7 +3721,18 @@ function renderFlashPattern(c, style, p, col){
       c.globalAlpha=1;
       break;
     }
-    case 'gemFacet': {
+    case 'gemFacet': { // 07.09.2026 «Аудит вспышек»: три грани залиты разным тоном (как у «Изо-треугольника»)
+      // вместо чистого проволочного контура — огранка должна читаться заливкой граней (преломление
+      // света), не только линиями; голый контур путался с «Ромб-сферой» на мелкой плитке
+      c.fillStyle=col((1-p)*.5);
+      c.beginPath(); c.moveTo(0,-32*p); c.lineTo(18*p,-18*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.fillStyle=col((1-p)*.28);
+      c.beginPath(); c.moveTo(18*p,-18*p); c.lineTo(18*p,8*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(-18*p,-18*p); c.lineTo(0,-32*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.fillStyle=col((1-p)*.7);
+      c.beginPath(); c.moveTo(18*p,8*p); c.lineTo(0,32*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(0,32*p); c.lineTo(-18*p,8*p); c.lineTo(0,0); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(-18*p,8*p); c.lineTo(-18*p,-18*p); c.lineTo(0,0); c.closePath(); c.fill();
       c.strokeStyle=col(1-p); c.lineWidth=1;
       c.beginPath(); c.moveTo(0,-32*p); c.lineTo(18*p,-18*p); c.lineTo(18*p,8*p); c.lineTo(0,32*p); c.lineTo(-18*p,8*p); c.lineTo(-18*p,-18*p); c.closePath(); c.stroke();
       c.globalAlpha=0.5;
@@ -3881,19 +3975,11 @@ function renderFlashPattern(c, style, p, col){
        численно на незамкнутость/NaN) до попадания сюда — тот самый урок этой же партии. */
     case 'sfRomb': case 'sfStarfish': case 'sfBlossom': case 'sfUrchin':
     case 'sfPebble': case 'sfSlab': case 'sfShield': case 'sfCrown': {
-      const SFP={sfRomb:[4,1,1,1], sfStarfish:[5,0.1,1.7,1.7], sfBlossom:[6,3,8,8],
-        sfUrchin:[8,0.3,0.3,0.3], sfPebble:[6,40,10,10], sfSlab:[4,1000,1000,1000],
-        sfShield:[3,60,55,30], sfCrown:[14,30,30,30]};
-      const [sm,sn1,sn2,sn3]=SFP[style];
-      const N=64, R=30*p;
+      const pts=sfUnitPts(style);
       c.strokeStyle=col(1-p); c.lineWidth=0.8;
       c.beginPath();
-      for(let i=0;i<=N;i++){
-        const phi=i/N*6.2832;
-        const t1=Math.pow(Math.abs(Math.cos(sm*phi/4)),sn2);
-        const t2=Math.pow(Math.abs(Math.sin(sm*phi/4)),sn3);
-        const r=Math.pow(t1+t2,-1/sn1)*R;
-        const x=r*Math.cos(phi), y=r*Math.sin(phi);
+      for(let i=0;i<pts.length;i++){
+        const x=pts[i][0]*p, y=pts[i][1]*p;
         if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
       }
       c.closePath(); c.stroke();
@@ -3906,16 +3992,11 @@ function renderFlashPattern(c, style, p, col){
        только k в ROSE_K. См. .knowledge/GENERATIVE-GEOMETRY.md. */
     case 'roseClover': case 'roseTrefoil': case 'roseRosette': case 'rosePetals5':
     case 'roseChrysanthemum': case 'roseSeven': case 'roseFan': {
-      const ROSE_K={roseClover:2, roseTrefoil:3, roseRosette:4, rosePetals5:5,
-        roseChrysanthemum:6, roseSeven:7, roseFan:8};
-      const k=ROSE_K[style];
-      const N=90, R=32*p, periods=(k%2===0?2:1);
+      const pts=roseUnitPts(style);
       c.strokeStyle=col(1-p); c.lineWidth=0.8;
       c.beginPath();
-      for(let i=0;i<=N*periods;i++){
-        const theta=i/N*Math.PI*2;
-        const r=Math.cos(k*theta)*R;
-        const x=r*Math.cos(theta), y=r*Math.sin(theta);
+      for(let i=0;i<pts.length;i++){
+        const x=pts[i][0]*p, y=pts[i][1]*p;
         if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
       }
       c.closePath(); c.stroke();
@@ -3929,11 +4010,9 @@ function renderFlashPattern(c, style, p, col){
        направление (это и даёт ветвление, не только зигзаг). Масштаб — как у остальных Вспышек,
        через p, а не через прогрессивное дорисовывание пути. */
     case 'lsysBranch': case 'lsysFern': {
-      const LSYS_N = style==='lsysBranch' ? 2 : 3;
       const LSYS_STEP = style==='lsysBranch' ? 9 : 3.6; // без учёта p — сам масштаб применяется только при отрисовке точки, ниже
       const ANGLE = 25.7*Math.PI/180;
-      let str='F';
-      for(let i=0;i<LSYS_N;i++) str=str.split('').map(ch=>ch==='F'?'F[+F]F[-F]F':ch).join('');
+      const str=lsysString(style);
       let x=0,y=0,dir=Math.PI/2; // вверх, как в примере источника
       const stack=[];
       c.strokeStyle=col(1-p); c.lineWidth=0.8;
@@ -4085,10 +4164,8 @@ function drawPlane(sh,nowMs){
       const ph=nowMs/900+i*2.094;
       const ox=Math.cos(ph)*22, oy=-2+Math.sin(ph)*12;
       const r=2.6+0.8*Math.sin(nowMs/300+i);
-      const g=ctx.createRadialGradient(ox,oy,0,ox,oy,r*2.2);
-      g.addColorStop(0,skin.trail+'.95)'); g.addColorStop(1,skin.trail+'0)');
-      ctx.fillStyle=g;
-      ctx.beginPath(); ctx.arc(ox,oy,r*2.2,0,6.283); ctx.fill();
+      const rr=r*2.2;
+      ctx.drawImage(satGlowSprite(skin), ox-rr, oy-rr, rr*2, rr*2);
       const a=((ph%6.283)+6.283)%6.283;
       // верх орбиты (ph≈4.71) — рядом с носом; низ (ph≈1.5708) — рядом с хвостом
       const topDist=Math.abs(a-4.71);
