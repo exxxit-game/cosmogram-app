@@ -29,7 +29,7 @@ function cardCapture(sc,opts){ // вызывается из gameOver/mapOver, к
 
 function cardModeName(){
   const names={ classic:function(){return L.modeClassic;},
-    speedrun:function(){return L.modeSpeedrun;}, daily:function(){return L.modeDaily;}, hundred:function(){return L.mode100;},
+    speedrun:function(){return L.modeSpeedrun;}, daily:function(){return L.modeDaily;},
     caravan:function(){return L.modeCaravan;} }; // 05.09.2026
   if(cardData.mode==='custom') return '«'+(cardData.custom||L.forgeDefName)+'»';
   return names[cardData.mode]?names[cardData.mode]():names.classic();

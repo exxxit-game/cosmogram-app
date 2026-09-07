@@ -2073,7 +2073,7 @@ const S = {
   mission:1, lives:3, invuln:0, // волна — событие; шаг до неё считает waveDistTarget (v1.31.0)
   speed:3.4, dist:0, combo:0, comboMax:0, starsCollected:0,
   shield:0, magnet:0, slowmo:0, dash:0, freeze:0, time:0, flash:0, shake:0, timeScale:1, // v1.40.0 «Шесть жестов»: классика + Таран (dash) + Сверхновая; time — часы полёта для лотереи; freeze — 06.09.2026 «Стоп-кадр», седьмой
-  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, starsSpawned:0, hundredDone:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены)
+  mode:'classic', hits:0, bonuses:0, nearMiss:0, everDash:0, everNova:0, starsSpawned:0, // v1.42.0 «Пять дисциплин»: режим забега + счётчики паспорта (v1.70.0: Пакт и «Без ударов» удалены; 07.09.2026: 100% удалён)
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
     // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
@@ -2141,9 +2141,6 @@ const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — п�
   // фиксированное время вместо «пока не умер» — Score Attack на таймер. Оригинал — 5 минут, у нас средний
   // забег ~30с, поэтому 60с (владелец выбрал сам, не решение по умолчанию) — короткий, напряжённый отрезок
   // на весь отведённый срок, а не растянутая копия оригинала не по темпу игры.
-const HUNDRED_DIST=200; // 05.09.2026 «100%»: короткий фиксированный отрезок из каталога идей
-  // (.knowledge/GAME-MODES.md «Загадка неба» — 200м) — достаточно короткий, чтобы каждую
-  // звезду было видно и помнить, достаточно длинный, чтобы обычные преграды успели пройти волну.
 const SLALOM_DIST=4500; // 06.09.2026 «Слалом»: длина того же порядка, что у пресета fpSlalom
   // Конструктора (forge.js) — не переиспользуем сам пресет (это утащило бы систему авторской
   // расстановки внутрь дисциплины), только ориентир по метражу для похожего ощущения дистанции.
@@ -3208,11 +3205,6 @@ function update(dt){
     const elMH=elModeHud, left=Math.max(0,CT-S.time), tSec=Math.floor(left*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
     if (S.time>=CT && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
-  }
-  else if (S.mode==='hundred'){ // 100% (v1.478.80): фиксированный отрезок — цель не выжить, а долететь и собрать всё
-    const elMH=elModeHud, distI=Math.floor(S.dist);
-    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent='100% · '+Math.min(distI,HUNDRED_DIST)+'/'+HUNDRED_DIST+(L.unitM||'м'); }
-    if (S.dist>=HUNDRED_DIST && !S.dying){ startDying(); S.hundredDone=1; } // долетаешь до конца всегда — 100% отдельно проверяется на итогах по starsSpawned/starsCollected
   }
   else if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
     const elMH=elModeHud, distI=Math.floor(S.dist);

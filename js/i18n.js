@@ -64,7 +64,6 @@ const I18N = {
     relayMineTitle:'Мои эстафеты', relayMineBtnLbl:'Мои эстафеты', relayMineEmpty:'Ты ещё не летал в эстафете',
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
-    mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
@@ -247,7 +246,6 @@ const I18N = {
     relayMineTitle:'My relays', relayMineBtnLbl:'My relays', relayMineEmpty:'You haven\'t flown in a relay yet',
     relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
     relayFailStart:'Could not start the relay — try again',
-    mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
@@ -410,7 +408,6 @@ const I18N = {
     relayMineTitle:'Mis relevos', relayMineBtnLbl:'Mis relevos', relayMineEmpty:'Aún no has volado en un relevo',
     relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
-    mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
@@ -588,7 +585,6 @@ const I18N = {
     relayMineTitle:'Meus revezamentos', relayMineBtnLbl:'Meus revezamentos', relayMineEmpty:'Você ainda não voou em um revezamento',
     relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
-    mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
@@ -764,7 +760,6 @@ const I18N = {
     relayMineTitle:'Mes relais', relayMineBtnLbl:'Mes relais', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
     relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
-    mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
