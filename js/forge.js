@@ -796,9 +796,9 @@ function workshopRenderList(){
       '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
       '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
       '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
-      '<div class="wActions"><button class="wPlay" data-act="play"></button><button class="wEdit" data-act="edit"></button>'+
-      '<button class="wReport" data-act="report">⚑</button>'+
-      (isOwner ? '<button class="wPin" data-act="pin"></button><button class="wHide" data-act="hide"></button>' : '')+
+      '<div class="wActions"><button class="btn pri small" data-act="play"></button><button class="btn ghost small" data-act="edit"></button>'+
+      '<button class="btn ghost small wReport" data-act="report">⚑</button>'+
+      (isOwner ? '<button class="btn ghost small wPin" data-act="pin"></button><button class="btn ghost small wHide" data-act="hide"></button>' : '')+
       '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
@@ -810,8 +810,8 @@ function workshopRenderList(){
       row.querySelector('[data-role="hearts"]').textContent='★ '+(t.hearts||0);
       row.querySelector('[data-role="plays"]').textContent='▶ '+(t.plays||0);
       row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
-      row.querySelector('.wPlay').textContent=L.workshopPlay||'Играть';
-      row.querySelector('.wEdit').textContent=L.workshopEdit||'Открыть';
+      row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'Играть';
+      row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Открыть';
       row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
