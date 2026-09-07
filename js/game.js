@@ -2389,12 +2389,12 @@ function update(dt){
       if (S.dist>=RELAY_LEG_DIST && !S.dying){ startDying(); S.relayLegDone=1; } // долетел до конца своего этапа — сдаём эстафету (ui.js gameOver)
     }
   }
-  else if (S.mode==='daily1cc'||S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
+  else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
     // v1.284.3: подпись общего события берётся общим временем — trackDayKey (UTC), тем же,
     // из которого шьётся сама трасса. Здесь стоял todayKey() — личная дата: в UTC+3 вечером
     // игрок видел завтрашнее число при сегодняшней трассе. Закон №17. Страж 122.
     const elMH=elModeHud, tk=trackDayKey(); if (elMH && !elMH._t){ elMH._t=1;
-      elMH.textContent=(S.mode==='daily1cc'?'1CC':L.modeDaily)+' · '+tk.slice(8)+'.'+tk.slice(5,7); } } // 05.09.2026: 1CC — та же дата, своя метка
+      elMH.textContent=L.modeDaily+' · '+tk.slice(8)+'.'+tk.slice(5,7); } } // 07.09.2026: 1CC убран из игры — своя метка ('1CC'/иначе) больше не нужна
   else if (S.mode==='theater'){ // Театр призраков (v1.94.0): табло зрителя — не счёт, а название спектакля
     const elMH=elModeHud; if (elMH && !elMH._t){ elMH._t=1; elMH.textContent=L.theaterChip; } }
   else if (S.mode==='custom'){ // Своя трасса (v1.68.0): имя автора + живой прогресс до финиша (шаг 5 м, как distHud)
@@ -2498,7 +2498,7 @@ function updateLives(){ // жизни = мини-модельки текущег
   x.setTransform(2,0,0,2,0,0); // canvas 132×48 → css 66×24: чётко на retina
   x.clearRect(0,0,66,24);
   const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
-  const maxLives=(S.mode==='ironman'||S.mode==='daily1cc'||S.mode==='slalom')?1:3; // 05.09.2026: Ironman/1CC — один слот, не три с двумя пустыми контурами; 06.09.2026: Слалом тоже — любое касание и так срывает заезд целиком
+  const maxLives=(S.mode==='ironman'||S.mode==='slalom')?1:3; // 05.09.2026: Ironman — один слот, не три с двумя пустыми контурами; 06.09.2026: Слалом тоже — любое касание и так срывает заезд целиком; 07.09.2026: 1CC убран из игры
   for(let i=0;i<maxLives;i++){
     x.save(); x.translate(12+i*22, 13); x.scale(.5,.5);
     if (i<S.lives){ // живая — полный корпус со свечением (v1.46.0: светятся только живые — потерянная не притворяется живой)

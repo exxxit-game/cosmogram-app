@@ -61,8 +61,7 @@ const I18N = {
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войди через Telegram, чтобы лететь в эстафете',
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
-    mode1CC:'1CC', mode1CCD:'Небо месяца на 1 жизни', oneCCNewBest:'Новый рекорд 1CC', // 05.09.2026: тот же замок/попытка, что у Небо месяца
-    mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца/1CC
+    mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
@@ -240,7 +239,6 @@ const I18N = {
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in via Telegram to fly in the relay',
     relayFailStart:'Could not start the relay — try again',
-    mode1CC:'1CC', mode1CCD:'Track of the month, 1 life', oneCCNewBest:'New 1CC record',
     mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
@@ -401,7 +399,6 @@ const I18N = {
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión con Telegram para volar en los relevos',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
-    mode1CC:'1CC', mode1CCD:'Pista del mes, 1 vida', oneCCNewBest:'Nuevo récord de 1CC',
     mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
@@ -577,7 +574,6 @@ const I18N = {
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre com o Telegram para voar no revezamento',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
-    mode1CC:'1CC', mode1CCD:'Pista do mês, 1 vida', oneCCNewBest:'Novo recorde de 1CC',
     mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
@@ -751,7 +747,6 @@ const I18N = {
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi via Telegram pour voler dans le relais',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
-    mode1CC:'1CC', mode1CCD:'Trace du mois, 1 vie', oneCCNewBest:'Nouveau record 1CC',
     mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',

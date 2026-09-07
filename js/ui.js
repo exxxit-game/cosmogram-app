@@ -222,12 +222,10 @@ function modesFill(){ // подписи + отметка выбранного р
   const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
   put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
   toggleCls('modeDaily','locked',dl);
-  // 1CC (05.09.2026): та же попытка/тот же замок, что у Daily (usedN/dl уже посчитаны выше) —
-  // отдельная кнопка, потому что это другое ПРАВИЛО (1 жизнь), не другое небо.
-  const ccBest=Store.get('daily1ccBest',null), ccSc=(ccBest&&ccBest.d===tk)?ccBest.s:0;
-  put('mode1CC',L.mode1CC, dl?L.dailyLocked(ccSc):L.mode1CCD);
-  toggleCls('mode1CC','locked',dl);
-  // 100% (05.09.2026): та же попытка/замок, что у Daily/1CC — результат бинарный (собрал всё
+  // 07.09.2026: 1CC убран из игры (владелец: «бесконечная возможность крутить небо дня в 1
+  // жизнь, бред» — 2 попытки в день на общий месячный сид убивали саму идею «одного шанса»,
+  // ради которой аркадный 1CC вообще существует).
+  // 100% (05.09.2026): та же попытка/замок, что у Daily — результат бинарный (собрал всё
   // за месяц хоть раз или нет), не число, поэтому locked-текст не про счёт, а про «да/нет».
   const hBest=Store.get('hundredBest',null), hOk=!!(hBest&&hBest.d===tk&&hBest.ok);
   put('mode100', L.mode100, dl?L.dailyLocked(hOk?'100%':'—'):L.mode100D+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce));
@@ -241,14 +239,14 @@ function modesFill(){ // подписи + отметка выбранного р
   // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
   // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
   // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
-  const sel={daily:'modeDaily',daily1cc:'mode1CC',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
+  const sel={daily:'modeDaily',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
   // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
   const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
-  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,daily1cc:L.mode1CC,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon,relay:L.modeRelay}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон/Эстафета
+  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon,relay:L.modeRelay}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран
   const mode=(typeof controlMode==='function')?controlMode():'touch';
   const ctlName=mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch);
   head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
@@ -301,7 +299,7 @@ function startGame(saved){
   /* v1.282.15: ключ трассы называется ОДИН раз и живёт рядом с самим потоком — из него
      же шьются личные потоки каждого спавна (см. withTrack в core.js). Разъехаться им
      нельзя: иначе поле снова станет зависеть от того, что делал игрок. */
-  mapSeedKey = (runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') ? trackDayKey() // v1.282.20: ключ трассы — по общему времени; 05.09.2026: 1CC/100% летят по тому же небу месяца
+  mapSeedKey = (runMode==='daily'||runMode==='hundred') ? trackDayKey() // v1.282.20: ключ трассы — по общему времени; 05.09.2026: 100% летит по тому же небу месяца; 07.09.2026: 1CC убран
     : runMode==='theater' ? String(theaterDay||trackDayKey())
     : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
     : runMode==='slalom' ? (SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: та же трасса навсегда — честное сравнение времени между игроками
@@ -311,7 +309,7 @@ function startGame(saved){
     : String(freshSeed);
   mapSeqReset();
   if (typeof nebulaReseed==='function') nebulaReseed(); // v1.282.15: узор туманностей — свой на забег; раньше он менялся раз в секунду прямо в полёте
-  mapRNG = (runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') ? dailyRNG()
+  mapRNG = (runMode==='daily'||runMode==='hundred') ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
     : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
     : runMode==='slalom' ? keyRNG(SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: тот же приём — одна трасса навсегда
@@ -326,7 +324,7 @@ function startGame(saved){
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
   if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
-  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='daily1cc'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»/«1CC»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же
+  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же; 07.09.2026: 1CC убран
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,relayLegDone:0,seed:freshSeed,
@@ -337,8 +335,8 @@ function startGame(saved){
   smoothWasPerfect=true; // старт полёта = потолок плавности сам по себе, попап «Плавный полёт» не за это
   lastDistKm=0; // новый забег — золотая вспышка километров начинается с нуля, не с прошлого полёта
   if (typeof cinemaClipHide==='function') cinemaClipHide(); // 31.08.2026 «Момент полёта»: кнопка «Клип» не донашивает клип с прошлой посадки, если в ЭТОМ полёте запись не сработает
-  S.dailyDay = runMode==='theater' ? theaterDay : ((runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') ? (saved&&saved.dailyDay ? saved.dailyDay : trackDayKey()) : ''); // v1.282.20: день соревнования общий // v1.93 «Одна попытка»: прыжок принадлежит дню взлёта — даже через полночь; v1.94.0: театр помнит день спектакля; 05.09.2026: 1CC/100% — тот же день, что у Daily
-  if ((runMode==='daily'||runMode==='daily1cc'||runMode==='hundred') && !saved){ // 23.08.2026 «5 попыток»: счётчик +1 на взлёте — та же защита от читерства, что была у одной попытки, порог просто выше; 05.09.2026: 1CC/100% жгут ту же попытку, что и обычный Daily — это тот же день, просто под более жёстким правилом
+  S.dailyDay = runMode==='theater' ? theaterDay : ((runMode==='daily'||runMode==='hundred') ? (saved&&saved.dailyDay ? saved.dailyDay : trackDayKey()) : ''); // v1.282.20: день соревнования общий // v1.93 «Одна попытка»: прыжок принадлежит дню взлёта — даже через полночь; v1.94.0: театр помнит день спектакля; 05.09.2026: 100% — тот же день, что у Daily; 07.09.2026: 1CC убран
+  if ((runMode==='daily'||runMode==='hundred') && !saved){ // 23.08.2026 «5 попыток»: счётчик +1 на взлёте — та же защита от читерства, что была у одной попытки, порог просто выше; 05.09.2026: 100% жгут ту же попытку, что и обычный Daily — это тот же день, просто под более жёстким правилом
     const ak0=attemptDayKey(); // 05.09.2026: счётчик попыток живёт по реальному дню, не по S.dailyDay (тот — месячный сид неба, не трогаем)
     const dr0=Store.get('dailyRun',null), curN=(dr0&&dr0.d===ak0)?(dr0.n||0):dailyDoneGet(ak0); // после сброса хранилища — восстанавливаем счётчик из журнала, не начинаем с нуля
     const nextN=curN+1;
@@ -449,7 +447,7 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom'||runMode==='biathlon'||runMode==='relay')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/1CC/100%; 06.09.2026: + Слалом/Биатлон/Эстафета
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom'||runMode==='biathlon'||runMode==='relay')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
   if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
   sfx.launch(SKINS_BY_ID.get(S.skin)||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
@@ -615,14 +613,9 @@ function gameOver(){
     if (sc>prevDlSc){ Store.set('dailyBest',{d:dd,s:sc});
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
   }
-  // 1CC (05.09.2026): то же небо месяца, но 1 жизнь — отдельный личный рекорд (daily1ccBest),
-  // не общий dailyBest и не серверная таблица (cosmogram-daily не тронута — своя, локальная витрина).
-  if (S.mode==='daily1cc' && sc>0){
-    const dd=S.dailyDay||trackDayKey();
-    const prevCC=Store.get('daily1ccBest',null), prevCCSc=(prevCC && prevCC.d===dd)?prevCC.s:0;
-    if (sc>prevCCSc){ Store.set('daily1ccBest',{d:dd,s:sc});
-      recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('trophy')+L.oneCCNewBest+'</span>'); }
-  }
+  // 07.09.2026: 1CC убран из игры (владелец: 2 попытки в реальный день на общий месячный сид
+  // убивали саму идею «одного шанса», ради которой аркадный 1CC существует) — daily1ccBest
+  // больше нигде не читается и не пишется, старое значение в Store просто лежит без дела.
   // 100% (05.09.2026): бинарный результат — «собрал всё хоть раз в этом месяце», не число.
   // Не понижаем флаг обратно в false, если сегодняшний повтор не удался — успех уже был.
   if (S.mode==='hundred'){
@@ -630,7 +623,7 @@ function gameOver(){
     const prevH=Store.get('hundredBest',null), prevHOk=!!(prevH && prevH.d===dd && prevH.ok);
     if (hundredNow && !prevHOk) Store.set('hundredBest',{d:dd,ok:true});
   }
-  if (S.mode==='daily'||S.mode==='daily1cc'||S.mode==='hundred'||S.mode==='relay'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic; 05.09.2026: + 1CC/100%; 06.09.2026: + Эстафета — «Ещё раз» после этапа улетает в обычный полёт, новую цепочку/этап игрок выбирает заново через кнопку режима
+  if (S.mode==='daily'||S.mode==='hundred'||S.mode==='relay'){ runMode='classic'; } // 23.08.2026 «5 попыток»: счётчик уже увеличен на взлёте (dailyBest уже обновлён выше) — здесь только режим возвращается к classic; 05.09.2026: + 100%; 06.09.2026: + Эстафета — «Ещё раз» после этапа улетает в обычный полёт, новую цепочку/этап игрок выбирает заново через кнопку режима; 07.09.2026: 1CC убран
   if (noMissNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('checkbadge')+L.noMiss+'</span>');
   if (pacifistNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('shield')+L.pacifist+'</span>');
   if (hundredNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('star4')+L.hundredBadge+'</span>');
@@ -2104,9 +2097,9 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman'],['mode1CC','daily1cc'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
+[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
-    if (pair[1]==='daily'||pair[1]==='daily1cc'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 1CC/100% жгут ту же попытку
+    if (pair[1]==='daily'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 100% жжёт ту же попытку; 07.09.2026: 1CC убран
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
 /* 06.09.2026 «Эстафета»: единственная кнопка режима с асинхронной логикой перед стартом —
@@ -2143,7 +2136,7 @@ wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen(
 wireOn('menuBtn', 'click', toMenu);
 wireOn('pauseBtn', 'click', pauseGame);
 wireOn('resumeBtn', 'click', resumeGame);
-wireOn('restartBtn', 'click', ()=>{ if((runMode==='daily'||runMode==='daily1cc'||runMode==='hundred'||runMode==='relay')&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами; 05.09.2026: то же правило для 1CC/100%; 06.09.2026: + Эстафета — рестарт середины этапа честно считается несдачей, не тихим сбросом
+wireOn('restartBtn', 'click', ()=>{ if((runMode==='daily'||runMode==='hundred'||runMode==='relay')&&S.running){ gameOver(); } else runStart(); }); // рестарт из паузы — в той же дисциплине (v1.42.0); v1.93: прыжок не переигрывают — «рестарт» дня = сдача с честными итогами; 05.09.2026: то же правило для 100%; 06.09.2026: + Эстафета — рестарт середины этапа честно считается несдачей, не тихим сбросом; 07.09.2026: 1CC убран
 wireOn('pauseMenuBtn', 'click', toMenu);
 wireOn('settingsBtn', 'click', ()=>openSettings('menu'));
 wireOn('pauseSettingsBtn', 'click', ()=>openSettings('pause'));
