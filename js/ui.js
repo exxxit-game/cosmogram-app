@@ -268,21 +268,20 @@ function modesFill(){ // подписи + отметка выбранного р
   toggleCls('mode100','locked',dl);
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
   caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Пуля/Блиц
-  put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
   put('modeRelay',L.modeRelay,L.modeRelayD); // 06.09.2026
   // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
   // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
   // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
-  const sel={daily:'modeDaily',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',ironman:'modeIronman',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
+  const sel={daily:'modeDaily',hundred:'mode100',speedrun:'modeSpeedrun',caravan:'modeCaravan',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
   for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
   // визуальным языком (.statGrid.stats4, та же плитка, что уже стоит на других экранах)
   const head=$('runHead'), grid=$('runPass'); if(!head||!grid) return;
-  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon,relay:L.modeRelay}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/Ironman/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран
+  const names={classic:L.modeClassic,speedrun:L.modeSpeedrun,daily:L.modeDaily,hundred:L.mode100,custom:L.modeForge,caravan:L.modeCaravan,slalom:L.modeSlalom,biathlon:L.modeBiathlon,relay:L.modeRelay}; // v1.68.0: + своя трасса; 05.09.2026: + Caravan/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран; 07.09.2026: Ironman ушёл в Конструктор («Высокая ставка» уже даёт то же самое)
   const mode=(typeof controlMode==='function')?controlMode():'touch';
   const ctlName=mode==='gyro'?L.modeGyro:(mode==='keys'?L.modeKeys:L.modeTouch);
   head.innerHTML='<span>'+names[S.mode||'classic']+'</span><span class="runCtl">· '+ctlName+'</span>';
@@ -360,7 +359,7 @@ function startGame(saved){
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
   if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
-  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же; 07.09.2026: 1CC убран
+  Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 06.09.2026: Слалом — 1 жизнь вместо 3; 07.09.2026: 1CC убран; 07.09.2026: Ironman ушёл в Конструктор
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     caravanTime:(runMode==='caravan'?caravanTierGet():60), // 07.09.2026 «Пуля/Блиц»: выбор игрока на кнопке режима, снимается один раз на старте — смена переключателя посреди полёта (невозможна физически, экран другой) всё равно не задела бы текущий забег
@@ -484,9 +483,8 @@ function startGame(saved){
   updateLives(); updateCombo(); updateStarsHud();
   setScreen('game');
   if (typeof tgImmersion==='function') tgImmersion(true); // погружение: полный экран + замок + защита (v1.58.0)
-  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='ironman'||runMode==='slalom'||runMode==='biathlon'||runMode==='relay')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/Ironman/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран
+  toggleCls('modeHud','hidden', !(runMode==='speedrun'||runMode==='daily'||runMode==='hundred'||runMode==='custom'||runMode==='theater'||runMode==='caravan'||runMode==='slalom'||runMode==='biathlon'||runMode==='relay')); // HUD дисциплины (v1.42.0/v1.47.0/v1.68.0/v1.94.0; v1.70.0: Пакт удалён; 05.09.2026: + Caravan/100%; 06.09.2026: + Слалом/Биатлон/Эстафета; 07.09.2026: 1CC убран
   $('modeHud')._t=0; // новый забег — табло дисциплины пересобирается (v1.43.0)
-  if (runMode==='ironman') $('modeHud').textContent=L.modeIronman; // 05.09.2026: статичная метка — у Ironman нет отсчёта, только напоминание «это не Классика»
   sfx.launch(SKINS_BY_ID.get(S.skin)||SKINS[0]); // фирменный аккорд скина (или обычный старт); v1.87.0: баннер «Добро пожаловать» убран — каждый забег он был лишним
   music.start('game'); // адаптивный полёт: дрон сразу, слои — по волнам/жизням
   engine.start(); // голос самолётика: шелест следует за скоростью
@@ -510,7 +508,6 @@ function gameOver(){
   if(typeof BB!=='undefined') BB.log('landing','score '+Math.floor(S.score)+' · '+S.mode); // v1.99.7 «Чёрный ящик»
   if (typeof playSecFlush==='function') playSecFlush(); // v1.66.1: секунды неба — в хранилище разом, не по одной
   let sc=Math.floor(S.score*(0.5+S.smooth*0.5)); // Smooth Flight: итог × плавность (0.75..1.0)
-  if (S.mode==='ironman') sc*=4; // 05.09.2026 «Ironman»: ×4 поверх уже честного счёта — плата за 1 жизнь и 0 бонусов
   if (S.mode==='custom' && typeof mapOver==='function'){ // Своя трасса: не в зачёт — иначе лёгкие карты стали бы фермой звёзд (v1.68.0); v1.94.0: театр здесь не ставится — занавес опущен
     /* v1.282.13: автосейв обязан сгореть ЗДЕСЬ. Ранний выход стоит выше общего
        Store.del('savedRun') в конце функции, а mapOver его не трогает — и автосейв
@@ -526,19 +523,19 @@ function gameOver(){
     theaterTrack=null; toggleCls('watchBtn','hidden',true); mapOver(sc); return;
   }
   const mode=controlMode(); // категория управления: gyro / touch / keys
-  // 05.09.2026 «Caravan»/«Ironman»: одна общая таблица на каждую дисциплину, не по управлению
-  // (владелец выбрал так для Caravan явно — мало игроков, дробить рано; тот же приём для Ironman).
+  // 05.09.2026 «Caravan»: одна общая таблица на дисциплину, не по управлению (владелец
+  // выбрал так явно — мало игроков, дробить рано).
   // 06.09.2026 «Эстафета»: своя изолированная локальная категория (bestRelayLeg), не
   // touch/gyro/keys — счёт этапа несёт унаследованные очки чужих этапов цепочки, писать его
-  // в личный рекорд СПОСОБА управления было бы нечестно (тот же принцип, что увёл Caravan/Ironman
+  // в личный рекорд СПОСОБА управления было бы нечестно (тот же принцип, что увёл Caravan
   // в свои ключи ниже).
   // 07.09.2026 «Три тайминга Caravan»: 15с/60с/180с не сравнимы по очкам между собой — свой
   // локальный рекорд на каждый тайминг. Только 60с (дефолт) остаётся старой серверной
   // категорией 'caravan'/'bestCaravan' (владелец отклонил лишние вкладки в Топе — «занимать
   // лишнее место»); 15с и 180с — bestCaravan15/bestCaravan180, только на устройстве, не в sync.
   const caravanOtherTier = S.mode==='caravan' && S.caravanTime && S.caravanTime!==60 ? S.caravanTime : 0;
-  const cat=caravanOtherTier?('caravan'+caravanOtherTier):(S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':(S.mode==='relay'?'relay':mode)));
-  const modeKey=caravanOtherTier?('bestCaravan'+caravanOtherTier):(S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'))))); // v1.280.0: добавлена ветка keys
+  const cat=caravanOtherTier?('caravan'+caravanOtherTier):(S.mode==='caravan'?'caravan':(S.mode==='relay'?'relay':mode));
+  const modeKey=caravanOtherTier?('bestCaravan'+caravanOtherTier):(S.mode==='caravan'?'bestCaravan':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')))); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
   const isRecord = sc>prevCat && sc>0;
   const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
@@ -628,10 +625,10 @@ function gameOver(){
       +'</div>';
   }
   const medals=[];
-  // Caravan/Ironman (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
+  // Caravan (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
   // проекта визуал идёт только через макет. Рекорд объявляется текстовой плашкой
   // ниже (recChips), как уже сделано для Спидрана, а не золотой медалью с иконкой.
-  if (isRecord && S.mode!=='caravan' && S.mode!=='ironman' && S.mode!=='relay') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0)); // 06.09.2026: Эстафета — своя изолированная категория, та же логика, что уже исключает Caravan/Ironman из медали по способу управления
+  if (isRecord && S.mode!=='caravan' && S.mode!=='relay') medals.push(medalHTML(mode==='gyro'?'gyro':(mode==='keys'?'keys':'touch'), 0)); // 06.09.2026: Эстафета — своя изолированная категория, та же логика, что уже исключает Caravan из медали по способу управления
   if (isDistRecord) medals.push(medalHTML('dist', medals.length*80));
   setHTML('recordMedals', medals.join(''));
 
@@ -648,7 +645,6 @@ function gameOver(){
     else recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.relayFail+'</span>');
   }
   if (S.mode==='caravan' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('target')+L.caravanNewBest+'</span>'); // 05.09.2026: текстовый рекорд вместо новой медали-иконки
-  if (S.mode==='ironman' && isRecord) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('crown')+L.ironmanNewBest+'</span>');
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
     const dd=S.dailyDay||trackDayKey();
     const prevDl=Store.get('dailyBest',null), prevDlSc=(prevDl && prevDl.d===dd)?prevDl.s:0;
@@ -2175,7 +2171,7 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeIronman','ironman'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
+[['modeDaily','daily'],['modeSpeedrun','speedrun'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
     if (pair[1]==='daily'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 100% жжёт ту же попытку; 07.09.2026: 1CC убран
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
@@ -2761,7 +2757,7 @@ wireOn('accDeleteBtn', 'click',()=>{
    таблицу из витрины чужих успехов в разговор о твоём месте в ней. */
 function myBestFor(cat){
   const k = cat==='gyro'?'bestGyro' : cat==='touch'?'bestTouch' : cat==='keys'?'bestKeys'
-          : cat==='dist'?'bestDist' : cat==='caravan'?'bestCaravan' : cat==='ironman'?'bestIronman' : null;
+          : cat==='dist'?'bestDist' : cat==='caravan'?'bestCaravan' : null;
   return k ? saneNumber(Store.get(k,0),0) : 0;
 }
 /* ============================================================
@@ -3049,9 +3045,9 @@ function applyLang(){
   setText('tabMine',L.mineTab); setText('tabTop',L.topTab);
   /* 04.09.2026 (владелец): вкладки категорий в «Топ» были без подписей — неясно, что означает
      каждая иконка. Переиспользую уже готовые ключи (те же слова, что у выбора управления и
-     режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan/modeIronman),
+     режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan),
      новых переводов не завожу. */
-  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,ironman:L.modeIronman,slalom:L.modeSlalom,biathlon:L.modeBiathlon};
+  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,slalom:L.modeSlalom,biathlon:L.modeBiathlon};
   document.querySelectorAll('.topCat').forEach(function(b){
     const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
   });

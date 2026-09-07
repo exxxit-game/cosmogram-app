@@ -55,7 +55,6 @@ const I18N = {
     modeCaravanD15:'15 секунд на очки — время решает, не жизни', modeCaravanD180:'180 секунд на очки — время решает, не жизни',
     caravanBullet:'15 секунд', caravanBlitz:'60 секунд', caravan180:'180 секунд', // 07.09.2026: были шахматные термины «Пуля»/«Блиц» — владелец вживую: слово «Пуля» не нравится, при таком запасе места проще прямо число секунд, всем понятно без словаря; третий тайминг (180с) добавлен следом же — рекорд общий текст (caravanNewBest) не различает тир
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
-    modeIronman:'Ironman', modeIronmanD:'1 жизнь, 0 бонусов, ×4 очков', ironmanNewBest:'Новый рекорд Ironman', // 05.09.2026: имя дисциплины не переводится, как Speedrun/Caravan
     modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
     modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
@@ -77,10 +76,12 @@ const I18N = {
     workshopTitle:'Мастерская', workshopSub:'небеса других игроков — сыграй или открой', // 06.09.2026 «Переосмысление»: «трасса»/«в Кузнице» — слова 01.09.2026 (Кузница→Конструктор) сюда не докатились, поправлено
     workshopEmpty:'пока пусто — поделись своим небом, и оно появится здесь',
     workshopSignInFirst:'войди через Telegram, чтобы увидеть свои небеса',
-    workshopSort_new:'Новые', workshopSort_top:'Лучшие', workshopSort_plays:'Играли больше всех', workshopSort_mine:'Мои',
-    workshopPlay:'Играть', workshopEdit:'Открыть', // 06.09.2026: «В Кузницу» — Кузница как отдельное место больше не существует
+    workshopSort_new:'Новые', workshopSort_top:'По лайкам', workshopSort_plays:'По играм', workshopSort_mine:'Мои', // 07.09.2026, владелец: «Лучшие» не объясняло критерий, «Играли больше всех» громоздко — обе вкладки на короткую параллельную пару
+    workshopPlay:'Играть', workshopEdit:'Открыть в Конструкторе', // 06.09.2026: «В Кузницу» — Кузница как отдельное место больше не существует; 07.09.2026: было короткое «Открыть» рядом с «Играть» одинаковым весом — путало (два похожих варианта); теперь словом-ссылкой второго яруса, полная фраза не нуждается в соседстве с «Играть», чтобы быть понятной
+    workshopPlays:(n)=>'Сыграно: '+n, // 07.09.2026: было голое «▶ N» — не грамматика по числу (1/2/5), а нейтральная формулировка «Сыграно: N», не нужно спрягать
     workshopReport:'Пожаловаться', workshopReported:'Спасибо, посмотрим', // 05.09.2026: EN/ES/PT/FR ниже ещё без этих ключей
     workshopPin:'Закрепить', workshopHide:'Скрыть', // 05.09.2026: видны только владельцу, EN/ES/PT/FR тоже ещё нет
+    workshopPinned:'Закреплено', workshopUnpinned:'Откреплено', workshopHidden:'Скрыто от игроков', workshopUnhidden:'Снова видно всем', // 07.09.2026: тост-подтверждение — смены одного эмодзи было мало, владелец не понимал, сработало ли
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', // v1.69.0; 02.09.2026: «Настроение»→«Туман» переехало в Расстановку, «Состав» переехал сюда же — обе больше не отдельные группы
@@ -237,7 +238,6 @@ const I18N = {
     modeCaravanD15:'15 seconds for points — the clock decides, not your lives', modeCaravanD180:'180 seconds for points — the clock decides, not your lives',
     caravanBullet:'15 seconds', caravanBlitz:'60 seconds', caravan180:'180 seconds',
     noMiss:'Not a single hit', pacifist:'Evasion only',
-    modeIronman:'Ironman', modeIronmanD:'1 life, 0 power-ups, ×4 score', ironmanNewBest:'New Ironman record',
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
     modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
     biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
@@ -401,7 +401,6 @@ const I18N = {
     modeCaravanD15:'15 segundos para puntos — decide el reloj, no las vidas', modeCaravanD180:'180 segundos para puntos — decide el reloj, no las vidas',
     caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
     noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
-    modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bonos, ×4 puntos', ironmanNewBest:'Nuevo récord de Ironman',
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
     modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
     biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
@@ -580,7 +579,6 @@ const I18N = {
     modeCaravanD15:'15 segundos para pontos — o relógio decide, não as vidas', modeCaravanD180:'180 segundos para pontos — o relógio decide, não as vidas',
     caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
     noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
-    modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bônus, ×4 pontos', ironmanNewBest:'Novo recorde de Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
     modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
     biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
@@ -757,7 +755,6 @@ const I18N = {
     modeCaravanD15:'15 secondes pour marquer des points — l’horloge décide, pas tes vies', modeCaravanD180:'180 secondes pour marquer des points — l’horloge décide, pas tes vies',
     caravanBullet:'15 secondes', caravanBlitz:'60 secondes', caravan180:'180 secondes',
     noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
-    modeIronman:'Ironman', modeIronmanD:'1 vie, 0 bonus, ×4 points', ironmanNewBest:'Nouveau record Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
     modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
     biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),

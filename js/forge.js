@@ -792,13 +792,22 @@ function workshopRenderList(){
     // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
     const isOwner = !!(res && res.isOwner);
+    // 07.09.2026, владелец вживую, второй заход: «Играть»/«Открыть» рядом одинаковым весом
+    // путали (два равных варианта одного смысла), лайк-бейдж на превью терялся («не
+    // комфортная»). Теперь три яруса силы, разделённые линией (см. index.html, .wRow):
+    // 1) ИГРАТЬ — крупная кнопка на всю ширину, вес большой кнопки режима;
+    // 2) тихая строка: лайк — настоящая кнопка со счётчиком (не мелкий бейдж на картинке),
+    //    сыграли N раз, «Открыть в Конструкторе» словом-ссылкой, не пилюлей;
+    // 3) модерация — Пожаловаться (все) / Закрепить, Скрыть (только владелец), самое тихое.
     listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
-      '<div class="wSwatch"><canvas width="52" height="52"></canvas><span class="wHeart" data-act="vote"></span></div>'+
-      '<div class="wBody"><div class="wTop"><span class="wName"></span></div><div class="wAuthor"></div>'+
-      '<div class="wMeta"><span class="m wStars" data-role="hearts"></span><span class="m" data-role="plays"></span></div></div>'+
-      '<div class="wActions"><button class="btn pri small" data-act="play"></button><button class="btn ghost small" data-act="edit"></button>'+
-      '<button class="btn ghost small wReport" data-act="report">⚑</button>'+
-      (isOwner ? '<button class="btn ghost small wPin" data-act="pin"></button><button class="btn ghost small wHide" data-act="hide"></button>' : '')+
+      '<div class="wTop"><div class="wSwatch"><canvas width="52" height="52"></canvas></div>'+
+      '<div class="wBody"><div class="wTop2"><span class="wName"></span></div><div class="wAuthor"></div>'+
+      '<div class="wPlaysHint" data-role="plays"></div></div>'+
+      '<button class="wVote" data-act="vote"><span class="wVoteIc"></span><span data-role="hearts"></span></button></div>'+
+      '<button class="btn pri wPlayBtn" data-act="play"></button>'+
+      '<div class="wSecondRow"><button class="wOpenLink" data-act="edit"></button></div>'+
+      '<div class="wModRow"><button class="wReport" data-act="report">⚑</button>'+
+      (isOwner ? '<button class="wPin" data-act="pin">📍</button><button class="wHide" data-act="hide">👁</button>' : '')+
       '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
@@ -807,20 +816,21 @@ function workshopRenderList(){
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
       row.querySelector('.wAuthor').textContent=t.author_name||'';
-      row.querySelector('[data-role="hearts"]').textContent='★ '+(t.hearts||0);
-      row.querySelector('[data-role="plays"]').textContent='▶ '+(t.plays||0);
-      row.querySelector('.wHeart').textContent = mine.indexOf(t.code)>=0 ? '♥' : '♡';
+      const voted = mine.indexOf(t.code)>=0;
+      row.querySelector('.wVoteIc').textContent = voted ? '♥' : '♡';
+      row.querySelector('[data-role="hearts"]').textContent=String(t.hearts||0);
+      row.querySelector('.wVote').classList.toggle('voted', voted);
+      row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'▶ '+(t.plays||0));
       row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'Играть';
-      row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Открыть';
-      row.querySelector('.wReport').setAttribute('aria-label', L.workshopReport||'Пожаловаться');
+      row.querySelector('.wOpenLink').textContent=L.workshopEdit||'Открыть в Конструкторе';
+      const reportBtn=row.querySelector('.wReport');
+      reportBtn.textContent='⚑ '+(L.workshopReport||'Пожаловаться'); // 07.09.2026: подпись видна всем, не только aria-label
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
-        pinBtn.textContent = status==='pinned' ? '📌' : '📍';
+        pinBtn.textContent = (status==='pinned' ? '📌 ' : '📍 ')+(L.workshopPin||'Закрепить');
         pinBtn.classList.toggle('active', status==='pinned');
-        pinBtn.setAttribute('aria-label', L.workshopPin||'Закрепить');
-        hideBtn.textContent = status==='hidden' ? '🚫' : '👁';
+        hideBtn.textContent = (status==='hidden' ? '🚫 ' : '👁 ')+(L.workshopHide||'Скрыть');
         hideBtn.classList.toggle('active', status==='hidden');
-        hideBtn.setAttribute('aria-label', L.workshopHide||'Скрыть');
       }
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
@@ -841,15 +851,16 @@ wireOnLocal('workshopList','click',function(e){
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
       Store.set('workshopMyVotes',mine);
-      act.textContent = res.hearted ? '♥' : '♡';
-      const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent='★ '+(res.hearts||0);
+      const icEl=act.querySelector('.wVoteIc'); if(icEl) icEl.textContent = res.hearted ? '♥' : '♡';
+      act.classList.toggle('voted', res.hearted);
+      const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent=String(res.hearts||0);
     });
     haptic('light');
   }
   if(act.dataset.act==='report'){
     // 05.09.2026: сервер сам не даёт накрутить счётчик повторной жалобой (unique код+игрок) —
     // здесь достаточно погасить кнопку визуально, чтобы не звать снова с этого же экрана без толку.
-    act.disabled=true; act.textContent='✓';
+    act.disabled=true; act.textContent='✓ '+(L.achDone||'Готово'); // 07.09.2026: была голая «✓» без слова — теперь видимое подтверждение, не только тост
     workshopReport(code); haptic('light'); toast(L.workshopReported||'Спасибо, посмотрим', 'rgba(255,159,176,.5)');
   }
   if(act.dataset.act==='pin'){
@@ -859,8 +870,11 @@ wireOnLocal('workshopList','click',function(e){
     workshopModerate(code, next).then(function(res){
       if(!res || !res.ok) return;
       row.dataset.status=next;
-      act.textContent = next==='pinned' ? '📌' : '📍';
+      act.textContent = (next==='pinned' ? '📌 ' : '📍 ')+(L.workshopPin||'Закрепить');
       act.classList.toggle('active', next==='pinned');
+      // 07.09.2026, владелец («не понятно что произошло после нажатия»): смена эмодзи одна,
+      // без слов, легко пропустить — добавлен тот же тост, что уже есть у report.
+      toast(next==='pinned' ? (L.workshopPinned||'Закреплено') : (L.workshopUnpinned||'Откреплено'), 'rgba(255,214,140,.5)');
     });
     haptic('light');
   }
@@ -869,8 +883,9 @@ wireOnLocal('workshopList','click',function(e){
     workshopModerate(code, next).then(function(res){
       if(!res || !res.ok) return;
       row.dataset.status=next;
-      act.textContent = next==='hidden' ? '🚫' : '👁';
+      act.textContent = (next==='hidden' ? '🚫 ' : '👁 ')+(L.workshopHide||'Скрыть');
       act.classList.toggle('active', next==='hidden');
+      toast(next==='hidden' ? (L.workshopHidden||'Скрыто от игроков') : (L.workshopUnhidden||'Снова видно всем'), 'rgba(255,159,176,.5)');
     });
     haptic('light');
   }
