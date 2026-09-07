@@ -40,20 +40,20 @@ const ACH=[
     es:{n:'Ganador del duelo',d:'Superaste la marca de alguien en un Duelo.'}, pt:{n:'Vencedor do duelo',d:'Superou a marca de alguém em um Duelo.'},
     fr:{n:'Vainqueur du duel',d:'Tu as battu la marque de quelqu\u2019un en Duel.'}},
   {id:'h1', cat:'hangar', ic:'🎨', need:2, rw:10, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
-    ru:{n:'Первый скин',d:'Купил свой первый скин в Ангаре.'}, en:{n:'First Skin',d:'Bought your first skin in the Hangar.'},
-    es:{n:'Primera piel',d:'Compraste tu primera piel en el Hangar.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin no Hangar.'},
-    fr:{n:'Première skin',d:'Tu as acheté ta première skin dans le Hangar.'}},
+    ru:{n:'Первый скин',d:'Купил свой первый скин в Тюнинге.'}, en:{n:'First Skin',d:'Bought your first skin in Tuning.'},
+    es:{n:'Primera piel',d:'Compraste tu primera piel en Tuning.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin em Tuning.'},
+    fr:{n:'Première skin',d:'Tu as acheté ta première skin dans Tuning.'}},
   {id:'h2', cat:'hangar', ic:'👑', need:9, rw:400, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
-    ru:{n:'Вся коллекция',d:'Собрал все скины Ангара.'}, en:{n:'Full Collection',d:'Collected every skin in the Hangar.'},
-    es:{n:'Colección completa',d:'Reuniste todas las pieles del Hangar.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins do Hangar.'},
-    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins du Hangar.'}}, // need=9: SKINS.length сегодня — обновить вместе, если добавите скин
+    ru:{n:'Вся коллекция',d:'Собрал все скины Тюнинга.'}, en:{n:'Full Collection',d:'Collected every skin in Tuning.'},
+    es:{n:'Colección completa',d:'Reuniste todas las pieles de Tuning.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins de Tuning.'},
+    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins de Tuning.'}}, // need=9: SKINS.length сегодня — обновить вместе, если добавите скин
 ];
 const CATS=['cosmos','flight','duel','hangar']; // v1.108.1: было одно «одна цель — одна категория», теперь честно по числу целей
 const CAT_N={
   cosmos:{ru:'Космическая шкала',en:'Cosmic ladder',es:'Escala cósmica',pt:'Escala cósmica',fr:'Échelle cosmique'},
   flight:{ru:'Полёт',en:'Flight',es:'Vuelo',pt:'Voo',fr:'Vol'},
   duel:{ru:'Дуэль',en:'Duel',es:'Duelo',pt:'Duelo',fr:'Duel'},
-  hangar:{ru:'Ангар',en:'Hangar',es:'Hangar',pt:'Hangar',fr:'Hangar'}
+  hangar:{ru:'Тюнинг',en:'Tuning',es:'Tuning',pt:'Tuning',fr:'Tuning'} // 07.09.2026: было «Ангар»/«Hangar» на всех 5 языках — экран переименован в Тюнинг ещё 30.08.2026, здесь забыли обновить
 };
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
