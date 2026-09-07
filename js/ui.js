@@ -137,6 +137,7 @@ function setScreen(name){
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('modesScreen','hidden', name!=='modes');
   toggleCls('modesTopScreen','hidden', name!=='modesTop'); // 06.09.2026: Топ соревнований — свой экран, не вкладка внутри Достижений
+  toggleCls('relayMineScreen','hidden', name!=='relayMine'); // 07.09.2026: «Мои эстафеты» — единственный способ узнать судьбу этапа после сдачи
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
   // (forgeSkyKick при первом входе в Кузницу) requestAnimationFrame-цикл превью-неба крутился
@@ -208,6 +209,41 @@ window.addEventListener('pointerdown', function tgImmKick(){ // полный э�
   if (typeof tgImmersion==='function') tgImmersion(true);
   window.removeEventListener('pointerdown', tgImmKick);
 });
+/* 07.09.2026 «Пуля/Блиц»: Caravan получил второй тайминг (10с рядом со старыми 60с) — владелец
+   явно попросил, чтобы это осталось ОДНОЙ кнопкой режима с быстрым переключателем внутри, не
+   вторым пунктом в списке и не отдельным экраном подтверждения (тап по карточке = сразу полёт,
+   как у всех остальных дисциплин). Тир хранится отдельно от caravanCardFill() (которая просто
+   перерисовывает карточку) — put() в modesFill() ниже перезаписывает innerHTML #modeCaravan
+   целиком при каждом заходе на экран/смене языка, поэтому сегменты нужно пересобирать тем же
+   вызовом, а не один раз при загрузке. */
+// 07.09.2026: три тайминга (10с/60с/180с) — 60 остаётся дефолтом и единственной серверной
+// категорией ('caravan'/'bestCaravan', владелец отклонил лишние вкладки в Топе), 10 и 180 —
+// личные локальные рекорды (bestCaravan10/bestCaravan180, см. gameOver() в этом же файле).
+// Список тиров — один массив, не разбросанные тройные ternary: третий тайминг добавился
+// одной строкой, без переписывания caravanCardFill()/caravanTierGet() заново.
+const CARAVAN_TIERS=[15,60,180];
+function caravanTierGet(){ const v=Number(Store.get('caravanTier',60)); return CARAVAN_TIERS.includes(v)?v:60; }
+function caravanTierSet(v){ Store.set('caravanTier', CARAVAN_TIERS.includes(v)?v:60); caravanCardFill(); }
+function caravanTierLabel(v){ return v===15?L.caravanBullet:(v===180?L.caravan180:L.caravanBlitz); }
+function caravanTierDesc(v){ return v===15?L.modeCaravanD15:(v===180?L.modeCaravanD180:L.modeCaravanD); }
+function caravanCardFill(){
+  // 07.09.2026: карточка теперь статичная разметка (index.html) — #modeCaravanFly настоящая
+  // кнопка полёта, #caravanTierSeg отдельная строка под ней. Эта функция только обновляет
+  // текст/выбор внутри них, ничего не перестраивает с нуля (та вложенная версия и вызывала
+  // «кнопку на кнопке», отклонённую владельцем вживую).
+  const flyBtn=$('modeCaravanFly'), seg=$('caravanTierSeg'); if(!flyBtn||!seg) return;
+  const cur=caravanTierGet();
+  const desc=flyBtn.querySelector('.modeDesc'); if(desc) desc.textContent=caravanTierDesc(cur);
+  if(!seg.children.length){
+    CARAVAN_TIERS.forEach(function(v){
+      const b=document.createElement('button');
+      b.type='button'; b.className='forgeSegBtn'; b.dataset.tier=v;
+      b.addEventListener('click', function(){ caravanTierSet(v); sfx.click(); haptic('light'); });
+      seg.appendChild(b);
+    });
+  }
+  CARAVAN_TIERS.forEach(function(v,i){ seg.children[i].textContent=caravanTierLabel(v); seg.children[i].classList.toggle('sel',cur===v); });
+}
 function modesFill(){ // подписи + отметка выбранного режима
   setText('modesTitle',L.modes);
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
@@ -231,7 +267,7 @@ function modesFill(){ // подписи + отметка выбранного р
   put('mode100', L.mode100, dl?L.dailyLocked(hOk?'100%':'—'):L.mode100D+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce));
   toggleCls('mode100','locked',dl);
   put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
-  put('modeCaravan',L.modeCaravan,L.modeCaravanD); // 05.09.2026
+  caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Пуля/Блиц
   put('modeIronman',L.modeIronman,L.modeIronmanD); // 05.09.2026
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
@@ -327,6 +363,7 @@ function startGame(saved){
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='ironman'||runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 05.09.2026 «Ironman»: 1 жизнь вместо 3; 06.09.2026: Слалом туда же; 07.09.2026: 1CC убран
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,hundredDone:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
+    caravanTime:(runMode==='caravan'?caravanTierGet():60), // 07.09.2026 «Пуля/Блиц»: выбор игрока на кнопке режима, снимается один раз на старте — смена переключателя посреди полёта (невозможна физически, экран другой) всё равно не задела бы текущий забег
     biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,relayLegDone:0,seed:freshSeed,
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
@@ -495,8 +532,13 @@ function gameOver(){
   // touch/gyro/keys — счёт этапа несёт унаследованные очки чужих этапов цепочки, писать его
   // в личный рекорд СПОСОБА управления было бы нечестно (тот же принцип, что увёл Caravan/Ironman
   // в свои ключи ниже).
-  const cat=S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':(S.mode==='relay'?'relay':mode));
-  const modeKey=S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')))); // v1.280.0: добавлена ветка keys
+  // 07.09.2026 «Три тайминга Caravan»: 15с/60с/180с не сравнимы по очкам между собой — свой
+  // локальный рекорд на каждый тайминг. Только 60с (дефолт) остаётся старой серверной
+  // категорией 'caravan'/'bestCaravan' (владелец отклонил лишние вкладки в Топе — «занимать
+  // лишнее место»); 15с и 180с — bestCaravan15/bestCaravan180, только на устройстве, не в sync.
+  const caravanOtherTier = S.mode==='caravan' && S.caravanTime && S.caravanTime!==60 ? S.caravanTime : 0;
+  const cat=caravanOtherTier?('caravan'+caravanOtherTier):(S.mode==='caravan'?'caravan':(S.mode==='ironman'?'ironman':(S.mode==='relay'?'relay':mode)));
+  const modeKey=caravanOtherTier?('bestCaravan'+caravanOtherTier):(S.mode==='caravan'?'bestCaravan':(S.mode==='ironman'?'bestIronman':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'))))); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
   const isRecord = sc>prevCat && sc>0;
   const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
@@ -1694,7 +1736,7 @@ function angarBuildGrid(){
         }
         if(item.fact){
           // 07.09.2026: была плоская курсивная «i» текстом (на маленьком экране читалась как
-          // «/», жалоба владельца) — теперь настоящий контур, тот же язык .ic-иконок,
+          // «/», жалоба владельца) — теперь настоящий контур «ⓘ», тот же язык .ic-иконок,
           // что и везде в игре (i-info добавлена в index.html).
           const fb=document.createElement('button'); fb.type='button'; fb.className='angarFact';
           fb.innerHTML='<svg class="ic"><use href="#i-info"></use></svg>';
@@ -2133,11 +2175,16 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeCaravan','caravan'],['modeIronman','ironman'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
+[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeIronman','ironman'],['mode100','hundred'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
     if (pair[1]==='daily'||pair[1]==='hundred'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 100% жжёт ту же попытку; 07.09.2026: 1CC убран
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
+/* 07.09.2026 «Пуля/Блиц»: Caravan вышел из общего массива выше — у карточки теперь два честных
+   отдельных элемента (#modeCaravanFly — настоящая кнопка полёта, #caravanTierSeg — переключатель
+   тайминга под ней, свои клики на forgeSegBtn в caravanCardFill()). Ни closest(), ни keydown-хаки
+   больше не нужны — #modeCaravanFly настоящий <button>, обычный wireOn как у всех остальных. */
+wireOn('modeCaravanFly','click',()=>{ setRunMode('caravan'); sfx.click(); haptic('light'); runStart(); });
 /* 06.09.2026 «Эстафета»: единственная кнопка режима с асинхронной логикой перед стартом —
    не влезает в общий массив выше (тому просто меняет runMode и тут же летит). Здесь сначала
    нужно спросить сервер: есть открытая цепочка, ждущая следующий этап (не от меня последнего),
@@ -2621,6 +2668,31 @@ document.querySelectorAll('#compTopCats .topCat').forEach(b=>b.addEventListener(
 }));
 wireOn('modesTopBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('modesTop'); renderTopComp(); });
 wireOn('modesTopBackBtn', 'click', ()=>{ sfx.click(); setScreen('modes'); });
+/* 07.09.2026 «Куда делся первый игрок»: список цепочек, где я сыграл хоть один этап — с
+   текущим статусом (ждёт этап N / завершена) и общим счётом. Своя строка (.relayMineRow),
+   не .topIt — там ровно один факт в строке (место+имя+счёт), здесь два разных (кто играл +
+   что сейчас со счётом/статусом), плющить в один формат было бы менее читаемо. */
+function renderRelayMine(){
+  const list=$('relayMineList'); if(!list) return;
+  list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
+  if (!syncAvailable()){ list.innerHTML='<div class="topMsg">'+L.relaySignInFirst+'</div>'; return; }
+  if (typeof syncRelayMyChains!=='function'){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+  syncRelayMyChains().then(function(d){
+    if (screenName!=='relayMine') return; // ушёл с экрана, пока грузилось
+    if (!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+    if (!d.chains || !d.chains.length){ list.innerHTML='<div class="topMsg">'+L.relayMineEmpty+'</div>'; return; }
+    list.innerHTML=d.chains.map(function(c){
+      const names=(c.legs||[]).map(function(l){ return escapeHtml(l.name||'?'); }).join(' → ');
+      const statusTxt = c.status==='done' ? L.relayMineDone : L.relayMineWaiting(c.leg);
+      return '<div class="relayMineRow'+(c.status==='done'?' done':'')+'">'
+        +'<div class="relayMineNames">'+names+'</div>'
+        +'<div class="relayMineMeta"><span class="relayMineSc">'+fmtN(c.score)+'</span><span class="relayMineStatus">'+statusTxt+'</span></div>'
+        +'</div>';
+    }).join('');
+  }).catch(function(){ if(screenName==='relayMine') list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; });
+}
+wireOn('relayMineBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('relayMine'); renderRelayMine(); });
+wireOn('relayMineBackBtn', 'click', ()=>{ sfx.click(); setScreen('modes'); });
 /* ---------- Одна таблица, много входов (v1.51.0) ----------
    Гость играет полноценно, рекорд ждёт локально; вход — Telegram Login Widget (только браузер).
    Анонимных записей нет: без подписи Telegram в таблицу не встать — доверие дороже охвата. */
@@ -2986,6 +3058,8 @@ function applyLang(){
   // 06.09.2026 «Топ соревнований»: новый экран + кнопка-вход на «Соревнованиях», тот же текст на обоих
   setText('modesTopTitle', L.topCompTitle);
   setText('modesTopBtnLbl', L.topCompTitle);
+  setText('relayMineTitle', L.relayMineTitle);
+  setText('relayMineBtnLbl', L.relayMineBtnLbl);
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»

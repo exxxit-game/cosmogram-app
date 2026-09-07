@@ -52,7 +52,8 @@ const I18N = {
     modeDaily:'Небо месяца', modeDailyD:'Одно небо на всех игроков — весь месяц, поставь рекорд', dlNewBest:'Новый рекорд неба месяца',
     dailyOnce:'2 попытки', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'На сегодня попытки кончились · твой полёт: '+s+' · новые попытки завтра, небо то же весь месяц',
     modeCaravan:'Caravan', modeCaravanD:'60 секунд на очки — время решает, не жизни', caravanNewBest:'Новый рекорд Caravan', // 05.09.2026: имя дисциплины (Cave, аркады) не переводится, как Speedrun
-    modeCaravanD10:'10 секунд на очки — время решает, не жизни', caravanBullet:'Пуля', caravanBlitz:'Блиц', // 07.09.2026: настоящие шахматные термины тайминга (как «Bullet chess»/«Blitz chess»), не выдумка — рекорд общий текст (caravanNewBest) не различает тир
+    modeCaravanD15:'15 секунд на очки — время решает, не жизни', modeCaravanD180:'180 секунд на очки — время решает, не жизни',
+    caravanBullet:'15 секунд', caravanBlitz:'60 секунд', caravan180:'180 секунд', // 07.09.2026: были шахматные термины «Пуля»/«Блиц» — владелец вживую: слово «Пуля» не нравится, при таком запасе места проще прямо число секунд, всем понятно без словаря; третий тайминг (180с) добавлен следом же — рекорд общий текст (caravanNewBest) не различает тир
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
     modeIronman:'Ironman', modeIronmanD:'1 жизнь, 0 бонусов, ×4 очков', ironmanNewBest:'Новый рекорд Ironman', // 05.09.2026: имя дисциплины не переводится, как Speedrun/Caravan
     modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
@@ -61,6 +62,8 @@ const I18N = {
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 300м, лети свой — передавай следующему', // 06.09.2026
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войди через Telegram, чтобы лететь в эстафете',
+    relayMineTitle:'Мои эстафеты', relayMineBtnLbl:'Мои эстафеты', relayMineEmpty:'Ты ещё не летал в эстафете',
+    relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     mode100:'100%', mode100D:'200м, собери каждую звезду', hundredBadge:'100% звёзд!', // 05.09.2026: тот же замок/попытка, что у Небо месяца
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
@@ -231,7 +234,8 @@ const I18N = {
     modeDaily:'Track of the month', modeDailyD:'One track for every player, all month — set the record', dlNewBest:'New track of the month record',
     dailyOnce:'2 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'Out of attempts for today · your flight: '+s+' · new attempts tomorrow, same sky all month',
     modeCaravan:'Caravan', modeCaravanD:'60 seconds for points — the clock decides, not your lives', caravanNewBest:'New Caravan record',
-    modeCaravanD10:'10 seconds for points — the clock decides, not your lives', caravanBullet:'Bullet', caravanBlitz:'Blitz',
+    modeCaravanD15:'15 seconds for points — the clock decides, not your lives', modeCaravanD180:'180 seconds for points — the clock decides, not your lives',
+    caravanBullet:'15 seconds', caravanBlitz:'60 seconds', caravan180:'180 seconds',
     noMiss:'Not a single hit', pacifist:'Evasion only',
     modeIronman:'Ironman', modeIronmanD:'1 life, 0 power-ups, ×4 score', ironmanNewBest:'New Ironman record',
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
@@ -240,6 +244,8 @@ const I18N = {
     modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 300m, fly yours — hand off to the next pilot',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in via Telegram to fly in the relay',
+    relayMineTitle:'My relays', relayMineBtnLbl:'My relays', relayMineEmpty:'You haven\'t flown in a relay yet',
+    relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
     relayFailStart:'Could not start the relay — try again',
     mode100:'100%', mode100D:'200m, catch every star', hundredBadge:'100% of the stars!',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
@@ -392,7 +398,8 @@ const I18N = {
     dlNewBest:'Nuevo récord de la pista del mes', dailyOnce:'2 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sin intentos por hoy · tu vuelo: '+s+' · nuevos intentos mañana, mismo cielo todo el mes',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para puntos — decide el reloj, no las vidas', caravanNewBest:'Nuevo récord de Caravan',
-    modeCaravanD10:'10 segundos para puntos — decide el reloj, no las vidas', caravanBullet:'Bullet', caravanBlitz:'Blitz',
+    modeCaravanD15:'15 segundos para puntos — decide el reloj, no las vidas', modeCaravanD180:'180 segundos para puntos — decide el reloj, no las vidas',
+    caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
     noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bonos, ×4 puntos', ironmanNewBest:'Nuevo récord de Ironman',
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
@@ -401,6 +408,8 @@ const I18N = {
     modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 300m, vuela el tuyo — pásaselo al siguiente',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión con Telegram para volar en los relevos',
+    relayMineTitle:'Mis relevos', relayMineBtnLbl:'Mis relevos', relayMineEmpty:'Aún no has volado en un relevo',
+    relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
     mode100:'100%', mode100D:'200m, atrapa cada estrella', hundredBadge:'¡100% de estrellas!',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
@@ -568,7 +577,8 @@ const I18N = {
     dlNewBest:'Novo recorde da pista do mês', dailyOnce:'2 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
     dailyLocked:(s)=>'Sem tentativas por hoje · seu voo: '+s+' · novas tentativas amanhã, mesmo céu o mês todo',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para pontos — o relógio decide, não as vidas', caravanNewBest:'Novo recorde de Caravan',
-    modeCaravanD10:'10 segundos para pontos — o relógio decide, não as vidas', caravanBullet:'Bullet', caravanBlitz:'Blitz',
+    modeCaravanD15:'15 segundos para pontos — o relógio decide, não as vidas', modeCaravanD180:'180 segundos para pontos — o relógio decide, não as vidas',
+    caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
     noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
     modeIronman:'Ironman', modeIronmanD:'1 vida, 0 bônus, ×4 pontos', ironmanNewBest:'Novo recorde de Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
@@ -577,6 +587,8 @@ const I18N = {
     modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 300m, voe o seu — passe para o próximo',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre com o Telegram para voar no revezamento',
+    relayMineTitle:'Meus revezamentos', relayMineBtnLbl:'Meus revezamentos', relayMineEmpty:'Você ainda não voou em um revezamento',
+    relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
     mode100:'100%', mode100D:'200m, pegue cada estrela', hundredBadge:'100% das estrelas!',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
@@ -742,7 +754,8 @@ const I18N = {
     modeDaily:'Trace du mois', modeDailyD:'Une trace pour tous les joueurs, tout le mois — décroche le record', dlNewBest:'Nouveau record de la Trace du mois',
     dailyOnce:'2 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Plus de tentatives aujourd’hui · ton vol : '+s+' · nouvelles tentatives demain, même ciel tout le mois',
     modeCaravan:'Caravan', modeCaravanD:'60 secondes pour marquer des points — l’horloge décide, pas tes vies', caravanNewBest:'Nouveau record Caravan',
-    modeCaravanD10:'10 secondes pour marquer des points — l’horloge décide, pas tes vies', caravanBullet:'Bullet', caravanBlitz:'Blitz',
+    modeCaravanD15:'15 secondes pour marquer des points — l’horloge décide, pas tes vies', modeCaravanD180:'180 secondes pour marquer des points — l’horloge décide, pas tes vies',
+    caravanBullet:'15 secondes', caravanBlitz:'60 secondes', caravan180:'180 secondes',
     noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
     modeIronman:'Ironman', modeIronmanD:'1 vie, 0 bonus, ×4 points', ironmanNewBest:'Nouveau record Ironman',
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
@@ -751,6 +764,8 @@ const I18N = {
     modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 300m, vole la tienne — passe le relais',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi via Telegram pour voler dans le relais',
+    relayMineTitle:'Mes relais', relayMineBtnLbl:'Mes relais', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
+    relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
     mode100:'100%', mode100D:'200m, attrape chaque étoile', hundredBadge:'100% des étoiles !',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»

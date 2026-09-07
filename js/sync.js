@@ -593,6 +593,13 @@ function syncRelayGetOpen(){ // {ok,chain:{id,seed,leg,score,lives,prevTrack,pre
     return r.json().catch(()=>null);
   });
 }
+function syncRelayMyChains(){ // 07.09.2026 «Мои эстафеты»: {ok,chains:[{id,status,leg,score,legs:[{player_id,name,skin,score_end}]}]}
+  if(!syncAvailable()) return Promise.resolve(null);
+  return relayPost(Object.assign({action:'relay_my_chains'}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 function syncRelayStart(o){ // {skin} → {ok,chain:{...}}
   if(!syncAvailable()) return Promise.resolve(null);
   return relayPost(Object.assign({action:'relay_start'}, syncAuth(), o||{})).then(r=>{
@@ -712,6 +719,9 @@ function syncLocalScores(){
     dist: saneScore(Store.get('bestDist',0)),
     keys: saneScore(Store.get('bestKeys',0)),
     caravan: saneScore(Store.get('bestCaravan',0)), // 05.09.2026: единая таблица Caravan, не по управлению
+    // 07.09.2026 «Пуля»: bestCaravan10 сознательно НЕ уходит на сервер — владелец вживую отклонил
+    // отдельную вкладку в Топе соревнований («был Caravan, зачем делить и занимать место»).
+    // Рекорд остаётся личным, только на устройстве (Store), общий Топ Caravan не тронут.
     ironman: saneScore(Store.get('bestIronman',0)) // 05.09.2026: единая таблица Ironman, не по управлению
   };
 }
