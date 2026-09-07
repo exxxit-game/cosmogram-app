@@ -1,0 +1,588 @@
+<title>Карта скинов — партия 07.09.2026</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 28px;max-width:880px}
+.topic{margin-bottom:38px;padding-top:22px;border-top:1px solid var(--panel-edge)}
+.topic:first-of-type{border-top:none;padding-top:0}
+.topicHead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.topicHead .status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+.legend{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 18px;font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:30px}
+</style>
+<div class="wrap">
+  <h1>Карта скинов — партия 07.09.2026</h1>
+  <p class="sub">Свод тем, одобренных за эту сессию (макет-уровень — дизайн
+  подтверждён, ничего из этого пока НЕ добавлено в игру как реальный код). Каждая
+  карточка — тот же живой canvas, что и в собственном макете темы; полная запись
+  проверок и история правок по каждой теме остаётся в её отдельном артефакте, здесь —
+  сводный обзор для ориентира. Файл — главный, обновляется при каждом новом одобрении;
+  хранится и в артефакте, и в репозитории (.knowledge/macets/), под git.</p>
+  <div class="legend"><b>Как читать:</b> «✓ одобрено» — владелец подтвердил дизайн явно
+  словом. Порядок разделов — по мере одобрения: Снежинка Коха, Математика оригами,
+  Спирограф, Тесселяции Эшера, Мукарнас, Сэйгайха, Меандр.</div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Снежинка Коха</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Фрактал фон Коха (1904) — периметр растёт в 4/3 раза за
+    разбиение (проверено числом), площадь сходится к 1.6·A₀.</p>
+    <div class="grid" id="gridKoch"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Математика оригами — твист-фолд</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Скручивание квадрата (внутренний квадрат на параметре t, честный
+    квадрат при любом t∈(0,0.5], проверено числом) + мозаика Мьюра. Владелец: «намного
+    лучше, очень красивые, особенно анимация» — после того, как единичная вершина
+    Кавасаки/Маэкавы дважды не удержала саму тему при тайловании.</p>
+    <div class="grid" id="gridOri"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Спирограф — гипотрохоиды</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Реально катящийся круг, 5 передаточных чисел R:r:d (4/6/7/10/8
+    лепестков, честно посчитано). Все 5 карточек — резец вживую вычерчивает кривую
+    (владелец попросил анимировать все, не одну демо-карточку).</p>
+    <div class="grid" id="gridSpiro"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Тесселяции Эшера</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Настоящий метод переноса края (не абстрактный Пенроуз) — проверено
+    числом, расхождение 0 при сдвиге на клетку. Крупная подача выиграла у плотного поля
+    мелких плиток (владелец отметил карточки с крупными плитками и вспышки).</p>
+    <div class="grid" id="gridEsch"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Мукарнас</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Ярусный сталактитовый свод, вид спереди — перевязка «центр точно
+    середина стыка» (не приближённый сдвиг), сходится к вершине 6→1/8→1. Найдена и
+    исправлена реальная асимметрия до окончательного показа.</p>
+    <div class="grid" id="gridMuq"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Сэйгайха — японские волны</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Вложенные дуги-чешуйки, касание соседних чешуек одного ряда — ровно
+    2R (проверено числом). Владелец: «вау, особенно анимация» — после фикса реальной беды
+    (сплошная заливка перекрывающихся колец стирала соседний ряд; починено обводкой). Все
+    4 карточки — вспышки, разные волны/направления.</p>
+    <div class="grid" id="gridSei"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Меандр — греческий ключ</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Одна непрерывная линия на целочисленной сетке, повороты только 90°,
+    самопересечение структурно невозможно (путь никогда не идёт влево, проверено числом —
+    0 повторных клеток за 20 повторов). Владелец: «5 намного интереснее, чем по одной, а
+    когда разные цвета — ещё сильнее выделяется» — карточка с 5 разноцветными полосами.</p>
+    <div class="grid" id="gridMea"></div>
+  </div>
+</div>
+<script>
+/* ===== Общий шаблон партии (BODY_PTS/clipBody/fillBody/edgeStroke/loop/loopFlash/
+   mountCards) — один экземпляр на все 5 тем, они используют его идентично в своих
+   собственных макетах. ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loop(id, draw, zoom){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function render(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth, h=cv.clientHeight;
+    if(!w||!h) return;
+    cv.width=w*dpr; cv.height=h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(zoom||4.2,zoom||4.2);
+    draw(ctx,0);
+    ctx.restore();
+  }
+  requestAnimationFrame(render);
+  if(window.ResizeObserver){ new ResizeObserver(render).observe(cv); }
+  else { window.addEventListener('resize', render); }
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function frame(t){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth, h=cv.clientHeight;
+    if(w&&h){
+      cv.width=w*dpr; cv.height=h*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,w,h);
+      ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(zoom||4.2,zoom||4.2);
+      const p=(t%cycleMs)/cycleMs;
+      draw(ctx,p);
+      ctx.restore();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function mountCards(gridId, items){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+
+/* ===================== 1. СНЕЖИНКА КОХА ===================== */
+function kochSubdivide(points){
+  const result=[]; const n=points.length;
+  for(let i=0;i<n;i++){
+    const A=points[i], B=points[(i+1)%n];
+    const dx=(B[0]-A[0])/3, dy=(B[1]-A[1])/3;
+    const P1=[A[0]+dx, A[1]+dy];
+    const P3=[A[0]+2*dx, A[1]+2*dy];
+    const angle = Math.atan2(P3[1]-P1[1], P3[0]-P1[0]) - Math.PI/3;
+    const segLen = Math.hypot(P3[0]-P1[0], P3[1]-P1[1]);
+    const apex=[P1[0]+segLen*Math.cos(angle), P1[1]+segLen*Math.sin(angle)];
+    result.push(A, P1, apex, P3);
+  }
+  return result;
+}
+function kochPoly(iterations){
+  const s=1, R=s/Math.sqrt(3);
+  let poly=[];
+  for(let i=0;i<3;i++){ const a=-Math.PI/2+i*2*Math.PI/3; poly.push([R*Math.cos(a), R*Math.sin(a)]); }
+  for(let it=0; it<iterations; it++) poly=kochSubdivide(poly);
+  return poly;
+}
+const KOCH_ZOOM=4.2, KOCH_MIN_LW=1.2/KOCH_ZOOM;
+function drawKoch(ctx, iterations, scale, cy0, hue){
+  const poly=kochPoly(iterations);
+  const p=poly.map(([x,y])=>[x*scale, cy0+y*scale]);
+  ctx.fillStyle=`hsla(${hue},55%,42%,.9)`;
+  ctx.beginPath(); p.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=`hsla(${hue},80%,80%,.95)`; ctx.lineWidth=KOCH_MIN_LW;
+  ctx.beginPath(); p.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+}
+const KOCH_SCALE=11.5;
+function fxIt0(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawKoch(ctx,0,KOCH_SCALE,-4,195); ctx.restore(); edgeStroke(ctx); }
+function fxIt1(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawKoch(ctx,1,KOCH_SCALE,-4,150); ctx.restore(); edgeStroke(ctx); }
+function fxIt2(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawKoch(ctx,2,KOCH_SCALE,-4,300); ctx.restore(); edgeStroke(ctx); }
+function fxIt3(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawKoch(ctx,3,KOCH_SCALE,-4,20); ctx.restore(); edgeStroke(ctx); }
+function fxIt4(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawKoch(ctx,4,KOCH_SCALE,-4,190); ctx.restore(); edgeStroke(ctx); }
+mountCards('gridKoch', [
+  ['k0','0 разбиений','Периметр 3, площадь A₀.'],
+  ['k1','1 разбиение','Периметр ×4/3 = 4.0.'],
+  ['k2','2 разбиения','Периметр 5.33.'],
+  ['k3','3 разбиения','Периметр 7.11.'],
+  ['k4','4 разбиения','Периметр 9.48, площадь 1.577·A₀ (98.5% предела 1.6·A₀).'],
+]);
+loop('k0', fxIt0, 4.2); loop('k1', fxIt1, 4.2); loop('k2', fxIt2, 4.2); loop('k3', fxIt3, 4.2); loop('k4', fxIt4, 4.2);
+
+/* ===================== 2. ОРИГАМИ — ТВИСТ-ФОЛД + МЬЮРА ===================== */
+function pointInPoly(x,y,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const [xi,yi]=poly[i], [xj,yj]=poly[j];
+    const intersect = ((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi)+xi);
+    if(intersect) inside=!inside;
+  }
+  return inside;
+}
+const TWIST_CELL=3.6;
+function twistCenters(cell){
+  const out=[];
+  for(let gy=-20; gy<=13; gy+=cell){
+    for(let gx=-15.5; gx<=15.5; gx+=cell){
+      if(pointInPoly(gx+cell/2,gy+cell/2,BODY_PTS)) out.push([gx,gy]);
+    }
+  }
+  return out;
+}
+const TWIST_CENTERS = twistCenters(TWIST_CELL);
+function twistCorners(t){ return [[t,0],[1,t],[1-t,1],[0,1-t]]; }
+function drawTwistCell(ctx, ox, oy, cell, t, hueShift){
+  const S=cell;
+  const inner=twistCorners(t).map(([x,y])=>[ox+x*S, oy+y*S]);
+  const corners=[
+    [[ox,oy],[ox+t*S,oy],[ox,oy+(1-t)*S]],
+    [[ox+S,oy],[ox+S,oy+t*S],[ox+t*S,oy]],
+    [[ox+S,oy+S],[ox+(1-t)*S,oy+S],[ox+S,oy+t*S]],
+    [[ox,oy+S],[ox,oy+(1-t)*S],[ox+(1-t)*S,oy+S]],
+  ];
+  ctx.fillStyle=`hsla(${205+hueShift},32%,20%,.95)`;
+  corners.forEach(tri=>{ ctx.beginPath(); ctx.moveTo(tri[0][0],tri[0][1]); ctx.lineTo(tri[1][0],tri[1][1]); ctx.lineTo(tri[2][0],tri[2][1]); ctx.closePath(); ctx.fill(); });
+  ctx.fillStyle=`hsla(${40+hueShift},55%,58%,.95)`;
+  ctx.beginPath(); inner.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=`hsla(45,90%,85%,.9)`; ctx.lineWidth=0.09;
+  ctx.beginPath(); inner.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+}
+function fxTwist(ctx, t){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  TWIST_CENTERS.forEach(([ox,oy],i)=>{ drawTwistCell(ctx, ox, oy, TWIST_CELL, t, (i*17)%40); });
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxTwistFull(ctx){ fxTwist(ctx, 0.5); }
+function fxTwistGentle(ctx){ fxTwist(ctx, 0.24); }
+function miuraPoint(col,row,a,h,slant){
+  let x=col*a;
+  for(let r=0;r<row;r++) x += (r%2===0? slant : -slant);
+  return [x, row*h];
+}
+function fxMiura(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const a=3.6, h=3.0, slant=1.25;
+  const cols=8, rows=11;
+  for(let row=-1;row<rows;row++){
+    for(let col=-2;col<cols;col++){
+      const P=miuraPoint(col,row,a,h,slant), Q=miuraPoint(col+1,row,a,h,slant),
+            Rp=miuraPoint(col+1,row+1,a,h,slant), S=miuraPoint(col,row+1,a,h,slant);
+      const ox=-13.5, oy=-15;
+      const shade = ((col+row)%2===0) ? 'rgba(140,190,255,.16)' : 'rgba(140,190,255,.06)';
+      ctx.fillStyle=shade;
+      ctx.beginPath();
+      ctx.moveTo(P[0]+ox,P[1]+oy); ctx.lineTo(Q[0]+ox,Q[1]+oy); ctx.lineTo(Rp[0]+ox,Rp[1]+oy); ctx.lineTo(S[0]+ox,S[1]+oy); ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle='rgba(210,230,255,.5)'; ctx.lineWidth=0.35;
+      ctx.stroke();
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxFoldFlash(ctx, p){
+  const fold = 0.03 + 0.47*(0.5-0.5*Math.cos(p*2*Math.PI));
+  fxTwist(ctx, fold);
+}
+mountCards('gridOri', [
+  ['o1','Твист-фолд, полный (t=0.5)','34 скручённых квадрата — «пинвил», площадь пополам.'],
+  ['o2','Твист-фолд, лёгкий (t=0.24)','Тот же параметр t, другое значение (0.625/0.375).'],
+  ['o3','Мозаика Мьюра','Параллелограммы, «ёлочка» через строку.'],
+  ['o4','Вспышка: скручивание','t качается 0.03→0.5→0.03 по всем 34 ячейкам разом.'],
+]);
+loop('o1', fxTwistFull, 4.2); loop('o2', fxTwistGentle, 4.2); loop('o3', fxMiura, 4.2); loopFlash('o4', fxFoldFlash, 4.2, 1600);
+
+/* ===================== 3. СПИРОГРАФ ===================== */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); return b===0?a:gcd(b,a%b); }
+function hypotrochoid(R,r,d,stepsPerTurn){
+  const q = r/gcd(r,R-r);
+  const N = Math.round((stepsPerTurn||220)*q);
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const t=2*Math.PI*q*i/N;
+    pts.push([(R-r)*Math.cos(t)+d*Math.cos((R-r)/r*t), (R-r)*Math.sin(t)-d*Math.sin((R-r)/r*t)]);
+  }
+  return pts;
+}
+const SPIRO_SETS=[
+  {R:5,r:3,d:2, maxR:4.0,  lobes:4,  hue:200},
+  {R:7,r:2,d:1.5,maxR:6.5, lobes:6,  hue:20},
+  {R:8,r:3,d:2.2,maxR:7.2, lobes:7,  hue:280},
+  {R:11,r:4,d:3, maxR:10.0,lobes:10, hue:130},
+  {R:9,r:4,d:2.5,maxR:7.5, lobes:8,  hue:45},
+];
+const SPIRO_TARGET_R=13;
+function drawRosette(ctx, set, frac){
+  const pts=hypotrochoid(set.R,set.r,set.d,260);
+  const s=SPIRO_TARGET_R/set.maxR;
+  const n = frac!=null ? Math.max(2, Math.round(pts.length*frac)) : pts.length;
+  const p=pts.slice(0,n).map(([x,y])=>[x*s,y*s]);
+  [ [6,0.05], [3.2,0.12], [1.4,0.35], [0.55,0.95] ].forEach(([lw,a])=>{
+    ctx.strokeStyle=`hsla(${set.hue},85%,70%,${a})`; ctx.lineWidth=lw;
+    ctx.beginPath(); p.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  });
+  return p;
+}
+function fxSpiroTrace(set){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-3);
+  const frac = p<0.82 ? (p/0.82) : 1;
+  const trail = drawRosette(ctx, set, Math.max(0.02,frac));
+  if(frac<1 && trail.length){
+    const tip=trail[trail.length-1];
+    ctx.fillStyle=`hsla(${set.hue},95%,82%,.95)`; ctx.beginPath(); ctx.arc(tip[0],tip[1],0.45,0,7); ctx.fill();
+  }
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridSpiro', [
+  ['s1','R:r:d = 5:3:2','4 лепестка, замыкается за 3 оборота.'],
+  ['s2','R:r:d = 7:2:1.5','6 лепестков, за 2 оборота.'],
+  ['s3','R:r:d = 8:3:2.2','7 лепестков.'],
+  ['s4','R:r:d = 11:4:3','10 лепестков.'],
+  ['s5','R:r:d = 9:4:2.5','8 лепестков.'],
+]);
+SPIRO_SETS.forEach((set,i)=>{ loopFlash('s'+(i+1), fxSpiroTrace(set), 4.2, 2400+i*260); });
+
+/* ===================== 4. ТЕССЕЛЯЦИИ ЭШЕРА ===================== */
+function gauss(x,c,w){ const z=(x-c)/w; return Math.exp(-(z*z)); }
+function zc(fn){ return (x)=> fn(x)-fn(0)*(1-x)-fn(1)*x; }
+const F_BIRD = zc(x=>0.40*gauss(x,0.45,0.16)+0.50*gauss(x,0.70,0.055));
+const G_BIRD = zc(y=>0.30*gauss(y,0.32,0.11)-0.24*gauss(y,0.74,0.09));
+const F_FISH = zc(x=>0.30*gauss(x,0.5,0.20));
+const G_FISH = zc(y=>0.32*gauss(y,0.38,0.09)+0.30*gauss(y,0.66,0.09));
+function tilePath(ctx, ox, oy, S, f, g, N){
+  N=N||14;
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){ const x=i/N; const px=ox+x*S, py=oy+f(x)*S; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+  for(let i=1;i<=N;i++){ const y=i/N; ctx.lineTo(ox+(1+g(y))*S, oy+y*S); }
+  for(let i=N-1;i>=0;i--){ const x=i/N; ctx.lineTo(ox+x*S, oy+(1+f(x))*S); }
+  for(let i=N-1;i>=0;i--){ const y=i/N; ctx.lineTo(ox+g(y)*S, oy+y*S); }
+  ctx.closePath();
+}
+function drawField(ctx, f, g, S, cols0,cols1,rows0,rows1, tone1, tone2, checkFn){
+  for(let row=rows0; row<rows1; row++){
+    for(let col=cols0; col<cols1; col++){
+      const ox=col*S, oy=row*S;
+      if(checkFn && !checkFn(ox+S/2, oy+S/2)) continue;
+      tilePath(ctx, ox, oy, S, f, g);
+      ctx.fillStyle = (col+row)%2===0 ? tone1 : tone2;
+      ctx.fill();
+      ctx.strokeStyle='rgba(6,8,16,.55)'; ctx.lineWidth=0.06; ctx.stroke();
+    }
+  }
+}
+function fxEscherTrick(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  drawField(ctx, F_BIRD, G_BIRD, 7.2, -2,2, -3,2, 'hsla(205,55%,60%,.92)', 'hsla(35,70%,64%,.92)');
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxEscherTrickFish(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  drawField(ctx, F_FISH, G_FISH, 7.2, -2,2, -3,2, 'hsla(175,55%,48%,.92)', 'hsla(280,45%,55%,.92)');
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxEscherMorph(f0,g0,tone1,tone2){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const k = 0.5-0.5*Math.cos(p*2*Math.PI);
+  const f=(x)=>f0(x)*k, g=(y)=>g0(y)*k;
+  drawField(ctx, f, g, 7.2, -2,2, -3,2, tone1, tone2);
+  ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridEsch', [
+  ['e1','Птица (крупно)','Клюв одной плитки точно входит в вырез соседней.'],
+  ['e2','Рыба (крупно)','Честно другой набор кривых, не перекраска птицы.'],
+  ['e3','Вспышка: откуда клюв','Квадрат вживую обрастает клювом/крылом.'],
+  ['e4','Вспышка: откуда плавник','Тот же приём на кривой рыбы.'],
+]);
+loop('e1', fxEscherTrick, 4.2); loop('e2', fxEscherTrickFish, 4.2);
+loopFlash('e3', fxEscherMorph(F_BIRD,G_BIRD,'hsla(205,50%,55%,.92)','hsla(35,65%,60%,.92)'), 4.2, 2600);
+loopFlash('e4', fxEscherMorph(F_FISH,G_FISH,'hsla(175,55%,48%,.92)','hsla(280,45%,55%,.92)'), 4.2, 2600);
+
+/* ===================== 5. МУКАРНАС ===================== */
+function buildTiers(N0,W0,h0,s,K){
+  let centers=[]; const cw0=W0/N0;
+  for(let i=0;i<N0;i++) centers.push(-W0/2+cw0/2+i*cw0);
+  let cw=cw0, y=0; const tiers=[];
+  for(let k=0;k<K && centers.length>=1;k++){
+    const h=h0*Math.pow(s,k);
+    tiers.push({k, centers:centers.slice(), cw, h, y0:y, y1:y+h});
+    y+=h;
+    if(centers.length===1) break;
+    const next=[]; for(let i=0;i<centers.length-1;i++) next.push((centers[i]+centers[i+1])/2);
+    cw = centers[1]-centers[0];
+    centers=next;
+  }
+  return {tiers, totalH:y};
+}
+function nicheArch(ctx, cx, yBase, yApex, halfW, hueBase, litFrac){
+  ctx.beginPath();
+  ctx.moveTo(cx-halfW, yBase);
+  ctx.quadraticCurveTo(cx-halfW*0.72, yBase-(yBase-yApex)*0.55, cx, yApex);
+  ctx.quadraticCurveTo(cx+halfW*0.72, yBase-(yBase-yApex)*0.55, cx+halfW, yBase);
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(cx,yApex,cx,yBase);
+  const L = Math.min(80, 32+40*litFrac);
+  grad.addColorStop(0, `hsla(${hueBase+15},55%,${Math.min(90,L+22)}%,.95)`);
+  grad.addColorStop(1, `hsla(${hueBase},30%,${Math.max(8,L-28)}%,.95)`);
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.strokeStyle=`hsla(${hueBase+15},60%,${Math.min(92,L+22)}%,.5)`; ctx.lineWidth=0.045;
+  ctx.beginPath(); ctx.moveTo(cx-halfW,yBase); ctx.quadraticCurveTo(cx-halfW*0.72,yBase-(yBase-yApex)*0.55,cx,yApex); ctx.stroke();
+}
+function drawMuqarnas(ctx, N0,W0,h0,s,K, hueBase, litK){
+  const {tiers,totalH}=buildTiers(N0,W0,h0,s,K);
+  const baseY = 12.5;
+  const maxK=tiers.length-1;
+  tiers.forEach(t=>{
+    const litFrac = (litK!=null? litK : t.k)/Math.max(1,maxK);
+    t.centers.forEach(cx=>{
+      nicheArch(ctx, cx, baseY-t.y0, baseY-t.y1, t.cw*0.46, hueBase, litFrac);
+    });
+  });
+  return totalH;
+}
+function fxMuqA(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050408'; fillBody(ctx);
+  drawMuqarnas(ctx, 6,15.5,3.1,0.88,6, 38);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxMuqB(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050408'; fillBody(ctx);
+  drawMuqarnas(ctx, 8,15.5,2.35,0.90,8, 260);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxMuqLight(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050408'; fillBody(ctx);
+  const maxK=5;
+  const litK = maxK*(0.5-0.5*Math.cos(p*2*Math.PI));
+  drawMuqarnas(ctx, 6,15.5,3.1,0.88,6, 38, litK);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMuq', [
+  ['m1','Свод, 6→1','Сходится к вершине, свет сверху.'],
+  ['m2','Свод, 8→1','Другая перевязка, честно другая арифметика.'],
+  ['m3','Крупный план','Ниша точно на середине стыка, без сдвига.'],
+  ['m4','Вспышка: свет ползёт по своду','Освещённый ярус едет сверху вниз и обратно.'],
+]);
+loop('m1', fxMuqA, 4.2); loop('m2', fxMuqB, 4.2); loop('m3', fxMuqA, 7.4); loopFlash('m4', fxMuqLight, 4.2, 3000);
+
+/* ===================== 6. СЭЙГАЙХА ===================== */
+function seigaihaField(ctx, R, K, hueBase, phaseFn){
+  const rowH=R, colW=2*R;
+  const rows0=Math.floor(-22*1.3/rowH), rows1=Math.ceil(14*1.3/rowH);
+  const cols0=Math.floor(-16*1.3/colW), cols1=Math.ceil(16*1.3/colW);
+  for(let j=rows0; j<rows1; j++){
+    const cy=j*rowH;
+    const xshift=(j%2!==0)? R : 0;
+    for(let i=cols0; i<cols1; i++){
+      const cx=i*colW+xshift;
+      const phase = phaseFn? phaseFn(j) : 0;
+      for(let k=K;k>=1;k--){
+        const r=k*R*(1+0.12*phase*((k===K)?1:0.4));
+        const a=0.35+ (k/K)*0.55;
+        ctx.strokeStyle=`hsla(${hueBase},70%,72%,${a})`;
+        ctx.lineWidth=Math.max(0.05, R*0.045);
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,Math.PI,2*Math.PI,false);
+        ctx.stroke();
+      }
+    }
+  }
+}
+function fxSeiWave(R,K,hueBase,speed){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
+  seigaihaField(ctx, R, K, hueBase, (j)=> Math.sin(j*0.9 - p*2*Math.PI*speed));
+  ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridSei', [
+  ['w1','Классика, R=1.9, 4 дуги','Касание чешуек ровно 2R, волна бежит по рядам.'],
+  ['w2','Крупная чешуя, 5 дуг','Другие параметры, своя волна.'],
+  ['w3','Мелкая частая чешуя','R=1.3, волна быстрее.'],
+  ['w4','Крупная волна, встречный ход','Волна навстречу остальным.'],
+]);
+loopFlash('w1', fxSeiWave(1.9,4,200,2), 4.2, 2200);
+loopFlash('w2', fxSeiWave(2.6,5,15,1.4), 4.2, 2600);
+loopFlash('w3', fxSeiWave(1.3,4,175,2.6), 4.2, 1900);
+loopFlash('w4', fxSeiWave(2.2,4,320,-1.6), 4.2, 2400);
+
+/* ===================== 7. МЕАНДР ===================== */
+function meanderWalk(startX,startY,moves){
+  let x=startX,y=startY; const pts=[[x,y]];
+  moves.forEach(m=>{
+    if(m==='R') x+=1; else if(m==='U') y-=1; else if(m==='D') y+=1;
+    pts.push([x,y]);
+  });
+  return {pts, endX:x, endY:y};
+}
+const MEA_KEY_A = 'U U R U R D D D R U U R D D R'.split(' ');
+const MEA_KEY_B = 'U U U U R D D R U U R D D D D R'.split(' ');
+function buildMeander(unit, reps){
+  let x=0,y=0; const all=[[x,y]];
+  for(let r=0;r<reps;r++){
+    const {pts,endX,endY}=meanderWalk(x,y,unit);
+    for(let i=1;i<pts.length;i++) all.push(pts[i]);
+    x=endX; y=endY;
+  }
+  return all;
+}
+function drawMeanderRibbon(ctx, pts, scale, ox, oy, hue, lw){
+  const p = pts.map(([x,y])=>[ox+x*scale, oy+y*scale]);
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.strokeStyle=`hsla(${hue},15%,10%,.6)`; ctx.lineWidth=lw*1.35;
+  ctx.beginPath(); p.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  ctx.strokeStyle=`hsla(${hue},60%,68%,.95)`; ctx.lineWidth=lw;
+  ctx.beginPath(); p.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  return p;
+}
+function traceRibbon(ctx, pts, scale, ox, oy, hue, lw, frac){
+  const n = Math.max(2, Math.round(pts.length*Math.max(0.02,frac)));
+  const drawn = drawMeanderRibbon(ctx, pts.slice(0,n), scale, ox, oy, hue, lw);
+  if(frac<1 && drawn.length){
+    const tip=drawn[drawn.length-1];
+    ctx.fillStyle=`hsla(${hue},95%,80%,.95)`; ctx.beginPath(); ctx.arc(tip[0],tip[1],lw*0.7,0,7); ctx.fill();
+  }
+}
+function fxMeaTraceA(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = p<0.85? p/0.85 : 1;
+  traceRibbon(ctx, buildMeander(MEA_KEY_A,7), 2.0, -18, 1, 45, 0.9, frac);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxMeaTraceB(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = p<0.85? p/0.85 : 1;
+  traceRibbon(ctx, buildMeander(MEA_KEY_B,8), 1.8, -18, 3, 195, 0.85, frac);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxMeaTraceFrieze(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = p<0.85? p/0.85 : 1;
+  traceRibbon(ctx, buildMeander(MEA_KEY_A,9), 0.95, -14, -15.5, 45, 0.55, frac);
+  traceRibbon(ctx, buildMeander(MEA_KEY_A,9), 1.75, -14, 4.5, 45, 0.85, frac);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxMeaTraceCloseup(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = p<0.85? p/0.85 : 1;
+  traceRibbon(ctx, buildMeander(MEA_KEY_B,5), 3.1, -12, 3, 320, 1.15, frac);
+  ctx.restore(); edgeStroke(ctx);
+}
+const MEA5_BANDS = [
+  {y:-19, scale:0.55, hue:45},
+  {y:-13, scale:0.85, hue:80},
+  {y:-7,  scale:1.15, hue:150},
+  {y:-1,  scale:1.55, hue:210},
+  {y:5,   scale:2.0,  hue:280},
+];
+function fxMeaTrace5(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = p<0.85? p/0.85 : 1;
+  MEA5_BANDS.forEach(b=>{ traceRibbon(ctx, buildMeander(MEA_KEY_A,9), b.scale, -16, b.y, b.hue, 0.4+b.scale*0.25, frac); });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMea', [
+  ['e1','Юнит A — резец вычерчивает','0 самопересечений за 20 повторов (проверено числом).'],
+  ['e2','Юнит B — выше и уже','Честно другая арифметика хода, не перекраска.'],
+  ['e3','Фриз в два ряда','Кайма сверху и снизу, обе ленты синхронно.'],
+  ['e4','Крупный план','Виден каждый прямой угол хода.'],
+  ['e5','5 полос сразу','Разные высоты/масштаб/цвет — интереснее одной.'],
+]);
+loopFlash('e1', fxMeaTraceA, 4.2, 2600);
+loopFlash('e2', fxMeaTraceB, 4.2, 2400);
+loopFlash('e3', fxMeaTraceFrieze, 4.2, 3000);
+loopFlash('e4', fxMeaTraceCloseup, 4.2, 2000);
+loopFlash('e5', fxMeaTrace5, 4.2, 3200);
+</script>
