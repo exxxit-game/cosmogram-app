@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Подробности полёта — колесо (макет 07.09.2026)</title>
+<style>
+  @font-face { font-family:'Exo 2'; src: local('Exo 2'); }
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#05070d;color:var(--ink);font-family:var(--font-disp);padding:28px 20px 80px}
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 28px;max-width:760px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:34px}
+  .col{background:var(--bg-1);border:1px solid var(--line);border-radius:16px;padding:20px;flex:1;min-width:280px}
+  .colLabel{font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+  .colLabel.bad{color:#e8836a}
+  .colLabel.good{color:var(--gold-hi)}
+
+  /* --- точная копия реальных CSS-правил игры (index.html), не приближение --- */
+  .gameScreen{background:radial-gradient(circle at 50% 20%,#16244a,var(--bg-0));border-radius:12px;padding:20px 16px;display:flex;flex-direction:column;align-items:center}
+  .statGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(92%,380px);margin:8px 0 12px}
+  .statCell{background:rgba(22,38,56,.6);border:1px solid var(--line);border-radius:14px;padding:11px 6px 9px;display:flex;flex-direction:column;gap:3px;align-items:center}
+  .statCell b{font-family:var(--font-disp);font-weight:400;font-size:25px;line-height:1.05;color:var(--ink)}
+  .statCell span{font-size:10.5px;color:var(--muted);letter-spacing:.14em}
+
+  canvas{display:block;margin:0 auto}
+  .caption{text-align:center;font-size:12px;color:var(--muted);margin-top:10px}
+  .note{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:16px 20px;font-size:13px;line-height:1.65;color:var(--muted);margin-bottom:16px}
+  .note b{color:var(--ink)}
+  .note.warn{border-color:rgba(232,131,106,.35)}
+  .note.warn b{color:#e8836a}
+  .real{display:inline-block;background:rgba(240,192,64,.14);color:var(--gold-hi);border-radius:6px;padding:1px 7px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>«Подробности полёта» — колесо вместо сетки</h1>
+  <p class="sub">Слева — точная копия реального экрана (CSS и цифры взяты из живой игры,
+  забег только что честно пролетан на localhost:8934, не выдуманы). Справа — предлагаемое
+  «колесо полёта»: та же плотность информации, космический вид вместо серых плиток.</p>
+
+  <div class="row">
+    <div class="col">
+      <div class="colLabel">Было — реальный экран сейчас <span class="real">настоящие цифры</span></div>
+      <div class="gameScreen">
+        <div class="statGrid" id="grid1"></div>
+      </div>
+      <div class="caption">9 плиток, неровный последний ряд — то, что владелец назвал «уродством»</div>
+    </div>
+    <div class="col">
+      <div class="colLabel good">Стало — колесо, тот же полёт</div>
+      <canvas id="wheelReal" width="360" height="360"></canvas>
+      <div class="caption">Тот же честный забег (208 м) — маленькое, сжатое колесо, само по себе читается как «слабый полёт»</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col" style="flex:0 0 100%">
+      <div class="colLabel good">Для сравнения — иллюстративный «хороший» полёт <span class="real" style="background:rgba(125,138,168,.18);color:var(--muted)">пример, не реальные данные</span></div>
+      <canvas id="wheelGood" width="360" height="360" style="margin:0 auto"></canvas>
+      <div class="caption">Показывает диапазон формы — полное золотое колесо против маленького сжатого выше</div>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <b>Открытый вопрос 1 — «Удары».</b> Если рисовать как есть, БОЛЬШЕ ударов будет выглядеть
+    как БОЛЬШИЙ луч — то есть плохой результат читался бы как хороший. На колесе выше этот луч
+    развёрнут («Уклонение» = чем меньше ударов, тем полнее луч). Это смена смысла показателя,
+    не просто перекраска — нужно отдельное «да» на такое название и логику, не только на форму колеса.
+  </div>
+  <div class="note warn">
+    <b>Открытый вопрос 2 — «Время».</b> В Классике больше времени в воздухе — обычно лучше,
+    но в Speedrun цель — набрать 10 000 очков БЫСТРЕЕ, то есть меньше времени — лучше. Один луч
+    не может значить разное в разных дисциплинах без явного решения, как его показывать.
+  </div>
+  <div class="note">
+    <b>Открытый вопрос 3 — максимумы шкал.</b> Числа на скриншотах (макс. 1000 м, 60 сек, 8 звёзд
+    и т.д.) — прикидка для макета, не баланс игры. Настоящие максимумы нужно откалибровать по
+    реальным честным полётам, не выдумывать на глаз.
+  </div>
+
+  <div class="note">
+    Что не поменялось: сами 9 показателей и их источники в коде (<code>S.dist, S.time, S.starsCollected,
+    S.comboMax, S.mission, S.hits, S.bonuses, S.smooth, S.nearMiss</code>) — макет только про то,
+    как их ПОКАЗАТЬ, числа и формулы подсчёта не тронуты.
+  </div>
+</div>
+
+<script>
+const grid1=document.getElementById('grid1');
+const real={dist:208,time:'0:05.5',stars:1,combo:1,wave:1,hits:1,bonus:0,smooth:51,nearmiss:1};
+function cell(v,l){ const d=document.createElement('div'); d.className='statCell';
+  d.innerHTML='<b>'+v+'</b><span>'+l+'</span>'; return d; }
+[[real.dist+' м','ДИСТАНЦИЯ'],[real.time,'ВРЕМЯ'],[real.stars,'ЗВЁЗДЫ'],['×'+real.combo,'МАКС. КОМБО'],
+ [real.wave,'ВОЛНА'],[real.hits,'УДАРЫ'],[real.bonus,'БОНУСЫ'],[real.smooth+'%','ПЛАВНОСТЬ'],
+ [real.nearmiss,'ВПРИТЫК']].forEach(p=>grid1.appendChild(cell(p[0],p[1])));
+
+// ---------- колесо ----------
+const AXES=[
+  {key:'dist', label:'Дистанция', max:1000},
+  {key:'time', label:'Время', max:60},
+  {key:'stars', label:'Звёзды', max:8},
+  {key:'combo', label:'Комбо', max:8},
+  {key:'wave', label:'Волна', max:5},
+  {key:'evade', label:'Уклонение', max:5}, // инверсия «Удары»: 5-hits, clamp 0..5
+  {key:'bonus', label:'Бонусы', max:6},
+  {key:'smooth', label:'Плавность', max:100},
+  {key:'nearmiss', label:'Впритык', max:10},
+];
+function drawWheel(cv, vals, glowGold){
+  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height, cx=W/2, cy=H/2, R=W*0.34;
+  ctx.clearRect(0,0,W,H);
+  const bgGrad=ctx.createRadialGradient(cx,cy*0.75,10,cx,cy,R*1.7);
+  bgGrad.addColorStop(0,'#16244a'); bgGrad.addColorStop(1,'#0b1626');
+  ctx.fillStyle=bgGrad; ctx.beginPath(); ctx.arc(cx,cy,R*1.55,0,6.283); ctx.fill();
+  // фоновые кольца
+  ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+  for(let ring=1;ring<=4;ring++){ ctx.beginPath();
+    for(let i=0;i<=AXES.length;i++){ const a=-Math.PI/2+i/AXES.length*6.283; const r=R*ring/4;
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  // оси + подписи
+  ctx.font='600 11px "Exo 2",sans-serif'; ctx.fillStyle='#7d8aa8'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  AXES.forEach((ax,i)=>{ const a=-Math.PI/2+i/AXES.length*6.283;
+    const x2=cx+Math.cos(a)*R, y2=cy+Math.sin(a)*R;
+    ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2); ctx.stroke();
+    const lx=cx+Math.cos(a)*(R+26), ly=cy+Math.sin(a)*(R+26);
+    ctx.fillText(ax.label,lx,ly);
+  });
+  // многоугольник значений
+  const pts=AXES.map((ax,i)=>{ const a=-Math.PI/2+i/AXES.length*6.283;
+    const norm=Math.max(0,Math.min(1,vals[ax.key]/ax.max));
+    return [cx+Math.cos(a)*R*norm, cy+Math.sin(a)*R*norm];
+  });
+  ctx.save();
+  ctx.shadowColor=glowGold?'rgba(240,192,64,.6)':'rgba(150,180,255,.4)'; ctx.shadowBlur=14;
+  ctx.beginPath(); pts.forEach((p,i)=> i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1])); ctx.closePath();
+  ctx.fillStyle=glowGold?'rgba(240,192,64,.22)':'rgba(150,180,255,.16)';
+  ctx.strokeStyle=glowGold?'#f0c040':'#9fc4ff'; ctx.lineWidth=2;
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // точки-звёзды на вершинах
+  pts.forEach(p=>{ ctx.fillStyle=glowGold?'#f0c040':'#dfe8ff'; ctx.beginPath(); ctx.arc(p[0],p[1],3.2,0,6.283); ctx.fill(); });
+  // центр
+  ctx.fillStyle='rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(cx,cy,2,0,6.283); ctx.fill();
+}
+drawWheel(document.getElementById('wheelReal'), {dist:208,time:5.5,stars:1,combo:1,wave:1,evade:4,bonus:0,smooth:51,nearmiss:1}, false);
+drawWheel(document.getElementById('wheelGood'), {dist:850,time:42,stars:6,combo:5,wave:3,evade:5,bonus:4,smooth:92,nearmiss:7}, true);
+</script>
+</body>
+</html>

@@ -73,6 +73,9 @@ AI-WORKFLOW → INDEX → KNOWN-BUGS + ERROR-CATALOG → STYLE-GUIDE → PERFORM
 |---|---|---|
 | GROWTH-STRATEGY.md | Wordle-механика Трассы дня, STEPPS, тиры платформ, стоп-лист | ДОМ роста |
 | MARKET-ANALYSIS.md | Сценарии MAU, монетизация благодарностью, горизонты | ДОМ рынка |
+| RESEARCH-2026-09-MULTILINGUAL.md | Многоязычный поиск 07.09: async-вызовы, sendGift/emoji-статус, Canvas2D Layers API, манифест-как-PR | ничей, свежий |
+| RESEARCH-2026-09-SCALE-RISKS.md | Риски на пути к 1М+ игроков: ИИ-разработка без команды (CVE-2025-48757), юридика, как ломались соло-разработчики | ничей, свежий |
+| RESEARCH-2026-09-LAUNCH-AND-STARS.md | План запуска (тонко, не разом) + экономика Stars: крипта запрещена ToS, Fragment/веб дешевле для игрока | ничей, свежий |
 
 ---
 

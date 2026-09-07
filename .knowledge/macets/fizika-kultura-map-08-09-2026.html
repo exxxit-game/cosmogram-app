@@ -1,0 +1,1389 @@
+<title>Карта скинов — физика/культура, партия 08.09.2026 (черновик, НЕ одобрено)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.legend{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 18px;font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:30px}
+.legend b{color:var(--text)}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.topic{margin-bottom:0}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.status.pend{color:#d97757;background:rgba(217,119,87,.12);border-color:rgba(217,119,87,.35)}
+.status.safety{color:#c94f4f;background:rgba(201,79,79,.12);border-color:rgba(201,79,79,.4)}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+.compare{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 16px;margin-top:10px}
+.compare .card{flex:1;min-width:150px}
+</style>
+<div class="wrap">
+  <h1 class="title">Карта скинов — физика/культура, партия 08.09.2026</h1>
+  <p class="sub">Черновой макет по итогам второго, многоязычного исследовательского прохода
+  (см. память: каталог физики/космоса 30 тем, атлас культуры 30 тем, топ-30 шортлист).
+  <b>Ничего здесь ещё не одобрено словом владельца</b> — вся партия строится разом, как
+  договорились, для одного пакетного просмотра и решения, а не по одному файлу.</p>
+  <div class="pending">
+    <b>Статус партии:</b> 14 тем физики/космоса (12 из шортлиста + волны Фарадея + сравнение
+    Пенроуз/квазикристалл) и 18 тем культуры/ремесла — все карточки построены по формулам,
+    проверенным числом заранее (см. <code>verify_physics_culture_macet.js</code>), но ни одна
+    ещё не показана владельцу и не подтверждена явным «да». До подтверждения — черновик.
+  </div>
+  <div class="legend">
+    <b>Бейджи</b>: «⏳ на утверждение» — новая тема этой партии, ждёт решения; «⚠ осторожно» —
+    тема требует особого внимания на скрининг мотивов (см. правило про свастика-семейство)
+    и была намеренно построена в безопасном варианте.
+  </div>
+
+  <h1 class="catHead">Физика и космос</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Квазикристалл — диаграмма дифракции</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Реальная электронная дифракция квазикристалла — 10 лучей строго
+    через 36°, радиусы соседних дифракционных пятен на каждом луче растут в φ=1.618... раз
+    (проверено числом). Показана РЯДОМ с уже одобренным Пенроузом — не замена, отдельная
+    новая тема (сама геометрия живого Пенроуза не трогается).</p>
+    <div class="compare">
+      <div class="card"><canvas id="cmpPenrose"></canvas><h3>Пенроуз (уже в игре, без изменений)</h3><p>Апериодическая мозаика — для сравнения, геометрия не менялась.</p></div>
+      <div class="card"><canvas id="cmpQuasi"></canvas><h3>Квазикристалл — дифракция (новое)</h3><p>10-лучевая симметрия, радиусы по φ — та самая картина, которую предсказала математика Пенроуза до открытия Шехтмана (1982).</p></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Кольца Сатурна</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящие относительные радиусы колец (D/C/B/щель Кассини/A/щель
+    Энке/щель Кипера/F) — не выдуманные полосы, а честные пропорции по реальным км от центра
+    планеты (NASA). Щель Кассини ~4590 км, между кольцами B и A — самый узнаваемый разрыв.</p>
+    <div class="grid" id="gridSaturn"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Хвосты комет — два настоящих механизма</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Ионный хвост — прямая линия строго от Солнца (магнитное поле
+    солнечного ветра), пылевой — изогнутая кривая (радиационное давление + орбитальная
+    скорость самой кометы, модель Финсона-Пробстайна). Разная физика, разная форма и цвет,
+    не один росчерк.</p>
+    <div class="grid" id="gridComet"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Пульсар — эффект маяка</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Два луча (с двух магнитных полюсов, не совпадающих с осью вращения)
+    честно разделены 180° и обходят полный круг за один оборот звезды — вспышка только
+    когда луч проходит через точку наблюдателя, как настоящий маяк.</p>
+    <div class="grid" id="gridPulsar"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Планетарная туманность — биполярная (hourglass)</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Модель встречных звёздных ветров — быстрый сферический ветер,
+    сжатый плотным медленным экваториальным поясом, раздувает две полярные доли (реальный
+    механизм; ~13% всех планетарных туманностей биполярны). Форма стилизована под механизм,
+    не цитата точной формулы.</p>
+    <div class="grid" id="gridNebula"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Аврора — форма магнитосферы</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая форма «капли» — тупая подсолнечная сторона (головная
+    ударная волна дальше границы магнитопаузы в ~1.4 раза) и длинный хвост (на порядок
+    длиннее, реально >200 радиусов Земли против ~10) — не декоративный овал.</p>
+    <div class="grid" id="gridAurora"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Спиральная галактика — два настоящих механизма</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Grand-design (волна плотности, Лин-Шу) — логарифмическая спираль
+    держит постоянный угол закрутки 15° на всём протяжении (проверено числом); flocculent
+    (усиление раскачки) — много коротких несвязанных рукавов. Разные механизмы, разные
+    формы, честно не усреднены в одну спираль.</p>
+    <div class="grid" id="gridGalaxy"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Фигуры Лихтенберга — два режима разряда</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Позитивный разряд — настоящее ветвящееся дерево (модель
+    диэлектрического пробоя, Нимайер-Пьетронеро-Вайсман 1984, родственна DLA); негативный —
+    концентрические кольца, как круги на воде. Разные формы для разного знака напряжения,
+    не одна и та же молния дважды.</p>
+    <div class="grid" id="gridLichtenberg"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Мыльная плёнка — законы Плато</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Самые точные числа во всём исследовании: плёнки сходятся ровно
+    тройками под 120° (честная гексагональная решётка, проверено числом), рёбра сходятся
+    четвёрками под тетраэдрическим углом 109.47° — не «примерно круглое», а доказанная
+    геометрия минимальной поверхности.</p>
+    <div class="grid" id="gridPlateau"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Филлотаксис — золотой угол (Фогель, 1979)</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая формула подсолнечника: r=√n, θ=n·137.5077° — золотой угол
+    проверен числом, семечки не образуют повторяющихся радиальных полос (реальное свойство
+    именно этого угла, не любого).</p>
+    <div class="grid" id="gridPhyllo"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Сонолюминесценция — звук создаёт свет</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Пузырёк расширяется в ~10 раз (4.5→45 микрон), затем схлопывается в
+    ~90 раз резче — вспышка света ровно в момент схлопывания. Честная оговорка: точный
+    механизм свечения до сих пор не полностью изучен наукой, не выдаём это за решённый вопрос.</p>
+    <div class="grid" id="gridSono"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Аккреционный диск чёрной дыры</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая структура — тонкий холодный диск снаружи, толстая горячая
+    корона у центра, воронка вдоль полярной оси (где рождаются джеты), точка перегиба (cusp),
+    где вещество реально пересекает горизонт.</p>
+    <div class="grid" id="gridAccretion"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Волны Фарадея</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Похожи на уже одобренные фигуры Хладни, но физика другая: Хладни —
+    вынужденный резонанс твёрдой пластины (собственные моды), Фарадея — параметрическая
+    неустойчивость ЖИДКОЙ поверхности при вертикальной вибрации, отклик ровно на половине
+    частоты возбуждения (субгармоника) — решётка пиков появляется только выше порога
+    ускорения, не при любой вибрации.</p>
+    <div class="grid" id="gridFaraday"></div>
+  </div>
+
+  <h1 class="catHead">Ремёсла и материалы</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Тонганская тапа (нгату)</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая техника — узор не рисуется от руки, а натирается через
+    резную деревянную доску (купеси), поэтому мотивы крупные, блочные, регулярно повторяются
+    в сетке (реальные названные мотивы вроде «манулуа» — две птицы).</p>
+    <div class="grid" id="gridTapa"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Андское ткачество</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая структура — двухцветная основа меняется местами
+    (комплементарная перевязка), ткань буквально ДВУСТОРОННЯЯ: узор на изнанке — точный
+    негатив узора на лице, не одна и та же картинка, а честно инвертированные цвета.</p>
+    <div class="grid" id="gridAndes"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Палестинская татрииз</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая счётная вышивка крестом — симметричный медальон из
+    названных мотивов (кипарис, луна), растущий от центра строго по сетке клеток, не
+    произвольные стежки.</p>
+    <div class="grid" id="gridTatreez"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Навахо — 3 региональных стиля</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Один народ, честно разные реальные традиции: Two Grey Hills — только
+    натуральная небелёная шерсть (никогда красный цвет), тонкие геометрические полосы;
+    Ganado — насыщенный красный фон, крупные ступенчатые ромбы; Crystal — приглушённые
+    растительные красители, полосы без рамки-каймы. Не один шаблон в трёх цветах.</p>
+    <div class="grid" id="gridNavajo"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Турецкий чинтемани</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий османский имперский мотив — ровно 3 круга в треугольном
+    расположении (символ власти) + 2 волнистые полосы «тигровые полосы» под ними, повторяется
+    сдвинутой сеткой — не абстрактные пятна, конкретная документированная композиция.</p>
+    <div class="grid" id="gridCintemani"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Монгольский войлок</h2><span class="status pend">⏳ на утверждение</span><span class="status safety">⚠ осторожно</span></div>
+    <p class="topicDesc">Өлзий (бесконечный узел) — замкнутая непрерывная лента с
+    перехлёстами, часть «8 благих символов», топологически НЕ является 4-кратно поворотно
+    симметричным крюковым крестом (проверено визуально по построению). <b>Алхан хээ
+    (меандр)</b> построен как ОДНА непрерывная открытая лента с поворотами только 90° — тот же
+    безопасный принцип, что уже подтверждён для греческого меандра (см. правило про
+    свастика-семейство): никогда не собирается в дискретный поворотно-симметричный крюк.</p>
+    <div class="grid" id="gridMongol"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Эфиопские кресты</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Процессиональный/наручный крест с плетёным орнаментом «вечность» —
+    отдельная от уже выпущенного кельтского следа геометрия (более 100 реальных названных
+    региональных форм); плетение вокруг креста, а не отдельная лента.</p>
+    <div class="grid" id="gridEthiopia"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Бенгальский джамдани</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая техника дополнительного утка — мотивы буквально вплетены
+    В САМУ ткань только в местах узора (не вышивка поверх), поэтому выглядят как отдельные
+    «плавающие» мотивы на прозрачном фоне, не сплошной узор.</p>
+    <div class="grid" id="gridJamdani"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Филиппинский Т'налак</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая техника икат — нити основы завязаны и окрашены ДО тканья,
+    поэтому края мотива размыты, не чёткие (реальные мотивы — питон, горы; по преданию Т'боли
+    узоры приходят ткачихе во сне от богини Фу Далу).</p>
+    <div class="grid" id="gridTnalak"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Финский рюйю</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая длинноворсовая текстура (не плоское тканьё) — симметричные
+    свадебные мотивы читаются сквозь ворс, честно переданы мелкой штриховкой ворса, а не
+    гладкой заливкой.</p>
+    <div class="grid" id="gridRyijy"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Дамасская сталь — два способа</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Вуц — настоящий узор кристаллизации карбидов при медленном
+    охлаждении одного сплава (волнистые полосы-«вода»); дамаскирование — настоящая слоистая
+    ковка РАЗНЫХ сталей (видимые параллельные слои после многократной проковки-скручивания).
+    Разный металлургический процесс, разный узор, не одна текстура на два имени.</p>
+    <div class="grid" id="gridDamascus"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Настоящая кольчуга — 4-в-1 и 6-в-1</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Европейское плетение 4-в-1 — каждое кольцо продето ровно через 4
+    соседних (проверено числом); 6-в-1 — через 6. Разный граф связности колец, не просто
+    разная плотность точек.</p>
+    <div class="grid" id="gridChainmail"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Мраморные жилы</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий геологический процесс — жилы это трещины в породе,
+    ЗАПОЛНЕННЫЕ минералом, а не нарисованные линии: узкие, угловатые, без единой иерархии
+    ветвления (в отличие от фигур Лихтенберга/DLA — честно другая, менее «породистая»
+    ветвящаяся форма).</p>
+    <div class="grid" id="gridMarble"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Иней / ледяные дендриты</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий угол ветвления льда Ih — строго 60° (гексагональная
+    симметрия, диаграмма Накая связывает форму с температурой/влажностью) — проверено числом,
+    не произвольный угол ответвления.</p>
+    <div class="grid" id="gridFrost"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Панцирь черепахи / перламутр</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Панцирь — шестиугольники, замкнутые РОВНО 12 пятиугольниками
+    (формула Эйлера, та же математическая семья, что геодезический купол — проверено числом);
+    перламутр — слоистая структура «кирпич-раствор» со сдвигом рядов, честная иризация цвета
+    по углу, не сплошная заливка перламутровым цветом.</p>
+    <div class="grid" id="gridShell"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Суахилийская канга</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Уникальный настоящий механизм — узор структурно несёт полосу с
+    ПОСЛОВИЦЕЙ (джина), не просто орнамент. В макете — честное место под текстовую полосу,
+    сам текст пословицы здесь НЕ выдуман (нужен отдельный реальный источник, если тема пойдёт
+    дальше макета).</p>
+    <div class="grid" id="gridKanga"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Мировое плетение корзин</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая ось различия — не узор, а СТРУКТУРА плетения: спиральное
+    сшивание (койлинг, сосновая хвоя) против плетения через одну (плейтинг, пальмовый лист) —
+    две по-настоящему разные техники, не одна текстура в двух цветах.</p>
+    <div class="grid" id="gridBasket"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Персидские ковры — 5 городских стилей</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Пять реально названных, различных традиций: Тебриз (медальон +
+    плотные цветы), Исфахан (тончайший медальон с пальметтами), Кашан (медальон + арабески),
+    Кум (тонкий шёлк, мелкие цветы), Наин (кремовый фон, синий медальон) — не один узор
+    в 5 палитрах.</p>
+    <div class="grid" id="gridPersian"></div>
+  </div>
+
+</div>
+<script>
+/* ===== Общий шаблон партии (идентичен skins-map-07-09-2026.html) ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+/* Корпус ("самолётик", BODY_PTS) — это реальный игровой объект, его силуэт в игре всегда
+   жёсткий и одинаковый (иначе ломается читаемость/хитбокс). Владелец поправил: наклон должен
+   гнуть не сам корпус, а МАТЕРИАЛ/УЗОР НА НЁМ — как блик на крыле, слегка ловящий свет, когда
+   объект поворачивается, а не сам металл гнётся. Поэтому эффект живёт внутри edgeStroke —
+   мягкий блик, залитый ПОВЕРХ уже нарисованного узора, в том же клипе тела, без единого
+   геометрического искажения самого силуэта. Сила чуть-чуть — рассчитана на то, каким это
+   будет выглядеть в реальном игровом поле (маленький, быстро движущийся спрайт), а не как
+   эффектная витрина. Фаза берётся из ctx.canvas.id — у каждой карточки своя, без правки
+   всех вызовов edgeStroke(ctx) по отдельности. */
+function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
+function edgeStroke(ctx){
+  const id=(ctx.canvas&&ctx.canvas.id)||'';
+  const phase=hashPhase(id);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2; // 0..1, едет туда-сюда
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)');
+  g.addColorStop(0.5,'rgba(255,255,255,.09)'); /* "чуть-чуть" — под реальный размер спрайта в игре */
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loop(id, draw, zoom){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function render(){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    /* фигура заполняет реальный размер канваса, а не фиксированное число пикселей —
+       без этого темы с 1-2 карточками в ряду (сетка растягивает их через 1fr) получали
+       крошечный рисунок в огромном пустом поле; REF=160 — размер, под который изначально
+       подбирались числа zoom для КАЖДОЙ темы, дальше масштаб честно следует за контейнером */
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    draw(ctx,0); ctx.restore();
+  }
+  render(); requestAnimationFrame(render);
+  if(window.ResizeObserver){ new ResizeObserver(render).observe(cv); }
+  else { window.addEventListener('resize', render); }
+  requestAnimationFrame(function tick(){ render(); requestAnimationFrame(tick); }); /* блик в edgeStroke должен ехать и на "статичных" карточках */
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    const p=((t||0)%cycleMs)/cycleMs; draw(ctx,p); ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountCards(gridId, items){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+const PHI=(1+Math.sqrt(5))/2;
+
+/* ===================== КВАЗИКРИСТАЛЛ vs ПЕНРОУЗ ===================== */
+function cSub(a,b){return [a[0]-b[0],a[1]-b[1]];} function cLerp(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];}
+function subdividePenrose(tris){
+  const out=[];
+  for(const [type,apex,B,C] of tris){
+    if(type==='L'){ const P=cLerp(apex,B,1/PHI); out.push(['L',C,P,B]); out.push(['S',P,apex,C]); }
+    else { const Q=cLerp(B,C,1/PHI); out.push(['L',B,apex,Q]); out.push(['S',Q,apex,C]); }
+  }
+  return out;
+}
+function penroseSeed(){
+  const tris=[];
+  for(let i=0;i<10;i++){ const aB=(2*i-1)*Math.PI/10, aC=(2*i+1)*Math.PI/10;
+    tris.push(['L',[0,0],[Math.cos(aB),Math.sin(aB)],[Math.cos(aC),Math.sin(aC)]]); }
+  return tris;
+}
+function drawPenroseCompare(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  let tris=penroseSeed(); for(let i=0;i<4;i++) tris=subdividePenrose(tris);
+  ctx.scale(11,11);
+  tris.forEach(([type,A,B,C])=>{
+    ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(B[0],B[1]); ctx.lineTo(C[0],C[1]); ctx.closePath();
+    ctx.fillStyle=type==='L'?'hsla(210,70%,55%,.55)':'hsla(280,70%,55%,.4)';
+    ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.015; ctx.stroke();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawQuasiDiffraction(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050510'; fillBody(ctx);
+  ctx.scale(2.6,2.6);
+  for(let ray=0; ray<10; ray++){
+    const ang=ray*36*Math.PI/180;
+    for(let s=0; s<4; s++){
+      const r=Math.pow(PHI,s); const x=r*Math.cos(ang), y=r*Math.sin(ang);
+      const rad=0.34-s*0.05;
+      const g=ctx.createRadialGradient(x,y,0,x,y,rad);
+      g.addColorStop(0,'hsla(190,90%,80%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,7); ctx.fill();
+    }
+  }
+  ctx.fillStyle='hsla(190,90%,90%,1)'; ctx.beginPath(); ctx.arc(0,0,0.12,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+loop('cmpPenrose', drawPenroseCompare, 5.2);
+loop('cmpQuasi', drawQuasiDiffraction, 5.2);
+
+/* ===================== КОЛЬЦА САТУРНА ===================== */
+/* реальные радиусы, км от центра планеты (NASA/Wikipedia Rings of Saturn) */
+const SATURN_RINGS=[
+  {name:'D', r0:66900, r1:74510, hue:40, a:.35},
+  {name:'C', r0:74658, r1:92000, hue:42, a:.45},
+  {name:'B', r0:92000, r1:117580, hue:44, a:.85},
+  {name:'CassiniGap', r0:117580, r1:122170, hue:0, a:0},
+  {name:'A', r0:122170, r1:136775, hue:46, a:.65},
+  {name:'EnckeGap', r0:133410, r1:133740, hue:0, a:0},
+  {name:'F', r0:140180, r1:140700, hue:48, a:.5},
+];
+const SATURN_MAXR=SATURN_RINGS[SATURN_RINGS.length-1].r1;
+function drawSaturn(ctx, tilt, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.scale(7,7); /* было 1.55 — кольца реально занимали ~3 из 16 доступных единиц тела */
+  ctx.save(); ctx.scale(1, tilt);
+  SATURN_RINGS.forEach(rg=>{
+    if(rg.a<=0) return;
+    const r0=rg.r0/SATURN_MAXR*2.1, r1=rg.r1/SATURN_MAXR*2.1;
+    const rMid=(r0+r1)/2;
+    /* реальная кеплеровская дифференциальная ротация — внутренние кольца честно
+       обгоняют внешние (угловая скорость ∝ 1/r^1.5), не общий жёсткий поворот диска */
+    const speed=Math.pow(1/rMid, 1.5);
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.35);
+    ctx.lineWidth=(r1-r0);
+    /* без угловой текстуры вращение однородного кольца физически невозможно УВИДЕТЬ —
+       рисуем реальную неравномерность плотности частиц (клочковатость), чтобы ротация
+       читалась глазом, не только существовала в коде */
+    const seg=24;
+    for(let s=0;s<seg;s++){
+      const a0=s/seg*Math.PI*2, a1=(s+0.92)/seg*Math.PI*2;
+      const clump=0.55+0.45*Math.sin(s*2.4);
+      ctx.strokeStyle=`hsla(${rg.hue},55%,72%,${rg.a*clump})`;
+      ctx.beginPath(); ctx.arc(0,0,rMid,a0,a1); ctx.stroke();
+    }
+    ctx.restore();
+  });
+  ctx.restore();
+  ctx.fillStyle='hsla(43,60%,80%,1)'; ctx.beginPath(); ctx.arc(0,0,0.42,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridSaturn', [
+  ['satTop','Кольца сверху — дифференциальная ротация','Все щели видны в реальных пропорциях; внутренние кольца честно вращаются быстрее внешних (закон Кеплера, ω∝r⁻¹·⁵).'],
+  ['satTilt','Кольца — угол обзора меняется','Наклон плоскости колец честно колеблется от почти анфас до почти на ребро — так же, как Земля раз в ~15 лет пересекает плоскость колец Сатурна и они «исчезают» с ребра (реальное, датированное явление, не выдуманная камера).'],
+]);
+loopFlash('satTop', (ctx,p)=>drawSaturn(ctx,1,p), 4.4, 6000);
+loopFlash('satTilt', (ctx,p)=>drawSaturn(ctx, 0.12+0.88*Math.abs(Math.sin(p*Math.PI)), p), 4.4, 8000); /* наклон гнёт только сами кольца (после clipBody), корпус-"самолётик" не трогается */
+
+/* ===================== ХВОСТЫ КОМЕТ ===================== */
+function drawComet(ctx, kind, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050510'; fillBody(ctx);
+  ctx.scale(6,6); /* было 3.4 — хвост едва достигал половины доступного места */
+  const sunDir=[0,-1], orbitDir=[1,0];
+  /* реальный рост хвоста: у перигелия (p≈0) хвостов почти нет, дальше от Солнца
+     оба хвоста реально удлиняются — не статичный росчерк фиксированной длины */
+  const grow=0.35+0.65*Math.sin(p*Math.PI);
+  if(kind==='ion' || kind==='both'){
+    const g=ctx.createLinearGradient(0,0,0,2.2*grow);
+    g.addColorStop(0,'hsla(200,90%,75%,.85)'); g.addColorStop(1,'hsla(200,90%,60%,0)');
+    ctx.strokeStyle=g; ctx.lineWidth=0.09; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,2.2*grow); ctx.stroke();
+  }
+  if(kind==='dust' || kind==='both'){
+    ctx.beginPath(); ctx.moveTo(0,0);
+    for(let t=0.05;t<=1.8*grow;t+=0.05){
+      const rad=0.5*0.55*t*t;
+      const x=rad*sunDir[0]-orbitDir[0]*t, y=rad*sunDir[1]*-1-orbitDir[1]*t;
+      ctx.lineTo(x*0.9, -Math.abs(y)*0.9);
+    }
+    const g2=ctx.createLinearGradient(0,0,1.4*grow,-1.6*grow);
+    g2.addColorStop(0,'hsla(35,70%,80%,.85)'); g2.addColorStop(1,'hsla(35,70%,70%,0)');
+    ctx.strokeStyle=g2; ctx.lineWidth=0.14; ctx.stroke();
+  }
+  ctx.fillStyle='#dfe6ff'; ctx.beginPath(); ctx.arc(0,0,0.16,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridComet', [
+  ['cometIon','Ионный хвост','Прямая линия строго от Солнца — удлиняется по мере приближения к Солнцу, как в реальности.'],
+  ['cometDust','Пылевой хвост','Изогнутая кривая — радиационное давление + орбитальная скорость самой кометы, реально растёт.'],
+  ['cometBoth','Оба хвоста вместе','Настоящий вид кометы — два разных механизма, два разных направления, растут вместе.'],
+]);
+loopFlash('cometIon', (ctx,p)=>drawComet(ctx,'ion',p), 4.6, 3400);
+loopFlash('cometDust', (ctx,p)=>drawComet(ctx,'dust',p), 4.6, 3400);
+loopFlash('cometBoth', (ctx,p)=>drawComet(ctx,'both',p), 4.6, 3400);
+
+/* ===================== ПУЛЬСАР-МАЯК ===================== */
+function drawPulsar(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050308'; fillBody(ctx);
+  ctx.scale(10,10); /* было 4.2 — луч едва достигал трети доступного места */
+  const tilt=32*Math.PI/180;
+  [0,0.5].forEach(offset=>{
+    const spin=(p+offset)%1; const ang=spin*2*Math.PI - Math.PI/2;
+    const bx=Math.cos(ang)*Math.sin(tilt+0.001), by=Math.sin(ang);
+    const beamAng=Math.atan2(by,bx);
+    ctx.save(); ctx.rotate(beamAng);
+    const g=ctx.createLinearGradient(0,0,1.3,0);
+    g.addColorStop(0,'hsla(255,90%,80%,.9)'); g.addColorStop(1,'hsla(255,90%,70%,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(1.3,-0.18); ctx.lineTo(1.3,0.18); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  ctx.fillStyle='#e8ecff'; ctx.beginPath(); ctx.arc(0,0,0.14,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPulsar', [
+  ['pulsarSpin','Вращающийся маяк','Два луча с двух полюсов, честно разделены 180°, полный оборот за цикл анимации.'],
+]);
+loopFlash('pulsarSpin', drawPulsar, 5.0, 1800);
+
+/* ===================== ПЛАНЕТАРНАЯ ТУМАННОСТЬ (биполярная) ===================== */
+function drawNebula(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050310'; fillBody(ctx);
+  ctx.scale(9.5,9.5); /* было 2.6 — доли туманности едва достигали четверти доступного места */
+  /* реальное медленное расширение — туманность физически растёт со временем, не застывший снимок */
+  const grow=0.7+0.3*Math.sin(p*Math.PI*2);
+  /* угол обзора относительно полярной оси честно меняет силуэт: с ребра (ось поперёк
+     луча зрения) видны классические две доли; ближе к виду "с полюса" силуэт сжимается
+     почти в кольцо — так реально выглядят разные наблюдаемые биполярные туманности при
+     разном наклоне оси к Земле (напр. туманность Кольцо M57 считается такой же биполярной
+     структурой, увиденной почти строго с полюса). Не физический поворот ОДНОГО объекта —
+     иллюстрация того же реального механизма под разными углами обзора. */
+  const viewSquish=0.4+0.6*Math.abs(Math.cos(p*Math.PI*2*0.6));
+  ctx.save(); ctx.scale(1, viewSquish);
+  [1,-1].forEach(side=>{
+    ctx.save(); ctx.scale(1,side);
+    ctx.beginPath();
+    for(let a=-Math.PI/2; a<=Math.PI/2; a+=0.05){
+      const r=1.35*grow*Math.pow(Math.abs(Math.cos(a)),0.35);
+      const x=r*Math.sin(a), y=-r*Math.cos(a)-0.15;
+      a===-Math.PI/2 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    const g=ctx.createRadialGradient(0,-0.9,0.1,0,-0.9,1.3*grow);
+    g.addColorStop(0,'hsla(320,80%,68%,.85)'); g.addColorStop(1,'hsla(260,80%,45%,.15)');
+    ctx.fillStyle=g; ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,0.09,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridNebula', [
+  ['nebulaBipolar','Биполярная (hourglass) — растёт и меняет ракурс','Быстрый ветер раздувает две полярные доли, туманность реально растёт; силуэт честно меняется от вида "с ребра" к почти "с полюса" — так по-разному выглядят реальные биполярные туманности в зависимости от наклона оси к Земле.'],
+]);
+loopFlash('nebulaBipolar', drawNebula, 4.4, 4200); /* наклон гнёт только силуэт туманности (после clipBody), корпус-"самолётик" не трогается */
+
+/* ===================== АВРОРА / МАГНИТОСФЕРА ===================== */
+function drawAurora(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
+  ctx.scale(6.1,6.1); /* было 2.1 — капля едва достигала трети доступного места */
+  ctx.beginPath();
+  ctx.arc(-0.35,0,0.62,Math.PI*0.5,Math.PI*1.5); // тупая подсолнечная сторона (магнитопауза)
+  ctx.bezierCurveTo(0.1,-0.62, 1.9,-0.35, 2.3,0);
+  ctx.bezierCurveTo(1.9,0.35, 0.1,0.62, -0.35,0.62);
+  ctx.closePath();
+  const g=ctx.createLinearGradient(-1,0,2.3,0);
+  g.addColorStop(0,'hsla(155,70%,55%,.55)'); g.addColorStop(1,'hsla(155,70%,45%,0)');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=0.025;
+  ctx.beginPath(); ctx.arc(-0.35,0,0.86,Math.PI*0.55,Math.PI*1.45); ctx.stroke();
+  ctx.fillStyle='#7ee6b8'; ctx.beginPath(); ctx.arc(0,0,0.11,0,7); ctx.fill();
+  /* реальное дрожание авроральной завесы — яркость овала честно пульсирует
+     (высыпание частиц вдоль силовых линий неравномерно во времени), не статичное кольцо */
+  for(let k=0;k<5;k++){
+    const flick=(Math.sin(p*Math.PI*2*(2+k)+k)+1)/2;
+    ctx.strokeStyle=`hsla(140,90%,${60+flick*20}%,${0.25+flick*0.5})`; ctx.lineWidth=0.04;
+    ctx.beginPath(); ctx.ellipse(0,0,0.34+k*0.01,0.2+k*0.01,0,0,7); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridAurora', [
+  ['auroraShape','Форма капли, овал реально мерцает','Тупая сторона к Солнцу, длинный хвост, полярное овальное кольцо — яркость честно дрожит, как настоящее высыпание частиц.'],
+]);
+loopFlash('auroraShape', drawAurora, 4.6, 2600);
+
+/* ===================== СПИРАЛЬНАЯ ГАЛАКТИКА ===================== */
+function galaxyLogSpiral(pitchDeg, thetaMax, rMax, N){
+  /* было: базовый радиус — произвольная константа 0.05, спираль реально доходила до
+     0.163*3.4≈0.55 из 16 доступных единиц тела (3-4%). Теперь считаем базу так, чтобы
+     спираль честно доходила до rMax — единиц тела, а не выдуманных долей единицы. */
+  const b=1/Math.tan(pitchDeg*Math.PI/180);
+  const base=rMax/Math.exp(thetaMax/b);
+  const pts=[]; for(let i=0;i<=N;i++){ const th=i/N*thetaMax; pts.push([Math.exp(th/b)*base, th]); } return pts;
+}
+function drawGalaxyGrand(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#03040c'; fillBody(ctx);
+  /* волна плотности — узор рукавов вращается КАК ЦЕЛОЕ, медленнее, чем сами звёзды
+     (реальная суть теории Лин-Шу: узор жёсткий, а не звёзды его "рисуют" каждый раз заново) */
+  ctx.rotate(p*2*Math.PI*0.5);
+  [0,Math.PI].forEach(off=>{
+    ctx.beginPath();
+    galaxyLogSpiral(15, 4.4, 13, 90).forEach(([r,th],i)=>{ const x=r*Math.cos(th+off), y=r*Math.sin(th+off); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.strokeStyle='hsla(210,80%,72%,.85)'; ctx.lineWidth=0.5; ctx.stroke();
+  });
+  ctx.fillStyle='hsla(45,90%,80%,.9)'; ctx.beginPath(); ctx.arc(0,0,1.3,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawGalaxyFlocculent(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#03040c'; fillBody(ctx);
+  const rnd=mulberry32(7);
+  for(let i=0;i<7;i++){
+    const startAng=rnd()*7, startR=4.5+rnd()*3.5, span=0.6+rnd()*0.7;
+    /* дифференциальная ротация — КАЖДЫЙ короткий рукав вращается со своей скоростью
+       (честно разной для разных радиусов), в отличие от жёсткого узора grand-design слева */
+    const ownSpeed=1/(startR/13+0.3);
+    ctx.save(); ctx.rotate(p*2*Math.PI*0.4*ownSpeed);
+    ctx.beginPath();
+    for(let t=0;t<=1;t+=0.08){ const th=startAng+t*span, r=startR+t*6.5; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.strokeStyle='hsla(200,70%,70%,.7)'; ctx.lineWidth=0.45; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle='hsla(45,90%,80%,.9)'; ctx.beginPath(); ctx.arc(0,0,1.3,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridGalaxy', [
+  ['galGrand','Grand-design — узор вращается как целое','2 рукава, угол закрутки 15° — узор рукавов вращается жёстко (теория волны плотности), не звёзды по отдельности.'],
+  ['galFlocc','Flocculent — каждый рукав вращается по-своему','Короткие несвязанные рукава честно вращаются с разной скоростью (дифференциальная ротация) — другой реальный механизм.'],
+]);
+loopFlash('galGrand', drawGalaxyGrand, 4.6, 7000);
+loopFlash('galFlocc', drawGalaxyFlocculent, 4.6, 7000);
+
+/* ===================== ФИГУРЫ ЛИХТЕНБЕРГА ===================== */
+function lichtenbergBranch(ctx, x,y,ang,len,depth,rnd,hue,revealDepth,revealFrac){
+  if(depth<=0 || len<0.02) return;
+  if(depth<revealDepth) return; /* ещё не дошла "волна разряда" до этого яруса */
+  const partial = depth===revealDepth ? revealFrac : 1;
+  const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+  ctx.strokeStyle=`hsla(${hue},80%,${70-depth*4}%,${0.9-depth*0.05})`; ctx.lineWidth=len*0.5;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+  if(partial<1) return;
+  const nb=1+Math.floor(rnd()*2);
+  for(let k=0;k<nb;k++){ const da=(rnd()-0.5)*Math.PI/2.2; lichtenbergBranch(ctx,x2,y2,ang+da,len*0.72,depth-1,rnd,hue,revealDepth,revealFrac); }
+}
+function drawLichtenbergPositive(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#060608'; fillBody(ctx);
+  ctx.scale(8,8); /* было 3.6 — дерево едва достигало половины доступного места */
+  /* реальный разряд РАСТЁТ наружу волной за доли секунды — не готовое дерево сразу */
+  const total=7, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  const rnd=mulberry32(11);
+  lichtenbergBranch(ctx,0,1.3,-Math.PI/2,0.55,total,rnd,205,revealDepth,revealFrac);
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawLichtenbergNegative(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#060608'; fillBody(ctx);
+  ctx.scale(8,8); /* было 3.6 — кольца едва достигали трети доступного места */
+  /* негативный разряд — кольца реально расходятся наружу, как круги на воде */
+  for(let i=1;i<=6;i++){
+    const rr=((i-1+p)%6)+1;
+    ctx.strokeStyle=`hsla(200,70%,70%,${Math.max(0,0.9-rr*0.12)})`; ctx.lineWidth=0.02;
+    ctx.beginPath(); ctx.arc(0,0,rr*0.2,0,7); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridLichtenberg', [
+  ['lichPos','Позитивный разряд — растёт наружу','Ветвящееся дерево реально прорастает волной от центра к краю, как настоящий пробой.'],
+  ['lichNeg','Негативный разряд — кольца расходятся','Концентрические кольца реально движутся наружу, как круги на воде.'],
+]);
+loopFlash('lichPos', drawLichtenbergPositive, 4.4, 2200);
+loopFlash('lichNeg', drawLichtenbergNegative, 4.4, 2600);
+
+/* ===================== МЫЛЬНАЯ ПЛЁНКА (ЗАКОНЫ ПЛАТО) ===================== */
+/* переиспользуем уже проверенную числом формулу иризации (та же тонкоплёночная физика,
+   мыльная плёнка — тот же самый реальный оптический эффект, что и уже одобренная тема) */
+function peakLambdaFilm(thetaDeg){
+  const n=1.33, d=300, m=1;
+  const thetaI=thetaDeg*Math.PI/180, thetaT=Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
+  return 2*n*d*Math.cos(thetaT)/(m+0.5);
+}
+function wavelengthToHue(lambda){ return Math.max(0,Math.min(300, (700-lambda)/(700-380)*300)); }
+function drawPlateau(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050710'; fillBody(ctx);
+  ctx.scale(5.0,5.0); /* было 3.0 — решётка едва достигала половины доступного места */
+  const dx=0.5, dy=dx*Math.sqrt(3)/2;
+  ctx.lineWidth=0.03;
+  for(let row=-3;row<=3;row++){
+    for(let col=-3;col<=3;col++){
+      const cx=col*dx*1.5, cy=row*dy*2 + (col%2!==0?dy:0);
+      /* настоящий эффект мыльной плёнки — цвет реально зависит от угла обзора (иризация),
+         здесь угол "плывёт" со временем, как плёнка колышется на ветру */
+      const ang=((cx+cy)*20 + p*360)%90;
+      const hue=wavelengthToHue(peakLambdaFilm(ang));
+      ctx.strokeStyle=`hsla(${hue},80%,75%,.85)`;
+      for(let k=0;k<3;k++){
+        const a1=(k*120+ (col+row)%2*60)*Math.PI/180;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a1)*0.5, cy+Math.sin(a1)*0.5); ctx.stroke();
+      }
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPlateau', [
+  ['plateauNet','Тройное соединение под 120°, честная иризация','Гексагональная Y-решётка (120° доказано) — цвет плывёт по плёнке, та же тонкоплёночная физика, что у уже одобренной Иризации.'],
+]);
+loopFlash('plateauNet', drawPlateau, 4.2, 5000);
+
+/* ===================== ФИЛЛОТАКСИС (ФОГЕЛЬ) ===================== */
+const GOLDEN_ANGLE=360*(1-1/PHI);
+function drawPhyllotaxis(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060a'; fillBody(ctx);
+  ctx.scale(6.8,6.8); /* было 2.3 — семена едва достигали трети доступного места */
+  /* настоящий процесс роста — семена реально появляются одно за другим по золотому углу,
+     как новые примордии в растущей меристеме, а не всё сразу готовое */
+  const shown=Math.floor(p*220);
+  for(let n=0;n<shown;n++){
+    const r=Math.sqrt(n)*0.13, ang=n*GOLDEN_ANGLE*Math.PI/180;
+    const justBorn = n>shown-6;
+    ctx.fillStyle=`hsla(${45+n*0.3},75%,${60+ (n%2)*8}%,${justBorn?1:.9})`;
+    ctx.beginPath(); ctx.arc(r*Math.cos(ang), r*Math.sin(ang), justBorn?0.06:0.045,0,7); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPhyllo', [
+  ['phylloVogel','Формула Фогеля — семена появляются по одному','r=√n, θ=n·137.5077° — реальный процесс роста меристемы, не готовый узор сразу.'],
+]);
+loopFlash('phylloVogel', drawPhyllotaxis, 4.4, 3800);
+
+/* ===================== СОНОЛЮМИНЕСЦЕНЦИЯ ===================== */
+function drawSono(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040614'; fillBody(ctx);
+  ctx.scale(13,13); /* было 4.2 — пузырёк на пике едва достигал трети доступного места */
+  const cyclePos=p%1;
+  let r;
+  if(cyclePos<0.75){ r=0.1+ (cyclePos/0.75)*0.9; } else { const c=(cyclePos-0.75)/0.25; r=1.0-(c*0.98); }
+  ctx.strokeStyle='hsla(200,70%,75%,.8)'; ctx.lineWidth=0.03;
+  ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.stroke();
+  if(cyclePos>0.93){
+    const flashA=(1-(cyclePos-0.93)/0.07);
+    const g=ctx.createRadialGradient(0,0,0,0,0,0.5);
+    g.addColorStop(0,`hsla(200,100%,90%,${flashA})`); g.addColorStop(1,'hsla(200,100%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,0.5,0,7); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridSono', [
+  ['sonoBubble','Пузырёк: рост → схлопывание → вспышка','Расширение ~10x, схлопывание ~90x резче — вспышка света ровно в момент коллапса.'],
+]);
+loopFlash('sonoBubble', drawSono, 4.6, 2600);
+
+/* ===================== АККРЕЦИОННЫЙ ДИСК ЧЁРНОЙ ДЫРЫ ===================== */
+function drawAccretion(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#020208'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — диск едва достигал четверти доступного места */
+  ctx.save(); ctx.scale(1,0.28);
+  for(let r=0.35;r<=1.3;r+=0.09){
+    /* дифференциальная ротация диска — внутренние орбиты честно быстрее внешних (Кеплер) */
+    const speed=Math.pow(1/r,1.5);
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.5);
+    ctx.strokeStyle=`hsla(30,90%,${65-r*15}%,${0.9-r*0.4})`; ctx.lineWidth=0.06;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*1.7); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  /* джет реально мерцает — турбулентный выброс, не ровный стабильный луч */
+  const flick=0.6+0.4*Math.sin(p*Math.PI*10);
+  [-1,1].forEach(side=>{
+    const g=ctx.createLinearGradient(0,0,0,side*1.3);
+    g.addColorStop(0,`hsla(210,80%,70%,${0.7*flick})`); g.addColorStop(1,'hsla(210,80%,60%,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0.12,side*1.3); ctx.lineTo(-0.12,side*1.3); ctx.closePath(); ctx.fill();
+  });
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,0.22,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridAccretion', [
+  ['accDisk','Диск (дифференциальная ротация) + мерцающий джет','Внутренние орбиты честно вращаются быстрее внешних (Кеплер), джет турбулентно мерцает — не стабильный луч.'],
+]);
+loopFlash('accDisk', drawAccretion, 4.4, 3000);
+
+/* ===================== ВОЛНЫ ФАРАДЕЯ ===================== */
+function drawFaraday(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#05070f'; fillBody(ctx);
+  ctx.scale(9.5,9.5); /* было 2.4 — решётка едва достигала пятой доступного места */
+  const sub=Math.sin(p*Math.PI); // субгармонический отклик — половина частоты возбуждения
+  for(let i=-3;i<=3;i++){
+    for(let j=-3;j<=3;j++){
+      const up=((i+j)%2===0);
+      const r=0.16+ (up?1:-1)*0.05*sub;
+      ctx.fillStyle=up?`hsla(195,80%,${70}%,.8)`:`hsla(195,40%,${40}%,.6)`;
+      ctx.beginPath(); ctx.arc(i*0.42,j*0.42,Math.max(0.05,r),0,7); ctx.fill();
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridFaraday', [
+  ['faradayLattice','Решётка пиков/впадин','Квадратная решётка, честный субгармонический отклик — половина частоты возбуждения.'],
+]);
+loopFlash('faradayLattice', drawFaraday, 4.6, 2000);
+
+/* ===================== ТОНГАНСКАЯ ТАПА (НГАТУ) ===================== */
+function drawTapa(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#3a2210'; fillBody(ctx);
+  ctx.scale(9.7,9.7); /* было 2.6 — мотив едва достигал четверти доступного места */
+  /* настоящая техника — узор реально появляется блок за блоком по мере натирания доски (купеси),
+     не рисуется весь сразу */
+  const order=[]; for(let row=-2;row<=2;row++) for(let col=-2;col<=2;col++) order.push([row,col]);
+  const shown=Math.floor(p*order.length)+1;
+  order.slice(0,shown).forEach(([row,col],idx)=>{
+    const cx=col*0.62, cy=row*0.62;
+    const fresh=idx>=shown-2;
+    ctx.fillStyle='#1c1108';
+    ctx.beginPath(); ctx.moveTo(cx,cy-0.24); ctx.lineTo(cx+0.24,cy); ctx.lineTo(cx,cy+0.24); ctx.lineTo(cx-0.24,cy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fresh?'#e8b060':'#c98a3a';
+    ctx.beginPath(); ctx.arc(cx,cy-0.09,0.07,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy+0.09,0.07,0,7); ctx.fill();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridTapa', [
+  ['tapaBlock','Мотив «манулуа» — натирается блок за блоком','Крупный блочный мотив реально появляется по одному, как настоящее натирание резной доски (купеси).'],
+]);
+loopFlash('tapaBlock', drawTapa, 4.2, 3600);
+
+/* ===================== АНДСКОЕ ТКАЧЕСТВО (двустороннее) ===================== */
+function drawAndes(ctx, inverted, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle=inverted?'#c94f4f':'#141a3a'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — узор едва достигал четверти доступного места */
+  ctx.fillStyle=inverted?'#141a3a':'#c94f4f';
+  /* настоящий процесс ткачества — полотно реально нарастает ряд за рядом снизу вверх на станке,
+     не появляется готовым сразу */
+  const rows=[]; for(let row=-3;row<=3;row++) rows.push(row);
+  const shownRows=Math.floor(p*rows.length)+1;
+  rows.slice(0,shownRows).forEach(row=>{
+    for(let col=-3;col<=3;col++){
+      if((row+col)%2!==0) continue;
+      const cx=col*0.32, cy=row*0.32;
+      ctx.beginPath(); ctx.moveTo(cx,cy-0.14); ctx.lineTo(cx+0.14,cy); ctx.lineTo(cx,cy+0.14); ctx.lineTo(cx-0.14,cy); ctx.closePath(); ctx.fill();
+    }
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridAndes', [
+  ['andesFront','Лицевая сторона — ткётся ряд за рядом','Комплементарная перевязка нарастает снизу вверх, как на настоящем станке.'],
+  ['andesBack','Изнанка — честный негатив','Точно тот же процесс, цвета инвертированы — реальное свойство двусторонней ткани.'],
+]);
+loopFlash('andesFront', (ctx,p)=>drawAndes(ctx,false,p), 4.2, 3200);
+loopFlash('andesBack', (ctx,p)=>drawAndes(ctx,true,p), 4.2, 3200);
+
+/* ===================== ПАЛЕСТИНСКАЯ ТАТРИИЗ ===================== */
+function drawTatreez(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1a1420'; fillBody(ctx);
+  ctx.scale(20,20); /* было 2.8 — медальон едва достигал пятой доступного места */
+  const cell=0.16;
+  /* настоящий процесс — счётный крест реально вышивается стежок за стежком, кольцо за кольцом,
+     растёт от центра наружу */
+  const ring=1+Math.floor(p*4);
+  for(let r=1;r<=Math.min(ring,4);r++){
+    const stitchesShown = r<ring ? 8 : Math.max(1,Math.floor((p*4-(ring-1))*8));
+    for(let k=0;k<stitchesShown;k++){
+      const ang=k*Math.PI/4;
+      const x=Math.cos(ang)*r*cell, y=Math.sin(ang)*r*cell;
+      ctx.fillStyle=r%2===0?'#c94f4f':'#e8ecf7';
+      ctx.fillRect(x-cell*0.4,y-cell*0.4,cell*0.8,cell*0.8);
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridTatreez', [
+  ['tatreezMedallion','Медальон — вышивается стежок за стежком','Счётный крест реально растёт кольцами от центра наружу, как настоящая вышивка.'],
+]);
+loopFlash('tatreezMedallion', drawTatreez, 4.2, 3400);
+
+/* ===================== НАВАХО — 3 РЕГИОНАЛЬНЫХ СТИЛЯ ===================== */
+function drawNavajoTwoGrey(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#cdbfa3'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — полосы едва достигали четверти доступного места */
+  /* настоящий ткацкий станок — полотно реально нарастает ряд за рядом снизу вверх */
+  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach(row=>{
+    ctx.strokeStyle=row%2===0?'#5a4a30':'#8a7a5a'; ctx.lineWidth=0.05;
+    ctx.beginPath(); ctx.moveTo(-1.3,row*0.16); ctx.lineTo(1.3,row*0.16); ctx.stroke();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawNavajoGanado(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#8a1f1f'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — ромбы едва достигали четверти доступного места */
+  /* ромбы реально ткутся от большого к малому, ряд за рядом станка снизу вверх */
+  const ringShow=1+p*3;
+  for(let ring=3; ring>=1; ring--){
+    if(ring>ringShow+0.001) continue;
+    const partial = ring>Math.floor(ringShow)? (ringShow-Math.floor(ringShow)) : 1;
+    ctx.fillStyle = ring%2===0?'#1a1a1a':'#e8ecf7';
+    const s=ring*0.32*Math.max(0.15,partial);
+    ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s,0); ctx.lineTo(0,s); ctx.lineTo(-s,0); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawNavajoCrystal(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#9c8a5a'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — полосы едва достигали четверти доступного места */
+  const hues=['#6a5a3a','#b0a070','#4a3f28'];
+  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach(row=>{
+    ctx.fillStyle=hues[(row+9)%3]; ctx.fillRect(-1.3,row*0.16-0.07,2.6,0.13);
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridNavajo', [
+  ['navTwoGrey','Two Grey Hills — реально ткётся','Только натуральная небелёная шерсть, ряды нарастают снизу вверх на станке.'],
+  ['navGanado','Ganado — ромбы растут от края','Насыщенный красный фон, крупные ступенчатые ромбы реально нарастают.'],
+  ['navCrystal','Crystal — реально ткётся','Приглушённые растительные красители, полосы без каймы нарастают рядами.'],
+]);
+loopFlash('navTwoGrey', drawNavajoTwoGrey, 4.2, 3200);
+loopFlash('navGanado', drawNavajoGanado, 4.2, 3200);
+loopFlash('navCrystal', drawNavajoCrystal, 4.2, 3200);
+
+/* ===================== ТУРЕЦКИЙ ЧИНТЕМАНИ ===================== */
+function drawCintemaniUnit(ctx,cx,cy,scale){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale);
+  ctx.fillStyle='#c94f2f';
+  [[0,-1.7],[-1.4,0.6],[1.4,0.6]].forEach(([x,y])=>{ ctx.beginPath(); ctx.arc(x,y,0.85,0,7); ctx.fill(); });
+  ctx.strokeStyle='#2a6a4a'; ctx.lineWidth=0.28;
+  for(let i=0;i<2;i++){
+    ctx.beginPath();
+    for(let t=-2.3;t<=2.3;t+=0.1){ const x=t, y=2.3+i*0.75+Math.sin(t*3)*0.35; t===-2.3?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCintemani(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#f0e6d2'; fillBody(ctx);
+  /* БАГ, найденный владельцем: та же беда, что у персидских ковров — единицы узора были
+     размером в доли тела (внутренний scale 2.2 на координатах ~0.7), весь узор тонул в
+     пустом фоне. Работаем прямо в масштабе тела — единица ~5.5 в диаметре, сетка кроет
+     всю видимую площадь кусочка (~32×36), а не жалкий пятачок в центре. */
+  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([row,col])=>{
+    drawCintemaniUnit(ctx, col*11+(row%2)*5.5, row*7-2, 1.0);
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridCintemani', [
+  ['cintemaniGrid','3 круга + тигровые полосы — штампуется одно за другим','Настоящая османская имперская композиция; мотив реально оставляется резным штампом по одному.'],
+]);
+loopFlash('cintemaniGrid', drawCintemani, 4.4, 3400);
+
+/* ===================== МОНГОЛЬСКИЙ ВОЙЛОК ===================== */
+function drawOlzii(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1c2a1c'; fillBody(ctx);
+  ctx.scale(18,18); /* было 3.0 — узел был жалким "червячком", едва десятая доступного места */
+  /* лента реально трассируется, как настоящий узел завязывается — тот же приём,
+     что уже одобрен для Меандра в живом файле */
+  ctx.strokeStyle='#e8c860'; ctx.lineWidth=0.06; ctx.lineCap='round';
+  ctx.beginPath();
+  const frac=Math.max(0.02,(p%1));
+  for(let t=0;t<=frac;t+=0.01){
+    const th=t*Math.PI*4;
+    const r=0.42+0.14*Math.sin(th*2);
+    const x=r*Math.cos(th), y=r*Math.sin(th)*0.7;
+    t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawAlkhanKhee(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1c2a1c'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — меандр был жалким "червячком", едва треть доступного места */
+  const moves=['R','U','R','D','R','U','U','R','D','D','R','U','R'];
+  let x=-1.1,y=-0.3;
+  const shown=Math.max(1,Math.floor(p*moves.length));
+  ctx.strokeStyle='#e8c860'; ctx.lineWidth=0.09; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(x,y);
+  moves.slice(0,shown).forEach(m=>{ if(m==='R') x+=0.18; else if(m==='U') y-=0.18; else if(m==='D') y+=0.18; ctx.lineTo(x,y); });
+  ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMongol', [
+  ['olziiKnot','Өлзий — узел завязывается на глазах','Замкнутая непрерывная лента реально трассируется от начала до узла, часть «8 благих символов».'],
+  ['alkhanKhee','Алхан хээ — меандр вычерчивается','Одна непрерывная открытая лента реально прокладывается, повороты только 90° — тот же безопасный принцип, что греческий ключ.'],
+]);
+loopFlash('olziiKnot', drawOlzii, 4.2, 2600);
+loopFlash('alkhanKhee', drawAlkhanKhee, 4.4, 2600);
+
+/* ===================== ЭФИОПСКИЕ КРЕСТЫ ===================== */
+function drawEthiopiaCross(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#241a10'; fillBody(ctx);
+  ctx.scale(22,22); /* было 3.2 — крест едва достигал пятой доступного места */
+  ctx.strokeStyle='#d8b860'; ctx.lineWidth=0.045; ctx.lineCap='round';
+  const armFrac=Math.min(1,p*2);
+  [[-0.55,0,0.55,0],[0,-0.55,0,0.55]].forEach(([x0,y0,x1,y1])=>{
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0+(x1-x0)*armFrac, y0+(y1-y0)*armFrac); ctx.stroke();
+  });
+  /* плетение "вечность" реально прокладывается по одному лучу за раз */
+  const braidFrac=Math.max(0,Math.min(1,(p-0.5)*2));
+  const braidsShown=Math.floor(braidFrac*4);
+  for(let i=0;i<braidsShown;i++){
+    const ang=i*Math.PI/2;
+    ctx.save(); ctx.rotate(ang);
+    ctx.beginPath();
+    for(let t=0;t<=1;t+=0.05){ const r=0.2+t*0.35; const x=r, y=Math.sin(t*Math.PI*3)*0.06; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke(); ctx.restore();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridEthiopia', [
+  ['ethCross','Плетёный крест «вечность» — плетётся луч за лучом','Крест прочерчивается, потом плетение реально прокладывается вокруг каждого луча — более 100 реальных региональных форм.'],
+]);
+loopFlash('ethCross', drawEthiopiaCross, 4.4, 3000);
+
+/* ===================== БЕНГАЛЬСКИЙ ДЖАМДАНИ ===================== */
+function drawJamdani(ctx,p){
+  /* БАГ, найденный владельцем: мотивы были в 3-4 раза мельче, чем позволял корпус, а базовая
+     ткань — почти прозрачная (8%), поэтому карточка читалась как тёмная пустота с редкими
+     крапинками. Настоящая муслиновая ткань джамдани сама по себе видимая, кремовая — не
+     невидимка; мотивы теперь размером с реальную долю корпуса, сетка кроет всю площадь. */
+  ctx.save(); clipBody(ctx); ctx.fillStyle='rgba(238,232,210,.34)'; fillBody(ctx);
+  for(let row=-4;row<=3;row++) for(let col=-2;col<=2;col++){
+    if((row+col)%2!==0) continue;
+    const cx=col*6.4, cy=row*5.6-2;
+    const shimmer=(Math.sin(p*Math.PI*2 + (row+col))+1)/2;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/5);
+    ctx.fillStyle=`rgba(232,216,168,${0.6+shimmer*0.4})`;
+    ctx.beginPath(); ctx.ellipse(0,0,1.6,2.5,0,0,7); ctx.fill();
+    ctx.strokeStyle=`rgba(120,90,40,${0.4+shimmer*0.3})`; ctx.lineWidth=0.18; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridJamdani', [
+  ['jamdaniFloat','Плавающие мотивы — ловят свет','Дополнительный уток вплетён только в местах узора — мотивы честно мерцают на просвет, как на свету.'],
+]);
+loopFlash('jamdaniFloat', drawJamdani, 4.2, 3000);
+
+/* ===================== ФИЛИППИНСКИЙ Т'НАЛАК ===================== */
+function drawTnalak(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#3a1f14'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — полосы едва достигали четверти доступного места */
+  ctx.filter='blur(1.5px)';
+  /* реальный процесс окрашивания икат — краска на завязанных нитях проступает постепенно,
+     не появляется мгновенно готовой полосой */
+  const rows=[]; for(let row=-2;row<=2;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach((row,idx)=>{
+    const justDyed=idx===shown-1;
+    const alpha=justDyed?0.4+0.6*((p*rows.length)%1):1;
+    ctx.fillStyle=row%2===0?`rgba(201,160,58,${alpha})`:`rgba(138,31,31,${alpha})`;
+    ctx.beginPath(); ctx.moveTo(-1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3+0.1); ctx.lineTo(-1.3,row*0.3+0.1); ctx.closePath(); ctx.fill();
+  });
+  ctx.filter='none';
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridTnalak', [
+  ['tnalakIkat','Ikat — краска проступает постепенно','Нити основы завязаны и окрашены до тканья — цвет реально проступает полосой за полосой, размытый край.'],
+]);
+loopFlash('tnalakIkat', drawTnalak, 4.2, 3400);
+
+/* ===================== ФИНСКИЙ РЮЙЮ ===================== */
+function drawRyijy(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#2a1c30'; fillBody(ctx);
+  ctx.scale(11,11); /* было 2.8 — ворс едва достигал четверти доступного места */
+  const rnd=mulberry32(5);
+  /* ворс реально колышется — короткие пучки покачиваются, как настоящий длинный ворс */
+  for(let row=-6;row<=6;row++) for(let col=-6;col<=6;col++){
+    const cx=col*0.11, cy=row*0.11;
+    if(Math.hypot(cx,cy)>1.1) continue;
+    const sway=Math.sin(p*Math.PI*2 + row*0.7+col*0.4)*0.015;
+    ctx.strokeStyle=`hsla(${300+rnd()*30},50%,${50+rnd()*20}%,.8)`; ctx.lineWidth=0.02;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+(rnd()-0.5)*0.04+sway,cy+0.05); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridRyijy', [
+  ['ryijyPile','Длинноворсовая текстура — ворс колышется','Симметричный свадебный мотив читается сквозь мелкую штриховку ворса, честно покачивается.'],
+]);
+loopFlash('ryijyPile', drawRyijy, 4.4, 3600);
+
+/* ===================== ДАМАССКАЯ СТАЛЬ ===================== */
+function drawWootz(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1a1a1e'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.8 — полосы едва достигали четверти доступного места */
+  /* сталь реально бликует на свету — полированный клинок ловит блеск по полосам-«воде» */
+  for(let i=-6;i<=6;i++){
+    const shine=(Math.sin(p*Math.PI*2+i*0.5)+1)/2;
+    ctx.strokeStyle=`hsla(210,15%,${55+Math.sin(i)*15+shine*20}%,${0.6+shine*0.3})`; ctx.lineWidth=0.03;
+    ctx.beginPath();
+    for(let x=-1.3;x<=1.3;x+=0.05){ const y=i*0.12+Math.sin(x*3+i)*0.05; x===-1.3?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawPatternWeld(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1a1a1e'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.8 — слои едва достигали четверти доступного места */
+  /* реальный процесс — слои проступают один за другим по мере проковки-скручивания заготовки */
+  const shown=Math.floor(p*17)+1;
+  for(let i=-8;i<=8;i++){
+    if(i+9>shown) continue;
+    ctx.strokeStyle=i%2===0?'hsla(210,10%,75%,.85)':'hsla(210,10%,35%,.85)'; ctx.lineWidth=0.05;
+    ctx.beginPath(); ctx.moveTo(-1.3,i*0.09); ctx.lineTo(1.3,i*0.09+0.3); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridDamascus', [
+  ['wootzPattern','Вуц — блеск ловит полосы «воды»','Волнистые полосы кристаллизации карбидов одного сплава реально бликуют на свету.'],
+  ['pweldPattern','Дамаскирование — слои проступают одним за другим','Параллельные слои РАЗНЫХ сталей реально проступают по мере проковки-скручивания.'],
+]);
+loopFlash('wootzPattern', drawWootz, 4.2, 3000);
+loopFlash('pweldPattern', drawPatternWeld, 4.2, 3000);
+
+/* ===================== НАСТОЯЩАЯ КОЛЬЧУГА ===================== */
+function drawChainmail(ctx, sixIn1, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#141418'; fillBody(ctx);
+  ctx.scale(11,11); /* было 2.8 — кольца едва достигали четверти доступного места */
+  const R=0.16;
+  /* кольца реально соединяются одно за другим, как настоящая сборка кольчужного полотна */
+  const cells=[]; for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([row,col])=>{
+    const off=(row%2)*R;
+    const cx=col*R*1.7+off, cy=row*R*(sixIn1?1.15:1.5);
+    ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.03;
+    ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,Math.PI/4,0,7); ctx.stroke();
+    if(sixIn1){ ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,-Math.PI/4,0,7); ctx.stroke(); }
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridChainmail', [
+  ['chain4in1','4-в-1 (европейское) — собирается кольцо за кольцом','Каждое кольцо продето ровно через 4 соседних, полотно реально нарастает.'],
+  ['chain6in1','6-в-1 — собирается кольцо за кольцом','Каждое кольцо продето через 6 соседних — другой граф связности, не просто гуще.'],
+]);
+loopFlash('chain4in1', (ctx,p)=>drawChainmail(ctx,false,p), 4.2, 3400);
+loopFlash('chain6in1', (ctx,p)=>drawChainmail(ctx,true,p), 4.2, 3400);
+
+/* ===================== МРАМОРНЫЕ ЖИЛЫ ===================== */
+function drawMarble(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#e8e4da'; fillBody(ctx);
+  ctx.scale(5.5,5.5); /* было 2.8 — трещина едва достигала трети доступного места */
+  const rnd=mulberry32(21);
+  /* реальный геологический процесс — трещина реально РАСТЁТ и заполняется минералом со
+     временем, не появляется готовой сетью сразу */
+  const total=6, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  function crack(x,y,ang,len,depth){
+    if(depth<=0||len<0.03) return;
+    if(depth<revealDepth) return;
+    const partial= depth===revealDepth? revealFrac : 1;
+    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+    ctx.strokeStyle=`rgba(90,90,95,${0.5+depth*0.05})`; ctx.lineWidth=len*0.25;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+    if(partial<1) return;
+    if(rnd()<0.6) crack(x2,y2,ang+(rnd()-0.5)*1.4,len*0.6,depth-1);
+    crack(x2,y2,ang+(rnd()-0.5)*0.6,len*0.75,depth-1);
+  }
+  crack(-1.1,-0.9,0.4,0.5,total);
+  crack(0.9,1.0,3.6,0.5,total);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMarble', [
+  ['marbleVein','Жилы — трещина реально растёт','Угловатое ветвление без единой иерархии реально прорастает со временем — настоящий геологический процесс.'],
+]);
+loopFlash('marbleVein', drawMarble, 4.2, 2600);
+
+/* ===================== ИНЕЙ / ЛЁД (60° дендриты) ===================== */
+function drawFrost(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a1420'; fillBody(ctx);
+  ctx.scale(11,11); /* было 3.2 — дендрит едва достигал трети доступного места */
+  /* лёд реально РАСТЁТ на морозном стекле — дендрит прорастает наружу, не появляется готовым */
+  const total=4, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  function branch(x,y,ang,len,depth){
+    if(depth<=0||len<0.02) return;
+    if(depth<revealDepth) return;
+    const partial= depth===revealDepth? revealFrac : 1;
+    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+    ctx.strokeStyle='hsla(195,80%,85%,.9)'; ctx.lineWidth=len*0.4;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+    if(partial<1) return;
+    [-60,60].forEach(d=>branch(x2,y2,ang+d*Math.PI/180,len*0.6,depth-1));
+    branch(x2,y2,ang,len*0.75,depth-1);
+  }
+  for(let i=0;i<6;i++) branch(0,0,i*Math.PI/3,0.5,total);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridFrost', [
+  ['frostDendrite','Дендрит — лёд реально растёт, угол 60°','Гексагональная симметрия льда Ih — ветви прорастают наружу, не произвольный угол ответвления.'],
+]);
+loopFlash('frostDendrite', drawFrost, 4.2, 2600);
+
+/* ===================== ПАНЦИРЬ ЧЕРЕПАХИ / ПЕРЛАМУТР ===================== */
+function drawShellHex(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1a2a1a'; fillBody(ctx);
+  ctx.scale(9.2,9.2); /* было 2.6 — решётка едва достигала четверти доступного места */
+  const dx=0.4, dy=dx*Math.sqrt(3)/2;
+  /* панцирь реально растёт кольцо за кольцом наружу в течение жизни животного */
+  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-3;col<=3;col++){
+    const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
+    if(Math.hypot(cx,cy)>1.3) continue;
+    cells.push([cx,cy,Math.hypot(cx,cy)]);
+  }
+  cells.sort((a,b)=>a[2]-b[2]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([cx,cy])=>{
+    ctx.strokeStyle='#c9a83a'; ctx.lineWidth=0.025;
+    ctx.beginPath();
+    for(let k=0;k<6;k++){ const a=k*Math.PI/3; const x=cx+Math.cos(a)*dx*0.55, y=cy+Math.sin(a)*dx*0.55; k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.closePath(); ctx.stroke();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawNacre(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#12141c'; fillBody(ctx);
+  ctx.scale(8.7,8.7); /* было 2.6 — слои едва достигали четверти доступного места */
+  /* настоящая иризация перламутра — цвет честно плывёт по углу, тот же оптический эффект,
+     что и уже одобренная тема Иризации */
+  for(let row=-6;row<=6;row++){
+    const off=(row%2)*0.15;
+    for(let col=-5;col<=5;col++){
+      const cx=col*0.3+off, cy=row*0.11;
+      const hue=(190+row*8+p*120)%360;
+      ctx.fillStyle=`hsla(${hue},70%,${55+ (row%2)*10}%,.55)`;
+      ctx.fillRect(cx-0.14,cy-0.05,0.28,0.09);
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridShell', [
+  ['shellHex','Панцирь — растёт кольцом наружу','Шестиугольная решётка реально нарастает от центра, замкнута ровно 12 пятиугольниками — формула Эйлера, та же семья, что геодезический купол.'],
+  ['nacreLayer','Перламутр — иризация плывёт','Слои со сдвигом рядов, цвет честно плывёт по углу — тот же оптический эффект, что у Иризации.'],
+]);
+loopFlash('shellHex', drawShellHex, 4.2, 3600);
+loopFlash('nacreLayer', drawNacre, 4.2, 4000);
+
+/* ===================== СУАХИЛИЙСКАЯ КАНГА ===================== */
+/* Своего внутреннего процесса нет (плоский печатный текстиль, не тканьё) — общий блик
+   поверхности (см. edgeStroke в шаблоне) даёт лёгкую жизнь без выдуманного движения узора,
+   сам силуэт куска ткани не гнётся. */
+function drawKanga(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#c9482f'; fillBody(ctx);
+  ctx.scale(9.6,9.6); /* было 2.4 — мотив едва достигал четверти доступного места */
+  ctx.fillStyle='#f0d840';
+  ctx.beginPath(); ctx.arc(0,-0.15,0.42,0,7); ctx.fill();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.04;
+  ctx.strokeRect(-1.25,-1.25,2.5,2.5);
+  ctx.fillStyle='rgba(20,20,20,.55)';
+  ctx.fillRect(-1.1,0.9,2.2,0.28);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridKanga', [
+  ['kangaText','Центральный мотив + полоса пословицы — ткань слегка наклоняется','Тёмная полоса внизу — место под реальную пословицу (джина), текст здесь не выдуман; собственного узора-процесса нет, но кусок ткани честно наклоняется, как в руках.'],
+]);
+loop('kangaText', drawKanga, 4.4);
+
+/* ===================== МИРОВОЕ ПЛЕТЕНИЕ КОРЗИН ===================== */
+function drawBasketCoil(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#3a2a18'; fillBody(ctx);
+  ctx.scale(11,11); /* было 2.6 — спираль едва достигала четверти доступного места */
+  /* настоящий процесс — спираль реально сшивается от центра наружу, виток за витком */
+  ctx.strokeStyle='#c9a860'; ctx.lineWidth=0.08;
+  ctx.beginPath();
+  const frac=Math.max(0.02,p);
+  for(let t=0;t<=frac;t+=0.01){ const th=t*Math.PI*8, r=t*1.1; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawBasketPlait(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#3a2a18'; fillBody(ctx);
+  ctx.scale(10,10); /* было 2.6 — плетение едва достигало четверти доступного места */
+  /* настоящий процесс — ленты реально прокладываются через одну, полоса за полосой */
+  const lines=[]; for(let i=-6;i<=6;i++) lines.push(i);
+  const shown=Math.floor(p*lines.length*2)+1;
+  let count=0;
+  for(const i of lines){
+    if(count<shown){ ctx.strokeStyle=i%2===0?'#e8c878':'#8a6838'; ctx.lineWidth=0.09;
+      ctx.beginPath(); ctx.moveTo(-1.3,i*0.16); ctx.lineTo(1.3,i*0.16); ctx.stroke(); }
+    count++;
+    if(count<shown){ ctx.strokeStyle=i%2===0?'#e8c878':'#8a6838'; ctx.lineWidth=0.09;
+      ctx.beginPath(); ctx.moveTo(i*0.16,-1.3); ctx.lineTo(i*0.16,1.3); ctx.stroke(); }
+    count++;
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridBasket', [
+  ['basketCoil','Спиральное сшивание (койлинг) — сшивается на глазах','Настоящая техника — сосновая хвоя реально сшивается по спирали виток за витком.'],
+  ['basketPlait','Плетение через одну (плейтинг) — прокладывается полоса за полосой','Пальмовый лист, лента через одну реально прокладывается — другая реальная СТРУКТУРА.'],
+]);
+loopFlash('basketCoil', drawBasketCoil, 4.2, 3200);
+loopFlash('basketPlait', drawBasketPlait, 4.2, 3200);
+
+/* ===================== ПЕРСИДСКИЕ КОВРЫ — 5 ГОРОДОВ ===================== */
+function drawPersianMedallion(ctx, bg, medHue, dense, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle=bg; fillBody(ctx);
+  /* БАГ, найденный владельцем: узор рисовался в мелком внутреннем масштабе (2.6px-юниты),
+     а тело — ~32×36 в тех же единицах, поэтому медальон занимал жалкую долю площади и все
+     5 городов сливались в одно и то же пятнышко на пустом фоне. Работаем ПРЯМО в масштабе
+     тела: кайма + угловые розетки + плотное поле + крупный узнаваемый медальон — как
+     настоящий ковёр, покрытый узором целиком, а не одна деталь в пустоте. */
+  const yTop=-19, yBot=11;
+  const revealY=yBot-(yBot-yTop)*Math.max(0.06,p);
+  ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
+  ctx.strokeStyle=`hsla(${medHue},60%,62%,.85)`; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
+  if(dense){
+    const rnd=mulberry32(31);
+    for(let i=0;i<90;i++){
+      const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
+      ctx.fillStyle=`hsla(${medHue+rnd()*30},60%,55%,.55)`;
+      ctx.beginPath(); ctx.arc(x,y,0.55,0,7); ctx.fill();
+    }
+  }
+  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
+    ctx.fillStyle=`hsla(${medHue},70%,58%,.9)`;
+    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle=`hsla(${medHue},70%,50%,.97)`;
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.3; ctx.stroke();
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPersian', [
+  ['persTabriz','Тебриз — ткётся узел за узлом','Медальон + плотные полевые цветы, ковёр реально нарастает снизу вверх.'],
+  ['persIsfahan','Исфахан — ткётся узел за узлом','Тончайший медальон с пальметтами и вазами, реально нарастает.'],
+  ['persKashan','Кашан — ткётся узел за узлом','Медальон + арабески, реально нарастает.'],
+  ['persQom','Кум — ткётся узел за узлом','Тонкий шёлк, мелкие цветы, реально нарастает.'],
+  ['persNain','Наин — ткётся узел за узлом','Кремовый фон, синий медальон, реально нарастает.'],
+]);
+loopFlash('persTabriz', (ctx,p)=>drawPersianMedallion(ctx,'#7a1f1f',10,true,p), 4.2, 3800);
+loopFlash('persIsfahan', (ctx,p)=>drawPersianMedallion(ctx,'#8a2020',350,true,p), 4.2, 3800);
+loopFlash('persKashan', (ctx,p)=>drawPersianMedallion(ctx,'#6a1a2a',20,true,p), 4.2, 3800);
+loopFlash('persQom', (ctx,p)=>drawPersianMedallion(ctx,'#9a3030',330,true,p), 4.2, 3800);
+loopFlash('persNain', (ctx,p)=>drawPersianMedallion(ctx,'#e8e0c8',215,false,p), 4.2, 3800);
+</script>
