@@ -642,12 +642,12 @@ mountCards('gridRos', [
   ['r1','Зерно жизни (7 кругов)','Классическое построение — центр + 6 вокруг, каждый центр честно на краю центрального (r, проверено числом). Циркуль чертит вживую.'],
   ['r2','Цветок жизни (13 кругов)','Второе кольцо — дальние точки пересечения соседних окружностей первого (r√3, угол 60°, проверено числом).'],
   ['r3','Лепестки (заливка)','Те же 13 окружностей, но области взаимного пересечения честно закрашены по мере построения — видна сама vesica piscis.'],
-  ['r4','Быстрый циркуль','Тот же цветок жизни, темп в 1.6 раза быстрее — честно другой параметр, не повтор r2.'],
+  ['r4','Быстрый циркуль, жёлто-зелёный','Тот же цветок жизни, темп в 1.6 раза быстрее и честно другой цвет — на статичном кадре r2/r4 раньше выглядели неотличимо (владелец: «будто одинаковый рисунок»), одна лишь скорость не читается на скриншоте.'],
 ]);
 loopFlash('r1', fxRosCompass(4.6,1,45,false,1), 4.2, 2200);
 loopFlash('r2', fxRosCompass(2.9,2,200,false,1), 4.2, 2800);
 loopFlash('r3', fxRosCompass(2.9,2,320,true,1), 4.2, 3000);
-loopFlash('r4', fxRosCompass(2.9,2,200,false,1.6), 4.2, 2800);
+loopFlash('r4', fxRosCompass(2.9,2,80,false,1.6), 4.2, 2800);
 
 /* ===================== ТЕССЕЛЯЦИИ ЭШЕРА ===================== */
 function gauss(x,c,w){ const z=(x-c)/w; return Math.exp(-(z*z)); }
@@ -984,12 +984,12 @@ mountCards('gridLog', [
   ['l1','Один блок, 4 круга','Классика — центр «очаг», светлая/тёмная диагональ через круги брёвен, площадь сохраняется точно (проверено числом). Пришивается вживую.'],
   ['l2','Плотный блок, 6 кругов','Тот же приём, более узкие брёвна (0.55 вместо 1) и на 2 круга больше — честно другие числа, не перекраска.'],
   ['l3','Восход над амбаром','4 копии одного блока, развёрнутые на 90°/180°/270° (повороты проверены числом — светлые углы честно сходятся в центре), собираются синхронно.'],
-  ['l4','Быстрая сборка','Тот же блок, что в карточке 1, темп в 1.8 раза быстрее — честно другой параметр.'],
+  ['l4','Поставлен на угол (set on point)','Тот же блок карточки 1, повёрнутый на 45° — реальная квилтинг-раскладка «set on point» (не выдуманная ради разнообразия), не просто перекраска. Темп сборки в 1.8 раза быстрее.'],
 ]);
 loopFlash('l1', fxLogSewing(buildLogCabin(2,1,4), 0,-3,0, 1), 4.2, 2400);
 loopFlash('l2', fxLogSewing(buildLogCabin(1.2,0.55,6), 0,-3,0, 1), 4.2, 2800);
 loopFlash('l3', fxLogSewingBarn(()=>buildLogCabin(1.4,0.62,3), 3.4, -3), 3.4, 3200);
-loopFlash('l4', fxLogSewing(buildLogCabin(2,1,4), 0,-3,0, 1.8), 4.2, 2400);
+loopFlash('l4', fxLogSewing(buildLogCabin(2,1,4), 0,-3,Math.PI/4, 1.8), 4.2, 2400);
 
 /* ===================== ОП-АРТ — МОДУЛЯЦИЯ ПОЛОС РАЙЛИ ===================== */
 function stripePositions(n, x0, wAvg, amp, freq, phase){
@@ -1051,6 +1051,10 @@ function drawAlbers(ctx, squares, colors, n){
 const PALETTE_WARM = ['#7a2e1d','#c0602b','#e8a33d','#f6d97a'];
 const PALETTE_COOL = ['#123a5e','#1f6f8b','#4fb3b0','#bfe6d8'];
 const PALETTE_DENSE = ['#3a1c5e','#6a2f8b','#a85fb0','#d9a3e0','#f3d9f6'];
+/* 07.09.2026, владелец: «Тёплая палитра, Быстрая сборка выглядят одинаково» — a1/a4 были
+   буквально одной и той же геометрией и палитрой, различались только скоростью, которая
+   не читается на замершем кадре. Новая палитра для a4, не повтор a1/a2/a3. */
+const PALETTE_FOREST = ['#0e2e1a','#1f5c34','#4a9c5a','#a3d9a5'];
 function fxAlbersBuild(squares, palette, speed){ return (ctx, p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
   ctx.save(); ctx.translate(0,-2);
@@ -1063,12 +1067,12 @@ mountCards('gridAlb', [
   ['a1','Тёплая палитра','4 честных квадрата, сдвиг вниз проверен числом (верхний зазор 1.45 > нижний 0.75 на каждом слое). Наносятся вживую.'],
   ['a2','Холодная палитра','Та же геометрия, другой цветовой ряд — Альберс изучал именно взаимодействие цвета на одной и той же форме.'],
   ['a3','5 слоёв, плотнее','Больше слоёв (5 вместо 4), уже отступ (1.05 вместо 1.5) — честно другие числа.'],
-  ['a4','Быстрая сборка','Тот же квадрат карточки 1, темп в 1.7 раза быстрее — честно другой параметр.'],
+  ['a4','Лесная палитра','Та же геометрия карточки 1, но честно другой цвет (не повтор a1 на другой скорости) — Альберс изучал именно то, как одна форма меняется от палитры к палитре. Темп сборки в 1.7 раза быстрее.'],
 ]);
 loopFlash('a1', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_WARM, 1), 4.2, 2400);
 loopFlash('a2', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_COOL, 1), 4.2, 2400);
 loopFlash('a3', fxAlbersBuild(buildAlbers(15,1.05,0.4,5), PALETTE_DENSE, 1), 4.2, 2600);
-loopFlash('a4', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_WARM, 1.7), 4.2, 2400);
+loopFlash('a4', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_FOREST, 1.7), 4.2, 2400);
 
 /* ===================== ТОКАПУ — СЕТКА ИНКСКИХ ЯЧЕЕК ===================== */
 function motifId(col,row){ return (col*3 + row*7 + Math.floor(col/2)) % 5; }
@@ -1472,16 +1476,23 @@ function densitySeeds(seed){
   return v;
 }
 function cellHash(k){ let x=(k*2654435761)>>>0; x^=x>>>16; x=(x*2246822519)>>>0; x^=x>>>13; return (x>>>0)/4294967296; }
-function drawVoronoi(ctx, seeds, scale, cy0, hue, precomputedLabel){
+/* 07.09.2026, владелец: «Случайные точки»/«Неравномерная плотность» смотрятся неряшливо —
+   квадратная/гексагональная решётка терпит цветовой шум по ячейкам (соль-перец) за счёт
+   собственной регулярности, а нерегулярные затравки — нет, шум складывается с реальной
+   неправильностью формы ячеек и превращается в кашу. jitter приглушает разброс тона у
+   нерегулярных распределений, не трогая квадратную/гексагональную (там смотрится нормально
+   по словам владельца) — сама геометрия ячеек (то, что проверено числом) не меняется. */
+function drawVoronoi(ctx, seeds, scale, cy0, hue, precomputedLabel, jitter){
   const G=76;
+  const jit = jitter!=null ? jitter : 1;
   const label=precomputedLabel || voronoiLabel(seeds,G);
   const cellW=2/G;
   for(let i=0;i<G;i++){
     for(let j=0;j<G;j++){
       const c=label[i*G+j];
       const h2=cellHash(c);
-      const lightness=42+h2*30;
-      const hueShift=hue+(h2-0.5)*30;
+      const lightness=42+h2*30*jit;
+      const hueShift=hue+(h2-0.5)*30*jit;
       let boundary=false;
       if(i+1<G && label[(i+1)*G+j]!==c) boundary=true;
       if(!boundary && j+1<G && label[i*G+(j+1)]!==c) boundary=true;
@@ -1500,9 +1511,15 @@ function drawVoronoi(ctx, seeds, scale, cy0, hue, precomputedLabel){
 /* 07.09.2026, владелец: та же беда, что у Трюше — маленький квадратный пятачок вместо
    всего корпуса. Домен ±1 поднят с масштаба 4.8 до 9. */
 const VOR_SCALE=9;
-function fxSquare(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, squareLatticeSeeds(), VOR_SCALE,-4,205,1); ctx.restore(); edgeStroke(ctx); }
-function fxHex(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, hexLatticeSeeds(), VOR_SCALE,-4,150,2); ctx.restore(); edgeStroke(ctx); }
-function fxRandom(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, randomSeeds(11,60), VOR_SCALE,-4,95,3); ctx.restore(); edgeStroke(ctx); }
+/* 07.09.2026, найдено замером fillStyle-разнообразия в реальном браузере (не на глаз —
+   ровно 3 разных цвета на 5776 ячеек вместо десятков, значит вся сетка красилась в ОДИН
+   плоский цвет): эти два вызова несли лишний, раньше ничего не значивший хвостовой
+   аргумент (,1)/,2)) — при добавлении параметра precomputedLabel для правки Ллойда он
+   стал ЭТИМ параметром (число 1/2 — «истинно», отключало honest voronoiLabel(seeds,G) и
+   подставляло вместо массива меток само число). Убран, сетка снова считается честно. */
+function fxSquare(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, squareLatticeSeeds(), VOR_SCALE,-4,205); ctx.restore(); edgeStroke(ctx); }
+function fxHex(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, hexLatticeSeeds(), VOR_SCALE,-4,150); ctx.restore(); edgeStroke(ctx); }
+function fxRandom(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, randomSeeds(11,60), VOR_SCALE,-4,95,null,0.3); ctx.restore(); edgeStroke(ctx); }
 /* 07.09.2026, владелец: анимация почти всегда выигрывает — здесь честный процесс есть
    ТОЛЬКО у этой карточки (релаксация Ллойда реально идёт шаг за шагом), у остальных 4
    карточек партии показано просто ФИКСИРОВАННОЕ распределение затравок (сетка/соты/
@@ -1536,7 +1553,7 @@ function fxLloydFlash(ctx, p){
   ctx.drawImage(off, -VOR_SCALE, -4-VOR_SCALE, destSize, destSize);
   ctx.restore(); edgeStroke(ctx);
 }
-function fxDensity(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, densitySeeds(21), VOR_SCALE,-4,20,5); ctx.restore(); edgeStroke(ctx); }
+function fxDensity(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, densitySeeds(21), VOR_SCALE,-4,20,null,0.3); ctx.restore(); edgeStroke(ctx); }
 
 mountCards('gridVoronoi', [
   ['sq','Квадратная решётка','Затравки строго по сетке — каждая ячейка ровно 4 соседа (проверено числом), сама ячейка — квадрат.'],
@@ -2051,7 +2068,13 @@ function drawEpicycles(ctx, K, scale, cy0, hue, tNow){
     cx=nx; cy=ny;
   });
   const N=300, pathPts=[];
-  const upToFrac=(t0%(2*Math.PI))/(2*Math.PI);
+  /* 07.09.2026, владелец: «будто сломаны, будто одинаковые» — настоящая причина: анимация
+     НИКОГДА не останавливалась на завершённой кривой (t крутился 0→2π по кругу без паузы),
+     поэтому случайный кадр почти всегда ловил кривую НА ПОЛПУТИ прочерчивания — сравнивать
+     K=1 против K=8 (весь смысл партии) было physически нечем сравнивать. t0=2π (%2π=0) —
+     частный случай «уже полный круг», не «только начали», иначе на паузе кривая внезапно
+     схлопывалась бы обратно в почти пустую. */
+  const upToFrac = t0>0 && (t0%(2*Math.PI))===0 ? 1 : (t0%(2*Math.PI))/(2*Math.PI);
   const upTo=Math.max(2,Math.round(N*upToFrac));
   for(let i=0;i<=upTo;i++){ const t=i/N*2*Math.PI; const [x,y]=reconstruct(topK,t); pathPts.push([x*scale, cy0+y*scale]); }
   ctx.save(); ctx.globalCompositeOperation='lighter';
@@ -2066,7 +2089,9 @@ function drawEpicycles(ctx, K, scale, cy0, hue, tNow){
 const FOU_SCALE=4.6;
 function fxFouFlash(K,hue,speed){ return (ctx,p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const t=(p*(speed||1)%1)*2*Math.PI;
+  const cyclePos=(p*(speed||1))%1;
+  const buildFrac = cyclePos<0.72 ? cyclePos/0.72 : 1;
+  const t=buildFrac*2*Math.PI;
   drawEpicycles(ctx,K,FOU_SCALE,-4,hue,t);
   ctx.restore(); edgeStroke(ctx);
 }; }
