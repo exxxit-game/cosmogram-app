@@ -1506,10 +1506,6 @@ function angarVisibleList(){ // список жетонов активной в�
   if(angarFilterMode==='new') return visible.filter(d=>d.id===0 || (d.since && verNewer(d.since, Store.get('angarSeenVersion','0'))));
   const owned = d=>S[cfg2.ownedKey].includes(d.id);
   if(angarFilterMode==='owned') return visible.filter(d=>d.id===0 || owned(d));
-  /* id0 («Нет») исключение здесь НЕ нужно, в отличие от соседних веток: id0 всегда куплен/
-     бесплатен по определению — принудительно показывать его в «Не куплено» значило бы
-     противоречить самому фильтру (найдено живой проверкой, не по чтению кода). */
-  if(angarFilterMode==='unowned') return visible.filter(d=>!owned(d));
   // 07.09.2026: 'favorite' заменяет временный 'hasfact' (иконка факта и так видна на плитке).
   if(angarFilterMode==='favorite') return visible.filter(d=>S[cfg2.favKey].includes(d.id));
   return visible;
@@ -1583,8 +1579,11 @@ let angarFilterMode='all';
 /* 07.09.2026, владелец: временный чип 'hasfact' убран совсем — иконка факта и так видна на
    плитке (.angarFact), отдельный фильтр дублировал её. 'favorite' — новый, ранжирован ВАЖНЕЕ
    'unowned' («избраное хорошая идея, лучше чм не куплено», владелец), т.е. Все → Новое →
-   Куплено → Избранное → Не куплено. */
-const ANGAR_FILTERS=['all','new','owned','favorite','unowned'];
+   Куплено → Избранное.
+   07.09.2026 вечер, владелец (живой скрин — фильтр «Не куплено» на вкладке «Цвет» отдал
+   пустой экран): «убрать не куплено, это лишнее». Чип убран совсем, не почищен — лишний
+   пятый вариант при уже имеющемся «Куплено» (обратное и так читается по контексту). */
+const ANGAR_FILTERS=['all','new','owned','favorite'];
 function angarFillFilterChips(){
   const box=$('angarFilter'); if(!box) return;
   if(box.children.length!==ANGAR_FILTERS.length){

@@ -247,6 +247,10 @@ function renderAch(){
     const items=ACH.filter(a=>a.cat===cid); if(!items.length) continue;
     const cc=CAT_COLOR[cid]||'var(--muted)';
     h+='<div class="achCat" style="--cc:'+cc+'">'+(CAT_N[cid][typeof langEff!=='undefined'?langEff:'ru'] || CAT_N[cid].en || CAT_N[cid].ru)+'</div>';
+    // 07.09.2026: «Дуэль» — единственная категория без входной точки в меню (кнопка «Вызов»
+    // выскакивает сама на итогах хорошего полёта, её нигде заранее не объясняют) — короткая
+    // подсказка тем же .hint, что уже стоит под слайдерами Конструктора, без нового компонента.
+    if(cid==='duel') h+='<div class="hint" style="padding:0 20px 4px">'+(L.achDuelHint||'')+'</div>';
     for(const a of items){
       const got=un.indexOf(a.id)>=0, tt=aT(a);
       const name=tt.n, desc=tt.d; // секретов в реестре нет (v1.32.0) — имя и описание всегда настоящие
