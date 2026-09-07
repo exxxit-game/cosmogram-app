@@ -451,6 +451,46 @@ const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев 
    (тот файл грузится позже), чтобы не дублировать 30 блоков дважды, как пришлось бы
    при повторении схемы первых шести. */
 function clipShipBody(ctx){ ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.clip(); }
+
+/* 08.09.2026 «Физика/космос, партия 1» — перенос из макета fizika-kultura-map-08-09-2026.html.
+   ВАЖНО: у макета своя система масштаба (карточка 160px + zoom + внутренний ctx.scale) — сюда
+   она НЕ переносится, здесь рисуем сразу в настоящих пикселях тела (тот же ±16 по ширине, что
+   clipShipBody). Масштаб COS_SCALE подобран от SYM_R=7.3 (уже проверенный ориентир сигилов —
+   расстояние до наклонной кромки борта), проверено вживую скриншотом, не на глаз по макету. */
+const COS_SCALE=3.5; // абстрактная единица макета (там кольца доходили до 2.1) -> реальный пиксель тела
+const SATURN_RINGS=[ // реальные радиусы, км от центра планеты (NASA/Wikipedia Rings of Saturn)
+  {r0:66900, r1:74510, hue:40, a:.35},
+  {r0:74658, r1:92000, hue:42, a:.45},
+  {r0:92000, r1:117580, hue:44, a:.85},
+  {r0:117580, r1:122170, hue:0, a:0}, // щель Кассини
+  {r0:122170, r1:136775, hue:46, a:.65},
+  {r0:133410, r1:133740, hue:0, a:0}, // щель Энке
+  {r0:140180, r1:140700, hue:48, a:.5},
+];
+const SATURN_MAXR=SATURN_RINGS[SATURN_RINGS.length-1].r1;
+function fxCosSaturn(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%6000)/6000;
+  SATURN_RINGS.forEach(rg=>{
+    if(rg.a<=0) return;
+    const r0abs=rg.r0/SATURN_MAXR*2.1, r1abs=rg.r1/SATURN_MAXR*2.1; // абстрактные единицы макета (0..2.1), для формулы скорости — как в оригинале
+    const rMidAbs=(r0abs+r1abs)/2;
+    const r0=r0abs*COS_SCALE, r1=r1abs*COS_SCALE, rMid=rMidAbs*COS_SCALE; // реальные пиксели тела — для рисования
+    const speed=Math.pow(1/rMidAbs,1.5); // честная кеплеровская дифф. ротация — внутренние кольца обгоняют внешние (ω∝r⁻¹·⁵)
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.35);
+    ctx.lineWidth=(r1-r0);
+    const seg=24;
+    for(let s=0;s<seg;s++){
+      const a0=s/seg*Math.PI*2, a1=(s+0.92)/seg*Math.PI*2;
+      const clump=0.55+0.45*Math.sin(s*2.4);
+      ctx.strokeStyle='hsla('+rg.hue+',55%,72%,'+(rg.a*clump).toFixed(2)+')';
+      ctx.beginPath(); ctx.arc(0,-4,rMid,a0,a1); ctx.stroke();
+    }
+    ctx.restore();
+  });
+  ctx.fillStyle='hsla(43,60%,80%,1)'; ctx.beginPath(); ctx.arc(0,-4,COS_SCALE*.42,0,6.283); ctx.fill();
+  ctx.restore();
+}
 function edgeHalfWidth(y){ return Math.max(0,(y+22)/36*16); }
 
 /* --- материалы: Золото/Серебро/Бронза — веерная сеть прямых прожилок из 4 узлов --- */
@@ -987,6 +1027,7 @@ const PREM_FX_MAP={
   sigYinyang:fxSigYinyang, sigFlower:fxSigFlower, sigMaltese:fxSigMaltese, sigSnowflake:fxSigSnowflake,
   illLeather:fxIllLeather, illTopo:fxIllTopo, illOrigami:fxIllOrigami, illLattice:fxIllLattice,
   patPenrose:fxPatPenrose, patLattice2:fxPatLattice2, patCircles:fxPatCircles, illCrystal:fxIllCrystal,
+  cosSaturn:fxCosSaturn,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,

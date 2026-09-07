@@ -114,7 +114,11 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
   {id:45, name:45, price:10, fx:'patPenrose',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Пенроуз — настоящая мозаика де Брёйна, проверена скриптом (одна длина стороны, 2 угла у всех 40 ромбов)
   {id:46, name:46, price:10, fx:'patLattice2',  body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Цветочная решётка
   {id:47, name:47, price:10, fx:'patCircles',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Плед из кругов
-  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}  // Кристалл — гранёный корпус вместо гладкого металла/бумаги
+  {id:48, name:48, price:10, fx:'illCrystal',   body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)', trail:'rgba(167,139,250,', cat:'patterns'}, // Кристалл — гранёный корпус вместо гладкого металла/бумаги
+  // 08.09.2026 «Небо месяца сентября: Космос» — первая тема партии физика/космос (перенос из
+  // .knowledge/macets/fizika-kultura-map-08-09-2026.html, макет одобрен владельцем 08.09.2026).
+  // premium:true+цена в Stars — уже согласованная цена (не заглушка), реальные деньги, не ✦.
+  {id:49, name:'Кольца Сатурна', price:200, premium:true, fx:'cosSaturn', body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,190,120,.95)', trail:'rgba(230,190,120,', cat:'cosmos'} // Настоящие относительные радиусы колец (NASA), честная кеплеровская дифференциальная ротация — внутренние обгоняют внешние
 ];
 /* 05.09.2026 «SKINS[id] тихо ломается при пропусках в id»: та же ловушка, что FLASHES/TRAILS/
    DECALS уже решили через X_BY_ID (прямая индексация по массиву верна ТОЛЬКО пока id идут

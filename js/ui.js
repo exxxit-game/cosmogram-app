@@ -1325,7 +1325,10 @@ function angarPvNameSync(){
   const el=$('angarPvName'); if(!el) return;
   const cfg=ANGAR_CATS[angarCat];
   const item=cfg && cfg.list.find(d=>d.id===angarSel);
-  el.textContent = item ? (angarCat==='color' ? (L.skinNames[item.name]||'') : (item.name||'')) : '';
+  // 08.09.2026: имена скинов id0-14 идут числовым индексом в L.skinNames (старая схема);
+  // новые темы (физика/культура) называются строкой напрямую, как уже давно делают Следы/Вспышки —
+  // не расширяем хрупкий короткий массив, просто различаем по типу item.name.
+  el.textContent = item ? ((angarCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'')) : '';
 }
 
 /* «Умное живое»: 30 кадров в секунду вместо 60, засыпает через 20 секунд без касания
@@ -1425,7 +1428,7 @@ function angarItemFill(el, item){
   // .nm задан один раз при постройке плитки (angarBuildGrid) и не должен стираться на
   // каждой перерисовке (29.08.2026, тот же баг, что уже чинили с .angarIt canvas — здесь
   // про специфичность DOM, не CSS).
-  if(nm && angarCat==='color') nm.textContent = L.skinNames[item.name];
+  if(nm && angarCat==='color') nm.textContent = typeof item.name==='number' ? L.skinNames[item.name] : (item.name||''); // 08.09.2026: см. коммент у angarPvNameFill выше — числовой индекс vs строка напрямую
   if(pr){
     pr.classList.toggle('own', owned);
     // 04.09.2026 «Эксклюзивные скины за Stars»: item.premium — цена в Stars (⭐), не в ✦
