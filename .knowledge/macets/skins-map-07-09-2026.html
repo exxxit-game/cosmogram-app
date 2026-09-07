@@ -1368,30 +1368,34 @@ function drawDiagFilledTruchet(ctx, scale, cy0, hue, N, ruleFn){
     }
   }
 }
+/* 07.09.2026, владелец: узор виден только маленьким квадратом в центре, корпус вокруг
+   пустой — домен ±1 при масштабе 4.8 подходил бы отдельной иконке, не всему силуэту.
+   Поднято до 9 (тот же класс правки, что уже проверен на других темах партии). */
+const TRU_SCALE=9;
 function fxArcRandom(ctx){
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
   const rnd=mulberry32(1);
   const N=9, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawArcTruchet(ctx, 4.8,-4,195, N, (i,j)=>choices[i*N+j]);
+  drawArcTruchet(ctx, TRU_SCALE,-4,195, N, (i,j)=>choices[i*N+j]);
   ctx.restore(); edgeStroke(ctx);
 }
 function fxArcWeave(ctx){
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  drawArcTruchet(ctx, 4.8,-4,150, 9, (i,j)=>(i+j)%2===0);
+  drawArcTruchet(ctx, TRU_SCALE,-4,150, 9, (i,j)=>(i+j)%2===0);
   ctx.restore(); edgeStroke(ctx);
 }
 function fxArcDense(ctx){
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
   const rnd=mulberry32(2);
   const N=16, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawArcTruchet(ctx, 4.8,-4,95, N, (i,j)=>choices[i*N+j]);
+  drawArcTruchet(ctx, TRU_SCALE,-4,95, N, (i,j)=>choices[i*N+j]);
   ctx.restore(); edgeStroke(ctx);
 }
 function fxDiagRandom(ctx){
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
   const rnd=mulberry32(3);
   const N=11, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawDiagTruchet(ctx, 4.8,-4,300, N, (i,j)=>choices[i*N+j]);
+  drawDiagTruchet(ctx, TRU_SCALE,-4,300, N, (i,j)=>choices[i*N+j]);
   ctx.restore(); edgeStroke(ctx);
 }
 function fxDiagBands(ctx){
@@ -1399,7 +1403,7 @@ function fxDiagBands(ctx){
   const rnd=mulberry32(4);
   const N=11;
   const choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.72);
-  drawDiagFilledTruchet(ctx, 4.8,-4,20, N, (i,j)=>choices[i*N+j]);
+  drawDiagFilledTruchet(ctx, TRU_SCALE,-4,20, N, (i,j)=>choices[i*N+j]);
   ctx.restore(); edgeStroke(ctx);
 }
 
@@ -1484,7 +1488,9 @@ function drawVoronoi(ctx, seeds, scale, cy0, hue){
     ctx.beginPath(); ctx.arc(x*scale, cy0+y*scale, 0.045*scale, 0, 7); ctx.fill();
   });
 }
-const VOR_SCALE=4.8;
+/* 07.09.2026, владелец: та же беда, что у Трюше — маленький квадратный пятачок вместо
+   всего корпуса. Домен ±1 поднят с масштаба 4.8 до 9. */
+const VOR_SCALE=9;
 function fxSquare(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, squareLatticeSeeds(), VOR_SCALE,-4,205,1); ctx.restore(); edgeStroke(ctx); }
 function fxHex(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, hexLatticeSeeds(), VOR_SCALE,-4,150,2); ctx.restore(); edgeStroke(ctx); }
 function fxRandom(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, randomSeeds(11,60), VOR_SCALE,-4,95,3); ctx.restore(); edgeStroke(ctx); }
@@ -1743,9 +1749,16 @@ mountCards('gridAutomata', [
 ]);
 loop('sp', ctx=>fxSierpinski(ctx,AUT_SCALE,-4,20), 4.2);
 loop('car30', ctx=>fxRule30(ctx,AUT_SCALE,-4,150), 4.2);
-loop('gl', ctx=>fxGlider(ctx,AUT_SCALE,-4,280), 4.2);
-loop('hb', ctx=>fxHilbert(ctx,AUT_SCALE,-4,340), 4.2);
-loop('bo', ctx=>fxBorromean(ctx,AUT_SCALE,-4,45), 4.2);
+/* 07.09.2026, владелец: Глайдер/Гильберт/Борромео заметно мельче Серпинского и Правила 30
+   на этой же карточной сетке — у каждого свой собственный домен (клетка/сетка/эллипс),
+   ощутимо теснее, чем 1.8 условных единиц Серпинского/Правила 30. AUT_SCALE=5 общий для
+   всей темы не трогаю (Серпинский/Правило 30 уже подобраны верно) — этим трём отдельно
+   передан свой, больший масштаб (масштаб применяется ПОСЛЕ вычисления самой геометрии —
+   ни гамильтонов путь Гильберта, ни проверенные точки пересечения Борромео не меняются,
+   меняется только конечный размер на холсте). */
+loop('gl', ctx=>fxGlider(ctx,16,-4,280), 4.2);
+loop('hb', ctx=>fxHilbert(ctx,9,-4,340), 4.2);
+loop('bo', ctx=>fxBorromean(ctx,10,-4,45), 4.2);
 
 /* ===================== ФИГУРЫ ХЛАДНИ ===================== */
 function chladni(n,m,x,y){ return Math.cos(n*Math.PI*x)*Math.cos(m*Math.PI*y) - Math.cos(m*Math.PI*x)*Math.cos(n*Math.PI*y); }
