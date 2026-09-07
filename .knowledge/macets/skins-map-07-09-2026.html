@@ -1308,21 +1308,26 @@ function drawArcTile(ctx, x0, y0, cellSize, orientA){
   }
   ctx.stroke();
 }
-function drawArcTruchet(ctx, scale, cy0, hue, N, ruleFn){
+function drawArcTruchet(ctx, scale, cy0, hue, N, ruleFn, count){
   const cellSize=2/N;
   const cellPx=cellSize*scale;
+  const lim = count!=null ? count : N*N;
   const glowPass=[[cellPx*0.30,0.14],[cellPx*0.16,0.26]];
   ctx.save(); ctx.globalCompositeOperation='lighter';
   glowPass.forEach(([w,a])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    let n=0;
     for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      if(n++>=lim) continue;
       const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
       drawArcTile(ctx, x0, y0, cellPx, ruleFn(i,j));
     }
   });
   ctx.restore();
   ctx.lineWidth=cellPx*0.09; ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`;
+  let n=0;
   for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    if(n++>=lim) continue;
     const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
     drawArcTile(ctx, x0, y0, cellPx, ruleFn(i,j));
   }
@@ -1334,26 +1339,34 @@ function drawDiagTile(ctx, x0, y0, cellSize, orientA, hue){
   else { ctx.moveTo(x0+s,y0); ctx.lineTo(x0,y0+s); }
   ctx.stroke();
 }
-function drawDiagTruchet(ctx, scale, cy0, hue, N, ruleFn){
+function drawDiagTruchet(ctx, scale, cy0, hue, N, ruleFn, count){
   const cellSize=2/N;
+  const lim = count!=null ? count : N*N;
   ctx.save(); ctx.globalCompositeOperation='lighter';
   [[2.0,0.12],[1.0,0.22]].forEach(([w,a])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    let n=0;
     for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      if(n++>=lim) continue;
       const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
       drawDiagTile(ctx, x0, y0, cellSize*scale, ruleFn(i,j));
     }
   });
   ctx.restore();
   ctx.lineWidth=0.55; ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`;
+  let n2=0;
   for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    if(n2++>=lim) continue;
     const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
     drawDiagTile(ctx, x0, y0, cellSize*scale, ruleFn(i,j));
   }
 }
-function drawDiagFilledTruchet(ctx, scale, cy0, hue, N, ruleFn){
+function drawDiagFilledTruchet(ctx, scale, cy0, hue, N, ruleFn, count){
   const cellSize=2/N;
+  const lim = count!=null ? count : N*N;
+  let n=0;
   for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    if(n++>=lim) continue;
     const s=cellSize*scale;
     const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
     const a=ruleFn(i,j);
@@ -1372,53 +1385,49 @@ function drawDiagFilledTruchet(ctx, scale, cy0, hue, N, ruleFn){
    пустой — домен ±1 при масштабе 4.8 подходил бы отдельной иконке, не всему силуэту.
    Поднято до 9 (тот же класс правки, что уже проверен на других темах партии). */
 const TRU_SCALE=9;
-function fxArcRandom(ctx){
+/* 07.09.2026, владелец: ни одна из 13 влитых тем не была анимирована — нарушает
+   установленный за партию паттерн (анимация почти всегда выигрывает, когда параметр
+   честный). Плитки Трюше реально укладываются в решётку одна за другой (как мастер
+   выкладывает плитку за плиткой) — та же честная вспышка «плетение», что уже одобрена
+   у Токапу (fxTocWeave). */
+function fxArcFlash(N, hue, choicesFn, speed){ return (ctx, p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const rnd=mulberry32(1);
-  const N=9, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawArcTruchet(ctx, TRU_SCALE,-4,195, N, (i,j)=>choices[i*N+j]);
+  const frac=((p*(speed||1))%1)<0.9 ? ((p*(speed||1))%1)/0.9 : 1;
+  const n=Math.max(1, Math.round(N*N*Math.max(0.03,frac)));
+  drawArcTruchet(ctx, TRU_SCALE,-4,hue, N, choicesFn, n);
   ctx.restore(); edgeStroke(ctx);
-}
-function fxArcWeave(ctx){
+}; }
+function fxDiagFlash(N, hue, choicesFn, speed){ return (ctx, p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  drawArcTruchet(ctx, TRU_SCALE,-4,150, 9, (i,j)=>(i+j)%2===0);
+  const frac=((p*(speed||1))%1)<0.9 ? ((p*(speed||1))%1)/0.9 : 1;
+  const n=Math.max(1, Math.round(N*N*Math.max(0.03,frac)));
+  drawDiagTruchet(ctx, TRU_SCALE,-4,hue, N, choicesFn, n);
   ctx.restore(); edgeStroke(ctx);
-}
-function fxArcDense(ctx){
+}; }
+function fxDiagFilledFlash(N, hue, choicesFn, speed){ return (ctx, p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const rnd=mulberry32(2);
-  const N=16, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawArcTruchet(ctx, TRU_SCALE,-4,95, N, (i,j)=>choices[i*N+j]);
+  const frac=((p*(speed||1))%1)<0.9 ? ((p*(speed||1))%1)/0.9 : 1;
+  const n=Math.max(1, Math.round(N*N*Math.max(0.03,frac)));
+  drawDiagFilledTruchet(ctx, TRU_SCALE,-4,hue, N, choicesFn, n);
   ctx.restore(); edgeStroke(ctx);
-}
-function fxDiagRandom(ctx){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const rnd=mulberry32(3);
-  const N=11, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
-  drawDiagTruchet(ctx, TRU_SCALE,-4,300, N, (i,j)=>choices[i*N+j]);
-  ctx.restore(); edgeStroke(ctx);
-}
-function fxDiagBands(ctx){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const rnd=mulberry32(4);
-  const N=11;
-  const choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.72);
-  drawDiagFilledTruchet(ctx, TRU_SCALE,-4,20, N, (i,j)=>choices[i*N+j]);
-  ctx.restore(); edgeStroke(ctx);
-}
+}; }
+const TRU_N1=9, TRU_CHOICES1=(()=>{ const rnd=mulberry32(1); const c=[]; for(let i=0;i<TRU_N1*TRU_N1;i++) c.push(rnd()<0.5); return c; })();
+const TRU_N2=16, TRU_CHOICES2=(()=>{ const rnd=mulberry32(2); const c=[]; for(let i=0;i<TRU_N2*TRU_N2;i++) c.push(rnd()<0.5); return c; })();
+const TRU_N3=11, TRU_CHOICES3=(()=>{ const rnd=mulberry32(3); const c=[]; for(let i=0;i<TRU_N3*TRU_N3;i++) c.push(rnd()<0.5); return c; })();
+const TRU_N4=11, TRU_CHOICES4=(()=>{ const rnd=mulberry32(4); const c=[]; for(let i=0;i<TRU_N4*TRU_N4;i++) c.push(rnd()<0.72); return c; })();
 
 mountCards('gridTruchet', [
-  ['arcR','Дуговый Трюше, случайно','Случайный выбор из 2 поворотов дуговой плитки — извилистый лабиринт без предсказуемой структуры.'],
+  ['arcR','Дуговый Трюше, случайно','Случайный выбор из 2 поворотов дуговой плитки — извилистый лабиринт без предсказуемой структуры. Укладывается вживую, плитка за плиткой.'],
   ['arcW','Дуговый Трюше, плетение','Поворот по правилу (i+j)%2 — не случайно! Строго периодический узор, период 2×2 — настоящее плетение корзины.'],
   ['arcD','Дуговый Трюше, плотная сетка','16×16 плиток вместо 9×9 — тот же случайный лабиринт, но заметно сложнее.'],
   ['diagR','Диагональный Трюше, случайно','Классические 2 треугольника (Трюше, 1704), случайный поворот — зигзаг без полос.'],
   ['diagB','Диагональный Трюше, полосы','Вероятность одной ориентации сдвинута до 72% — реальный исторический эффект: складываются крупные диагональные полосы вместо ровного зигзага.'],
 ]);
-loop('arcR', fxArcRandom, 4.2);
-loop('arcW', fxArcWeave, 4.2);
-loop('arcD', fxArcDense, 4.2);
-loop('diagR', fxDiagRandom, 4.2);
-loop('diagB', fxDiagBands, 4.2);
+loopFlash('arcR', fxArcFlash(TRU_N1,195,(i,j)=>TRU_CHOICES1[i*TRU_N1+j],1), 4.2, 3400);
+loopFlash('arcW', fxArcFlash(9,150,(i,j)=>(i+j)%2===0,1), 4.2, 3000);
+loopFlash('arcD', fxArcFlash(TRU_N2,95,(i,j)=>TRU_CHOICES2[i*TRU_N2+j],1), 4.2, 3800);
+loopFlash('diagR', fxDiagFlash(TRU_N3,300,(i,j)=>TRU_CHOICES3[i*TRU_N3+j],1), 4.2, 3200);
+loopFlash('diagB', fxDiagFilledFlash(TRU_N4,20,(i,j)=>TRU_CHOICES4[i*TRU_N4+j],1), 4.2, 3200);
 
 /* ===================== ДИАГРАММЫ ВОРОНОГО ===================== */
 function voronoiLabel(seeds, G){
@@ -1463,9 +1472,9 @@ function densitySeeds(seed){
   return v;
 }
 function cellHash(k){ let x=(k*2654435761)>>>0; x^=x>>>16; x=(x*2246822519)>>>0; x^=x>>>13; return (x>>>0)/4294967296; }
-function drawVoronoi(ctx, seeds, scale, cy0, hue){
+function drawVoronoi(ctx, seeds, scale, cy0, hue, precomputedLabel){
   const G=76;
-  const label=voronoiLabel(seeds,G);
+  const label=precomputedLabel || voronoiLabel(seeds,G);
   const cellW=2/G;
   for(let i=0;i<G;i++){
     for(let j=0;j<G;j++){
@@ -1494,11 +1503,38 @@ const VOR_SCALE=9;
 function fxSquare(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, squareLatticeSeeds(), VOR_SCALE,-4,205,1); ctx.restore(); edgeStroke(ctx); }
 function fxHex(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, hexLatticeSeeds(), VOR_SCALE,-4,150,2); ctx.restore(); edgeStroke(ctx); }
 function fxRandom(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, randomSeeds(11,60), VOR_SCALE,-4,95,3); ctx.restore(); edgeStroke(ctx); }
-function fxLloyd(ctx){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+/* 07.09.2026, владелец: анимация почти всегда выигрывает — здесь честный процесс есть
+   ТОЛЬКО у этой карточки (релаксация Ллойда реально идёт шаг за шагом), у остальных 4
+   карточек партии показано просто ФИКСИРОВАННОЕ распределение затравок (сетка/соты/
+   случайность/плотность) — анимировать их значило бы придумать процесс, которого нет,
+   поэтому они честно остаются статичными.
+   07.09.2026, ВТОРАЯ правка, найдено измерением (не на глаз): первая версия кэшировала
+   только СОСЕДСТВО (label), но сама отрисовка — 76×76=5776 ячеек, каждая с проверкой
+   4 соседей и fillRect — всё равно шла заново на каждый кадр (56мс замерено в браузере,
+   больше 3 полных бюджетов кадра одной карточкой). Правильный кэш — не промежуточные
+   данные, а ГОТОВАЯ КАРТИНКА: каждая из 5 стадий отрисована в свой offscreen-канвас ОДИН
+   раз при первой загрузке (тот же приём, что уже проверен у Тьюринга — drawTuringField),
+   вспышка на каждый кадр делает только ОДИН drawImage — растяжение уже готового кадра,
+   на 2-3 порядка дешевле честной переотрисовки. */
+const _lloydOffscreens=(()=>{
   let s=randomSeeds(11,60);
-  for(let it=0;it<4;it++) s=lloydStep(s,64);
-  drawVoronoi(ctx, s, VOR_SCALE,-4,285,4); ctx.restore(); edgeStroke(ctx);
+  const stages=[s];
+  for(let k=0;k<4;k++){ s=lloydStep(s,64); stages.push(s); }
+  return stages.map(seeds=>{
+    const off=document.createElement('canvas'); off.width=160; off.height=160;
+    const octx=off.getContext('2d');
+    octx.translate(80,80); octx.scale(70,70);
+    drawVoronoi(octx, seeds, 1, 0, 285, 4);
+    return off;
+  });
+})();
+function fxLloydFlash(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const cycle=5, stage=Math.min(4, Math.floor((p*cycle)%cycle));
+  const off=_lloydOffscreens[stage];
+  const destSize=2*VOR_SCALE;
+  ctx.drawImage(off, -VOR_SCALE, -4-VOR_SCALE, destSize, destSize);
+  ctx.restore(); edgeStroke(ctx);
 }
 function fxDensity(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, densitySeeds(21), VOR_SCALE,-4,20,5); ctx.restore(); edgeStroke(ctx); }
 
@@ -1506,17 +1542,23 @@ mountCards('gridVoronoi', [
   ['sq','Квадратная решётка','Затравки строго по сетке — каждая ячейка ровно 4 соседа (проверено числом), сама ячейка — квадрат.'],
   ['hex','Гексагональная решётка','Треугольная решётка затравок — каждая ячейка ровно 6 соседей, правильный шестиугольник — настоящие соты.'],
   ['rnd','Случайные точки','Полностью случайные затравки — форма ячеек неправильная, но среднее число соседей ВСЁ РАВНО ≈6 (следствие формулы Эйлера, не зависит от случайности).'],
-  ['lloyd','После релаксации Ллойда','4 повторения «затравка → в центр своей области» — реальный алгоритм, площади ячеек становятся заметно ровнее (разброс упал в 5+ раз).'],
+  ['lloyd','После релаксации Ллойда (вспышка)','4 повторения «затравка → в центр своей области» — реальный алгоритм честно идёт на глазах, шаг за шагом, площади ячеек становятся заметно ровнее (разброс упал в 5+ раз).'],
   ['dens','Неравномерная плотность','Слева редко, справа в 4 раза чаще — площадь ячейки честно обратно пропорциональна плотности затравок.'],
 ]);
 loop('sq', fxSquare, 4.2);
 loop('hex', fxHex, 4.2);
 loop('rnd', fxRandom, 4.2);
-loop('lloyd', fxLloyd, 4.2);
+loopFlash('lloyd', fxLloydFlash, 4.2, 4500);
 loop('dens', fxDensity, 4.2);
 
 /* ===================== УЗОРЫ ТЬЮРИНГА ===================== */
-function grayScott(N, steps, f, k, seed){
+/* 07.09.2026, владелец: анимация почти всегда выигрывает — здесь честный процесс есть
+   (пятна РЕАЛЬНО прорастают из зерна во времени), но живой пересчёт 5000 шагов на каждый
+   кадр 60 раз в секунду был бы настоящей прожорливостью, не косметикой. Вместо этого —
+   несколько снимков одного и того же счёта на РАСТУЩЕМ числе шагов (250→5000), посчитаны
+   один раз при первой отрисовке и закэшированы (см. _turSnapshotsCache ниже), вспышка
+   только переключает между уже готовыми снимками — 0 пересчёта в кадре. */
+function grayScott(N, steps, f, k, seed, checkpoints){
   const idx=(x,y)=>((y+N)%N)*N+((x+N)%N);
   let u=new Float32Array(N*N).fill(1);
   let v=new Float32Array(N*N).fill(0);
@@ -1526,6 +1568,8 @@ function grayScott(N, steps, f, k, seed){
   for(let i=0;i<N*N;i++) v[i]+=rnd()*0.02;
   const u2=new Float32Array(N*N), v2=new Float32Array(N*N);
   const Du=0.16, Dv=0.08, dt=1.0;
+  const snaps=[];
+  let nextCk=0;
   for(let s=0;s<steps;s++){
     for(let y=0;y<N;y++){
       for(let x=0;x<N;x++){
@@ -1538,8 +1582,9 @@ function grayScott(N, steps, f, k, seed){
       }
     }
     u.set(u2); v.set(v2);
+    if(checkpoints && nextCk<checkpoints.length && s+1===checkpoints[nextCk]){ snaps.push(v.slice()); nextCk++; }
   }
-  return v;
+  return checkpoints ? snaps : v;
 }
 function hslToRgb(h,s,l){
   h=((h%360)+360)%360; s/=100; l/=100;
@@ -1549,9 +1594,7 @@ function hslToRgb(h,s,l){
   else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
   return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
 }
-function drawTuring(ctx, scale, cy0, f, k, seedIdx, hue){
-  const N=64;
-  const v=grayScott(N, 5000, f, k, seedIdx);
+function drawTuringField(ctx, scale, cy0, v, N, hue){
   let vmin=1e9, vmax=-1e9;
   for(let i=0;i<v.length;i++){ vmin=Math.min(vmin,v[i]); vmax=Math.max(vmax,v[i]); }
   const off=document.createElement('canvas'); off.width=N; off.height=N;
@@ -1572,24 +1615,36 @@ function drawTuring(ctx, scale, cy0, f, k, seedIdx, hue){
   ctx.drawImage(off, -scale, cy0-scale, destSize, destSize);
 }
 const TUR_SCALE=19;
-function fxTurA(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0367,0.0649,1,20); ctx.restore(); edgeStroke(ctx); }
-function fxTurB(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0300,0.0620,2,150); ctx.restore(); edgeStroke(ctx); }
-function fxTurC(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0250,0.0550,3,280); ctx.restore(); edgeStroke(ctx); }
-function fxTurD(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0620,0.0609,4,340); ctx.restore(); edgeStroke(ctx); }
-function fxTurE(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0180,0.0510,5,95); ctx.restore(); edgeStroke(ctx); }
+const TUR_CHECKPOINTS=[250,600,1200,2200,3600,5000];
+const _turSnapshotsCache=new Map();
+function turSnapshots(f,k,seedIdx){
+  const key=f+'|'+k+'|'+seedIdx;
+  if(_turSnapshotsCache.has(key)) return _turSnapshotsCache.get(key);
+  const snaps=grayScott(64,5000,f,k,seedIdx,TUR_CHECKPOINTS);
+  _turSnapshotsCache.set(key,snaps);
+  return snaps;
+}
+function fxTurFlash(f,k,seedIdx,hue,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const snaps=turSnapshots(f,k,seedIdx);
+  const frac=((p*(speed||1))%1)<0.85 ? ((p*(speed||1))%1)/0.85 : 1;
+  const idx=Math.min(snaps.length-1, Math.floor(frac*snaps.length));
+  drawTuringField(ctx, TUR_SCALE,-4, snaps[idx], 64, hue);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridTuring', [
-  ['gsA','Пятна','f=0.0367, k=0.0649 — множество похожих круглых пятен по всему полю. Реально получилось именно так, проверено (не подписано по табличному названию без проверки).'],
+  ['gsA','Пятна','f=0.0367, k=0.0649 — множество похожих круглых пятен по всему полю. Пятна вживую прорастают из зерна (6 честных снимков одного и того же счёта на растущем числе шагов, 250→5000).'],
   ['gsB','Мелкая пятнистая текстура','f=0.0300, k=0.0620 — пятна мельче и чаще, чем у соседней карточки, почти сплошная крапинка.'],
   ['gsC','Волнистые полосы','f=0.0250, k=0.0550 — при этом соотношении пятна вытягиваются в полосы, а не остаются круглыми — другая морфология той же системы.'],
   ['gsD','Пятно в центре','f=0.0620, k=0.0609 — подпитка и распад почти равны, рост не успел занять всё поле, честно показано как получилось.'],
   ['gsE','Разрозненные пятна','f=0.0180, k=0.0510 — самая медленная подпитка партии, пятна разного размера разбросаны неравномерно.'],
 ]);
-loop('gsA', fxTurA, 4.2);
-loop('gsB', fxTurB, 4.2);
-loop('gsC', fxTurC, 4.2);
-loop('gsD', fxTurD, 4.2);
-loop('gsE', fxTurE, 4.2);
+loopFlash('gsA', fxTurFlash(0.0367,0.0649,1,20,1), 4.2, 4200);
+loopFlash('gsB', fxTurFlash(0.0300,0.0620,2,150,1), 4.2, 4200);
+loopFlash('gsC', fxTurFlash(0.0250,0.0550,3,280,1), 4.2, 4200);
+loopFlash('gsD', fxTurFlash(0.0620,0.0609,4,340,1), 4.2, 4200);
+loopFlash('gsE', fxTurFlash(0.0180,0.0510,5,95,1), 4.2, 4200);
 
 /* ===================== КЛЕТОЧНЫЕ АВТОМАТЫ И РЕКУРСИВНЫЕ КРИВЫЕ ===================== */
 const AUT_ZOOM=4.2, AUT_MIN_LW=1.2/AUT_ZOOM;
@@ -1601,34 +1656,50 @@ function sierpinski(depth,x,y,size,out){
   sierpinski(depth-1,x+h,y,h,out);
   sierpinski(depth-1,x+h/2,y+h*Math.sqrt(3)/2,h,out);
 }
-function fxSierpinski(ctx, scale, cy0, hue){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const out=[]; sierpinski(5,-0.9,-0.75,1.8,out);
+function drawSierpinski(ctx, depth, scale, cy0, hue){
+  const out=[]; sierpinski(depth,-0.9,-0.75,1.8,out);
   out.forEach(([x,y,size],i)=>{
     const p=[[x,y],[x+size,y],[x+size/2,y+size*Math.sqrt(3)/2]].map(([px,py])=>[px*scale,cy0+py*scale]);
     ctx.fillStyle=`hsla(${hue+((i*37)%40)},50%,${52+((i*17)%20)}%,.92)`;
     ctx.beginPath(); ctx.moveTo(p[0][0],p[0][1]); ctx.lineTo(p[1][0],p[1][1]); ctx.lineTo(p[2][0],p[2][1]); ctx.closePath(); ctx.fill();
   });
+}
+/* 07.09.2026, владелец: живая глубина рекурсии — реальный процесс построения (не
+   украшение): каждый шаг честно делит треугольник на 3, ровно то же правило, что дало
+   3⁵=243 на глубине 5 (см. подпись карточки). */
+function fxSierpinskiFlash(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const cycle=6, raw=(p*cycle)%cycle, depth=Math.min(5, Math.floor(raw));
+  drawSierpinski(ctx, depth, AUT_SCALE, -4, 20);
   ctx.restore(); edgeStroke(ctx);
 }
 
 function rule30(a,b,c){ const pattern=(a<<2)|(b<<1)|c; return [0,1,1,1,1,0,0,0][pattern]; }
 function stepRule30(row){ const n=row.length; const next=new Array(n).fill(0);
   for(let i=0;i<n;i++){ const a=row[(i-1+n)%n], b=row[i], c=row[(i+1)%n]; next[i]=rule30(a,b,c); } return next; }
-function fxRule30(ctx, scale, cy0, hue){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const N=61, gens=32;
-  let row=new Array(N).fill(0); row[Math.floor(N/2)]=1;
-  const cell=2/N;
-  for(let g=0; g<gens; g++){
-    for(let i=0;i<N;i++){
+const AUT_N=61, AUT_GENS=32;
+const _rule30Rows=(()=>{ const rows=[]; let row=new Array(AUT_N).fill(0); row[Math.floor(AUT_N/2)]=1;
+  for(let g=0; g<AUT_GENS; g++){ rows.push(row); row=stepRule30(row); } return rows; })();
+function drawRule30(ctx, scale, cy0, hue, upTo){
+  const cell=2/AUT_N;
+  const lim = upTo!=null ? upTo : AUT_GENS;
+  for(let g=0; g<lim; g++){
+    const row=_rule30Rows[g];
+    for(let i=0;i<AUT_N;i++){
       if(!row[i]) continue;
       const px=(-1+i*cell)*scale, py=cy0+(-0.95+g*cell*1.55)*scale;
       ctx.fillStyle=`hsla(${hue},55%,${68-g}%,.9)`;
       ctx.fillRect(px,py,cell*scale*1.05,cell*scale*1.55*1.05);
     }
-    row=stepRule30(row);
   }
+}
+/* 07.09.2026, владелец: реальный процесс — поколения растут вниз по настоящему правилу
+   строка за строкой, честная вспышка вместо статичного полного результата. */
+function fxRule30Flash(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac=(p%1)<0.85 ? (p%1)/0.85 : 1;
+  const upTo=Math.max(1, Math.round(AUT_GENS*frac));
+  drawRule30(ctx, AUT_SCALE, -4, 150, upTo);
   ctx.restore(); edgeStroke(ctx);
 }
 
@@ -1649,20 +1720,37 @@ function lifeStep(cells){
   }
   return next.map(k=>k.split(',').map(Number));
 }
-function fxGlider(ctx, scale, cy0, hue){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+/* 07.09.2026, владелец: глайдер физически ДВИЖЕТСЯ по сетке — без движения теряет весь
+   смысл названия «космический корабль». История поколений посчитана один раз (48 шагов,
+   дёшево для 5 клеток), вспышка только выбирает окно из истории — каждый шаг настоящий
+   (тот же lifeStep, что дал проверенный сдвиг на (1,1) за 4 поколения), самой сетки не
+   касается: центр окна каждый раз вычисляется заново (центроид текущего поколения), чтобы
+   бесконечно ползущий по диагонали глайдер оставался в кадре, а не уполз за силуэт. */
+function gliderHistory(totalGens){
   let gen=[[1,0],[2,1],[0,2],[1,2],[2,2]];
-  const phases=[gen];
-  for(let s=0;s<3;s++){ gen=lifeStep(gen); phases.push(gen); }
+  const hist=[gen];
+  for(let s=0;s<totalGens;s++){ gen=lifeStep(gen); hist.push(gen); }
+  return hist;
+}
+const _gliderHist = gliderHistory(48);
+function centroid(cells){
+  let sx=0, sy=0; cells.forEach(([x,y])=>{ sx+=x; sy+=y; }); return [sx/cells.length, sy/cells.length];
+}
+function fxGliderFlash(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const scale=16, cy0=-4;
+  const gi=Math.min(_gliderHist.length-1, Math.floor((p%1)*_gliderHist.length));
+  const [ccx,ccy]=centroid(_gliderHist[gi]);
   const cell=0.24;
-  phases.forEach((phase,pi)=>{
-    const alpha = pi===phases.length-1? 0.95 : 0.16+pi*0.08;
-    phase.forEach(([cx,cy])=>{
-      const px=(-0.5+cx*cell)*scale, py=cy0+(-0.5+cy*cell)*scale;
-      ctx.fillStyle=`hsla(${hue},60%,70%,${alpha})`;
+  for(let t=3;t>=0;t--){
+    const idx=Math.max(0, gi-t);
+    const alpha = t===0? 0.95 : 0.16+(3-t)*0.08;
+    _gliderHist[idx].forEach(([cx,cy])=>{
+      const px=(cx-ccx)*cell*scale, py=cy0+(cy-ccy)*cell*scale;
+      ctx.fillStyle=`hsla(280,60%,70%,${alpha})`;
       ctx.fillRect(px,py,cell*scale*0.92,cell*scale*0.92);
     });
-  });
+  }
   ctx.restore(); edgeStroke(ctx);
 }
 
@@ -1675,11 +1763,18 @@ function hilbertD2XY(order,d){
   }
   return [x,y];
 }
-function fxHilbert(ctx, scale, cy0, hue){
+const _hilbertPts=(()=>{ const order=3, N=1<<order, cell=1.8/N; const pts=[];
+  for(let d=0;d<N*N;d++){ const [x,y]=hilbertD2XY(order,d); pts.push([-0.9+x*cell+cell/2, -0.9+y*cell+cell/2]); }
+  return pts; })();
+/* 07.09.2026, владелец: резец вычерчивает гамильтонов путь во времени — тот же приём,
+   что уже одобрен у Меандра/Спирографа/Розетки, честный процесс «путь строится», не
+   готовая картинка сразу. */
+function fxHilbertFlash(ctx, p){
   ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const order=3, N=1<<order, cell=1.8/N;
-  const pts=[];
-  for(let d=0;d<N*N;d++){ const [x,y]=hilbertD2XY(order,d); pts.push([(-0.9+x*cell+cell/2)*scale, cy0+(-0.9+y*cell+cell/2)*scale]); }
+  const scale=9, cy0=-4, hue=340;
+  const frac=(p%1)<0.85 ? (p%1)/0.85 : 1;
+  const n=Math.max(2, Math.round(_hilbertPts.length*Math.max(0.02,frac)));
+  const pts=_hilbertPts.slice(0,n).map(([x,y])=>[x*scale, cy0+y*scale]);
   ctx.save(); ctx.globalCompositeOperation='lighter';
   [[3.2*AUT_MIN_LW,0.1],[1.8*AUT_MIN_LW,0.22]].forEach(([w,a])=>{
     ctx.lineWidth=Math.max(w,AUT_MIN_LW); ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
@@ -1688,6 +1783,7 @@ function fxHilbert(ctx, scale, cy0, hue){
   ctx.restore();
   ctx.lineWidth=AUT_MIN_LW; ctx.strokeStyle=`hsla(${hue},20%,93%,.95)`;
   ctx.beginPath(); pts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  if(frac<1){ const tip=pts[pts.length-1]; ctx.fillStyle=`hsla(${hue},95%,82%,.95)`; ctx.beginPath(); ctx.arc(tip[0],tip[1],AUT_MIN_LW*1.6,0,7); ctx.fill(); }
   ctx.restore(); edgeStroke(ctx);
 }
 
@@ -1696,15 +1792,13 @@ function ellipsePointAt(cx,cy,a,b,angle,t){
   return [cx+x0*Math.cos(angle)-y0*Math.sin(angle), cy+x0*Math.sin(angle)+y0*Math.cos(angle)];
 }
 const UNDER_AT=[1.948,2.793], GAP=0.16;
-function fxBorromean(ctx, scale, cy0, hue){
-  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+function drawBorromean(ctx, scale, cy0, hue, maxT){
+  const limT = maxT!=null ? maxT : 2*Math.PI;
   for(let i=0;i<3;i++){
     const ang=i*2*Math.PI/3;
-    const cx=0.55*Math.cos(ang)*0.62, cy=0.55*Math.sin(ang)*0.62+cy0/scale*0;
     const params={cx:0.55*Math.cos(ang), cy:0.55*Math.sin(ang), a:0.75, b:0.42, rot:ang+Math.PI/2};
     const N=300;
     const h2=hue+i*40;
-    let segStart=0;
     const cuts=UNDER_AT.slice().sort((a,b)=>a-b);
     const bounds=[];
     cuts.forEach(t0=>{ bounds.push([t0-GAP, t0+GAP]); });
@@ -1716,6 +1810,7 @@ function fxBorromean(ctx, scale, cy0, hue){
       ctx.beginPath();
       for(let k=0;k<=N;k++){
         const t=k/N*2*Math.PI;
+        if(t>limT) break;
         if(inGap(t)){ started=false; continue; }
         const [x,y]=ellipsePointAt(params.cx,params.cy,params.a,params.b,params.rot,t);
         const px=x*scale, py=cy0+y*scale;
@@ -1729,6 +1824,7 @@ function fxBorromean(ctx, scale, cy0, hue){
     ctx.beginPath();
     for(let k=0;k<=N;k++){
       const t=k/N*2*Math.PI;
+      if(t>limT) break;
       if(inGap(t)){ started=false; continue; }
       const [x,y]=ellipsePointAt(params.cx,params.cy,params.a,params.b,params.rot,t);
       const px=x*scale, py=cy0+y*scale;
@@ -1736,19 +1832,27 @@ function fxBorromean(ctx, scale, cy0, hue){
     }
     ctx.stroke();
   }
+}
+/* 07.09.2026, владелец: плетение вычерчивается во времени, каждое кольцо честно от
+   угла 0 до текущего — те же самые проверенные разрывы над/под (t≈1.948/2.793), не
+   переоткрыты заново, просто дорисовываются постепенно. */
+function fxBorromeanFlash(ctx, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac=(p%1)<0.85 ? (p%1)/0.85 : 1;
+  drawBorromean(ctx, 10, -4, 45, Math.max(0.15, frac*2*Math.PI));
   ctx.restore(); edgeStroke(ctx);
 }
 
 const AUT_SCALE=5.0;
 mountCards('gridAutomata', [
-  ['sp','Треугольник Серпинского','Число закрашенных треугольников на глубине 5 = 3⁵=243 — точный счёт, не оценка.'],
-  ['car30','Правило 30 Вольфрама','Детерминированная таблица из 8 случаев — хаотичный узор растёт из одной клетки честно по правилу.'],
-  ['gl','Глайдер («Жизнь» Конвея)','Проверено числом: после 4 поколений фигура повторяет себя, сдвинутая на (1,1) — настоящий «космический корабль».'],
-  ['hb','Кривая Гильберта','Путь порядка 3 проходит все 64 клетки сетки 8×8 по одному разу — гамильтонов путь, проверено числом.'],
-  ['bo','Кольца Борромео','3 эллипса (не окружности!) — каждая пара пересекается ровно в 2 точках, плетение над/под честно чередуется.'],
+  ['sp','Треугольник Серпинского','Глубина рекурсии растёт вживую 0→5 — число треугольников на глубине 5 честно 3⁵=243, точный счёт, не оценка.'],
+  ['car30','Правило 30 Вольфрама','Поколения растут вниз вживую по детерминированной таблице из 8 случаев — хаотичный узор растёт из одной клетки честно по правилу.'],
+  ['gl','Глайдер («Жизнь» Конвея)','Глайдер реально ползёт по диагонали (проверено числом: за 4 поколения сдвигается на (1,1)) — настоящий «космический корабль», без движения не имеет смысла.'],
+  ['hb','Кривая Гильберта','Резец вживую вычерчивает гамильтонов путь — проходит все 64 клетки сетки 8×8 по одному разу, проверено числом.'],
+  ['bo','Кольца Борромео','Плетение вычерчивается во времени — 3 эллипса (не окружности!), каждая пара пересекается ровно в 2 точках, над/под честно чередуется.'],
 ]);
-loop('sp', ctx=>fxSierpinski(ctx,AUT_SCALE,-4,20), 4.2);
-loop('car30', ctx=>fxRule30(ctx,AUT_SCALE,-4,150), 4.2);
+loopFlash('sp', fxSierpinskiFlash, 4.2, 3400);
+loopFlash('car30', fxRule30Flash, 4.2, 3200);
 /* 07.09.2026, владелец: Глайдер/Гильберт/Борромео заметно мельче Серпинского и Правила 30
    на этой же карточной сетке — у каждого свой собственный домен (клетка/сетка/эллипс),
    ощутимо теснее, чем 1.8 условных единиц Серпинского/Правила 30. AUT_SCALE=5 общий для
@@ -1756,49 +1860,71 @@ loop('car30', ctx=>fxRule30(ctx,AUT_SCALE,-4,150), 4.2);
    передан свой, больший масштаб (масштаб применяется ПОСЛЕ вычисления самой геометрии —
    ни гамильтонов путь Гильберта, ни проверенные точки пересечения Борромео не меняются,
    меняется только конечный размер на холсте). */
-loop('gl', ctx=>fxGlider(ctx,16,-4,280), 4.2);
-loop('hb', ctx=>fxHilbert(ctx,9,-4,340), 4.2);
-loop('bo', ctx=>fxBorromean(ctx,10,-4,45), 4.2);
+loopFlash('gl', fxGliderFlash, 4.2, 3800);
+loopFlash('hb', fxHilbertFlash, 4.2, 2800);
+loopFlash('bo', fxBorromeanFlash, 4.2, 3400);
 
 /* ===================== ФИГУРЫ ХЛАДНИ ===================== */
 function chladni(n,m,x,y){ return Math.cos(n*Math.PI*x)*Math.cos(m*Math.PI*y) - Math.cos(m*Math.PI*x)*Math.cos(n*Math.PI*y); }
 
-function drawChladni(ctx, n, m, scale, cy0, hue, seed){
+const _chladniGrainsCache=new Map();
+function chladniGrains(n,m,seed){
+  const key=n+'|'+m+'|'+seed;
+  if(_chladniGrainsCache.has(key)) return _chladniGrainsCache.get(key);
   const N=90, rnd=mulberry32(seed);
-  ctx.fillStyle=`hsla(${hue},15%,55%,.06)`;
+  const grains=[];
   for(let i=0;i<N;i++){
     for(let j=0;j<N;j++){
       const x0=-1+2*i/N, x1=-1+2*(i+1)/N, y0=-1+2*j/N, y1=-1+2*(j+1)/N;
       const s=[chladni(n,m,x0,y0),chladni(n,m,x1,y0),chladni(n,m,x0,y1),chladni(n,m,x1,y1)].map(z=>z>=0?1:-1);
       if(s[0]===s[1] && s[1]===s[2] && s[2]===s[3]) continue;
       const jx=(rnd()-0.5)*(x1-x0)*0.7, jy=(rnd()-0.5)*(y1-y0)*0.7;
-      const cx=(x0+x1)/2+jx, cyN=(y0+y1)/2+jy;
-      const px=cx*scale, py=cy0+cyN*scale;
-      const r=0.14+rnd()*0.07;
-      ctx.fillStyle=`hsla(${hue+ (rnd()*14-7)},20%,${78+rnd()*12}%,.85)`;
-      ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.fill();
+      grains.push({cx:(x0+x1)/2+jx, cy:(y0+y1)/2+jy, r:0.14+rnd()*0.07, hueJ:rnd()*14-7, lJ:rnd()*12});
     }
+  }
+  // 07.09.2026: перемешано тем же сидированным ГПСЧ (не Math.random — воспроизводимо) —
+  // честная имитация «песчинки оседают вразнобой по всей пластине», не построчной волной.
+  for(let i=grains.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [grains[i],grains[j]]=[grains[j],grains[i]]; }
+  _chladniGrainsCache.set(key, grains);
+  return grains;
+}
+function drawChladni(ctx, n, m, scale, cy0, hue, seed, count){
+  const grains=chladniGrains(n,m,seed);
+  const lim = count!=null ? count : grains.length;
+  ctx.fillStyle=`hsla(${hue},15%,55%,.06)`;
+  for(let g=0; g<lim; g++){
+    const gr=grains[g];
+    const px=gr.cx*scale, py=cy0+gr.cy*scale;
+    ctx.fillStyle=`hsla(${hue+gr.hueJ},20%,${78+gr.lJ}%,.85)`;
+    ctx.beginPath(); ctx.arc(px,py,gr.r,0,7); ctx.fill();
   }
 }
 const CHL_SCALE=4.8;
-function fxChl21(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,2,1,CHL_SCALE,-4,40,1); ctx.restore(); edgeStroke(ctx); }
-function fxChl31(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,3,1,CHL_SCALE,-4,40,2); ctx.restore(); edgeStroke(ctx); }
-function fxChl32(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,3,2,CHL_SCALE,-4,40,3); ctx.restore(); edgeStroke(ctx); }
-function fxChl43(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,4,3,CHL_SCALE,-4,40,4); ctx.restore(); edgeStroke(ctx); }
-function fxChl54(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,5,4,CHL_SCALE,-4,40,5); ctx.restore(); edgeStroke(ctx); }
+/* 07.09.2026, владелец: настоящая демонстрация Хладни — песок реально ОСЕДАЕТ на
+   узловые линии, не появляется готовым. Позиции песчинок те же самые, проверенные
+   числом (см. .note в описании темы) — вспышка только раскрывает их не сразу все, а
+   по одной, в честно перемешанном порядке. */
+function fxChlFlash(n,m,seed,hue,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx);
+  const frac=((p*(speed||1))%1)<0.85 ? ((p*(speed||1))%1)/0.85 : 1;
+  const total=chladniGrains(n,m,seed).length;
+  const count=Math.max(1, Math.round(total*Math.max(0.03,frac)));
+  drawChladni(ctx,n,m,CHL_SCALE,-4,hue,seed,count);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridChladni', [
-  ['c21','Мода 2:1','7.4% ячеек сетки — самая простая мода партии, крупные секторы.'],
+  ['c21','Мода 2:1','7.4% ячеек сетки — самая простая мода партии, крупные секторы. Песок оседает вживую.'],
   ['c31','Мода 3:1','12.8% ячеек — заметно плотнее, вырожденная пара (3,1)/(1,3).'],
   ['c32','Мода 3:2','11.5% ячеек — классический учебный пример фигуры Хладни.'],
   ['c43','Мода 4:3','16.0% ячеек — более высокая частота, больше узловых линий.'],
   ['c54','Мода 5:4','20.1% ячеек — самая сложная мода партии, самая высокая частота.'],
 ]);
-loop('c21', fxChl21, 4.2);
-loop('c31', fxChl31, 4.2);
-loop('c32', fxChl32, 4.2);
-loop('c43', fxChl43, 4.2);
-loop('c54', fxChl54, 4.2);
+loopFlash('c21', fxChlFlash(2,1,1,40,1), 4.2, 3200);
+loopFlash('c31', fxChlFlash(3,1,2,40,1), 4.2, 3400);
+loopFlash('c32', fxChlFlash(3,2,3,40,1), 4.2, 3300);
+loopFlash('c43', fxChlFlash(4,3,4,40,1), 4.2, 3600);
+loopFlash('c54', fxChlFlash(5,4,5,40,1), 4.2, 3800);
 
 /* ===================== ФИГУРЫ ЛИССАЖУ ===================== */
 function lissajousPoints(a,b,delta,N){
@@ -1806,44 +1932,54 @@ function lissajousPoints(a,b,delta,N){
   for(let i=0;i<=N;i++){ const t=i/N*2*Math.PI; pts.push([Math.sin(a*t+delta), Math.sin(b*t)]); }
   return pts;
 }
-function drawLissajous(ctx, a, b, scale, cy0, hue){
+function drawLissajous(ctx, a, b, scale, cy0, hue, count){
   const N=900;
   const raw=lissajousPoints(a,b,Math.PI/2,N);
-  const p=raw.map(([x,y])=>[x*scale, cy0+y*scale]);
+  const lim = count!=null ? count : N;
+  const p=raw.slice(0,lim+1).map(([x,y])=>[x*scale, cy0+y*scale]);
   ctx.save();
   ctx.globalCompositeOperation='lighter';
   [[3.2,0.10],[1.8,0.18],[0.9,0.35]].forEach(([w,a2])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a2})`;
     ctx.beginPath();
     p.forEach(([x,y],i)=> i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
-    ctx.closePath(); ctx.stroke();
+    if(lim>=N) ctx.closePath();
+    ctx.stroke();
   });
   ctx.restore();
-  for(let i=0;i<N;i++){
+  for(let i=0;i<p.length-1;i++){
     const t0=i/N, hue2=hue + t0*40 - 20;
     ctx.strokeStyle=`hsla(${hue2},90%,80%,.95)`; ctx.lineWidth=0.5;
     ctx.beginPath(); ctx.moveTo(p[i][0],p[i][1]); ctx.lineTo(p[i+1][0],p[i+1][1]); ctx.stroke();
   }
+  if(lim<N && p.length){
+    const tip=p[p.length-1];
+    ctx.fillStyle=`hsla(${hue},95%,85%,.95)`; ctx.beginPath(); ctx.arc(tip[0],tip[1],0.45,0,7); ctx.fill();
+  }
 }
 const LIS_SCALE=5.4;
-function fxLis11(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,1,1,LIS_SCALE,-4,195); ctx.restore(); edgeStroke(ctx); }
-function fxLis12(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,1,2,LIS_SCALE,-4,140); ctx.restore(); edgeStroke(ctx); }
-function fxLis32(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,3,2,LIS_SCALE,-4,95); ctx.restore(); edgeStroke(ctx); }
-function fxLis34(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,3,4,LIS_SCALE,-4,300); ctx.restore(); edgeStroke(ctx); }
-function fxLis54(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,5,4,LIS_SCALE,-4,20); ctx.restore(); edgeStroke(ctx); }
+/* 07.09.2026, владелец: луч осциллографа честно вычерчивает кривую во времени — тот
+   же приём, что и у остальных «трассирующих» тем партии (Спирограф/Меандр/Розетка). */
+function fxLisFlash(a,b,hue,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac=((p*(speed||1))%1)<0.88 ? ((p*(speed||1))%1)/0.88 : 1;
+  const count=Math.max(2, Math.round(900*Math.max(0.02,frac)));
+  drawLissajous(ctx,a,b,LIS_SCALE,-4,hue,count);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridLissajous', [
-  ['l11','1:1 — овал','Равные частоты, фаза 90° — окружность/эллипс. Классический тест «одинаковая частота, сдвиг фазы».'],
+  ['l11','1:1 — овал','Равные частоты, фаза 90° — окружность/эллипс. Луч вычерчивает вживую, как настоящий осциллограф.'],
   ['l12','1:2 — восьмёрка','Вертикальная частота вдвое выше. Кривая касается левого/правого края 1 раз, верхнего/нижнего — дважды за проход.'],
   ['l32','3:2 — восьмёрка с узлом','Классический учебный пример отношения 3:2 — характерная «плетёнка».'],
   ['l34','3:4','Более сложное отношение — больше пересечений внутри одной замкнутой кривой.'],
   ['l54','5:4','Самое сложное отношение партии — плотный узел из пересечений, тот же принцип, что у настоящего фазового теста на осциллографе.'],
 ]);
-loop('l11', fxLis11, 4.2);
-loop('l12', fxLis12, 4.2);
-loop('l32', fxLis32, 4.2);
-loop('l34', fxLis34, 4.2);
-loop('l54', fxLis54, 4.2);
+loopFlash('l11', fxLisFlash(1,1,195,1), 4.2, 2600);
+loopFlash('l12', fxLisFlash(1,2,140,1), 4.2, 2800);
+loopFlash('l32', fxLisFlash(3,2,95,1), 4.2, 3000);
+loopFlash('l34', fxLisFlash(3,4,300,1), 4.2, 3200);
+loopFlash('l54', fxLisFlash(5,4,20,1), 4.2, 3400);
 
 /* ===================== КРУГИ ФУРЬЕ ===================== */
 function starShape(t){
@@ -1886,8 +2022,13 @@ function reconstruct(topK, t){
   }
   return [x,y];
 }
-function drawEpicycles(ctx, K, scale, cy0, hue){
+/* 07.09.2026, владелец: классическая живая анимация Фурье — цепочка окружностей честно
+   ВРАЩАЕТСЯ (каждая гармоника на своей частоте k, ровно та же формула reconstruct/o.k*t,
+   что и раньше при t=0), а не стоит на месте — сама кривая при этом дорисовывается только
+   до текущего t, не сразу вся целиком. */
+function drawEpicycles(ctx, K, scale, cy0, hue, tNow){
   const topK = ALL_COEFFS.slice(0,K);
+  const t0 = tNow!=null ? tNow : 0;
   ctx.strokeStyle='rgba(210,220,255,.16)'; ctx.lineWidth=0.4;
   ctx.beginPath();
   for(let i=0;i<=200;i++){ const [x,y]=starShape(i/200); const px=x*scale, py=cy0+y*scale; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
@@ -1900,7 +2041,9 @@ function drawEpicycles(ctx, K, scale, cy0, hue){
       ctx.strokeStyle=`hsla(${hue2},70%,68%,.6)`; ctx.lineWidth=0.55;
       ctx.beginPath(); ctx.arc(cx*scale, cy0+cy*scale, Math.max(r*scale,0.35), 0, 7); ctx.stroke();
     }
-    const nx=cx+o.re, ny=cy+o.im;
+    const ang=o.k*t0, ca=Math.cos(ang), sa=Math.sin(ang);
+    const ex=o.re*ca-o.im*sa, ey=o.re*sa+o.im*ca;
+    const nx=cx+ex, ny=cy+ey;
     ctx.strokeStyle=`hsla(${hue2},70%,75%,.5)`; ctx.lineWidth=0.4;
     ctx.beginPath(); ctx.moveTo(cx*scale,cy0+cy*scale); ctx.lineTo(nx*scale,cy0+ny*scale); ctx.stroke();
     ctx.fillStyle=`hsla(${hue2},85%,80%,.95)`;
@@ -1908,35 +2051,37 @@ function drawEpicycles(ctx, K, scale, cy0, hue){
     cx=nx; cy=ny;
   });
   const N=300, pathPts=[];
-  for(let i=0;i<=N;i++){ const t=i/N*2*Math.PI; const [x,y]=reconstruct(topK,t); pathPts.push([x*scale, cy0+y*scale]); }
+  const upToFrac=(t0%(2*Math.PI))/(2*Math.PI);
+  const upTo=Math.max(2,Math.round(N*upToFrac));
+  for(let i=0;i<=upTo;i++){ const t=i/N*2*Math.PI; const [x,y]=reconstruct(topK,t); pathPts.push([x*scale, cy0+y*scale]); }
   ctx.save(); ctx.globalCompositeOperation='lighter';
   [[2.6,0.12],[1.4,0.22]].forEach(([w,a2])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a2})`;
-    ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
   });
   ctx.restore();
   ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`; ctx.lineWidth=0.55;
-  ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
 }
 const FOU_SCALE=4.6;
-function fxK1(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,1,FOU_SCALE,-4,195); ctx.restore(); edgeStroke(ctx); }
-function fxK2(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,2,FOU_SCALE,-4,150); ctx.restore(); edgeStroke(ctx); }
-function fxK3(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,3,FOU_SCALE,-4,95); ctx.restore(); edgeStroke(ctx); }
-function fxK4(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,4,FOU_SCALE,-4,300); ctx.restore(); edgeStroke(ctx); }
-function fxK8(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,8,FOU_SCALE,-4,20); ctx.restore(); edgeStroke(ctx); }
-
+function fxFouFlash(K,hue,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const t=(p*(speed||1)%1)*2*Math.PI;
+  drawEpicycles(ctx,K,FOU_SCALE,-4,hue,t);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 mountCards('gridEpi', [
-  ['fk1','K=1','Одна окружность (первая гармоника) — только грубый круг, ошибка 0.183.'],
+  ['fk1','K=1','Одна окружность (первая гармоника) — только грубый круг, ошибка 0.183. Цепочка честно вращается, вычерчивая кривую.'],
   ['fk2','K=2','2 окружности — уже видна пятиконечная звезда, ошибка 0.077 (в 2.4 раза меньше).'],
   ['fk3','K=3','3 окружности — звезда уверенно узнаваема, ошибка 0.022 (в 8 раз меньше, чем K=1).'],
   ['fk4','K=4','4 окружности — первые 3 гармоники уже несут почти всю форму, дальше улучшения совсем мелкие.'],
   ['fk8','K=8','8 окружностей — ошибка 0.0065, но на глаз почти неотличимо от K=4: сходимость для этой формы очень быстрая.'],
 ]);
-loop('fk1', fxK1, 4.2);
-loop('fk2', fxK2, 4.2);
-loop('fk3', fxK3, 4.2);
-loop('fk4', fxK4, 4.2);
-loop('fk8', fxK8, 4.2);
+loopFlash('fk1', fxFouFlash(1,195,0.6), 4.2, 3600);
+loopFlash('fk2', fxFouFlash(2,150,0.6), 4.2, 3600);
+loopFlash('fk3', fxFouFlash(3,95,0.6), 4.2, 3600);
+loopFlash('fk4', fxFouFlash(4,300,0.6), 4.2, 3600);
+loopFlash('fk8', fxFouFlash(8,20,0.6), 4.2, 3600);
 
 /* ===================== СТРАННЫЕ АТТРАКТОРЫ ===================== */
 function iterateAttractor(a,b,c,d,n,x0,y0){
@@ -1949,40 +2094,62 @@ function iterateAttractor(a,b,c,d,n,x0,y0){
   }
   return pts;
 }
-function drawAttractor(ctx, a,b,c,d, scale, cy0, hue){
-  const N=30000;
-  const pts=iterateAttractor(a,b,c,d,N,0.1,0.1);
+const _attrPtsCache=new Map();
+function attractorPts(a,b,c,d){
+  const key=[a,b,c,d].join('|');
+  if(_attrPtsCache.has(key)) return _attrPtsCache.get(key);
+  const pts=iterateAttractor(a,b,c,d,30000,0.1,0.1);
+  _attrPtsCache.set(key,pts);
+  return pts;
+}
+function drawAttractor(ctx, a,b,c,d, scale, cy0, hue, count){
+  const pts=attractorPts(a,b,c,d);
+  const N=count!=null ? count : 30000;
+  /* 07.09.2026, владелец: замер в браузере — 23.34мс на кадр у ОДНОЙ этой карточки при
+     раскрытии ближе к концу (до 60000 fillRect за кадр, 2 прохода по 30000 точек) —
+     почти в 1.5 раза больше всего бюджета кадра 60fps сама по себе. Шаг выборки растёт
+     вместе с count, так что за кадр рисуется не больше ~4000 точек независимо от того,
+     сколько всего уже "прошло" — в начале (мало точек) шаг=1, ничего не теряется, к концу
+     нарисована честная равномерная выборка по всему пройденному диапазону, не первые/
+     последние точки подряд. Сама траектория (какие точки существуют) не меняется. */
+  const stride=Math.max(1, Math.floor((N-200)/4000));
   ctx.save(); ctx.globalCompositeOperation='lighter';
   ctx.fillStyle=`hsla(${hue},70%,60%,.05)`;
-  for(let i=200;i<N;i++){
+  for(let i=200;i<N;i+=stride){
     const x=pts[i*2]*scale, y=cy0+pts[i*2+1]*scale;
     ctx.fillRect(x-0.05,y-0.05,0.16,0.16);
   }
   ctx.fillStyle=`hsla(${hue},90%,82%,.5)`;
-  for(let i=200;i<N;i++){
+  for(let i=200;i<N;i+=stride){
     const x=pts[i*2]*scale, y=cy0+pts[i*2+1]*scale;
     ctx.fillRect(x,y,0.05,0.05);
   }
   ctx.restore();
 }
-function fxAttA(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.4,1.6,1.0,0.7, 3.2,-4,195); ctx.restore(); edgeStroke(ctx); }
-function fxAttB(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,1.7,1.7,0.6,1.2, 3.8,-4,150); ctx.restore(); edgeStroke(ctx); }
-function fxAttC(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.7,1.3,-0.1,-1.21, 4.1,-4,300); ctx.restore(); edgeStroke(ctx); }
-function fxAttD(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,1.5,-1.8,1.6,0.9, 2.4,-4,20); ctx.restore(); edgeStroke(ctx); }
-function fxAttE(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.9,-1.9,-1.9,-1.0, 2.3,-4,45); ctx.restore(); edgeStroke(ctx); }
+/* 07.09.2026, владелец: сама траектория честно накапливается во времени — «узор соткан
+   из хаоса» становится видно буквально, а не только сказано в подписи. Точки те же самые,
+   один раз посчитанные и закэшированные (см. attractorPts) — вспышка только меняет,
+   сколько уже накопленных точек показано, не пересчитывает 30000 шагов на кадр. */
+function fxAttrFlash(a,b,c,d,scale,hue,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac=((p*(speed||1))%1)<0.9 ? ((p*(speed||1))%1)/0.9 : 1;
+  const count=Math.max(200, Math.round(30000*Math.max(0.01,frac)));
+  drawAttractor(ctx,a,b,c,d, scale, -4, hue, count);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridAttr', [
-  ['att1','a=−1.4, b=1.6, c=1.0, d=0.7','30000 точек одной непрерывной траектории — узор соткан из хаоса, не нарисован вручную.'],
+  ['att1','a=−1.4, b=1.6, c=1.0, d=0.7','30000 точек одной непрерывной траектории накапливаются вживую — узор соткан из хаоса на глазах, не нарисован вручную.'],
   ['att2','a=1.7, b=1.7, c=0.6, d=1.2','Другой набор параметров — совсем другая форма из той же самой формулы.'],
   ['att3','a=−1.7, b=1.3, c=−0.1, d=−1.21','Третий набор — плотные переплетающиеся полосы.'],
   ['att4','a=1.5, b=−1.8, c=1.6, d=0.9','Четвёртый набор — более компактная, узловатая форма.'],
   ['att5','a=−1.9, b=−1.9, c=−1.9, d=−1.0','Пятый набор — все параметры отрицательные и близки друг к другу.'],
 ]);
-loop('att1', fxAttA, 4.2);
-loop('att2', fxAttB, 4.2);
-loop('att3', fxAttC, 4.2);
-loop('att4', fxAttD, 4.2);
-loop('att5', fxAttE, 4.2);
+loopFlash('att1', fxAttrFlash(-1.4,1.6,1.0,0.7, 3.2,195,1), 4.2, 3600);
+loopFlash('att2', fxAttrFlash(1.7,1.7,0.6,1.2, 3.8,150,1), 4.2, 3800);
+loopFlash('att3', fxAttrFlash(-1.7,1.3,-0.1,-1.21, 4.1,300,1), 4.2, 4000);
+loopFlash('att4', fxAttrFlash(1.5,-1.8,1.6,0.9, 2.4,20,1), 4.2, 3400);
+loopFlash('att5', fxAttrFlash(-1.9,-1.9,-1.9,-1.0, 2.3,45,1), 4.2, 3400);
 
 /* ===================== ИРИЗАЦИЯ ПОД УГЛОМ ===================== */
 function peakLambda(thetaDeg, n, d, m){
@@ -2155,91 +2322,112 @@ function drawSolid(ctx, verts, cy0, scale, hue, rx, ry){
 }
 const PLA_SCALE=3.5;
 const phi=(1+Math.sqrt(5))/2;
-function fxTetra(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawSolid(ctx,[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]],-4,PLA_SCALE,10); ctx.restore(); edgeStroke(ctx); }
-function fxCube(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  const v=[]; [1,-1].forEach(a=>[1,-1].forEach(b=>[1,-1].forEach(c=>v.push([a,b,c]))));
-  drawSolid(ctx,v,-4,PLA_SCALE,205); ctx.restore(); edgeStroke(ctx); }
-function fxOcta(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawSolid(ctx,[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],-4,PLA_SCALE,150,0.55,0.15); ctx.restore(); edgeStroke(ctx); }
-function fxDodeca(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+function tetraVerts(){ return [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]]; }
+function cubeVerts(){ const v=[]; [1,-1].forEach(a=>[1,-1].forEach(b=>[1,-1].forEach(c=>v.push([a,b,c])))); return v; }
+function octaVerts(){ return [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]; }
+function dodecaVerts(){
   const v=[];
   [1,-1].forEach(a=>[1,-1].forEach(b=>[1,-1].forEach(c=>v.push([a,b,c]))));
   [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([0,a/phi,b*phi])));
   [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([a/phi,b*phi,0])));
   [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([a*phi,0,b/phi])));
-  drawSolid(ctx,v,-4,PLA_SCALE,290); ctx.restore(); edgeStroke(ctx); }
-function fxIco(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  return v;
+}
+function icoVerts(){
   const v=[];
   [1,-1].forEach(s1=>[1,-1].forEach(s2=>{ v.push([0,s1*1,s2*phi]); v.push([s1*1,s2*phi,0]); v.push([s1*phi,0,s2*1]); }));
-  drawSolid(ctx,v,-4,PLA_SCALE,45); ctx.restore(); edgeStroke(ctx); }
+  return v;
+}
+/* 07.09.2026, владелец: честный поворот в 3D — функция rotate() уже была, просто не
+   крутилась во времени. Для октаэдра сохранён СВОЙ стартовый rx=0.55 (тот самый, что
+   специально подобран числом против «плоского шестиугольника без глубины», см. правку
+   выше) — вращается только ry, вокруг вертикальной оси, тот же самый принцип, что и у
+   остальных четырёх тел, стартовая насмотренная сторона не теряется. */
+function fxSolidFlash(vertsFn, hue, rx0, speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const ry=0.7+(p*(speed||1))*2*Math.PI;
+  drawSolid(ctx, vertsFn(), -4, PLA_SCALE, hue, rx0!==undefined?rx0:0.5, ry);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridPlatonic', [
-  ['tetra','Тетраэдр','4 вершины, 6 рёбер, 4 грани. Двугранный угол 70.53° (arccos(1/3), проверено числом).'],
+  ['tetra','Тетраэдр','4 вершины, 6 рёбер, 4 грани. Двугранный угол 70.53° (arccos(1/3), проверено числом). Честно вращается вокруг вертикальной оси.'],
   ['cube','Куб','8 вершин, 12 рёбер, 6 граней. Двугранный угол ровно 90°.'],
   ['octa','Октаэдр','6 вершин, 12 рёбер, 8 граней. Двугранный угол 109.47° (arccos(−1/3)) — та же цифра, что у тетраэдрической геометрии VSEPR, не совпадение (двойственен кубу).'],
   ['dodeca','Додекаэдр','20 вершин, 30 рёбер, 12 граней. Вершины построены через золотое сечение φ. Двугранный угол 116.57°.'],
   ['ico','Икосаэдр','12 вершин, 30 рёбер, 20 граней. Двойственен додекаэдру. Двугранный угол 138.19° — самый тупой среди пяти, самое сглаженное тело.'],
 ]);
-loop('tetra', fxTetra, 4.2);
-loop('cube', fxCube, 4.2);
-loop('octa', fxOcta, 4.2);
-loop('dodeca', fxDodeca, 4.2);
-loop('ico', fxIco, 4.2);
+loopFlash('tetra', fxSolidFlash(tetraVerts,10,0.5,0.15), 4.2, 5200);
+loopFlash('cube', fxSolidFlash(cubeVerts,205,0.5,0.15), 4.2, 5200);
+loopFlash('octa', fxSolidFlash(octaVerts,150,0.55,0.15), 4.2, 5200);
+loopFlash('dodeca', fxSolidFlash(dodecaVerts,290,0.5,0.15), 4.2, 5200);
+loopFlash('ico', fxSolidFlash(icoVerts,45,0.5,0.15), 4.2, 5200);
 
 /* ===================== ХАНГЫЛЬ ===================== */
 const HAN_ZOOM=4.2, HAN_LW=Math.max(0.16, 1.3/HAN_ZOOM);
-function strokePath(ctx, pts, scale, cy0, hue, closed){
+/* 07.09.2026, владелец: буква вычерчивается штрихом во времени, как настоящая
+   каллиграфия (кистью/пером), не появляется готовой сразу — путь и разрывы те же самые,
+   вспышка только ограничивает, докуда штрих уже дошёл. */
+function pathLength(pts, closed){
+  let L=0; for(let i=1;i<pts.length;i++) L+=Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]);
+  if(closed) L+=Math.hypot(pts[0][0]-pts[pts.length-1][0], pts[0][1]-pts[pts.length-1][1]);
+  return L;
+}
+function pathUpTo(pts, closed, frac){
+  const full = closed ? [...pts, pts[0]] : pts;
+  const L=pathLength(pts, closed), target=L*frac;
+  const out=[full[0]]; let acc=0;
+  for(let i=1;i<full.length;i++){
+    const seg=Math.hypot(full[i][0]-full[i-1][0], full[i][1]-full[i-1][1]);
+    if(acc+seg>=target){ const t=(target-acc)/seg; out.push([full[i-1][0]+(full[i][0]-full[i-1][0])*t, full[i-1][1]+(full[i][1]-full[i-1][1])*t]); return out; }
+    acc+=seg; out.push(full[i]);
+  }
+  return out;
+}
+function strokePath(ctx, pts, scale, cy0, hue, closed, frac){
+  const shown = frac!=null ? pathUpTo(pts, closed, Math.max(0.02,frac)) : (closed ? [...pts, pts[0]] : pts);
   ctx.save(); ctx.globalCompositeOperation='lighter';
   [[HAN_LW*3.2,0.10],[HAN_LW*1.8,0.22]].forEach(([w,a])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
     ctx.beginPath();
-    pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
-    if(closed) ctx.closePath();
+    shown.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
     ctx.stroke();
   });
   ctx.restore();
   ctx.lineWidth=HAN_LW; ctx.strokeStyle=`hsla(${hue},20%,92%,.97)`; ctx.lineCap='round'; ctx.lineJoin='round';
   ctx.beginPath();
-  pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
-  if(closed) ctx.closePath();
+  shown.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
   ctx.stroke();
 }
-function strokeCircle(ctx, r, scale, cy0, hue){
+function strokeCircle(ctx, r, scale, cy0, hue, frac){
+  const endAng = frac!=null ? Math.max(0.02,frac)*2*Math.PI : 2*Math.PI;
   ctx.save(); ctx.globalCompositeOperation='lighter';
   [[HAN_LW*3.2,0.10],[HAN_LW*1.8,0.22]].forEach(([w,a])=>{
     ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
-    ctx.beginPath(); ctx.arc(0,cy0,r*scale,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,cy0,r*scale,-Math.PI/2,-Math.PI/2+endAng); ctx.stroke();
   });
   ctx.restore();
   ctx.lineWidth=HAN_LW; ctx.strokeStyle=`hsla(${hue},20%,92%,.97)`;
-  ctx.beginPath(); ctx.arc(0,cy0,r*scale,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0,cy0,r*scale,-Math.PI/2,-Math.PI/2+endAng); ctx.stroke();
 }
 const HAN_SCALE=5.0;
-function fxGiyeok(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6]], HAN_SCALE,-4,20,false);
-  ctx.restore(); edgeStroke(ctx); }
-function fxNieun(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  strokePath(ctx, [[-0.6,-0.6],[-0.6,0.6],[0.6,0.6]], HAN_SCALE,-4,150,false);
-  ctx.restore(); edgeStroke(ctx); }
-function fxMieum(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6],[-0.6,0.6]], HAN_SCALE,-4,280,true);
-  ctx.restore(); edgeStroke(ctx); }
-function fxSiot(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  strokePath(ctx, [[-0.65,0.6],[0,-0.6],[0.65,0.6]], HAN_SCALE,-4,340,false);
-  ctx.restore(); edgeStroke(ctx); }
-function fxIeung(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
-  strokeCircle(ctx, 0.62, HAN_SCALE,-4,95);
-  ctx.restore(); edgeStroke(ctx); }
+function fxHanFlash(drawFn, speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac=((p*(speed||1))%1)<0.8 ? ((p*(speed||1))%1)/0.8 : 1;
+  drawFn(ctx, frac);
+  ctx.restore(); edgeStroke(ctx);
+}; }
 
 mountCards('gridHangul', [
-  ['hgG','ㄱ (giyeok) — корень языка','Изгиб корня языка, перекрывающего заднюю часть нёба — велярный звук (как «к»/«г»).'],
+  ['hgG','ㄱ (giyeok) — корень языка','Изгиб корня языка, перекрывающего заднюю часть нёба — велярный звук (как «к»/«г»). Штрих вычерчивается вживую, как каллиграфия.'],
   ['hgN','ㄴ (nieun) — язык у зубов','Кончик языка касается альвеолярного гребня за верхними зубами — звук «н».'],
   ['hgM','ㅁ (mieum) — форма рта','Квадрат — стилизованная форма губ, сомкнутых для звука «м».'],
   ['hgS','ㅅ (siot) — форма резца','Пик — форма переднего зуба (резца), место шипящего/свистящего звука «с».'],
   ['hgNg','ㅇ (ieung) — форма горла','Окружность — форма самого горла (гортани), нейтральный/носовой звук.'],
 ]);
-loop('hgG', fxGiyeok, 4.2);
-loop('hgN', fxNieun, 4.2);
-loop('hgM', fxMieum, 4.2);
-loop('hgS', fxSiot, 4.2);
-loop('hgNg', fxIeung, 4.2);
+loopFlash('hgG', fxHanFlash((ctx,f)=>strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6]], HAN_SCALE,-4,20,false,f), 1), 4.2, 2200);
+loopFlash('hgN', fxHanFlash((ctx,f)=>strokePath(ctx, [[-0.6,-0.6],[-0.6,0.6],[0.6,0.6]], HAN_SCALE,-4,150,false,f), 1), 4.2, 2200);
+loopFlash('hgM', fxHanFlash((ctx,f)=>strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6],[-0.6,0.6]], HAN_SCALE,-4,280,true,f), 1), 4.2, 2600);
+loopFlash('hgS', fxHanFlash((ctx,f)=>strokePath(ctx, [[-0.65,0.6],[0,-0.6],[0.65,0.6]], HAN_SCALE,-4,340,false,f), 1), 4.2, 2200);
+loopFlash('hgNg', fxHanFlash((ctx,f)=>strokeCircle(ctx, 0.62, HAN_SCALE,-4,95,f), 1), 4.2, 2200);
 </script>
