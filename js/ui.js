@@ -1349,16 +1349,19 @@ function starJewelWake(){
    вспышкой подбора звезды) — независимая, но НЕ рисуется на самом борту постоянно, а
    проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). */
 const ANGAR_CATS = {
-  color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin' },
-  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal' },
-  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
-  trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
+  color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin',  favKey:'favSkins' },
+  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal', favKey:'favDecals' },
+  flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx', favKey:'favLaunchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
+  trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail', favKey:'favTrails' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
 };
 /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
    тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
    владении (см. game.js: ownedDecals/ownedLaunchFx, price:0 у самих записей).
    Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
-   состав каталога, не действие игрока. */
+   состав каталога, не действие игрока.
+   07.09.2026, владелец, явный пересмотр этого же решения («это тогда было, сейчас нужно»):
+   Избранное возвращается — favKey/favXxx выше и .angarFav ниже. ANGAR_FREEBIE не убирается,
+   два механизма не конфликтуют (фрибут — фиксированный подарок, избранное — выбор игрока). */
 // 04.09.2026 (владелец, живая сессия): decal поменян местами со старым бесплатным —
 // Ракета/Тарелка теперь платные, вместо них бесплатны Звезда/Сотка — выбраны
 // владельцем вживую (клик-ловушка в консоли, не на глаз по коду). flash не менялся.
@@ -1487,7 +1490,8 @@ function angarVisibleList(){ // список жетонов активной в�
      бесплатен по определению — принудительно показывать его в «Не куплено» значило бы
      противоречить самому фильтру (найдено живой проверкой, не по чтению кода). */
   if(angarFilterMode==='unowned') return visible.filter(d=>!owned(d));
-  if(angarFilterMode==='hasfact') return visible.filter(d=>!!d.fact);
+  // 07.09.2026: 'favorite' заменяет временный 'hasfact' (иконка факта и так видна на плитке).
+  if(angarFilterMode==='favorite') return visible.filter(d=>S[cfg2.favKey].includes(d.id));
   return visible;
 }
 function angarBuyFill(){
@@ -1556,9 +1560,11 @@ function angarFactOpen(text){
 }
 wireOn('angarFactPop','click',()=>{ const pop=$('angarFactPop'); if(pop) pop.classList.add('hidden'); });
 let angarFilterMode='all';
-/* 'hasfact' — временный чип (владелец, 06.09.2026): пока описания (item.fact) есть не у всех
-   200+ предметов, помогает видеть, что уже объяснено. Убрать, когда fact будет у всех. */
-const ANGAR_FILTERS=['all','new','owned','unowned','hasfact'];
+/* 07.09.2026, владелец: временный чип 'hasfact' убран совсем — иконка факта и так видна на
+   плитке (.angarFact), отдельный фильтр дублировал её. 'favorite' — новый, ранжирован ВАЖНЕЕ
+   'unowned' («избраное хорошая идея, лучше чм не куплено», владелец), т.е. Все → Новое →
+   Куплено → Избранное → Не куплено. */
+const ANGAR_FILTERS=['all','new','owned','favorite','unowned'];
 function angarFillFilterChips(){
   const box=$('angarFilter'); if(!box) return;
   if(box.children.length!==ANGAR_FILTERS.length){
@@ -1687,11 +1693,41 @@ function angarBuildGrid(){
           const dot=document.createElement('span'); dot.className='angarNew'; box.appendChild(dot);
         }
         if(item.fact){
+          // 07.09.2026: была плоская курсивная «i» текстом (на маленьком экране читалась как
+          // «/», жалоба владельца) — теперь настоящий контур, тот же язык .ic-иконок,
+          // что и везде в игре (i-info добавлена в index.html).
           const fb=document.createElement('button'); fb.type='button'; fb.className='angarFact';
-          fb.textContent='i'; fb.setAttribute('aria-label', L.angarFactBtn||'Факт');
+          fb.innerHTML='<svg class="ic"><use href="#i-info"></use></svg>';
+          fb.setAttribute('aria-label', L.angarFactBtn||'Факт');
           fb.addEventListener('click', e=>{ e.stopPropagation(); angarFactOpen(item.fact); });
           box.appendChild(fb);
         }
+        // 07.09.2026 «Избранное» (владелец, пересмотр отклонённого 29.08.2026 решения,
+        // явный override — «это тогда было, сейчас нужно»): звезда есть у КАЖДОГО предмета,
+        // не только у тех, где есть item.fact — это выбор игрока, не готовая история.
+        // Не i-star4 (та же иконка — игровая ВАЛЮТА, .angarTileBuy/кошелёк) — отдельная
+        // 5-конечная i-star5, контур/заливка = не в избранном/в избранном.
+        (function(){
+          const cfg = ANGAR_CATS[angarCat];
+          const fav=document.createElement('button'); fav.type='button'; fav.className='angarFav';
+          const isFav=()=>S[cfg.favKey].includes(item.id);
+          // одна и та же геометрия (i-star5-outline) — заливка переключается классом .on
+          // (index.html CSS: .angarFav.on .ic{fill:currentColor}), не сменой symbol.
+          fav.innerHTML='<svg class="ic"><use href="#i-star5-outline"></use></svg>';
+          const paint=()=>{ fav.classList.toggle('on', isFav()); };
+          paint();
+          fav.setAttribute('aria-label', L.angarFavBtn||'Избранное');
+          fav.addEventListener('click', e=>{
+            e.stopPropagation();
+            const arr=S[cfg.favKey]; const i=arr.indexOf(item.id);
+            if(i<0) arr.push(item.id); else arr.splice(i,1);
+            Store.set(cfg.favKey, arr);
+            paint();
+            sfx.click(); haptic('light');
+            if(angarFilterMode==='favorite'){ angarBuilt=false; angarBuildGrid(); }
+          });
+          box.appendChild(fav);
+        })();
       }
       el.addEventListener('click',()=>{ angarPick(item.id); });
       grid.appendChild(el);
@@ -2989,6 +3025,12 @@ Store.init(()=>{
   S.launchFx = saneNumber(Store.get('launchFx',0),0); // 29.08.2026: было S.flash/Store-ключ 'flash' — переименовано, см. game.js
   S.ownedTrails = saneArray(Store.get('ownedTrails',[0]),[0]); // 05.09.2026: след — независимый от скина, все стартуют с «Нет», без ANGAR_FREEBIE (владелец: старая пара скин→след не переносится)
   S.trail = saneNumber(Store.get('trail',0),0);
+  // 07.09.2026 «Избранное»: по одному массиву на категорию Тюнинга, пусто по умолчанию
+  // (в отличие от ownedX — тут нет фрибута, только личный выбор игрока).
+  S.favSkins = saneArray(Store.get('favSkins',[]),[]);
+  S.favDecals = saneArray(Store.get('favDecals',[]),[]);
+  S.favLaunchFx = saneArray(Store.get('favLaunchFx',[]),[]);
+  S.favTrails = saneArray(Store.get('favTrails',[]),[]);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);
