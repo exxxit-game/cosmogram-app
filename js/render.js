@@ -2494,6 +2494,112 @@ function renderTrailPattern(c, style, col){
       c.strokeStyle=col(a); c.beginPath();
       c.moveTo(x-3,y); c.lineTo(x+3,y); c.moveTo(x,y-3); c.lineTo(x,y+3); c.stroke();
     });
+  /* 07.09.2026 «Аудит вспышек и следов» (владелец: проверить/отполировать уже существующие
+     134 вспышки + 17 следов, тем же приёмом, что и скины) — найден настоящий баг, не
+     гипотеза: у 7 премиум-следов (loopKnot/snakeWave/heartKnot/trailConstellation/
+     paperclip/rainbowArc/waterWaves) и у Морзянки не было ветки здесь вообще — плитка в
+     Тюнинге рисовала пустой квадрат (totalAlpha=0, проверено и численно на реальной
+     функции, и вживую на экране), хотя в самом полёте (drawStructuredTrail выше) все они
+     работают правильно. Ниже — та же честная заморозка, что у остальных стилей этой
+     функции: тот же облегчённый набор точек, что у «Ленты»/«Нити-жемчуг», с формулой
+     стиля из drawStructuredTrail, подогнанной под всего ~9 точек вместо ~100 у настоящего
+     шлейфа (частота колебания увеличена соразмерно, чтобы волна/пульс были видны и на
+     коротком отрезке — тот же приём, каким уже пользуются существующие случаи здесь). */
+  } else if(style==='loopKnot'){ // Узел-петля: та же лента, что «Лента», ширина пульсирует волной — читается как затянутый бант
+    const seg=[[0,8],[0,13],[0,18],[0,23],[0,28],[0,33],[0,38],[0,43],[0,48],[0,53]];
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    for(let i=1;i<seg.length;i++){
+      const age=1-(i-1)/(seg.length-1);
+      c.strokeStyle=col(age*.55); c.lineWidth=Math.max(.5,(2+4*Math.abs(Math.sin(i*.9)))*age);
+      c.beginPath(); c.moveTo(seg[i-1][0],seg[i-1][1]); c.lineTo(seg[i][0],seg[i][1]); c.stroke();
+    }
+    c.restore();
+  } else if(style==='snakeWave'){ // Волна-змейка: путь колышется перпендикулярно направлению полёта
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    c.strokeStyle=col(.5); c.lineWidth=2.2;
+    c.beginPath();
+    for(let i=0;i<11;i++){
+      const y=8+i*4.8, x=Math.sin(i*.9)*4;
+      if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke(); c.restore();
+  } else if(style==='heartKnot'){ // Сердце-узел: жемчужная нить, но тёплым цветом и с мягкими бусинами-сердечками
+    const pts=[[0,8,.85],[-.5,20,.65],[1,32,.45],[1.5,44,.28],[0,56,.15]];
+    c.save(); c.globalCompositeOperation='lighter';
+    c.strokeStyle=col(.4); c.lineWidth=.7; c.beginPath();
+    pts.forEach(([x,y],i)=>{ if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); c.stroke();
+    pts.forEach(([x,y,a],i)=>{ if(i%2) return; const r=1.6*a+.4;
+      c.fillStyle=col(a*.9);
+      c.beginPath();
+      c.moveTo(x,y+r*.6);
+      c.arc(x-r*.5,y,r*.5,Math.PI*.9,Math.PI*2.4);
+      c.arc(x+r*.5,y,r*.5,Math.PI*1.6,Math.PI*3.1);
+      c.closePath(); c.fill();
+    });
+    c.restore();
+  } else if(style==='trailConstellation'){ // Созвездие-след: редкие точки, соединённые тонкими линиями
+    const pts=[[0,8,.9],[-2,20,.7],[3,32,.5],[-1,44,.3],[2,56,.15]];
+    c.save(); c.globalCompositeOperation='lighter';
+    c.strokeStyle=col(.3); c.lineWidth=.5;
+    let prev=null;
+    pts.forEach(([x,y,a])=>{
+      if(prev){ c.beginPath(); c.moveTo(prev[0],prev[1]); c.lineTo(x,y); c.stroke(); }
+      c.fillStyle=col(a*.9);
+      c.beginPath(); c.arc(x,y,1.8*a+.5,0,6.2832); c.fill();
+      prev=[x,y];
+    });
+    c.restore();
+  } else if(style==='paperclip'){ // Скрепка: лента с двойным нахлёстом ширины — реже и резче, чем «Узел-петля»
+    const seg=[[0,8],[0,16],[0,24],[0,32],[0,40],[0,48],[0,56]];
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    for(let i=1;i<seg.length;i++){
+      const age=1-(i-1)/(seg.length-1);
+      const w=(i%2)? 5:1.2;
+      c.strokeStyle=col(age*.55); c.lineWidth=Math.max(.5,w*age);
+      c.beginPath(); c.moveTo(seg[i-1][0],seg[i-1][1]); c.lineTo(seg[i][0],seg[i][1]); c.stroke();
+    }
+    c.restore();
+  } else if(style==='rainbowArc'){ // Радуга-арка: основной путь + пара тонких дуг-эхо со сдвигом
+    const seg=[[0,8],[0,20],[0,32],[0,44],[0,56]];
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    [0,-4,4].forEach((off,k)=>{
+      c.strokeStyle=col(k===0?.5:.22); c.lineWidth=k===0?2:1;
+      c.beginPath();
+      seg.forEach(([x,y],i)=>{ if(i===0) c.moveTo(x,y+off); else c.lineTo(x,y+off); });
+      c.stroke();
+    });
+    c.restore();
+  } else if(style==='waterWaves'){ // Волны: несколько параллельных линий рядом, как рябь за кормой
+    const seg=[[0,8],[0,20],[0,32],[0,44],[0,56]];
+    c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+    for(let k=-2;k<=2;k++){
+      c.strokeStyle=col(0.4-Math.abs(k)*.08); c.lineWidth=1;
+      c.beginPath();
+      seg.forEach(([x,y],i)=>{ const xx=x+k*3; if(i===0) c.moveTo(xx,y); else c.lineTo(xx,y); });
+      c.stroke();
+    }
+    c.restore();
+  } else if(style==='morse'){ // Морзянка: те же элементы (точка/тире) настоящего позывного, что и в полёте (morseUnits/morseElemsOf,
+    // core.js), на прямой синтетической дуге — morseGlyphs() сюда не годится, она рисует в глобальный ctx полёта, а не в переданный c
+    if(typeof morseUnits==='function' && typeof morseElemsOf==='function'){
+      const pat=morseUnits(typeof myCallsign==='function'?myCallsign():'');
+      if(pat){
+        const elems=morseElemsOf(pat), y0=8, yMax=56;
+        c.lineCap='round';
+        elems.forEach(el=>{
+          const a0=y0+el.off*MORSE_UNIT, a1=a0+el.len*MORSE_UNIT;
+          if(a0>yMax) return;
+          const mid=(a0+a1)/2, age=Math.max(0,1-(mid-y0)/(yMax-y0));
+          if(el.k==='dot'){
+            c.fillStyle=col(age*.9);
+            c.beginPath(); c.arc(0,mid,1.6,0,6.2832); c.fill();
+          } else {
+            c.strokeStyle=col(age*.9); c.lineWidth=2.4;
+            c.beginPath(); c.moveTo(0,a0); c.lineTo(0,Math.min(a1,yMax)); c.stroke();
+          }
+        });
+      }
+    }
   } else if(style==='celticTwist' || style==='celticBraid'){ // 05.09.2026: статичная заморозка той же формулы, что в drawStructuredTrail ниже — см. HUMAN-SYMBOLS.md
     const N=style==='celticTwist'?2:3, A=3.6;
     for(let i=1;i<=12;i++){
