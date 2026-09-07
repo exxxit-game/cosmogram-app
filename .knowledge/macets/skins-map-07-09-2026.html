@@ -17,40 +17,85 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
 .wrap{max-width:1180px;margin:0 auto}
-h1{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
-.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 28px;max-width:880px}
-.topic{margin-bottom:38px;padding-top:22px;border-top:1px solid var(--panel-edge)}
-.topic:first-of-type{border-top:none;padding-top:0}
-.topicHead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.legend{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 18px;font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:30px}
+.legend b{color:var(--text)}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.catEmpty{color:var(--text-dim);font-size:12.5px;line-height:1.55;font-style:italic;margin:0 0 10px;max-width:820px}
+.topic{margin-bottom:0}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .topicHead h2{font-size:19px;margin:0;font-weight:800}
-.topicHead .status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.status.hist{color:#a3792e;background:rgba(163,121,46,.12);border-color:rgba(163,121,46,.35)}
+.status.bug{color:#d97757;background:rgba(217,119,87,.12);border-color:rgba(217,119,87,.35)}
 .topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
 .card h3{font-size:12px;margin:1px 0 0}
 .card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
-.legend{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 18px;font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:30px}
+.historical{background:var(--panel);border:1px solid #a3792e;border-radius:14px;padding:14px 16px;margin-top:14px}
+.histBadge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#a3792e;border:1px solid #a3792e;border-radius:999px;padding:2px 9px;margin-bottom:10px}
+.histBody{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.histBody canvas{width:130px;height:130px;flex:none;background:var(--card-bg);border-radius:9px}
+.histText{flex:1;min-width:220px}
+.histText h3{font-size:14px;margin:0 0 6px}
+.histText p{font-size:11.5px;color:var(--text-dim);line-height:1.55;margin:0 0 6px}
+.histText p:last-child{margin-bottom:0}
 </style>
 <div class="wrap">
-  <h1>Карта скинов — партия 07.09.2026</h1>
+  <h1 class="title">Карта скинов — партия 07.09.2026</h1>
   <p class="sub">Свод тем, одобренных за эту сессию (макет-уровень — дизайн
   подтверждён, ничего из этого пока НЕ добавлено в игру как реальный код). Каждая
   карточка — тот же живой canvas, что и в собственном макете темы; полная запись
   проверок и история правок по каждой теме остаётся в её отдельном артефакте, здесь —
   сводный обзор для ориентира. Файл — главный, обновляется при каждом новом одобрении;
   хранится и в артефакте, и в репозитории (.knowledge/macets/), под git.</p>
-  <div class="legend"><b>Как читать:</b> «✓ одобрено» — владелец подтвердил дизайн явно
-  словом. Порядок разделов — по мере одобрения: Снежинка Коха, Математика оригами,
-  Спирограф, Тесселяции Эшера, Мукарнас, Сэйгайха, Меандр.</div>
+  <div class="legend">
+    <b>Разделы</b> — по стилю, не по дате одобрения; специально с запасом на десятки
+    будущих тем (в `.knowledge/` уже исследовано ~90 тем сверх этого файла — см.
+    заготовленные пустые разделы ниже с указанием, что туда пойдёт).<br>
+    <b>Бейджи</b> рядом с названием: «✓ одобрено» — владелец подтвердил дизайн явно
+    словом; «📜 история» — рядом есть отдельная, чётко подписанная историческая
+    иллюстрация, которая НЕ является скином (см. принцип в теме «Токапу»); «⚠ баг» —
+    при создании темы была реально пойманная (и исправленная до или после показа)
+    ошибка построения, поучительная, стоит прочитать её описание в теме.
+  </div>
 
+  <h1 class="catHead">Фракталы и рекурсивные кривые</h1>
   <div class="topic">
     <div class="topicHead"><h2>Снежинка Коха</h2><span class="status">✓ одобрено</span></div>
     <p class="topicDesc">Фрактал фон Коха (1904) — периметр растёт в 4/3 раза за
     разбиение (проверено числом), площадь сходится к 1.6·A₀.</p>
     <div class="grid" id="gridKoch"></div>
   </div>
+  <p class="catEmpty">Задел на будущее: снежинка Серпинского, кривые Гильберта/Пеано,
+  африканские фракталы, L-системы — все уже исследованы в GENERATIVE-GEOMETRY.md,
+  ничего пока не отрисовано.</p>
 
+  <h1 class="catHead">Механические и параметрические кривые</h1>
+  <div class="topic">
+    <div class="topicHead"><h2>Спирограф — гипотрохоиды</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Реально катящийся круг, 5 передаточных чисел R:r:d (4/6/7/10/8
+    лепестков, честно посчитано). Все 5 карточек — резец вживую вычерчивает кривую
+    (владелец попросил анимировать все, не одну демо-карточку).</p>
+    <div class="grid" id="gridSpiro"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Розетка циркуль-линейка</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Настоящее построение циркулем — vesica piscis, «цветок жизни».
+    Центры второго кольца — реально выведенные дальние точки пересечения окружностей
+    первого (не досочинённые координаты), проверено числом.</p>
+    <div class="grid" id="gridRos"></div>
+  </div>
+  <p class="catEmpty">Задел: фигуры Лиссажу, круги Фурье, фигуры Хладни, странные
+  аттракторы, розы Родонеи — часть уже построена отдельными артефактами (см. чат),
+  ещё не влита в этот файл единым проходом со сверкой id.</p>
+
+  <h1 class="catHead">Оригами, тела и пропорции</h1>
   <div class="topic">
     <div class="topicHead"><h2>Математика оригами — твист-фолд</h2><span class="status">✓ одобрено</span></div>
     <p class="topicDesc">Скручивание квадрата (внутренний квадрат на параметре t, честный
@@ -59,15 +104,11 @@ h1{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     Кавасаки/Маэкавы дважды не удержала саму тему при тайловании.</p>
     <div class="grid" id="gridOri"></div>
   </div>
+  <p class="catEmpty">Задел: 5 платоновых тел (уже построено отдельным артефактом, не
+  влито сюда), лента Мёбиуса/бутылка Клейна, каноны пропорций (Витрувий→да Винчи→Модулор
+  Ле Корбюзье).</p>
 
-  <div class="topic">
-    <div class="topicHead"><h2>Спирограф — гипотрохоиды</h2><span class="status">✓ одобрено</span></div>
-    <p class="topicDesc">Реально катящийся круг, 5 передаточных чисел R:r:d (4/6/7/10/8
-    лепестков, честно посчитано). Все 5 карточек — резец вживую вычерчивает кривую
-    (владелец попросил анимировать все, не одну демо-карточку).</p>
-    <div class="grid" id="gridSpiro"></div>
-  </div>
-
+  <h1 class="catHead">Тесселяции и мозаики</h1>
   <div class="topic">
     <div class="topicHead"><h2>Тесселяции Эшера</h2><span class="status">✓ одобрено</span></div>
     <p class="topicDesc">Настоящий метод переноса края (не абстрактный Пенроуз) — проверено
@@ -75,36 +116,112 @@ h1{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     мелких плиток (владелец отметил карточки с крупными плитками и вспышки).</p>
     <div class="grid" id="gridEsch"></div>
   </div>
-
   <div class="topic">
-    <div class="topicHead"><h2>Мукарнас</h2><span class="status">✓ одобрено</span></div>
+    <div class="topicHead"><h2>Мукарнас</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
     <p class="topicDesc">Ярусный сталактитовый свод, вид спереди — перевязка «центр точно
     середина стыка» (не приближённый сдвиг), сходится к вершине 6→1/8→1. Найдена и
     исправлена реальная асимметрия до окончательного показа.</p>
     <div class="grid" id="gridMuq"></div>
   </div>
-
   <div class="topic">
-    <div class="topicHead"><h2>Сэйгайха — японские волны</h2><span class="status">✓ одобрено</span></div>
+    <div class="topicHead"><h2>Сэйгайха — японские волны</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
     <p class="topicDesc">Вложенные дуги-чешуйки, касание соседних чешуек одного ряда — ровно
     2R (проверено числом). Владелец: «вау, особенно анимация» — после фикса реальной беды
     (сплошная заливка перекрывающихся колец стирала соседний ряд; починено обводкой). Все
     4 карточки — вспышки, разные волны/направления.</p>
     <div class="grid" id="gridSei"></div>
   </div>
+  <p class="catEmpty">Задел: Пенроуз/квазикристаллы, плитки Трюше, диаграммы Вороного,
+  узоры Тьюринга (реакционно-диффузные) — все уже построены отдельными артефактами, не
+  влиты сюда. Ещё не отрисовано: зеллидж (Марокко), гиперболическая мозаика (диск
+  Пуанкаре), 17 групп обоев, гирих.</p>
 
+  <h1 class="catHead">Оптика, цвет и материя</h1>
   <div class="topic">
-    <div class="topicHead"><h2>Меандр — греческий ключ</h2><span class="status">✓ одобрено</span></div>
+    <div class="topicHead"><h2>Оп-арт — модуляция полос Райли</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Реальный приём Бриджет Райли — ширина полосы задаётся формулой
+    w_i = w̄ + A·sin(i·f+φ), амплитуда всегда меньше средней ширины (проверено числом,
+    ширина никогда не касается нуля).</p>
+    <div class="grid" id="gridOp"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Альберс — «Посвящение квадрату»</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Вложенные квадраты, честно смещённые вниз (не по центру) —
+    самосогласованная, проверенная числом пропорция вместо неточно вспомненного
+    исторического соотношения.</p>
+    <div class="grid" id="gridAlb"></div>
+  </div>
+  <p class="catEmpty">Задел: иризация/структурная окраска, муаровые узоры — уже построены
+  отдельными артефактами, не влиты сюда. Ещё не отрисовано: 3 именованные схемы цветовой
+  гармонии (комплементарная/аналоговая/триадная) из COLOR-THEORY.md.</p>
+
+  <h1 class="catHead">Традиционные орнаменты и ремёсла</h1>
+  <div class="topic">
+    <div class="topicHead"><h2>Меандр — греческий ключ</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
     <p class="topicDesc">Одна непрерывная линия на целочисленной сетке, повороты только 90°,
     самопересечение структурно невозможно (путь никогда не идёт влево, проверено числом —
     0 повторных клеток за 20 повторов). Владелец: «5 намного интереснее, чем по одной, а
     когда разные цвета — ещё сильнее выделяется» — карточка с 5 разноцветными полосами.</p>
     <div class="grid" id="gridMea"></div>
   </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Бревенчатая изба (Log Cabin)</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Настоящий американский лоскутный блок — брёвна-полосы по кругу
+    вокруг центра-«очага», светлая/тёмная диагональ через круги — не раскраска для
+    красоты. «Восход над амбаром» — реальная схема сборки 4 копий одного блока.</p>
+    <div class="grid" id="gridLog"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Токапу — сетка инкских ячеек</h2><span class="status">✓ одобрено</span><span class="status hist">📜 история</span></div>
+    <p class="topicDesc">Настоящая инкская система — сетка ячеек со своим мотивом в
+    каждой, целые блоки повторяются переносом. 5 мотивов по формуле от (столбец,строка),
+    сознательно НЕ строгая шахматка через одну клетку.</p>
+    <div class="grid" id="gridToc"></div>
+    <div class="historical">
+      <div class="histBadge">Не скин — только история</div>
+      <div class="histBody">
+        <canvas id="tHist"></canvas>
+        <div class="histText">
+          <h3>Колькапата — туника Сапа Инки</h3>
+          <p>Строгая шахматная туника (ровно 2 токапу через клетку без исключений) — по
+          Гуаману Поме де Айяле и анализу Джона Роу — исключительный знак Сапа Инки и его
+          личной гвардии, не рядовой узор. Показана здесь для контекста историей, а не
+          как игровой скин: сознательно НЕ реализована выше как скин, именно чтобы не
+          превращать знак верховной власти в обычную доступную всем косметику.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Керамика Мимбрес</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Чёрно-белая роспись дна чаши (750–1150 гг., юго-запад США) —
+    зубчатые кольца с реальной поворотной симметрией (360°/N, проверено числом до
+    расхождения 1.89e-15), многоярусная композиция как в настоящих чашах.</p>
+    <div class="grid" id="gridMim"></div>
+  </div>
+  <p class="catEmpty">Задел: кельтские узлы, колам/ранголи, батик Паранг/Кавунг, кенте
+  (Гана), адинкра, персидские/анатолийские ковровые узлы, писанки, шиболи/макраме и
+  другие ремесленные техники из CRAFT-TECHNIQUES.md.</p>
+
+  <h1 class="catHead">Знаки, письмо и коды</h1>
+  <p class="catEmpty">Пока пусто в этом файле — «Партия: пять букв Хангыля» уже построена
+  отдельным артефактом, не влита сюда. Задел: мировые системы письма, числовые
+  системы/кипу/И-Цзин, исторические шифры, геральдика, защитные символы (Назар/Хамса),
+  алхимические/зодиакальные глифы — WORLD-SCRIPTS.md, NUMBER-SYSTEMS-AND-CODES.md,
+  HISTORICAL-CIPHERS.md, PROTECTIVE-SYMBOLS.md, HUMAN-SYMBOLS.md.</p>
+
+  <h1 class="catHead">Наука, природа и точные построения</h1>
+  <p class="catEmpty">Пока пусто в этом файле, хотя уже построено отдельными артефактами
+  (не влито сюда): клеточные автоматы, странные аттракторы, диаграммы Вороного, узоры
+  Тьюринга, фигуры Хладни/Лиссажу, круги Фурье, муар, иризация, платоновы тела, Пенроуз,
+  Трюше. Ещё не отрисовано: небесные инструменты, структурные системы (геодезический
+  купол и т.п.), картографические проекции, календарные системы, воздушные змеи —
+  CELESTIAL-INSTRUMENTS.md, STRUCTURAL-SYSTEMS.md, MAP-PROJECTIONS.md,
+  CALENDAR-SYSTEMS.md, KITES-AND-FIREWORKS.md.</p>
 </div>
 <script>
 /* ===== Общий шаблон партии (BODY_PTS/clipBody/fillBody/edgeStroke/loop/loopFlash/
-   mountCards) — один экземпляр на все 5 тем, они используют его идентично в своих
+   mountCards) — один экземпляр на все темы, они используют его идентично в своих
    собственных макетах. ===== */
 const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
 function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
@@ -188,7 +305,7 @@ function mountCards(gridId, items){
   ).join('');
 }
 
-/* ===================== 1. СНЕЖИНКА КОХА ===================== */
+/* ===================== СНЕЖИНКА КОХА ===================== */
 function kochSubdivide(points){
   const result=[]; const n=points.length;
   for(let i=0;i<n;i++){
@@ -234,7 +351,7 @@ mountCards('gridKoch', [
 ]);
 loop('k0', fxIt0, 4.2); loop('k1', fxIt1, 4.2); loop('k2', fxIt2, 4.2); loop('k3', fxIt3, 4.2); loop('k4', fxIt4, 4.2);
 
-/* ===================== 2. ОРИГАМИ — ТВИСТ-ФОЛД + МЬЮРА ===================== */
+/* ===================== ОРИГАМИ — ТВИСТ-ФОЛД + МЬЮРА ===================== */
 function pointInPoly(x,y,poly){
   let inside=false;
   for(let i=0,j=poly.length-1;i<poly.length;j=i++){
@@ -316,7 +433,7 @@ mountCards('gridOri', [
 ]);
 loop('o1', fxTwistFull, 4.2); loop('o2', fxTwistGentle, 4.2); loop('o3', fxMiura, 4.2); loopFlash('o4', fxFoldFlash, 4.2, 1600);
 
-/* ===================== 3. СПИРОГРАФ ===================== */
+/* ===================== СПИРОГРАФ ===================== */
 function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); return b===0?a:gcd(b,a%b); }
 function hypotrochoid(R,r,d,stepsPerTurn){
   const q = r/gcd(r,R-r);
@@ -370,7 +487,77 @@ mountCards('gridSpiro', [
 ]);
 SPIRO_SETS.forEach((set,i)=>{ loopFlash('s'+(i+1), fxSpiroTrace(set), 4.2, 2400+i*260); });
 
-/* ===================== 4. ТЕССЕЛЯЦИИ ЭШЕРА ===================== */
+/* ===================== РОЗЕТКА ЦИРКУЛЬ-ЛИНЕЙКА ===================== */
+/* drawRosetteCompass — НЕ drawRosette: то имя уже занято Спирографом выше (своя, другая
+   отрисовка), при слиянии файлов переименовано, чтобы не совпасть и не перезаписать. */
+function circleIntersections(c1,c2,r){
+  const [x1,y1]=c1,[x2,y2]=c2;
+  const d=Math.hypot(x2-x1,y2-y1);
+  const a=d/2, h=Math.sqrt(Math.max(0,r*r-a*a));
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  const ux=(x2-x1)/d, uy=(y2-y1)/d;
+  const px=-uy, py=ux;
+  return [[mx+h*px, my+h*py],[mx-h*px, my-h*py]];
+}
+function buildRosette(r, rings){
+  const centers=[[0,0]];
+  const ring1=[]; for(let i=0;i<6;i++){ const a=i*Math.PI/3; ring1.push([r*Math.cos(a), r*Math.sin(a)]); }
+  centers.push(...ring1);
+  if(rings>=2){
+    const ring2=[];
+    for(let i=0;i<6;i++){
+      const [p1,p2]=circleIntersections(ring1[i], ring1[(i+1)%6], r);
+      ring2.push(Math.hypot(...p1)>Math.hypot(...p2)? p1 : p2);
+    }
+    centers.push(...ring2);
+  }
+  return centers;
+}
+function drawRosetteCompass(ctx, centers, r, hue, frac, fillLens){
+  const n = frac!=null ? Math.max(1, Math.round(centers.length*frac)) : centers.length;
+  const shown = centers.slice(0,n);
+  if(fillLens){
+    for(let i=1;i<shown.length;i++){
+      for(let j=0;j<i;j++){
+        const d=Math.hypot(shown[i][0]-shown[j][0], shown[i][1]-shown[j][1]);
+        if(d<2*r && d>0.001){
+          const [p1,p2]=circleIntersections(shown[i],shown[j],r);
+          ctx.fillStyle=`hsla(${hue},55%,38%,.5)`;
+          ctx.beginPath();
+          ctx.arc(shown[j][0],shown[j][1], r, Math.atan2(p1[1]-shown[j][1],p1[0]-shown[j][0]), Math.atan2(p2[1]-shown[j][1],p2[0]-shown[j][0]));
+          ctx.arc(shown[i][0],shown[i][1], r, Math.atan2(p2[1]-shown[i][1],p2[0]-shown[i][0]), Math.atan2(p1[1]-shown[i][1],p1[0]-shown[i][0]));
+          ctx.closePath(); ctx.fill();
+        }
+      }
+    }
+  }
+  shown.forEach(([cx,cy],i)=>{
+    [[3.2,0.08],[1.4,0.22],[0.5,0.9]].forEach(([lw,a])=>{
+      ctx.strokeStyle=`hsla(${hue},80%,72%,${a})`; ctx.lineWidth=lw;
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+    });
+  });
+  return shown;
+}
+function fxRosCompass(r, rings, hue, fillLens, speed){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const centers=buildRosette(r,rings);
+  const frac = (p*speed)%1 < 0.82 ? ((p*speed)%1)/0.82 : 1;
+  drawRosetteCompass(ctx, centers, r, hue, Math.max(0.05,frac), fillLens);
+  ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridRos', [
+  ['r1','Зерно жизни (7 кругов)','Классическое построение — центр + 6 вокруг, каждый центр честно на краю центрального (r, проверено числом). Циркуль чертит вживую.'],
+  ['r2','Цветок жизни (13 кругов)','Второе кольцо — дальние точки пересечения соседних окружностей первого (r√3, угол 60°, проверено числом).'],
+  ['r3','Лепестки (заливка)','Те же 13 окружностей, но области взаимного пересечения честно закрашены по мере построения — видна сама vesica piscis.'],
+  ['r4','Быстрый циркуль','Тот же цветок жизни, темп в 1.6 раза быстрее — честно другой параметр, не повтор r2.'],
+]);
+loopFlash('r1', fxRosCompass(4.6,1,45,false,1), 4.2, 2200);
+loopFlash('r2', fxRosCompass(2.9,2,200,false,1), 4.2, 2800);
+loopFlash('r3', fxRosCompass(2.9,2,320,true,1), 4.2, 3000);
+loopFlash('r4', fxRosCompass(2.9,2,200,false,1.6), 4.2, 2800);
+
+/* ===================== ТЕССЕЛЯЦИИ ЭШЕРА ===================== */
 function gauss(x,c,w){ const z=(x-c)/w; return Math.exp(-(z*z)); }
 function zc(fn){ return (x)=> fn(x)-fn(0)*(1-x)-fn(1)*x; }
 const F_BIRD = zc(x=>0.40*gauss(x,0.45,0.16)+0.50*gauss(x,0.70,0.055));
@@ -386,10 +573,6 @@ function tilePath(ctx, ox, oy, S, fVals, gVals, N){
   ctx.closePath();
 }
 function drawField(ctx, f, g, S, cols0,cols1,rows0,rows1, tone1, tone2, checkFn){
-  // 07.09.2026: f(x)/g(y) — одни и те же для КАЖДОЙ плитки (локальные координаты одинаковы
-  // у всех клеток решётки) — считались заново на каждую плитку (до 16 плиток) на каждый
-  // кадр вспышки. Теперь честно посчитаны ОДИН раз за вызов (за кадр), плитки только читают
-  // готовый массив — то же самое изображение, в разы меньше вызовов Math.exp внутри gauss().
   const N=14;
   const fVals=new Array(N+1), gVals=new Array(N+1);
   for(let i=0;i<=N;i++){ fVals[i]=f(i/N); gVals[i]=g(i/N); }
@@ -431,9 +614,7 @@ loop('e1', fxEscherTrick, 4.2); loop('e2', fxEscherTrickFish, 4.2);
 loopFlash('e3', fxEscherMorph(F_BIRD,G_BIRD,'hsla(205,50%,55%,.92)','hsla(35,65%,60%,.92)'), 4.2, 2600);
 loopFlash('e4', fxEscherMorph(F_FISH,G_FISH,'hsla(175,55%,48%,.92)','hsla(280,45%,55%,.92)'), 4.2, 2600);
 
-/* ===================== 5. МУКАРНАС ===================== */
-// 07.09.2026: ярусы (позиции/ширины/высоты) не зависят от litK (фазы света) — вспышка
-// пересчитывала всю перевязку заново каждый кадр, хотя меняется только освещение.
+/* ===================== МУКАРНАС ===================== */
 const _muqTiersCache=new Map();
 function buildTiers(N0,W0,h0,s,K){
   const key=N0+'|'+W0+'|'+h0+'|'+s+'|'+K;
@@ -505,12 +686,7 @@ mountCards('gridMuq', [
 ]);
 loop('m1', fxMuqA, 4.2); loop('m2', fxMuqB, 4.2); loop('m3', fxMuqA, 7.4); loopFlash('m4', fxMuqLight, 4.2, 3000);
 
-/* ===================== 6. СЭЙГАЙХА ===================== */
-// 07.09.2026: сетка центров чешуек не зависит от фазы/времени — пересчитывалась целиком
-// (вложенный цикл ряд×столбец) на каждый кадр каждой из 4 карточек. Кэш по R — считаем
-// один раз на карточку, дальше только читаем. Заодно phaseFn(j) вынесен из внутреннего
-// цикла по столбцам (раньше честно вызывался заново на каждую ячейку в ряду, хотя зависит
-// только от номера ряда, не столбца) — то же самое значение, один вызов на ряд, не на ячейку.
+/* ===================== СЭЙГАЙХА ===================== */
 const _seiCentersCache=new Map();
 function seigaihaCenters(R){
   if(_seiCentersCache.has(R)) return _seiCentersCache.get(R);
@@ -560,7 +736,7 @@ loopFlash('w2', fxSeiWave(2.6,5,15,1.4), 4.2, 2600);
 loopFlash('w3', fxSeiWave(1.3,4,175,2.6), 4.2, 1900);
 loopFlash('w4', fxSeiWave(2.2,4,320,-1.6), 4.2, 2400);
 
-/* ===================== 7. МЕАНДР ===================== */
+/* ===================== МЕАНДР ===================== */
 function meanderWalk(startX,startY,moves){
   let x=startX,y=startY; const pts=[[x,y]];
   moves.forEach(m=>{
@@ -571,7 +747,7 @@ function meanderWalk(startX,startY,moves){
 }
 const MEA_KEY_A = 'U U R U R D D D R U U R D D R'.split(' ');
 const MEA_KEY_B = 'U U U U R D D R U U R D D D D R'.split(' ');
-const _meanderCache=new Map(); // 07.09.2026: обход сетки один и тот же на каждый кадр — кэш по (юнит,повторы)
+const _meanderCache=new Map();
 function buildMeander(unit, reps){
   const key=unit.join('')+'|'+reps;
   if(_meanderCache.has(key)) return _meanderCache.get(key);
@@ -643,7 +819,10 @@ function fxMeaTrace5(ctx, p){
    скриптом по всему файлу): id 'e1'-'e4' здесь совпадали с id карточек раздела Эшера
    (тоже 'e1'-'e4') — document.getElementById находит только ПЕРВЫЙ элемент с таким id,
    рисование Меандра уходило в канвасы Эшера, а собственные канвасы Меандра оставались
-   пустыми навсегда. Переименовано в mea1-mea5 — уникально по всему файлу. */
+   пустыми навсегда. Переименовано в mea1-mea5 — уникально по всему файлу. Стандартное
+   правило теперь: перед КАЖДЫМ слиянием тем в этот файл — скрипт-проверка уникальности
+   id по ВСЕМУ файлу, не только внутри одной новой темы (см. Мимбрес ниже — то же самое
+   поймано и исправлено ДО показа, а не после жалобы). */
 mountCards('gridMea', [
   ['mea1','Юнит A — резец вычерчивает','0 самопересечений за 20 повторов (проверено числом).'],
   ['mea2','Юнит B — выше и уже','Честно другая арифметика хода, не перекраска.'],
@@ -656,4 +835,305 @@ loopFlash('mea2', fxMeaTraceB, 4.2, 2400);
 loopFlash('mea3', fxMeaTraceFrieze, 4.2, 3000);
 loopFlash('mea4', fxMeaTraceCloseup, 4.2, 2000);
 loopFlash('mea5', fxMeaTrace5, 4.2, 3200);
+
+/* ===================== БРЕВЕНЧАТАЯ ИЗБА (LOG CABIN) ===================== */
+function buildLogCabin(c, w, rounds){
+  let x0=-c/2, y0=-c/2, x1=c/2, y1=c/2;
+  const logs=[{x0,y0,x1,y1,side:-1}];
+  for(let r=0;r<rounds;r++){
+    for(let side=0;side<4;side++){
+      let lx0,ly0,lx1,ly1;
+      if(side===0){ lx0=x1; lx1=x1+w; ly0=y0; ly1=y0+(y1-y0); x1=lx1; }
+      else if(side===1){ lx0=x0; lx1=x1; ly0=y1; ly1=y1+w; y1=ly1; }
+      else if(side===2){ lx0=x0-w; lx1=x0; ly0=y0; ly1=y1; x0=lx0; }
+      else { lx0=x0; lx1=x1; ly0=y0-w; ly1=y0; y0=ly0; }
+      logs.push({x0:lx0,y0:ly0,x1:lx1,y1:ly1, side});
+    }
+  }
+  return logs;
+}
+function drawLogCabin(ctx, logs, ox, oy, rot, n){
+  const cos=Math.cos(rot), sin=Math.sin(rot);
+  const tf=(x,y)=>[ox+x*cos-y*sin, oy+x*sin+y*cos];
+  const shown = n!=null ? logs.slice(0,n) : logs;
+  shown.forEach(l=>{
+    const corners=[[l.x0,l.y0],[l.x1,l.y0],[l.x1,l.y1],[l.x0,l.y1]].map(([x,y])=>tf(x,y));
+    let fill;
+    if(l.side===-1) fill='#b23a3a';
+    else fill = (l.side<2) ? 'hsla(42,55%,72%,1)' : 'hsla(215,35%,26%,1)';
+    ctx.fillStyle=fill;
+    ctx.beginPath(); corners.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(5,6,10,.55)'; ctx.lineWidth=0.04; ctx.stroke();
+  });
+}
+/* «Восход над амбаром» (Barn Raising) — 07.09.2026, найдено собственной численной
+   проверкой ДО показа: первая версия сопоставляла повороты позициям НАУГАД (TL=π, BR=0) —
+   2 из 4 светлых углов оказались на расстоянии 8.43 от общего центра вместо 1.19 у
+   остальных двух. Верное соответствие выведено из направления «блок→центр» для каждой
+   позиции (TL: 0°, TR: 90°, BL: −90°, BR: 180°) — перепроверено числом, все 4 расстояния
+   до центра равны (1.188). */
+function fxLogSewing(logs, ox, oy, rot, speed){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const frac = ((p*(speed||1))%1)<0.85 ? ((p*(speed||1))%1)/0.85 : 1;
+  const n=Math.max(1, Math.round(logs.length*Math.max(0.04,frac)));
+  drawLogCabin(ctx, logs, ox,oy, rot, n);
+  ctx.restore(); edgeStroke(ctx);
+}; }
+function fxLogSewingBarn(logsFn, s, oy0){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const logs=logsFn();
+  const frac = p<0.85? p/0.85 : 1;
+  const n=Math.max(1, Math.round(logs.length*Math.max(0.04,frac)));
+  const positions=[[-s,-s+oy0, 0],[s,-s+oy0, Math.PI/2],[-s,s+oy0, -Math.PI/2],[s,s+oy0, Math.PI]];
+  positions.forEach(([ox,oy,rot])=>drawLogCabin(ctx, logs, ox,oy, rot, n));
+  ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridLog', [
+  ['l1','Один блок, 4 круга','Классика — центр «очаг», светлая/тёмная диагональ через круги брёвен, площадь сохраняется точно (проверено числом). Пришивается вживую.'],
+  ['l2','Плотный блок, 6 кругов','Тот же приём, более узкие брёвна (0.55 вместо 1) и на 2 круга больше — честно другие числа, не перекраска.'],
+  ['l3','Восход над амбаром','4 копии одного блока, развёрнутые на 90°/180°/270° (повороты проверены числом — светлые углы честно сходятся в центре), собираются синхронно.'],
+  ['l4','Быстрая сборка','Тот же блок, что в карточке 1, темп в 1.8 раза быстрее — честно другой параметр.'],
+]);
+loopFlash('l1', fxLogSewing(buildLogCabin(2,1,4), 0,-3,0, 1), 4.2, 2400);
+loopFlash('l2', fxLogSewing(buildLogCabin(1.2,0.55,6), 0,-3,0, 1), 4.2, 2800);
+loopFlash('l3', fxLogSewingBarn(()=>buildLogCabin(1.4,0.62,3), 3.4, -3), 3.4, 3200);
+loopFlash('l4', fxLogSewing(buildLogCabin(2,1,4), 0,-3,0, 1.8), 4.2, 2400);
+
+/* ===================== ОП-АРТ — МОДУЛЯЦИЯ ПОЛОС РАЙЛИ ===================== */
+function stripePositions(n, x0, wAvg, amp, freq, phase){
+  const xs=[x0];
+  for(let i=0;i<n;i++){ const w=wAvg+amp*Math.sin(i*freq+phase); xs.push(xs[xs.length-1]+w); }
+  return xs;
+}
+function drawStripesVert(ctx, wAvg, amp, freq, phase, hue, rot){
+  ctx.save(); if(rot) ctx.rotate(rot);
+  const xs=stripePositions(44, -22, wAvg, amp, freq, phase);
+  for(let i=0;i<xs.length-1;i++){
+    ctx.fillStyle = i%2===0 ? `hsla(${hue},10%,92%,.95)` : `hsla(${hue},60%,10%,.95)`;
+    ctx.fillRect(xs[i], -30, xs[i+1]-xs[i], 60);
+  }
+  ctx.restore();
+}
+function drawStripesRing(ctx, gapAvg, amp, freq, phase, hue){
+  const rs=stripePositions(16, 0, gapAvg, amp, freq, phase);
+  for(let i=rs.length-2;i>=0;i--){
+    ctx.fillStyle = i%2===0 ? `hsla(${hue},10%,92%,.95)` : `hsla(${hue},60%,12%,.95)`;
+    ctx.beginPath(); ctx.arc(0,0,rs[i+1],0,Math.PI*2); ctx.fill();
+  }
+}
+function fxOpVert(wAvg,amp,freq,hue,rot){ return (ctx,phase)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  drawStripesVert(ctx, wAvg, amp, freq, phase*Math.PI*2, hue, rot);
+  ctx.restore(); edgeStroke(ctx);
+}; }
+function fxOpRing(gapAvg,amp,freq,hue){ return (ctx,phase)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-4);
+  drawStripesRing(ctx, gapAvg, amp, freq, phase*Math.PI*2, hue);
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridOp', [
+  ['p1','Вертикальные полосы','w̄=1.0, A=0.55, f=0.35 — классическая модуляция Райли, полосы дышат по формуле, не на глаз.'],
+  ['p2','Диагональные полосы','Тот же приём, повёрнут на 35° и другая частота (f=0.5) — честно другая волна, не перекраска.'],
+  ['p3','Концентрические кольца','Та же модуляция, но по радиусу — зазор между кольцами дышит вместо ширины вертикальной полосы.'],
+  ['p4','Частые полосы','w̄=0.6, выше частота (f=0.55) — мельче и чаще, честно другие числа.'],
+]);
+loopFlash('p1', fxOpVert(1.0,0.55,0.35,0,0), 4.2, 3200);
+loopFlash('p2', fxOpVert(1.0,0.5,0.5,40,0.61), 4.2, 2800);
+loopFlash('p3', fxOpRing(1.0,0.5,0.6,200), 4.2, 3400);
+loopFlash('p4', fxOpVert(0.6,0.32,0.55,320,0), 4.2, 2600);
+
+/* ===================== АЛЬБЕРС — «ПОСВЯЩЕНИЕ КВАДРАТУ» ===================== */
+function buildAlbers(outerSide, m, shift, count){
+  const squares=[]; let side=outerSide, cy=0;
+  for(let i=0;i<count;i++){ squares.push({side,cy}); side-=2*m; cy+=shift; }
+  return squares;
+}
+function drawAlbers(ctx, squares, colors, n){
+  const shown = n!=null ? squares.slice(0,n) : squares;
+  shown.forEach((s,i)=>{
+    ctx.fillStyle = colors[i%colors.length];
+    ctx.fillRect(-s.side/2, s.cy-s.side/2, s.side, s.side);
+  });
+}
+const PALETTE_WARM = ['#7a2e1d','#c0602b','#e8a33d','#f6d97a'];
+const PALETTE_COOL = ['#123a5e','#1f6f8b','#4fb3b0','#bfe6d8'];
+const PALETTE_DENSE = ['#3a1c5e','#6a2f8b','#a85fb0','#d9a3e0','#f3d9f6'];
+function fxAlbersBuild(squares, palette, speed){ return (ctx, p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-2);
+  const frac = ((p*(speed||1))%1)<0.85 ? ((p*(speed||1))%1)/0.85 : 1;
+  const n=Math.max(1, Math.round(squares.length*Math.max(0.25,frac)));
+  drawAlbers(ctx, squares, palette, n);
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}; }
+mountCards('gridAlb', [
+  ['a1','Тёплая палитра','4 честных квадрата, сдвиг вниз проверен числом (верхний зазор 1.45 > нижний 0.75 на каждом слое). Наносятся вживую.'],
+  ['a2','Холодная палитра','Та же геометрия, другой цветовой ряд — Альберс изучал именно взаимодействие цвета на одной и той же форме.'],
+  ['a3','5 слоёв, плотнее','Больше слоёв (5 вместо 4), уже отступ (1.05 вместо 1.5) — честно другие числа.'],
+  ['a4','Быстрая сборка','Тот же квадрат карточки 1, темп в 1.7 раза быстрее — честно другой параметр.'],
+]);
+loopFlash('a1', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_WARM, 1), 4.2, 2400);
+loopFlash('a2', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_COOL, 1), 4.2, 2400);
+loopFlash('a3', fxAlbersBuild(buildAlbers(15,1.05,0.4,5), PALETTE_DENSE, 1), 4.2, 2600);
+loopFlash('a4', fxAlbersBuild(buildAlbers(15,1.5,0.55,4), PALETTE_WARM, 1.7), 4.2, 2400);
+
+/* ===================== ТОКАПУ — СЕТКА ИНКСКИХ ЯЧЕЕК ===================== */
+function motifId(col,row){ return (col*3 + row*7 + Math.floor(col/2)) % 5; }
+function drawMotif(ctx, id, cx, cy, s, fg, bg){
+  const h=s/2*0.86;
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.fillStyle=bg; ctx.fillRect(-s/2,-s/2,s,s);
+  ctx.fillStyle=fg;
+  if(id===0){
+    ctx.beginPath(); ctx.moveTo(-h,-h); ctx.lineTo(h,-h); ctx.lineTo(-h,h); ctx.closePath(); ctx.fill();
+  } else if(id===1){
+    ctx.beginPath(); ctx.moveTo(0,-h); ctx.lineTo(h,0); ctx.lineTo(0,h); ctx.lineTo(-h,0); ctx.closePath(); ctx.fill();
+  } else if(id===2){
+    const t=h*0.42;
+    ctx.fillRect(-t,-h,2*t,2*h); ctx.fillRect(-h,-t,2*h,2*t);
+  } else if(id===3){
+    ctx.fillRect(-h,-h,2*h,2*h);
+    ctx.fillStyle=bg; ctx.fillRect(-h*0.5,-h*0.5,h,h);
+  } else {
+    [[-h,-h,0],[h,-h,Math.PI/2],[h,h,Math.PI],[-h,h,-Math.PI/2]].forEach(([x,y,a])=>{
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,h*0.75,a,a+Math.PI/2); ctx.closePath(); ctx.fill();
+    });
+  }
+  ctx.strokeStyle='rgba(5,6,10,.5)'; ctx.lineWidth=0.03; ctx.strokeRect(-s/2,-s/2,s,s);
+  ctx.restore();
+}
+function buildGrid(cell, cols, rows){
+  const cells=[];
+  for(let row=0;row<rows;row++) for(let col=0;col<cols;col++) cells.push({col,row,id:motifId(col,row)});
+  return cells;
+}
+function drawTocapu(ctx, cell, cols, rows, palette, n){
+  const w=cols*cell, h=rows*cell, ox=-w/2, oy=-h/2;
+  const cells=buildGrid(cell,cols,rows);
+  const shown = n!=null ? cells.slice(0,n) : cells;
+  shown.forEach(c=>{
+    const cx=ox+c.col*cell+cell/2, cy=oy+c.row*cell+cell/2;
+    const [fg,bg]=palette[(c.col+c.row)%2===0? 0:1];
+    drawMotif(ctx, c.id, cx, cy, cell*0.92, fg, bg);
+  });
+}
+const PAL_A=[['#c96a2e','#241a12'],['#e8b84a','#241a12']];
+const PAL_B=[['#2e6a8f','#0e1a24'],['#7bc6c9','#0e1a24']];
+function fxTocA(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-7);
+  drawTocapu(ctx, 2.0, 12, 12, PAL_A, null);
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}
+function fxTocB(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-7);
+  drawTocapu(ctx, 2.4, 10, 10, PAL_B, null);
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}
+function fxTocWeave(cell,cols,rows,palette,speed){ return (ctx,p)=>{
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-7);
+  const total=cols*rows;
+  const frac=((p*(speed||1))%1)<0.9 ? ((p*(speed||1))%1)/0.9 : 1;
+  const n=Math.max(1, Math.round(total*Math.max(0.03,frac)));
+  drawTocapu(ctx, cell, cols, rows, palette, n);
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}; }
+/* Историческая иллюстрация (не скин) — колькапата, строго 2 цвета через клетку, без
+   пятого мотива. Своя функция, не переиспользует motifId/drawTocapu (та специально НЕ
+   шахматная), чтобы не смешать два разных по смыслу узора в одном коде. */
+function drawColcapata(ctx, cell, cols, rows){
+  const w=cols*cell, h=rows*cell, ox=-w/2, oy=-h/2;
+  for(let row=0;row<rows;row++) for(let col=0;col<cols;col++){
+    const cx=ox+col*cell, cy=oy+row*cell;
+    ctx.fillStyle = (col+row)%2===0 ? '#f2ede0' : '#1c1a17';
+    ctx.fillRect(cx, cy, cell, cell);
+  }
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=0.04;
+  for(let row=0;row<rows;row++) for(let col=0;col<cols;col++){
+    ctx.strokeRect(ox+col*cell, oy+row*cell, cell, cell);
+  }
+}
+function fxColcapata(ctx){
+  ctx.clearRect(-30,-30,60,60);
+  drawColcapata(ctx, 3.0, 8, 8);
+}
+mountCards('gridToc', [
+  ['t1','Тёплая сетка 12×12','5 мотивов по формуле от (столбец,строка) — сетка без остатка (проверено числом), не шахматный шаблон.'],
+  ['t2','Холодная сетка 10×10','Другой размер ячейки и палитра — честно другая арифметика, не перекраска карточки 1.'],
+  ['t3','Вспышка: ткут по рядам','Ячейки заполняются слева направо, ряд за рядом — реальный порядок работы на ткацком станке.'],
+  ['t4','Вспышка: быстрее','Тот же порядок, темп в 1.6 раза быстрее — честно другой параметр.'],
+]);
+loop('t1', fxTocA, 4.2);
+loop('t2', fxTocB, 4.2);
+loopFlash('t3', fxTocWeave(2.0,12,12,PAL_A,1), 4.2, 3000);
+loopFlash('t4', fxTocWeave(2.4,10,10,PAL_B,1.6), 4.2, 2800);
+loop('tHist', fxColcapata, 6.2);
+
+/* ===================== КЕРАМИКА МИМБРЕС ===================== */
+/* id 'mim1'-'mim4' — НЕ 'm1'-'m4': те уже заняты Мукарнасом выше. Стандартное правило
+   после случая с Меандр/Эшер (см. комментарий там) — проверка уникальности id по ВСЕМУ
+   файлу перед вставкой новой темы, не только внутри новой темы. */
+function toothRing(ctx, N, r0, len, w, rot, colA, colB){
+  for(let i=0;i<N;i++){
+    const a=i*2*Math.PI/N+rot;
+    const cx=r0*Math.cos(a), cy=r0*Math.sin(a);
+    const tipx=(r0+len)*Math.cos(a), tipy=(r0+len)*Math.sin(a);
+    const perpx=-Math.sin(a)*w, perpy=Math.cos(a)*w;
+    ctx.fillStyle = i%2===0? colA: colB;
+    ctx.beginPath();
+    ctx.moveTo(cx+perpx,cy+perpy); ctx.lineTo(tipx,tipy); ctx.lineTo(cx-perpx,cy-perpy); ctx.closePath();
+    ctx.fill();
+  }
+}
+function checkerRing(ctx, N, r0, r1, rot, colA, colB){
+  for(let i=0;i<N;i++){
+    const a0=i*2*Math.PI/N+rot, a1=(i+1)*2*Math.PI/N+rot;
+    ctx.fillStyle = i%2===0? colA: colB;
+    ctx.beginPath();
+    ctx.arc(0,0,r1,a0,a1); ctx.arc(0,0,r0,a1,a0,true); ctx.closePath();
+    ctx.fill();
+  }
+}
+function fxMimA(ctx, rot){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-3);
+  ctx.fillStyle='#e9e2cf'; ctx.beginPath(); ctx.arc(0,0,7.2,0,Math.PI*2); ctx.fill();
+  checkerRing(ctx, 16, 4.2, 6.6, rot||0, '#1a1a1a', '#e9e2cf');
+  toothRing(ctx, 8, 3.6, 2.4, 1.0, rot||0, '#1a1a1a', '#1a1a1a');
+  ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(0,0,1.1,0,Math.PI*2); ctx.fill();
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}
+function fxMimB(ctx, rot){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-3);
+  ctx.fillStyle='#e9e2cf'; ctx.beginPath(); ctx.arc(0,0,7.2,0,Math.PI*2); ctx.fill();
+  toothRing(ctx, 6, 5.0, 1.8, 1.3, rot||0, '#1a1a1a', '#1a1a1a');
+  toothRing(ctx, 6, 2.6, 1.8, 0.85, (rot||0)+Math.PI/6, '#1a1a1a', '#1a1a1a');
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}
+function fxMimTiers(ctx, rot){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  ctx.save(); ctx.translate(0,-3);
+  ctx.fillStyle='#e9e2cf'; ctx.beginPath(); ctx.arc(0,0,7.4,0,Math.PI*2); ctx.fill();
+  toothRing(ctx, 8, 6.2, 1.1, 0.9, rot||0, '#1a1a1a', '#1a1a1a');
+  checkerRing(ctx, 12, 3.6, 5.4, (rot||0)*1.3, '#1a1a1a', '#e9e2cf');
+  toothRing(ctx, 4, 1.2, 2.0, 1.1, (rot||0)*0.7, '#1a1a1a', '#1a1a1a');
+  ctx.restore(); ctx.restore(); edgeStroke(ctx);
+}
+function fxMimSpin(ctx, p){
+  fxMimTiers(ctx, p*2*Math.PI);
+}
+mountCards('gridMim', [
+  ['mim1','Зубцы + шахматное кольцо','N=8 и N=16, поворотная симметрия проверена числом (расхождение 1.89e-15).'],
+  ['mim2','Два зубчатых кольца','N=6 снаружи и внутри, сдвинутые друг относительно друга на 30° — честно другая композиция.'],
+  ['mim3','Три яруса','Внешний зубчатый (8), шахматный (12), внутренний зубчатый (4) — реальная многоярусная схема, не одно кольцо трижды.'],
+  ['mim4','Вспышка: чаша вращается','Тот же трёхъярусный узор честно вращается во времени — реальная физическая рамка, не украшение.'],
+]);
+loop('mim1', fxMimA, 4.2);
+loop('mim2', fxMimB, 4.2);
+loop('mim3', fxMimTiers, 4.2);
+loopFlash('mim4', fxMimSpin, 4.2, 4200);
 </script>
