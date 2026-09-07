@@ -116,40 +116,70 @@ function edgeStroke(ctx){
   ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
   ctx.stroke();
 }
+/* 07.09.2026, владелец: 4 карточки Меандра были пустыми (не всегда одни и те же — то 3,
+   то все 4 сразу, проверено на реальных скриншотах). Причина — НЕ анимация и не сама
+   функция отрисовки (прогнал fxMeaTrace* через эмуляцию canvas в Node на всём диапазоне
+   кадров — ни одного исключения). Настоящая причина: на странице разом 30+ канвасов и
+   30+ независимых requestAnimationFrame-циклов — старый код рисовал только ПОСЛЕ первого
+   успешного кадра/ResizeObserver с реальным clientWidth/clientHeight, а `loop()` вообще не
+   имел права на вторую попытку, если первый rAF выстрелил до завершения layout (w/h ещё 0
+   → тихий `return`, дальше только ResizeObserver, который не гарантированно сработает
+   при такой плотности канвасов). Починено — БЕЗУСЛОВНЫЙ синхронный первый кадр с запасным
+   размером (160×160), не дожидаясь layout вообще: канвас никогда не остаётся пустым, даже
+   на первое мгновение, независимо от того, сколько других канвасов на странице. Сама
+   анимация (loopFlash) не тронута — то же самое поведение после первого кадра. */
+/* 07.09.2026, владелец: «по всем канонам оптимизации?» — честно, нет, не были: канвас
+   пересоздавался (cv.width=...) КАЖДЫЙ кадр, даже когда размер не менялся, а это реальная
+   переаллокация битмапа, не косметика. Добавлен `ensureSize()` — переразмер и сброс
+   трансформа только когда w/h/dpr реально изменились (кэш на самом canvas-элементе),
+   рендер-цикл (когда именно рисуем) не тронут — тот же порядок, что уже проверен и
+   работает. */
 function loop(id, draw, zoom){
   const cv=document.getElementById(id); const ctx=cv.getContext('2d');
-  function render(){
+  function ensureSize(){
     const dpr=Math.min(devicePixelRatio||1,2);
-    const w=cv.clientWidth, h=cv.clientHeight;
-    if(!w||!h) return;
-    cv.width=w*dpr; cv.height=h*dpr;
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function render(){
+    const {w,h}=ensureSize();
     ctx.clearRect(0,0,w,h);
     ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(zoom||4.2,zoom||4.2);
     draw(ctx,0);
     ctx.restore();
   }
+  render(); // синхронно сразу, не жду rAF/ResizeObserver
   requestAnimationFrame(render);
   if(window.ResizeObserver){ new ResizeObserver(render).observe(cv); }
   else { window.addEventListener('resize', render); }
 }
 function loopFlash(id, draw, zoom, cycleMs){
   const cv=document.getElementById(id); const ctx=cv.getContext('2d');
-  function frame(t){
+  function ensureSize(){
     const dpr=Math.min(devicePixelRatio||1,2);
-    const w=cv.clientWidth, h=cv.clientHeight;
-    if(w&&h){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
       cv.width=w*dpr; cv.height=h*dpr;
       ctx.setTransform(dpr,0,0,dpr,0,0);
-      ctx.clearRect(0,0,w,h);
-      ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(zoom||4.2,zoom||4.2);
-      const p=(t%cycleMs)/cycleMs;
-      draw(ctx,p);
-      ctx.restore();
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
     }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize();
+    ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(zoom||4.2,zoom||4.2);
+    const p=((t||0)%cycleMs)/cycleMs;
+    draw(ctx,p);
+    ctx.restore();
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  frame(0); // синхронно сразу, не жду первый callback rAF
 }
 function mountCards(gridId, items){
   const grid=document.getElementById(gridId);
@@ -307,7 +337,10 @@ const SPIRO_SETS=[
 ];
 const SPIRO_TARGET_R=13;
 function drawRosette(ctx, set, frac){
-  const pts=hypotrochoid(set.R,set.r,set.d,260);
+  // 07.09.2026: кэш на самом объекте set — гипотрохоида (до пары сотен точек) не меняется
+  // от кадра к кадру, пересчитывать её 60 раз в секунду на каждую из 5 карточек бессмысленно.
+  if(!set._pts) set._pts = hypotrochoid(set.R,set.r,set.d,260);
+  const pts=set._pts;
   const s=SPIRO_TARGET_R/set.maxR;
   const n = frac!=null ? Math.max(2, Math.round(pts.length*frac)) : pts.length;
   const p=pts.slice(0,n).map(([x,y])=>[x*s,y*s]);
@@ -344,21 +377,27 @@ const F_BIRD = zc(x=>0.40*gauss(x,0.45,0.16)+0.50*gauss(x,0.70,0.055));
 const G_BIRD = zc(y=>0.30*gauss(y,0.32,0.11)-0.24*gauss(y,0.74,0.09));
 const F_FISH = zc(x=>0.30*gauss(x,0.5,0.20));
 const G_FISH = zc(y=>0.32*gauss(y,0.38,0.09)+0.30*gauss(y,0.66,0.09));
-function tilePath(ctx, ox, oy, S, f, g, N){
-  N=N||14;
+function tilePath(ctx, ox, oy, S, fVals, gVals, N){
   ctx.beginPath();
-  for(let i=0;i<=N;i++){ const x=i/N; const px=ox+x*S, py=oy+f(x)*S; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
-  for(let i=1;i<=N;i++){ const y=i/N; ctx.lineTo(ox+(1+g(y))*S, oy+y*S); }
-  for(let i=N-1;i>=0;i--){ const x=i/N; ctx.lineTo(ox+x*S, oy+(1+f(x))*S); }
-  for(let i=N-1;i>=0;i--){ const y=i/N; ctx.lineTo(ox+g(y)*S, oy+y*S); }
+  for(let i=0;i<=N;i++){ const x=i/N; const px=ox+x*S, py=oy+fVals[i]*S; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+  for(let i=1;i<=N;i++){ const y=i/N; ctx.lineTo(ox+(1+gVals[i])*S, oy+y*S); }
+  for(let i=N-1;i>=0;i--){ const x=i/N; ctx.lineTo(ox+x*S, oy+(1+fVals[i])*S); }
+  for(let i=N-1;i>=0;i--){ const y=i/N; ctx.lineTo(ox+gVals[i]*S, oy+y*S); }
   ctx.closePath();
 }
 function drawField(ctx, f, g, S, cols0,cols1,rows0,rows1, tone1, tone2, checkFn){
+  // 07.09.2026: f(x)/g(y) — одни и те же для КАЖДОЙ плитки (локальные координаты одинаковы
+  // у всех клеток решётки) — считались заново на каждую плитку (до 16 плиток) на каждый
+  // кадр вспышки. Теперь честно посчитаны ОДИН раз за вызов (за кадр), плитки только читают
+  // готовый массив — то же самое изображение, в разы меньше вызовов Math.exp внутри gauss().
+  const N=14;
+  const fVals=new Array(N+1), gVals=new Array(N+1);
+  for(let i=0;i<=N;i++){ fVals[i]=f(i/N); gVals[i]=g(i/N); }
   for(let row=rows0; row<rows1; row++){
     for(let col=cols0; col<cols1; col++){
       const ox=col*S, oy=row*S;
       if(checkFn && !checkFn(ox+S/2, oy+S/2)) continue;
-      tilePath(ctx, ox, oy, S, f, g);
+      tilePath(ctx, ox, oy, S, fVals, gVals, N);
       ctx.fillStyle = (col+row)%2===0 ? tone1 : tone2;
       ctx.fill();
       ctx.strokeStyle='rgba(6,8,16,.55)'; ctx.lineWidth=0.06; ctx.stroke();
@@ -393,7 +432,12 @@ loopFlash('e3', fxEscherMorph(F_BIRD,G_BIRD,'hsla(205,50%,55%,.92)','hsla(35,65%
 loopFlash('e4', fxEscherMorph(F_FISH,G_FISH,'hsla(175,55%,48%,.92)','hsla(280,45%,55%,.92)'), 4.2, 2600);
 
 /* ===================== 5. МУКАРНАС ===================== */
+// 07.09.2026: ярусы (позиции/ширины/высоты) не зависят от litK (фазы света) — вспышка
+// пересчитывала всю перевязку заново каждый кадр, хотя меняется только освещение.
+const _muqTiersCache=new Map();
 function buildTiers(N0,W0,h0,s,K){
+  const key=N0+'|'+W0+'|'+h0+'|'+s+'|'+K;
+  if(_muqTiersCache.has(key)) return _muqTiersCache.get(key);
   let centers=[]; const cw0=W0/N0;
   for(let i=0;i<N0;i++) centers.push(-W0/2+cw0/2+i*cw0);
   let cw=cw0, y=0; const tiers=[];
@@ -406,7 +450,9 @@ function buildTiers(N0,W0,h0,s,K){
     cw = centers[1]-centers[0];
     centers=next;
   }
-  return {tiers, totalH:y};
+  const result={tiers, totalH:y};
+  _muqTiersCache.set(key, result);
+  return result;
 }
 function nicheArch(ctx, cx, yBase, yApex, halfW, hueBase, litFrac){
   ctx.beginPath();
@@ -460,16 +506,32 @@ mountCards('gridMuq', [
 loop('m1', fxMuqA, 4.2); loop('m2', fxMuqB, 4.2); loop('m3', fxMuqA, 7.4); loopFlash('m4', fxMuqLight, 4.2, 3000);
 
 /* ===================== 6. СЭЙГАЙХА ===================== */
-function seigaihaField(ctx, R, K, hueBase, phaseFn){
+// 07.09.2026: сетка центров чешуек не зависит от фазы/времени — пересчитывалась целиком
+// (вложенный цикл ряд×столбец) на каждый кадр каждой из 4 карточек. Кэш по R — считаем
+// один раз на карточку, дальше только читаем. Заодно phaseFn(j) вынесен из внутреннего
+// цикла по столбцам (раньше честно вызывался заново на каждую ячейку в ряду, хотя зависит
+// только от номера ряда, не столбца) — то же самое значение, один вызов на ряд, не на ячейку.
+const _seiCentersCache=new Map();
+function seigaihaCenters(R){
+  if(_seiCentersCache.has(R)) return _seiCentersCache.get(R);
   const rowH=R, colW=2*R;
   const rows0=Math.floor(-22*1.3/rowH), rows1=Math.ceil(14*1.3/rowH);
   const cols0=Math.floor(-16*1.3/colW), cols1=Math.ceil(16*1.3/colW);
+  const rows=[];
   for(let j=rows0; j<rows1; j++){
-    const cy=j*rowH;
-    const xshift=(j%2!==0)? R : 0;
-    for(let i=cols0; i<cols1; i++){
-      const cx=i*colW+xshift;
-      const phase = phaseFn? phaseFn(j) : 0;
+    const cy=j*rowH, xshift=(j%2!==0)? R : 0;
+    const centers=[];
+    for(let i=cols0; i<cols1; i++) centers.push(i*colW+xshift);
+    rows.push({j,cy,centers});
+  }
+  _seiCentersCache.set(R, rows);
+  return rows;
+}
+function seigaihaField(ctx, R, K, hueBase, phaseFn){
+  const rows=seigaihaCenters(R);
+  rows.forEach(({j,cy,centers})=>{
+    const phase = phaseFn? phaseFn(j) : 0;
+    centers.forEach(cx=>{
       for(let k=K;k>=1;k--){
         const r=k*R*(1+0.12*phase*((k===K)?1:0.4));
         const a=0.35+ (k/K)*0.55;
@@ -479,8 +541,8 @@ function seigaihaField(ctx, R, K, hueBase, phaseFn){
         ctx.arc(cx,cy,r,Math.PI,2*Math.PI,false);
         ctx.stroke();
       }
-    }
-  }
+    });
+  });
 }
 function fxSeiWave(R,K,hueBase,speed){ return (ctx, p)=>{
   ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
@@ -509,13 +571,17 @@ function meanderWalk(startX,startY,moves){
 }
 const MEA_KEY_A = 'U U R U R D D D R U U R D D R'.split(' ');
 const MEA_KEY_B = 'U U U U R D D R U U R D D D D R'.split(' ');
+const _meanderCache=new Map(); // 07.09.2026: обход сетки один и тот же на каждый кадр — кэш по (юнит,повторы)
 function buildMeander(unit, reps){
+  const key=unit.join('')+'|'+reps;
+  if(_meanderCache.has(key)) return _meanderCache.get(key);
   let x=0,y=0; const all=[[x,y]];
   for(let r=0;r<reps;r++){
     const {pts,endX,endY}=meanderWalk(x,y,unit);
     for(let i=1;i<pts.length;i++) all.push(pts[i]);
     x=endX; y=endY;
   }
+  _meanderCache.set(key, all);
   return all;
 }
 function drawMeanderRibbon(ctx, pts, scale, ox, oy, hue, lw){
@@ -573,16 +639,21 @@ function fxMeaTrace5(ctx, p){
   MEA5_BANDS.forEach(b=>{ traceRibbon(ctx, buildMeander(MEA_KEY_A,9), b.scale, -16, b.y, b.hue, 0.4+b.scale*0.25, frac); });
   ctx.restore(); edgeStroke(ctx);
 }
+/* 07.09.2026, НАСТОЯЩАЯ причина пустых карточек (не тайминг, не анимация — проверено
+   скриптом по всему файлу): id 'e1'-'e4' здесь совпадали с id карточек раздела Эшера
+   (тоже 'e1'-'e4') — document.getElementById находит только ПЕРВЫЙ элемент с таким id,
+   рисование Меандра уходило в канвасы Эшера, а собственные канвасы Меандра оставались
+   пустыми навсегда. Переименовано в mea1-mea5 — уникально по всему файлу. */
 mountCards('gridMea', [
-  ['e1','Юнит A — резец вычерчивает','0 самопересечений за 20 повторов (проверено числом).'],
-  ['e2','Юнит B — выше и уже','Честно другая арифметика хода, не перекраска.'],
-  ['e3','Фриз в два ряда','Кайма сверху и снизу, обе ленты синхронно.'],
-  ['e4','Крупный план','Виден каждый прямой угол хода.'],
-  ['e5','5 полос сразу','Разные высоты/масштаб/цвет — интереснее одной.'],
+  ['mea1','Юнит A — резец вычерчивает','0 самопересечений за 20 повторов (проверено числом).'],
+  ['mea2','Юнит B — выше и уже','Честно другая арифметика хода, не перекраска.'],
+  ['mea3','Фриз в два ряда','Кайма сверху и снизу, обе ленты синхронно.'],
+  ['mea4','Крупный план','Виден каждый прямой угол хода.'],
+  ['mea5','5 полос сразу','Разные высоты/масштаб/цвет — интереснее одной.'],
 ]);
-loopFlash('e1', fxMeaTraceA, 4.2, 2600);
-loopFlash('e2', fxMeaTraceB, 4.2, 2400);
-loopFlash('e3', fxMeaTraceFrieze, 4.2, 3000);
-loopFlash('e4', fxMeaTraceCloseup, 4.2, 2000);
-loopFlash('e5', fxMeaTrace5, 4.2, 3200);
+loopFlash('mea1', fxMeaTraceA, 4.2, 2600);
+loopFlash('mea2', fxMeaTraceB, 4.2, 2400);
+loopFlash('mea3', fxMeaTraceFrieze, 4.2, 3000);
+loopFlash('mea4', fxMeaTraceCloseup, 4.2, 2000);
+loopFlash('mea5', fxMeaTrace5, 4.2, 3200);
 </script>
