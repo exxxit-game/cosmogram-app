@@ -764,7 +764,7 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
     sortEl.innerHTML='';
     WORKSHOP_SORTS.forEach(function(s){
       const b=document.createElement('button'); b.className='forgeChip';
-      b.addEventListener('click', function(){ workshopSortMode=s; workshopRenderList(); sfx.click(); haptic('light'); });
+      b.addEventListener('click', function(){ workshopSortMode=s; workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light'); }); // 07.09.2026: было без workshopFillLabels() — режим менялся честно, но подсветка .sel навсегда оставалась на «Новые» (владелец, живой скрин)
       sortEl.appendChild(b);
     });
   }
