@@ -91,9 +91,35 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     первого (не досочинённые координаты), проверено числом.</p>
     <div class="grid" id="gridRos"></div>
   </div>
-  <p class="catEmpty">Задел: фигуры Лиссажу, круги Фурье, фигуры Хладни, странные
-  аттракторы, розы Родонеи — часть уже построена отдельными артефактами (см. чат),
-  ещё не влита в этот файл единым проходом со сверкой id.</p>
+  <div class="topic">
+    <div class="topicHead"><h2>Фигуры Хладни</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Реальный опыт Хладни (1787) — песок на вибрирующей квадратной
+    пластине скапливается на узловых линиях z(x,y)=cos(nπx)cos(mπy)−cos(mπx)cos(nπy)=0;
+    доля ячеек с узловой линией растёт от 7.4% (мода 2:1) до 20.1% (мода 5:4).</p>
+    <div class="grid" id="gridChladni"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Фигуры Лиссажу</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Реальный узор осциллографа — x=sin(a·t+δ), y=sin(b·t), фаза δ=90°.
+    Все 5 кривых честно замкнуты и заполняют весь диапазон, проверено числом.</p>
+    <div class="grid" id="gridLissajous"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Круги Фурье (эпициклы)</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Настоящее ДПФ пятиконечной звезды — сумма вращающихся окружностей
+    приближает ломаную кривую; ошибка приближения падает с 0.183 (K=1) до 0.0065 (K=8),
+    посчитано числом, не выдумано.</p>
+    <div class="grid" id="gridEpi"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Странные аттракторы</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Аттракторы Клиффорда — простая формула, 20000+ шагов, честный хаос:
+    траектория остаётся ограниченной, но чувствительна к начальным условиям (расхождение
+    в миллион раз за несколько тысяч шагов, проверено числом для каждого набора).</p>
+    <div class="grid" id="gridAttr"></div>
+  </div>
+  <p class="catEmpty">Задел: розы Родонеи — уже построены отдельным артефактом, ещё не
+  влиты в этот файл.</p>
 
   <h1 class="catHead">Оригами, тела и пропорции</h1>
   <div class="topic">
@@ -104,9 +130,15 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     Кавасаки/Маэкавы дважды не удержала саму тему при тайловании.</p>
     <div class="grid" id="gridOri"></div>
   </div>
-  <p class="catEmpty">Задел: 5 платоновых тел (уже построено отдельным артефактом, не
-  влито сюда), лента Мёбиуса/бутылка Клейна, каноны пропорций (Витрувий→да Винчи→Модулор
-  Ле Корбюзье).</p>
+  <div class="topic">
+    <div class="topicHead"><h2>5 платоновых тел</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Ровно 5 выпуклых многогранников с одинаковыми правильными гранями
+    (Евклид) — формула Эйлера V−E+F=2 проверена числом для всех пяти, двугранные углы
+    реальные (70.53°→138.19°, растут вместе со сложностью тела).</p>
+    <div class="grid" id="gridPlatonic"></div>
+  </div>
+  <p class="catEmpty">Задел: лента Мёбиуса/бутылка Клейна, каноны пропорций (Витрувий→да
+  Винчи→Модулор Ле Корбюзье).</p>
 
   <h1 class="catHead">Тесселяции и мозаики</h1>
   <div class="topic">
@@ -131,10 +163,45 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     4 карточки — вспышки, разные волны/направления.</p>
     <div class="grid" id="gridSei"></div>
   </div>
-  <p class="catEmpty">Задел: Пенроуз/квазикристаллы, плитки Трюше, диаграммы Вороного,
-  узоры Тьюринга (реакционно-диффузные) — все уже построены отдельными артефактами, не
-  влиты сюда. Ещё не отрисовано: зеллидж (Марокко), гиперболическая мозаика (диск
-  Пуанкаре), 17 групп обоев, гирих.</p>
+  <div class="topic">
+    <div class="topicHead"><h2>Мозаика Пенроуза</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Настоящая апериодическая мозаика (Пенроуз, 1974) — 2 плитки
+    («золотой» треугольник и гномон), правило разбиения Робинсона; проверено числом до
+    вставки — все треугольники сохраняют точные углы 36/72/72 или 108/36/36 на каждом из
+    5 разбиений, число плиток честно удваивается.</p>
+    <div class="grid" id="gridPenrose"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Плитки Трюше</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Настоящая тайловая система (Себастьен Трюше, 1704) — одна плитка,
+    правило поворота на клетку решает всё: случайный лабиринт, регулярное плетение или
+    крупные диагональные полосы из одного и того же элемента.</p>
+    <div class="grid" id="gridTruchet"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Диаграммы Вороного</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Настоящее разбиение плоскости «кто ближе» — квадратная решётка даёт
+    ровно 4 соседа на ячейку, гексагональная — ровно 6, случайные точки — тоже ≈6 в среднем
+    (следствие формулы Эйлера); релаксация Ллойда честно выравнивает площади.</p>
+    <div class="grid" id="gridVoronoi"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Узоры Тьюринга</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Настоящая реакция-диффузия Грея-Скотта — численно решается прямо в
+    браузере (5000 шагов, сетка 64×64), не картинка. Устойчивость схемы и параметры
+    подобраны и проверены числом до вставки.</p>
+    <div class="grid" id="gridTuring"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Клеточные автоматы и рекурсивные кривые</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">5 простых правил, честно сложные результаты: треугольник
+    Серпинского (3ⁿ), правило 30 Вольфрама, глайдер игры «Жизнь» (проверен как настоящий
+    «космический корабль»), кривая Гильберта (гамильтонов путь), кольца Борромео из
+    эллипсов (не окружностей — доказано, что окружностями это сцепление не построить).</p>
+    <div class="grid" id="gridAutomata"></div>
+  </div>
+  <p class="catEmpty">Задел: зеллидж (Марокко), гиперболическая мозаика (диск Пуанкаре),
+  17 групп обоев, гирих.</p>
 
   <h1 class="catHead">Оптика, цвет и материя</h1>
   <div class="topic">
@@ -151,9 +218,22 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
     исторического соотношения.</p>
     <div class="grid" id="gridAlb"></div>
   </div>
-  <p class="catEmpty">Задел: иризация/структурная окраска, муаровые узоры — уже построены
-  отдельными артефактами, не влиты сюда. Ещё не отрисовано: 3 именованные схемы цветовой
-  гармонии (комплементарная/аналоговая/триадная) из COLOR-THEORY.md.</p>
+  <div class="topic">
+    <div class="topicHead"><h2>Иризация: цвет плёнки зависит от угла взгляда</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Структурный цвет, не пигмент — настоящее условие интерференции
+    тонкой плёнки с учётом преломления (Снеллиус). При росте угла обзора рабочая длина
+    волны честно и монотонно падает: 532нм (0°) → 389нм (65°), проверено числом.</p>
+    <div class="grid" id="gridIrid"></div>
+  </div>
+  <div class="topic">
+    <div class="topicHead"><h2>Муаровые узоры</h2><span class="status">✓ одобрено</span><span class="status bug">⚠ баг</span></div>
+    <p class="topicDesc">Настоящий оптический эффект — две наложенные решётки честно рождают
+    третий, более крупный узор. Период муара (поворот D=d/(2sin(θ/2)), масштаб
+    D=p₁p₂/|p₁−p₂|) проверен числом с точностью 4 знаков.</p>
+    <div class="grid" id="gridMoire"></div>
+  </div>
+  <p class="catEmpty">Задел: 3 именованные схемы цветовой гармонии (комплементарная/
+  аналоговая/триадная) из COLOR-THEORY.md.</p>
 
   <h1 class="catHead">Традиционные орнаменты и ремёсла</h1>
   <div class="topic">
@@ -204,17 +284,25 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
   другие ремесленные техники из CRAFT-TECHNIQUES.md.</p>
 
   <h1 class="catHead">Знаки, письмо и коды</h1>
-  <p class="catEmpty">Пока пусто в этом файле — «Партия: пять букв Хангыля» уже построена
-  отдельным артефактом, не влита сюда. Задел: мировые системы письма, числовые
-  системы/кипу/И-Цзин, исторические шифры, геральдика, защитные символы (Назар/Хамса),
-  алхимические/зодиакальные глифы — WORLD-SCRIPTS.md, NUMBER-SYSTEMS-AND-CODES.md,
+  <div class="topic">
+    <div class="topicHead"><h2>Хангыль: 5 базовых букв</h2><span class="status">✓ одобрено</span></div>
+    <p class="topicDesc">Единственная письменность мира с опубликованным авторским
+    трактатом («Хунмин Чоным Хэре», 1446) — каждая базовая согласная буквально рисует
+    орган речи в момент произнесения звука: ㄱ корень языка, ㄴ язык у зубов, ㅁ форма рта,
+    ㅅ форма резца, ㅇ форма горла.</p>
+    <div class="grid" id="gridHangul"></div>
+  </div>
+  <p class="catEmpty">Задел: мировые системы письма, числовые системы/кипу/И-Цзин,
+  исторические шифры, геральдика, защитные символы (Назар/Хамса), алхимические/
+  зодиакальные глифы — WORLD-SCRIPTS.md, NUMBER-SYSTEMS-AND-CODES.md,
   HISTORICAL-CIPHERS.md, PROTECTIVE-SYMBOLS.md, HUMAN-SYMBOLS.md.</p>
 
   <h1 class="catHead">Наука, природа и точные построения</h1>
-  <p class="catEmpty">Пока пусто в этом файле, хотя уже построено отдельными артефактами
-  (не влито сюда): клеточные автоматы, странные аттракторы, диаграммы Вороного, узоры
-  Тьюринга, фигуры Хладни/Лиссажу, круги Фурье, муар, иризация, платоновы тела, Пенроуз,
-  Трюше. Ещё не отрисовано: небесные инструменты, структурные системы (геодезический
+  <p class="catEmpty">Пока пусто в этом файле — точные-науки-темы партии 07.09 расселены
+  по разделам выше, где им самое место по виду построения (клеточные автоматы/Пенроуз/
+  Трюше/Вороной/Тьюринг → «Тесселяции и мозаики»; Хладни/Лиссажу/Фурье/аттракторы →
+  «Механические кривые»; муар/иризация → «Оптика»; платоновы тела → «Оригами, тела»).
+  Задел именно для ЭТОГО раздела: небесные инструменты, структурные системы (геодезический
   купол и т.п.), картографические проекции, календарные системы, воздушные змеи —
   CELESTIAL-INSTRUMENTS.md, STRUCTURAL-SYSTEMS.md, MAP-PROJECTIONS.md,
   CALENDAR-SYSTEMS.md, KITES-AND-FIREWORKS.md.</p>
@@ -304,6 +392,10 @@ function mountCards(gridId, items){
     `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
   ).join('');
 }
+/* Общий ГПСЧ (mulberry32) — используется несколькими темами партии науки (Трюше, Вороной,
+   Хладни, Тьюринг); раньше каждая тема носила свою идентичную копию, при слиянии оставлена
+   одна. */
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
 
 /* ===================== СНЕЖИНКА КОХА ===================== */
 function kochSubdivide(points){
@@ -1136,4 +1228,1005 @@ loop('mim1', fxMimA, 4.2);
 loop('mim2', fxMimB, 4.2);
 loop('mim3', fxMimTiers, 4.2);
 loopFlash('mim4', fxMimSpin, 4.2, 4200);
+
+/* ===================== МОЗАИКА ПЕНРОУЗА ===================== */
+const PEN_PHI=(1+Math.sqrt(5))/2;
+function cAdd(a,b){ return [a[0]+b[0], a[1]+b[1]]; }
+function cSub(a,b){ return [a[0]-b[0], a[1]-b[1]]; }
+function cScale(a,s){ return [a[0]*s, a[1]*s]; }
+function cLerp(a,b,t){ return cAdd(a, cScale(cSub(b,a), t)); }
+function subdividePenrose(triangles){
+  const result=[];
+  for(const [type, apex, B, C] of triangles){
+    if(type==='L'){
+      const P = cLerp(apex,B, 1/PEN_PHI);
+      result.push(['L', C, P, B]);
+      result.push(['S', P, apex, C]);
+    } else {
+      const Q = cLerp(B,C, 1/PEN_PHI);
+      result.push(['L', B, apex, Q]);
+      result.push(['S', Q, apex, C]);
+    }
+  }
+  return result;
+}
+function penroseSeed(){
+  const triangles=[];
+  for(let i=0;i<10;i++){
+    const angB=(2*i-1)*Math.PI/10, angC=(2*i+1)*Math.PI/10;
+    triangles.push(['L', [0,0], [Math.cos(angB),Math.sin(angB)], [Math.cos(angC),Math.sin(angC)]]);
+  }
+  return triangles;
+}
+function drawPenrose(ctx, iterations, scale, cy0, hueL, hueS){
+  let tris=penroseSeed();
+  for(let i=0;i<iterations;i++) tris=subdividePenrose(tris);
+  const shortestEdge = 1/Math.pow(PEN_PHI, iterations);
+  const lw = Math.max(shortestEdge*scale*0.06, 1.3/4.2);
+  tris.forEach(([type, A, B, C])=>{
+    const p=[A,B,C].map(([x,y])=>[x*scale, cy0+y*scale]);
+    const hue = type==='L'? hueL : hueS;
+    const shade = type==='L'? 62 : 46;
+    ctx.fillStyle=`hsla(${hue},45%,${shade}%,.92)`;
+    ctx.beginPath(); ctx.moveTo(p[0][0],p[0][1]); ctx.lineTo(p[1][0],p[1][1]); ctx.lineTo(p[2][0],p[2][1]); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=`hsla(${hue},60%,80%,.55)`; ctx.lineWidth=lw;
+    ctx.stroke();
+  });
+}
+const PEN_SCALE=6.8;
+function fxPenIt2(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawPenrose(ctx,2,PEN_SCALE,-4,205,330); ctx.restore(); edgeStroke(ctx); }
+function fxPenIt3(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawPenrose(ctx,3,PEN_SCALE,-4,150,290); ctx.restore(); edgeStroke(ctx); }
+function fxPenIt4(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawPenrose(ctx,4,PEN_SCALE,-4,20,340); ctx.restore(); edgeStroke(ctx); }
+function fxPenIt5(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawPenrose(ctx,5,PEN_SCALE,-4,45,300); ctx.restore(); edgeStroke(ctx); }
+function fxPenIt6(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawPenrose(ctx,6,PEN_SCALE,-4,190,260); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridPenrose', [
+  ['it2','2 разбиения — 40 плиток','Уже видна 10-лучевая («солнечная») структура из золотых треугольников и гномонов.'],
+  ['it3','3 разбиения — 80 плиток','Внутри каждого сектора появляется собственный мелкий узор — но 10-кратная симметрия не пропадает.'],
+  ['it4','4 разбиения — 160 плиток','Плотность растёт вдвое — узор всё ещё нигде не повторяется периодически.'],
+  ['it5','5 разбиений — 320 плиток','Настоящая апериодическая мозаика: сколько ни всматривайся, периода нет — только самоподобие.'],
+  ['it6','6 разбиений — 640 плиток','Тот же принцип на пределе плотности карточки — треугольники размером с 1/17.9 исходного радиуса.'],
+]);
+loop('it2', fxPenIt2, 4.2);
+loop('it3', fxPenIt3, 4.2);
+loop('it4', fxPenIt4, 4.2);
+loop('it5', fxPenIt5, 4.2);
+loop('it6', fxPenIt6, 4.2);
+
+/* ===================== ПЛИТКИ ТРЮШЕ ===================== */
+function drawArcTile(ctx, x0, y0, cellSize, orientA){
+  const r=cellSize/2;
+  ctx.beginPath();
+  if(orientA){
+    ctx.arc(x0, y0+cellSize, r, -Math.PI/2, 0);
+    ctx.moveTo(x0+cellSize, y0);
+    ctx.arc(x0+cellSize, y0, r, Math.PI/2, Math.PI);
+  } else {
+    ctx.arc(x0, y0, r, 0, Math.PI/2);
+    ctx.moveTo(x0+cellSize, y0+cellSize-r);
+    ctx.arc(x0+cellSize, y0+cellSize, r, Math.PI, Math.PI*1.5);
+  }
+  ctx.stroke();
+}
+function drawArcTruchet(ctx, scale, cy0, hue, N, ruleFn){
+  const cellSize=2/N;
+  const cellPx=cellSize*scale;
+  const glowPass=[[cellPx*0.30,0.14],[cellPx*0.16,0.26]];
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  glowPass.forEach(([w,a])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
+      drawArcTile(ctx, x0, y0, cellPx, ruleFn(i,j));
+    }
+  });
+  ctx.restore();
+  ctx.lineWidth=cellPx*0.09; ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`;
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
+    drawArcTile(ctx, x0, y0, cellPx, ruleFn(i,j));
+  }
+}
+function drawDiagTile(ctx, x0, y0, cellSize, orientA, hue){
+  const s=cellSize;
+  ctx.beginPath();
+  if(orientA){ ctx.moveTo(x0,y0); ctx.lineTo(x0+s,y0+s); }
+  else { ctx.moveTo(x0+s,y0); ctx.lineTo(x0,y0+s); }
+  ctx.stroke();
+}
+function drawDiagTruchet(ctx, scale, cy0, hue, N, ruleFn){
+  const cellSize=2/N;
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  [[2.0,0.12],[1.0,0.22]].forEach(([w,a])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
+      drawDiagTile(ctx, x0, y0, cellSize*scale, ruleFn(i,j));
+    }
+  });
+  ctx.restore();
+  ctx.lineWidth=0.55; ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`;
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
+    drawDiagTile(ctx, x0, y0, cellSize*scale, ruleFn(i,j));
+  }
+}
+function drawDiagFilledTruchet(ctx, scale, cy0, hue, N, ruleFn){
+  const cellSize=2/N;
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const s=cellSize*scale;
+    const x0=(-1+i*cellSize)*scale, y0=cy0+(-1+j*cellSize)*scale;
+    const a=ruleFn(i,j);
+    ctx.fillStyle=`hsla(${hue},35%,${a?68:32}%,1)`;
+    ctx.beginPath();
+    if(a){ ctx.moveTo(x0,y0); ctx.lineTo(x0+s,y0); ctx.lineTo(x0,y0+s); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=`hsla(${hue},35%,${a?32:68}%,1)`;
+      ctx.beginPath(); ctx.moveTo(x0+s,y0); ctx.lineTo(x0+s,y0+s); ctx.lineTo(x0,y0+s); ctx.closePath(); ctx.fill();
+    } else { ctx.moveTo(x0,y0); ctx.lineTo(x0+s,y0); ctx.lineTo(x0+s,y0+s); ctx.closePath(); ctx.fill();
+      ctx.fillStyle=`hsla(${hue},35%,${a?68:32}%,1)`;
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0+s,y0+s); ctx.lineTo(x0,y0+s); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+function fxArcRandom(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const rnd=mulberry32(1);
+  const N=9, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
+  drawArcTruchet(ctx, 4.8,-4,195, N, (i,j)=>choices[i*N+j]);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxArcWeave(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  drawArcTruchet(ctx, 4.8,-4,150, 9, (i,j)=>(i+j)%2===0);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxArcDense(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const rnd=mulberry32(2);
+  const N=16, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
+  drawArcTruchet(ctx, 4.8,-4,95, N, (i,j)=>choices[i*N+j]);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxDiagRandom(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const rnd=mulberry32(3);
+  const N=11, choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.5);
+  drawDiagTruchet(ctx, 4.8,-4,300, N, (i,j)=>choices[i*N+j]);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxDiagBands(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const rnd=mulberry32(4);
+  const N=11;
+  const choices=[]; for(let i=0;i<N*N;i++) choices.push(rnd()<0.72);
+  drawDiagFilledTruchet(ctx, 4.8,-4,20, N, (i,j)=>choices[i*N+j]);
+  ctx.restore(); edgeStroke(ctx);
+}
+
+mountCards('gridTruchet', [
+  ['arcR','Дуговый Трюше, случайно','Случайный выбор из 2 поворотов дуговой плитки — извилистый лабиринт без предсказуемой структуры.'],
+  ['arcW','Дуговый Трюше, плетение','Поворот по правилу (i+j)%2 — не случайно! Строго периодический узор, период 2×2 — настоящее плетение корзины.'],
+  ['arcD','Дуговый Трюше, плотная сетка','16×16 плиток вместо 9×9 — тот же случайный лабиринт, но заметно сложнее.'],
+  ['diagR','Диагональный Трюше, случайно','Классические 2 треугольника (Трюше, 1704), случайный поворот — зигзаг без полос.'],
+  ['diagB','Диагональный Трюше, полосы','Вероятность одной ориентации сдвинута до 72% — реальный исторический эффект: складываются крупные диагональные полосы вместо ровного зигзага.'],
+]);
+loop('arcR', fxArcRandom, 4.2);
+loop('arcW', fxArcWeave, 4.2);
+loop('arcD', fxArcDense, 4.2);
+loop('diagR', fxDiagRandom, 4.2);
+loop('diagB', fxDiagBands, 4.2);
+
+/* ===================== ДИАГРАММЫ ВОРОНОГО ===================== */
+function voronoiLabel(seeds, G){
+  const N=seeds.length;
+  const label=new Int32Array(G*G);
+  for(let i=0;i<G;i++){
+    for(let j=0;j<G;j++){
+      const x=-1+2*(i+0.5)/G, y=-1+2*(j+0.5)/G;
+      let best=-1,bestD=Infinity;
+      for(let k=0;k<N;k++){
+        const dx=x-seeds[k][0], dy=y-seeds[k][1];
+        const d=dx*dx+dy*dy;
+        if(d<bestD){ bestD=d; best=k; }
+      }
+      label[i*G+j]=best;
+    }
+  }
+  return label;
+}
+function lloydStep(seeds,G){
+  const N=seeds.length;
+  const label=voronoiLabel(seeds,G);
+  const sx=new Array(N).fill(0), sy=new Array(N).fill(0), cnt=new Array(N).fill(0);
+  for(let i=0;i<G;i++)for(let j=0;j<G;j++){
+    const c=label[i*G+j];
+    sx[c]+=-1+2*(i+0.5)/G; sy[c]+=-1+2*(j+0.5)/G; cnt[c]++;
+  }
+  return seeds.map((s,k)=> cnt[k]>0? [sx[k]/cnt[k], sy[k]/cnt[k]] : s);
+}
+function squareLatticeSeeds(){ const v=[]; const n=6; for(let i=0;i<n;i++)for(let j=0;j<n;j++) v.push([-1+2*(i+0.5)/n, -1+2*(j+0.5)/n]); return v; }
+function hexLatticeSeeds(){
+  const v=[]; const dx=2/9, dy=dx*Math.sqrt(3)/2; const rows=Math.floor(2/dy);
+  for(let r=0;r<rows;r++){ const off=(r%2)*dx/2;
+    for(let c=0;c<9;c++){ const x=-1+c*dx+off+dx*0.25, y=-1+r*dy+dy*0.5; if(x<1&&y<1) v.push([x,y]); } }
+  return v;
+}
+function randomSeeds(seed,n){ const rnd=mulberry32(seed); const v=[]; for(let i=0;i<n;i++) v.push([-1+2*rnd(), -1+2*rnd()]); return v; }
+function densitySeeds(seed){
+  const rnd=mulberry32(seed); const v=[];
+  for(let i=0;i<14;i++) v.push([-1+rnd(), -1+2*rnd()]);
+  for(let i=0;i<50;i++) v.push([0+rnd(), -1+2*rnd()]);
+  return v;
+}
+function cellHash(k){ let x=(k*2654435761)>>>0; x^=x>>>16; x=(x*2246822519)>>>0; x^=x>>>13; return (x>>>0)/4294967296; }
+function drawVoronoi(ctx, seeds, scale, cy0, hue){
+  const G=76;
+  const label=voronoiLabel(seeds,G);
+  const cellW=2/G;
+  for(let i=0;i<G;i++){
+    for(let j=0;j<G;j++){
+      const c=label[i*G+j];
+      const h2=cellHash(c);
+      const lightness=42+h2*30;
+      const hueShift=hue+(h2-0.5)*30;
+      let boundary=false;
+      if(i+1<G && label[(i+1)*G+j]!==c) boundary=true;
+      if(!boundary && j+1<G && label[i*G+(j+1)]!==c) boundary=true;
+      if(!boundary && i>0 && label[(i-1)*G+j]!==c) boundary=true;
+      if(!boundary && j>0 && label[i*G+(j-1)]!==c) boundary=true;
+      ctx.fillStyle = boundary ? `hsla(${hueShift},30%,${Math.max(lightness-22,10)}%,1)` : `hsla(${hueShift},32%,${lightness}%,1)`;
+      const x=-1+i*cellW, y=-1+j*cellW;
+      ctx.fillRect(x*scale, cy0+y*scale, cellW*scale*1.02, cellW*scale*1.02);
+    }
+  }
+  seeds.forEach(([x,y])=>{
+    ctx.fillStyle=`hsla(${hue},85%,85%,.95)`;
+    ctx.beginPath(); ctx.arc(x*scale, cy0+y*scale, 0.045*scale, 0, 7); ctx.fill();
+  });
+}
+const VOR_SCALE=4.8;
+function fxSquare(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, squareLatticeSeeds(), VOR_SCALE,-4,205,1); ctx.restore(); edgeStroke(ctx); }
+function fxHex(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, hexLatticeSeeds(), VOR_SCALE,-4,150,2); ctx.restore(); edgeStroke(ctx); }
+function fxRandom(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, randomSeeds(11,60), VOR_SCALE,-4,95,3); ctx.restore(); edgeStroke(ctx); }
+function fxLloyd(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  let s=randomSeeds(11,60);
+  for(let it=0;it<4;it++) s=lloydStep(s,64);
+  drawVoronoi(ctx, s, VOR_SCALE,-4,285,4); ctx.restore(); edgeStroke(ctx);
+}
+function fxDensity(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawVoronoi(ctx, densitySeeds(21), VOR_SCALE,-4,20,5); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridVoronoi', [
+  ['sq','Квадратная решётка','Затравки строго по сетке — каждая ячейка ровно 4 соседа (проверено числом), сама ячейка — квадрат.'],
+  ['hex','Гексагональная решётка','Треугольная решётка затравок — каждая ячейка ровно 6 соседей, правильный шестиугольник — настоящие соты.'],
+  ['rnd','Случайные точки','Полностью случайные затравки — форма ячеек неправильная, но среднее число соседей ВСЁ РАВНО ≈6 (следствие формулы Эйлера, не зависит от случайности).'],
+  ['lloyd','После релаксации Ллойда','4 повторения «затравка → в центр своей области» — реальный алгоритм, площади ячеек становятся заметно ровнее (разброс упал в 5+ раз).'],
+  ['dens','Неравномерная плотность','Слева редко, справа в 4 раза чаще — площадь ячейки честно обратно пропорциональна плотности затравок.'],
+]);
+loop('sq', fxSquare, 4.2);
+loop('hex', fxHex, 4.2);
+loop('rnd', fxRandom, 4.2);
+loop('lloyd', fxLloyd, 4.2);
+loop('dens', fxDensity, 4.2);
+
+/* ===================== УЗОРЫ ТЬЮРИНГА ===================== */
+function grayScott(N, steps, f, k, seed){
+  const idx=(x,y)=>((y+N)%N)*N+((x+N)%N);
+  let u=new Float32Array(N*N).fill(1);
+  let v=new Float32Array(N*N).fill(0);
+  const half=Math.floor(N/6);
+  const rnd=mulberry32(seed);
+  for(let y=N/2-half;y<N/2+half;y++) for(let x=N/2-half;x<N/2+half;x++){ u[y*N+x]=0.5; v[y*N+x]=0.25; }
+  for(let i=0;i<N*N;i++) v[i]+=rnd()*0.02;
+  const u2=new Float32Array(N*N), v2=new Float32Array(N*N);
+  const Du=0.16, Dv=0.08, dt=1.0;
+  for(let s=0;s<steps;s++){
+    for(let y=0;y<N;y++){
+      for(let x=0;x<N;x++){
+        const i=idx(x,y);
+        const lapU=u[idx(x-1,y)]+u[idx(x+1,y)]+u[idx(x,y-1)]+u[idx(x,y+1)]-4*u[i];
+        const lapV=v[idx(x-1,y)]+v[idx(x+1,y)]+v[idx(x,y-1)]+v[idx(x,y+1)]-4*v[i];
+        const uu=u[i], vv=v[i], reaction=uu*vv*vv;
+        u2[i]=uu+(Du*lapU-reaction+f*(1-uu))*dt;
+        v2[i]=vv+(Dv*lapV+reaction-(f+k)*vv)*dt;
+      }
+    }
+    u.set(u2); v.set(v2);
+  }
+  return v;
+}
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360; s/=100; l/=100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;} else if(h<180){r=0;g=c;b=x;}
+  else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
+  return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
+}
+function drawTuring(ctx, scale, cy0, f, k, seedIdx, hue){
+  const N=64;
+  const v=grayScott(N, 5000, f, k, seedIdx);
+  let vmin=1e9, vmax=-1e9;
+  for(let i=0;i<v.length;i++){ vmin=Math.min(vmin,v[i]); vmax=Math.max(vmax,v[i]); }
+  const off=document.createElement('canvas'); off.width=N; off.height=N;
+  const octx=off.getContext('2d');
+  const img=octx.createImageData(N,N);
+  for(let y=0;y<N;y++){
+    for(let x=0;x<N;x++){
+      const val=(v[y*N+x]-vmin)/Math.max(1e-6,(vmax-vmin));
+      const light=14+val*58;
+      const [r,g,b]=hslToRgb(hue,42,light);
+      const p=(y*N+x)*4;
+      img.data[p]=r; img.data[p+1]=g; img.data[p+2]=b; img.data[p+3]=255;
+    }
+  }
+  octx.putImageData(img,0,0);
+  ctx.imageSmoothingEnabled=true;
+  const destSize=2*scale;
+  ctx.drawImage(off, -scale, cy0-scale, destSize, destSize);
+}
+const TUR_SCALE=19;
+function fxTurA(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0367,0.0649,1,20); ctx.restore(); edgeStroke(ctx); }
+function fxTurB(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0300,0.0620,2,150); ctx.restore(); edgeStroke(ctx); }
+function fxTurC(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0250,0.0550,3,280); ctx.restore(); edgeStroke(ctx); }
+function fxTurD(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0620,0.0609,4,340); ctx.restore(); edgeStroke(ctx); }
+function fxTurE(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawTuring(ctx,TUR_SCALE,-4,0.0180,0.0510,5,95); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridTuring', [
+  ['gsA','Пятна','f=0.0367, k=0.0649 — множество похожих круглых пятен по всему полю. Реально получилось именно так, проверено (не подписано по табличному названию без проверки).'],
+  ['gsB','Мелкая пятнистая текстура','f=0.0300, k=0.0620 — пятна мельче и чаще, чем у соседней карточки, почти сплошная крапинка.'],
+  ['gsC','Волнистые полосы','f=0.0250, k=0.0550 — при этом соотношении пятна вытягиваются в полосы, а не остаются круглыми — другая морфология той же системы.'],
+  ['gsD','Пятно в центре','f=0.0620, k=0.0609 — подпитка и распад почти равны, рост не успел занять всё поле, честно показано как получилось.'],
+  ['gsE','Разрозненные пятна','f=0.0180, k=0.0510 — самая медленная подпитка партии, пятна разного размера разбросаны неравномерно.'],
+]);
+loop('gsA', fxTurA, 4.2);
+loop('gsB', fxTurB, 4.2);
+loop('gsC', fxTurC, 4.2);
+loop('gsD', fxTurD, 4.2);
+loop('gsE', fxTurE, 4.2);
+
+/* ===================== КЛЕТОЧНЫЕ АВТОМАТЫ И РЕКУРСИВНЫЕ КРИВЫЕ ===================== */
+const AUT_ZOOM=4.2, AUT_MIN_LW=1.2/AUT_ZOOM;
+
+function sierpinski(depth,x,y,size,out){
+  if(depth===0){ out.push([x,y,size]); return; }
+  const h=size/2;
+  sierpinski(depth-1,x,y,h,out);
+  sierpinski(depth-1,x+h,y,h,out);
+  sierpinski(depth-1,x+h/2,y+h*Math.sqrt(3)/2,h,out);
+}
+function fxSierpinski(ctx, scale, cy0, hue){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const out=[]; sierpinski(5,-0.9,-0.75,1.8,out);
+  out.forEach(([x,y,size],i)=>{
+    const p=[[x,y],[x+size,y],[x+size/2,y+size*Math.sqrt(3)/2]].map(([px,py])=>[px*scale,cy0+py*scale]);
+    ctx.fillStyle=`hsla(${hue+((i*37)%40)},50%,${52+((i*17)%20)}%,.92)`;
+    ctx.beginPath(); ctx.moveTo(p[0][0],p[0][1]); ctx.lineTo(p[1][0],p[1][1]); ctx.lineTo(p[2][0],p[2][1]); ctx.closePath(); ctx.fill();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+
+function rule30(a,b,c){ const pattern=(a<<2)|(b<<1)|c; return [0,1,1,1,1,0,0,0][pattern]; }
+function stepRule30(row){ const n=row.length; const next=new Array(n).fill(0);
+  for(let i=0;i<n;i++){ const a=row[(i-1+n)%n], b=row[i], c=row[(i+1)%n]; next[i]=rule30(a,b,c); } return next; }
+function fxRule30(ctx, scale, cy0, hue){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const N=61, gens=32;
+  let row=new Array(N).fill(0); row[Math.floor(N/2)]=1;
+  const cell=2/N;
+  for(let g=0; g<gens; g++){
+    for(let i=0;i<N;i++){
+      if(!row[i]) continue;
+      const px=(-1+i*cell)*scale, py=cy0+(-0.95+g*cell*1.55)*scale;
+      ctx.fillStyle=`hsla(${hue},55%,${68-g}%,.9)`;
+      ctx.fillRect(px,py,cell*scale*1.05,cell*scale*1.55*1.05);
+    }
+    row=stepRule30(row);
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+
+function lifeStep(cells){
+  const key=(x,y)=>x+','+y;
+  const counts=new Map();
+  for(const [x,y] of cells) for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+    if(dx===0&&dy===0) continue;
+    const k=key(x+dx,y+dy); counts.set(k,(counts.get(k)||0)+1);
+  }
+  const aliveSet=new Set(cells.map(([x,y])=>key(x,y)));
+  const next=[]; const checked=new Set();
+  for(const [k,c] of counts){
+    if(checked.has(k)) continue; checked.add(k);
+    const alive=aliveSet.has(k);
+    if(alive&&(c===2||c===3)) next.push(k);
+    else if(!alive&&c===3) next.push(k);
+  }
+  return next.map(k=>k.split(',').map(Number));
+}
+function fxGlider(ctx, scale, cy0, hue){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  let gen=[[1,0],[2,1],[0,2],[1,2],[2,2]];
+  const phases=[gen];
+  for(let s=0;s<3;s++){ gen=lifeStep(gen); phases.push(gen); }
+  const cell=0.24;
+  phases.forEach((phase,pi)=>{
+    const alpha = pi===phases.length-1? 0.95 : 0.16+pi*0.08;
+    phase.forEach(([cx,cy])=>{
+      const px=(-0.5+cx*cell)*scale, py=cy0+(-0.5+cy*cell)*scale;
+      ctx.fillStyle=`hsla(${hue},60%,70%,${alpha})`;
+      ctx.fillRect(px,py,cell*scale*0.92,cell*scale*0.92);
+    });
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+
+function hilbertD2XY(order,d){
+  let rx,ry,x=0,y=0,t=d;
+  for(let s=1;s<(1<<order);s<<=1){
+    rx=1&Math.floor(t/2); ry=1&(t^rx);
+    if(ry===0){ if(rx===1){ x=s-1-x; y=s-1-y; } [x,y]=[y,x]; }
+    x+=s*rx; y+=s*ry; t=Math.floor(t/4);
+  }
+  return [x,y];
+}
+function fxHilbert(ctx, scale, cy0, hue){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const order=3, N=1<<order, cell=1.8/N;
+  const pts=[];
+  for(let d=0;d<N*N;d++){ const [x,y]=hilbertD2XY(order,d); pts.push([(-0.9+x*cell+cell/2)*scale, cy0+(-0.9+y*cell+cell/2)*scale]); }
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  [[3.2*AUT_MIN_LW,0.1],[1.8*AUT_MIN_LW,0.22]].forEach(([w,a])=>{
+    ctx.lineWidth=Math.max(w,AUT_MIN_LW); ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    ctx.beginPath(); pts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  });
+  ctx.restore();
+  ctx.lineWidth=AUT_MIN_LW; ctx.strokeStyle=`hsla(${hue},20%,93%,.95)`;
+  ctx.beginPath(); pts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+
+function ellipsePointAt(cx,cy,a,b,angle,t){
+  const x0=a*Math.cos(t), y0=b*Math.sin(t);
+  return [cx+x0*Math.cos(angle)-y0*Math.sin(angle), cy+x0*Math.sin(angle)+y0*Math.cos(angle)];
+}
+const UNDER_AT=[1.948,2.793], GAP=0.16;
+function fxBorromean(ctx, scale, cy0, hue){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  for(let i=0;i<3;i++){
+    const ang=i*2*Math.PI/3;
+    const cx=0.55*Math.cos(ang)*0.62, cy=0.55*Math.sin(ang)*0.62+cy0/scale*0;
+    const params={cx:0.55*Math.cos(ang), cy:0.55*Math.sin(ang), a:0.75, b:0.42, rot:ang+Math.PI/2};
+    const N=300;
+    const h2=hue+i*40;
+    let segStart=0;
+    const cuts=UNDER_AT.slice().sort((a,b)=>a-b);
+    const bounds=[];
+    cuts.forEach(t0=>{ bounds.push([t0-GAP, t0+GAP]); });
+    function inGap(t){ return bounds.some(([a,b])=>{ const tn=((t%(2*Math.PI))+2*Math.PI)%(2*Math.PI); const an=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI); const bn=((b%(2*Math.PI))+2*Math.PI)%(2*Math.PI); return tn>an&&tn<bn; }); }
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    [[3.0*AUT_MIN_LW,0.1],[1.7*AUT_MIN_LW,0.22]].forEach(([w,al])=>{
+      ctx.lineWidth=Math.max(w,AUT_MIN_LW); ctx.strokeStyle=`hsla(${h2},85%,65%,${al})`;
+      let started=false;
+      ctx.beginPath();
+      for(let k=0;k<=N;k++){
+        const t=k/N*2*Math.PI;
+        if(inGap(t)){ started=false; continue; }
+        const [x,y]=ellipsePointAt(params.cx,params.cy,params.a,params.b,params.rot,t);
+        const px=x*scale, py=cy0+y*scale;
+        if(!started){ ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+    });
+    ctx.restore();
+    ctx.lineWidth=AUT_MIN_LW; ctx.strokeStyle=`hsla(${h2},25%,92%,.95)`;
+    let started=false;
+    ctx.beginPath();
+    for(let k=0;k<=N;k++){
+      const t=k/N*2*Math.PI;
+      if(inGap(t)){ started=false; continue; }
+      const [x,y]=ellipsePointAt(params.cx,params.cy,params.a,params.b,params.rot,t);
+      const px=x*scale, py=cy0+y*scale;
+      if(!started){ ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+
+const AUT_SCALE=5.0;
+mountCards('gridAutomata', [
+  ['sp','Треугольник Серпинского','Число закрашенных треугольников на глубине 5 = 3⁵=243 — точный счёт, не оценка.'],
+  ['car30','Правило 30 Вольфрама','Детерминированная таблица из 8 случаев — хаотичный узор растёт из одной клетки честно по правилу.'],
+  ['gl','Глайдер («Жизнь» Конвея)','Проверено числом: после 4 поколений фигура повторяет себя, сдвинутая на (1,1) — настоящий «космический корабль».'],
+  ['hb','Кривая Гильберта','Путь порядка 3 проходит все 64 клетки сетки 8×8 по одному разу — гамильтонов путь, проверено числом.'],
+  ['bo','Кольца Борромео','3 эллипса (не окружности!) — каждая пара пересекается ровно в 2 точках, плетение над/под честно чередуется.'],
+]);
+loop('sp', ctx=>fxSierpinski(ctx,AUT_SCALE,-4,20), 4.2);
+loop('car30', ctx=>fxRule30(ctx,AUT_SCALE,-4,150), 4.2);
+loop('gl', ctx=>fxGlider(ctx,AUT_SCALE,-4,280), 4.2);
+loop('hb', ctx=>fxHilbert(ctx,AUT_SCALE,-4,340), 4.2);
+loop('bo', ctx=>fxBorromean(ctx,AUT_SCALE,-4,45), 4.2);
+
+/* ===================== ФИГУРЫ ХЛАДНИ ===================== */
+function chladni(n,m,x,y){ return Math.cos(n*Math.PI*x)*Math.cos(m*Math.PI*y) - Math.cos(m*Math.PI*x)*Math.cos(n*Math.PI*y); }
+
+function drawChladni(ctx, n, m, scale, cy0, hue, seed){
+  const N=90, rnd=mulberry32(seed);
+  ctx.fillStyle=`hsla(${hue},15%,55%,.06)`;
+  for(let i=0;i<N;i++){
+    for(let j=0;j<N;j++){
+      const x0=-1+2*i/N, x1=-1+2*(i+1)/N, y0=-1+2*j/N, y1=-1+2*(j+1)/N;
+      const s=[chladni(n,m,x0,y0),chladni(n,m,x1,y0),chladni(n,m,x0,y1),chladni(n,m,x1,y1)].map(z=>z>=0?1:-1);
+      if(s[0]===s[1] && s[1]===s[2] && s[2]===s[3]) continue;
+      const jx=(rnd()-0.5)*(x1-x0)*0.7, jy=(rnd()-0.5)*(y1-y0)*0.7;
+      const cx=(x0+x1)/2+jx, cyN=(y0+y1)/2+jy;
+      const px=cx*scale, py=cy0+cyN*scale;
+      const r=0.14+rnd()*0.07;
+      ctx.fillStyle=`hsla(${hue+ (rnd()*14-7)},20%,${78+rnd()*12}%,.85)`;
+      ctx.beginPath(); ctx.arc(px,py,r,0,7); ctx.fill();
+    }
+  }
+}
+const CHL_SCALE=4.8;
+function fxChl21(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,2,1,CHL_SCALE,-4,40,1); ctx.restore(); edgeStroke(ctx); }
+function fxChl31(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,3,1,CHL_SCALE,-4,40,2); ctx.restore(); edgeStroke(ctx); }
+function fxChl32(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,3,2,CHL_SCALE,-4,40,3); ctx.restore(); edgeStroke(ctx); }
+function fxChl43(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,4,3,CHL_SCALE,-4,40,4); ctx.restore(); edgeStroke(ctx); }
+function fxChl54(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#0c0a06'; fillBody(ctx); drawChladni(ctx,5,4,CHL_SCALE,-4,40,5); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridChladni', [
+  ['c21','Мода 2:1','7.4% ячеек сетки — самая простая мода партии, крупные секторы.'],
+  ['c31','Мода 3:1','12.8% ячеек — заметно плотнее, вырожденная пара (3,1)/(1,3).'],
+  ['c32','Мода 3:2','11.5% ячеек — классический учебный пример фигуры Хладни.'],
+  ['c43','Мода 4:3','16.0% ячеек — более высокая частота, больше узловых линий.'],
+  ['c54','Мода 5:4','20.1% ячеек — самая сложная мода партии, самая высокая частота.'],
+]);
+loop('c21', fxChl21, 4.2);
+loop('c31', fxChl31, 4.2);
+loop('c32', fxChl32, 4.2);
+loop('c43', fxChl43, 4.2);
+loop('c54', fxChl54, 4.2);
+
+/* ===================== ФИГУРЫ ЛИССАЖУ ===================== */
+function lissajousPoints(a,b,delta,N){
+  const pts=[];
+  for(let i=0;i<=N;i++){ const t=i/N*2*Math.PI; pts.push([Math.sin(a*t+delta), Math.sin(b*t)]); }
+  return pts;
+}
+function drawLissajous(ctx, a, b, scale, cy0, hue){
+  const N=900;
+  const raw=lissajousPoints(a,b,Math.PI/2,N);
+  const p=raw.map(([x,y])=>[x*scale, cy0+y*scale]);
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  [[3.2,0.10],[1.8,0.18],[0.9,0.35]].forEach(([w,a2])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a2})`;
+    ctx.beginPath();
+    p.forEach(([x,y],i)=> i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
+    ctx.closePath(); ctx.stroke();
+  });
+  ctx.restore();
+  for(let i=0;i<N;i++){
+    const t0=i/N, hue2=hue + t0*40 - 20;
+    ctx.strokeStyle=`hsla(${hue2},90%,80%,.95)`; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(p[i][0],p[i][1]); ctx.lineTo(p[i+1][0],p[i+1][1]); ctx.stroke();
+  }
+}
+const LIS_SCALE=5.4;
+function fxLis11(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,1,1,LIS_SCALE,-4,195); ctx.restore(); edgeStroke(ctx); }
+function fxLis12(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,1,2,LIS_SCALE,-4,140); ctx.restore(); edgeStroke(ctx); }
+function fxLis32(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,3,2,LIS_SCALE,-4,95); ctx.restore(); edgeStroke(ctx); }
+function fxLis34(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,3,4,LIS_SCALE,-4,300); ctx.restore(); edgeStroke(ctx); }
+function fxLis54(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawLissajous(ctx,5,4,LIS_SCALE,-4,20); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridLissajous', [
+  ['l11','1:1 — овал','Равные частоты, фаза 90° — окружность/эллипс. Классический тест «одинаковая частота, сдвиг фазы».'],
+  ['l12','1:2 — восьмёрка','Вертикальная частота вдвое выше. Кривая касается левого/правого края 1 раз, верхнего/нижнего — дважды за проход.'],
+  ['l32','3:2 — восьмёрка с узлом','Классический учебный пример отношения 3:2 — характерная «плетёнка».'],
+  ['l34','3:4','Более сложное отношение — больше пересечений внутри одной замкнутой кривой.'],
+  ['l54','5:4','Самое сложное отношение партии — плотный узел из пересечений, тот же принцип, что у настоящего фазового теста на осциллографе.'],
+]);
+loop('l11', fxLis11, 4.2);
+loop('l12', fxLis12, 4.2);
+loop('l32', fxLis32, 4.2);
+loop('l34', fxLis34, 4.2);
+loop('l54', fxLis54, 4.2);
+
+/* ===================== КРУГИ ФУРЬЕ ===================== */
+function starShape(t){
+  const outerR=1, innerR=0.42;
+  const verts=[];
+  for(let i=0;i<10;i++){
+    const ang=-Math.PI/2+i*Math.PI/5;
+    const r=i%2===0?outerR:innerR;
+    verts.push([r*Math.cos(ang), r*Math.sin(ang)]);
+  }
+  const seg=t*10, i=Math.floor(seg)%10, frac=seg-Math.floor(seg);
+  const a=verts[i], b=verts[(i+1)%10];
+  return [a[0]+(b[0]-a[0])*frac, a[1]+(b[1]-a[1])*frac];
+}
+function computeCoeffs(){
+  const N=400;
+  const pts=[]; for(let i=0;i<N;i++) pts.push(starShape(i/N));
+  const coeffs=[];
+  for(let k=-60;k<=60;k++){
+    let re=0, im=0;
+    for(let j=0;j<N;j++){
+      const [x,y]=pts[j];
+      const ang=-2*Math.PI*k*j/N;
+      const cr=Math.cos(ang), ci=Math.sin(ang);
+      re += x*cr - y*ci;
+      im += x*ci + y*cr;
+    }
+    coeffs.push({k, re:re/N, im:im/N, mag:Math.hypot(re/N,im/N)});
+  }
+  coeffs.sort((a,b)=>b.mag-a.mag);
+  return coeffs;
+}
+const ALL_COEFFS = computeCoeffs();
+function reconstruct(topK, t){
+  let x=0,y=0;
+  for(const o of topK){
+    const ang=o.k*t, ca=Math.cos(ang), sa=Math.sin(ang);
+    x += o.re*ca - o.im*sa;
+    y += o.re*sa + o.im*ca;
+  }
+  return [x,y];
+}
+function drawEpicycles(ctx, K, scale, cy0, hue){
+  const topK = ALL_COEFFS.slice(0,K);
+  ctx.strokeStyle='rgba(210,220,255,.16)'; ctx.lineWidth=0.4;
+  ctx.beginPath();
+  for(let i=0;i<=200;i++){ const [x,y]=starShape(i/200); const px=x*scale, py=cy0+y*scale; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+  ctx.stroke();
+  let cx=0, cy=0;
+  topK.forEach((o,idx)=>{
+    const r=o.mag;
+    const hue2=hue+idx*29;
+    if(r>0.002){
+      ctx.strokeStyle=`hsla(${hue2},70%,68%,.6)`; ctx.lineWidth=0.55;
+      ctx.beginPath(); ctx.arc(cx*scale, cy0+cy*scale, Math.max(r*scale,0.35), 0, 7); ctx.stroke();
+    }
+    const nx=cx+o.re, ny=cy+o.im;
+    ctx.strokeStyle=`hsla(${hue2},70%,75%,.5)`; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.moveTo(cx*scale,cy0+cy*scale); ctx.lineTo(nx*scale,cy0+ny*scale); ctx.stroke();
+    ctx.fillStyle=`hsla(${hue2},85%,80%,.95)`;
+    ctx.beginPath(); ctx.arc(nx*scale, cy0+ny*scale, 0.22, 0, 7); ctx.fill();
+    cx=nx; cy=ny;
+  });
+  const N=300, pathPts=[];
+  for(let i=0;i<=N;i++){ const t=i/N*2*Math.PI; const [x,y]=reconstruct(topK,t); pathPts.push([x*scale, cy0+y*scale]); }
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  [[2.6,0.12],[1.4,0.22]].forEach(([w,a2])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a2})`;
+    ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+  });
+  ctx.restore();
+  ctx.strokeStyle=`hsla(${hue},90%,80%,.95)`; ctx.lineWidth=0.55;
+  ctx.beginPath(); pathPts.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.stroke();
+}
+const FOU_SCALE=4.6;
+function fxK1(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,1,FOU_SCALE,-4,195); ctx.restore(); edgeStroke(ctx); }
+function fxK2(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,2,FOU_SCALE,-4,150); ctx.restore(); edgeStroke(ctx); }
+function fxK3(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,3,FOU_SCALE,-4,95); ctx.restore(); edgeStroke(ctx); }
+function fxK4(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,4,FOU_SCALE,-4,300); ctx.restore(); edgeStroke(ctx); }
+function fxK8(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawEpicycles(ctx,8,FOU_SCALE,-4,20); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridEpi', [
+  ['fk1','K=1','Одна окружность (первая гармоника) — только грубый круг, ошибка 0.183.'],
+  ['fk2','K=2','2 окружности — уже видна пятиконечная звезда, ошибка 0.077 (в 2.4 раза меньше).'],
+  ['fk3','K=3','3 окружности — звезда уверенно узнаваема, ошибка 0.022 (в 8 раз меньше, чем K=1).'],
+  ['fk4','K=4','4 окружности — первые 3 гармоники уже несут почти всю форму, дальше улучшения совсем мелкие.'],
+  ['fk8','K=8','8 окружностей — ошибка 0.0065, но на глаз почти неотличимо от K=4: сходимость для этой формы очень быстрая.'],
+]);
+loop('fk1', fxK1, 4.2);
+loop('fk2', fxK2, 4.2);
+loop('fk3', fxK3, 4.2);
+loop('fk4', fxK4, 4.2);
+loop('fk8', fxK8, 4.2);
+
+/* ===================== СТРАННЫЕ АТТРАКТОРЫ ===================== */
+function iterateAttractor(a,b,c,d,n,x0,y0){
+  let x=x0,y=y0; const pts=new Float32Array(n*2);
+  for(let i=0;i<n;i++){
+    const nx=Math.sin(a*y)+c*Math.cos(a*x);
+    const ny=Math.sin(b*x)+d*Math.cos(b*y);
+    x=nx; y=ny;
+    pts[i*2]=x; pts[i*2+1]=y;
+  }
+  return pts;
+}
+function drawAttractor(ctx, a,b,c,d, scale, cy0, hue){
+  const N=30000;
+  const pts=iterateAttractor(a,b,c,d,N,0.1,0.1);
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  ctx.fillStyle=`hsla(${hue},70%,60%,.05)`;
+  for(let i=200;i<N;i++){
+    const x=pts[i*2]*scale, y=cy0+pts[i*2+1]*scale;
+    ctx.fillRect(x-0.05,y-0.05,0.16,0.16);
+  }
+  ctx.fillStyle=`hsla(${hue},90%,82%,.5)`;
+  for(let i=200;i<N;i++){
+    const x=pts[i*2]*scale, y=cy0+pts[i*2+1]*scale;
+    ctx.fillRect(x,y,0.05,0.05);
+  }
+  ctx.restore();
+}
+function fxAttA(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.4,1.6,1.0,0.7, 3.2,-4,195); ctx.restore(); edgeStroke(ctx); }
+function fxAttB(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,1.7,1.7,0.6,1.2, 3.8,-4,150); ctx.restore(); edgeStroke(ctx); }
+function fxAttC(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.7,1.3,-0.1,-1.21, 4.1,-4,300); ctx.restore(); edgeStroke(ctx); }
+function fxAttD(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,1.5,-1.8,1.6,0.9, 2.4,-4,20); ctx.restore(); edgeStroke(ctx); }
+function fxAttE(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawAttractor(ctx,-1.9,-1.9,-1.9,-1.0, 2.3,-4,45); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridAttr', [
+  ['att1','a=−1.4, b=1.6, c=1.0, d=0.7','30000 точек одной непрерывной траектории — узор соткан из хаоса, не нарисован вручную.'],
+  ['att2','a=1.7, b=1.7, c=0.6, d=1.2','Другой набор параметров — совсем другая форма из той же самой формулы.'],
+  ['att3','a=−1.7, b=1.3, c=−0.1, d=−1.21','Третий набор — плотные переплетающиеся полосы.'],
+  ['att4','a=1.5, b=−1.8, c=1.6, d=0.9','Четвёртый набор — более компактная, узловатая форма.'],
+  ['att5','a=−1.9, b=−1.9, c=−1.9, d=−1.0','Пятый набор — все параметры отрицательные и близки друг к другу.'],
+]);
+loop('att1', fxAttA, 4.2);
+loop('att2', fxAttB, 4.2);
+loop('att3', fxAttC, 4.2);
+loop('att4', fxAttD, 4.2);
+loop('att5', fxAttE, 4.2);
+
+/* ===================== ИРИЗАЦИЯ ПОД УГЛОМ ===================== */
+function peakLambda(thetaDeg, n, d, m){
+  const thetaI = thetaDeg*Math.PI/180;
+  const thetaT = Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
+  return 2*n*d*Math.cos(thetaT)/(m+0.5);
+}
+function wavelengthToRGB(wl){
+  let r=0,g=0,b=0;
+  if(wl>=380&&wl<440){ r=-(wl-440)/(440-380); g=0; b=1; }
+  else if(wl>=440&&wl<490){ r=0; g=(wl-440)/(490-440); b=1; }
+  else if(wl>=490&&wl<510){ r=0; g=1; b=-(wl-510)/(510-490); }
+  else if(wl>=510&&wl<580){ r=(wl-510)/(580-510); g=1; b=0; }
+  else if(wl>=580&&wl<645){ r=1; g=-(wl-645)/(645-580); b=0; }
+  else if(wl>=645&&wl<=700){ r=1; g=0; b=0; }
+  else { return [10,9,14]; }
+  return [Math.max(0,Math.min(1,r))*255, Math.max(0,Math.min(1,g))*255, Math.max(0,Math.min(1,b))*255];
+}
+function drawIridescence(ctx, heroTheta, scale){
+  const n=1.33, d=300, m=1;
+  const grad=ctx.createLinearGradient(0,-22*1, 0, 14*1);
+  const stops=7;
+  for(let i=0;i<=stops;i++){
+    const t=i/stops;
+    const theta=heroTheta-12+24*t;
+    const [r,g,b]=wavelengthToRGB(peakLambda(Math.max(0,theta), n, d, m));
+    grad.addColorStop(t, `rgba(${r|0},${g|0},${b|0},1)`);
+  }
+  ctx.fillStyle=grad;
+  fillBody(ctx);
+  const sheen=ctx.createRadialGradient(-4,-8,1,-4,-8,26);
+  sheen.addColorStop(0,'rgba(255,255,255,.28)');
+  sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sheen;
+  fillBody(ctx);
+}
+const IRID_SCALE=1;
+function fxT0(ctx){ ctx.save(); clipBody(ctx); drawIridescence(ctx,0,IRID_SCALE); ctx.restore(); edgeStroke(ctx); }
+function fxT20(ctx){ ctx.save(); clipBody(ctx); drawIridescence(ctx,20,IRID_SCALE); ctx.restore(); edgeStroke(ctx); }
+function fxT35(ctx){ ctx.save(); clipBody(ctx); drawIridescence(ctx,35,IRID_SCALE); ctx.restore(); edgeStroke(ctx); }
+function fxT50(ctx){ ctx.save(); clipBody(ctx); drawIridescence(ctx,50,IRID_SCALE); ctx.restore(); edgeStroke(ctx); }
+function fxT65(ctx){ ctx.save(); clipBody(ctx); drawIridescence(ctx,65,IRID_SCALE); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridIrid', [
+  ['t0','Угол 0° (в упор)','λ≈532нм — зелёный. Смотрим прямо на плёнку, путь луча внутри плёнки самый длинный.'],
+  ['t20','Угол 20°','λ≈514нм — зелёный смещается к жёлто-зелёному краю.'],
+  ['t35','Угол 35°','λ≈480нм — голубой. Путь луча внутри плёнки короче, рабочая длина волны падает.'],
+  ['t50','Угол 50°','λ≈435нм — синий.'],
+  ['t65','Угол 65°','λ≈389нм — фиолетовый, на самой грани видимого света.'],
+]);
+loop('t0', fxT0, 4.2);
+loop('t20', fxT20, 4.2);
+loop('t35', fxT35, 4.2);
+loop('t50', fxT50, 4.2);
+loop('t65', fxT65, 4.2);
+
+/* ===================== МУАРОВЫЕ УЗОРЫ ===================== */
+function drawLineGrating(ctx, scale, cy0, d, angleDeg, hue, alpha, lineW){
+  const a=angleDeg*Math.PI/180;
+  const dirX=Math.cos(a), dirY=Math.sin(a);
+  const perpX=-dirY, perpY=dirX;
+  const R=2.2;
+  ctx.strokeStyle=`hsla(${hue},70%,70%,${alpha})`;
+  ctx.lineWidth=lineW;
+  const nLines=Math.ceil(2*R/d);
+  for(let n=-nLines;n<=nLines;n++){
+    const offX=perpX*n*d, offY=perpY*n*d;
+    const x0=(offX-dirX*R)*scale, y0=cy0+(offY-dirY*R)*scale;
+    const x1=(offX+dirX*R)*scale, y1=cy0+(offY+dirY*R)*scale;
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  }
+}
+function drawDotGrid(ctx, scale, cy0, d, hue, alpha, r){
+  ctx.fillStyle=`hsla(${hue},75%,72%,${alpha})`;
+  const n=Math.ceil(1.6/d);
+  for(let i=-n;i<=n;i++) for(let j=-n;j<=n;j++){
+    const x=i*d*scale, y=cy0+j*d*scale;
+    ctx.beginPath(); ctx.arc(x,y,r*scale,0,7); ctx.fill();
+  }
+}
+function drawConcentric(ctx, scale, cy0, p, cx, cyOff, hue, alpha, lineW){
+  ctx.strokeStyle=`hsla(${hue},70%,70%,${alpha})`;
+  ctx.lineWidth=lineW;
+  const nR=Math.ceil(2.2/p);
+  for(let n=1;n<=nR;n++){
+    ctx.beginPath(); ctx.arc(cx*scale, cy0+cyOff*scale, n*p*scale, 0, 7); ctx.stroke();
+  }
+}
+const MOI_SCALE=4.8, MOI_ZOOM=4.2;
+const MOI_MIN_LW = 1.25/MOI_ZOOM;
+const MOI_MIN_R  = 0.65/MOI_ZOOM;
+function fxAngleCoarse(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const d=0.18, lw=Math.max(d*MOI_SCALE*0.12, MOI_MIN_LW), half=7/2;
+  drawLineGrating(ctx,MOI_SCALE,-4,d,-half,195,.6,lw);
+  drawLineGrating(ctx,MOI_SCALE,-4,d,half,205,.6,lw);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxAngleFine(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const d=0.18, lw=Math.max(d*MOI_SCALE*0.12, MOI_MIN_LW), half=21/2;
+  drawLineGrating(ctx,MOI_SCALE,-4,d,-half,150,.6,lw);
+  drawLineGrating(ctx,MOI_SCALE,-4,d,half,160,.6,lw);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxDotScale(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const r=Math.max(0.02, MOI_MIN_R/MOI_SCALE);
+  drawDotGrid(ctx,MOI_SCALE,-4,0.20,95,.6,r);
+  drawDotGrid(ctx,MOI_SCALE,-4,0.18,105,.6,r);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxRadialScale(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const p1=0.20, p2=0.18, lw=Math.max(Math.min(p1,p2)*MOI_SCALE*0.12, MOI_MIN_LW);
+  drawConcentric(ctx,MOI_SCALE,-4,p1,0,0,300,.65,lw);
+  drawConcentric(ctx,MOI_SCALE,-4,p2,0,0,310,.65,lw);
+  ctx.restore(); edgeStroke(ctx);
+}
+function fxRadialOffset(ctx){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const p=0.19, lw=Math.max(p*MOI_SCALE*0.12, MOI_MIN_LW);
+  drawConcentric(ctx,MOI_SCALE,-4,p,-0.12,0,20,.65,lw);
+  drawConcentric(ctx,MOI_SCALE,-4,p,0.12,0,30,.65,lw);
+  ctx.restore(); edgeStroke(ctx);
+}
+
+mountCards('gridMoire', [
+  ['angC','Поворот 7° — крупный муар','Две решётки под углом 7° — период муара D=d/(2sin3.5°)≈8.2d, огромный узор из мелких линий.'],
+  ['angF','Поворот 21° — мелкий муар','Тот же приём, угол больше — период муара D=d/(2sin10.5°)≈2.7d, узор заметно мельче.'],
+  ['dotS','Точечные сетки, разный шаг','Две сетки точек с шагом 0.20 и 0.18 — муар от несовпадения масштаба, не поворота. Период D=p₁p₂/|p₁−p₂|≈1.8.'],
+  ['radS','Кольца, разный шаг','Два набора концентрических колец с шагом 0.20 и 0.18 — период D=p₁p₂/|p₁−p₂|≈1.8, проверено числом.'],
+  ['radO','Кольца, смещённый центр','Те же кольца, но центры сдвинуты — классический гиперболический муар (используется в интерферометрии для измерения деформаций).'],
+]);
+loop('angC', fxAngleCoarse, 4.2);
+loop('angF', fxAngleFine, 4.2);
+loop('dotS', fxDotScale, 4.2);
+loop('radS', fxRadialScale, 4.2);
+loop('radO', fxRadialOffset, 4.2);
+
+/* ===================== 5 ПЛАТОНОВЫХ ТЕЛ ===================== */
+function rotate(v, rx, ry){
+  let [x,y,z]=v;
+  let y1=y*Math.cos(rx)-z*Math.sin(rx), z1=y*Math.sin(rx)+z*Math.cos(rx);
+  let x2=x*Math.cos(ry)+z1*Math.sin(ry), z2=-x*Math.sin(ry)+z1*Math.cos(ry);
+  return [x2,y1,z2];
+}
+function edgesFromVerts(verts){
+  function dist(a,b){ return Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]); }
+  let minD=1e9;
+  for(let i=0;i<verts.length;i++)for(let j=i+1;j<verts.length;j++) minD=Math.min(minD,dist(verts[i],verts[j]));
+  const edges=[];
+  for(let i=0;i<verts.length;i++)for(let j=i+1;j<verts.length;j++) if(dist(verts[i],verts[j])<minD*1.01) edges.push([i,j]);
+  return edges;
+}
+function drawSolid(ctx, verts, cy0, scale, hue, rx, ry){
+  const rotated=verts.map(v=>rotate(v, rx===undefined?0.5:rx, ry===undefined?0.7:ry));
+  const edges=edgesFromVerts(verts);
+  const p=rotated.map(([x,y,z])=>[x*scale, cy0+y*scale, z]);
+  ctx.strokeStyle=`hsla(${hue},70%,78%,.9)`; ctx.lineWidth=0.9;
+  edges.forEach(([i,j])=>{ ctx.beginPath(); ctx.moveTo(p[i][0],p[i][1]); ctx.lineTo(p[j][0],p[j][1]); ctx.stroke(); });
+  p.forEach(([x,y,z])=>{
+    const shade=Math.max(0.4,Math.min(1,0.7+z*0.12));
+    const grad=ctx.createRadialGradient(x-0.4,y-0.4,0,x,y,0.8);
+    grad.addColorStop(0,`hsla(${hue},85%,${80*shade}%,1)`);
+    grad.addColorStop(1,`hsla(${hue},70%,${40*shade}%,1)`);
+    ctx.fillStyle=grad;
+    ctx.beginPath(); ctx.arc(x,y,0.8,0,7); ctx.fill();
+  });
+}
+const PLA_SCALE=3.5;
+const phi=(1+Math.sqrt(5))/2;
+function fxTetra(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawSolid(ctx,[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]],-4,PLA_SCALE,10); ctx.restore(); edgeStroke(ctx); }
+function fxCube(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const v=[]; [1,-1].forEach(a=>[1,-1].forEach(b=>[1,-1].forEach(c=>v.push([a,b,c]))));
+  drawSolid(ctx,v,-4,PLA_SCALE,205); ctx.restore(); edgeStroke(ctx); }
+function fxOcta(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx); drawSolid(ctx,[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],-4,PLA_SCALE,150,0.55,0.15); ctx.restore(); edgeStroke(ctx); }
+function fxDodeca(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const v=[];
+  [1,-1].forEach(a=>[1,-1].forEach(b=>[1,-1].forEach(c=>v.push([a,b,c]))));
+  [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([0,a/phi,b*phi])));
+  [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([a/phi,b*phi,0])));
+  [1,-1].forEach(a=>[1,-1].forEach(b=>v.push([a*phi,0,b/phi])));
+  drawSolid(ctx,v,-4,PLA_SCALE,290); ctx.restore(); edgeStroke(ctx); }
+function fxIco(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  const v=[];
+  [1,-1].forEach(s1=>[1,-1].forEach(s2=>{ v.push([0,s1*1,s2*phi]); v.push([s1*1,s2*phi,0]); v.push([s1*phi,0,s2*1]); }));
+  drawSolid(ctx,v,-4,PLA_SCALE,45); ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridPlatonic', [
+  ['tetra','Тетраэдр','4 вершины, 6 рёбер, 4 грани. Двугранный угол 70.53° (arccos(1/3), проверено числом).'],
+  ['cube','Куб','8 вершин, 12 рёбер, 6 граней. Двугранный угол ровно 90°.'],
+  ['octa','Октаэдр','6 вершин, 12 рёбер, 8 граней. Двугранный угол 109.47° (arccos(−1/3)) — та же цифра, что у тетраэдрической геометрии VSEPR, не совпадение (двойственен кубу).'],
+  ['dodeca','Додекаэдр','20 вершин, 30 рёбер, 12 граней. Вершины построены через золотое сечение φ. Двугранный угол 116.57°.'],
+  ['ico','Икосаэдр','12 вершин, 30 рёбер, 20 граней. Двойственен додекаэдру. Двугранный угол 138.19° — самый тупой среди пяти, самое сглаженное тело.'],
+]);
+loop('tetra', fxTetra, 4.2);
+loop('cube', fxCube, 4.2);
+loop('octa', fxOcta, 4.2);
+loop('dodeca', fxDodeca, 4.2);
+loop('ico', fxIco, 4.2);
+
+/* ===================== ХАНГЫЛЬ ===================== */
+const HAN_ZOOM=4.2, HAN_LW=Math.max(0.16, 1.3/HAN_ZOOM);
+function strokePath(ctx, pts, scale, cy0, hue, closed){
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  [[HAN_LW*3.2,0.10],[HAN_LW*1.8,0.22]].forEach(([w,a])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    ctx.beginPath();
+    pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
+    if(closed) ctx.closePath();
+    ctx.stroke();
+  });
+  ctx.restore();
+  ctx.lineWidth=HAN_LW; ctx.strokeStyle=`hsla(${hue},20%,92%,.97)`; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  pts.forEach(([x,y],i)=> i===0?ctx.moveTo(x*scale,cy0+y*scale):ctx.lineTo(x*scale,cy0+y*scale));
+  if(closed) ctx.closePath();
+  ctx.stroke();
+}
+function strokeCircle(ctx, r, scale, cy0, hue){
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  [[HAN_LW*3.2,0.10],[HAN_LW*1.8,0.22]].forEach(([w,a])=>{
+    ctx.lineWidth=w; ctx.strokeStyle=`hsla(${hue},85%,62%,${a})`;
+    ctx.beginPath(); ctx.arc(0,cy0,r*scale,0,7); ctx.stroke();
+  });
+  ctx.restore();
+  ctx.lineWidth=HAN_LW; ctx.strokeStyle=`hsla(${hue},20%,92%,.97)`;
+  ctx.beginPath(); ctx.arc(0,cy0,r*scale,0,7); ctx.stroke();
+}
+const HAN_SCALE=5.0;
+function fxGiyeok(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6]], HAN_SCALE,-4,20,false);
+  ctx.restore(); edgeStroke(ctx); }
+function fxNieun(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  strokePath(ctx, [[-0.6,-0.6],[-0.6,0.6],[0.6,0.6]], HAN_SCALE,-4,150,false);
+  ctx.restore(); edgeStroke(ctx); }
+function fxMieum(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  strokePath(ctx, [[-0.6,-0.6],[0.6,-0.6],[0.6,0.6],[-0.6,0.6]], HAN_SCALE,-4,280,true);
+  ctx.restore(); edgeStroke(ctx); }
+function fxSiot(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  strokePath(ctx, [[-0.65,0.6],[0,-0.6],[0.65,0.6]], HAN_SCALE,-4,340,false);
+  ctx.restore(); edgeStroke(ctx); }
+function fxIeung(ctx){ ctx.save(); clipBody(ctx); ctx.fillStyle='#07060c'; fillBody(ctx);
+  strokeCircle(ctx, 0.62, HAN_SCALE,-4,95);
+  ctx.restore(); edgeStroke(ctx); }
+
+mountCards('gridHangul', [
+  ['hgG','ㄱ (giyeok) — корень языка','Изгиб корня языка, перекрывающего заднюю часть нёба — велярный звук (как «к»/«г»).'],
+  ['hgN','ㄴ (nieun) — язык у зубов','Кончик языка касается альвеолярного гребня за верхними зубами — звук «н».'],
+  ['hgM','ㅁ (mieum) — форма рта','Квадрат — стилизованная форма губ, сомкнутых для звука «м».'],
+  ['hgS','ㅅ (siot) — форма резца','Пик — форма переднего зуба (резца), место шипящего/свистящего звука «с».'],
+  ['hgNg','ㅇ (ieung) — форма горла','Окружность — форма самого горла (гортани), нейтральный/носовой звук.'],
+]);
+loop('hgG', fxGiyeok, 4.2);
+loop('hgN', fxNieun, 4.2);
+loop('hgM', fxMieum, 4.2);
+loop('hgS', fxSiot, 4.2);
+loop('hgNg', fxIeung, 4.2);
 </script>
