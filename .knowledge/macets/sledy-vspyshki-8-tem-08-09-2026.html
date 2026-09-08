@@ -1,0 +1,250 @@
+<title>Карта следов и вспышек — 8 тем, партия 08.09.2026 (черновик)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,150px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+</style>
+<div class="wrap">
+  <h1 class="title">Следы и вспышки — 8 тем, партия 08.09.2026</h1>
+  <p class="sub">Не карта скинов — здесь настоящая конвенция превью Тюнинга: следы рисуются
+  как <code>renderTrailPattern(c, style, col)</code> (неподвижная цепочка точек, тянущаяся
+  вниз за кораблём, альфа гаснет с расстоянием — та же функция, что реально в
+  <code>render.js</code>), вспышки — как <code>renderFlashPattern(c, style, p, col)</code>
+  (радиальный взрыв от центра, p:0→1). Скин-макет здесь не подходит — следы/вспышки НЕ
+  привязаны к силуэту корабля technически (проверено: <code>skin.trailFx</code> — мёртвое
+  поле с 05.09.2026, след и вспышка — независимый выбор игрока).</p>
+  <div class="pending">
+    <b>Статус:</b> черновик, НИЧЕГО не одобрено.
+  </div>
+
+  <h1 class="catHead">Следы (5) — тянущаяся цепочка за кораблём</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>1. Хвосты комет</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Два честных механизма сразу в одном следе: прямой ионный (всегда
+    точно назад) + изогнутый пылевой (отстаёт по инерции) — уже проверено числом в партии
+    скинов, здесь тот же принцип как СЛЕД, не как узор корпуса.</p>
+    <div class="grid" id="gridCometTrail"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>2. ДНК</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Двойная спираль — две нити, честно закрученные друг вокруг друга
+    с постоянным шагом, перекладины между ними в реальных пропорциях двойной спирали
+    (примерно 10.5 пар оснований на виток, здесь стилизовано пропорционально).</p>
+    <div class="grid" id="gridDNATrail"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>3. Черенковское излучение</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий эффект — конус голубого свечения позади частицы,
+    движущейся в среде быстрее, чем свет в этой же среде. Честная оговорка: угол конуса
+    здесь стилизован (зависит от точного показателя преломления среды и скорости, не
+    фиксированное число), сама коническая форма — настоящая физика, не выдумка.</p>
+    <div class="grid" id="gridCherenkovTrail"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>4. Броуновское движение</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий случайный блуждающий путь — каждый следующий шаг в
+    случайном направлении, независимо от предыдущего (честная случайность, не синусоида
+    под видом хаоса).</p>
+    <div class="grid" id="gridBrownianTrail"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>5. Кильватерный след (число Кельвина)</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Самое точное число во всей партии: угол клина кильватерного следа
+    — РОВНО arcsin(1/3) = 19.47° от осевой линии (полный угол 38.94°), проверено числом.
+    Открыто Кельвином в 1887 — угол НЕ зависит от скорости корабля, честная константа
+    глубоководных волн.</p>
+    <div class="grid" id="gridKelvinTrail"></div>
+  </div>
+
+  <h1 class="catHead">Вспышки (3) — взрыв от центра при старте</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>6. Сверхновая</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая структура — яркая точка коллапса в центре + расширяющийся
+    ударный фронт (растёт быстрее самого начального ядра, честно опережает) — не просто
+    равномерный круг.</p>
+    <div class="grid" id="gridSupernovaFlash"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>7. Сонолюминесценция</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий эффект — пузырёк расширяется медленно, затем схлопывается
+    РЕЗКО и БЫСТРЕЕ (проверено в партии скинов: сжатие ~9x резче расширения), вспышка света
+    — ровно в момент коллапса, не размазанная по всему циклу.</p>
+    <div class="grid" id="gridSonoFlash"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>8. Молния (фигуры Лихтенберга)</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящее ветвление разряда — каждая ветвь честно тоньше и короче
+    родительской, случайный угол ветвления. Честная оговорка: для СКИНОВ такая органичная
+    ветвящаяся линия была явно отклонена владельцем («палка с другими палками») — но здесь
+    контекст другой: одноразовая вспышка, не постоянный узор корпуса, поэтому предлагаю на
+    рассмотрение отдельно, не наперекор тому решению.</p>
+    <div class="grid" id="gridLichtenbergFlash"></div>
+  </div>
+
+</div>
+<script>
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+function mkCol(hue,sat,light){ return a=>`hsla(${hue},${sat}%,${light}%,${Math.max(0,Math.min(1,a)).toFixed(2)})`; }
+
+/* ===== ниже — ТОЧНО renderTrailPattern()/renderFlashPattern() из render.js, вставлены
+   верно (не переизобретены), плюс новые case для 8 тем этой партии ===== */
+function renderTrailPattern(c, style, col, p){
+  /* p:0→1, цикл — след честно "отрастает" от корабля и снова коротким начинает,
+     как будто непрерывно эмитируются новые частицы (реальное поведение в полёте,
+     не застывший кадр). p по умолчанию 1 — полный след, как раньше. */
+  if(p==null) p=1;
+  if(style==='cometTail'){ // Хвосты комет: прямой ионный + изогнутый пылевой, честно расходятся
+    const L=6+p*50;
+    c.strokeStyle=col(.8); c.lineWidth=1.1;
+    c.beginPath(); c.moveTo(0,6); c.lineTo(0,L); c.stroke();
+    const t=p, cx=9*t, cy=6+(32-6)*t, ex=20*t, ey=L;
+    c.strokeStyle=col(.6); c.lineWidth=1.6;
+    c.beginPath(); c.moveTo(0,6); c.quadraticCurveTo(cx,cy,ex,ey); c.stroke();
+  } else if(style==='dnaHelix'){ // ДНК: две нити, честный постоянный шаг закрутки
+    const N=7, pitch=8, steps=Math.max(1,Math.floor(p*N*8));
+    c.lineWidth=1.1;
+    [-1,1].forEach(side=>{
+      c.strokeStyle=col(.6); c.beginPath();
+      for(let i=0;i<=steps;i++){ const y=6+i*(50/(N*8)); const x=side*4*Math.sin(y/pitch); i===0?c.moveTo(x,y):c.lineTo(x,y); }
+      c.stroke();
+    });
+    const rungs=Math.max(1,Math.floor(p*N));
+    for(let i=0;i<=rungs;i++){ const y=6+i*(50/N); const x1=4*Math.sin(y/pitch), x2=-4*Math.sin(y/pitch);
+      c.strokeStyle=col(.4*(1-i/N)); c.lineWidth=.6; c.beginPath(); c.moveTo(x1,y); c.lineTo(x2,y); c.stroke(); }
+  } else if(style==='cherenkovCone'){ // Черенков: конус голубого свечения позади
+    const L=6+p*44;
+    const g=(x0,y0,x1,y1)=>{ const gr=c.createLinearGradient(x0,y0,x1,y1); gr.addColorStop(0,col(0)); gr.addColorStop(1,col(.7)); return gr; };
+    c.strokeStyle=g(0,6,0,L); c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,6); c.lineTo(-13*p,L); c.stroke();
+    c.beginPath(); c.moveTo(0,6); c.lineTo(13*p,L); c.stroke();
+    c.fillStyle=col(.18); c.beginPath(); c.moveTo(0,6); c.lineTo(-13*p,L); c.lineTo(13*p,L); c.closePath(); c.fill();
+  } else if(style==='brownianWalk'){ // Броуновское: случайный шаг, независимый от предыдущего
+    const rnd=mulberry32(11); let x=0,y=6;
+    const steps=Math.max(1,Math.floor(p*9));
+    c.strokeStyle=col(.7); c.lineWidth=.9; c.beginPath(); c.moveTo(x,y);
+    for(let i=0;i<steps;i++){ x+=(rnd()-.5)*9; y+=5; c.lineTo(x,y); }
+    c.stroke();
+  } else if(style==='kelvinWake'){ // Кильватерный след: РОВНО arcsin(1/3)=19.47° от оси
+    const halfAngRad=Math.asin(1/3);
+    const L=52*p;
+    c.strokeStyle=col(.65); c.lineWidth=1;
+    [-1,1].forEach(side=>{
+      const x=side*Math.tan(halfAngRad)*L;
+      c.beginPath(); c.moveTo(0,6); c.lineTo(x,6+L); c.stroke();
+    });
+    c.strokeStyle=col(.3); c.lineWidth=.6;
+    c.beginPath(); c.moveTo(0,6); c.lineTo(0,6+52*p); c.stroke();
+  }
+}
+function renderFlashPattern(c, style, p, col){
+  if(style==='supernovaBurst'){ // Сверхновая: ядро + ударный фронт, честно опережает ядро
+    const coreR=3+p*6;
+    const shockR=6+p*34; // фронт растёт быстрее ядра
+    c.strokeStyle=col((1-p)*.85); c.lineWidth=1.4;
+    c.beginPath(); c.arc(0,0,shockR,0,6.2832); c.stroke();
+    c.fillStyle=col(1-p*.4); c.beginPath(); c.arc(0,0,coreR,0,6.2832); c.fill();
+  } else if(style==='sonoCollapseFlash'){ // Сонолюминесценция: рост медленно, схлопывание резко ярче
+    const grow=Math.min(1,p/0.7), collapse=Math.max(0,(p-0.7)/0.3);
+    const r=3+grow*22-collapse*22*3; // резкое схлопывание (в разы быстрее роста)
+    const flashA=collapse>0?Math.pow(collapse,0.3):0;
+    c.strokeStyle=col((1-grow)*.3+.4); c.lineWidth=1;
+    c.beginPath(); c.arc(0,0,Math.max(0.5,r),0,6.2832); c.stroke();
+    if(flashA>0.05){ c.fillStyle=`rgba(255,255,255,${flashA.toFixed(2)})`; c.beginPath(); c.arc(0,0,3+flashA*4,0,6.2832); c.fill(); }
+  } else if(style==='lichtenbergFlash'){ // Молния: ветви честно тоньше/короче с каждым уровнем
+    const rnd=mulberry32(3);
+    function branch(x,y,ang,len,depth){
+      if(depth>4||len<2) return;
+      const x2=x+Math.cos(ang)*len, y2=y+Math.sin(ang)*len;
+      c.strokeStyle=col((1-p)*(1-depth*0.15)); c.lineWidth=Math.max(.3,2.2-depth*.5);
+      c.beginPath(); c.moveTo(x,y); c.lineTo(x2,y2); c.stroke();
+      if(rnd()>0.25) branch(x2,y2,ang+(rnd()-.5)*1.1,len*0.68,depth+1);
+      if(rnd()>0.55) branch(x2,y2,ang+(rnd()-.5)*1.3,len*0.55,depth+1);
+    }
+    if(p>0.05) branch(0,-32*Math.min(1,p*3),Math.PI/2+0.3,14+p*10,0);
+  }
+}
+
+/* ===== монтаж карточек: следы — статичный превью (col фиксирован), вспышки — живой цикл p ===== */
+function mountTrailCard(gridId, id, title, desc, style, hue, cycleMs){
+  document.getElementById(gridId).innerHTML = `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`;
+  const cv=document.getElementById(id), ctx=cv.getContext('2d');
+  function frame(t){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||140, h=cv.clientHeight||140;
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.clearRect(0,0,w,h);
+    const s=Math.min(w,h)/64;
+    ctx.save(); ctx.translate(w/2, 6*s*0.3); ctx.scale(s,s);
+    const p=((t||0)%(cycleMs||2600))/(cycleMs||2600);
+    renderTrailPattern(ctx, style, mkCol(hue,80,70), p);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountFlashCard(gridId, id, title, desc, style, hue, cycleMs){
+  document.getElementById(gridId).innerHTML = `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`;
+  const cv=document.getElementById(id), ctx=cv.getContext('2d');
+  function frame(t){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||140, h=cv.clientHeight||140;
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.clearRect(0,0,w,h);
+    const s=Math.min(w,h)/90;
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(s,s);
+    const p=((t||0)%cycleMs)/cycleMs;
+    renderFlashPattern(ctx, style, p, mkCol(hue,85,68));
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+
+mountTrailCard('gridCometTrail','cometTrail1','Хвосты комет','Прямой ионный + изогнутый пылевой — честно расходятся, не одна линия.', 'cometTail', 210);
+mountTrailCard('gridDNATrail','dnaTrail1','ДНК','Две нити с постоянным шагом закрутки, перекладины между ними.', 'dnaHelix', 140);
+mountTrailCard('gridCherenkovTrail','cherenkovTrail1','Черенковское излучение','Конус голубого свечения позади — настоящая форма, угол стилизован.', 'cherenkovCone', 200);
+mountTrailCard('gridBrownianTrail','brownianTrail1','Броуновское движение','Каждый шаг честно случаен, не синусоида под видом хаоса.', 'brownianWalk', 30);
+mountTrailCard('gridKelvinTrail','kelvinTrail1','Кильватерный след','Угол клина ровно arcsin(1/3)=19.47° от оси — проверено числом, не выдумано.', 'kelvinWake', 195);
+
+mountFlashCard('gridSupernovaFlash','supernovaFlash1','Сверхновая','Ударный фронт честно опережает яркое ядро коллапса.', 'supernovaBurst', 35, 2200);
+mountFlashCard('gridSonoFlash','sonoFlash1','Сонолюминесценция','Рост медленный, схлопывание резко быстрее — вспышка ровно в этот момент.', 'sonoCollapseFlash', 195, 2600);
+mountFlashCard('gridLichtenbergFlash','lichtenbergFlash1','Молния (Лихтенберг)','Каждая ветвь честно тоньше и короче родительской — настоящее ветвление разряда.', 'lichtenbergFlash', 220, 2400);
+</script>

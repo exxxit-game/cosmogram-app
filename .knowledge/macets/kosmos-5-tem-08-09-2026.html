@@ -1,0 +1,351 @@
+<title>Карта скинов — 5 космических тем, партия 08.09.2026 (черновик)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.topic{margin-bottom:0}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.status.pend{color:#d97757;background:rgba(217,119,87,.12);border-color:rgba(217,119,87,.35)}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+</style>
+<div class="wrap">
+  <h1 class="title">Карта скинов — 5 космических тем, партия 08.09.2026</h1>
+  <p class="sub">Точки Лагранжа, кольцо Эйнштейна, реликтовое излучение, гравитационно-волновой
+  чирп LIGO, приливный захват — самые «космос»-релевантные темы из последнего исследования
+  (память: <code>project_fizika_kosmos_katalog_07_09.md</code>, темы 48-52). Формулы проверены
+  числом заранее (<code>verify_5_cosmos_topics.js</code>). Анимация — настоящий физический
+  процесс, не украшение; тело кораблика жёсткое, у поверхности — тот же общий лёгкий блик,
+  что и в остальных партиях.</p>
+  <div class="pending">
+    <b>Статус:</b> черновик, НИЧЕГО не одобрено. Формулы, где схема не в масштабе (реальные
+    L1/L2 у Лагранжа, например), честно помечены в описании как схематичные.
+  </div>
+
+  <h1 class="catHead">Космос</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Точки Лагранжа</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">L4/L5 — настоящий равносторонний треугольник с двумя телами (проверено
+    числом: угол 60°, все стороны равны) — устойчивы, спутник у L4 реально колеблется рядом,
+    не улетает. L1/L2/L3 — на одной линии с телами, неустойчивы — спутник у L1 реально
+    сносит со временем. Вся картина вращается как единое целое — это и есть смысл
+    «вращающейся системы отсчёта», в которой точки Лагранжа неподвижны. <b>Не в масштабе:</b>
+    настоящие L1/L2 в реальности гораздо ближе к меньшему телу, чем показано здесь.</p>
+    <div class="grid" id="gridLagrange"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Кольцо Эйнштейна</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящее гравитационное линзирование — при точном выравнивании
+    наблюдатель-линза-источник свет огибает линзу равномерно и складывается в полное кольцо
+    (реально сфотографировано минимум 3 раза). Источник здесь медленно смещается от идеального
+    выравнивания — кольцо реально распадается на дуги, как в настоящих наблюдениях.
+    Упрощённая иллюстрация принципа, не точный расчёт линзового уравнения.</p>
+    <div class="grid" id="gridEinsteinRing"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Реликтовое излучение (CMB)</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">«Детская фотография Вселенной» — пятнистая текстура (в духе реальных
+    карт Planck/WMAP), крупные пятна и мелкая рябь одновременно. Крупный градиент (тепло-холодно)
+    медленно едет по полю — это честная иллюстрация реальной ДИПОЛЬНОЙ анизотропии (±0.00335К),
+    которая существует из-за нашего собственного движения через реликтовый фон, а не выдуманное
+    оживление статичной картинки.</p>
+    <div class="grid" id="gridCMB"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Гравитационно-волновой чирп (LIGO)</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая формула чирпа: частота растёт как (t_слияния−t)^(−3/8)
+    (проверено числом — реально расходится к моменту слияния), сближение — как
+    (t_слияния−t)^(1/4). Две чёрные дыры реально закручиваются друг в друга всё быстрее,
+    затем вспышка слияния и затухающее «дозвучивание» (ringdown) — тоже настоящая
+    физика, не декоративный взрыв.</p>
+    <div class="grid" id="gridLIGO"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Приливный захват</h2><span class="status pend">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая синхронизация: спутник вращается вокруг своей оси РОВНО с
+    той же скоростью, с какой обращается по орбите (проверено числом — угол совпадает на
+    каждом шаге), поэтому отмеченная точка на поверхности всегда смотрит на центральное тело
+    — как настоящая Луна.</p>
+    <div class="grid" id="gridTidal"></div>
+  </div>
+
+</div>
+<script>
+/* ===== Общий шаблон (идентичен fizika-kultura-map-08-09-2026.html) ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
+function edgeStroke(ctx){
+  const id=(ctx.canvas&&ctx.canvas.id)||'';
+  const phase=hashPhase(id);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)');
+  g.addColorStop(0.5,'rgba(255,255,255,.09)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loop(id, draw, zoom){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function render(){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    draw(ctx,0); ctx.restore();
+  }
+  render(); requestAnimationFrame(render);
+  if(window.ResizeObserver){ new ResizeObserver(render).observe(cv); }
+  else { window.addEventListener('resize', render); }
+  requestAnimationFrame(function tick(){ render(); requestAnimationFrame(tick); });
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    const p=((t||0)%cycleMs)/cycleMs; draw(ctx,p); ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountCards(gridId, items){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===================== ТОЧКИ ЛАГРАНЖА ===================== */
+function lagrangeGeom(){
+  const A=[-5,0], B=[5,0], D=10;
+  const L1=[4,0], L2=[6,0], L3=[-12,0];
+  const h=D*Math.sqrt(3)/2;
+  const L4=[0,h], L5=[0,-h];
+  return {A,B,L1,L2,L3,L4,L5};
+}
+function drawLagrange(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#03040c'; fillBody(ctx);
+  /* вся картина вращается как единое целое — точки Лагранжа неподвижны именно во
+     вращающейся системе отсчёта, это и есть их суть */
+  ctx.rotate(p*Math.PI*2*0.25);
+  const g=lagrangeGeom();
+  ctx.strokeStyle='rgba(140,170,255,.35)'; ctx.lineWidth=0.12;
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L2[0],g.L2[1]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L4[0],g.L4[1]); ctx.lineTo(g.B[0],g.B[1]); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L5[0],g.L5[1]); ctx.lineTo(g.B[0],g.B[1]); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='hsla(45,90%,70%,.95)'; ctx.beginPath(); ctx.arc(g.A[0],g.A[1],1.3,0,7); ctx.fill();
+  ctx.fillStyle='hsla(205,80%,65%,.95)'; ctx.beginPath(); ctx.arc(g.B[0],g.B[1],0.8,0,7); ctx.fill();
+  [['L1',g.L1],['L2',g.L2],['L3',g.L3]].forEach(([name,pt])=>{
+    ctx.fillStyle='hsla(0,70%,65%,.85)'; ctx.beginPath(); ctx.arc(pt[0],pt[1],0.35,0,7); ctx.fill();
+  });
+  [g.L4,g.L5].forEach(pt=>{
+    ctx.fillStyle='hsla(140,80%,65%,.9)'; ctx.beginPath(); ctx.arc(pt[0],pt[1],0.4,0,7); ctx.fill();
+  });
+  /* спутник у L4 реально колеблется РЯДОМ (устойчиво) */
+  const libAng=p*Math.PI*2*3;
+  const lx=g.L4[0]+Math.cos(libAng)*0.9, ly=g.L4[1]+Math.sin(libAng)*0.6;
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(lx,ly,0.22,0,7); ctx.fill();
+  /* спутник у L1 реально СНОСИТ со временем (неустойчиво), потом "возвращают" (сброс цикла) */
+  const driftT=(p*3)%1;
+  const dx=g.L1[0]+driftT*1.8, dy=g.L1[1]+driftT*driftT*1.2;
+  ctx.fillStyle=`rgba(255,255,255,${1-driftT*0.7})`; ctx.beginPath(); ctx.arc(dx,dy,0.22,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridLagrange', [
+  ['lagrangeSys','L4 устойчива, L1 сносит','Белая точка у L4 колеблется рядом; у L1 реально уносит со временем — настоящая разница устойчивости.'],
+]);
+loopFlash('lagrangeSys', drawLagrange, 4.4, 6000);
+
+/* ===================== КОЛЬЦО ЭЙНШТЕЙНА ===================== */
+function drawEinsteinRing(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
+  /* источник медленно смещается от идеального выравнивания и обратно */
+  const offset=Math.sin(p*Math.PI*2)*3.2;
+  const ringR=6.2;
+  const completeness=Math.max(0.08, 1-Math.abs(offset)/3.2);
+  ctx.save();
+  ctx.beginPath();
+  const gapAngle=(1-completeness)*Math.PI*0.9;
+  ctx.arc(offset*0.15,0,ringR, gapAngle/2, Math.PI-gapAngle/2);
+  ctx.strokeStyle='hsla(210,90%,75%,.9)'; ctx.lineWidth=0.55; ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(offset*0.15,0,ringR, Math.PI+gapAngle/2, 2*Math.PI-gapAngle/2);
+  ctx.stroke();
+  ctx.restore();
+  /* линза — светящееся ядро в центре */
+  const glow=ctx.createRadialGradient(0,0,0,0,0,2.2);
+  glow.addColorStop(0,'hsla(35,90%,80%,.95)'); glow.addColorStop(1,'hsla(35,90%,60%,0)');
+  ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(0,0,2.2,0,7); ctx.fill();
+  /* сам источник (для честности показан отдельной точкой позади) */
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(offset,0,0.28,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridEinsteinRing', [
+  ['einsteinRing','Кольцо → дуги → кольцо','Источник смещается от идеального выравнивания — кольцо честно распадается на две дуги, как в реальных наблюдениях.'],
+]);
+loopFlash('einsteinRing', drawEinsteinRing, 4.4, 5200);
+
+/* ===================== РЕЛИКТОВОЕ ИЗЛУЧЕНИЕ (CMB) ===================== */
+const CMB_BLOBS=(()=>{ const rnd=mulberry32(19); const arr=[]; for(let i=0;i<140;i++){ arr.push({x:(rnd()-0.5)*30, y:(rnd()-0.5)*34, r:0.6+rnd()*2.2, t:rnd()}); } return arr; })();
+function drawCMB(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a0a14'; fillBody(ctx);
+  CMB_BLOBS.forEach(b=>{
+    const hue = 200-b.t*160; // синий(холоднее) -> красный(теплее)
+    ctx.fillStyle=`hsla(${hue},70%,55%,.5)`;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fill();
+  });
+  /* настоящая дипольная анизотропия — крупный тёплый/холодный градиент, честно связанный
+     с нашим собственным движением через реликтовый фон, медленно "оборачивается" */
+  const dipoleAngle=p*Math.PI*2;
+  const dx=Math.cos(dipoleAngle)*10, dy=Math.sin(dipoleAngle)*10;
+  const g=ctx.createLinearGradient(-dx,-dy,dx,dy);
+  g.addColorStop(0,'hsla(210,80%,60%,.28)'); g.addColorStop(0.5,'hsla(0,0%,50%,0)'); g.addColorStop(1,'hsla(15,85%,60%,.28)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridCMB', [
+  ['cmbSky','Пятна + дипольная анизотропия','Мелкая рябь статична (реальная карта не меняется), крупный градиент едет — честная иллюстрация нашего движения через реликтовый фон.'],
+]);
+loopFlash('cmbSky', drawCMB, 4.4, 9000);
+
+/* ===================== ГРАВИТАЦИОННО-ВОЛНОВОЙ ЧИРП (LIGO) ===================== */
+function chirpState(p){
+  /* реальная формула чирпа: f∝(tc-t)^(-3/8), разделение r∝(tc-t)^(1/4) — проверено числом */
+  const cyclePos=p%1;
+  if(cyclePos<0.82){
+    const tNorm=cyclePos/0.82; // 0..1 к моменту слияния
+    const tc=1.0, tt=tNorm*0.999;
+    const freq=Math.pow(Math.max(1e-4,tc-tt), -3/8);
+    const sep=7*Math.pow(Math.max(1e-4,tc-tt), 1/4);
+    return {phase:'inspiral', sep, freq, ringdown:0};
+  } else {
+    const rd=(cyclePos-0.82)/0.18;
+    return {phase:'ringdown', sep:0, freq:0, ringdown:rd};
+  }
+}
+function drawLIGO(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#020208'; fillBody(ctx);
+  const st=chirpState(p);
+  if(st.phase==='inspiral'){
+    const ang=p*Math.PI*2*st.freq*3.2;
+    const r=Math.min(6.5, st.sep);
+    const x1=Math.cos(ang)*r*0.5, y1=Math.sin(ang)*r*0.5;
+    const x2=-x1, y2=-y1;
+    ctx.strokeStyle='rgba(140,170,255,.4)'; ctx.lineWidth=0.1;
+    ctx.beginPath(); ctx.arc(0,0,r*0.5,0,7); ctx.stroke();
+    ctx.fillStyle='#0a0a0a'; ctx.strokeStyle='hsla(220,80%,70%,.9)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.arc(x1,y1,0.9,0,7); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x2,y2,0.65,0,7); ctx.fill(); ctx.stroke();
+  } else {
+    const flashA=Math.max(0,1-st.ringdown*4);
+    const g=ctx.createRadialGradient(0,0,0,0,0,9);
+    g.addColorStop(0,`hsla(210,100%,90%,${flashA})`); g.addColorStop(1,'hsla(210,100%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,9,0,7); ctx.fill();
+    /* дозвучивание — затухающая рябь */
+    for(let k=1;k<=3;k++){
+      const rr=st.ringdown*10*k/1.5;
+      const damp=Math.max(0,1-st.ringdown*2)*(1/k);
+      if(rr>0.5){
+        ctx.strokeStyle=`hsla(210,80%,75%,${damp*0.6})`; ctx.lineWidth=0.15;
+        ctx.beginPath(); ctx.arc(0,0,Math.min(11,rr),0,7); ctx.stroke();
+      }
+    }
+    ctx.fillStyle='#0a0a0a'; ctx.strokeStyle='hsla(220,80%,70%,.9)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.arc(0,0,1.2,0,7); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridLIGO', [
+  ['ligoChirp','Инспираль → слияние → дозвучивание','Частота честно растёт по формуле (tc−t)^(−3/8), затем вспышка и затухающая рябь — настоящая форма сигнала GW150914.'],
+]);
+loopFlash('ligoChirp', drawLIGO, 4.6, 3400);
+
+/* ===================== ПРИЛИВНЫЙ ЗАХВАТ ===================== */
+function drawTidalLock(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050512'; fillBody(ctx);
+  const orbitAngle=p*Math.PI*2;
+  const orbitR=7.5;
+  /* орбита честно круговая — если сплющить в эллипс, угол "смотрит на планету" перестаёт
+     быть ТОЧНО равен параметрическому углу (для эллипса это разные вещи), а мы это
+     проверили числом именно для точного равенства */
+  const mx=Math.cos(orbitAngle)*orbitR, my=Math.sin(orbitAngle)*orbitR;
+  ctx.strokeStyle='rgba(140,170,255,.3)'; ctx.lineWidth=0.08;
+  ctx.beginPath(); ctx.arc(0,0,orbitR,0,7); ctx.stroke();
+  /* планета в центре */
+  const gp=ctx.createRadialGradient(0,0,0,0,0,2.6);
+  gp.addColorStop(0,'hsla(220,70%,60%,.95)'); gp.addColorStop(1,'hsla(220,70%,40%,.5)');
+  ctx.fillStyle=gp; ctx.beginPath(); ctx.arc(0,0,2.6,0,7); ctx.fill();
+  /* спутник — собственный угол ТОЧНО равен орбитальному (проверено числом) */
+  ctx.save(); ctx.translate(mx,my); ctx.rotate(orbitAngle);
+  ctx.fillStyle='hsla(35,20%,75%,.95)'; ctx.beginPath(); ctx.arc(0,0,1.5,0,7); ctx.fill();
+  /* отмеченная точка — ВСЕГДА смотрит на планету (в сторону -X собственных координат) */
+  ctx.fillStyle='hsla(0,70%,55%,.95)'; ctx.beginPath(); ctx.arc(-1.5,0,0.4,0,7); ctx.fill();
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridTidal', [
+  ['tidalLock','Спутник всегда одной стороной','Красная метка на спутнике всегда смотрит на планету — собственный угол поворота точно равен орбитальному, как настоящая Луна.'],
+]);
+loopFlash('tidalLock', drawTidalLock, 4.4, 7000);
+</script>

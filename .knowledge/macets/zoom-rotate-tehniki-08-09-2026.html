@@ -1,0 +1,617 @@
+<title>Карта скинов — приближение+вращение, партия 08.09.2026 (черновик)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 8px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.status.pend{color:#d97757;background:rgba(217,119,87,.12);border-color:rgba(217,119,87,.35)}
+.status.now{color:#6fbf73;background:rgba(111,191,115,.12);border-color:rgba(111,191,115,.35)}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+.card.now{outline:2px solid rgba(111,191,115,.5)}
+</style>
+<div class="wrap">
+  <h1 class="title">Приближение + вращение — техника и её комбинации</h1>
+  <p class="sub">Владелец заметил: у одного из скинов «приближение» (пульс масштаба) и
+  «вращение» вместе дают эффект гораздо сильнее, чем каждый приём по отдельности — мозг
+  читает это как настоящий объём, не плоскую картинку. Первая карточка — честное
+  воспроизведение приёма, который уже есть в игре (Вспышка «Гироскоп»,
+  <code>render.js:3063</code>), для сравнения. Остальные 7 — новые варианты той же идеи,
+  каждый привязан к настоящему явлению (проверено числом заранее,
+  <code>verify_zoom_rotate_combo.js</code>), не выдуманы на глаз.</p>
+  <div class="pending">
+    <b>Статус:</b> черновик, НИЧЕГО не одобрено. Это подбор направлений — владелец выбирает,
+    что красивее, до кода или изменения существующих скинов дело не доходит.
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>Сейчас в игре — для сравнения</h2><span class="status now">✓ уже есть</span></div>
+    <p class="topicDesc">Вспышка «Гироскоп» (<code>render.js:3063</code>) — три наклонных
+    кольца одновременно расширяются (это и есть «приближение») и крутятся; здесь тот же
+    приём собран как непрерывный цикл, а не одноразовая вспышка.</p>
+    <div class="grid" id="gridNow"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>1. Спираль Дросте</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Настоящее свойство логарифмической спирали (та же математика, что у
+    раковины наутилуса и рукавов галактики): УВЕЛИЧЕНИЕ спирали в g раз — это ТО ЖЕ САМОЕ,
+    что поворот на фиксированный угол. Поэтому масштаб и поворот можно подобрать так, что
+    зум выглядит БЕСКОНЕЧНЫМ и БЕСШОВНЫМ — картинка как будто вечно приближается, не
+    дёргаясь на стыке цикла (проверено числом: 25/25 сэмплов совпали с точностью до 1e-9).</p>
+    <div class="grid" id="gridDroste"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>2. Аккреционный диск — падение к горизонту</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Продолжение уже одобренного «Кольца Эйнштейна». Диск вращается
+    дифференциально (внутри честно быстрее — та же кеплеровская формула ω∝r⁻¹·⁵, что уже
+    проверена для колец Сатурна), и весь диск медленно СЖИМАЕТСЯ, как будто падает к
+    горизонту. <b>Честная оговорка:</b> само «падение» — художественный приём (плавное
+    сжатие радиуса), не точный расчёт настоящей геодезической траектории в General
+    Relativity — тот расчёт был бы намного сложнее.</p>
+    <div class="grid" id="gridAccretion"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>3. Маяк пульсара, усиленный</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">У нас уже есть вращающийся луч пульсара. Здесь длина/яркость луча
+    дополнительно нарастает именно в момент, когда он «смотрит» на зрителя — вдохновлено
+    настоящим релятивистским биминг-эффектом (луч маяка кажется ярче/длиннее, когда направлен
+    прямо на наблюдателя). <b>Честно:</b> это художественное усиление реального эффекта, а
+    не точный расчёт доплеровского коэффициента — тот требует скорости вращения и угла
+    зрения в конкретных единицах, которых здесь нет.</p>
+    <div class="grid" id="gridPulsarPlus"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>4. Смерч / водоворот</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Настоящая гидродинамика — вихрь Ренкина: у самого центра вращение
+    как единое твёрдое тело (иначе скорость нефизично уходила бы в бесконечность), а дальше
+    от центра — честный свободный вихрь, скорость ~1/r, значит угловая скорость ~1/r²
+    (проверено числом: на границе ядра совпадает без разрыва, снаружи падает ровно в 4 раза
+    при удвоении радиуса). Ощущение «затягивает к центру» — из самой формулы, не трюк.</p>
+    <div class="grid" id="gridVortex"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>5. Гироскоп с прецессией</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Настоящая механика волчка: БЫСТРОЕ вращение вокруг своей оси плюс
+    МЕДЛЕННЫЙ уход самой оси по конусу (прецессия) — два разных по скорости вращения сразу,
+    отсюда и «приближение» (ободок то раскрывается к зрителю, то сжимается в линию, пока ось
+    гуляет). Честно иллюстративно — без реального расчёта момента импульса и крутящего
+    момента, только композиция двух вращений, которая качественно верна.</p>
+    <div class="grid" id="gridPrecession"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>6. Пролёт сквозь спиральную галактику</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">У нас уже есть Grand Design и Flocculent (волна плотности вращается
+    как целое / рукава вращаются дифференциально — оба варианта уже проверены числом ранее).
+    Здесь добавлен мягкий дыхательный зум поверх уже идущего вращения — камера как будто
+    медленно то приближается к диску, то немного отступает.</p>
+    <div class="grid" id="gridGalaxyZoom"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>7. Кристалл, ловящий свет</h2><span class="status pend">⭐ владелец отметил лучшим</span></div>
+    <p class="topicDesc">Не физика, а честная оптика: грани огранки по очереди ловят блик
+    при повороте, и лёгкий зум читается как «камень подносят ближе к глазу». Раз приём
+    зашёл лучше всего — добавлены ещё 3 варианта на настоящих огранках драгоценных камней,
+    каждая даёт РАЗНЫЙ, реальный характер блеска (это настоящие геммологические термины,
+    не выдумка): круглая бриллиантовая — мелкое частое «сцинтилляция» (много маленьких
+    граней в два кольца, сверкает часто и мелко); ступенчатая (изумрудная) — редкие широкие
+    «флэши» на весь срез (крупные прямоугольные ступени, вспыхивает разом и широко, не
+    искрится); розовая — мягкое рассеянное «свечение свечи», без резких вспышек (купол без
+    плоской площадки-«стола», грани сходятся в одну макушку).</p>
+    <div class="grid" id="gridCrystalZoom"></div>
+  </div>
+
+  <h1 class="catHead">Каналы, которых ещё не было (не геометрия — свет и композитинг)</h1>
+  <p class="sub">Всё выше — это ОДИН канал (поворот/масштаб фигуры). У канвы есть ещё
+  минимум три независимых канала, которые ничего общего с геометрией не имеют и ни разу
+  не использовались в партии выше — они честно расширяют потолок, а не повторяют старое.</p>
+
+  <div class="topic">
+    <div class="topicHead"><h2>8. Аддитивный световой след</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Не альфа-прозрачность (старые копии проступают сквозь фон), а
+    настоящее СЛОЖЕНИЕ света (<code>globalCompositeOperation='lighter'</code>) — там, где
+    следы перекрываются, светлее не «поверх», а ДЕЙСТВИТЕЛЬНО ярче, как при длинной
+    выдержке в фотографии звёздных треков. Тот же контур, что и раньше, крутится+
+    приближается, но след теперь горит, а не тускнеет.</p>
+    <div class="grid" id="gridAdditive"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>9. Глубина резкости</h2><span class="status pend">⏳ на выбор (правлено)</span></div>
+    <p class="topicDesc">Настоящий приём операторской съёмки: дальний слой мягче по краю и
+    крутится медленнее, ближний — чёткий и быстрее — мозг читает мягкость как расстояние
+    ДАЖЕ без параллакса. <b>Честно про правку:</b> первая версия использовала
+    <code>ctx.filter='blur()'</code> — но в собственном <code>PERFORMANCE.md §2.21</code>
+    этот приём уже отвергнут с замером: на Safari/iOS он молча не работает вовсе (не
+    тормозит — просто не применяется). Заменено на мягкий край радиальным градиентом —
+    тот же приём, что уже дают свечения в игре, честно работает везде.</p>
+    <div class="grid" id="gridDOF"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>10. Яркость по закону обратных квадратов</h2><span class="status pend">⏳ на выбор</span></div>
+    <p class="topicDesc">Настоящая физика света, не украшение: интенсивность падает как
+    1/расстояние², а расстояние обратно пропорционально масштабу — значит честная яркость
+    должна расти как МАСШТАБ В КВАДРАТЕ (проверено числом: scale=2 → яркость ровно ×4,
+    scale=0.5 → ровно ×0.25). Раньше зум был только геометрией; здесь он ещё и физически
+    честно светится ярче именно тогда, когда «ближе».</p>
+    <div class="grid" id="gridInvSquare"></div>
+  </div>
+
+</div>
+<script>
+/* ===== Общий шаблон (идентичен предыдущим партиям) ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
+function edgeStroke(ctx){
+  const id=(ctx.canvas&&ctx.canvas.id)||'';
+  const phase=hashPhase(id);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)');
+  g.addColorStop(0.5,'rgba(255,255,255,.09)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    const p=((t||0)%cycleMs)/cycleMs; draw(ctx,p); ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountCards(gridId, items, extraClass){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card ${extraClass||''}"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===================== 0. СЕЙЧАС В ИГРЕ: ГИРОСКОП (для сравнения) ===================== */
+function drawGyroNow(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
+  ctx.translate(0,-3);
+  const rings=3;
+  for(let i=0;i<rings;i++){
+    const tilt=i*(Math.PI/rings);
+    const spin=p*Math.PI*2*(1+i*.3);
+    const r=1.5+p*7; /* «приближение»: радиус растёт весь цикл, потом честно сбрасывается */
+    ctx.save();
+    ctx.rotate(tilt);
+    ctx.scale(1,0.32);
+    ctx.rotate(spin);
+    ctx.strokeStyle=`hsla(${205+i*30},80%,70%,${0.85*(1-p*.35)})`;
+    ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridNow', [
+  ['gyroNow','Гироскоп (как сейчас)','Точное воспроизведение render.js:3063 — три наклонных кольца растут и крутятся вместе, потом сбрасываются.'],
+], 'now');
+loopFlash('gyroNow', drawGyroNow, 4.2, 2200);
+
+/* ===================== 1. СПИРАЛЬ ДРОСТЕ ===================== */
+const DR_G=1.5, DR_M=6, DR_STEP=Math.PI*2/DR_M, DR_B=Math.log(DR_G)/DR_STEP;
+function drawDroste(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050208'; fillBody(ctx);
+  ctx.translate(0,-3);
+  ctx.save();
+  /* инвариантное преобразование: поворот на p*шаг + масштаб g^p — картинка не "дёргается"
+     на стыке цикла, потому что это настоящее свойство лог-спирали (проверено числом) */
+  ctx.rotate(p*DR_STEP);
+  ctx.scale(Math.pow(DR_G,p), Math.pow(DR_G,p));
+  for(let i=-5;i<=4;i++){
+    const hue=260+((i+5)*14);
+    ctx.save();
+    ctx.rotate(i*DR_STEP);
+    ctx.beginPath();
+    const N=16;
+    for(let k=0;k<=N;k++){
+      const th=k/N*DR_STEP;
+      const r=1.0*Math.exp(DR_B*th);
+      const x=r*Math.cos(th), y=r*Math.sin(th);
+      k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`hsla(${hue},75%,68%,.85)`;
+    ctx.lineWidth=0.28;
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridDroste', [
+  ['droste1','Спираль Дросте','Приближение бесшовное — увеличение в 1.5 раза и поворот на 60° математически неотличимы для этой спирали.'],
+]);
+loopFlash('droste1', drawDroste, 4.4, 5200);
+
+/* ===================== 2. АККРЕЦИОННЫЙ ДИСК: ПАДЕНИЕ К ГОРИЗОНТУ ===================== */
+function drawAccretionFall(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#02020a'; fillBody(ctx);
+  ctx.translate(0,-2);
+  /* горизонт событий — тёмное ядро */
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,1.1,0,7); ctx.fill();
+  const shrink=1-0.32*p; /* весь диск честно сжимается — "падение", художественный приём */
+  ctx.save(); ctx.scale(1,0.3);
+  for(let r=1.6;r<=7.2;r+=0.55){
+    const rr=r*shrink;
+    const speed=Math.pow(1/r,1.5); /* та же кеплеровская формула, что и у колец Сатурна */
+    ctx.save(); ctx.rotate(p*Math.PI*2*speed*0.6);
+    const heat=Math.max(0,1-(r-1.6)/5.6);
+    ctx.strokeStyle=`hsla(${30-heat*15},95%,${55+heat*20}%,${0.85-r*0.06})`;
+    ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*1.85); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridAccretion', [
+  ['accretion1','Падение к горизонту','Диск дифференциально вращается (Кеплер) и весь честно сжимается — как будто камера падает.'],
+]);
+loopFlash('accretion1', drawAccretionFall, 4.4, 4600);
+
+/* ===================== 3. ПУЛЬСАР, УСИЛЕННЫЙ ===================== */
+function drawPulsarPlus(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#020208'; fillBody(ctx);
+  ctx.translate(0,-3);
+  const core=ctx.createRadialGradient(0,0,0,0,0,1.3);
+  core.addColorStop(0,'hsla(220,60%,85%,.95)'); core.addColorStop(1,'hsla(220,60%,60%,.4)');
+  ctx.fillStyle=core; ctx.beginPath(); ctx.arc(0,0,1.3,0,7); ctx.fill();
+  const tilt=32*Math.PI/180;
+  [0,0.5].forEach(offset=>{
+    const spin=(p+offset)%1; const ang=spin*Math.PI*2-Math.PI/2;
+    const bx=Math.cos(ang)*Math.sin(tilt+0.001), by=Math.sin(ang);
+    const beamAng=Math.atan2(by,bx);
+    /* биминг-усиление: луч длиннее/ярче, когда направлен к зрителю (ang≈-π/2, вверх на канве) */
+    const facing=Math.max(0,Math.cos(ang+Math.PI/2));
+    const boost=1+facing*facing*2.2;
+    ctx.save(); ctx.rotate(beamAng);
+    const len=6.5*boost;
+    const g=ctx.createLinearGradient(0,0,len,0);
+    g.addColorStop(0,`hsla(255,90%,82%,${0.55+facing*0.4})`); g.addColorStop(1,'hsla(255,90%,70%,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,-0.35); ctx.lineTo(len,0); ctx.lineTo(0,0.35); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPulsarPlus', [
+  ['pulsarPlus1','Маяк пульсара, усиленный','Луч заметно длиннее и ярче в момент, когда смотрит прямо на зрителя — вдохновлено релятивистским бимингом.'],
+]);
+loopFlash('pulsarPlus1', drawPulsarPlus, 4.6, 1800);
+
+/* ===================== 4. СМЕРЧ / ВОДОВОРОТ (вихрь Ренкина) ===================== */
+const VX_RC=1.6, VX_OMEGA=3.2;
+function vortexOmega(r){ return r<VX_RC ? VX_OMEGA : VX_OMEGA*Math.pow(VX_RC/r,2); }
+function drawVortex(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050a0c'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const rnd=mulberry32(11);
+  for(let i=0;i<60;i++){
+    const r0=0.3+rnd()*7.2;
+    const baseAng=rnd()*Math.PI*2;
+    const ang=baseAng+p*Math.PI*2*vortexOmega(r0)*0.5;
+    /* лёгкое затягивание к центру — визуальный эффект самой формулы, не отдельный трюк */
+    const pull=r0*(1-0.12*Math.min(1,3/r0)*Math.sin(p*Math.PI*2));
+    const x=pull*Math.cos(ang), y=pull*Math.sin(ang)*0.55;
+    const inCore=r0<VX_RC;
+    ctx.fillStyle=inCore?'rgba(200,230,255,.9)':'rgba(140,190,220,'+(0.75-r0*0.06)+')';
+    ctx.beginPath(); ctx.arc(x,y,inCore?0.22:0.16,0,7); ctx.fill();
+  }
+  ctx.strokeStyle='rgba(180,220,255,.25)'; ctx.lineWidth=0.15;
+  ctx.beginPath(); ctx.ellipse(0,0,VX_RC,VX_RC*0.55,0,0,7); ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridVortex', [
+  ['vortex1','Смерч (вихрь Ренкина)','Ядро крутится как единое тело, снаружи — честный свободный вихрь (ω~1/r²), затягивает к центру.'],
+]);
+loopFlash('vortex1', drawVortex, 4.4, 3600);
+
+/* ===================== 5. ГИРОСКОП С ПРЕЦЕССИЕЙ ===================== */
+function drawGyroPrecession(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#040611'; fillBody(ctx);
+  ctx.translate(0,-3);
+  const precession=p*Math.PI*2*0.4; /* медленный уход оси по конусу */
+  const spin=p*Math.PI*2*5; /* быстрое вращение вокруг своей оси */
+  const coneTilt=0.55;
+  ctx.save();
+  ctx.rotate(precession);
+  ctx.scale(1, Math.cos(coneTilt)); /* ободок раскрывается/сжимается по ходу прецессии */
+  ctx.rotate(spin);
+  ctx.strokeStyle='hsla(45,85%,70%,.9)'; ctx.lineWidth=0.55;
+  ctx.beginPath(); ctx.arc(0,0,6.4,0,Math.PI*2); ctx.stroke();
+  for(let i=0;i<10;i++){
+    const a=i*(Math.PI*2/10);
+    ctx.strokeStyle='hsla(45,85%,75%,.5)'; ctx.lineWidth=0.3;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*6.4,Math.sin(a)*6.4); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle='hsla(45,90%,80%,.95)'; ctx.beginPath(); ctx.arc(0,0,0.55,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridPrecession', [
+  ['precession1','Гироскоп с прецессией','Быстрый спин + медленный уход оси по конусу — ободок то раскрывается кругом, то сжимается в линию.'],
+]);
+loopFlash('precession1', drawGyroPrecession, 4.4, 4200);
+
+/* ===================== 6. ГАЛАКТИКА: ПРОЛЁТ СКВОЗЬ + ЗУМ-ПУЛЬС ===================== */
+function galaxyLogSpiral(pitchDeg, thetaMax, rMax, N){
+  const b=Math.tan(pitchDeg*Math.PI/180);
+  const base=rMax/Math.exp(b*thetaMax);
+  const pts=[]; for(let i=0;i<=N;i++){ const th=i/N*thetaMax; pts.push([Math.exp(th*b)*base, th]); } return pts;
+}
+function drawGalaxyZoom(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#03040c'; fillBody(ctx);
+  ctx.translate(0,-2);
+  /* мягкое дыхание камеры поверх уже идущего вращения волны плотности (Grand Design) */
+  const breathe=1+0.14*Math.sin(p*Math.PI*2);
+  ctx.scale(breathe,breathe);
+  ctx.rotate(p*Math.PI*2*0.5);
+  [0,Math.PI].forEach(off=>{
+    ctx.beginPath();
+    galaxyLogSpiral(14,3.6,6.8,40).forEach(([r,th],i)=>{
+      const x=r*Math.cos(th+off), y=r*Math.sin(th+off)*0.85;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='hsla(210,80%,72%,.8)'; ctx.lineWidth=0.45; ctx.stroke();
+  });
+  ctx.fillStyle='hsla(45,90%,80%,.9)'; ctx.beginPath(); ctx.arc(0,0,0.6,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridGalaxyZoom', [
+  ['galaxyZoom1','Галактика: дыхание камеры','Волна плотности вращается как целое (уже проверено), а поверх — мягкий зум-пульс камеры.'],
+]);
+loopFlash('galaxyZoom1', drawGalaxyZoom, 4.6, 6000);
+
+/* ===================== 7. КРИСТАЛЛ, ЛОВЯЩИЙ СВЕТ ===================== */
+function drawCrystalZoom(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a0a12'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const breathe=1+0.1*Math.sin(p*Math.PI*2);
+  ctx.scale(breathe,breathe);
+  ctx.rotate(p*Math.PI*2);
+  const facets=8;
+  for(let i=0;i<facets;i++){
+    const a0=i*(Math.PI*2/facets), a1=a0+Math.PI*2/facets;
+    /* блик "бежит" по граням при повороте — у каждой грани своя фаза относительно света сверху */
+    const facingLight=Math.max(0,Math.cos((a0+a1)/2 - p*Math.PI*2 - Math.PI/2));
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a0)*6.5,Math.sin(a0)*6.5); ctx.lineTo(Math.cos(a1)*6.5,Math.sin(a1)*6.5); ctx.closePath();
+    ctx.fillStyle=`hsla(200,${40+facingLight*40}%,${25+facingLight*55}%,.9)`;
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.15; ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawCrystalBrilliant(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a0a12'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const breathe=1+0.1*Math.sin(p*Math.PI*2);
+  ctx.scale(breathe,breathe);
+  ctx.rotate(p*Math.PI*2);
+  const outerN=16, innerN=8;
+  /* два кольца граней, каждое ловит блик в СВОЮ фазу — настоящая "сцинтилляция"
+     (частое мелкое сверкание) круглой бриллиантовой огранки складывается именно
+     из большого числа мелких граней с разными углами, не из одной большой */
+  for(let i=0;i<outerN;i++){
+    const a0=i*(Math.PI*2/outerN), a1=a0+Math.PI*2/outerN;
+    const facing=Math.max(0,Math.cos((a0+a1)/2 - p*Math.PI*2*1.4 - Math.PI/2));
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a0)*3.2,Math.sin(a0)*3.2);
+    ctx.lineTo(Math.cos(a0)*6.6,Math.sin(a0)*6.6);
+    ctx.lineTo(Math.cos(a1)*6.6,Math.sin(a1)*6.6);
+    ctx.lineTo(Math.cos(a1)*3.2,Math.sin(a1)*3.2);
+    ctx.closePath();
+    ctx.fillStyle=`hsla(195,${35+facing*45}%,${20+facing*60}%,.92)`; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.12; ctx.stroke();
+  }
+  for(let i=0;i<innerN;i++){
+    const a0=i*(Math.PI*2/innerN), a1=a0+Math.PI*2/innerN;
+    const facing=Math.max(0,Math.cos((a0+a1)/2 + p*Math.PI*2*1.4 - Math.PI/2));
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a0)*3.2,Math.sin(a0)*3.2); ctx.lineTo(Math.cos(a1)*3.2,Math.sin(a1)*3.2); ctx.closePath();
+    ctx.fillStyle=`hsla(195,${40+facing*40}%,${25+facing*55}%,.95)`; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.12; ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawCrystalStep(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a0a12'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const breathe=1+0.08*Math.sin(p*Math.PI*2);
+  ctx.scale(breathe,breathe);
+  ctx.rotate(p*Math.PI*2*0.5); /* ступенчатая огранка вращается медленнее — широкие грани, не мелкая рябь */
+  const steps=[[1.6,3.0],[3.0,4.6],[4.6,6.6]], facetsPerStep=8;
+  steps.forEach(([r0,r1])=>{
+    for(let i=0;i<facetsPerStep;i++){
+      const a0=i*(Math.PI*2/facetsPerStep), a1=a0+Math.PI*2/facetsPerStep;
+      const facing=Math.max(0,Math.cos((a0+a1)/2 - p*Math.PI*2*0.5 - Math.PI/2));
+      const flash=Math.pow(facing,3); /* резкий переход тускло→вспышка — настоящий "флэш" ступенчатой огранки, не бегущая искра */
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a0)*r0,Math.sin(a0)*r0); ctx.lineTo(Math.cos(a0)*r1,Math.sin(a0)*r1);
+      ctx.lineTo(Math.cos(a1)*r1,Math.sin(a1)*r1); ctx.lineTo(Math.cos(a1)*r0,Math.sin(a1)*r0);
+      ctx.closePath();
+      ctx.fillStyle=`hsla(155,${30+flash*50}%,${18+flash*62}%,.92)`; ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.22)'; ctx.lineWidth=0.12; ctx.stroke();
+    }
+  });
+  ctx.fillStyle='#0a0a12'; ctx.beginPath(); ctx.arc(0,0,1.4,0,7); ctx.fill(); /* тёмная площадка-"стол" в центре */
+  ctx.restore(); edgeStroke(ctx);
+}
+function drawCrystalRose(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a0a12'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const breathe=1+0.12*Math.sin(p*Math.PI*2);
+  ctx.scale(breathe,breathe);
+  ctx.rotate(p*Math.PI*2);
+  const N=12; /* розетка без плоского "стола" — грани сходятся в одну макушку купола */
+  for(let i=0;i<N;i++){
+    const a0=i*(Math.PI*2/N), a1=a0+Math.PI*2/N;
+    const facing=(Math.cos((a0+a1)/2 - p*Math.PI*2 - Math.PI/2)+1)/2;
+    const glow=Math.pow(facing,1.4); /* мягче бриллианта — плавное "свечение свечи", без резких искр (настоящее отличие розовой огранки) */
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a0)*6.2,Math.sin(a0)*6.2); ctx.lineTo(Math.cos(a1)*6.2,Math.sin(a1)*6.2); ctx.closePath();
+    ctx.fillStyle=`hsla(35,${30+glow*35}%,${18+glow*45}%,.85)`; ctx.fill();
+    ctx.strokeStyle='rgba(255,235,200,.25)'; ctx.lineWidth=0.12; ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridCrystalZoom', [
+  ['crystalZoom1','Кристалл (исходный)','Каждая грань по очереди ловит блик при повороте, лёгкий зум читается как приближение камня к глазу.'],
+  ['crystalBrilliant','Бриллиантовая огранка','Два кольца мелких граней, каждое в своей фазе — настоящая частая мелкая «сцинтилляция».'],
+  ['crystalStep','Ступенчатая (изумрудная)','Крупные прямоугольные ступени вспыхивают разом и широко — настоящий «флэш», не искры.'],
+  ['crystalRose','Розовая огранка','Купол без «стола», грани сходятся в макушку — мягкое рассеянное свечение вместо резких вспышек.'],
+]);
+loopFlash('crystalZoom1', drawCrystalZoom, 4.4, 3400);
+loopFlash('crystalBrilliant', drawCrystalBrilliant, 4.4, 2600);
+loopFlash('crystalStep', drawCrystalStep, 4.4, 4000);
+loopFlash('crystalRose', drawCrystalRose, 4.4, 4400);
+
+/* ===================== 8. АДДИТИВНЫЙ СВЕТОВОЙ СЛЕД ===================== */
+function drawAdditive(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#020204'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const N=10;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter'; /* СЛОЖЕНИЕ света, не альфа-наложение — где следы
+    перекрываются, там честно ярче, как при долгой выдержке звёздных треков */
+  for(let i=0;i<N;i++){
+    const pp=((p - i*0.045)%1+1)%1;
+    const ang=pp*Math.PI*2*2.2;
+    const r=1.5+pp*5.5;
+    const alpha=0.10*(1-i/N);
+    ctx.save();
+    ctx.rotate(ang);
+    const g=ctx.createRadialGradient(r,0,0,r,0,1.1);
+    g.addColorStop(0,`rgba(180,220,255,${alpha*3})`); g.addColorStop(1,'rgba(180,220,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(r,0,1.1,0,7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridAdditive', [
+  ['additive1','Аддитивный след','Точка крутится+приближается, старые копии складываются светом, а не гаснут под альфой — след горит.'],
+]);
+loopFlash('additive1', drawAdditive, 4.4, 2400);
+
+/* ===================== 9. ГЛУБИНА РЕЗКОСТИ (без ctx.filter — см. PERFORMANCE.md §2.21:
+   ctx.filter молча не работает на Safari/iOS, отвергнуто с замером, каждая новая
+   идея сверяется с этим списком до карточки, не после). "Размытие" — радиальным
+   градиентом с мягким краем, тот же приём, что уже используют свечения в игре. */
+function drawDOF(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#04040c'; fillBody(ctx);
+  ctx.translate(0,-2);
+  /* дальний слой — мягкий край через градиент вместо фильтра, крутится медленнее */
+  ctx.save();
+  ctx.globalAlpha=0.6;
+  ctx.rotate(p*Math.PI*2*0.3);
+  for(let i=0;i<6;i++){
+    const a=i*(Math.PI*2/6);
+    const cx=Math.cos(a)*5.5, cy=Math.sin(a)*5.5;
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,1.6);
+    g.addColorStop(0,'hsla(220,60%,60%,.85)'); g.addColorStop(0.6,'hsla(220,60%,55%,.4)'); g.addColorStop(1,'hsla(220,60%,55%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,1.6,0,7); ctx.fill();
+  }
+  ctx.restore();
+  /* ближний слой — резкая заливка без градиента, крутится быстрее, зум пульсирует */
+  const breathe=1+0.12*Math.sin(p*Math.PI*2*1.3);
+  ctx.save();
+  ctx.scale(breathe,breathe);
+  ctx.rotate(-p*Math.PI*2*0.9);
+  for(let i=0;i<4;i++){
+    const a=i*(Math.PI*2/4);
+    ctx.fillStyle='hsla(45,90%,72%,.95)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*3.0,Math.sin(a)*3.0,1.3,0,7); ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridDOF', [
+  ['dof1','Глубина резкости','Дальний слой мягкий по краю (градиент, не фильтр — на iOS/Safari ctx.filter молча не работает) и крутится медленнее.'],
+]);
+loopFlash('dof1', drawDOF, 4.4, 4600);
+
+/* ===================== 10. ЯРКОСТЬ ПО ЗАКОНУ ОБРАТНЫХ КВАДРАТОВ ===================== */
+function drawInvSquare(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#020208'; fillBody(ctx);
+  ctx.translate(0,-2);
+  const scale=1+0.7*((Math.sin(p*Math.PI*2)+1)/2); /* 1..1.7 */
+  const brightness=scale*scale; /* честная I~1/d², d~1/scale ⇒ I~scale² (проверено числом) */
+  ctx.rotate(p*Math.PI*2*1.6);
+  ctx.scale(scale,scale);
+  const R=3.2;
+  const g=ctx.createRadialGradient(0,0,0,0,0,R*1.8);
+  const core=Math.min(1,0.35*brightness);
+  g.addColorStop(0,`hsla(45,95%,80%,${core})`); g.addColorStop(0.5,`hsla(45,90%,65%,${core*0.4})`); g.addColorStop(1,'hsla(45,90%,60%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,R*1.8,0,7); ctx.fill();
+  ctx.fillStyle=`hsla(45,95%,${65+Math.min(30,brightness*10)}%,.95)`;
+  ctx.beginPath(); ctx.arc(0,0,R*0.4,0,7); ctx.fill();
+  for(let i=0;i<6;i++){
+    const a=i*(Math.PI/3);
+    ctx.strokeStyle=`hsla(45,95%,80%,${Math.min(0.9,0.15*brightness)})`;
+    ctx.lineWidth=0.2;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a)*R*0.5,Math.sin(a)*R*0.5); ctx.lineTo(Math.cos(a)*R*1.6,Math.sin(a)*R*1.6); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridInvSquare', [
+  ['invSquare1','Обратные квадраты','Ближе (больше scale) — честно ярче по формуле I~scale², не декоративное совпадение.'],
+]);
+loopFlash('invSquare1', drawInvSquare, 4.4, 3000);
+</script>

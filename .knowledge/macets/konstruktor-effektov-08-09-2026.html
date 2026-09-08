@@ -1,0 +1,505 @@
+<title>Конструктор эффектов скинов</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:28px 20px 60px}
+.wrap{max-width:1080px;margin:0 auto}
+h1.title{font-size:24px;font-weight:800;margin:0 0 6px}
+.sub{color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 22px;max-width:820px}
+.layout{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:22px;align-items:start}
+@media (max-width:760px){.layout{grid-template-columns:1fr}}
+.previewBox{background:var(--panel);border:1px solid var(--panel-edge);border-radius:16px;padding:16px;position:sticky;top:16px}
+.previewBox canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:12px;display:block}
+.recipe{margin-top:12px;background:var(--card-bg);border:1px solid var(--panel-edge);border-radius:10px;padding:10px 12px;font:11px/1.5 'SF Mono',Consolas,monospace;color:var(--text-dim);white-space:pre-wrap;word-break:break-word}
+.panel{display:flex;flex-direction:column;gap:16px}
+.section{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 16px}
+.section h3{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.02em}
+.section h3 small{font-weight:600;color:var(--text-dim);text-transform:none;letter-spacing:0}
+.radioRow,.checkRow{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px}
+.radioRow label,.checkRow label{cursor:pointer}
+.checkRow label{flex:0 0 auto}
+.radioRow label{flex:1}
+.sliderRow{display:grid;grid-template-columns:1fr 56px;gap:6px;align-items:center;font-size:11.5px;color:var(--text-dim);margin:4px 0 8px 24px}
+.sliderRow input[type=range]{grid-column:1/3;width:100%}
+.sliderVal{width:52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);background:var(--card-bg);border:1px solid var(--panel-edge);border-radius:6px;padding:2px 5px;font-size:11px}
+.moduleBlock{border-top:1px solid var(--panel-edge);padding-top:8px;margin-top:8px;transition:opacity .15s}
+.moduleBlock:first-child{border-top:none;padding-top:0;margin-top:0}
+.moduleBlock.inactive{opacity:.45}
+.incompatNote{color:#d97757;font-size:10.5px;font-weight:700;margin-left:2px}
+button{background:var(--accent);color:#08101f;border:none;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+button.secondary{background:transparent;color:var(--text-dim);border:1px solid var(--panel-edge)}
+.btnRow{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.pauseRow{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12px;color:var(--text-dim);background:var(--card-bg);border:1px solid var(--panel-edge);border-radius:10px;padding:8px 10px}
+.pauseRow label{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;color:var(--text)}
+.pauseRow input[type=range]{flex:1}
+.pinnedSection{margin-top:26px}
+.pinnedSection h3{font-size:14px;font-weight:800;margin:0 0 10px}
+.pinnedEmpty{color:var(--text-dim);font-size:12.5px}
+.pinnedGrid{display:flex;flex-wrap:wrap;gap:10px}
+.pinCard{width:126px;background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.pinCard canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.pinCard .pinLabel{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em}
+.pinCard .pinBtns{display:flex;gap:4px}
+.pinCard .pinBtns button{flex:1;font-size:10.5px;padding:5px 4px}
+.refGrid{display:flex;flex-direction:column;gap:16px}
+.refFrame{border:1px solid var(--panel-edge);border-radius:14px;overflow:hidden;background:var(--panel)}
+.refFrameHead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid var(--panel-edge)}
+.refFrameHead a{color:var(--accent);font-size:12px;font-weight:600;text-decoration:none}
+.refFrame iframe{width:100%;height:520px;border:none;display:block;background:var(--card-bg)}
+select#harmony{width:100%;margin:2px 0 10px;background:var(--card-bg);color:var(--text);border:1px solid var(--panel-edge);border-radius:8px;padding:6px 8px;font-size:12.5px}
+.swatchRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.swatch{font-size:11px;padding:6px 9px;border-radius:20px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.colorNote{font-size:10.5px;color:var(--text-dim);margin:-4px 0 8px}
+</style>
+<div class="wrap">
+  <h1 class="title">Конструктор эффектов скинов</h1>
+  <p class="sub">Не каталог скинов — отдельный полигон для экспериментов. Один базовый узор
+  + цвет по настоящей HSL-гармонии + слои эффектов — всё включается и крутится ползунками
+  одновременно, поверх настоящего силуэта самолёта (<code>clipShipBody</code> из
+  <code>render.js</code>, координата в координату, не приближение) на реальном тёмном фоне
+  со звёздами. Комбинация, которая понравится — закрепляется ниже или описывается словами,
+  превращается в отдельную тему скина в основном макете, сюда код игры не попадает вообще.
+  <b>Честно про «Грани»</b>: один упрощённый параметр резкости, не три разные настоящие
+  огранки (бриллиант/ступени/розовая) из уже одобренной партии — для новых идей, не пульт
+  от старых карточек.</p>
+
+  <div class="layout">
+    <div class="previewBox">
+      <canvas id="preview"></canvas>
+      <div class="pauseRow">
+        <label><input type="checkbox" id="paused"> ⏸ пауза</label>
+        <input type="range" id="moment" min="0" max="12" step="0.05" value="0" disabled>
+      </div>
+      <div class="recipe" id="recipe"></div>
+      <div class="btnRow">
+        <button id="btnPin">📌 закрепить</button>
+        <button id="btnRandom">🎲 случайная комбинация</button>
+        <button class="secondary" id="btnReset">сброс</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section">
+        <h3>Базовый узор <small>(один из трёх)</small></h3>
+        <div class="radioRow"><input type="radio" name="base" value="ring" id="baseRing" checked><label for="baseRing">Кольцо точек</label></div>
+        <div class="radioRow"><input type="radio" name="base" value="facet" id="baseFacet"><label for="baseFacet">Грани (как кристалл)</label></div>
+        <div class="sliderRow" id="rowFacetN" style="display:none">
+          <label for="facetN">граней</label><input type="number" class="sliderVal" id="facetNVal">
+          <input type="range" id="facetN" min="4" max="20" step="1" value="8">
+        </div>
+        <div class="sliderRow" id="rowFacetSharp" style="display:none">
+          <label for="facetSharp">мягко ↔ резко (свечение ↔ сцинтилляция)</label><input type="number" class="sliderVal" id="facetSharpVal">
+          <input type="range" id="facetSharp" min="0" max="1" step="0.05" value="0.5">
+        </div>
+        <div class="radioRow"><input type="radio" name="base" value="droste" id="baseDroste"><label for="baseDroste">Спираль Дросте</label></div>
+        <div class="sliderRow" id="rowDrosteM" style="display:none">
+          <label for="drosteM">рукавов</label><input type="number" class="sliderVal" id="drosteMVal">
+          <input type="range" id="drosteM" min="3" max="12" step="1" value="6">
+        </div>
+        <div class="sliderRow" id="rowDrosteG" style="display:none">
+          <label for="drosteG">рост за рукав</label><input type="number" class="sliderVal" id="drosteGVal">
+          <input type="range" id="drosteG" min="1.15" max="2.2" step="0.05" value="1.5">
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Цвет <small>(HSL-гармония, не наугад — COLOR-THEORY.md)</small></h3>
+        <div class="sliderRow">
+          <label for="hue">оттенок базы</label><input type="number" class="sliderVal" id="hueVal">
+          <input type="range" id="hue" min="0" max="359" step="1" value="205">
+        </div>
+        <div class="sliderRow">
+          <label for="sat">насыщенность</label><input type="number" class="sliderVal" id="satVal">
+          <input type="range" id="sat" min="10" max="100" step="1" value="75">
+        </div>
+        <div class="sliderRow">
+          <label for="light">яркость базы</label><input type="number" class="sliderVal" id="lightVal">
+          <input type="range" id="light" min="15" max="70" step="1" value="42">
+        </div>
+        <select id="harmony">
+          <option value="0">монохромная (0°)</option>
+          <option value="30">аналогичная (30°)</option>
+          <option value="90">квадрат (90°)</option>
+          <option value="120" selected>триада (120°)</option>
+          <option value="150">раздел.-комплементарная (150°)</option>
+          <option value="180">комплементарная (180°)</option>
+        </select>
+        <div class="colorNote">схема задаёт оттенок АКЦЕНТА (блик/лит-грань/дальний рукав спирали) относительно базы — реальные названия схем, не декоративные пресеты.</div>
+        <div class="swatchRow">
+          <button class="swatch" data-hue="205" style="background:hsl(205,70%,42%)">🧊 лёд</button>
+          <button class="swatch" data-hue="20" style="background:hsl(20,80%,45%)">🔥 огонь</button>
+          <button class="swatch" data-hue="150" style="background:hsl(150,65%,35%)">💚 изумруд</button>
+          <button class="swatch" data-hue="280" style="background:hsl(280,55%,45%)">💜 аметист</button>
+          <button class="swatch" data-hue="45" style="background:hsl(45,80%,42%)">🟡 золото</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Общее движение</h3>
+        <div class="sliderRow">
+          <label for="rotSpeed">скорость вращения</label><input type="number" class="sliderVal" id="rotSpeedVal">
+          <input type="range" id="rotSpeed" min="-1.5" max="1.5" step="0.05" value="0.4">
+        </div>
+        <div class="sliderRow">
+          <label for="zoomAmp">амплитуда зума</label><input type="number" class="sliderVal" id="zoomAmpVal">
+          <input type="range" id="zoomAmp" min="0" max="0.6" step="0.02" value="0.18">
+        </div>
+        <div class="sliderRow">
+          <label for="zoomSpeed">скорость зума</label><input type="number" class="sliderVal" id="zoomSpeedVal">
+          <input type="range" id="zoomSpeed" min="0.1" max="2.5" step="0.05" value="0.6">
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Слои <small>(любая комбинация)</small></h3>
+        <div class="moduleBlock">
+          <div class="checkRow"><input type="checkbox" id="layerTrail"><label for="layerTrail">Аддитивный след (свет складывается, не гаснет)</label></div>
+          <div class="sliderRow"><label for="trailN">копий</label><input type="number" class="sliderVal" id="trailNVal"><input type="range" id="trailN" min="2" max="16" step="1" value="8"></div>
+          <div class="sliderRow"><label for="trailFade">затухание</label><input type="number" class="sliderVal" id="trailFadeVal"><input type="range" id="trailFade" min="0.02" max="0.2" step="0.01" value="0.06"></div>
+        </div>
+        <div class="moduleBlock" id="blockVortex">
+          <div class="checkRow"><input type="checkbox" id="layerVortex"><label for="layerVortex">Вихрь (затягивает к центру)</label><span class="incompatNote" id="noteVortex" style="display:none">— не действует на спирали</span></div>
+          <div class="sliderRow"><label for="vortexStrength">сила</label><input type="number" class="sliderVal" id="vortexStrengthVal"><input type="range" id="vortexStrength" min="0" max="1" step="0.05" value="0.4"></div>
+        </div>
+        <div class="moduleBlock">
+          <div class="checkRow"><input type="checkbox" id="layerPrecess"><label for="layerPrecess">Прецессия (ось гуляет по конусу — меняет смысл «скорости вращения» выше)</label></div>
+          <div class="sliderRow"><label for="precessSpeed">скорость прецессии</label><input type="number" class="sliderVal" id="precessSpeedVal"><input type="range" id="precessSpeed" min="0.05" max="1.2" step="0.05" value="0.35"></div>
+          <div class="sliderRow"><label for="precessTilt">наклон</label><input type="number" class="sliderVal" id="precessTiltVal"><input type="range" id="precessTilt" min="0.1" max="1.1" step="0.05" value="0.55"></div>
+        </div>
+        <div class="moduleBlock" id="blockInvSquare">
+          <div class="checkRow"><input type="checkbox" id="layerInvSquare"><label for="layerInvSquare">Обратные квадраты (ярче = ближе, честная физика)</label><span class="incompatNote" id="noteInvSquare" style="display:none">— нужна амплитуда зума &gt; 0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pinnedSection">
+    <h3>📌 Закреплённые находки</h3>
+    <div class="pinnedEmpty" id="pinnedEmpty">Пока пусто — нажмите «закрепить», чтобы сохранить текущую комбинацию сюда и сравнивать несколько сразу. Сохраняется в этом браузере между заходами.</div>
+    <div class="pinnedGrid" id="pinnedGrid"></div>
+  </div>
+
+  <div class="pinnedSection">
+    <h3>✓ Уже одобрено — для сравнения</h3>
+    <p class="sub" style="margin:0 0 12px">32 темы физика/культура + 5 космических тем — те же файлы, что вы уже одобрили целиком, встроены как есть (не копия кода — если поправить исходник, здесь тоже обновится). Листайте, сравнивайте «вот этот» против того, что настроили выше слева.</p>
+    <div class="refGrid">
+      <div class="refFrame">
+        <div class="refFrameHead"><span>Физика/культура — 32 темы</span><a href="fizika-kultura-map-08-09-2026.html" target="_blank">открыть отдельно ↗</a></div>
+        <iframe src="fizika-kultura-map-08-09-2026.html" loading="lazy"></iframe>
+      </div>
+      <div class="refFrame">
+        <div class="refFrameHead"><span>Космос — 5 тем</span><a href="kosmos-5-tem-08-09-2026.html" target="_blank">открыть отдельно ↗</a></div>
+        <iframe src="kosmos-5-tem-08-09-2026.html" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===== Общий шаблон (тот же силуэт, что clipShipBody в render.js — сверено координата в координату) ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.save(); clipBody(ctx);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2)+1)/2;
+  const gx=-16+sweep*32;
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.09)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+/* настоящий тёмный космос со звёздами позади самолёта — не плоская карточка, чтобы честно
+   судить о сочетании цвета с реальным фоном полёта, не в вакууме */
+function drawSpaceBg(ctx,w,h,seed){
+  const g=ctx.createRadialGradient(w*0.5,h*0.32,0,w*0.5,h*0.5,w*0.78);
+  g.addColorStop(0,'#0d1226'); g.addColorStop(1,'#020208');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  const rnd=mulberry32(seed);
+  for(let i=0;i<38;i++){
+    const x=rnd()*w, y=rnd()*h, r=0.4+rnd()*1.15, a=0.25+rnd()*0.6;
+    ctx.fillStyle=`rgba(255,255,255,${a.toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  }
+}
+
+/* ===== элементы управления ===== */
+const $=id=>document.getElementById(id);
+const sliderIds = ['hue','sat','light','rotSpeed','zoomAmp','zoomSpeed','facetN','facetSharp','drosteM','drosteG','trailN','trailFade','vortexStrength','precessSpeed','precessTilt'];
+/* ползунок и число — двусторонняя синхронизация, для точного ввода, не только на глаз */
+function wireSlider(id){
+  const range=$(id), num=$(id+'Val');
+  if(!range||!num) return;
+  num.min=range.min; num.max=range.max; num.step=range.step; num.value=range.value;
+  range.addEventListener('input', ()=>{ num.value=range.value; });
+  num.addEventListener('input', ()=>{
+    let v=+num.value; if(isNaN(v)) return;
+    v=Math.max(+range.min, Math.min(+range.max, v));
+    range.value=v;
+  });
+}
+sliderIds.forEach(wireSlider);
+function setVal(id,v){ const el=$(id); if(el) el.value=v; const num=$(id+'Val'); if(num) num.value=v; }
+
+function updateCompatNotes(){
+  const base=document.querySelector('input[name=base]:checked').value;
+  const droste = base==='droste';
+  $('noteVortex').style.display = droste ? '' : 'none';
+  $('blockVortex').classList.toggle('inactive', droste);
+  const zeroZoom = (+$('zoomAmp').value) <= 0.001;
+  $('noteInvSquare').style.display = zeroZoom ? '' : 'none';
+  $('blockInvSquare').classList.toggle('inactive', zeroZoom);
+}
+function updateBaseRows(){
+  const base=document.querySelector('input[name=base]:checked').value;
+  $('rowFacetN').style.display = base==='facet' ? '' : 'none';
+  $('rowFacetSharp').style.display = base==='facet' ? '' : 'none';
+  $('rowDrosteM').style.display = base==='droste' ? '' : 'none';
+  $('rowDrosteG').style.display = base==='droste' ? '' : 'none';
+  updateCompatNotes();
+}
+document.querySelectorAll('input[name=base]').forEach(r=>r.addEventListener('change', updateBaseRows));
+$('zoomAmp').addEventListener('input', updateCompatNotes);
+updateBaseRows();
+
+document.querySelectorAll('.swatch').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ setVal('hue', +btn.dataset.hue); });
+});
+
+/* ===== пауза / момент ===== */
+let manualT=0;
+$('moment').addEventListener('input', ()=>{ manualT=+$('moment').value; });
+$('paused').addEventListener('change', ()=>{ $('moment').disabled = !$('paused').checked; });
+
+function readCfg(){
+  return {
+    base: document.querySelector('input[name=base]:checked').value,
+    hue:+$('hue').value, sat:+$('sat').value, light:+$('light').value, harmony:+$('harmony').value,
+    rotSpeed:+$('rotSpeed').value, zoomAmp:+$('zoomAmp').value, zoomSpeed:+$('zoomSpeed').value,
+    facetN:+$('facetN').value, facetSharp:+$('facetSharp').value,
+    drosteM:+$('drosteM').value, drosteG:+$('drosteG').value,
+    trailOn:$('layerTrail').checked, trailN:+$('trailN').value, trailFade:+$('trailFade').value,
+    vortexOn:$('layerVortex').checked, vortexStrength:+$('vortexStrength').value,
+    precessOn:$('layerPrecess').checked, precessSpeed:+$('precessSpeed').value, precessTilt:+$('precessTilt').value,
+    invSquareOn:$('layerInvSquare').checked,
+  };
+}
+function applyCfg(cfg){
+  $(cfg.base==='ring'?'baseRing':cfg.base==='facet'?'baseFacet':'baseDroste').checked=true;
+  setVal('hue',cfg.hue); setVal('sat',cfg.sat); setVal('light',cfg.light); $('harmony').value=cfg.harmony;
+  setVal('rotSpeed',cfg.rotSpeed); setVal('zoomAmp',cfg.zoomAmp); setVal('zoomSpeed',cfg.zoomSpeed);
+  setVal('facetN',cfg.facetN); setVal('facetSharp',cfg.facetSharp);
+  setVal('drosteM',cfg.drosteM); setVal('drosteG',cfg.drosteG);
+  $('layerTrail').checked=cfg.trailOn; setVal('trailN',cfg.trailN); setVal('trailFade',cfg.trailFade);
+  $('layerVortex').checked=cfg.vortexOn; setVal('vortexStrength',cfg.vortexStrength);
+  $('layerPrecess').checked=cfg.precessOn; setVal('precessSpeed',cfg.precessSpeed); setVal('precessTilt',cfg.precessTilt);
+  $('layerInvSquare').checked=cfg.invSquareOn;
+  updateBaseRows();
+}
+
+/* ===== базовые узоры ===== */
+function ringPoints(N){ const a=[]; for(let i=0;i<N;i++) a.push({ang:i*(Math.PI*2/N), r0:6.2}); return a; }
+function vortexPull(r0, t, strength){
+  if(!strength) return r0;
+  const pull = 0.32*strength*(Math.sin(t*0.9)*0.5+0.5);
+  return r0*(1-pull);
+}
+function accentHueOf(cfg){ return (cfg.hue+cfg.harmony)%360; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function drawContent(ctx, t, cfg, phaseOffset, alphaMul){
+  const zoomPhase = (t*cfg.zoomSpeed + (phaseOffset||0)*3);
+  const scale = 1 + cfg.zoomAmp*((Math.sin(zoomPhase)+1)/2);
+  const brightness = cfg.invSquareOn ? scale*scale : 1;
+  const rotAngle = (t*cfg.rotSpeed) + (phaseOffset||0)*0.35;
+  const accentHue = accentHueOf(cfg);
+
+  ctx.save();
+  if(cfg.precessOn){
+    const precess = t*cfg.precessSpeed;
+    ctx.rotate(precess);
+    ctx.scale(1, Math.cos(cfg.precessTilt));
+    ctx.rotate(rotAngle*3);
+  } else {
+    ctx.rotate(rotAngle);
+  }
+  ctx.scale(scale,scale);
+
+  const am = alphaMul==null?1:alphaMul;
+
+  if(cfg.base==='droste'){
+    const M=cfg.drosteM, STEP=Math.PI*2/M, G=cfg.drosteG, B=Math.log(G)/STEP;
+    const p = ((t*0.15)%1+1)%1;
+    ctx.save();
+    ctx.rotate(p*STEP); ctx.scale(Math.pow(G,p),Math.pow(G,p));
+    for(let i=-5;i<=4;i++){
+      const armHue = lerp(cfg.hue, accentHue, (i+5)/9);
+      ctx.save(); ctx.rotate(i*STEP);
+      ctx.beginPath();
+      const N2=14;
+      for(let k=0;k<=N2;k++){
+        const th=k/N2*STEP; const r=1.0*Math.exp(B*th);
+        const x=r*Math.cos(th), y=r*Math.sin(th);
+        k===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=`hsla(${armHue},${cfg.sat}%,${Math.min(80,cfg.light+15+brightness*8)}%,${0.85*am})`;
+      ctx.lineWidth=0.28; ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  } else {
+    const N = cfg.base==='facet' ? cfg.facetN : 10;
+    const pts = ringPoints(N);
+    pts.forEach((pt,i)=>{
+      const r = cfg.vortexOn ? vortexPull(pt.r0, t + i*0.3, cfg.vortexStrength) : pt.r0;
+      const x = Math.cos(pt.ang)*r, y = Math.sin(pt.ang)*r*0.9;
+      if(cfg.base==='facet'){
+        const a0=pt.ang, a1=a0+Math.PI*2/N;
+        const facing=Math.max(0, Math.cos((a0+a1)/2 - t*1.4 - Math.PI/2));
+        const exp=1+cfg.facetSharp*4;
+        const glow=Math.pow(facing,exp);
+        const facetHue = lerp(cfg.hue, accentHue, glow);
+        ctx.beginPath(); ctx.moveTo(0,0);
+        ctx.lineTo(Math.cos(a0)*r,Math.sin(a0)*r*0.9); ctx.lineTo(Math.cos(a1)*r,Math.sin(a1)*r*0.9); ctx.closePath();
+        ctx.fillStyle=`hsla(${facetHue},${20+cfg.sat*0.8}%,${Math.min(85,(cfg.light*0.55+glow*45)*Math.min(1.6,brightness))}%,${0.92*am})`;
+        ctx.fill();
+      } else {
+        ctx.fillStyle=`hsla(${cfg.hue},${cfg.sat}%,${Math.min(85,cfg.light*Math.min(1.8,brightness))}%,${0.85*am})`;
+        ctx.beginPath(); ctx.arc(x,y,0.8,0,7); ctx.fill();
+      }
+    });
+  }
+  ctx.restore();
+}
+
+/* ===== единая отрисовка карточки в ЛЮБОЙ canvas по заданному конфигу/времени ===== */
+function renderInto(cv, cfg, t){
+  const ctx=cv.getContext('2d');
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=cv.clientWidth||160, h=cv.clientHeight||160;
+  if(cv._lastW!==w||cv._lastH!==h||cv._lastDpr!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr; }
+  if(!cv._starSeed) cv._starSeed = Math.floor(Math.random()*1e9);
+  ctx.clearRect(0,0,w,h);
+  drawSpaceBg(ctx,w,h,cv._starSeed);
+  const autoScale=4.2*(Math.min(w,h)/160);
+  ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale,autoScale);
+  clipBody(ctx); ctx.fillStyle='#050510'; fillBody(ctx);
+  ctx.translate(0,-2);
+
+  if(cfg.trailOn){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=cfg.trailN-1;i>=1;i--){
+      const alpha=(1-i/cfg.trailN)*cfg.trailFade*3;
+      drawContent(ctx, t-i*0.06, cfg, i, alpha);
+    }
+    ctx.restore();
+  }
+  drawContent(ctx, t, cfg, 0, 1);
+
+  ctx.restore();
+  edgeStroke(ctx);
+}
+
+/* ===== закреплённые находки (localStorage) ===== */
+let pinned=[];
+function loadPinned(){
+  try{
+    const raw=localStorage.getItem('effectsConstructorPinned_v2');
+    pinned = raw ? JSON.parse(raw).map(cfg=>({cfg,canvas:null})) : [];
+  }catch(e){ pinned=[]; }
+}
+function savePinned(){
+  try{ localStorage.setItem('effectsConstructorPinned_v2', JSON.stringify(pinned.map(p=>p.cfg))); }catch(e){}
+}
+function baseLabel(base){ return base==='ring'?'кольцо':base==='facet'?'грани':'дросте'; }
+function renderPinnedStrip(){
+  const grid=$('pinnedGrid');
+  $('pinnedEmpty').style.display = pinned.length ? 'none' : '';
+  grid.innerHTML='';
+  pinned.forEach(entry=>{
+    const card=document.createElement('div'); card.className='pinCard';
+    const label=document.createElement('div'); label.className='pinLabel'; label.textContent=baseLabel(entry.cfg.base);
+    const cv=document.createElement('canvas'); entry.canvas=cv;
+    const btns=document.createElement('div'); btns.className='pinBtns';
+    const loadBtn=document.createElement('button'); loadBtn.textContent='загрузить';
+    loadBtn.addEventListener('click', ()=>applyCfg(entry.cfg));
+    const delBtn=document.createElement('button'); delBtn.className='secondary'; delBtn.textContent='✕';
+    delBtn.addEventListener('click', ()=>{ pinned=pinned.filter(p=>p!==entry); savePinned(); renderPinnedStrip(); });
+    btns.appendChild(loadBtn); btns.appendChild(delBtn);
+    card.appendChild(cv); card.appendChild(label); card.appendChild(btns);
+    grid.appendChild(card);
+  });
+}
+$('btnPin').addEventListener('click', ()=>{
+  pinned.push({cfg:readCfg(), canvas:null});
+  savePinned(); renderPinnedStrip();
+});
+loadPinned(); renderPinnedStrip();
+
+/* ===== главный цикл ===== */
+function frame(tMs){
+  const t = $('paused').checked ? manualT : (tMs||0)/1000;
+  const liveCfg = readCfg();
+  renderInto($('preview'), liveCfg, t);
+  $('recipe').textContent = JSON.stringify(liveCfg,null,0);
+  pinned.forEach(entry=>{ if(entry.canvas) renderInto(entry.canvas, entry.cfg, t); });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ===== случайная комбинация / сброс ===== */
+$('btnRandom').addEventListener('click', ()=>{
+  const bases=['baseRing','baseFacet','baseDroste'];
+  $(bases[Math.floor(Math.random()*3)]).checked=true;
+  setVal('hue', Math.floor(Math.random()*360));
+  setVal('sat', 40+Math.floor(Math.random()*60));
+  setVal('light', 25+Math.floor(Math.random()*40));
+  $('harmony').value = [0,30,90,120,150,180][Math.floor(Math.random()*6)];
+  setVal('facetN', 4+Math.floor(Math.random()*16));
+  setVal('facetSharp', (Math.random()).toFixed(2));
+  setVal('drosteM', 3+Math.floor(Math.random()*9));
+  setVal('drosteG', (1.15+Math.random()*1.05).toFixed(2));
+  setVal('rotSpeed', (-1.5+Math.random()*3).toFixed(2));
+  setVal('zoomAmp', (Math.random()*0.6).toFixed(2));
+  setVal('zoomSpeed', (0.1+Math.random()*2.4).toFixed(2));
+  $('layerTrail').checked = Math.random()>0.5;
+  setVal('trailN', 2+Math.floor(Math.random()*14));
+  setVal('trailFade', (0.02+Math.random()*0.18).toFixed(2));
+  $('layerVortex').checked = Math.random()>0.5;
+  setVal('vortexStrength', Math.random().toFixed(2));
+  $('layerPrecess').checked = Math.random()>0.6;
+  setVal('precessSpeed', (0.05+Math.random()*1.15).toFixed(2));
+  setVal('precessTilt', (0.1+Math.random()).toFixed(2));
+  $('layerInvSquare').checked = Math.random()>0.5;
+  updateBaseRows();
+});
+$('btnReset').addEventListener('click', ()=>{
+  $('baseRing').checked=true;
+  setVal('hue',205); setVal('sat',75); setVal('light',42); $('harmony').value=120;
+  setVal('rotSpeed',0.4); setVal('zoomAmp',0.18); setVal('zoomSpeed',0.6);
+  setVal('facetN',8); setVal('facetSharp',0.5); setVal('drosteM',6); setVal('drosteG',1.5);
+  $('layerTrail').checked=false; setVal('trailN',8); setVal('trailFade',0.06);
+  $('layerVortex').checked=false; setVal('vortexStrength',0.4);
+  $('layerPrecess').checked=false; setVal('precessSpeed',0.35); setVal('precessTilt',0.55);
+  $('layerInvSquare').checked=false;
+  updateBaseRows();
+});
+</script>

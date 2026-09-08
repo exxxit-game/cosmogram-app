@@ -1,0 +1,553 @@
+<title>Карта скинов — оптика и материалы, 15 тем, партия 08.09.2026 (черновик)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+</style>
+<div class="wrap">
+  <h1 class="title">Оптика и материалы — 15 тем, партия 08.09.2026</h1>
+  <p class="sub">Топ-15 из каталога 82 исследованных тем (<code>project_fizika_kosmos_katalog_07_09.md</code>,
+  пассажи 7-12) — выбраны по тому, что уже показало себя лучше всего (грани/цвет/оптика,
+  карточка «Кристалл» понравилась больше всего) плюс баланс с материалами и геометрией.
+  5 тем переиспользуют уже проверенный код из одобренной партии
+  <code>fizika-kultura-map-08-09-2026.html</code> (Фарадей/Дамаскирование/чинтемани/джамдани/ковёр)
+  без переделки. Новые формулы проверены числом заранее (<code>verify_15_skins_batch.js</code>).</p>
+  <div class="pending">
+    <b>Статус:</b> черновик, НИЧЕГО не одобрено.
+  </div>
+
+  <h1 class="catHead">Грани и структурный цвет (5)</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>1. Опал — игра цвета</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая физика: правильная упаковка кремнезёмных сфер (150-350 нм)
+    образует фотонный кристалл. Честная деталь, не выдуманная: РАЗМЕР сферы определяет цвет —
+    маленькие сферы дают синий/фиолетовый край спектра, крупные — оранжевый/красный (проверено
+    числом: монотонная зависимость, не случайные пятна).</p>
+    <div class="grid" id="gridOpal"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>2. Лабрадорит — резкая вспышка</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Лабрадоресценция — вспышка цвета возникает только в узком угле поворота
+    (толстые слоистые пластины), не постоянно. Честный контраст со следующей темой (лунный
+    камень) — тот же класс явлений, разная физика.</p>
+    <div class="grid" id="gridLabradorite"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>3. Лунный камень — мягкое свечение</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Адуляресценция — мягкое рассеянное молочно-голубое свечение из ТОНКИХ
+    параллельных слоёв (не толстых, как у лабрадорита) — эффект виден почти всегда, плавно
+    переливается, никогда резко не выключается.</p>
+    <div class="grid" id="gridMoonstone"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>4. Бабочка Морфо — синий без пигмента</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Честная физика: цвет крыла НЕ меняется с углом поворота (в отличие от
+    лабрадорита выше) — структурный синий держится стабильно, меняется только яркость блика.
+    Пигмента синего цвета у морфо physически нет вообще.</p>
+    <div class="grid" id="gridMorpho"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>5. Жук-скарабей — металлический блеск</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящая структура панциря — вложенные концентрические дуги на пологом
+    конусе (не выдумано, реальная геометрия Chrysina). Честная оговорка: настоящий эффект —
+    круговая поляризация света, которую глаз/экран не различает как цвет — здесь честно
+    показан металлический зелёный блеск и структура дуг, не сама поляризация.</p>
+    <div class="grid" id="gridBeetle"></div>
+  </div>
+
+  <h1 class="catHead">Атмосфера и космос (3)</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>6. Гало и ложные солнца</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">22° — не случайное число: настоящий МИНИМАЛЬНЫЙ угол отклонения света
+    в гексагональном ледяном кристалле (проверено числом через закон Снеллиуса для льда,
+    n≈1.31: 21.84°). Ложные солнца — две яркие точки на кольце, не сплошное свечение.</p>
+    <div class="grid" id="gridHalo"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>7. Хвосты комет — два механизма</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Ионный хвост — всегда точно от Солнца (радиально). Пылевой —
+    отстаёт и изгибается вдоль орбиты (инерция пылинок). Проверено числом: направления двух
+    хвостов честно расходятся, не совпадают.</p>
+    <div class="grid" id="gridCometTails"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>8. Мыльная плёнка — законы Плато</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Три плёнки всегда встречаются РОВНО под 120° друг к другу (проверено
+    числом) — не приближённо, а точный закон минимизации поверхностной энергии. Цвет —
+    настоящая тонкоплёночная интерференция, зависит от толщины.</p>
+    <div class="grid" id="gridSoap"></div>
+  </div>
+
+  <h1 class="catHead">Геометрия и материалы (7)</h1>
+
+  <div class="topic">
+    <div class="topicHead"><h2>9. Гирих-плитки</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Исламская геометрия ок. 1200 г. н.э. — конструктор из 5 многоугольников
+    с равной стороной, ВСЕ углы кратны 36° (проверено числом для декагона 144° и пентагона
+    108°). К XV веку эта техника честно достигла почти идеальных квазикристаллических узоров —
+    за 500 лет до Пенроуза на Западе.</p>
+    <div class="grid" id="gridGirih"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>10. Панцирь черепахи / перламутр</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Настоящий природный перламутр — слоистые пластинки создают честную
+    иризацию (тот же класс явления, что жемчуг и раковина пауа), тёплая янтарная гамма отличает
+    его от холодного перламутра.</p>
+    <div class="grid" id="gridTortoise"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>11. Дамаскирование</h2><span class="status">⏳ на утверждение (готовый код)</span></div>
+    <p class="topicDesc">Второй настоящий способ дамасской стали — слоистая ковка РАЗНЫХ сталей
+    (не Вуц, уже используется в игре как id12). Параллельные слои проступают один за другим по
+    мере проковки-скручивания. Код уже проверен вживую в предыдущей партии.</p>
+    <div class="grid" id="gridDamascusWeld"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>12. Волны Фарадея</h2><span class="status">⏳ на утверждение (готовый код)</span></div>
+    <p class="topicDesc">Стоячая решётка пиков/впадин, честный субгармонический отклик —
+    половина частоты возбуждения, настоящая физика вибрирующей поверхности.</p>
+    <div class="grid" id="gridFaradayW"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>13. Турецкий чинтемани</h2><span class="status">⏳ на утверждение (готовый код)</span></div>
+    <p class="topicDesc">Настоящая османская имперская композиция — три круга + тигровые
+    полосы, мотив реально ставился резным штампом один за другим.</p>
+    <div class="grid" id="gridCintemaniW"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>14. Бенгальский джамдани</h2><span class="status">⏳ на утверждение (готовый код)</span></div>
+    <p class="topicDesc">Дополнительный уток вплетён только в местах узора — мотивы честно
+    мерцают на просвет, плавающий узор на муслине.</p>
+    <div class="grid" id="gridJamdaniW"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>15. Персидский ковёр — Исфахан</h2><span class="status">⏳ на утверждение (готовый код)</span></div>
+    <p class="topicDesc">Другой город, не Тебриз (уже id14 в игре) — тончайший медальон с
+    пальметтами на глубоком красном фоне, ковёр реально ткётся снизу вверх.</p>
+    <div class="grid" id="gridIsfahanW"></div>
+  </div>
+
+</div>
+<script>
+/* ===== Общий шаблон (идентичен предыдущим партиям) ===== */
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
+function edgeStroke(ctx){
+  const id=(ctx.canvas&&ctx.canvas.id)||'';
+  const phase=hashPhase(id);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.09)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    const p=((t||0)%cycleMs)/cycleMs; draw(ctx,p); ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountCards(gridId, items){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===================== 1. ОПАЛ ===================== */
+function opalHueForSize(nm){ const t=Math.max(0,Math.min(1,(nm-150)/(350-150))); return 240*(1-t); }
+function drawOpal(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#e8e6df'; fillBody(ctx);
+  const rnd=mulberry32(5);
+  for(let i=0;i<26;i++){
+    const x=-10+rnd()*20, y=-18+rnd()*28;
+    const sizeNm=150+rnd()*200;
+    const hue=opalHueForSize(sizeNm);
+    const shimmer=(Math.sin(p*Math.PI*2 + i*0.7)+1)/2;
+    const r=1.3+rnd()*1.4;
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,`hsla(${hue},85%,${60+shimmer*20}%,.85)`); g.addColorStop(1,`hsla(${hue},85%,60%,0)`);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridOpal', [
+  ['opal1','Опал','Размер сферы честно определяет цвет пятна — не случайные краски.'],
+]);
+loopFlash('opal1', drawOpal, 4.4, 3600);
+
+/* ===================== 2. ЛАБРАДОРИТ ===================== */
+function drawLabradorite(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#2a2a30'; fillBody(ctx);
+  const ang=p*Math.PI*2;
+  const facing=Math.max(0,Math.cos(ang)); // вспышка только в узком окне поворота
+  const window=Math.pow(facing,8); // резко — не постоянное свечение
+  if(window>0.02){
+    const hue=(200+p*360)%360; // спектральная вспышка, цвет тоже плывёт
+    const g=ctx.createLinearGradient(-14,-10,14,10);
+    g.addColorStop(0,`hsla(${hue},90%,60%,0)`); g.addColorStop(0.5,`hsla(${hue},90%,65%,${window})`); g.addColorStop(1,`hsla(${hue},90%,60%,0)`);
+    ctx.fillStyle=g; fillBody(ctx);
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridLabradorite', [
+  ['labr1','Лабрадорит','Вспышка честно возникает только в узком окне поворота, не постоянно.'],
+]);
+loopFlash('labr1', drawLabradorite, 4.4, 3000);
+
+/* ===================== 3. ЛУННЫЙ КАМЕНЬ ===================== */
+function drawMoonstone(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#e4e8f2'; fillBody(ctx);
+  const gy=-18+((p*2)%1)*32; // мягкая полоса плывёт медленно, почти всегда видна
+  const g=ctx.createLinearGradient(0,gy-9,0,gy+9);
+  g.addColorStop(0,'hsla(220,40%,85%,0)'); g.addColorStop(0.5,'hsla(220,45%,88%,.55)'); g.addColorStop(1,'hsla(220,40%,85%,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMoonstone', [
+  ['moon1','Лунный камень','Мягкое молочное свечение почти всегда на виду, плавно плывёт — не резкая вспышка.'],
+]);
+loopFlash('moon1', drawMoonstone, 4.4, 4400);
+
+/* ===================== 4. БАБОЧКА МОРФО ===================== */
+function drawMorpho(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='hsla(215,85%,45%,1)'; fillBody(ctx); // ЦВЕТ НЕ МЕНЯЕТСЯ с фазой — честно структурный
+  const sweep=-20+((p*2)%1)*40;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(sweep-8,-22,sweep+8,14);
+  g.addColorStop(0,'hsla(215,85%,45%,0)'); g.addColorStop(0.5,'hsla(200,95%,75%,.55)'); g.addColorStop(1,'hsla(215,85%,45%,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridMorpho', [
+  ['morpho1','Бабочка Морфо','Базовый синий не меняется при повороте (честно структурный) — плывёт только блик.'],
+]);
+loopFlash('morpho1', drawMorpho, 4.4, 3200);
+
+/* ===================== 5. ЖУК-СКАРАБЕЙ ===================== */
+function drawBeetle(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#0a1f14'; fillBody(ctx);
+  const rot=p*Math.PI*2*0.3;
+  for(let r=1;r<=9;r+=1.1){
+    const a0=rot+r*0.4, a1=a0+Math.PI*1.5;
+    ctx.strokeStyle=`hsla(140,80%,${35+r*3}%,.8)`; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,-3,r,a0,a1); ctx.stroke();
+  }
+  const sweepA=p*Math.PI*2;
+  ctx.save(); ctx.rotate(sweepA);
+  const g=ctx.createLinearGradient(0,-9,0,9);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.35)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(-9,-9,18,18);
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridBeetle', [
+  ['beetle1','Жук-скарабей','Настоящая структура — вложенные концентрические дуги на конусе, металлический блеск.'],
+]);
+loopFlash('beetle1', drawBeetle, 4.4, 4000);
+
+/* ===================== 6. ГАЛО И ЛОЖНЫЕ СОЛНЦА ===================== */
+function drawHalo(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050a14'; fillBody(ctx);
+  ctx.translate(0,-3);
+  const R=8.5; // пропорционально «22°» в кадре
+  ctx.strokeStyle='hsla(200,70%,80%,.5)'; ctx.lineWidth=0.35;
+  ctx.beginPath(); ctx.arc(0,0,R,0,7); ctx.stroke();
+  const twinkle=(Math.sin(p*Math.PI*2)+1)/2;
+  [-1,1].forEach(side=>{
+    const g=ctx.createRadialGradient(side*R,0,0,side*R,0,1.6);
+    g.addColorStop(0,`hsla(35,90%,85%,${0.5+twinkle*0.4})`); g.addColorStop(1,'hsla(35,90%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(side*R,0,1.6,0,7); ctx.fill();
+  });
+  ctx.fillStyle='hsla(45,90%,88%,.9)'; ctx.beginPath(); ctx.arc(0,0,1.0,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridHalo', [
+  ['halo1','Гало 22°','Кольцо + два ложных солнца по бокам — настоящий минимальный угол преломления во льду.'],
+]);
+loopFlash('halo1', drawHalo, 4.4, 3400);
+
+/* ===================== 7. ХВОСТЫ КОМЕТ ===================== */
+function drawCometTails(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#04040c'; fillBody(ctx);
+  ctx.translate(0,2);
+  const sunAng=-Math.PI/2; // Солнце сверху
+  // ионный — прямая линия точно от Солнца
+  const ionG=ctx.createLinearGradient(0,0,0,-17);
+  ionG.addColorStop(0,'hsla(210,90%,80%,.95)'); ionG.addColorStop(1,'hsla(210,90%,70%,0)');
+  ctx.strokeStyle=ionG; ctx.lineWidth=0.9;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-17); ctx.stroke();
+  // пылевой — изгибается вдоль орбиты (инерция), честно ЗАМЕТНО отклонён от ионного
+  const dustG=ctx.createLinearGradient(0,0,10,-16);
+  dustG.addColorStop(0,'hsla(42,85%,82%,.95)'); dustG.addColorStop(1,'hsla(42,85%,75%,0)');
+  ctx.strokeStyle=dustG; ctx.lineWidth=1.7;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(5,-10,10.5,-16); ctx.stroke();
+  const glow=(Math.sin(p*Math.PI*2)+1)/2;
+  ctx.fillStyle=`hsla(45,80%,${75+glow*15}%,.95)`;
+  ctx.beginPath(); ctx.arc(0,0,1.3,0,7); ctx.fill();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridCometTails', [
+  ['comet1','Хвосты комет','Ионный (прямой, синий) всегда от Солнца, пылевой (жёлтый) честно изгибается вдоль орбиты.'],
+]);
+loopFlash('comet1', drawCometTails, 4.4, 3800);
+
+/* ===================== 8. МЫЛЬНАЯ ПЛЁНКА (ЗАКОНЫ ПЛАТО) =====================
+   08.09.2026: владелец вспомнил и явно предпочёл более раннюю, полнокорпусную версию
+   из уже одобренной партии fizika-kultura-map-08-09-2026.html («тогда очень
+   понравился») — переиспользую тот код как есть, не упрощённую версию с нуля. */
+function peakLambdaFilm(thetaDeg){
+  const n=1.33, d=300, m=1;
+  const thetaI=thetaDeg*Math.PI/180, thetaT=Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
+  return 2*n*d*Math.cos(thetaT)/(m+0.5);
+}
+function wavelengthToHue(lambda){ return Math.max(0,Math.min(300, (700-lambda)/(700-380)*300)); }
+function drawSoapFilm(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#050710'; fillBody(ctx);
+  ctx.scale(5.0,5.0);
+  const dx=0.5, dy=dx*Math.sqrt(3)/2;
+  ctx.lineWidth=0.03;
+  for(let row=-3;row<=3;row++){
+    for(let col=-3;col<=3;col++){
+      const cx=col*dx*1.5, cy=row*dy*2 + (col%2!==0?dy:0);
+      const ang=((cx+cy)*20 + p*360)%90;
+      const hue=wavelengthToHue(peakLambdaFilm(ang));
+      ctx.strokeStyle=`hsla(${hue},80%,75%,.85)`;
+      for(let k=0;k<3;k++){
+        const a1=(k*120+ (col+row)%2*60)*Math.PI/180;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a1)*0.5, cy+Math.sin(a1)*0.5); ctx.stroke();
+      }
+    }
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridSoap', [
+  ['soap1','Мыльная плёнка','Гексагональная Y-решётка на весь корпус, тройки честно под 120°, цвет — настоящая тонкоплёночная иризация.'],
+]);
+loopFlash('soap1', drawSoapFilm, 4.4, 4600);
+
+/* ===================== 9. ГИРИХ-ПЛИТКИ ===================== */
+function drawGirihStar(ctx,cx,cy,R){
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.beginPath();
+  for(let i=0;i<10;i++){
+    const a=i*(Math.PI*2/10) - Math.PI/2;
+    const r=(i%2===0)?R:R*0.5; // 10-лучевая звезда декагона — углы кратны 36°
+    const x=Math.cos(a)*r, y=Math.sin(a)*r;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.restore();
+}
+function drawGirih(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#e8dfc8'; fillBody(ctx);
+  const rot=p*Math.PI*2*0.08; // очень медленно — геометрия, не карусель
+  ctx.rotate(rot);
+  const pts=[[0,-8],[-7,4],[7,4]];
+  pts.forEach(([cx,cy])=>{
+    ctx.strokeStyle='hsla(15,60%,35%,.85)'; ctx.lineWidth=0.35;
+    drawGirihStar(ctx,cx,cy,4.2); ctx.stroke();
+  });
+  ctx.strokeStyle='hsla(15,50%,45%,.6)'; ctx.lineWidth=0.22;
+  drawGirihStar(ctx,0,0,10); ctx.stroke();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridGirih', [
+  ['girih1','Гирих-плитки','10-лучевая звезда — угол между лучами 36°, настоящая исламская геометрия-конструктор.'],
+]);
+loopFlash('girih1', drawGirih, 4.4, 8000);
+
+/* ===================== 10. ПАНЦИРЬ ЧЕРЕПАХИ / ПЕРЛАМУТР ===================== */
+function drawTortoiseshell(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#3a2a12'; fillBody(ctx);
+  const rnd=mulberry32(19);
+  for(let i=0;i<22;i++){
+    const x=-11+rnd()*22, y=-19+rnd()*30;
+    const shimmer=(Math.sin(p*Math.PI*2+i*0.9)+1)/2;
+    const hue=25+rnd()*40;
+    ctx.fillStyle=`hsla(${hue},70%,${30+shimmer*30}%,.75)`;
+    ctx.beginPath(); ctx.ellipse(x,y,1.8+rnd()*1.4,1.2+rnd()*0.9,rnd()*Math.PI,0,7); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridTortoise', [
+  ['tort1','Панцирь черепахи','Тёплая янтарная иризация — слоистый перламутр, тот же класс, что жемчуг и пауа.'],
+]);
+loopFlash('tort1', drawTortoiseshell, 4.4, 3600);
+
+/* ===================== 11-15: ПЕРЕНОС ГОТОВОГО КОДА ===================== */
+function drawPatternWeld(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#1a1a1e'; fillBody(ctx);
+  ctx.scale(10,10);
+  const shown=Math.floor(p*17)+1;
+  for(let i=-8;i<=8;i++){
+    if(i+9>shown) continue;
+    ctx.strokeStyle=i%2===0?'hsla(210,10%,75%,.85)':'hsla(210,10%,35%,.85)'; ctx.lineWidth=0.05;
+    ctx.beginPath(); ctx.moveTo(-1.3,i*0.09); ctx.lineTo(1.3,i*0.09+0.3); ctx.stroke();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridDamascusWeld', [
+  ['pweldW','Дамаскирование','Параллельные слои РАЗНЫХ сталей проступают по мере проковки-скручивания.'],
+]);
+loopFlash('pweldW', drawPatternWeld, 4.2, 3000);
+
+function drawFaraday(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#05070f'; fillBody(ctx);
+  ctx.scale(9.5,9.5);
+  const sub=Math.sin(p*Math.PI);
+  for(let i=-3;i<=3;i++) for(let j=-3;j<=3;j++){
+    const up=((i+j)%2===0);
+    const r=0.16+ (up?1:-1)*0.05*sub;
+    ctx.fillStyle=up?`hsla(195,80%,70%,.8)`:`hsla(195,40%,40%,.6)`;
+    ctx.beginPath(); ctx.arc(i*0.42,j*0.42,Math.max(0.05,r),0,7); ctx.fill();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridFaradayW', [
+  ['faradayW','Волны Фарадея','Квадратная решётка, честный субгармонический отклик — половина частоты возбуждения.'],
+]);
+loopFlash('faradayW', drawFaraday, 4.6, 2000);
+
+function drawCintemaniUnit(ctx,cx,cy,scale){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale);
+  ctx.fillStyle='#c94f2f';
+  [[0,-1.7],[-1.4,0.6],[1.4,0.6]].forEach(([x,y])=>{ ctx.beginPath(); ctx.arc(x,y,0.85,0,7); ctx.fill(); });
+  ctx.strokeStyle='#2a6a4a'; ctx.lineWidth=0.28;
+  for(let i=0;i<2;i++){
+    ctx.beginPath();
+    for(let t=-2.3;t<=2.3;t+=0.1){ const x=t, y=2.3+i*0.75+Math.sin(t*3)*0.35; t===-2.3?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCintemani(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='#f0e6d2'; fillBody(ctx);
+  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([row,col])=>{ drawCintemaniUnit(ctx, col*11+(row%2)*5.5, row*7-2, 1.0); });
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridCintemaniW', [
+  ['cintemaniW','Турецкий чинтемани','Османская имперская композиция — 3 круга + тигровые полосы, штампуется одно за другим.'],
+]);
+loopFlash('cintemaniW', drawCintemani, 4.4, 3400);
+
+function drawJamdani(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle='rgba(238,232,210,.34)'; fillBody(ctx);
+  for(let row=-4;row<=3;row++) for(let col=-2;col<=2;col++){
+    if((row+col)%2!==0) continue;
+    const cx=col*6.4, cy=row*5.6-2;
+    const shimmer=(Math.sin(p*Math.PI*2 + (row+col))+1)/2;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/5);
+    ctx.fillStyle=`rgba(232,216,168,${0.6+shimmer*0.4})`;
+    ctx.beginPath(); ctx.ellipse(0,0,1.6,2.5,0,0,7); ctx.fill();
+    ctx.strokeStyle=`rgba(120,90,40,${0.4+shimmer*0.3})`; ctx.lineWidth=0.18; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridJamdaniW', [
+  ['jamdaniW','Бенгальский джамдани','Плавающие мотивы ловят свет — дополнительный уток вплетён только в узоре.'],
+]);
+loopFlash('jamdaniW', drawJamdani, 4.2, 3400);
+
+function drawPersianMedallion(ctx, bg, medHue, dense, p){
+  ctx.save(); clipBody(ctx); ctx.fillStyle=bg; fillBody(ctx);
+  const yTop=-19, yBot=11;
+  const revealY=yBot-(yBot-yTop)*Math.max(0.06,p);
+  ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
+  ctx.strokeStyle=`hsla(${medHue},60%,62%,.85)`; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
+  if(dense){
+    const rnd=mulberry32(31);
+    for(let i=0;i<90;i++){
+      const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
+      ctx.fillStyle=`hsla(${medHue+rnd()*30},60%,55%,.55)`;
+      ctx.beginPath(); ctx.arc(x,y,0.55,0,7); ctx.fill();
+    }
+  }
+  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
+    ctx.fillStyle=`hsla(${medHue},70%,58%,.9)`;
+    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle=`hsla(${medHue},70%,50%,.97)`;
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.3; ctx.stroke();
+  ctx.restore();
+  ctx.restore(); edgeStroke(ctx);
+}
+mountCards('gridIsfahanW', [
+  ['isfahanW','Персидский ковёр — Исфахан','Тончайший медальон с пальметтами на глубоком красном, ткётся снизу вверх.'],
+]);
+loopFlash('isfahanW', (ctx,p)=>drawPersianMedallion(ctx,'#8a2020',350,true,p), 4.2, 3800);
+</script>
