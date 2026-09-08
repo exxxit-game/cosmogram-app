@@ -52,41 +52,48 @@ const FORGE_SC_MAX=50;
    сама (forgeSyncWidgets→ptRender, готово с сегодняшнего коммита). Каждый пресет ниже получил
    sc — авторские точки (все укладываются в свой l с запасом, максимум 22 из разрешённых 50).
    Длины подросли по просьбе владельца: от 1500 у «Разминки» и дальше. */
+// 08.09.2026 «Витрина, а не повтор» (владелец, живой скрин: 2 пары пресетов давали ОДИНАКОВЫЙ
+// фон — Разминка/Дрейф оба sky=0, Дождь/Пульсар оба sky=120, потому что FORGE_SKYS даёт только
+// 6 сдвигов на 8 пресетов): каждому пресету — свой h1/h2 явно, в обход общей формулы sky*.3.
+// Взяты не наугад, а 8 самых непохожих друг на друга пар из PT_SAFE_PAIRS (partitura.js) —
+// того же набора, что уже стоит за кнопкой «Случайное небо» и уже проверен глазами на клэши
+// (macet-01-09-nastroenie-neba.html). sky/fog оставлены как были — только для старых кодов без
+// явного h1/h2.
 const FORGE_PRESETS=[ // точки входа: тапнул — и сразу летишь; докрутить можно под себя
-  {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1500,lv:3,w:1,fl:0,b:3,sky:0,fog:0,sc:[ // мягкое знакомство: редкие камни, одна передышка, одни ворота как «выпускной»
+  {k:'fpWarm', c:{n:'',d:25,s:40,e:15,l:1500,lv:3,w:1,fl:0,b:3,sky:0,h1:220,h2:260,fog:0,sc:[ // мягкое знакомство: редкие камни, одна передышка, одни ворота как «выпускной»
     {at:100,type:'pause'},{at:300,type:'kind',kind:0},{at:500,type:'kind',kind:0},{at:700,type:'pause'},
     {at:900,type:'kind',kind:1},{at:1100,type:'kind',kind:0},{at:1300,type:'kind',kind:7}]}},
-  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:4000,lv:3,w:3,fl:1,b:2,sky:120,fog:0,sc:[ // плотный шторм камней/обломков + кометы поочерёдно слева-справа — витрина направления
+  {k:'fpRain', c:{n:'',d:90,s:65,e:35,l:4000,lv:3,w:3,fl:1,b:2,sky:120,h1:200,h2:180,fog:0,sc:[ // плотный шторм камней/обломков + кометы поочерёдно слева-справа — витрина направления
     {at:150,type:'kind',kind:0},{at:300,type:'kind',kind:1},{at:450,type:'kind',kind:0},{at:600,type:'kind',kind:0},
     {at:750,type:'kind',kind:5,dir:1},{at:900,type:'kind',kind:1},{at:1050,type:'kind',kind:0},{at:1200,type:'kind',kind:5,dir:-1},
     {at:1350,type:'kind',kind:0},{at:1500,type:'kind',kind:1},{at:1650,type:'kind',kind:0},{at:1800,type:'kind',kind:5,dir:1},
     {at:1950,type:'kind',kind:0},{at:2100,type:'kind',kind:1},{at:2250,type:'kind',kind:5,dir:-1},{at:2400,type:'kind',kind:0},
     {at:2550,type:'kind',kind:1},{at:2700,type:'kind',kind:5,dir:1},{at:2850,type:'kind',kind:0},{at:3000,type:'kind',kind:5,dir:-1},
     {at:3150,type:'kind',kind:1},{at:3300,type:'kind',kind:0}]}},
-  {k:'fpMines', c:{n:'',d:55,s:45,e:136,l:3500,lv:3,w:3,fl:0,b:2,sky:300,fog:0,sc:[ // 08.09.2026, замена «Ад на одну жизнь» (дублировал Створ): мины+ворота, скорость нарочно ниже средней — ставка на выбор пути, не на реакцию, щедрые паузы, чтобы успеть посмотреть и решить
+  {k:'fpMines', c:{n:'',d:55,s:45,e:136,l:3500,lv:3,w:3,fl:0,b:2,sky:300,h1:280,h2:200,fog:0,sc:[ // 08.09.2026, замена «Ад на одну жизнь» (дублировал Створ): мины+ворота, скорость нарочно ниже средней — ставка на выбор пути, не на реакцию, щедрые паузы, чтобы успеть посмотреть и решить
     {at:250,type:'kind',kind:3},{at:550,type:'kind',kind:7},{at:850,type:'pause'},
     {at:1150,type:'kind',kind:3},{at:1450,type:'kind',kind:3},{at:1750,type:'kind',kind:7},
     {at:2050,type:'pause'},{at:2350,type:'kind',kind:3},{at:2650,type:'kind',kind:7},
     {at:2950,type:'kind',kind:3},{at:3250,type:'kind',kind:7}]}},
-  {k:'fpFog',  c:{n:'',d:45,s:50,e:13,l:2500,lv:3,w:2,fl:0,b:2,sky:180,fog:2,sc:[ // туман режет видимость — препятствия предсказуемые, разнесённые, щедрые паузы
+  {k:'fpFog',  c:{n:'',d:45,s:50,e:13,l:2500,lv:3,w:2,fl:0,b:2,sky:180,h1:25,h2:5,fog:2,sc:[ // туман режет видимость — препятствия предсказуемые, разнесённые, щедрые паузы
     {at:150,type:'pause'},{at:400,type:'kind',kind:4},{at:700,type:'kind',kind:2},{at:1000,type:'pause'},
     {at:1300,type:'kind',kind:4},{at:1600,type:'kind',kind:2},{at:1900,type:'pause'},{at:2200,type:'kind',kind:4}]}},
   // v1.83.0 «Галерея мастера»: эталонные трассы с выверенным характером — карты в галерее рядом с базовыми
-  {k:'fpDrift', c:{n:'',d:50,s:55,e:4,l:4000,lv:3,w:3,fl:0,b:2,sky:0,fog:0,sc:[ // 08.09.2026, замена «Кометного сада» (дублировал «Метеоритный дождь» — та же комета): чистая витрина Дрейфера, направление чередуется — у него до этого не было своего пресета вообще
+  {k:'fpDrift', c:{n:'',d:50,s:55,e:4,l:4000,lv:3,w:3,fl:0,b:2,sky:0,h1:260,h2:320,fog:0,sc:[ // 08.09.2026, замена «Кометного сада» (дублировал «Метеоритный дождь» — та же комета): чистая витрина Дрейфера, направление чередуется — у него до этого не было своего пресета вообще
     {at:200,type:'kind',kind:2,dir:1},{at:550,type:'kind',kind:2,dir:-1},{at:900,type:'pause'},
     {at:1250,type:'kind',kind:2,dir:1},{at:1600,type:'kind',kind:2,dir:1},{at:1950,type:'kind',kind:2,dir:-1},
     {at:2300,type:'pause'},{at:2650,type:'kind',kind:2,dir:-1},{at:3000,type:'kind',kind:2,dir:1},
     {at:3350,type:'kind',kind:2,dir:-1},{at:3700,type:'kind',kind:2,dir:1}]}},
-  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:4500,lv:3,w:3,fl:0,b:2,sky:60,fog:0,sc:[ // почти сплошные ворота подряд — витрина «дышащих» ворот с первой волны, узкие просветы
+  {k:'fpSlalom', c:{n:'',d:55,s:70,e:132,l:4500,lv:3,w:3,fl:0,b:2,sky:60,h1:355,h2:265,fog:0,sc:[ // почти сплошные ворота подряд — витрина «дышащих» ворот с первой волны, узкие просветы
     {at:200,type:'kind',kind:7},{at:450,type:'kind',kind:7},{at:700,type:'kind',kind:2},{at:950,type:'kind',kind:7},
     {at:1200,type:'kind',kind:7},{at:1450,type:'kind',kind:2},{at:1700,type:'kind',kind:7},{at:1950,type:'kind',kind:7},
     {at:2200,type:'pause'},{at:2450,type:'kind',kind:7},{at:2700,type:'kind',kind:7},{at:2950,type:'kind',kind:2},
     {at:3200,type:'kind',kind:7},{at:3450,type:'kind',kind:7},{at:3700,type:'kind',kind:2},{at:3950,type:'kind',kind:7},{at:4200,type:'kind',kind:7}]}}, // дрейфы+врата в индиго — чистое мастерство
-  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:3500,lv:2,w:4,fl:1,b:1,sky:240,fog:1,sc:[ // ловцы преследуют, спутники между ними — ощущение погони
+  {k:'fpHunt',  c:{n:'',d:60,s:60,e:72,l:3500,lv:2,w:4,fl:1,b:1,sky:240,h1:260,h2:25,fog:1,sc:[ // ловцы преследуют, спутники между ними — ощущение погони
     {at:200,type:'kind',kind:6},{at:450,type:'kind',kind:4},{at:700,type:'kind',kind:6},{at:950,type:'kind',kind:4},
     {at:1200,type:'pause'},{at:1450,type:'kind',kind:6},{at:1700,type:'kind',kind:6},{at:1950,type:'kind',kind:4},
     {at:2200,type:'kind',kind:6},{at:2450,type:'pause'},{at:2700,type:'kind',kind:6},{at:2950,type:'kind',kind:4},{at:3200,type:'kind',kind:6}]}},
-  {k:'fpPulse', c:{n:'',d:70,s:95,e:17,l:2000,lv:2,w:5,fl:0,b:3,sky:120,fog:0,sc:[ // короткий рваный спринт: пачки препятствий, разделённые крошечными паузами, как пульс
+  {k:'fpPulse', c:{n:'',d:70,s:95,e:17,l:2000,lv:2,w:5,fl:0,b:3,sky:120,h1:230,h2:300,fog:0,sc:[ // короткий рваный спринт: пачки препятствий, разделённые крошечными паузами, как пульс
     {at:150,type:'kind',kind:0},{at:200,type:'kind',kind:0},{at:250,type:'pause'},{at:500,type:'kind',kind:4},
     {at:550,type:'kind',kind:0},{at:600,type:'pause'},{at:850,type:'kind',kind:0},{at:900,type:'kind',kind:1},
     {at:950,type:'kind',kind:0},{at:1000,type:'pause'},{at:1250,type:'kind',kind:4},{at:1300,type:'kind',kind:0},
@@ -686,6 +693,29 @@ function forgeMiniSwatchPaint(cv, cfg){
     v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.8)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
 }
 
+/* 08.09.2026 «Избранная палитра» (первый шаг, владелец: «возможность скопировать небо к себе
+   в избранное», зелёная точка на живом скрине под сердечком): 10 свободных ячеек, копируем
+   только сами данные неба (h1/h2/густота/настроение/туман), не весь конфиг трассы — экран
+   просмотра/выбора ячейки ещё не построен, это отдельная задача. */
+const FORGE_FAV_MAX=10;
+function forgeFavSave(cfg, name, btn){
+  const list=Store.get('skyFavorites')||[];
+  if(list.length>=FORGE_FAV_MAX){ toast(L.workshopFavFull||'Избранное заполнено (10 из 10)','rgba(255,159,176,.5)'); return; }
+  list.push({h1:cfg.h1, h2:cfg.h2, dens:cfg.dens, mood:cfg.mood, fog:cfg.fog, name:name||''});
+  Store.set('skyFavorites', list);
+  toast(L.workshopFavSaved||'Сохранено в избранное','rgba(255,215,106,.5)');
+  // 08.09.2026 (владелец: «а как это понять? она без цвета, и не говорит об этом») — экрана
+  // с ячейками ещё нет, поэтому подтверждение прямо на значке: кратко заливается тем же
+  // оттенком, что и само небо (formula из forgePreviewMoodSL, светлее — для видимости на тёмном фоне).
+  if(btn){
+    const psl=forgePreviewMoodSL(cfg.mood);
+    const prevBg=btn.style.background, prevBorder=btn.style.borderColor, prevColor=btn.style.color;
+    btn.style.background='hsl('+cfg.h1+','+psl.S0+'%,'+Math.min(78,psl.L0+38)+'%)';
+    btn.style.borderColor='transparent'; btn.style.color='#0b1626';
+    setTimeout(function(){ btn.style.background=prevBg; btn.style.borderColor=prevBorder; btn.style.color=prevColor; }, 900);
+  }
+}
+
 /* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
 function forgeBoot(){ // true = есть трасса друга: этот запуск открывается в конструкторе, а не в полёте
   try{
@@ -798,7 +828,13 @@ function workshopRenderList(){
       const canReport = !own; // нельзя пожаловаться на своё же
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
+      // 08.09.2026 (владелец, живой скрин, поправка): «избранное» сперва встало под сердечком,
+      // владелец поправил — «в один ряд с лайк, а не под него». Один общий ряд слева (wLeftRow).
+      // Клик по звезде — сразу в первый свободный слот (экран из 10 ячеек ещё не построен).
+      '<div class="wLeftRow">'+
       '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
+      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></button>'+
+      '</div>'+
       '<div class="wCornerRow">'+
       (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2"></rect></svg></button>' : '')+
       // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
@@ -835,6 +871,7 @@ function workshopRenderList(){
       row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
       row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться'; // 08.09.2026: значок без подписи (владелец), title остаётся для доступности
+      const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.title=L.workshopFav||'В избранное';
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
         pinBtn.title=L.workshopPin||'Закрепить';
@@ -865,6 +902,11 @@ wireOnLocal('workshopList','click',function(e){
       act.classList.toggle('voted', res.hearted); // заливка сердца — CSS
       const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent=String(res.hearts||0);
     });
+    haptic('light');
+  }
+  if(act.dataset.act==='fav'){
+    const cfg=forgeDecode(code);
+    if(cfg) forgeFavSave(cfg, row.querySelector('.wName').textContent, act);
     haptic('light');
   }
   if(act.dataset.act==='report'){
