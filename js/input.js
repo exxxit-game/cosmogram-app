@@ -788,25 +788,44 @@ function keysOneHandHintMaybe(){
   Store.set('keysOneHandSeen',1);
   if(typeof toast==='function') toast(L.keysOneHandHint,'rgba(159,232,255,.5)');
 }
+/* 09.09.2026 «Переназначение клавиш» (владелец: игроки с ограниченной подвижностью руки,
+   не дотягивающиеся до стрелок/WASD). Персональная привязка ЗАМЕНЯЕТ дефолтную пару
+   стрелка+буква для своего направления целиком — владелец явно сказал не усложнять дуотон-
+   схему «одной руки» под кастом. Пустая строка — «привязки нет, дефолт». Само переключение
+   в режим «слушаю» и захват клавиши — в ui.js (keyRebindListen), это UI-забота, не ядро. */
+const KEY_BIND_DEFAULT_LABEL = {left:'← / A', right:'→ / D', up:'↑ / W', down:'↓ / S'};
+const KEY_BINDS = {
+  left:  Store.get('keyBindLeft',''),
+  right: Store.get('keyBindRight',''),
+  up:    Store.get('keyBindUp',''),
+  down:  Store.get('keyBindDown',''),
+};
+function keyMatchesDir(dir,e){
+  if(KEY_BINDS[dir]) return e.code===KEY_BINDS[dir]; // персональная привязка — только код, без дефолтной пары
+  if(dir==='left') return e.key==='ArrowLeft'||e.code==='KeyA';
+  if(dir==='right') return e.key==='ArrowRight'||e.code==='KeyD';
+  if(dir==='up') return e.key==='ArrowUp'||e.code==='KeyW';
+  return e.key==='ArrowDown'||e.code==='KeyS'; // down
+}
 window.addEventListener('keydown',e=>{
   if(keysBusy(e)) return;
+  if(typeof keyRebindListening!=='undefined' && keyRebindListening) return; // 09.09.2026: пока UI ждёт нажатие для переназначения, обычное рулление молчит — ui.js уже перехватил это событие на capture-фазе
   const k=e.key, c=e.code; // v1.108.1 «Честная клавиатура»: код физической клавиши, не символ раскладки —
   // раньше 'a'/'A' не срабатывало на AZERTY/QWERTZ (там на месте W/A/S/D другие буквы), только на QWERTY/ЙЦУКЕН
-  const isSteerKey = k==='ArrowLeft'||c==='KeyA'||k==='ArrowRight'||c==='KeyD'||k==='ArrowUp'||c==='KeyW'||k==='ArrowDown'||c==='KeyS';
+  const isSteerKey = keyMatchesDir('left',e)||keyMatchesDir('right',e)||keyMatchesDir('up',e)||keyMatchesDir('down',e);
   if(isSteerKey && ekran()==='game') keysOneHandHintMaybe();
-  if(k==='ArrowLeft'||c==='KeyA'){input.keyL=true;e.preventDefault();}
-  if(k==='ArrowRight'||c==='KeyD'){input.keyR=true;e.preventDefault();}
-  if(k==='ArrowUp'||c==='KeyW'){input.keyU=true;e.preventDefault();}
-  if(k==='ArrowDown'||c==='KeyS'){input.keyD=true;e.preventDefault();}
+  if(keyMatchesDir('left',e)){input.keyL=true;e.preventDefault();}
+  if(keyMatchesDir('right',e)){input.keyR=true;e.preventDefault();}
+  if(keyMatchesDir('up',e)){input.keyU=true;e.preventDefault();}
+  if(keyMatchesDir('down',e)){input.keyD=true;e.preventDefault();}
   if(k===' '||k==='Enter'){ const scr=ekran(); if(scr==='menu') runStart(); else if(scr==='over') retryRun(); e.preventDefault(); } // как главная кнопка экрана: выбранная дисциплина, не всегда классика
   if(k==='Escape'||c==='KeyP'){ const scr=ekran(); if(scr==='game') pauseGame(); else if(scr==='pause') resumeGame(); }
 });
 window.addEventListener('keyup',e=>{
   // v1.282.13: отпускание слушаем ВСЕГДА, без фильтра. Поднять руль обязаны в любом
   // случае — иначе клавиша, зажатая до того, как фокус ушёл в поле ввода, залипнет.
-  const k=e.key, c=e.code;
-  if(k==='ArrowLeft'||c==='KeyA')input.keyL=false;
-  if(k==='ArrowRight'||c==='KeyD')input.keyR=false;
-  if(k==='ArrowUp'||c==='KeyW')input.keyU=false;
-  if(k==='ArrowDown'||c==='KeyS')input.keyD=false;
+  if(keyMatchesDir('left',e))input.keyL=false;
+  if(keyMatchesDir('right',e))input.keyR=false;
+  if(keyMatchesDir('up',e))input.keyU=false;
+  if(keyMatchesDir('down',e))input.keyD=false;
 });

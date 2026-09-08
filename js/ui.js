@@ -1001,7 +1001,7 @@ function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw
      выключенными на свежий вход, даже если фильтр реально активен со прошлой сессии
      (сам CONTRAST/COLORBLIND читается верно, canvasFilterSync() применяет фильтр к
      канвасу — расходился только вид строки). calmFxLabel() — новый тумблер, тот же приём. */
-  contrastLabel(); colorblindLabel(); calmFxLabel(); textScaleLabel(); // 09.09.2026: тот же приём для «Размера текста»
+  contrastLabel(); colorblindLabel(); calmFxLabel(); textScaleLabel(); keyBindAllLabels(); // 09.09.2026: тот же приём для «Размера текста»/переназначения клавиш
 } // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
 function closeSettings(){ setScreen(settingsFrom); sfx.click(); }
 function rowV(btnId,val,on){ // v1.63.0: строка настроек «параметр — значение» (цикл-значения)
@@ -2533,6 +2533,46 @@ wireOn('setGfxBtn', 'click', ()=>{
   Store.set('gfx',Q.mode); gfxCap(); resize(); // HD-резолюция следует за режимом
   gfxLabel(); haptic('light'); sfx.click();
 });
+/* 09.09.2026 «Переназначение клавиш» (владелец, макет key_rebind_macet.png, одобрен «да»):
+   тап по строке → «слушаю», следующая клавиша становится персональной привязкой ВМЕСТО
+   дефолтной пары стрелка+буква (KEY_BINDS — js/input.js). Esc отменяет без изменений.
+   Слушатель — на capture-фазе, чтобы гарантированно сработать раньше обычного руления
+   в input.js независимо от порядка подключения файлов (см. keyRebindListening там же). */
+let keyRebindListening=null; // null | 'left'|'right'|'up'|'down'
+const KEY_DIR_ROW={left:'setKeyLeftBtn',right:'setKeyRightBtn',up:'setKeyUpBtn',down:'setKeyDownBtn'};
+const KEY_DIR_STORE={left:'keyBindLeft',right:'keyBindRight',up:'keyBindUp',down:'keyBindDown'};
+function keyCodeLabel(code){ // человекочитаемое имя физической клавиши (KeyboardEvent.code)
+  if(!code) return '';
+  if(code.startsWith('Key')) return code.slice(3);
+  if(code.startsWith('Digit')) return code.slice(5);
+  const NAMED={ArrowLeft:'←',ArrowRight:'→',ArrowUp:'↑',ArrowDown:'↓',Space:'Пробел',
+    ShiftLeft:'Shift',ShiftRight:'Shift',ControlLeft:'Ctrl',ControlRight:'Ctrl',
+    Tab:'Tab',CapsLock:'Caps',Backquote:'`',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/'};
+  return NAMED[code]||code;
+}
+function keyBindLabel(dir){ return KEY_BINDS[dir] ? keyCodeLabel(KEY_BINDS[dir]) : KEY_BIND_DEFAULT_LABEL[dir]; }
+function keyBindRowLabel(dir){ rowV(KEY_DIR_ROW[dir], keyBindLabel(dir)); }
+function keyBindAllLabels(){ ['left','right','up','down'].forEach(keyBindRowLabel); }
+function keyRebindListen(dir){
+  if(keyRebindListening) keyBindRowLabel(keyRebindListening); // отменяем прошлое незавершённое ожидание, если было
+  keyRebindListening=dir;
+  rowV(KEY_DIR_ROW[dir], L.keyListening, true);
+  haptic('light'); sfx.click();
+}
+['left','right','up','down'].forEach(dir=>{
+  wireOn(KEY_DIR_ROW[dir], 'click', ()=>keyRebindListen(dir));
+});
+window.addEventListener('keydown', e=>{
+  if(!keyRebindListening) return;
+  const dir=keyRebindListening;
+  e.preventDefault(); e.stopPropagation();
+  if(e.key==='Escape'){ keyRebindListening=null; keyBindRowLabel(dir); return; } // отмена — привязка не меняется
+  KEY_BINDS[dir]=e.code; Store.set(KEY_DIR_STORE[dir], e.code);
+  ['left','right','up','down'].forEach(other=>{ // конфликт: та же клавиша была персонально занята другим направлением
+    if(other!==dir && KEY_BINDS[other]===e.code){ KEY_BINDS[other]=''; Store.set(KEY_DIR_STORE[other],''); keyBindRowLabel(other); }
+  });
+  keyRebindListening=null; keyBindRowLabel(dir); haptic('success'); sfx.click();
+}, true); // capture-фаза — раньше input.js, раньше keysBusy()
 const EXXXIT_DOOR_PATH='m 148.169,80.709657 v 60.715533 c 6.31638,0.48241 10.5308,5.63536 10.5308,10.31517 v 2.4687 l -2.46869,-0.006 -8.06211,-0.0182 v 12.73893 l 6.08214,5.9854 h -40.12901 l -7.43227,-7.11934 h -9.238704 l 7.432844,7.11934 H 93.428076 l -6.08214,-5.98542 V 125.1738 h 10.66451 c 0.0833,5.9e-4 0.16247,0.004 0.24579,0.004 0.0556,0 0.0832,-0.007 0.13598,-0.008 0.0349,-5.8e-4 0.0686,-0.002 0.10294,-0.004 1.43847,-0.0274 1.750194,-0.28172 2.778784,-1.31031 l 6.24145,-7.37766 c 1.73064,3.78552 3.36138,7.00437 5.08475,10.65995 0.19459,0.37374 0.65441,1.21334 0.30951,1.86731 l -17.152864,34.63575 6.292634,-0.021 c 3.29001,0.0726 4.66137,-2.19803 5.81814,-4.23075 4.63991,-9.35178 9.30161,-18.69659 13.94909,-28.04895 l 0.87733,16.64253 c 0.22955,2.88042 2.17565,3.61243 4.72575,3.69137 l 28.81702,0.0659 c 0,-3.31243 -3.28192,-7.68712 -8.6265,-7.89482 0,0 -10.29203,0.11556 -15.67301,0.13711 -0.68225,0 -0.86922,-0.38098 -0.94846,-0.94845 -0.24993,-4.28189 -0.48763,-8.59103 -0.7533,-12.87205 -0.16632,-2.12536 -0.3528,-3.59821 -0.96949,-5.20708 -2.0106,-4.31016 -4.02228,-8.59953 -6.03491,-12.89424 l 7.36399,-0.0859 c 0.19342,-0.007 0.34356,0.0358 0.44435,0.20823 l 5.32998,9.33771 c 2.19819,4.00865 8.13833,1.08508 6.14813,-3.16681 l -6.53616,-10.93249 c -1.14949,-1.70937 -1.6747,-2.29896 -4.66145,-2.39188 0,0 -13.95626,-0.0222 -20.94497,-0.0222 v -5.8e-4 c -2.27014,-0.0504 -2.52919,0.66163 -3.61401,1.81782 -2.91625,3.5982 -6.10478,7.43502 -8.949664,10.7891 -0.3953,0.47396 -0.61745,0.67583 -1.55836,0.66796 -1.74231,-0.0292 -3.27034,0.002 -4.6188,0.0808 h -4.28821 V 80.709277 Z m -38.64915,8.33748 c -4.00109,0 -7.06757,3.07482 -7.06757,7.09658 0,4.029633 3.06678,7.103983 7.06757,7.103983 4.00049,0 7.07496,-3.07435 7.07496,-7.103983 0,-4.02205 -3.07447,-7.09658 -7.07496,-7.09658 z';
 /* 03.09.2026: логотип exxxit game — настоящий знак ISO 7010 E001 (Emergency Exit,
    общественное достояние), дверь перекрашена в космос, человечек/штриховка не тронуты. */
@@ -3067,13 +3107,14 @@ function applyLang(){
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
-  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel() — та же роль для «Размера текста»
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
-   ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setTextScaleBtn','setTextScale'],['setLangBtn','setLang'],
+   ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setTextScaleBtn','setTextScale'],
+   ['setKeyLeftBtn','setKeyLeft'],['setKeyRightBtn','setKeyRight'],['setKeyUpBtn','setKeyUp'],['setKeyDownBtn','setKeyDown'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   setText('diagVibroBtn',L.diagVibro);
 }
