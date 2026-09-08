@@ -779,7 +779,14 @@ function forgeResetAll(){
 
 /* ---------- 05.09.2026 «Мастерская»: экран-витрина — подписи, сортировка, список ---------- */
 let workshopSortMode='new';
-const WORKSHOP_SORTS=['new','top','plays','mine'];
+// 08.09.2026 (владелец, живой скрин): «Мои» убрано из верхнего ряда — фильтр только своих
+// небес нужен исключительно авторам, а занимал место у всех подряд (переезжает во вкладку
+// «Создать», отдельной задачей). На его место — «Закреплённые» (sort='pinned', см. правку
+// cosmogram-workshop Edge Function того же дня): единственная из четырёх, что НЕ дублирует
+// остальные — pinned и так уже всегда наверху у new/top/plays, тут это единственное, что видно.
+// workshopSortMode/сама логика 'mine' в workshopRenderList() ниже не тронуты — понадобятся
+// будущей кнопке в «Создать», просто больше не в этом списке чипов.
+const WORKSHOP_SORTS=['new','top','plays','pinned'];
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
   const LBL=[['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js); заголовок workshopTitle убран целиком следом (лишняя надпись без функции)
