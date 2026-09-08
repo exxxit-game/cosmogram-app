@@ -464,7 +464,7 @@ function forgeFill(){ // подписи + состояние виджетов п
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
-    ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],['forgeCodeLbl',L.forgeCodeLbl],
+    ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],
     ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
   // 07.09.2026: «Начать по-другому»/forgeStartOverLbl снята вместе с общей рамкой — «Сбросить
   // всё» и «Небо друга» разъехались по разным местам экрана, общей подписи над ними больше нет.
@@ -633,20 +633,6 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
   try{ window.open(shareUrl,'_blank'); }catch(e2){}
   haptic('success');
 }
-function forgeLoadCode(){
-  const codeEl=$('forgeCode');
-  const cfg=forgeDecode(codeEl?codeEl.value:'');
-  if(!cfg){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
-  forgeCfg=cfg; forgeSyncWidgets(); if(codeEl) codeEl.value='';
-  /* v1.282.13: трасса гостя должна пережить выход из Кузницы. Раньше чужая карта жила
-     только в памяти, а forgeOpen при следующем входе перечитывает forgeLast из хранилища —
-     и молча заменял её на прошлую свою, хотя тост «трасса гостя» игрок уже видел.
-     forgeBoot (тот же путь через deep-link) давно записывает — здесь просто не хватало. */
-  Store.set('forgeLast',cfg);
-  toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
-  forgeTabSet('create'); // 06.09.2026: код принят — сразу к «Лететь», как и у сценариев
-}
-
 /* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
 function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины
   const cfg=forgeDecode(code);
@@ -891,7 +877,6 @@ wireOnLocal('workshopList','click',function(e){
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
 wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
-wireOnLocal('forgeLoad', 'click', forgeLoadCode);
 wireOnLocal('forgeResetBtn', 'click', forgeResetAll);
 wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); }); // 08.09.2026 (владелец, живой баг): вело в 'modes' (Соревнования) — хвост с 05.09.2026, когда кнопка Конструктора переехала с modeForge (внутри Соревнований) на главное меню, а «Назад» тогда забыли поправить. Единственный реальный вход теперь — konstruktorBtn с главного меню (проверено: «Открыть в Конструкторе» из Галереи — не отдельный вход, а переключение вкладки на уже открытом экране).
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
@@ -902,7 +887,6 @@ wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); })
 wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.textContent=this.value; forgeSkyKick(); });
 wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.textContent=this.value; forgeSkyKick(); });
 wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.textContent=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика
-wireOnLocal('forgeCode', 'keydown', function(e){ if(e.key==='Enter') forgeLoadCode(); });
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
 wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; });

@@ -67,7 +67,7 @@ const I18N = {
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Название неба', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
-    forgeCodeLbl:'Небо друга — вставь код или ссылку', forgeShareMapBtn:'Поделиться небом',
+    forgeShareMapBtn:'Поделиться небом', // 08.09.2026: forgeCodeLbl («Небо друга — код/ссылка») убрано вместе с полем — редкий путь, автошаринг уже покрывает основной сценарий
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
     forgeGuest:'Небо друга загружено — жми «Лететь»', forgeReset:'Сброшено', forgeResetBtn:'Сбросить всё', forgeShareTxt:'Лети в моё небо «%s» в Cosmogram!',
     forgeStartOverLbl:'Начать по-другому', // 06.09.2026 «Переосмысление»: подпись над «Сбросить всё»/«Небо друга» — оба сгруппированы, один смысл
@@ -253,7 +253,7 @@ const I18N = {
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
-    forgeCodeLbl:"Friend's track — paste the code or link", forgeShareMapBtn:'Share this sky',
+    forgeShareMapBtn:'Share this sky',
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
     forgeGuest:"Friend's track loaded — hit Fly", forgeReset:'Reset', forgeResetBtn:'Reset all', forgeShareTxt:'Fly my track «%s» in Cosmogram!',
     forgeStartOverLbl:'Start over',
@@ -416,7 +416,7 @@ const I18N = {
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
-    forgeCodeLbl:'Pista de un amigo — pega el código o el enlace', forgeShareMapBtn:'Compartir este cielo',
+    forgeShareMapBtn:'Compartir este cielo',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
     forgeWin:'¡Meta!', forgeGuest:'Pista de un amigo cargada — pulsa Volar', forgeReset:'Restablecido', forgeResetBtn:'Restablecer todo',
     forgeStartOverLbl:'Empezar de otra forma',
@@ -594,7 +594,7 @@ const I18N = {
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
-    forgeCodeLbl:'Pista de um amigo — cole o código ou o link', forgeShareMapBtn:'Compartilhar este céu',
+    forgeShareMapBtn:'Compartilhar este céu',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
     forgeWin:'Chegada!', forgeGuest:'Pista de um amigo carregada — toque em Voar', forgeReset:'Redefinido', forgeResetBtn:'Redefinir tudo',
     forgeStartOverLbl:'Começar diferente',
@@ -770,7 +770,7 @@ const I18N = {
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
-    forgeCodeLbl:"Trace d'un ami — colle le code ou le lien", forgeShareMapBtn:'Partager ce ciel',
+    forgeShareMapBtn:'Partager ce ciel',
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
     forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeReset:'Réinitialisé', forgeResetBtn:'Tout réinitialiser', forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
     forgeStartOverLbl:'Recommencer autrement',
