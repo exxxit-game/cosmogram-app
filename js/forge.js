@@ -797,7 +797,8 @@ function workshopRenderList(){
       (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
       '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
       '</div>'+
-      '<div class="wBannerText"><div class="wName"></div><div class="wPlaysHint" data-role="plays"></div></div></div>'+
+      '<div class="wBannerText"><div class="wAuthorHint" data-role="author"></div><div class="wPlaysHint" data-role="plays"></div>'+
+      '<div class="wName"></div><div class="wStickerRow" data-role="stickers"></div></div></div>'+
       '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
       '</div>'; }).join('');
     tracks.forEach(function(t,i){
@@ -806,6 +807,17 @@ function workshopRenderList(){
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
+      row.querySelector('.wAuthorHint').textContent=(L.workshopAuthor?L.workshopAuthor(t.author_name||''):'Создал: '+(t.author_name||''));
+      // 08.09.2026 (владелец, живой макет): значки препятствий — настоящий набор Партитуры
+      // (js/partitura.js PT_ICON_SVG/PT_KIND_COLOR/PT_KIND_LABEL), не текстовые таблетки —
+      // тот же язык, что уже есть в Расстановке, просто переиспользован здесь. Измерено
+      // живьём: все 8 иконок при 22px помещаются в ряд без переноса, обрезка не нужна.
+      if(cfg && typeof PT_ICON_SVG!=='undefined'){
+        const kinds=FORGE_KINDS.filter(function(k,idx){ return cfg.e>>idx&1; });
+        row.querySelector('[data-role="stickers"]').innerHTML=kinds.map(function(k){
+          return '<span class="wSticker" style="color:'+PT_KIND_COLOR[k]+'" title="'+(PT_KIND_LABEL[k]||k)+'">'+PT_ICON_SVG[k]+'</span>';
+        }).join('');
+      }
       const voted = mine.indexOf(t.code)>=0;
       row.querySelector('[data-role="hearts"]').textContent=String(t.hearts||0);
       row.querySelector('.wVote').classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
