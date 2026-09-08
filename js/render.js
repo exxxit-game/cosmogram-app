@@ -1308,15 +1308,6 @@ function bakeRockSprite(o){
   x.globalAlpha=.40; x.drawImage(powGlow('#000000'), dc.darkBig.x-dc.darkBig.r, dc.darkBig.y-dc.darkBig.r, dc.darkBig.r*2, dc.darkBig.r*2);
   x.globalAlpha=1;
   x.restore();
-  if(o.kind==='drift'){
-    /* 09.09.2026 (владелец, макет drift_macet.png, «да»): тот же приём дуотон-кромки, что
-       уже в коде у Мины/Ворот — тёмное кольцо + светлый шов по силуэту. Печётся в спрайт
-       ОДИН РАЗ вместе с остальной заливкой камня, не каждый кадр (тот же принцип экономии,
-       что у самого bakeRockSprite). Только drift — обычные камни/астероиды этим макетом не
-       проверялись, трогать их сейчас значило бы чинить непроверенное. */
-    x.strokeStyle='rgba(6,8,14,.65)'; x.lineWidth=3.5; x.stroke(o._path);
-    x.strokeStyle='rgba(255,255,255,.6)'; x.lineWidth=1.6; x.stroke(o._path);
-  }
   o._sprite=c; o._spritePx=px; o._spriteCss=cssSize;
   return c;
 }
