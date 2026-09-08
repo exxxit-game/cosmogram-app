@@ -896,7 +896,7 @@ wireOnLocal('forgePlay', 'click', forgePlay);
 wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
 wireOnLocal('forgeLoad', 'click', forgeLoadCode);
 wireOnLocal('forgeResetBtn', 'click', forgeResetAll);
-wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('modes'); });
+wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); }); // 08.09.2026 (владелец, живой баг): вело в 'modes' (Соревнования) — хвост с 05.09.2026, когда кнопка Конструктора переехала с modeForge (внутри Соревнований) на главное меню, а «Назад» тогда забыли поправить. Единственный реальный вход теперь — konstruktorBtn с главного меню (проверено: «Открыть в Конструкторе» из Галереи — не отдельный вход, а переключение вкладки на уже открытом экране).
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
    меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой
    другой виджет, пресет, смена языка) возвращал слайдер на старое значение: правка автора
