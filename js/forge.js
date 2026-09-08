@@ -797,7 +797,7 @@ function workshopRenderList(){
       (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
       '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
       '</div>'+
-      '<div class="wBannerText"><div class="wAuthorHint" data-role="author"></div><div class="wPlaysHint" data-role="plays"></div>'+
+      '<div class="wBannerText"><div class="wPlaysHint" data-role="plays"></div><div class="wAuthorHint" data-role="author"></div>'+
       '<div class="wName"></div><div class="wStickerRow" data-role="stickers"></div></div></div>'+
       '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
       '</div>'; }).join('');
