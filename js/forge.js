@@ -465,7 +465,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],
-    ['forgePlay',L.start],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
+    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
   // 07.09.2026: «Начать по-другому»/forgeStartOverLbl снята вместе с общей рамкой — «Сбросить
   // всё» и «Небо друга» разъехались по разным местам экрана, общей подписи над ними больше нет.
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
@@ -612,26 +612,36 @@ function forgeCopy(text,done){
   try{ navigator.clipboard.writeText(text).then(function(){done&&done();},function(){done&&done();}); }
   catch(e){ done&&done(); }
 }
+/* 08.09.2026 (владелец, живой разговор): «Поделиться» и «Опубликовать в Галерею» были одним
+   и тем же нажатием без предупреждения — «это бред, неудобно и непонятно» (ты делишься с
+   другом, а тебя тихо публикуют всем под именем). Теперь публикация — отдельный явный вопрос
+   ПОСЛЕ шаринга (тот же tg.showConfirm, что уже применяется для удаления данных — не новый
+   экран, готовый паттерн игры), не связанный с самим действием «отправить код другу». */
+function mapAskPublish(code, name){
+  if(typeof workshopSubmit!=='function') return;
+  const msg=L.forgePublishConfirm||'Опубликовать это небо в Галерее — увидят все?';
+  const go=()=>{ workshopSubmit(code, name).then(res=>{
+    if(res && res.ok) toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)');
+  }).catch(()=>{}); };
+  if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); }); }
+  else if(typeof confirm==='function'){ if(confirm(msg)) go(); }
+}
 function mapShare(){ // v1.87.0: «Поделиться» живёт в итогах трассы — там, где случился восторг, а не на панели кузницы
   const cfg=forgeSanitize(forgeCfg);
   const code=forgeEncode(cfg);
   const link='https://t.me/realcosmogrambot/app?startapp=map_'+code; // тот же мост, что и у дуэлей (v1.68.0)
   const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
-  // 05.09.2026 «Мастерская»: тот же тап «Поделиться» одновременно кладёт код в публичную
-  // витрину (owner подтвердил именно эту связку в макете) — не блокирует и не мешает самому
-  // шарингу, если сеть недоступна/игрок не вошёл, ссылка другу всё равно уходит как раньше.
-  if(typeof workshopSubmit==='function') workshopSubmit(code, cfg.n).catch(()=>{});
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
-    try{ tg.openTelegramLink(shareUrl); haptic('success'); return; }catch(e){}
+    try{ tg.openTelegramLink(shareUrl); haptic('success'); mapAskPublish(code, cfg.n); return; }catch(e){}
   }
   if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
     navigator.share({text:txt, url:link}).catch(()=>{});
-    haptic('success'); return;
+    haptic('success'); mapAskPublish(code, cfg.n); return;
   }
   try{ window.open(shareUrl,'_blank'); }catch(e2){}
-  haptic('success');
+  haptic('success'); mapAskPublish(code, cfg.n);
 }
 /* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
 function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины
