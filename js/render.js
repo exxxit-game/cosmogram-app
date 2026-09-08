@@ -1958,7 +1958,7 @@ function draw(){
           ctx.fillStyle='rgba(255,236,200,.9)'; ctx.beginPath(); ctx.arc(hw-6,-2,1.5,0,6.283); ctx.fill(); }
       }
     } else if (o.kind==='mine' || o.kind==='seeker'){
-      const col = o.kind==='seeker' ? '#ffa53a' : '#ff5f6d'; // ловец — янтарный
+      const col = o.kind==='seeker' ? '#ffe14a' : '#ff5f6d'; // 08.09.2026 (владелец, живой макет «форма важна не меньше цвета»): ловец сдвинут от янтарного к ярко-жёлтому — было слишком близко к мине при протанопии/дейтеранопии; владелец сам уточнил «ярко-жёлтый» после первой, слишком слабой попытки (#ffcf3a)
       const colBase = hexToRgba(col);
       const pl=1+Math.sin(o.pulse)*.12;
       ctx.scale(pl,pl);
@@ -1966,9 +1966,22 @@ function draw(){
       ctx.fillStyle='#3a2430';
       ctx.beginPath(); ctx.arc(0,0,o.r,0,6.283); ctx.fill();
       ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
-      ctx.globalAlpha=.55+.45*Math.sin(o.pulse*2); // ядро мигает — сигнал опасности
+      /* 08.09.2026 «Форма важна не меньше цвета» (владелец, живой макет до/после): мина и ловец
+         делили один силуэт — единственная точка внутри у обоих, различались только оттенком,
+         а красно-жёлтая часть спектра хуже всего различима при протанопии/дейтеранопии (реальный
+         дальтоник не отличил бы одно от другого). Одна точка → два «глаза» разной формы —
+         отличие теперь держится на силуэте, не только на цвете. */
+      ctx.globalAlpha=.55+.45*Math.sin(o.pulse*2); // ядро мигает — сигнал опасности, поведение не изменилось
       ctx.fillStyle=col;
-      ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
+      const eyeOff=o.r*.34;
+      if(o.kind==='mine'){
+        ctx.beginPath(); ctx.arc(-eyeOff,0,3.4,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(eyeOff,0,3.4,0,6.283); ctx.fill();
+      } else {
+        const es=5.6;
+        ctx.fillRect(-eyeOff-es/2,-es/2,es,es);
+        ctx.fillRect(eyeOff-es/2,-es/2,es,es);
+      }
       ctx.globalAlpha=1;
       if(sh){ // внутреннее кольцо — детализация корпуса (v1.37.0: со средней)
         ctx.strokeStyle=partCol(colBase,.35); ctx.lineWidth=1;
@@ -1979,11 +1992,26 @@ function draw(){
         ctx.setLineDash([5,7]); ctx.lineDashOffset=-nowMs/40;
         ctx.beginPath(); ctx.arc(0,0,o.r+7,0,6.283); ctx.stroke(); ctx.setLineDash([]);
       }
-      for(let i=0;i<6;i++){ const a=i/6*6.283;
-        ctx.beginPath(); ctx.moveTo(Math.cos(a)*o.r,Math.sin(a)*o.r);
-        ctx.lineTo(Math.cos(a)*(o.r+6),Math.sin(a)*(o.r+6)); ctx.stroke(); }
+      /* 08.09.2026, тот же макет: шипы по ободу тоже разведены по форме — у мины острые
+         треугольные (колючая мина), у ловца прежние тупые штрихи (код ниже не менялся).
+         Второе, независимое отличие по силуэту вдобавок к глазам выше. */
+      if(o.kind==='mine'){
+        for(let i=0;i<6;i++){ const a=i/6*6.283;
+          const baseW=5.5, len=9, nx=Math.cos(a), ny=Math.sin(a), px=-ny, py=nx;
+          const bx=nx*o.r, by=ny*o.r, tx=nx*(o.r+len), ty=ny*(o.r+len);
+          ctx.beginPath();
+          ctx.moveTo(bx+px*baseW/2, by+py*baseW/2);
+          ctx.lineTo(bx-px*baseW/2, by-py*baseW/2);
+          ctx.lineTo(tx,ty); ctx.closePath();
+          ctx.fillStyle=col; ctx.fill();
+        }
+      } else {
+        for(let i=0;i<6;i++){ const a=i/6*6.283;
+          ctx.beginPath(); ctx.moveTo(Math.cos(a)*o.r,Math.sin(a)*o.r);
+          ctx.lineTo(Math.cos(a)*(o.r+6),Math.sin(a)*(o.r+6)); ctx.stroke(); }
+      }
       if (o.kind==='seeker'){ // кольцо-прицел вокруг ловца
-        ctx.strokeStyle='rgba(255,165,58,.5)'; ctx.lineWidth=1;
+        ctx.strokeStyle='rgba(255,225,74,.5)'; ctx.lineWidth=1; // цвет сверен с новым col (08.09.2026)
         ctx.beginPath(); ctx.arc(0,0,o.r+11,0,6.283); ctx.stroke();
       }
     } else if (o.kind==='sat'){ // семья спутников (v1.105.0 «Свет и дым»): четыре лица
