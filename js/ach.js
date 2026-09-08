@@ -12,6 +12,7 @@
    ============================================================ */
 
 const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const needOf=a=>typeof a.need==='function'?a.need():a.need; // 08.09.2026: та же гибкость, что уже была у val() — нужна h2 (SKINS.length растёт с каждым сезоном, число не должно застревать)
 const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru); // v1.108.1: было бинарно en/ru — теперь честно по активному языку, с запасным путём
 
 /* Профиль: счётчики живут в game.js (Stats). Старые сохранения мержатся
@@ -43,10 +44,10 @@ const ACH=[
     ru:{n:'Первый скин',d:'Купил свой первый скин в Тюнинге.'}, en:{n:'First Skin',d:'Bought your first skin in Tuning.'},
     es:{n:'Primera piel',d:'Compraste tu primera piel en Tuning.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin em Tuning.'},
     fr:{n:'Première skin',d:'Tu as acheté ta première skin dans Tuning.'}},
-  {id:'h2', cat:'hangar', ic:'👑', need:9, rw:400, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
+  {id:'h2', cat:'hangar', ic:'👑', need:()=>(typeof SKINS!=='undefined'?SKINS.length:9), rw:400, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
     ru:{n:'Вся коллекция',d:'Собрал все скины Тюнинга.'}, en:{n:'Full Collection',d:'Collected every skin in Tuning.'},
     es:{n:'Colección completa',d:'Reuniste todas las pieles de Tuning.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins de Tuning.'},
-    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins de Tuning.'}}, // need=9: SKINS.length сегодня — обновить вместе, если добавите скин
+    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins de Tuning.'}}, // 08.09.2026: было захардкожено need:9, разошлось до 49 реальных скинов — теперь читает SKINS.length живьём, растёт сама с каждым новым сезонным добавлением, обновлять вручную больше не нужно
 ];
 const CATS=['cosmos','flight','duel','hangar']; // v1.108.1: было одно «одна цель — одна категория», теперь честно по числу целей
 const CAT_N={
@@ -76,7 +77,7 @@ function achCheck(){
   for(const a of ACH){
     if(un.indexOf(a.id)>=0) continue;
     let v=0; try{ v=a.val(); }catch(e){}
-    if(v>=a.need){ un.push(a.id); fresh.push(a); }
+    if(v>=needOf(a)){ un.push(a.id); fresh.push(a); }
   }
   if(!fresh.length) return;
   Store.set('ach',un);
@@ -187,7 +188,7 @@ if(typeof $==='function' && $('achList')) $('achList').addEventListener('click',
 /* Ближайшая непройденная точка космической шкалы — строка мотивации на итогах */
 function achNextLoc(){
   const d=Stats.totalDist||0;
-  for(const a of ACH) if(a.cat==='cosmos' && d<a.need) return a;
+  for(const a of ACH) if(a.cat==='cosmos' && d<needOf(a)) return a;
   return null;
 }
 
@@ -258,8 +259,9 @@ function renderAch(){
       const big=a.id==='c1'; // единственная по-настоящему большая веха (владелец, макет) — не выдумано, «Линия Кармана»
       let side='', barHtml='';
       if(!got&&!a.secret){ let v=0; try{ v=a.val(); }catch(e){}
-        side='<span class="achPr">'+fmtN(Math.min(v,a.need))+'/'+fmtN(a.need)+'</span>';
-        barHtml='<span class="achBar"><i style="width:'+Math.min(100,Math.round(v/a.need*100))+'%"></i></span>'; }
+        const nd=needOf(a);
+        side='<span class="achPr">'+fmtN(Math.min(v,nd))+'/'+fmtN(nd)+'</span>';
+        barHtml='<span class="achBar"><i style="width:'+Math.min(100,Math.round(v/nd*100))+'%"></i></span>'; }
       h+='<div class="achIt'+(got?' got':'')+(pend?' pend':'')+(big?' big':'')+
         '" style="--ac:'+cc+';--acg:'+cc+'55;animation-delay:'+(Math.min(hI++,10)*60)+'ms">'+
         '<span class="achIco">'+ic(ACH_ICO[a.id]||'star4')+'</span>'+
