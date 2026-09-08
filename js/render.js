@@ -2020,6 +2020,14 @@ function draw(){
           ctx.lineTo(tx,ty); ctx.closePath();
           ctx.fillStyle=col; ctx.fill();
         }
+        /* 08.09.2026 «Дуотон-кромка» (владелец, макет vorota_mina_macet.png, одобрено):
+           тёмное кольцо + светлый шов по силуэту решают провал WCAG-контраста мины
+           (2.44:1) против тёплого неба [0,40]/[324,4] — см. .knowledge/COLOR-REGISTRY.md.
+           Размер мины не меняется (владелец: «тот же размер»), только кромка. */
+        ctx.strokeStyle='rgba(6,8,14,.65)'; ctx.lineWidth=3.5;
+        ctx.beginPath(); ctx.arc(0,0,o.r+2,0,6.283); ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.arc(0,0,o.r+2,0,6.283); ctx.stroke();
       } else {
         for(let i=0;i<6;i++){ const a=i/6*6.283;
           ctx.beginPath(); ctx.moveTo(Math.cos(a)*o.r,Math.sin(a)*o.r);
@@ -2078,28 +2086,40 @@ function draw(){
          ступенях у мины/обломка/спутника/кометы/тёмного кратера камня рядом в этом же файле;
          ворота остались забытым исключением. Ворота — самый частый игровой элемент, включено
          везде (владелец). */
-      ctx.strokeStyle='rgba(159,232,255,.22)'; ctx.lineWidth=6;
+      /* 08.09.2026 (владелец, макет vorota_mina_macet.png): цвет ворот сменён с #9fe8ff
+         (сливался и с небом [180,220], и с бонусом Щит #7fd8ff) на индиго #7a8cff — из трёх
+         кандидатов малиновый (#e07aff) и бирюзовый (#4dffc2) визуально дальше от Щита при
+         обычном зрении, но под реальной симуляцией дальтонизма (Brettel/Viénot/Mollon 1997)
+         оба почти сливаются с бонусом Магнит (#c58fff) при протанопии/дейтеранопии — индиго
+         единственный держит дистанцию при всех трёх типах. См. .knowledge/COLOR-REGISTRY.md. */
+      ctx.strokeStyle='rgba(122,140,255,.22)'; ctx.lineWidth=6;
       ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
       ctx.globalAlpha=.55;
-      for (const sgn of SGN2) ctx.drawImage(powGlow('#9fe8ff'),sgn*g2-pr-6,-pr-6,(pr+6)*2,(pr+6)*2);
+      for (const sgn of SGN2) ctx.drawImage(powGlow('#7a8cff'),sgn*g2-pr-6,-pr-6,(pr+6)*2,(pr+6)*2);
       ctx.globalAlpha=1;
       if(sh && !o.passed){ // бегущая энергия по лучу (v1.37.0: со средней)
         ctx.setLineDash([7,7]); ctx.lineDashOffset=-nowMs/28;
       }
-      ctx.strokeStyle=o.passed?'rgba(159,232,255,.25)':'rgba(159,232,255,.8)';
+      ctx.strokeStyle=o.passed?'rgba(122,140,255,.25)':'rgba(122,140,255,.8)';
       ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(-g2,0); ctx.lineTo(g2,0); ctx.stroke();
       if(sh) ctx.setLineDash([]);
       ctx.fillStyle='#3d5a80';
       for (const sgn of SGN2){
         ctx.beginPath(); ctx.arc(sgn*g2,0,pr,0,6.283); ctx.fill();
-        ctx.strokeStyle='#9fe8ff'; ctx.lineWidth=2; ctx.stroke();
+        ctx.strokeStyle='#7a8cff'; ctx.lineWidth=2; ctx.stroke();
         if(sh){ // внутреннее кольцо пилона (v1.37.0: со средней)
-          ctx.strokeStyle='rgba(159,232,255,.35)'; ctx.lineWidth=1;
+          ctx.strokeStyle='rgba(122,140,255,.35)'; ctx.lineWidth=1;
           ctx.beginPath(); ctx.arc(sgn*g2,0,pr*.55,0,6.283); ctx.stroke();
         }
-        ctx.fillStyle='#9fe8ff'; ctx.beginPath(); ctx.arc(sgn*g2,0,3,0,6.283); ctx.fill();
+        ctx.fillStyle='#7a8cff'; ctx.beginPath(); ctx.arc(sgn*g2,0,3,0,6.283); ctx.fill();
         ctx.fillStyle='#3d5a80';
+        // «Дуотон-кромка» (тот же приём, что у мины выше в этом файле) — тёмное кольцо +
+        // светлый шов по контуру пилона, контраст против любого неба независимо от оттенка.
+        ctx.strokeStyle='rgba(6,8,14,.65)'; ctx.lineWidth=3.5;
+        ctx.beginPath(); ctx.arc(sgn*g2,0,pr+2,0,6.283); ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.6;
+        ctx.beginPath(); ctx.arc(sgn*g2,0,pr+2,0,6.283); ctx.stroke();
       }
     } else {
       ctx.fillStyle=planetRockTint(o); // v1.100.0 «Планетарий»: тон камня — база, лёд или железо (мина остаётся красной)
