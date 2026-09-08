@@ -68,7 +68,7 @@ function backAction(){
   else if(screenName==='settings') closeSettings();
   else if(screenName==='diag') setScreen('settings'); // v1.66.3: сервисный центр — назад в настройки
   else if(screenName==='modes') setScreen('menu'); // v1.108.1: та же дверь, что у modesBack — раньше нативная/аппаратная «Назад» тут молчала, хотя кнопка была видна
-  else if(screenName==='forge') setScreen('modes'); // v1.68.0: конструктор — назад к дисциплинам
+  else if(screenName==='forge') setScreen('menu'); // 08.09.2026 (владелец, живой баг): было setScreen('modes') с v1.68.0, когда Конструктор открывался только изнутри Соревнований; вход переехал на главное меню 05.09.2026 (см. js/forge.js:1011, та же правка для кнопки forgeBack), а эту нативную/аппаратную ветку тогда забыли — тот же класс бага, что уже трижды чинили в этой же функции сегодня (modes/modesTop/relayMine)
   else if(screenName==='modesTop') setScreen('modes'); // 08.09.2026: экран добавлен 06.09, эту ветку тогда забыли — нативная/аппаратная «Назад» тут молчала
   else if(screenName==='relayMine') setScreen('modes'); // 08.09.2026: экран добавлен 07.09, та же забытая ветка
   else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
