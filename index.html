@@ -1553,52 +1553,51 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    3) третий, самый тихий — модерация (Пожаловаться всем, Закрепить/Скрыть только владельцу),
    мельче второго яруса. Разделительные линии между ярусами — тот же приём, что развёл
    #modeCaravanFly и #caravanTierSeg сегодня же (.caravanFlyBtn border-bottom). */
+/* 08.09.2026 «Превью — главное»: владелец, живой макет, несколько заходов подряд —
+   превью неба было плоским квадратиком 52px, лайк/жалоба/закрепить/скрыть тянулись
+   отдельными рядами вниз, кнопка «Играть» на всю ширину читалась как «огромная, там ещё
+   3 таких слова влезет». Владелец явно попросил НЕ увеличивать общий размер карточки —
+   он мерил настоящую (317×206.6px) и просил лечь в неё же, просто перераспределив место:
+   превью — широкий баннер сверху (имя/статистика легли поверх картинки затемнением снизу,
+   это и освободило высоту), лайк — крупный значок в углу баннера (не тянет строку вниз),
+   редкие действия (Пожаловаться/Закрепить/Скрыть) — за кнопкой «⋯», не видны, пока не
+   нужны. «Играть» переименован в «В полёт» и больше не занимает всю ширину — стоит парой
+   с «Изменить», тем же стилем (.btn.ghost), «пусть с двух сторон красиво будет». */
 .wRow{display:flex;flex-direction:column;padding:10px 11px;border:1px solid var(--line);
   border-radius:var(--r-card);background:rgba(22,38,56,.45)}
-.wTop{display:flex;gap:11px;align-items:center;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--line)}
-.wSwatch{flex:none;width:52px;height:52px;border-radius:12px;position:relative;overflow:hidden;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
-.wSwatch canvas{width:100%;height:100%;display:block}
-.wBody{flex:1;min-width:0}
-.wTop2{display:flex;align-items:baseline;gap:6px}
-.wName{font-size:14px;font-weight:600;color:#eaf2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wAuthor{font-size:10.5px;color:var(--muted)}
-/* 07.09.2026, владелец вживую («и карт пропала статистика, сколько играли... это было
-   важно»): разнеся лайк (кнопка справа) и «сыграно» (второй ярус ниже) по разным строкам,
-   общая картина карточки одним взглядом пропала — раньше оба числа стояли рядом под
-   именем. Возвращено: короткая строка «▶ Сыграно N» здесь же, у имени — не дублирует
-   счётчик лайка (тот остаётся в самой кнопке), просто «сколько играли» больше не уехало
-   вниз отдельной строкой. */
-.wPlaysHint{font-size:10.5px;color:var(--muted);margin-top:2px}
-/* Лайк переехал из мелкого бейджа на превью (терялся, «не комфортная») в настоящую кнопку
-   со счётчиком рядом с именем — то самое место, куда владелец указал на скриншоте. */
-.wVote{flex:none;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:12px;
-  border:1px solid var(--line);background:rgba(10,16,28,.4);color:var(--gold-hi);
-  font-family:inherit;font-size:13px;cursor:pointer}
-.wVote.voted{border-color:rgba(255,214,140,.45);background:rgba(255,214,140,.08)}
-/* Ярус 1 — главное действие, полная ширина, вес большой кнопки режима (.btn.pri уже несёт
-   этот стиль по всей игре, здесь только полная ширина + чуть крупнее паддинг). */
-.wPlayBtn{width:100%;margin:0 0 9px;padding:12px;font-size:14px}
-/* Ярус 2 — тихая строка-ссылка «Открыть в Конструкторе» (07.09.2026: «сыграно N» переехало
-   обратно наверх, к имени — см. .wPlaysHint выше; здесь остаётся только само действие).
-   Не .btn — сюда нарочно НЕ ставим пилюлю, чтобы вес читался явно ниже Играть. */
-/* 07.09.2026, владелец вживую (два кружка на скриншоте): flex-end на одной ссылке оставлял
-   всё пустое место слева от неё («пустое место» — красным); .wModRow без justify оставлял
-   ряд из 3 чипов прижатым к левому краю, 15px пустоты справа — измерено (63→333.9 из
-   285.98 доступных), не на глаз («по-разному расстояние» — зелёным). Обе строки теперь
-   center — группа как целое ровно посередине, а не прижата к одному краю. */
-.wSecondRow{display:flex;align-items:center;justify-content:center;gap:10px;
-  padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--muted)}
-.wOpenLink{background:none;border:none;color:#8fb8ff;font-family:inherit;font-size:11.5px;
-  cursor:pointer;padding:4px 2px;text-decoration:underline;text-underline-offset:2px}
-/* Ярус 3 — модерация, самый тихий: Пожаловаться (все), Закрепить/Скрыть (только владелец). */
-.wModRow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.wModRow button{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:10px;
-  border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);
-  font-family:inherit;letter-spacing:.01em;cursor:pointer;opacity:.75}
+.wBanner{position:relative;height:146px;border-radius:12px;overflow:hidden;margin-bottom:8px}
+.wBanner canvas{width:100%;height:100%;display:block}
+.wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+.wBannerText{position:absolute;left:10px;right:10px;bottom:7px;pointer-events:none}
+.wName{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* «Сыграно» — тот же золотой заглавный язык, что подписи в Конструкторе (.panel.quickEdit .k). */
+.wPlaysHint{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.12em;color:var(--gold);margin-top:5px}
+.wVote{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:5px;
+  padding:6px 11px;border-radius:999px;background:rgba(6,10,20,.55);
+  border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:13px;font-weight:700}
+.wVote .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
+.wVote.voted{background:rgba(255,159,176,.22);border-color:rgba(255,159,176,.7);color:#ff9fb0;
+  box-shadow:0 0 14px rgba(255,120,150,.5)}
+.wVote.voted .ic{fill:currentColor;stroke:none}
+.wMore{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;
+  background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+.wMore .ic{width:13px;height:13px;fill:currentColor}
+.wActionRow{display:flex;gap:10px}
+.wActionRow button{flex:1;padding:8px 14px;font-size:13px;text-align:center;
+  font-weight:600;letter-spacing:.04em;border-radius:var(--r-btn);cursor:pointer}
+/* Ярус 3 — модерация, самый тихий: Пожаловаться (все), Закрепить/Скрыть (только владелец) —
+   за «⋯», не занимают места, пока не нажаты. */
+.wModRow{display:none;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.wModRow.open{display:flex}
+.wModRow button{display:flex;align-items:center;gap:7px;padding:6px 8px;font-size:10.5px;
+  border:1px solid var(--line);border-radius:9px;background:rgba(10,16,28,.3);color:var(--muted);
+  font-family:inherit;letter-spacing:.01em;cursor:pointer;text-align:left}
+.wModRow .ic{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6}
 .wModRow button:disabled{opacity:.4;cursor:default}
-.wPin.active{color:var(--gold-hi);border-color:rgba(255,214,140,.45);opacity:1}
-.wHide.active{color:#ff9fb0;border-color:rgba(255,159,176,.45);opacity:1}
+.wPin.active{color:var(--gold-hi);border-color:rgba(255,214,140,.45)}
+.wHide.active{color:#ff9fb0;border-color:rgba(255,159,176,.45)}
 .wRow[data-status="hidden"]{opacity:.5}
 
 /* 01.09.2026 «Конструктор»/Партитура — перенесено из macet-31-08-kuznica-partitura.html
@@ -2256,9 +2255,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.139"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.139"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.139"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.140"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.140"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.140"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2671,11 +2670,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <!-- 06.09.2026: перенесено из отдельного экрана #workshopScreen — та же ровно разметка/id,
          тот же JS (js/forge.js workshopFillLabels/workshopRenderList/делегированный клик на
          #workshopList), просто без собственных screenTitle/menuBack — они внутри одной вкладки. -->
-    <div class="setGrp partitura" id="workshopGrp">
-      <div class="kzTitle" id="workshopTitle">Галерея</div>
-      <div class="kzSub hidden" id="workshopSub"></div><!-- 08.09.2026: «Мастерская» переименована в «Галерею», подпись убрана целиком (владелец: название говорит само за себя, витрина компактнее без строки под ней) -->
-
-    </div>
+    <!-- 08.09.2026 (владелец, живой скрин): заголовок «Галерея» над списком убран целиком —
+         чистая надпись без функции, мы и так уже во вкладке «Играть» Конструктора, лишнее место. -->
     <div class="forgeChips" id="workshopSort"></div>
     <div id="workshopList" class="workshopList"></div>
     <div class="hint hidden" id="workshopEmpty" style="text-align:center;margin-top:14px">пока пусто — поделись своим небом, и оно появится здесь</div>
@@ -3058,25 +3054,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.139" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.139"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.139"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.139"></script>
-<script defer src="js/game.js?v=1.478.139" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.139"></script>
-<script defer src="js/sync.js?v=1.478.139"></script>
-<script defer src="js/render.js?v=1.478.139"></script>
-<script defer src="js/planetarium.js?v=1.478.139"></script>
-<script defer src="js/goldstar.js?v=1.478.139"></script>
-<script defer src="js/music.js?v=1.478.139"></script>
-<script defer src="js/gyro.js?v=1.478.139"></script>
-<script defer src="js/forge.js?v=1.478.139"></script>
-<script defer src="js/partitura.js?v=1.478.139"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.139"></script>
-<script defer src="js/card.js?v=1.478.139"></script>
-<script defer src="js/star.js?v=1.478.139"></script>
-<script defer src="js/cinema.js?v=1.478.139"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.139"></script>
+<script defer src="js/core.js?v=1.478.140" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.140"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.140"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.140"></script>
+<script defer src="js/game.js?v=1.478.140" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.140"></script>
+<script defer src="js/sync.js?v=1.478.140"></script>
+<script defer src="js/render.js?v=1.478.140"></script>
+<script defer src="js/planetarium.js?v=1.478.140"></script>
+<script defer src="js/goldstar.js?v=1.478.140"></script>
+<script defer src="js/music.js?v=1.478.140"></script>
+<script defer src="js/gyro.js?v=1.478.140"></script>
+<script defer src="js/forge.js?v=1.478.140"></script>
+<script defer src="js/partitura.js?v=1.478.140"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.140"></script>
+<script defer src="js/card.js?v=1.478.140"></script>
+<script defer src="js/star.js?v=1.478.140"></script>
+<script defer src="js/cinema.js?v=1.478.140"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.140"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

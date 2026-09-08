@@ -755,9 +755,8 @@ function forgeResetAll(){
 let workshopSortMode='new';
 const WORKSHOP_SORTS=['new','top','plays','mine'];
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
-  if(typeof L==='undefined'||!L.workshopTitle) return;
-  const LBL=[['workshopTitle',L.workshopTitle],
-    ['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js)
+  if(typeof L==='undefined'||!L.workshopEmpty) return;
+  const LBL=[['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js); заголовок workshopTitle убран целиком следом (лишняя надпись без функции)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   const sortEl=$('workshopSort');
   if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
@@ -792,22 +791,20 @@ function workshopRenderList(){
     // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
     const isOwner = !!(res && res.isOwner);
-    // 07.09.2026, владелец вживую, второй заход: «Играть»/«Открыть» рядом одинаковым весом
-    // путали (два равных варианта одного смысла), лайк-бейдж на превью терялся («не
-    // комфортная»). Теперь три яруса силы, разделённые линией (см. index.html, .wRow):
-    // 1) ИГРАТЬ — крупная кнопка на всю ширину, вес большой кнопки режима;
-    // 2) тихая строка: лайк — настоящая кнопка со счётчиком (не мелкий бейдж на картинке),
-    //    сыграли N раз, «Открыть в Конструкторе» словом-ссылкой, не пилюлей;
-    // 3) модерация — Пожаловаться (все) / Закрепить, Скрыть (только владелец), самое тихое.
+    // 08.09.2026 «Превью — главное» (владелец, живой макет, несколько заходов): превью
+    // неба — широкий баннер сверху, имя/сыграно лежат поверх затемнением снизу. Лайк —
+    // крупный значок в левом углу баннера, светится при лайке. Редкие действия
+    // (Пожаловаться/Закрепить/Скрыть) — за «⋯» в правом углу, не видны, пока не нужны.
+    // Играть переименован в «В полёт», без иконки, стоит парой с «Изменить» тем же стилем.
     listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
-      '<div class="wTop"><div class="wSwatch"><canvas width="52" height="52"></canvas></div>'+
-      '<div class="wBody"><div class="wTop2"><span class="wName"></span></div><div class="wAuthor"></div>'+
-      '<div class="wPlaysHint" data-role="plays"></div></div>'+
-      '<button class="wVote" data-act="vote"><span class="wVoteIc"></span><span data-role="hearts"></span></button></div>'+
-      '<button class="btn pri wPlayBtn" data-act="play"></button>'+
-      '<div class="wSecondRow"><button class="wOpenLink" data-act="edit"></button></div>'+
-      '<div class="wModRow"><button class="wReport" data-act="report">⚑</button>'+
-      (isOwner ? '<button class="wPin" data-act="pin">📍</button><button class="wHide" data-act="hide">👁</button>' : '')+
+      '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
+      '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
+      '<button class="wMore" data-act="more"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>'+
+      '<div class="wBannerText"><div class="wName"></div><div class="wPlaysHint" data-role="plays"></div></div></div>'+
+      '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
+      '<div class="wModRow"><button class="wReport" data-act="report"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3v18M6 4h12l-3 4 3 4H6" stroke-linejoin="round" stroke-linecap="round"></path></svg><span></span></button>'+
+      (isOwner ? '<button class="wPin" data-act="pin"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z" stroke-linejoin="round"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg><span></span></button>'+
+      '<button class="wHide" data-act="hide"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle></svg><span></span></button>' : '')+
       '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
@@ -815,22 +812,20 @@ function workshopRenderList(){
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
-      row.querySelector('.wAuthor').textContent=t.author_name||'';
       const voted = mine.indexOf(t.code)>=0;
-      row.querySelector('.wVoteIc').textContent = voted ? '♥' : '♡';
       row.querySelector('[data-role="hearts"]').textContent=String(t.hearts||0);
-      row.querySelector('.wVote').classList.toggle('voted', voted);
-      row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'▶ '+(t.plays||0));
-      row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'Играть';
-      row.querySelector('.wOpenLink').textContent=L.workshopEdit||'Открыть в Конструкторе';
-      const reportBtn=row.querySelector('.wReport');
-      reportBtn.textContent='⚑ '+(L.workshopReport||'Пожаловаться'); // 07.09.2026: подпись видна всем, не только aria-label
+      row.querySelector('.wVote').classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
+      row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'Сыграно: '+(t.plays||0));
+      row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
+      row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
+      row.querySelector('.wReport span').textContent=L.workshopReport||'Пожаловаться'; // 07.09.2026: подпись видна всем, не только aria-label
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
-        pinBtn.textContent = (status==='pinned' ? '📌 ' : '📍 ')+(L.workshopPin||'Закрепить');
-        pinBtn.classList.toggle('active', status==='pinned');
-        hideBtn.textContent = (status==='hidden' ? '🚫 ' : '👁 ')+(L.workshopHide||'Скрыть');
+        pinBtn.querySelector('span').textContent=L.workshopPin||'Закрепить';
+        pinBtn.classList.toggle('active', status==='pinned'); // заливка — CSS
+        hideBtn.querySelector('span').textContent=L.workshopHide||'Скрыть';
         hideBtn.classList.toggle('active', status==='hidden');
+        if(status==='hidden') hideBtn.querySelector('svg').innerHTML='<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle><path d="M4 4l16 16" stroke-linecap="round"></path>';
       }
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
@@ -845,14 +840,14 @@ wireOnLocal('workshopList','click',function(e){
   const act=e.target.closest('[data-act]'); if(!act) return;
   if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
   if(act.dataset.act==='edit'){ forgeWorkshopEdit(code); forgeTabSet('create'); return; } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
+  if(act.dataset.act==='more'){ row.querySelector('.wModRow').classList.toggle('open'); return; } // 08.09.2026: редкие действия за «⋯», не занимают места, пока их не открыли
   if(act.dataset.act==='vote'){
     workshopVote(code).then(function(res){
       if(!res || !res.ok) return;
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
       Store.set('workshopMyVotes',mine);
-      const icEl=act.querySelector('.wVoteIc'); if(icEl) icEl.textContent = res.hearted ? '♥' : '♡';
-      act.classList.toggle('voted', res.hearted);
+      act.classList.toggle('voted', res.hearted); // заливка сердца — CSS
       const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent=String(res.hearts||0);
     });
     haptic('light');
@@ -870,8 +865,7 @@ wireOnLocal('workshopList','click',function(e){
     workshopModerate(code, next).then(function(res){
       if(!res || !res.ok) return;
       row.dataset.status=next;
-      act.textContent = (next==='pinned' ? '📌 ' : '📍 ')+(L.workshopPin||'Закрепить');
-      act.classList.toggle('active', next==='pinned');
+      act.classList.toggle('active', next==='pinned'); // заливка булавки — CSS
       // 07.09.2026, владелец («не понятно что произошло после нажатия»): смена эмодзи одна,
       // без слов, легко пропустить — добавлен тот же тост, что уже есть у report.
       toast(next==='pinned' ? (L.workshopPinned||'Закреплено') : (L.workshopUnpinned||'Откреплено'), 'rgba(255,214,140,.5)');
@@ -883,7 +877,10 @@ wireOnLocal('workshopList','click',function(e){
     workshopModerate(code, next).then(function(res){
       if(!res || !res.ok) return;
       row.dataset.status=next;
-      act.textContent = (next==='hidden' ? '🚫 ' : '👁 ')+(L.workshopHide||'Скрыть');
+      const eyeSvg=act.querySelector('svg');
+      eyeSvg.innerHTML = next==='hidden'
+        ? '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle><path d="M4 4l16 16" stroke-linecap="round"></path>'
+        : '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle>'; // перечёркнутый глаз — «скрыто» честнее показать другой формой, не просто заливкой
       act.classList.toggle('active', next==='hidden');
       toast(next==='hidden' ? (L.workshopHidden||'Скрыто от игроков') : (L.workshopUnhidden||'Снова видно всем'), 'rgba(255,159,176,.5)');
     });
