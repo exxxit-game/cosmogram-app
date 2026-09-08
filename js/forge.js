@@ -619,13 +619,37 @@ function forgeCopy(text,done){
   try{ navigator.clipboard.writeText(text).then(function(){done&&done();},function(){done&&done();}); }
   catch(e){ done&&done(); }
 }
+/* 08.09.2026 «Clear Check» (владелец, вдохновлено Super Mario Maker: нельзя опубликовать
+   уровень, не пройдя его самому) — единственная гарантия, что публикуемое небо вообще
+   пролетаемо, не просто валидный по цифрам конфиг. «Пройти» — из ui.js/gameOver(): для
+   небес с длиной (customL>0) только настоящий финиш (S.mapWin), для бесконечных (customL=0,
+   у них нет финиша в принципе) — любой настоящий забег до конца (естественная смерть).
+   Список — последние FORGE_VERIFY_MAX кодов, не весь бесконечный журнал. */
+const FORGE_VERIFY_MAX=200;
+function forgeVerifyCode(code){
+  if(!code) return;
+  let list=Store.get('forgeVerified',[]);
+  if(!Array.isArray(list)) list=[];
+  const idx=list.indexOf(code);
+  if(idx>=0) list.splice(idx,1); // недавно пройденный код всплывает в конец — не вытесняется раньше свежих
+  list.push(code);
+  if(list.length>FORGE_VERIFY_MAX) list=list.slice(list.length-FORGE_VERIFY_MAX);
+  Store.set('forgeVerified',list);
+}
+function forgeIsVerified(code){
+  const list=Store.get('forgeVerified',[]);
+  return Array.isArray(list) && list.indexOf(code)>=0;
+}
 /* 08.09.2026 (владелец, живой разговор): «Поделиться» и «Опубликовать в Галерею» были одним
    и тем же нажатием без предупреждения — «это бред, неудобно и непонятно» (ты делишься с
    другом, а тебя тихо публикуют всем под именем). Теперь публикация — отдельный явный вопрос
    ПОСЛЕ шаринга (тот же tg.showConfirm, что уже применяется для удаления данных — не новый
-   экран, готовый паттерн игры), не связанный с самим действием «отправить код другу». */
+   экран, готовый паттерн игры), не связанный с самим действием «отправить код другу».
+   08.09.2026 «Clear Check»: вопрос вообще не задаётся, если этот ТОЧНЫЙ код ни разу не
+   пройден по-настоящему — вместо диалога тост с объяснением, что нужно сделать сначала. */
 function mapAskPublish(code, name){
   if(typeof workshopSubmit!=='function') return;
+  if(!forgeIsVerified(code)){ toast(L.forgeNeedRealRun||'Сначала пролети это небо по-настоящему — потом можно опубликовать','rgba(255,159,176,.5)'); return; }
   const msg=L.forgePublishConfirm||'Опубликовать это небо в Галерее — увидят все?';
   const go=()=>{ workshopSubmit(code, name).then(res=>{
     if(res && res.ok) toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)');

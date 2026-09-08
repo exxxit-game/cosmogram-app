@@ -517,6 +517,12 @@ function gameOver(){
     // и Мозг неба записывал прошедшему трассу +1 забег и +1 «причину смерти», подкручивая
     // сложность под препятствие, о которое игрок не разбивался.
     if (!S.mapWin && typeof Adaptive!=='undefined') Adaptive.onDeath(S.time, S.lastHitKind); // v1.108.1 «Мозг неба»: тот же момент, что уже шлёт анонимную телеметрию — здесь только локально, для подстройки
+    // 08.09.2026 «Clear Check»: настоящий пройденный забег на ЭТОМ коде — с длиной только
+    // через честный финиш (S.mapWin), без длины (∞, финиша нет по определению) — любой
+    // естественный забег до конца уже засчитывается. Без этого «Поделиться» не даёт публиковать.
+    if((S.customL===0 || S.mapWin) && typeof forgeVerifyCode==='function' && typeof forgeEncode==='function' && typeof forgeSanitize==='function' && typeof forgeCfg!=='undefined'){
+      forgeVerifyCode(forgeEncode(forgeSanitize(forgeCfg)));
+    }
     theaterTrack=null; toggleCls('watchBtn','hidden',true); mapOver(sc); return;
   }
   const mode=controlMode(); // категория управления: gyro / touch / keys
