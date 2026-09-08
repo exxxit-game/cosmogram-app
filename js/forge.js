@@ -777,21 +777,29 @@ function workshopRenderList(){
     // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
     const isOwner = !!(res && res.isOwner);
+    const myId = (typeof syncMyId==='function') ? syncMyId() : null; // 08.09.2026: «это моё небо» — отдельно от «я модератор»
     // 08.09.2026 «Превью — главное» (владелец, живой макет, несколько заходов): превью
     // неба — широкий баннер сверху, имя/сыграно лежат поверх затемнением снизу. Лайк —
     // крупный значок в левом углу баннера, светится при лайке. Редкие действия
     // (Пожаловаться/Закрепить/Скрыть) — за «⋯» в правом углу, не видны, пока не нужны.
     // Играть переименован в «В полёт», без иконки, стоит парой с «Изменить» тем же стилем.
-    listEl.innerHTML=tracks.map(function(){ return '<div class="wRow">'+
+    listEl.innerHTML=tracks.map(function(t){
+      const own = !!(myId && t.author_id===myId); // 08.09.2026: «это моё небо», отдельно от «я модератор»
+      const canReport = !own; // нельзя пожаловаться на своё же
+      return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
       '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
-      '<button class="wMore" data-act="more"><svg class="ic" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>'+
+      '<div class="wCornerRow">'+
+      (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2"></rect></svg></button>' : '')+
+      // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
+      // без лишнего клика» — Закрепить/Скрыть тоже открытые значки в углу, залитые как
+      // жалоба, «⋯»/скрывающий wModRow убраны совсем.
+      (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
+      '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
+      '</div>'+
       '<div class="wBannerText"><div class="wName"></div><div class="wPlaysHint" data-role="plays"></div></div></div>'+
       '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
-      '<div class="wModRow"><button class="wReport" data-act="report"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3v18M6 4h12l-3 4 3 4H6" stroke-linejoin="round" stroke-linecap="round"></path></svg><span></span></button>'+
-      (isOwner ? '<button class="wPin" data-act="pin"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z" stroke-linejoin="round"></path><circle cx="12" cy="9.5" r="2.3"></circle></svg><span></span></button>'+
-      '<button class="wHide" data-act="hide"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle></svg><span></span></button>' : '')+
-      '</div></div>'; }).join('');
+      '</div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
       const status=t.status||'normal'; row.dataset.status=status;
@@ -804,14 +812,14 @@ function workshopRenderList(){
       row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'Сыграно: '+(t.plays||0));
       row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
       row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
-      row.querySelector('.wReport span').textContent=L.workshopReport||'Пожаловаться'; // 07.09.2026: подпись видна всем, не только aria-label
+      const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться'; // 08.09.2026: значок без подписи (владелец), title остаётся для доступности
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
-        pinBtn.querySelector('span').textContent=L.workshopPin||'Закрепить';
+        pinBtn.title=L.workshopPin||'Закрепить';
         pinBtn.classList.toggle('active', status==='pinned'); // заливка — CSS
-        hideBtn.querySelector('span').textContent=L.workshopHide||'Скрыть';
+        hideBtn.title=L.workshopHide||'Скрыть';
         hideBtn.classList.toggle('active', status==='hidden');
-        if(status==='hidden') hideBtn.querySelector('svg').innerHTML='<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle><path d="M4 4l16 16" stroke-linecap="round"></path>';
+        if(status==='hidden') hideBtn.querySelector('svg').innerHTML='<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>';
       }
     });
   }).catch(function(){ listEl.innerHTML=''; if(emptyEl) emptyEl.classList.remove('hidden'); });
@@ -826,7 +834,6 @@ wireOnLocal('workshopList','click',function(e){
   const act=e.target.closest('[data-act]'); if(!act) return;
   if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
   if(act.dataset.act==='edit'){ forgeWorkshopEdit(code); forgeTabSet('create'); return; } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
-  if(act.dataset.act==='more'){ row.querySelector('.wModRow').classList.toggle('open'); return; } // 08.09.2026: редкие действия за «⋯», не занимают места, пока их не открыли
   if(act.dataset.act==='vote'){
     workshopVote(code).then(function(res){
       if(!res || !res.ok) return;
@@ -841,8 +848,10 @@ wireOnLocal('workshopList','click',function(e){
   if(act.dataset.act==='report'){
     // 05.09.2026: сервер сам не даёт накрутить счётчик повторной жалобой (unique код+игрок) —
     // здесь достаточно погасить кнопку визуально, чтобы не звать снова с этого же экрана без толку.
-    act.disabled=true; act.textContent='✓ '+(L.achDone||'Готово'); // 07.09.2026: была голая «✓» без слова — теперь видимое подтверждение, не только тост
-    workshopReport(code); haptic('light'); toast(L.workshopReported||'Спасибо, посмотрим', 'rgba(255,159,176,.5)');
+    // 08.09.2026: значок стал маленьким кружком без подписи — текстом «Готово» внутри него
+    // не разместить, гасим (disabled уже даёт :disabled-стиль), подтверждение остаётся тостом.
+    act.disabled=true;
+    workshopReport(code); haptic('light'); toast(L.workshopReported||'Мы проверим название этого неба.', 'rgba(255,159,176,.5)');
   }
   if(act.dataset.act==='pin'){
     // 05.09.2026: один статус на трассу — закрепить снимает «скрыто», если было; сервер
@@ -865,8 +874,8 @@ wireOnLocal('workshopList','click',function(e){
       row.dataset.status=next;
       const eyeSvg=act.querySelector('svg');
       eyeSvg.innerHTML = next==='hidden'
-        ? '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle><path d="M4 4l16 16" stroke-linecap="round"></path>'
-        : '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke-linejoin="round"></path><circle cx="12" cy="12" r="2.6"></circle>'; // перечёркнутый глаз — «скрыто» честнее показать другой формой, не просто заливкой
+        ? '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path>'
+        : '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle>'; // перечёркнутый глаз — «скрыто» честнее показать другой формой, не просто заливкой
       act.classList.toggle('active', next==='hidden');
       toast(next==='hidden' ? (L.workshopHidden||'Скрыто от игроков') : (L.workshopUnhidden||'Снова видно всем'), 'rgba(255,159,176,.5)');
     });
