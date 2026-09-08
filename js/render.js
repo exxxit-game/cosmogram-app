@@ -1720,10 +1720,22 @@ function inView(x,y,mx,my){
 /* v1.66.0 «Лёгкий кадр»: цвета бонусов — константы модуля (раньше объект собирался заново
    на каждый бонус в каждом кадре); кольца — готовые строки, лениво после загрузки game.js */
 const POW_COLORS={shield:'#7fd8ff',magnet:'#c58fff',slowmo:'#8fff9f',life:'#ffa1d9',dash:'#a9bcff',nova:'#fff0a8'}; // v1.105.0: жизнь — розовая, вне красной семьи тревоги (мина/ловец): «лови» больше не читается как «бойся»
+/* 09.09.2026 «Для дальтоников» (владелец, тумблер COLORBLIND — задача «она следующая
+   будет», см. .knowledge/COLOR-REGISTRY.md): проверено численно (не на глаз) — 6 обычных
+   цветов бонусов при протанопии/дейтеранопии почти сливаются в одну кашу (Щит/Магнит/Таран
+   — RGB-дистанция после симуляции 7.5-12.5 из 441, порог тревоги 25), при тританопии
+   Жизнь/Сверхновая сливаются (15.6). Раньше тумблер только усиливал контраст/насыщенность
+   всего канваса (#game.cb, index.html) — это не решает путаницу ОТТЕНКОВ, только делает их
+   ярче. Палитра Пола Тола (Paul Tol muted, SRON) — набор из 9 цветов без чёрного, проверенный
+   как безопасный НАБОР; 6 из них подобраны под бонусы и перепроверены друг против друга и
+   против уже утверждённых цветов препятствий (Ворота/Дрейфер/Мина/Ловец) — минимальная
+   дистанция после симуляции 28.8 из 441 при любом типе, запас есть. */
+const POW_COLORS_CB={shield:'#44AA99',magnet:'#882255',slowmo:'#117733',life:'#CC6677',dash:'#332288',nova:'#DDCC77'};
+function powColor(kind){ return (typeof COLORBLIND!=='undefined'&&COLORBLIND) ? POW_COLORS_CB[kind] : POW_COLORS[kind]; }
 let POW_RING=null;
 function powRing(){
-  if(!POW_RING){ POW_RING={}; for(const k in POW_COLORS)
-    POW_RING[k]=[hexToRgba(POW_COLORS[k])+'.38)', hexToRgba(POW_COLORS[k])+'.5)']; }
+  if(!POW_RING || POW_RING._cb!==COLORBLIND){ POW_RING={_cb:COLORBLIND}; for(const k in POW_COLORS)
+    POW_RING[k]=[hexToRgba(powColor(k))+'.38)', hexToRgba(powColor(k))+'.5)']; }
   return POW_RING;
 }
 /* 27.08.2026 «Симметрия силуэтов»: значок-жетон (владелец выбрал это из трёх показанных
@@ -1931,7 +1943,7 @@ function draw(){
   for (const p of powerups){
     if(!inView(p.x,p.y,32,36)) continue;
     ctx.save(); ctx.translate(p.x, p.y+Math.sin(p.ph)*3);
-    const col=POW_COLORS[p.kind]; // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу
+    const col=powColor(p.kind); // v1.40.0 «Шесть жестов»; v1.43.1: Таран — плазменный синий, янтарь остаётся ловцу; 09.09.2026: подменяется на Tol-палитру при включённом COLORBLIND
     ctx.globalAlpha=.7; ctx.drawImage(powGlow(col),-20,-20,40,40); ctx.globalAlpha=1; // v1.37.0: ауреола всем ступеням — кэш-спрайт
     ctx.fillStyle=powTokenGrad(ctx,col);
     ctx.beginPath(); ctx.arc(0,0,p.r+2,0,6.283); ctx.fill();
