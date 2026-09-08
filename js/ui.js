@@ -1001,7 +1001,7 @@ function openSettings(from){ settingsFrom=from||'menu'; refreshGyroLock(); rowSw
      выключенными на свежий вход, даже если фильтр реально активен со прошлой сессии
      (сам CONTRAST/COLORBLIND читается верно, canvasFilterSync() применяет фильтр к
      канвасу — расходился только вид строки). calmFxLabel() — новый тумблер, тот же приём. */
-  contrastLabel(); colorblindLabel(); calmFxLabel();
+  contrastLabel(); colorblindLabel(); calmFxLabel(); textScaleLabel(); // 09.09.2026: тот же приём для «Размера текста»
 } // v1.91.0: шёпот самочувствия — свежий при каждом входе // v1.45.0: замок гироскопа — свежий при каждом входе; v1.66.1: диагностика датчика — свежая при входе (в полёте она в DOM не пишется); v1.107.0: и выключатель почты — честный при входе
 function closeSettings(){ setScreen(settingsFrom); sfx.click(); }
 function rowV(btnId,val,on){ // v1.63.0: строка настроек «параметр — значение» (цикл-значения)
@@ -2265,6 +2265,21 @@ wireOn('setColorblindBtn', 'click', ()=>{
 wireOn('setReduceShakeBtn', 'click', ()=>{
   CALM_FX=!CALM_FX; Store.set('calmFx',CALM_FX?1:0); calmFxLabel(); haptic('light'); sfx.click();
 });
+/* 09.09.2026 «Размер текста» (владелец, для слабовидящих): масштаб всего UI/HUD/меню, КРОМЕ
+   игрового канваса и рамки коридора — см. #uiScaleRoot в index.html. transform вместо
+   переписывания сотен font-size по всему index.html. Шаги 100/115/130% — 150% отклонён:
+   на узком экране (536px CSS, живой замер) часть строк настроек вылезала за край даже
+   после починки .setGrp/.setRow под перенос (см. --ui-scale в index.html). */
+const TEXT_SCALE_STEPS=[1,1.15,1.3];
+function applyUiScale(k){
+  document.documentElement.style.setProperty('--ui-scale', k);
+}
+function textScaleLabel(){ rowV('setTextScaleBtn', Math.round(UI_TEXT_SCALE*100)+'%'); }
+wireOn('setTextScaleBtn', 'click', ()=>{
+  const i=TEXT_SCALE_STEPS.indexOf(UI_TEXT_SCALE);
+  UI_TEXT_SCALE=TEXT_SCALE_STEPS[(i+1)%TEXT_SCALE_STEPS.length];
+  Store.set('uiTextScale',UI_TEXT_SCALE); applyUiScale(UI_TEXT_SCALE); textScaleLabel(); haptic('light'); sfx.click();
+});
 wireOn('setGyroBtn', 'click', ()=>{
   const budet = !((typeof gyroRul==='function') ? gyroRul() : true);
   Store.set('gyroOn', budet?1:0);
@@ -3052,13 +3067,13 @@ function applyLang(){
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
-  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel() — та же роль для «Размера текста»
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
-   ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setLangBtn','setLang'],
+   ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setTextScaleBtn','setTextScale'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
   setText('diagVibroBtn',L.diagVibro);
 }
@@ -3108,6 +3123,7 @@ Store.init(()=>{
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
   CALM_FX = Store.get('calmFx',1)===1; // 06.09.2026 «Смягчить тряску и вспышки», по умолчанию включён
+  { const tsv=saneNumber(Store.get('uiTextScale',1),1); UI_TEXT_SCALE = TEXT_SCALE_STEPS.includes(tsv)?tsv:1; applyUiScale(UI_TEXT_SCALE); } // 09.09.2026 «Размер текста»
   // Скоростные полосы полностью вырезаны: чтение флага хранилища удалено, чтобы не
   // восстанавливать отключённый эффект при старом сохранённом значении.
   MUSIC_ON = Store.get('music',1)!==0; // музыка — отдельная настройка от звуков

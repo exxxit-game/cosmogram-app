@@ -108,7 +108,7 @@ function ptShowToast(text,undoFn){
   let t=document.querySelector('.ptToast');
   if(!t){ t=document.createElement('div'); t.className='ptToast';
     t.innerHTML='<span class="ptToastTxt"></span><span class="undo">вернуть</span>';
-    document.body.appendChild(t); }
+    (document.getElementById('uiScaleRoot')||document.body).appendChild(t); } // 09.09.2026 «Размер текста»: внутрь масштабируемой обёртки, не мимо неё
   t.querySelector('.ptToastTxt').textContent=text;
   t.classList.add('show');
   clearTimeout(ptToastTimer);
@@ -294,7 +294,7 @@ function ptWireTray(){
     if(s.closest('.stickerItem').classList.contains('excluded')) return; // 02.09.2026: вид выключен в «Составе» — стикер не тащится, не спорит с «полностью исключить из игры»
     const pins=ptPins(); if(pins.length>=PT_MAX) return;
     s.classList.add('dragging');
-    if(!ptGhostEl){ ptGhostEl=document.createElement('div'); ptGhostEl.className='ptGhost'; document.body.appendChild(ptGhostEl); }
+    if(!ptGhostEl){ ptGhostEl=document.createElement('div'); ptGhostEl.className='ptGhost'; (document.getElementById('uiScaleRoot')||document.body).appendChild(ptGhostEl); } // 09.09.2026 «Размер текста»: та же причина, что у ptToast выше
     ptGhostEl.style.display='flex'; ptGhostEl.style.background=getComputedStyle(s).background;
     ptGhostEl.innerHTML=s.innerHTML; ptGhostEl.style.color=getComputedStyle(s).color;
     ptMoveGhost(ev.clientX,ev.clientY);
