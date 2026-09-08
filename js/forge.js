@@ -756,8 +756,8 @@ let workshopSortMode='new';
 const WORKSHOP_SORTS=['new','top','plays','mine'];
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopTitle) return;
-  const LBL=[['workshopTitle',L.workshopTitle],['workshopSub',L.workshopSub],
-    ['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Мастерская теперь вкладка «Играть»
+  const LBL=[['workshopTitle',L.workshopTitle],
+    ['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
   const sortEl=$('workshopSort');
   if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
