@@ -809,12 +809,14 @@ function forgeResetAll(){
 let workshopSortMode='new';
 // 08.09.2026 (владелец, живой скрин): «Мои» убрано из верхнего ряда — фильтр только своих
 // небес нужен исключительно авторам, а занимал место у всех подряд (переезжает во вкладку
-// «Создать», отдельной задачей). На его место — «Закреплённые» (sort='pinned', см. правку
-// cosmogram-workshop Edge Function того же дня): единственная из четырёх, что НЕ дублирует
-// остальные — pinned и так уже всегда наверху у new/top/plays, тут это единственное, что видно.
-// workshopSortMode/сама логика 'mine' в workshopRenderList() ниже не тронуты — понадобятся
-// будущей кнопке в «Создать», просто больше не в этом списке чипов.
-const WORKSHOP_SORTS=['new','top','plays','pinned'];
+// «Создать», отдельной задачей). На его место — «Случайные» (sort='random', см. правку
+// cosmogram-workshop Edge Function того же дня) — значок перемешивания вместо слова
+// («Закреплённые» было слишком длинным и большим словом, владелец). workshopSortMode/сама
+// логика 'mine' в workshopRenderList() ниже не тронуты — понадобятся будущей кнопке в «Создать».
+// «Избранное» тоже не отдельная вкладка — тап по уже выбранной «Лайки» ещё раз переключает
+// workshopLikedOnly, подпись меняется на «Твои», список сужается до лайкнутых тобой же.
+const WORKSHOP_SORTS=['new','top','plays','random'];
+let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
   const LBL=[['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js); заголовок workshopTitle убран целиком следом (лишняя надпись без функции)
@@ -823,21 +825,36 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   if(sortEl && sortEl.children.length!==WORKSHOP_SORTS.length){
     sortEl.innerHTML='';
     WORKSHOP_SORTS.forEach(function(s){
-      const b=document.createElement('button'); b.className='forgeChip';
-      b.addEventListener('click', function(){ workshopSortMode=s; workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light'); }); // 07.09.2026: было без workshopFillLabels() — режим менялся честно, но подсветка .sel навсегда оставалась на «Новые» (владелец, живой скрин)
+      const b=document.createElement('button'); b.className='forgeChip'; b.dataset.sort=s;
+      b.addEventListener('click', function(){
+        if(s==='top' && workshopSortMode==='top'){ workshopLikedOnly=!workshopLikedOnly; } // повторный тап по уже выбранной «Лайки» — переключатель все/твои
+        else { workshopSortMode=s; workshopLikedOnly=false; } // смена вкладки — переключатель сбрасывается, «Твои» не переживает уход на другую вкладку
+        workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
+      }); // 07.09.2026: было без workshopFillLabels() — режим менялся честно, но подсветка .sel навсегда оставалась на «Новые» (владелец, живой скрин)
       sortEl.appendChild(b);
     });
   }
   if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
-    sortEl.children[i].textContent = L['workshopSort_'+s] || s;
-    sortEl.children[i].classList.toggle('sel', s===workshopSortMode);
+    const chip=sortEl.children[i];
+    if(s==='random'){
+      // 08.09.2026: значок без слова — «Закреплённые»/«Случайные» слишком длинные, тот же
+      // #i-shuffle, что уже стоит у «Случайное небо» в Партитуре, не выдуман заново.
+      chip.classList.add('iconOnly');
+      chip.title=L.workshopSort_random||'Случайные';
+      if(!chip.querySelector('svg')) chip.innerHTML='<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
+    } else {
+      chip.classList.remove('iconOnly');
+      chip.textContent = (s==='top' && workshopLikedOnly) ? (L.workshopSort_topLiked||'Твои') : (L['workshopSort_'+s] || s);
+    }
+    chip.classList.toggle('sel', s===workshopSortMode);
   });
 }
 function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
 function workshopRenderList(){
   const listEl=$('workshopList'), emptyEl=$('workshopEmpty');
   if(!listEl) return;
-  if(workshopSortMode==='mine' && !syncAvailable()){
+  const likedOnly = workshopSortMode==='top' && workshopLikedOnly; // 08.09.2026: «Твои» — тот же 'top', отфильтрованный клиентом по своим лайкам, не отдельный сорт на сервере
+  if((workshopSortMode==='mine' || likedOnly) && !syncAvailable()){
     listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); emptyEl.textContent=L.workshopSignInFirst||L.workshopEmpty; }
     return;
   }
@@ -845,10 +862,11 @@ function workshopRenderList(){
   const requestedSort=workshopSortMode; // 05.09.2026: защита от гонки — быстрый тап по двум чипам подряд не должен дать ответу первого перезаписать второй
   workshopList(requestedSort).then(function(res){
     if(requestedSort!==workshopSortMode) return; // пока летал запрос, игрок уже переключил сортировку — этот ответ больше не актуален
-    const tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
+    let tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
+    const mine=workshopMyVotes();
+    if(likedOnly) tracks=tracks.filter(function(t){ return mine.indexOf(t.code)>=0; }); // «Твои» — сужаем уже полученный топ по лайкам, без отдельного запроса на сервер
     if(!tracks.length){ listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty; } return; }
     if(emptyEl) emptyEl.classList.add('hidden');
-    const mine=workshopMyVotes();
     // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
     const isOwner = !!(res && res.isOwner);
