@@ -833,7 +833,11 @@ function workshopRenderList(){
       // Клик по звезде — сразу в первый свободный слот (экран из 10 ячеек ещё не построен).
       '<div class="wLeftRow">'+
       '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
-      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3.2l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"></path></svg></button>'+
+      // 08.09.2026 (владелец, живой скрин): «звезда путает, учитывая что это связано с цветом» —
+      // звезда заменена на двухцветный кружок (макет A/Б/В, владелец выбрал В) — читается как
+      // «образец цвета», не как обычная звезда-избранное. Пипетка (Б) отклонена — на 26px похожа
+      // на карандаш «Изменить», путает с соседней кнопкой.
+      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"></circle><path d="M12 3a9 9 0 0 1 0 18z" fill="#ffd66a"></path></svg></button>'+
       '</div>'+
       '<div class="wCornerRow">'+
       (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2"></rect></svg></button>' : '')+
