@@ -55,13 +55,13 @@ const I18N = {
     modeCaravanD15:'15 секунд на очки — время решает, не жизни', modeCaravanD180:'180 секунд на очки — время решает, не жизни',
     caravanBullet:'15 секунд', caravanBlitz:'60 секунд', caravan180:'180 секунд', // 07.09.2026: были шахматные термины «Пуля»/«Блиц» — владелец вживую: слово «Пуля» не нравится, при таком запасе места проще прямо число секунд, всем понятно без словаря; третий тайминг (180с) добавлен следом же — рекорд общий текст (caravanNewBest) не различает тир
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
-    modeSlalom:'Слалом', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Слалома', slalomDQ:'Срыв — задел ворота', // 06.09.2026
+    modeSlalom:'Створ', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд Створа', slalomDQ:'Срыв — задел ворота', // 06.09.2026; 08.09.2026: «Слалом» — чужой вид спорта (склон, лыжи), у нас уклона нет; «Створ» — навигационный термин, точнее для полёта между ориентирами
     modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 300м, лети свой — передавай следующему', // 06.09.2026
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войди через Telegram, чтобы лететь в эстафете',
-    relayMineTitle:'Мои эстафеты', relayMineBtnLbl:'Мои эстафеты', relayMineEmpty:'Ты ещё не летал в эстафете',
+    relayMineTitle:'Статус эстафет', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
@@ -247,7 +247,7 @@ const I18N = {
     modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 300m, fly yours — hand off to the next pilot',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in via Telegram to fly in the relay',
-    relayMineTitle:'My relays', relayMineBtnLbl:'My relays', relayMineEmpty:'You haven\'t flown in a relay yet',
+    relayMineTitle:'Relay status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
     relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
     relayFailStart:'Could not start the relay — try again',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
@@ -410,7 +410,7 @@ const I18N = {
     modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 300m, vuela el tuyo — pásaselo al siguiente',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión con Telegram para volar en los relevos',
-    relayMineTitle:'Mis relevos', relayMineBtnLbl:'Mis relevos', relayMineEmpty:'Aún no has volado en un relevo',
+    relayMineTitle:'Estado de relevos', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
     relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
@@ -588,7 +588,7 @@ const I18N = {
     modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 300m, voe o seu — passe para o próximo',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre com o Telegram para voar no revezamento',
-    relayMineTitle:'Meus revezamentos', relayMineBtnLbl:'Meus revezamentos', relayMineEmpty:'Você ainda não voou em um revezamento',
+    relayMineTitle:'Status dos revezamentos', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
     relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
@@ -764,7 +764,7 @@ const I18N = {
     modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 300m, vole la tienne — passe le relais',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi via Telegram pour voler dans le relais',
-    relayMineTitle:'Mes relais', relayMineBtnLbl:'Mes relais', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
+    relayMineTitle:'État des relais', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
     relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
