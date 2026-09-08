@@ -38,10 +38,12 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      авторские тир-цены: 150/400/800 — стандартные (только цвет), 1500/2500/4000 — яркие
      (фирменная фишка), 7000/12000 — легендарные (уникальное поведение корпуса). */
   // Тир 1 — стандартные: только цвет (никаких фишек — правило №1)
-  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,', cat:'classic'}, // Бумажный — нейтральная бумага
-  {id:1,name:1,price:150,   body:'#d6e8ff',fold:'#9cc0ee',glow:'rgba(96,164,255,.95)',trail:'rgba(96,164,255,', cat:'classic'},   // Лазурь — чистый синий (не циан!)
-  {id:2,name:2,price:400,   body:'#fff3c8',fold:'#ecd38a',glow:'rgba(255,226,85,.95)', trail:'rgba(255,226,85,', cat:'classic'},  // Золото — жёлтое золото (тон 50°)
-  {id:3,name:3,price:800,   body:'#ffd9dd',fold:'#e88a96',glow:'rgba(255,80,95,.95)',  trail:'rgba(255,80,95,', cat:'classic'},    // Алый — настоящий красный
+  {id:0,name:0,price:0,   body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,229,225,.9)',trail:'rgba(200,198,190,', cat:'classic'}, // Бумажный — нейтральная бумага, единственный бесплатный/стандартный
+  // 08.09.2026 (владелец): id1-3 (Лазурь/Золото/Алый — просто цвет, никаких фишек)
+  // убраны из каталога — «всё остальное должно быть уникальным». SKINS_BY_ID.get() для
+  // не найденного id честно возвращает undefined, весь код уже страхуется ||SKINS[0]
+  // (проверено гриппом по всем 4 файлам перед удалением) — ничего не падает у игроков,
+  // у кого один из этих трёх уже был выбран, просто увидят Бумажный вместо них.
   // Тир 2 — яркие: фирменная фишка + богатый след (только визуал, никаких бонусов!)
   {id:4,name:4,price:1500,   fx:'neon',   body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)', trail:'rgba(120,255,80,', cat:'bright'}, // Неон — кислотно-зелёный
   {id:5,name:5,price:2500,   fx:'aurora', body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,', cat:'bright'}, // Аврора — фиолет
@@ -62,12 +64,16 @@ const SKINS=[ // v1.44.0: палитра разведена по цветово�
      можно перетасовать): спутники↔обломки-спутники, грани-кристалл↔нить-жемчуг,
      самоцветы↔искры, золото-гравировка↔кометная пыль, реактор-ядро↔лента-энергия,
      слежение-прицел↔метки пути. */
-  {id:9,  name:9,  price:1, premium:true, fx:'satellites', trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,', cat:'stars'}, // Спутники — синь тона 230°
-  {id:10, name:10, price:1, premium:true, fx:'facets',     trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,', cat:'stars'}, // Грани — почти белый хрусталь
-  {id:11, name:11, price:1, premium:true, fx:'inlay',      trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,', cat:'stars'},  // Инкрустация — рубин, тон 340°
-  {id:12, name:12, price:1, premium:true, fx:'filigree',   trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,', cat:'stars'},  // Филигрань — старое золото, тон 35°
-  {id:13, name:13, price:1, premium:true, fx:'core',       trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,', cat:'stars'},  // Ядро — изумруд, тон 140°
-  {id:14, name:14, price:1, premium:true, fx:'aim',        trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,', cat:'stars'},  // Прицел — электрик, тон 195°
+  // 08.09.2026: заменены на темы физика/культура (владелец, явное подтверждение; старые 6
+  // сохранены в .knowledge/archive-premium-skins-id9-14-08-09-2026.md). Цена остаётся 1⭐
+  // (тестовая, финальная — отдельный будущий разговор), Сатурн/Аврора/Пульсар НЕ повторяем —
+  // уже реальные скины id49-51.
+  {id:9,  name:'Спиральная галактика',       price:100, premium:true, fx:'cosGalaxy',    trailFx:'debris',   body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,', cat:'stars'}, // Волна плотности вращается как целое (Лин-Шу), не звёзды по отдельности
+  {id:10, name:'Аккреционный диск',          price:100, premium:true, fx:'cosAccretion', trailFx:'pearls',   body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,', cat:'stars'}, // Кеплеровская дифф. ротация + турбулентно мерцающий джет
+  {id:11, name:'Квазикристалл',              price:100, premium:true, fx:'cosQuasi',     trailFx:'sparks',   body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)', trail:'rgba(255,90,140,', cat:'stars'},  // Апериодичная диаграмма дифракции, 10-лучевая симметрия
+  {id:12, name:'Дамасская сталь',            price:100, premium:true, fx:'matWootz',     trailFx:'cometdust',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)', trail:'rgba(230,170,70,', cat:'stars'},  // Вуц — блеск бежит по волнистым полосам «воды»
+  {id:13, name:'Кольчуга',                   price:100, premium:true, fx:'chainmail6',   trailFx:'ribbon',   body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)', trail:'rgba(70,220,130,', cat:'stars'},  // 6-в-1, полотно реально собирается кольцо за кольцом
+  {id:14, name:'Персидский ковёр',           price:100, premium:true, fx:'persianTabriz',trailFx:'waypoints',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)', trail:'rgba(60,190,230,', cat:'stars'},  // Тебриз — ткётся узел за узлом снизу вверх
   /* 05.09.2026 «добавляй все скины в игру, и они будут временно бесплатные»: 30 доп.
      скинов, отобраны владельцем через макеты этой сессии — render.js:PREM_FX_MAP (общий
      рендерер, не 30 копий кода, тот файл грузится раньше). tempFree:true — маркер для

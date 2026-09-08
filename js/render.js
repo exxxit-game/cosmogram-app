@@ -274,23 +274,6 @@ function trailGlow(skin){
   }
   return trailGlowCache[skin.id];
 }
-/* 07.09.2026: тот же приём, что trailGlow() выше — спрайт-кружок вместо CanvasGradient
-   в кадре. У «Спутники» (fx==='satellites') раньше 3 createRadialGradient пересоздавались
-   каждый кадр (позиция/радиус орбиты меняются, но сам градиент — нет, только цвет skin.trail
-   и он один на скин): рисуем единичный спрайт один раз на skin.id, дальше drawImage с
-   нужным размером/позицией — тот же класс фикса, что уже применён у sheenSprite(). */
-const satGlowCache={};
-function satGlowSprite(skin){
-  if(!satGlowCache[skin.id]){
-    const c=document.createElement('canvas'); c.width=c.height=32;
-    const x=ctx2d(c);
-    const g=x.createRadialGradient(16,16,0,16,16,16);
-    g.addColorStop(0,skin.trail+'.95)'); g.addColorStop(1,skin.trail+'0)');
-    x.fillStyle=g; x.beginPath(); x.arc(16,16,16,0,6.283); x.fill();
-    satGlowCache[skin.id]=c;
-  }
-  return satGlowCache[skin.id];
-}
 /* v1.66.0: корпусное свечение скина — кэш-спрайт вместо shadowBlur в каждом кадре */
 const planeGlowCache={};
 function planeGlow(skin){
@@ -356,89 +339,6 @@ function drawSkinGem(g, skin, x, y, r, glint){
   }
   g.restore();
 }
-/* «мощный кристалл» вместо цветочка у Спутников — сросток из трёх шипов (главный +
-   два боковых поменьше), тот же металлический контур, что у остального. */
-function drawMightyCrystal(ctx, trail, x, y, r, glint){
-  ctx.save(); ctx.translate(x,y);
-  const shapes=[
-    [[-r*.15,-r*.35],[-r*.9,r*.1],[-r*.4,r*.55],[-r*.05,r*.15]],
-    [[r*.15,-r*.35],[r*.9,r*.1],[r*.4,r*.55],[r*.05,r*.15]],
-    [[0,-r*1.5],[r*.5,r*.15],[0,r*.85],[-r*.5,r*.15]],
-  ];
-  shapes.forEach((pts,i)=>{
-    ctx.fillStyle=trail+(i===2?'.8)':'.6)');
-    ctx.beginPath(); pts.forEach(([px,py],j)=>j===0?ctx.moveTo(px,py):ctx.lineTo(px,py)); ctx.closePath(); ctx.fill();
-    metalStroke(ctx, c=>{ pts.forEach(([px,py],j)=>j===0?c.moveTo(px,py):c.lineTo(px,py)); c.closePath(); }, .8, .3);
-  });
-  if(glint>0.02){
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.fillStyle='rgba(255,255,255,'+(glint*.9).toFixed(2)+')';
-    const main=shapes[2];
-    ctx.beginPath(); main.forEach(([px,py],j)=>j===0?ctx.moveTo(px,py):ctx.lineTo(px,py)); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,'+glint.toFixed(2)+')'; ctx.lineWidth=.4;
-    ctx.beginPath(); ctx.moveTo(-r*1.4,0); ctx.lineTo(r*1.4,0); ctx.moveTo(0,-r*1.9); ctx.lineTo(0,r*1.1); ctx.stroke();
-    ctx.restore();
-  }
-  ctx.restore();
-}
-/* «наконечник» Прицела — крупный, свой собственный силуэт (вытянутый, острее обычного
-   камня), не общий drawSkinGem: он один такой на весь борт, ему можно быть особенным. */
-function drawSpearGem(ctx, trail, x, y, r, glint){
-  ctx.save(); ctx.translate(x,y);
-  const pts=(c)=>{ c.moveTo(0,-r*1.3); c.lineTo(r*.55,0); c.lineTo(0,r*.75); c.lineTo(-r*.55,0); c.closePath(); };
-  ctx.fillStyle=trail+'.8)';
-  ctx.beginPath(); pts(ctx); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,.32)';
-  ctx.beginPath(); ctx.moveTo(0,-r*.7); ctx.lineTo(r*.26,0); ctx.lineTo(0,r*.4); ctx.lineTo(-r*.26,0); ctx.closePath(); ctx.fill();
-  metalStroke(ctx, pts, .85, .4);
-  if(glint>0.02){
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.fillStyle='rgba(255,255,255,'+(glint*.95).toFixed(2)+')';
-    ctx.beginPath(); pts(ctx); ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,'+glint.toFixed(2)+')'; ctx.lineWidth=.45;
-    ctx.beginPath(); ctx.moveTo(-r*1.1,0); ctx.lineTo(r*1.1,0); ctx.moveTo(0,-r*1.7); ctx.lineTo(0,r*1.1); ctx.stroke();
-    ctx.restore();
-  }
-  ctx.restore();
-}
-const FACET_PARTS=[ // грани корпуса для fx:'facets' — координаты те же, что макет
-  { pts:[[0,-22],[-16,14],[-8,10]], base:'.10', cx:-8 },
-  { pts:[[0,-22],[-8,10],[0,6]],    base:'.22', cx:-2.7 },
-  { pts:[[0,-22],[0,6],[8,10]],     base:'.16', cx:2.7 },
-  { pts:[[0,-22],[8,10],[16,14]],   base:'.26', cx:8 },
-];
-// углы корпуса (нос + оба кончика крыла) — общие точки для Граней/Прицела
-const CORNER_NOSE=[0,-22], CORNER_LWING=[-16,14], CORNER_RWING=[16,14];
-/* 04.09.2026 (владелец, живое устройство: «кривые линии»): координаты были на глаз, теперь
-   считаны — [1] и [2] стоят РОВНО на серединах рёбер крыльев ((0,-22)-(-16,14) и
-   (0,-22)-(16,14) → (-8,-4)/(8,-4)), оправа-«паутинка» рисуется от вершины носа (0,-22) до
-   этих же точек — то есть буквально по кромке крыла, не наискось через корпус. [0] — на
-   линии сгиба (x=0), в оправу не входит, отдельный камень. */
-const GEM_SLOTS=[ {x:0,y:-14,r:2.1,ph:0}, {x:-8,y:-4,r:1.7,ph:2.4}, {x:8,y:-4,r:1.7,ph:4.8} ]; // для fx:'inlay'
-// «на конце крыльев камни, что будут мигать» (владелец) — отдельные слоты на кончиках,
-// своя фаза мигания
-const WINGTIP_SLOTS=[ {x:-16,y:14,r:1.5,ph:1.2}, {x:16,y:14,r:1.5,ph:3.6} ];
-/* 04.09.2026, второй заход (владелец, живьём): формула поворота на 90° не знает, какая
-   сторона «внутрь» для конкретного ребра — для правого ребра (b-a=(16,36)) она честно
-   давала внутрь корпуса, для левого (b-a=(-16,36), другой знак dx) — по той же формуле,
-   но фактически НАРУЖУ (насечки торчали в пустое небо рядом с бортом). Разворачиваю
-   знак ТОЛЬКО у левой кромки (ei===0), правую не трогаю — она была верна с самого начала. */
-const FIL_MARKS=(()=>{ // насечки вдоль кромки крыльев для fx:'filigree'
-  const edges=[ [[0,-22],[-16,14]], [[0,-22],[16,14]] ], marks=[];
-  edges.forEach(([a,b],ei)=>{
-    const n=6;
-    for(let i=1;i<n;i++){
-      const f=i/n;
-      const x=a[0]+(b[0]-a[0])*f, y=a[1]+(b[1]-a[1])*f;
-      let nx=-(b[1]-a[1]), ny=(b[0]-a[0]);
-      if(ei===0){ nx=-nx; ny=-ny; }
-      const len=Math.hypot(nx,ny);
-      marks.push({x,y,ux:nx/len,uy:ny/len,f});
-    }
-  });
-  return marks;
-})();
-
 /* 05.09.2026 «добавляй все скины в игру»: 30 доп. премиум-скинов (id15-44 в SKINS,
    game.js) — отобраны владельцем через макеты этой же сессии, 17 «материалов» (тело
    перекрашено целиком, не пятно на нейтральном листе), 9 символов-сигилов (нейтральный
@@ -1076,6 +976,8 @@ const PREM_FX_MAP={
   illLeather:fxIllLeather, illTopo:fxIllTopo, illOrigami:fxIllOrigami, illLattice:fxIllLattice,
   patPenrose:fxPatPenrose, patLattice2:fxPatLattice2, patCircles:fxPatCircles, illCrystal:fxIllCrystal,
   cosSaturn:fxCosSaturn, cosAurora:fxCosAurora, cosPulsar:fxCosPulsar,
+  cosGalaxy:fxCosGalaxy, cosAccretion:fxCosAccretion, cosQuasi:fxCosQuasi,
+  matWootz:fxMatWootz, chainmail6:fxMatChainmail, persianTabriz:fxCulPersian,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1088,6 +990,121 @@ function drawPremiumFx2(ctx, sk, fx, nowMs){
   const dt=performance.now()-t0;
   if(premFxKey!==fx){ premFxAccum=0; premFxN=0; premFxKey=fx; }
   premFxAccum+=dt; premFxN++;
+}
+/* «Физика/культура, партия 2» — перенос для замены id9-14 (владелец, 08.09.2026: заменить
+   старые 6 приёмов, оригиналы сохранены в .knowledge/archive-premium-skins-id9-14-08-09-2026.md).
+   Тот же принцип, что у Сатурна/Авроры/Пульсара выше: рисуем в пикселях тела (clipShipBody),
+   без заливки фона (фон — уже нарисованный корпус скина) — масштаб первая прикидка,
+   ПОДЛЕЖИТ проверке вживую скриншотом до показа владельцу. */
+function galaxyLogSpiral(pitchDeg, thetaMax, rMax, N){
+  const b=1/Math.tan(pitchDeg*Math.PI/180);
+  const base=rMax/Math.exp(thetaMax/b);
+  const pts=[]; for(let i=0;i<=N;i++){ const th=i/N*thetaMax; pts.push([Math.exp(th/b)*base, th]); } return pts;
+}
+function fxCosGalaxy(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000;
+  ctx.rotate(p*2*Math.PI*0.5); // волна плотности вращается как целое, медленнее звёзд (Лин-Шу)
+  [0,Math.PI].forEach(off=>{
+    ctx.beginPath();
+    galaxyLogSpiral(15,4.4,11,60).forEach(([r,th],i)=>{ const x=r*Math.cos(th+off), y=r*Math.sin(th+off); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.strokeStyle='hsla(210,80%,72%,.9)'; ctx.lineWidth=0.55; ctx.stroke();
+  });
+  ctx.fillStyle='hsla(45,90%,80%,.95)'; ctx.beginPath(); ctx.arc(0,0,1.1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosAccretion(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  ctx.save(); ctx.scale(9,2.6);
+  for(let r=0.35;r<=1.3;r+=0.09){
+    const speed=Math.pow(1/r,1.5); // Кеплер — внутренние орбиты честно быстрее внешних
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.5);
+    ctx.strokeStyle='hsla(30,90%,'+(65-r*15)+'%,'+(0.9-r*0.4).toFixed(2)+')'; ctx.lineWidth=0.11;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*1.7); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  const flick=0.6+0.4*Math.sin(p*Math.PI*10); // джет турбулентно мерцает, не ровный луч
+  [-1,1].forEach(side=>{
+    const g=ctx.createLinearGradient(0,0,0,side*3.2);
+    g.addColorStop(0,'hsla(210,80%,70%,'+(0.7*flick).toFixed(2)+')'); g.addColorStop(1,'hsla(210,80%,60%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0.35,side*3.2); ctx.lineTo(-0.35,side*3.2); ctx.closePath(); ctx.fill();
+  });
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,0.55,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosQuasi(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%9000)/9000;
+  ctx.rotate(p*2*Math.PI*0.12); // очень медленное вращение — квазикристалл честно апериодичен, не "крутится как колесо"
+  const PHI=(1+Math.sqrt(5))/2;
+  for(let ray=0;ray<10;ray++){
+    const ang=ray*36*Math.PI/180;
+    for(let s=0;s<4;s++){
+      const r=Math.pow(PHI,s)*1.55; const x=r*Math.cos(ang), y=r*Math.sin(ang);
+      const rad=0.85-s*0.13;
+      const g=ctx.createRadialGradient(x,y,0,x,y,rad);
+      g.addColorStop(0,'hsla(190,90%,80%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,6.283); ctx.fill();
+    }
+  }
+  ctx.fillStyle='hsla(190,90%,90%,1)'; ctx.beginPath(); ctx.arc(0,0,0.3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxMatWootz(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3400)/3400;
+  for(let i=-9;i<=9;i++){
+    const y=i*1.4; if(y<-21||y>13) continue;
+    const shine=(Math.sin(p*Math.PI*2+i*0.5)+1)/2; // блеск бежит по полосам-«воде», настоящий узор кристаллизации карбидов
+    ctx.strokeStyle='hsla(210,15%,'+(55+Math.sin(i)*15+shine*20)+'%,'+(0.55+shine*0.35).toFixed(2)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath();
+    for(let x=-15;x<=15;x+=0.8){ const yy=y+Math.sin(x*0.4+i)*0.7; x===-15?ctx.moveTo(x,yy):ctx.lineTo(x,yy); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxMatChainmail(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  const R=2.9;
+  const cells=[]; for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1; // кольца реально собираются одно за другим, настоящая сборка полотна
+  cells.slice(0,shown).forEach(([row,col])=>{
+    const off=(row%2)*R;
+    const cx=col*R*1.7+off, cy=row*R*1.15;
+    if(Math.abs(cx)>15||cy<-20||cy>12) return;
+    ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,Math.PI/4,0,6.283); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,-Math.PI/4,0,6.283); ctx.stroke(); // 6-в-1: второй граф связности, не просто гуще
+  });
+  ctx.restore();
+}
+function fxCulPersian(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%4200)/4200;
+  const medHue=10; // Тебриз
+  const yTop=-19, yBot=11;
+  const revealY=yBot-(yBot-yTop)*Math.max(0.06,p); // ковёр реально ткётся снизу вверх, узел за узлом
+  ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
+  ctx.strokeStyle='rgba(20,10,10,.85)'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
+  ctx.strokeStyle='hsla('+medHue+',60%,62%,.85)'; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
+  const rnd=mulberry32(31);
+  for(let i=0;i<90;i++){
+    const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
+    ctx.fillStyle='hsla('+(medHue+rnd()*30)+',60%,55%,.55)';
+    ctx.beginPath(); ctx.arc(x,y,0.55,0,6.283); ctx.fill();
+  }
+  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
+    ctx.fillStyle='hsla('+medHue+',70%,58%,.9)';
+    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.fill();
+  });
+  ctx.fillStyle='hsla('+medHue+',70%,50%,.97)';
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(20,10,10,.7)'; ctx.lineWidth=0.3; ctx.stroke();
+  ctx.restore();
+  ctx.restore();
 }
 function premSkinPerfReport(){ // вызывается один раз при посадке/окончании забега (game.js)
   if(premFxN<10 || !premFxKey) return;
@@ -4269,158 +4286,10 @@ function drawPlane(sh,nowMs){
     ctx.drawImage(sheenSprite(),sx-9,-26,18,48); // v1.66.0: спрайт-полоса вместо градиента в кадре
     ctx.restore();
   }
-  /* 04.09.2026 «Премиум-скины за Stars»: 6 приёмов корпуса, каждый под свой Stars-скин
-     (id ещё не назначены — см. project_premium_skins_visual_language в памяти). Отобраны
-     живьём владельцем через макет, гейтятся по hq той же дисциплиной, что Неон/Хром/Плазма
-     выше — на слабых устройствах (Q.level<2) премиум-скин по-прежнему покупается и носится,
-     просто без этой добавки, как и любой другой fx-скин сейчас. */
-  if(hq && fx==='satellites'){ // Спутники: 3 орбитальные точки + мощный кристалл на носу и на хвосте
-    let nearTop=0, nearBottom=0;
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    for(let i=0;i<3;i++){
-      const ph=nowMs/900+i*2.094;
-      const ox=Math.cos(ph)*22, oy=-2+Math.sin(ph)*12;
-      const r=2.6+0.8*Math.sin(nowMs/300+i);
-      const rr=r*2.2;
-      ctx.drawImage(satGlowSprite(skin), ox-rr, oy-rr, rr*2, rr*2);
-      const a=((ph%6.283)+6.283)%6.283;
-      // верх орбиты (ph≈4.71) — рядом с носом; низ (ph≈1.5708) — рядом с хвостом
-      const topDist=Math.abs(a-4.71);
-      nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
-      const botDist=Math.abs(a-1.5708);
-      nearBottom=Math.max(nearBottom, Math.max(0,1-botDist/0.4));
-    }
-    ctx.restore();
-    // «меняем цветочек на мощный кристалл, на нос и назад... пусть оба мигают, когда шары
-    // мимо проходят» (владелец) — два кристалла на точках орбиты, где реально пролетают
-    // шары, каждый мигает от СВОЕГО прохода
-    drawMightyCrystal(ctx,skin.trail,0,-15,2.6,nearTop*.85);
-    drawMightyCrystal(ctx,skin.trail,0,7,2.2,nearBottom*.85);
-  }
-  if(hq && fx==='facets'){ // Грани: огранка с бегущим бликом-разверткой + камень в точке схода
-    const cyc=2200;
-    const sweep=-26+((nowMs%cyc)/cyc)*52;
-    FACET_PARTS.forEach(f=>{
-      ctx.fillStyle=skin.trail+f.base+')';
-      ctx.beginPath(); ctx.moveTo(f.pts[0][0],f.pts[0][1]); ctx.lineTo(f.pts[1][0],f.pts[1][1]); ctx.lineTo(f.pts[2][0],f.pts[2][1]); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle=skin.trail+'.5)'; ctx.lineWidth=.5; ctx.stroke();
-      const glint=Math.max(0,1-Math.abs(f.cx-sweep)/7);
-      if(glint>0.02){
-        ctx.save(); ctx.globalCompositeOperation='lighter';
-        ctx.fillStyle='rgba(255,255,255,'+(glint*glint*0.9).toFixed(2)+')';
-        ctx.beginPath(); ctx.moveTo(f.pts[0][0],f.pts[0][1]); ctx.lineTo(f.pts[1][0],f.pts[1][1]); ctx.lineTo(f.pts[2][0],f.pts[2][1]); ctx.closePath(); ctx.fill();
-        ctx.restore();
-      }
-    });
-    const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
-    drawSkinGem(ctx,skin,0,8,1.6,centerGlint*.9);
-    // «по задним граням будут драгоценности, в дополнение к той что уже по середине, и на
-    // острие носа добавится» (владелец) — камни в носу и на обоих кончиках крыльев
-    drawSkinGem(ctx,skin,CORNER_NOSE[0],CORNER_NOSE[1],1.2,0);
-    drawSkinGem(ctx,skin,CORNER_LWING[0],CORNER_LWING[1],1.1,0);
-    drawSkinGem(ctx,skin,CORNER_RWING[0],CORNER_RWING[1],1.1,0);
-  }
-  if(hq && fx==='inlay'){ // Инкрустация: камни в корпусе + на кончиках крыльев; оправа от вершины носа
-    // (0,-22) ровно по кромке крыла до камней [1]/[2] — не наискось через корпус.
-    metalStroke(ctx, c=>{
-      c.moveTo(0,-22); c.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
-      c.moveTo(0,-22); c.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y);
-    }, .75, .4);
-    const cyc=2400;
-    // «на конце крыльев камни, что будут мигать» — WINGTIP_SLOTS добавлены к основным
-    GEM_SLOTS.concat(WINGTIP_SLOTS).forEach(gm=>{
-      const ph=((nowMs+gm.ph*400)%cyc)/cyc;
-      const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
-      drawSkinGem(ctx,skin,gm.x,gm.y,gm.r,glint);
-    });
-  }
-  if(hq && fx==='filigree'){ // Филигрань: гравировка по кромке, искра бежит от камня в носу по обеим сторонам разом
-    /* 04.09.2026 (владелец, живьём — «доходит, камень не загорается»): проверено расчётом
-       фаз, не на глаз — старая формула ph=(ei*6+i)/12 давала правой и левой кромке РАЗНЫЕ
-       несовпадающие окна, а камень в носу мигал по своей отдельной формуле (nowMs/1800%1<
-       0.2), никак не привязанной к пробегу вообще: правая кромка «доходила» до носа на
-       42% цикла, камень к этому моменту уже гас на 20% раньше — разрыв в 22% цикла.
-       Починка: искра стартует ИЗ камня (C=0) и одновременно бежит по обеим кромкам
-       наружу — один физический источник времени (C) на всё, задержка насечки = f*0.5. */
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    metalStroke(ctx, c=>{ c.moveTo(0,-22); c.lineTo(-16,14); c.moveTo(0,-22); c.lineTo(16,14); }, .55, .35);
-    const cyc=1800;
-    const C=(nowMs/cyc)%1;
-    FIL_MARKS.forEach(m=>{
-      metalStroke(ctx, c=>{ c.moveTo(m.x,m.y); c.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); }, .7, .4);
-      const local=C-m.f*0.5;
-      const glint=(local>=0&&local<0.18)?Math.max(0,1-local/0.18):0;
-      if(glint>0.02){
-        ctx.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
-        ctx.beginPath(); ctx.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); ctx.fill();
-      }
-    });
-    ctx.restore();
-    const noseGlint=Math.max(0,1-C/0.15);
-    drawSkinGem(ctx,skin,0,-16,1.4,noseGlint*.85);
-  }
-  if(hq && fx==='core'){ // Ядро: гранёный реактор в оправе-кольце + хребет от хвоста до носа + камни на крыльях
-    // хребет от хвоста (0,6) до самого носа (0,-22) с бегущей точкой
-    metalStroke(ctx, c=>{ c.moveTo(0,-22); c.lineTo(0,6); }, .6, .4);
-    const spineT=(nowMs/2000)%1;
-    const sy=-22+28*spineT;
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    ctx.fillStyle='rgba(255,255,255,'+(Math.sin(spineT*Math.PI)*.8).toFixed(2)+')';
-    ctx.beginPath(); ctx.arc(0,sy,.9,0,6.283); ctx.fill();
-    ctx.restore();
-    // камни на крыльях вспыхивают ровно в момент, когда бегущая точка доходит до конца хребта
-    const wingGlint=Math.max(0,1-(1-spineT)/0.15);
-    drawSkinGem(ctx,skin,-9,9,1.3,wingGlint);
-    drawSkinGem(ctx,skin,9,9,1.3,wingGlint);
-    ctx.save(); ctx.translate(0,2);
-    // гранёная оправа-кольцо вокруг реактора — тёплый металл, не тон скина (была та же
-    // ошибка «сливается», что у Инкрустации)
-    metalStroke(ctx, c=>{
-      for(let i=0;i<6;i++){ const a=i*Math.PI/3; const px=Math.cos(a)*5.4, py=Math.sin(a)*5.4; i===0?c.moveTo(px,py):c.lineTo(px,py); }
-      c.closePath();
-    }, .7, .4);
-    ctx.strokeStyle=skin.trail+'.45)'; ctx.lineWidth=.4;
-    ctx.beginPath(); ctx.arc(0,0,3.3,0,6.283); ctx.stroke();
-    ctx.globalCompositeOperation='lighter';
-    const pulse=0.5+0.5*Math.sin(nowMs/500);
-    const coreR=1.6+pulse*.5;
-    ctx.fillStyle='rgba(255,255,255,'+(0.5+0.4*pulse).toFixed(2)+')';
-    ctx.beginPath(); ctx.moveTo(0,-coreR); ctx.lineTo(coreR*.6,0); ctx.lineTo(0,coreR); ctx.lineTo(-coreR*.6,0); ctx.closePath(); ctx.fill();
-    if(pulse>0.85){
-      const rayA=(pulse-0.85)/0.15;
-      ctx.strokeStyle=skin.trail+(rayA*.8).toFixed(2)+')'; ctx.lineWidth=.5;
-      for(let i=0;i<4;i++){
-        const ang=i*(Math.PI/2)+Math.PI/4;
-        ctx.beginPath(); ctx.moveTo(Math.cos(ang)*2,Math.sin(ang)*2); ctx.lineTo(Math.cos(ang)*(4+rayA*3),Math.sin(ang)*(4+rayA*3)); ctx.stroke();
-      }
-    }
-    ctx.restore();
-  }
-  if(hq && fx==='aim'){ // Прицел: HUD-скобки вращаются, на захвате сами фокусируются — подлетают ближе и раскрываются шире
-    let anyLock=0;
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    const rot=nowMs/2600;
-    for(let i=0;i<4;i++){
-      const ang=rot+i*(Math.PI/2);
-      const top=((ang-Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-      const distToTop=Math.min(top,Math.PI*2-top);
-      const lock=Math.max(0,1-distToTop/0.35);
-      const R=26-lock*7, spread=4+lock*3;
-      ctx.save(); ctx.rotate(ang);
-      ctx.strokeStyle=lock>0.02?'rgba(255,255,255,'+(0.8+lock*0.2).toFixed(2)+')':skin.trail+'.8)';
-      ctx.lineWidth=1+lock*.8;
-      ctx.beginPath(); ctx.moveTo(-R,-6); ctx.lineTo(-R,-6-spread); ctx.lineTo(-R+spread,-6-spread); ctx.stroke();
-      anyLock=Math.max(anyLock,lock);
-      ctx.restore();
-    }
-    ctx.restore();
-    // по камню на каждом углу крыла + свой «наконечник» в носу (не общий камень со всеми
-    // остальными), крупнее и ярче отзывается на скобку, когда та проходит мимо
-    drawSkinGem(ctx,skin,-14,12,1.1,0);
-    drawSkinGem(ctx,skin,14,12,1.1,0);
-    drawSpearGem(ctx,skin.trail,0,-17,2.6,anyLock*.9);
-  }
-  if(hq) drawPremiumFx2(ctx, skin, fx, nowMs); // 05.09.2026: 30 доп. премиум-скинов, единая точка входа — см. определение выше
+  /* 08.09.2026: старые 6 инлайн-приёмов (satellites/facets/inlay/filigree/core/aim) удалены —
+     заменены темами физика/культура через PREM_FX_MAP (см. fxCosGalaxy и соседние выше).
+     Оригинальный код — .knowledge/archive-premium-skins-id9-14-08-09-2026.md, ничего не потеряно. */
+  if(hq) drawPremiumFx2(ctx, skin, fx, nowMs); // 05.09.2026: единая точка входа для всех премиум-скинов
   /* 28.08.2026 «Тюнинг, шаг 1: декаль на корпусе». Левая половина корпуса — плоская видимая
      грань (fold красит только правый треугольник, см. выше); декаль кладём в её центр масс —
      геометрический центроид треугольника носа/крыла/хвоста (0,-22)/(-16,14)/(0,6):
