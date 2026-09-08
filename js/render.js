@@ -491,6 +491,54 @@ function fxCosSaturn(ctx,sk,nowMs){
   ctx.fillStyle='hsla(43,60%,80%,1)'; ctx.beginPath(); ctx.arc(0,-4,COS_SCALE*.42,0,6.283); ctx.fill();
   ctx.restore();
 }
+
+/* Аврора — тупая подсолнечная сторона + длинный хвост, честная асимметрия магнитосферы.
+   Раскладка исходно от -1 до 2.3 по x (центр масс смещён к хвосту) — сдвигаем начало
+   координат на -0.65*COS_SCALE, чтобы фигура легла в тело симметричнее, не вся вправо. */
+function fxCosAurora(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  ctx.translate(-0.65*COS_SCALE,-4);
+  ctx.scale(COS_SCALE,COS_SCALE);
+  const p=(nowMs%2600)/2600;
+  ctx.beginPath();
+  ctx.arc(-0.35,0,0.62,Math.PI*0.5,Math.PI*1.5);
+  ctx.bezierCurveTo(0.1,-0.62, 1.9,-0.35, 2.3,0);
+  ctx.bezierCurveTo(1.9,0.35, 0.1,0.62, -0.35,0.62);
+  ctx.closePath();
+  const g=ctx.createLinearGradient(-1,0,2.3,0);
+  g.addColorStop(0,'hsla(155,70%,55%,.55)'); g.addColorStop(1,'hsla(155,70%,45%,0)');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=0.06;
+  ctx.beginPath(); ctx.arc(-0.35,0,0.86,Math.PI*0.55,Math.PI*1.45); ctx.stroke();
+  ctx.fillStyle='#7ee6b8'; ctx.beginPath(); ctx.arc(0,0,0.11,0,6.283); ctx.fill();
+  for(let k=0;k<5;k++){
+    const flick=(Math.sin(p*Math.PI*2*(2+k)+k)+1)/2;
+    ctx.strokeStyle='hsla(140,90%,'+(60+flick*20)+'%,'+(0.25+flick*0.5).toFixed(2)+')'; ctx.lineWidth=0.09;
+    ctx.beginPath(); ctx.ellipse(0,0,0.34+k*0.01,0.2+k*0.01,0,0,6.283); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* Пульсар — два луча (с двух магнитных полюсов), честно разделены 180°, маяк-эффект. */
+function fxCosPulsar(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  ctx.translate(0,-4); ctx.scale(COS_SCALE,COS_SCALE);
+  const p=(nowMs%1800)/1800;
+  const tilt=32*Math.PI/180;
+  [0,0.5].forEach(offset=>{
+    const spin=(p+offset)%1; const ang=spin*2*Math.PI - Math.PI/2;
+    const bx=Math.cos(ang)*Math.sin(tilt+0.001), by=Math.sin(ang);
+    const beamAng=Math.atan2(by,bx);
+    ctx.save(); ctx.rotate(beamAng);
+    const g=ctx.createLinearGradient(0,0,1.3,0);
+    g.addColorStop(0,'hsla(255,90%,80%,.9)'); g.addColorStop(1,'hsla(255,90%,70%,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(1.3,-0.18); ctx.lineTo(1.3,0.18); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+  ctx.fillStyle='#e8ecff'; ctx.beginPath(); ctx.arc(0,0,0.14,0,6.283); ctx.fill();
+  ctx.restore();
+}
 function edgeHalfWidth(y){ return Math.max(0,(y+22)/36*16); }
 
 /* --- материалы: Золото/Серебро/Бронза — веерная сеть прямых прожилок из 4 узлов --- */
@@ -1027,7 +1075,7 @@ const PREM_FX_MAP={
   sigYinyang:fxSigYinyang, sigFlower:fxSigFlower, sigMaltese:fxSigMaltese, sigSnowflake:fxSigSnowflake,
   illLeather:fxIllLeather, illTopo:fxIllTopo, illOrigami:fxIllOrigami, illLattice:fxIllLattice,
   patPenrose:fxPatPenrose, patLattice2:fxPatLattice2, patCircles:fxPatCircles, illCrystal:fxIllCrystal,
-  cosSaturn:fxCosSaturn,
+  cosSaturn:fxCosSaturn, cosAurora:fxCosAurora, cosPulsar:fxCosPulsar,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
