@@ -2558,6 +2558,16 @@ function keyCodeLabel(code){ // человекочитаемое имя физи
 function keyBindLabel(dir){ return KEY_BINDS[dir] ? keyCodeLabel(KEY_BINDS[dir]) : KEY_BIND_DEFAULT_LABEL[dir]; }
 function keyBindRowLabel(dir){ rowV(KEY_DIR_ROW[dir], keyBindLabel(dir)); }
 function keyBindAllLabels(){ ['left','right','up','down'].forEach(keyBindRowLabel); }
+/* 09.09.2026, владелец, живой скрин с телефона (обвёл красным): тап по строке «Влево» на
+   сенсорном экране открывает «слушаю клавишу…» и дальше ничего не происходит — физической
+   клавиатуры нет, событие KeyboardEvent никогда не придёт, тупик. Переназначение клавиш имеет
+   смысл только там, где есть настоящая клавиатура. 'ontouchstart' in window — тот же признак
+   мобильного/сенсорного устройства, что core.js уже использует для safe-area/качества графики
+   (tgInsetsSync, автоопределение тира) — не новый метод, тот же самый. */
+function keyBindRowsVisibility(){
+  const touch=('ontouchstart' in window);
+  ['left','right','up','down'].forEach(dir=>{ const el=$(KEY_DIR_ROW[dir]); if(el) el.classList.toggle('hidden',touch); });
+}
 function keyRebindListen(dir){
   if(keyRebindListening) keyBindRowLabel(keyRebindListening); // отменяем прошлое незавершённое ожидание, если было
   keyRebindListening=dir;
@@ -3112,7 +3122,7 @@ function applyLang(){
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
   setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
-  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш
+  gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); keyBindRowsVisibility(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш; keyBindRowsVisibility() — прячет переназначение на сенсорных, там нет клавиатуры
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
