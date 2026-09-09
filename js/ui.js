@@ -1065,11 +1065,116 @@ let scoreCountGen=0; // поколение анимации count-up счёта 
    3. Кошелёк под кнопкой покупки, а не над витриной.
    ============================================================ */
 
+/* 09.09.2026 «Явление → корпус» (владелец, макет-артефакт d5c119ac, часть рекламной подачи):
+   у премиум-скинов с узором (PREM_FX_MAP, физика/культура/материалы) окно предпросмотра сперва
+   показывает сам узор крупно и без обрезки силуэтом — «явление», как самостоятельная красота —
+   и только потом, кинематографичным переходом (не рывком), узор садится на корпус, как обычно.
+   Один раз на каждую смену скина, не бесконечный цикл (макет специально зациклен только ради
+   показа). Тайминги и кривая — дословно из макета: 3.2с явление, 1.4с переход. */
+let angarPvFxKey=null, angarPvFxStart=0;
+const ANGAR_FX_EVENT=3200, ANGAR_FX_TRANS=1400; // мс — макет владельца, не мной придуманные числа
+/* 09.09.2026, владелец (второй заход, живой макет): 1.35 было «чуть крупнее», а нужно
+   «на весь экран, как отдаление камеры» — явление начинается огромным, самолёт проступает
+   под ним, пока оба не сойдутся в одной точке «без склейки». Большое число, не 1.35. */
+const ANGAR_FX_BIG=4.2; // во сколько раз явление крупнее, чем осевший на корпус узор
+function angarPvFxEase(p){ return p<0.4 ? Math.pow(p/0.4,2)*0.4 : 0.4+(1-Math.pow(1-(p-0.4)/0.6,3))*0.6; } // «кинематографичная» кривая макета: мягкий разгон, ещё более протяжное торможение
+function angarPvFxPhase(key){
+  if(key!==angarPvFxKey){ angarPvFxKey=key; angarPvFxStart=performance.now(); }
+  const t=performance.now()-angarPvFxStart;
+  if(t<ANGAR_FX_EVENT) return {phase:'event', t, tt:0};
+  if(t<ANGAR_FX_EVENT+ANGAR_FX_TRANS) return {phase:'trans', t, tt:angarPvFxEase((t-ANGAR_FX_EVENT)/ANGAR_FX_TRANS)};
+  return {phase:'hold', t, tt:1};
+}
+/* «Рэк-фокус»: между двумя резкими точками (явление само по себе → явление на корпусе)
+   объектив у операторов проходит через мягкий, не в фокусе кадр — щелчок без этого читался бы
+   как склейка, не как непрерывный кадр (тот же принцип, что уже применён к кривой перехода).
+   blur() в canvas — в текущих (уже отмасштабированных) единицах контекста, поэтому берём
+   реальный масштаб через getTransform(), а не гадаем пиксель под конкретный DPR/размер превью. */
+function angarPvFxBlurPx(x, realPx){
+  if(realPx<=0) return 0;
+  const m=x.getTransform ? x.getTransform() : null;
+  const sc=m ? Math.hypot(m.a,m.b) : 1;
+  return sc>0 ? realPx/sc : 0;
+}
+/* 09.09.2026, владелец: «для каждого скина» — у однотонных (без sk.fx) нет узора, который
+   можно показать крупно, поэтому явление — это их же цвет (sk.trail/sk.glow), большим
+   пульсирующим сиянием, оседающим в обычную ауру. Мягкий радиальный градиент сам гаснет
+   к краям — диафрагма (жёсткий край) ему не нужна и не идёт, в отличие от геометричных
+   узоров, поэтому angarPvFxReveal ниже зовёт её только когда узор настоящий (fxFn задан). */
+function angarPvFxPlainGlow(x, sk, pvNow){
+  const pulse=0.85+0.15*Math.sin(pvNow/420);
+  const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
+  const g=x.createRadialGradient(0,-4,0,0,-4,20);
+  g.addColorStop(0, base+(0.5*pulse).toFixed(2)+')'); g.addColorStop(.55, base+(0.2*pulse).toFixed(2)+')'); g.addColorStop(1, base+'0)');
+  x.save(); x.globalCompositeOperation='lighter';
+  x.fillStyle=g; x.beginPath(); x.arc(0,-4,20,0,6.283); x.fill();
+  const g2=x.createRadialGradient(0,10,0,0,10,13);
+  g2.addColorStop(0, sk.trail+(0.55*pulse).toFixed(2)+')'); g2.addColorStop(1, sk.trail+'0)');
+  x.fillStyle=g2; x.beginPath(); x.arc(0,10,13,0,6.283); x.fill();
+  x.restore();
+}
+function angarPvFxReveal(x, sk, pvNow, phase, tt, fxFn){
+  const scale = phase==='event' ? ANGAR_FX_BIG : 1+(ANGAR_FX_BIG-1)*(1-tt);
+  const sinceStart = pvNow - angarPvFxStart;
+  const blurReal = phase==='event'
+    ? Math.max(0, 1-Math.min(1,sinceStart/300))*2.4   // явление «наводится на резкость» первые 300мс — не выскакивает готовым
+    : Math.sin(tt*Math.PI)*2.6;                          // рэк-фокус: мягко на середине перехода, резко на обоих концах
+  x.save();
+  x.scale(scale,scale);
+  const blurPx=angarPvFxBlurPx(x, blurReal);
+  if(blurPx>0.04) x.filter='blur('+blurPx.toFixed(2)+'px)';
+  if(fxFn){
+    /* 09.09.2026, владелец, живой макет: плоский тёмный прямоугольник поверх «лишнего» узора
+       не совпадал цветом с настоящим небом витрины — на подходе к посадке читался как чёрное
+       пятно. Убран.
+       09.09.2026, второй заход (владелец: «идеальный ли match cut?», проверено покадрово
+       заморозкой performance.now — на границе явление→переход настоящий clipShipBody(),
+       включённый ОДНИМ кадром, реально обрубал узор по силуэту сразу и заметно: секунду назад
+       зритель видел узор БЕЗ обрезки вообще, тут — резкий срез, это и есть шов. Диафрагма
+       (та же форма силуэта, но заведомо шире — IRIS_SAFETY) закрывается ПОСТЕПЕННО вместе со
+       сжатием узора, а не одним кадром на границе фаз; к моменту tt=1 совпадает с настоящим
+       clipShipBody координата в координату — дальше («осело») использует его уже напрямую,
+       без диафрагмы, шва между «переходом» и «осевшим» тоже нет. */
+    const _clip=clipShipBody;
+    if(phase==='trans'){
+      const IRIS_SAFETY=2.3; // запас, чтобы в начале перехода диафрагма заведомо шире любого узора — проверено вживую на диске (нужно было ≥1.46×)
+      const irisK=1+(IRIS_SAFETY-1)*(1-tt);
+      x.scale(irisK,irisK); _clip(x); x.scale(1/irisK,1/irisK);
+    }
+    clipShipBody=function(){}; // либо диафрагма выше, либо (на «явлении») вообще без обрезки — внутренний вызов не должен резать по новой
+    fxFn(x, sk, pvNow);
+    clipShipBody=_clip;
+  } else {
+    angarPvFxPlainGlow(x, sk, pvNow);
+  }
+  x.filter='none';
+  if(phase==='trans' && tt>0.82){ // короткая вспышка-блик в момент, когда узор «защёлкивается» на корпусе
+    const a=(tt-0.82)/0.18;
+    x.save(); x.globalCompositeOperation='lighter';
+    const g=x.createRadialGradient(0,-4,0,0,-4,26);
+    g.addColorStop(0, sk.trail+(0.55*(1-a)*a*4).toFixed(2)+')'); g.addColorStop(1, sk.trail+'0)');
+    x.fillStyle=g; x.beginPath(); x.arc(0,-4,26,0,6.283); x.fill();
+    x.restore();
+  }
+  x.restore();
+}
 /* Один рисунок корабля на все места ангара: и в жетоне, и в большом небе.
    Форма — та же, что в полёте (render.js drawPlane): нос, крылья, складка. */
 function angarShip(x, sk, s, bolshoy){
   x.save(); x.scale(s,s);
-  if(bolshoy){ // в небе борт светится так же, как в полёте: аура кормы и аура корпуса
+  /* 09.09.2026 «Явление → корпус»: пока узор показывается сам по себе («явление»), самого
+     самолётика ещё не видно вообще — ни ауры, ни корпуса, ни кромки; во время перехода он
+     проступает вместе с узором (hullAlpha=tt), на осевшем виде всё как раньше (1, без изменений). */
+  /* 09.09.2026, владелец: «это для каждого скина нужно сделать» — не только для узорных
+     (PREM_FX_MAP). Однотонным (без sk.fx вообще) явление — большое пульсирующее свечение
+     их же цвета (angarPvFxPlainGlow), оседающее в обычную ауру. Исключение — «Бумажный»
+     (id0, владелец явно попросил кроме него): дефолтный старт-скин, без явления, сразу корпус. */
+  const angarFxFn = bolshoy && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  const fxEntry = bolshoy && (angarFxFn || (!sk.fx && sk.id!==0));
+  const fxState = fxEntry ? angarPvFxPhase(sk.id) : null;
+  const hullAlpha = fxState ? (fxState.phase==='event' ? 0 : fxState.tt) : 1;
+  if(bolshoy && hullAlpha>0){ // в небе борт светится так же, как в полёте: аура кормы и аура корпуса
+    x.globalAlpha=hullAlpha;
     const g=x.createRadialGradient(0,16,1,0,16,20);
     g.addColorStop(0,sk.trail+'.5)'); g.addColorStop(.5,sk.trail+'.2)'); g.addColorStop(1,sk.trail+'0)');
     x.globalCompositeOperation='lighter'; x.fillStyle=g; x.fillRect(-20,-4,40,40);
@@ -1078,6 +1183,7 @@ function angarShip(x, sk, s, bolshoy){
     const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
     gg.addColorStop(0,base+'.40)'); gg.addColorStop(.55,base+'.14)'); gg.addColorStop(1,base+'0)');
     x.fillStyle=gg; x.fillRect(-32,-36,64,64);
+    x.globalAlpha=1;
   }
   /* 29.08.2026 «показывать Вспышку тоже»: раньше окно предпросмотра вообще не знало о
      вспышке — её было видно только первые 0.45с настоящего полёта. Здесь — тот же узор
@@ -1087,7 +1193,7 @@ function angarShip(x, sk, s, bolshoy){
      04.09.2026 (владелец, живое устройство): рисовалась ПОСЛЕ борта — ложилась поверх
      корпуса вместо подложки под ним. Перенесена сюда, до заливки корпуса — тот же порядок,
      что теперь и в render.js:drawScene (drawLaunchFlash до drawPlane). */
-  if(bolshoy){
+  if(bolshoy && hullAlpha>0){
     const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
     /* 07.09.2026, владелец: «Нет» (id0) явным исключением — раньше полагались на то, что
        0 сам по себе ложный в if(pvFlash) (работало и так), но владелец просил явное «для
@@ -1097,163 +1203,50 @@ function angarShip(x, sk, s, bolshoy){
         const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
         const col=a=>base+Math.max(0,a).toFixed(2)+')';
         const p=(performance.now()%1600)/1600;
-        x.save(); x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
+        x.save(); x.globalAlpha=hullAlpha; x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
       }
     }
   }
-  x.fillStyle=sk.body;
-  x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
-  x.fillStyle=sk.fold;
-  x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+  if(hullAlpha>0){
+    x.globalAlpha=hullAlpha;
+    x.fillStyle=sk.body;
+    x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+    x.fillStyle=sk.fold;
+    x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+    x.globalAlpha=1;
+  }
   /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец, живое устройство — «в окне
      предпросмотра видно ноль от новых скинов»): angarShip() никогда не рисовала fx вообще
      (ни старые Неон/Хром/Плазма, ни новые) — только полёт (render.js:drawPlane) их знал.
      Тот же код, что там, только на большом борту (bolshoy) — на жетоне мелко, не разглядеть.
      drawSkinGem/FACET_PARTS/GEM_SLOTS/FIL_MARKS — общие с render.js, тот файл грузится раньше. */
-  if(bolshoy && sk.fx){
-    // 04.09.2026, второй заход: витрина подтянута до того же вида, что и в реальном
-    // полёте (render.js) — металлический контраст, кристаллы на Спутниках, синхронизация
-    // Филиграни, хребет Ядра, наконечник Прицела, угловые камни у Граней/Прицела/Инкрустации.
-    // metalStroke/drawMightyCrystal/drawSpearGem/WINGTIP_SLOTS/CORNER_* — общие с render.js,
-    // тот файл грузится раньше.
+  if(bolshoy && fxEntry){ // 09.09.2026: было sk.fx — плоские скины (angarFxFn нет, свой fxEntry) тоже должны сюда попасть
+    /* 09.09.2026, владелец: удалены шесть мёртвых веток (Спутники/Грани/Инкрустация/Филигрань/
+       Ядро/Прицел, sk.fx==='satellites'/'facets'/'inlay'/'filigree'/'core'/'aim') — ни один
+       текущий скин в js/game.js такие fx не использует (убраны из каталога ещё в 799be8b
+       «партия физика/культура-2 + чистка каталога», код-обработчик здесь забыли удалить
+       следом). drawMightyCrystal/FACET_PARTS/GEM_SLOTS/WINGTIP_SLOTS/FIL_MARKS/CORNER_* —
+       проверены: нигде больше не используются, безопасно осиротели вместе с этим кодом
+       (не удалены отдельно — вне текущей задачи, drawSkinGem/drawSpearGem/metalStroke
+       НЕ трогать, их использует премиум-рендерер ниже/render.js). */
     const pvNow = performance.now();
-    if(sk.fx==='satellites'){
-      let nearTop=0, nearBottom=0;
-      x.save(); x.globalCompositeOperation='lighter';
-      for(let i=0;i<3;i++){
-        const ph=pvNow/900+i*2.094;
-        const ox=Math.cos(ph)*22, oy=-2+Math.sin(ph)*12;
-        const r=2.6+0.8*Math.sin(pvNow/300+i);
-        const g=x.createRadialGradient(ox,oy,0,ox,oy,r*2.2);
-        g.addColorStop(0,sk.trail+'.95)'); g.addColorStop(1,sk.trail+'0)');
-        x.fillStyle=g;
-        x.beginPath(); x.arc(ox,oy,r*2.2,0,6.283); x.fill();
-        const a=((ph%6.283)+6.283)%6.283;
-        const topDist=Math.abs(a-4.71);
-        nearTop=Math.max(nearTop, Math.max(0,1-topDist/0.4));
-        const botDist=Math.abs(a-1.5708);
-        nearBottom=Math.max(nearBottom, Math.max(0,1-botDist/0.4));
-      }
-      x.restore();
-      drawMightyCrystal(x,sk.trail,0,-15,2.6,nearTop*.85);
-      drawMightyCrystal(x,sk.trail,0,7,2.2,nearBottom*.85);
-    } else if(sk.fx==='facets'){
-      const cyc=2200;
-      const sweep=-26+((pvNow%cyc)/cyc)*52;
-      FACET_PARTS.forEach(f=>{
-        x.fillStyle=sk.trail+f.base+')';
-        x.beginPath(); x.moveTo(f.pts[0][0],f.pts[0][1]); x.lineTo(f.pts[1][0],f.pts[1][1]); x.lineTo(f.pts[2][0],f.pts[2][1]); x.closePath(); x.fill();
-        x.strokeStyle=sk.trail+'.5)'; x.lineWidth=.5; x.stroke();
-        const glint=Math.max(0,1-Math.abs(f.cx-sweep)/7);
-        if(glint>0.02){
-          x.save(); x.globalCompositeOperation='lighter';
-          x.fillStyle='rgba(255,255,255,'+(glint*glint*0.9).toFixed(2)+')';
-          x.beginPath(); x.moveTo(f.pts[0][0],f.pts[0][1]); x.lineTo(f.pts[1][0],f.pts[1][1]); x.lineTo(f.pts[2][0],f.pts[2][1]); x.closePath(); x.fill();
-          x.restore();
-        }
-      });
-      const centerGlint=Math.max(0,1-Math.abs(sweep)/7);
-      drawSkinGem(x,sk,0,8,1.6,centerGlint*.9);
-      drawSkinGem(x,sk,CORNER_NOSE[0],CORNER_NOSE[1],1.2,0);
-      drawSkinGem(x,sk,CORNER_LWING[0],CORNER_LWING[1],1.1,0);
-      drawSkinGem(x,sk,CORNER_RWING[0],CORNER_RWING[1],1.1,0);
-    } else if(sk.fx==='inlay'){
-      metalStroke(x, c=>{
-        c.moveTo(0,-22); c.lineTo(GEM_SLOTS[1].x,GEM_SLOTS[1].y);
-        c.moveTo(0,-22); c.lineTo(GEM_SLOTS[2].x,GEM_SLOTS[2].y);
-      }, .75, .4);
-      const cyc=2400;
-      GEM_SLOTS.concat(WINGTIP_SLOTS).forEach(gm=>{
-        const ph=((pvNow+gm.ph*400)%cyc)/cyc;
-        const glint=Math.max(0,1-Math.abs(ph-0.15)/0.12);
-        drawSkinGem(x,sk,gm.x,gm.y,gm.r,glint);
-      });
-    } else if(sk.fx==='filigree'){
-      x.save(); x.globalCompositeOperation='lighter';
-      metalStroke(x, c=>{ c.moveTo(0,-22); c.lineTo(-16,14); c.moveTo(0,-22); c.lineTo(16,14); }, .55, .35);
-      const cyc=1800;
-      const C=(pvNow/cyc)%1;
-      FIL_MARKS.forEach(m=>{
-        metalStroke(x, c=>{ c.moveTo(m.x,m.y); c.lineTo(m.x+m.ux*1.6,m.y+m.uy*1.6); }, .7, .4);
-        const local=C-m.f*0.5;
-        const glint=(local>=0&&local<0.18)?Math.max(0,1-local/0.18):0;
-        if(glint>0.02){
-          x.fillStyle='rgba(255,255,255,'+glint.toFixed(2)+')';
-          x.beginPath(); x.arc(m.x+m.ux*.8,m.y+m.uy*.8,.9*glint+.2,0,6.283); x.fill();
-        }
-      });
-      x.restore();
-      const noseGlint=Math.max(0,1-C/0.15);
-      drawSkinGem(x,sk,0,-16,1.4,noseGlint*.85);
-    } else if(sk.fx==='core'){
-      metalStroke(x, c=>{ c.moveTo(0,-22); c.lineTo(0,6); }, .6, .4);
-      const spineT=(pvNow/2000)%1;
-      const sy=-22+28*spineT;
-      x.save(); x.globalCompositeOperation='lighter';
-      x.fillStyle='rgba(255,255,255,'+(Math.sin(spineT*Math.PI)*.8).toFixed(2)+')';
-      x.beginPath(); x.arc(0,sy,.9,0,6.283); x.fill();
-      x.restore();
-      const wingGlint=Math.max(0,1-(1-spineT)/0.15);
-      drawSkinGem(x,sk,-9,9,1.3,wingGlint);
-      drawSkinGem(x,sk,9,9,1.3,wingGlint);
-      x.save(); x.translate(0,2);
-      metalStroke(x, c=>{
-        for(let i=0;i<6;i++){ const a=i*Math.PI/3; const px=Math.cos(a)*5.4, py=Math.sin(a)*5.4; i===0?c.moveTo(px,py):c.lineTo(px,py); }
-        c.closePath();
-      }, .7, .4);
-      x.strokeStyle=sk.trail+'.45)'; x.lineWidth=.4;
-      x.beginPath(); x.arc(0,0,3.3,0,6.283); x.stroke();
-      x.globalCompositeOperation='lighter';
-      const pulse=0.5+0.5*Math.sin(pvNow/500);
-      const coreR=1.6+pulse*.5;
-      x.fillStyle='rgba(255,255,255,'+(0.5+0.4*pulse).toFixed(2)+')';
-      x.beginPath(); x.moveTo(0,-coreR); x.lineTo(coreR*.6,0); x.lineTo(0,coreR); x.lineTo(-coreR*.6,0); x.closePath(); x.fill();
-      if(pulse>0.85){
-        const rayA=(pulse-0.85)/0.15;
-        x.strokeStyle=sk.trail+(rayA*.8).toFixed(2)+')'; x.lineWidth=.5;
-        for(let i=0;i<4;i++){
-          const ang=i*(Math.PI/2)+Math.PI/4;
-          x.beginPath(); x.moveTo(Math.cos(ang)*2,Math.sin(ang)*2); x.lineTo(Math.cos(ang)*(4+rayA*3),Math.sin(ang)*(4+rayA*3)); x.stroke();
-        }
-      }
-      x.restore();
-    } else if(sk.fx==='aim'){
-      let anyLock=0;
-      x.save(); x.globalCompositeOperation='lighter';
-      const rot=pvNow/2600;
-      for(let i=0;i<4;i++){
-        const ang=rot+i*(Math.PI/2);
-        const top=((ang-Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-        const distToTop=Math.min(top,Math.PI*2-top);
-        const lock=Math.max(0,1-distToTop/0.35);
-        const R=26-lock*7, spread=4+lock*3;
-        x.save(); x.rotate(ang);
-        x.strokeStyle=lock>0.02?'rgba(255,255,255,'+(0.8+lock*0.2).toFixed(2)+')':sk.trail+'.8)';
-        x.lineWidth=1+lock*.8;
-        x.beginPath(); x.moveTo(-R,-6); x.lineTo(-R,-6-spread); x.lineTo(-R+spread,-6-spread); x.stroke();
-        anyLock=Math.max(anyLock,lock);
-        x.restore();
-      }
-      x.restore();
-      drawSkinGem(x,sk,-14,12,1.1,0);
-      drawSkinGem(x,sk,14,12,1.1,0);
-      drawSpearGem(x,sk.trail,0,-17,2.6,anyLock*.9);
-    } else if(typeof PREM_FX_MAP!=='undefined' && PREM_FX_MAP[sk.fx]){ // 05.09.2026: 30 доп. премиум-скинов — общий рендерер из render.js
-      PREM_FX_MAP[sk.fx](x, sk, pvNow);
-    }
+    if(fxState.phase==='hold'){ if(angarFxFn) angarFxFn(x, sk, pvNow); } // отстоялось — узорным рисуем как всегда; однотонным рисовать больше нечего, сияние+корпус уже выше
+    else angarPvFxReveal(x, sk, pvNow, fxState.phase, fxState.tt, angarFxFn); // «явление»/переход — крупно, без обрезки силуэтом, с рэк-фокусом
   }
-  if(bolshoy){ // кромки крыльев — только на большом борту, в жетоне это каша
+  if(bolshoy && hullAlpha>0){ // кромки крыльев — только на большом борту, в жетоне это каша
     // 02.09.2026 (владелец вживую — «над сердцем... белое пятно, выходит за корпус»):
     // блик-эллипс здесь убран. Тот же самый блик уже убирали 31.08.2026 из render.js
     // (настоящий полёт) — владелец обвёл его жёлтым как ошибку тогда же. angarShip() —
     // отдельная, скопированная функция рисования борта для витрины Ангара/Тюнинга, и
     // блик остался только в этой копии, непочищенным. Страж 149.
+    x.globalAlpha=hullAlpha;
     x.strokeStyle='rgba(255,255,255,.32)'; x.lineWidth=1.1;
     x.beginPath();
     x.moveTo(0,-22); x.lineTo(-16,14); x.moveTo(0,-22); x.lineTo(16,14);
     x.moveTo(-16,14); x.lineTo(0,6); x.moveTo(0,6); x.lineTo(16,14);
     x.stroke();
-  } else {
+    x.globalAlpha=1;
+  } else if(!bolshoy) {
     x.strokeStyle='rgba(120,140,180,.5)'; x.lineWidth=1.6;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.stroke();
   }
