@@ -368,27 +368,48 @@ const SATURN_RINGS=[ // реальные радиусы, км от центра 
   {r0:140180, r1:140700, hue:48, a:.5},
 ];
 const SATURN_MAXR=SATURN_RINGS[SATURN_RINGS.length-1].r1;
-function fxCosSaturn(ctx,sk,nowMs){
-  ctx.save(); clipShipBody(ctx);
-  const p=(nowMs%6000)/6000;
-  SATURN_RINGS.forEach(rg=>{
-    if(rg.a<=0) return;
-    const r0abs=rg.r0/SATURN_MAXR*2.1, r1abs=rg.r1/SATURN_MAXR*2.1; // абстрактные единицы макета (0..2.1), для формулы скорости — как в оригинале
+/* 09.09.2026 «Скины не должны жрать зря»: было 5 живых колец × 24 сегмента-дуги = 120
+   ctx.stroke() каждый кадр — а «комковатость» (clump) зависит только от индекса сегмента s,
+   не от времени, то есть сама текстура кольца НИКОГДА не меняется, крутится только целиком.
+   Каждое кольцо теперь — свой кэшированный спрайт (кольца вращаются с РАЗНОЙ кеплеровской
+   скоростью, поэтому один общий спрайт на всю систему не подходит — только по кольцу),
+   в кадре — 5 drawImage вместо 120 дуг. Дифференциальное вращение не пострадало: у каждого
+   спрайта своя ctx.rotate() перед отрисовкой, как и раньше. */
+let saturnRingSprites=null;
+function saturnRingSprite(idx){
+  if(!saturnRingSprites) saturnRingSprites=[];
+  if(!saturnRingSprites[idx]){
+    const rg=SATURN_RINGS[idx];
+    const r0abs=rg.r0/SATURN_MAXR*2.1, r1abs=rg.r1/SATURN_MAXR*2.1;
     const rMidAbs=(r0abs+r1abs)/2;
-    const r0=r0abs*COS_SCALE, r1=r1abs*COS_SCALE, rMid=rMidAbs*COS_SCALE; // реальные пиксели тела — для рисования
-    const speed=Math.pow(1/rMidAbs,1.5); // честная кеплеровская дифф. ротация — внутренние кольца обгоняют внешние (ω∝r⁻¹·⁵)
-    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.35);
-    ctx.lineWidth=(r1-r0);
+    const r0=r0abs*COS_SCALE, r1=r1abs*COS_SCALE, rMid=rMidAbs*COS_SCALE;
+    const S=4, R=Math.ceil(rMid+(r1-r0)/2)+1, W=R*2;
+    const c=document.createElement('canvas'); c.width=W*S; c.height=W*S;
+    const x=ctx2d(c); x.setTransform(S,0,0,S,R*S,R*S);
+    x.lineWidth=(r1-r0);
     const seg=24;
     for(let s=0;s<seg;s++){
       const a0=s/seg*Math.PI*2, a1=(s+0.92)/seg*Math.PI*2;
       const clump=0.55+0.45*Math.sin(s*2.4);
-      ctx.strokeStyle='hsla('+rg.hue+',55%,72%,'+(rg.a*clump).toFixed(2)+')';
-      ctx.beginPath(); ctx.arc(0,-4,rMid,a0,a1); ctx.stroke();
+      x.strokeStyle='hsla('+rg.hue+',55%,72%,'+(rg.a*clump).toFixed(2)+')';
+      x.beginPath(); x.arc(0,0,rMid,a0,a1); x.stroke();
     }
+    saturnRingSprites[idx]={c,R,W,rMidAbs};
+  }
+  return saturnRingSprites[idx];
+}
+function fxCosSaturn(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%6000)/6000;
+  SATURN_RINGS.forEach((rg,idx)=>{
+    if(rg.a<=0) return;
+    const spr=saturnRingSprite(idx);
+    const speed=Math.pow(1/spr.rMidAbs,1.5); // честная кеплеровская дифф. ротация — внутренние кольца обгоняют внешние (ω∝r⁻¹·⁵)
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.35);
+    ctx.drawImage(spr.c, -spr.R, -spr.R, spr.W, spr.W);
     ctx.restore();
   });
-  ctx.fillStyle='hsla(43,60%,80%,1)'; ctx.beginPath(); ctx.arc(0,-4,COS_SCALE*.42,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(43,60%,80%,1)'; ctx.beginPath(); ctx.arc(0,0,COS_SCALE*.42,0,6.283); ctx.fill();
   ctx.restore();
 }
 
@@ -672,15 +693,35 @@ function hexPath(ctx,cx,cy,r){
   for(let i=0;i<6;i++){ const a=Math.PI/6+i*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
   ctx.closePath();
 }
+/* 09.09.2026 «Скины не должны жрать зря» (владелец, живой замер): 208 сот (HONEY_CELLS) —
+   самая дорогая из 79 узорных функций (2.4мс медиана — единственная, отрисовка 208×2 путей
+   каждый кадр). Сама сетка при этом НЕ зависит от nowMs вообще (shade — чистая функция индекса
+   i) — то есть все 208 гексагонов рисуются одинаково каждый кадр, 60 раз в секунду, без всякой
+   необходимости. Тот же приём, что уже есть у Хрома (sheenSprite() выше): сетка рисуется РАЗ
+   в закешированный спрайт, дальше — один drawImage. Картинка не меняется ни на волос — не
+   «облегчённая» версия, та же самая, просто не пересчитывается заново. Двигается только блик
+   (glow), он и остался в кадре. */
+let honeySpr=null;
+function honeyGridSprite(){
+  if(!honeySpr){
+    const S=4, OX=-30, OY=-36, W=60, H=60; // сверхвыборка ×4 для чёткости при масштабировании назад в мировые единицы
+    const c=document.createElement('canvas'); c.width=W*S; c.height=H*S;
+    const x=ctx2d(c); x.setTransform(S,0,0,S,-OX*S,-OY*S);
+    HONEY_CELLS.forEach(([cx,cy],i)=>{
+      const shade=0.5+0.25*Math.sin((i*1.7)+0.3);
+      x.fillStyle='rgba(214,150,50,'+shade.toFixed(2)+')';
+      x.beginPath(); hexPath(x,cx,cy,2.55); x.fill();
+      x.strokeStyle='rgba(90,55,15,.7)'; x.lineWidth=.22;
+      x.beginPath(); hexPath(x,cx,cy,2.55); x.stroke();
+    });
+    honeySpr={c,OX,OY,W,H};
+  }
+  return honeySpr;
+}
 function fxMatHoney(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx);
-  HONEY_CELLS.forEach(([cx,cy],i)=>{
-    const shade=0.5+0.25*Math.sin((i*1.7)+0.3);
-    ctx.fillStyle='rgba(214,150,50,'+shade.toFixed(2)+')';
-    ctx.beginPath(); hexPath(ctx,cx,cy,2.55); ctx.fill();
-    ctx.strokeStyle='rgba(90,55,15,.7)'; ctx.lineWidth=.22;
-    ctx.beginPath(); hexPath(ctx,cx,cy,2.55); ctx.stroke();
-  });
+  const spr=honeyGridSprite();
+  ctx.drawImage(spr.c, spr.OX, spr.OY, spr.W, spr.H);
   const glow=0.15+0.1*Math.sin(nowMs/1100);
   ctx.fillStyle='rgba(255,220,140,'+glow.toFixed(2)+')';
   ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
@@ -710,15 +751,31 @@ const QUARTZ_CELLS=(()=>{
   return cells;
 })();
 function rhombPath(ctx,cx,cy,s){ ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s*0.72,cy); ctx.lineTo(cx,cy+s); ctx.lineTo(cx-s*0.72,cy); ctx.closePath(); }
+/* 09.09.2026: тот же приём, что у Honey выше — 195 ромбов (QUARTZ_CELLS), shade зависит
+   только от индекса i, ни на волос от nowMs — сетка кешируется в спрайт один раз, картинка
+   не меняется, дальше drawImage. Дорого было (второе место в замере, ~1.3мс) именно из-за
+   размера решётки (13×15), не из-за формулы. */
+let quartzSpr=null;
+function quartzGridSprite(){
+  if(!quartzSpr){
+    const S=4, OX=-30, OY=-32, W=60, H=52;
+    const c=document.createElement('canvas'); c.width=W*S; c.height=H*S;
+    const x=ctx2d(c); x.setTransform(S,0,0,S,-OX*S,-OY*S);
+    QUARTZ_CELLS.forEach(([cx,cy,s],i)=>{
+      const shade=0.08+((i*37)%9)*0.02;
+      x.fillStyle='rgba(200,150,175,'+shade.toFixed(2)+')';
+      x.beginPath(); rhombPath(x,cx,cy,s); x.fill();
+      x.strokeStyle='rgba(150,100,130,.4)'; x.lineWidth=.22;
+      x.beginPath(); rhombPath(x,cx,cy,s); x.stroke();
+    });
+    quartzSpr={c,OX,OY,W,H};
+  }
+  return quartzSpr;
+}
 function fxMatQuartz(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx);
-  QUARTZ_CELLS.forEach(([cx,cy,s],i)=>{
-    const shade=0.08+((i*37)%9)*0.02;
-    ctx.fillStyle='rgba(200,150,175,'+shade.toFixed(2)+')';
-    ctx.beginPath(); rhombPath(ctx,cx,cy,s); ctx.fill();
-    ctx.strokeStyle='rgba(150,100,130,.4)'; ctx.lineWidth=.22;
-    ctx.beginPath(); rhombPath(ctx,cx,cy,s); ctx.stroke();
-  });
+  const spr=quartzGridSprite();
+  ctx.drawImage(spr.c, spr.OX, spr.OY, spr.W, spr.H);
   const sp=(nowMs/900)%(Math.PI*2);
   [0.25,0.6].forEach((f,i)=>{
     const yy=-22+f*36+2*Math.sin(sp+i*2);
@@ -1016,29 +1073,58 @@ function galaxyLogSpiral(pitchDeg, thetaMax, rMax, N){
   const base=rMax/Math.exp(thetaMax/b);
   const pts=[]; for(let i=0;i<=N;i++){ const th=i/N*thetaMax; pts.push([Math.exp(th/b)*base, th]); } return pts;
 }
+/* 09.09.2026 «Скины не должны жрать зря»: сама форма спирали (galaxyLogSpiral, 60 точек ×
+   2 рукава) не зависит от времени вообще — крутится только волна плотности целиком
+   (ctx.rotate). Оба рукава собраны в один Path2D один раз, дальше только rotate+stroke. */
+let galaxySpiralPath=null;
+function galaxySpiralPathBuild(){
+  if(!galaxySpiralPath){
+    galaxySpiralPath=new Path2D();
+    [0,Math.PI].forEach(off=>{
+      galaxyLogSpiral(15,4.4,11,60).forEach(([r,th],i)=>{ const x=r*Math.cos(th+off), y=r*Math.sin(th+off); i===0?galaxySpiralPath.moveTo(x,y):galaxySpiralPath.lineTo(x,y); });
+    });
+  }
+  return galaxySpiralPath;
+}
 function fxCosGalaxy(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%5000)/5000;
   ctx.rotate(p*2*Math.PI*0.5); // волна плотности вращается как целое, медленнее звёзд (Лин-Шу)
-  [0,Math.PI].forEach(off=>{
-    ctx.beginPath();
-    galaxyLogSpiral(15,4.4,11,60).forEach(([r,th],i)=>{ const x=r*Math.cos(th+off), y=r*Math.sin(th+off); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-    ctx.strokeStyle='hsla(210,80%,72%,.9)'; ctx.lineWidth=0.55; ctx.stroke();
-  });
+  ctx.strokeStyle='hsla(210,80%,72%,.9)'; ctx.lineWidth=0.55; ctx.stroke(galaxySpiralPathBuild());
   ctx.fillStyle='hsla(45,90%,80%,.95)'; ctx.beginPath(); ctx.arc(0,0,1.1,0,6.283); ctx.fill();
   ctx.restore();
+}
+/* 09.09.2026 «Скины не должны жрать зря», второй заход: кольца рисуются УЖЕ внутри
+   ctx.scale(9,2.6) — сплющенного пространства, не круглого. Приём Сатурна (спрайт кольца +
+   поворот целиком) сюда физически не переносится: повернуть уже сплющенный битмап — это
+   кувыркание эллипса, а не честное движение по орбите (scale и rotate не переставляются
+   местами без изменения картинки). Но форма ДУГИ каждого кольца (Math.PI*1.7 от центра, свой
+   радиус r) не зависит от времени вообще — она одна и та же всегда для данного r. Кешируем
+   11 путей-дуг один раз (Path2D), поворот и цвет остаются честными и живыми каждый кадр —
+   экономим саму геометрию (ctx.arc пересчитывал синус/косинус заново 11 раз на кадр), не трогая физику. */
+let accretionRingPaths=null;
+function accretionRingPathsBuild(){
+  if(!accretionRingPaths){
+    accretionRingPaths=[];
+    for(let r=0.35;r<=1.3;r+=0.09){
+      const path=new Path2D(); path.arc(0,0,r,0,Math.PI*1.7);
+      const speed=Math.pow(1/r,1.5); // Кеплер — внутренние орбиты честно быстрее внешних
+      accretionRingPaths.push({r,path,speed});
+    }
+  }
+  return accretionRingPaths;
 }
 function fxCosAccretion(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3000)/3000;
   ctx.save(); ctx.scale(9,2.6);
-  for(let r=0.35;r<=1.3;r+=0.09){
-    const speed=Math.pow(1/r,1.5); // Кеплер — внутренние орбиты честно быстрее внешних
+  ctx.lineWidth=0.11;
+  accretionRingPathsBuild().forEach(({r,path,speed})=>{
     ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.5);
-    ctx.strokeStyle='hsla(30,90%,'+(65-r*15)+'%,'+(0.9-r*0.4).toFixed(2)+')'; ctx.lineWidth=0.11;
-    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*1.7); ctx.stroke();
+    ctx.strokeStyle='hsla(30,90%,'+(65-r*15)+'%,'+(0.9-r*0.4).toFixed(2)+')';
+    ctx.stroke(path);
     ctx.restore();
-  }
+  });
   ctx.restore();
   const flick=0.6+0.4*Math.sin(p*Math.PI*10); // джет турбулентно мерцает, не ровный луч
   [-1,1].forEach(side=>{
@@ -1069,19 +1155,36 @@ function fxCosComet(ctx,sk,nowMs){ // Хвосты комет — ионный (
   ctx.fillStyle='#dfe6ff'; ctx.beginPath(); ctx.arc(0,0,1,0,6.283); ctx.fill();
   ctx.restore();
 }
+/* 09.09.2026 «Скины не должны жрать зря», второй заход: сам силуэт честно «дышит» (grow,
+   viewSquish) — картинку целиком не кешировать, форма реально меняется. Но per-angle
+   тригонометрия (sin/cos/pow от угла a) одна и та же в любой момент — от времени зависит
+   только множитель grow (общий на все точки) и итоговый масштаб. Кешируем sin(a)/cos(a) и
+   степенной множитель pow(|cos(a)|,.35) один раз на все ~32 угла — каждый кадр вместо
+   sin+cos+pow на точку остаётся дешёвое умножение на grow. */
+let nebulaAngles=null;
+function nebulaAnglesBuild(){
+  if(!nebulaAngles){
+    nebulaAngles=[];
+    for(let a=-Math.PI/2;a<=Math.PI/2;a+=0.1){
+      nebulaAngles.push({sinA:Math.sin(a), cosA:Math.cos(a), pw:Math.pow(Math.abs(Math.cos(a)),0.35)});
+    }
+  }
+  return nebulaAngles;
+}
 function fxCosNebula(ctx,sk,nowMs){ // Биполярная (hourglass) туманность — растёт, силуэт меняется с ракурсом
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%4200)/4200;
   const grow=0.7+0.3*Math.sin(p*Math.PI*2);
   const viewSquish=0.4+0.6*Math.abs(Math.cos(p*Math.PI*2*0.6));
+  const angles=nebulaAnglesBuild();
   ctx.save(); ctx.scale(1,viewSquish);
   [1,-1].forEach(side=>{
     ctx.save(); ctx.scale(1,side);
     ctx.beginPath();
-    for(let a=-Math.PI/2;a<=Math.PI/2;a+=0.1){
-      const r=9*grow*Math.pow(Math.abs(Math.cos(a)),0.35);
-      ctx.lineTo(r*Math.sin(a), -r*Math.cos(a)-1);
-    }
+    angles.forEach(({sinA,cosA,pw})=>{
+      const r=9*grow*pw;
+      ctx.lineTo(r*sinA, -r*cosA-1);
+    });
     const g=ctx.createRadialGradient(0,-6,0.7,0,-6,9*grow);
     g.addColorStop(0,'hsla(320,80%,68%,.85)'); g.addColorStop(1,'hsla(260,80%,45%,.15)');
     ctx.fillStyle=g; ctx.fill();
@@ -1135,38 +1238,72 @@ function fxCosLichtNeg(ctx,sk,nowMs){ // Лихтенберг, негативн�
   }
   ctx.restore();
 }
-function fxCosPlateau(ctx,sk,nowMs){ // Мыльная плёнка — тройное соединение под 120°, честная иризация цвета по углу
-  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
-  const p=(nowMs%5000)/5000;
-  const dx=4,dy=dx*Math.sqrt(3)/2;
-  for(let row=-3;row<=3;row++){
-    for(let col=-3;col<=3;col++){
-      const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
-      if(Math.hypot(cx,cy)>14) continue;
-      const ang=((cx+cy)*20+p*360)%90;
-      const n=1.33,d=300,m=1;
-      const thetaI=ang*Math.PI/180, thetaT=Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
-      const lambda=2*n*d*Math.cos(thetaT)/(m+0.5);
-      const hue=Math.max(0,Math.min(300,(700-lambda)/(700-380)*300));
-      ctx.strokeStyle='hsla('+hue+',80%,75%,.85)'; ctx.lineWidth=0.24;
-      for(let k=0;k<3;k++){
-        const a1=(k*120+(col+row)%2*60)*Math.PI/180;
-        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a1)*4,cy+Math.sin(a1)*4); ctx.stroke();
+/* 09.09.2026 «Скины не должны жрать зря»: цвет здесь честно течёт от времени (иризация по
+   углу) — этот кусок закешировать НЕЛЬЗЯ, не потеряв смысл узора. Но 3 спицы одной ячейки
+   всегда рисуются одним и тем же strokeStyle — геометрию (moveTo/lineTo, синус/косинус) можно
+   собрать в один Path2D на ячейку один раз, дальше на каждый кадр только пересчёт цвета
+   (дешёвая арифметика) + один stroke(path) вместо beginPath+moveTo+lineTo×3. */
+let plateauCells=null;
+function plateauCellsBuild(){
+  if(!plateauCells){
+    plateauCells=[];
+    const dx=4,dy=dx*Math.sqrt(3)/2;
+    for(let row=-3;row<=3;row++){
+      for(let col=-3;col<=3;col++){
+        const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
+        if(Math.hypot(cx,cy)>14) continue;
+        const path=new Path2D();
+        for(let k=0;k<3;k++){
+          const a1=(k*120+(col+row)%2*60)*Math.PI/180;
+          path.moveTo(cx,cy); path.lineTo(cx+Math.cos(a1)*4,cy+Math.sin(a1)*4);
+        }
+        plateauCells.push({cx,cy,path});
       }
     }
   }
+  return plateauCells;
+}
+function fxCosPlateau(ctx,sk,nowMs){ // Мыльная плёнка — тройное соединение под 120°, честная иризация цвета по углу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000;
+  ctx.lineWidth=0.24;
+  plateauCellsBuild().forEach(({cx,cy,path})=>{
+    const ang=((cx+cy)*20+p*360)%90;
+    const n=1.33,d=300,m=1;
+    const thetaI=ang*Math.PI/180, thetaT=Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
+    const lambda=2*n*d*Math.cos(thetaT)/(m+0.5);
+    const hue=Math.max(0,Math.min(300,(700-lambda)/(700-380)*300));
+    ctx.strokeStyle='hsla('+hue+',80%,75%,.85)';
+    ctx.stroke(path);
+  });
   ctx.restore();
+}
+/* 09.09.2026 «Скины не должны жрать зря», второй заход: позиция (r,ang → x,y, через sqrt+
+   sin+cos) и оттенок каждого зерна зависят ТОЛЬКО от его номера n, не от времени вообще —
+   растёт только СКОЛЬКО зёрен уже показано (shown). Раньше x/y/hue пересчитывались заново
+   (sqrt+cos+sin+shue) для всех до 220 зёрен каждый кадр — теперь считаются один раз и
+   кешируются, каждый кадр только читаем таблицу и решаем «свежее» ли зерно (для радиуса/альфы). */
+let phylloSeeds=null;
+function phylloSeedsBuild(){
+  if(!phylloSeeds){
+    phylloSeeds=[];
+    const PHI=(1+Math.sqrt(5))/2, GOLDEN_ANGLE=360*(1-1/PHI);
+    for(let n=0;n<220;n++){
+      const r=Math.sqrt(n)*1.04, ang=n*GOLDEN_ANGLE*Math.PI/180;
+      phylloSeeds.push({x:r*Math.cos(ang), y:r*Math.sin(ang), hue:45+n*0.3, light:60+(n%2)*8});
+    }
+  }
+  return phylloSeeds;
 }
 function fxCosPhyllo(ctx,sk,nowMs){ // Филлотаксис Фогеля — r=√n, θ=n·137.5077°, семена появляются по одному
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3800)/3800;
-  const PHI=(1+Math.sqrt(5))/2, GOLDEN_ANGLE=360*(1-1/PHI);
   const shown=Math.floor(p*220);
+  const seeds=phylloSeedsBuild();
   for(let n=0;n<shown;n++){
-    const r=Math.sqrt(n)*1.04, ang=n*GOLDEN_ANGLE*Math.PI/180;
-    const justBorn=n>shown-6;
-    ctx.fillStyle='hsla('+(45+n*0.3)+',75%,'+(60+(n%2)*8)+'%,'+(justBorn?1:.9)+')';
-    ctx.beginPath(); ctx.arc(r*Math.cos(ang), r*Math.sin(ang), justBorn?0.48:0.36,0,6.283); ctx.fill();
+    const s=seeds[n], justBorn=n>shown-6;
+    ctx.fillStyle='hsla('+s.hue+',75%,'+s.light+'%,'+(justBorn?1:.9)+')';
+    ctx.beginPath(); ctx.arc(s.x, s.y, justBorn?0.48:0.36,0,6.283); ctx.fill();
   }
   ctx.restore();
 }
@@ -1206,38 +1343,80 @@ function fxCosFaraday(ctx,sk,nowMs){ // Волны Фарадея — квадр
    детерминированный (mulberry32) момент появления, с коротким ярким "хитом" в момент
    прихода. Тот же приём уже проверен в макете fizika-kultura-map-08-09-2026.html. */
 const QUASI_ARRIVAL=(()=>{ const rnd=mulberry32(42); const arr=[]; for(let i=0;i<40;i++) arr.push(rnd()); return arr; })();
-function fxCosQuasi(ctx,sk,nowMs){
-  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
-  const p=(nowMs%4200)/4200;
+/* 09.09.2026 «Скины не должны жрать зря»: все 40 точек дифракции стоят на месте всегда —
+   меняется только момент появления (arrival) и краткая вспышка (justHit). Раньше 40
+   createRadialGradient+fill каждый кадр пересчитывали то, что не меняется. Позиции — в
+   quasiSpotsBuild() один раз (без pow/cos/sin по кадрам), сама точка (радиус × вспышка/нет,
+   всего 4×2=8 вариантов) — offscreen-спрайт, по кадру только drawImage. */
+let quasiSpots=null;
+function quasiSpotsBuild(){
+  if(quasiSpots) return quasiSpots;
   const PHI=(1+Math.sqrt(5))/2;
+  quasiSpots=[];
   let idx=0;
   for(let ray=0;ray<10;ray++){
     const ang=ray*36*Math.PI/180;
     for(let s=0;s<4;s++){
-      const arrival=QUASI_ARRIVAL[idx++];
-      if(p<arrival){ continue; }
-      const justHit=(p-arrival)<0.04;
-      const r=Math.pow(PHI,s)*1.55; const x=r*Math.cos(ang), y=r*Math.sin(ang);
-      const rad=(0.85-s*0.13)*(justHit?1.5:1);
-      const g=ctx.createRadialGradient(x,y,0,x,y,rad);
-      g.addColorStop(0,'hsla(190,90%,'+(justHit?95:80)+'%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,6.283); ctx.fill();
+      const r=Math.pow(PHI,s)*1.55;
+      quasiSpots.push({x:r*Math.cos(ang), y:r*Math.sin(ang), s, arrival:QUASI_ARRIVAL[idx++]});
     }
   }
+  return quasiSpots;
+}
+let quasiSprites=null;
+function quasiDotSprite(s,hit){
+  if(!quasiSprites) quasiSprites=[];
+  const key=s*2+(hit?1:0);
+  if(quasiSprites[key]) return quasiSprites[key];
+  const rad=(0.85-s*0.13)*(hit?1.5:1);
+  const S=4, R=Math.ceil(rad)+1, W=R*2;
+  const c=document.createElement('canvas'); c.width=W*S; c.height=W*S;
+  const x=c.getContext('2d'); x.setTransform(S,0,0,S,R*S,R*S);
+  const g=x.createRadialGradient(0,0,0,0,0,rad);
+  g.addColorStop(0,'hsla(190,90%,'+(hit?95:80)+'%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
+  x.fillStyle=g; x.beginPath(); x.arc(0,0,rad,0,6.283); x.fill();
+  const spr={c,R};
+  quasiSprites[key]=spr;
+  return spr;
+}
+function fxCosQuasi(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4200)/4200;
+  quasiSpotsBuild().forEach(sp=>{
+    if(p<sp.arrival) return;
+    const hit=(p-sp.arrival)<0.04;
+    const spr=quasiDotSprite(sp.s,hit);
+    ctx.drawImage(spr.c, sp.x-spr.R, sp.y-spr.R, spr.R*2, spr.R*2);
+  });
   ctx.fillStyle='hsla(190,90%,90%,1)'; ctx.beginPath(); ctx.arc(0,0,0.3,0,6.283); ctx.fill();
   ctx.restore();
+}
+/* 09.09.2026 «Скины не должны жрать зря»: волнистая форма каждой полосы (~38 точек × 19 строк)
+   не зависит от времени вообще — «блеск» (shine) меняет только цвет/прозрачность целой строки,
+   не саму форму. Путь каждой строки собирается один раз в Path2D и переиспользуется — вместо
+   ~720 lineTo каждый кадр остаётся 19 готовых путей, просто перекрашиваемых. */
+let wootzPaths=null;
+function wootzRowPaths(){
+  if(!wootzPaths){
+    wootzPaths=[];
+    for(let i=-9;i<=9;i++){
+      const y=i*1.4; if(y<-21||y>13) continue;
+      const path=new Path2D();
+      for(let x=-15;x<=15;x+=0.8){ const yy=y+Math.sin(x*0.4+i)*0.7; x===-15?path.moveTo(x,yy):path.lineTo(x,yy); }
+      wootzPaths.push({i,path});
+    }
+  }
+  return wootzPaths;
 }
 function fxMatWootz(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx);
   const p=(nowMs%3400)/3400;
-  for(let i=-9;i<=9;i++){
-    const y=i*1.4; if(y<-21||y>13) continue;
+  ctx.lineWidth=0.5;
+  wootzRowPaths().forEach(({i,path})=>{
     const shine=(Math.sin(p*Math.PI*2+i*0.5)+1)/2; // блеск бежит по полосам-«воде», настоящий узор кристаллизации карбидов
-    ctx.strokeStyle='hsla(210,15%,'+(55+Math.sin(i)*15+shine*20)+'%,'+(0.55+shine*0.35).toFixed(2)+')'; ctx.lineWidth=0.5;
-    ctx.beginPath();
-    for(let x=-15;x<=15;x+=0.8){ const yy=y+Math.sin(x*0.4+i)*0.7; x===-15?ctx.moveTo(x,yy):ctx.lineTo(x,yy); }
-    ctx.stroke();
-  }
+    ctx.strokeStyle='hsla(210,15%,'+(55+Math.sin(i)*15+shine*20)+'%,'+(0.55+shine*0.35).toFixed(2)+')';
+    ctx.stroke(path);
+  });
   ctx.restore();
 }
 function fxMatChainmail(ctx,sk,nowMs){
@@ -1256,29 +1435,10 @@ function fxMatChainmail(ctx,sk,nowMs){
   });
   ctx.restore();
 }
-function fxCulPersian(ctx,sk,nowMs){
+function fxCulPersian(ctx,sk,nowMs){ // Тебриз — раньше был отдельной копией того же кода, теперь честно зовёт общую (culPersianCitySprite) функцию, как и остальные 4
   ctx.save(); clipShipBody(ctx);
   const p=(nowMs%4200)/4200;
-  const medHue=10; // Тебриз
-  const yTop=-19, yBot=11;
-  const revealY=yBot-(yBot-yTop)*Math.max(0.06,p); // ковёр реально ткётся снизу вверх, узел за узлом
-  ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
-  ctx.strokeStyle='rgba(20,10,10,.85)'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
-  ctx.strokeStyle='hsla('+medHue+',60%,62%,.85)'; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
-  const rnd=mulberry32(31);
-  for(let i=0;i<90;i++){
-    const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
-    ctx.fillStyle='hsla('+(medHue+rnd()*30)+',60%,55%,.55)';
-    ctx.beginPath(); ctx.arc(x,y,0.55,0,6.283); ctx.fill();
-  }
-  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
-    ctx.fillStyle='hsla('+medHue+',70%,58%,.9)';
-    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.fill();
-  });
-  ctx.fillStyle='hsla('+medHue+',70%,50%,.97)';
-  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='rgba(20,10,10,.7)'; ctx.lineWidth=0.3; ctx.stroke();
-  ctx.restore();
+  culPersianCity(ctx, 10, true, p);
   ctx.restore();
 }
 // 09.09.2026 «физика/культура партия 2» (вторая волна — ремёсла/материалы, 26 новых
@@ -1387,13 +1547,30 @@ function culCintemaniUnit(ctx,cx,cy,scale){
   }
   ctx.restore();
 }
+/* 09.09.2026 «Скины не должны жрать зря»: culCintemaniUnit() не берёт время вообще — при
+   scale=1.0 (единственный вызываемый масштаб) он ВСЕГДА рисует одно и то же. Растёт только
+   число «уже проштампованных» юнитов, не их вид. Рисуем юнит один раз в спрайт, дальше —
+   drawImage на каждую из до 28 позиций вместо 3 дуг + 2×24 точек волнистых полос заново. */
+let cintemaniSpr=null;
+function cintemaniUnitSprite(){
+  if(!cintemaniSpr){
+    const S=8, OX=-3, OY=-3, W=6, H=7;
+    const c=document.createElement('canvas'); c.width=W*S; c.height=H*S;
+    const x=ctx2d(c); x.setTransform(S,0,0,S,-OX*S,-OY*S);
+    culCintemaniUnit(x, 0, 0, 1.0);
+    cintemaniSpr={c,OX,OY,W,H};
+  }
+  return cintemaniSpr;
+}
 function fxCulCintemani(ctx,sk,nowMs){ // Турецкий чинтемани — три круга + тигровые полосы, штампуется одно за другим
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
   const cells=[]; for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++) cells.push([row,col]);
   const shown=Math.floor(p*cells.length)+1;
+  const spr=cintemaniUnitSprite();
   cells.slice(0,shown).forEach(([row,col])=>{
-    culCintemaniUnit(ctx, col*11+(row%2)*5.5, row*7-2, 1.0);
+    const cx=col*11+(row%2)*5.5, cy=row*7-2;
+    ctx.drawImage(spr.c, cx+spr.OX, cy+spr.OY, spr.W, spr.H);
   });
   ctx.restore();
 }
@@ -1446,49 +1623,110 @@ function fxCulEthiopia(ctx,sk,nowMs){ // Эфиопский плетёный к�
   }
   ctx.restore(); ctx.restore();
 }
+/* 09.09.2026 «Скины не должны жрать зря»: все мотивы — одна и та же форма эллипса (1.6×2.5),
+   меняется только позиция/поворот (transform) и мерцание (shimmer, от времени). Эллипс собран
+   в Path2D один раз в локальных координатах — вместо ctx.ellipse() (тригонометрия) на каждую
+   из ~20 ячеек каждый кадр остаётся готовый путь, просто залитый/обведённый заново. */
+/* 09.09.2026, третий заход (владелец: «с этим ещё что-то можно?» — да): форма эллипса уже
+   была в Path2D, но save/translate/rotate/restore на каждую из ~20 ячеек всё ещё происходили
+   каждый кадр — а позиция и поворот КАЖДОЙ ячейки такие же всегда, ничего не меняется. Раз
+   Path2D.addPath() умеет принимать готовую матрицу (DOMMatrix), запекаем translate+rotate
+   прямо в форму один раз на ячейку — при отрисовке остаётся голый fill/stroke, без единого
+   save/transform/restore на ячейку. */
+let jamdaniCellPaths=null;
+function jamdaniCellPathsBuild(){
+  if(!jamdaniCellPaths){
+    const base=new Path2D(); base.ellipse(0,0,1.6,2.5,0,0,6.283);
+    jamdaniCellPaths=[];
+    for(let row=-4;row<=3;row++) for(let col=-2;col<=2;col++){
+      if((row+col)%2!==0) continue;
+      const cx=col*6.4, cy=row*5.6-2;
+      const m=new DOMMatrix().translate(cx,cy).rotate(36); // Math.PI/5 рад = 36°, DOMMatrix.rotate() берёт градусы
+      const path=new Path2D(); path.addPath(base,m);
+      jamdaniCellPaths.push({row,col,path});
+    }
+  }
+  return jamdaniCellPaths;
+}
 function fxCulJamdani(ctx,sk,nowMs){ // Бенгальский джамдани — плавающие мотивы мерцают на просвет
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3000)/3000;
-  for(let row=-4;row<=3;row++) for(let col=-2;col<=2;col++){
-    if((row+col)%2!==0) continue;
-    const cx=col*6.4, cy=row*5.6-2;
+  ctx.lineWidth=0.18;
+  jamdaniCellPathsBuild().forEach(({row,col,path})=>{
     const shimmer=(Math.sin(p*Math.PI*2 + (row+col))+1)/2;
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/5);
     ctx.fillStyle='rgba(232,216,168,'+(0.6+shimmer*0.4).toFixed(2)+')';
-    ctx.beginPath(); ctx.ellipse(0,0,1.6,2.5,0,0,6.283); ctx.fill();
-    ctx.strokeStyle='rgba(120,90,40,'+(0.4+shimmer*0.3).toFixed(2)+')'; ctx.lineWidth=0.18; ctx.stroke();
-    ctx.restore();
-  }
+    ctx.fill(path);
+    ctx.strokeStyle='rgba(120,90,40,'+(0.4+shimmer*0.3).toFixed(2)+')';
+    ctx.stroke(path);
+  });
   ctx.restore();
+}
+/* 09.09.2026: ctx.filter='blur()' — та же категория риска, что shadowBlur (см. строку 13),
+   на слабых Android часто не ускорен GPU. Полоса красителя размывается ОДИН раз в offscreen-
+   спрайт (форма и радиус блюра неизменны — меняется только alpha), по кадрам живого блюра нет. */
+let tnalakSprites=null;
+function tnalakBandSprite(colIdx){
+  if(!tnalakSprites) tnalakSprites=[];
+  if(tnalakSprites[colIdx]) return tnalakSprites[colIdx];
+  const pad=6, w=26+pad*2, h=2+pad*2;
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const g=c.getContext('2d');
+  g.filter='blur(1.5px)';
+  g.fillStyle=colIdx===0?'rgba(201,160,58,1)':'rgba(138,31,31,1)';
+  g.fillRect(pad,pad,26,2);
+  const spr={c,w,h,pad};
+  tnalakSprites[colIdx]=spr;
+  return spr;
 }
 function fxCulTnalak(ctx,sk,nowMs){ // Филиппинский т'налак — краска ikat проступает полосой за полосой
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
   ctx.save(); ctx.scale(10,10);
-  ctx.filter='blur(1.5px)';
   const rows=[]; for(let row=-2;row<=2;row++) rows.push(row);
   const shown=Math.floor(p*rows.length)+1;
   rows.slice(0,shown).forEach((row,idx)=>{
     const justDyed=idx===shown-1;
     const alpha=justDyed?0.4+0.6*((p*rows.length)%1):1;
-    ctx.fillStyle=row%2===0?'rgba(201,160,58,'+alpha.toFixed(2)+')':'rgba(138,31,31,'+alpha.toFixed(2)+')';
-    ctx.beginPath(); ctx.moveTo(-1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3+0.1); ctx.lineTo(-1.3,row*0.3+0.1); ctx.closePath(); ctx.fill();
+    const spr=tnalakBandSprite(row%2===0?0:1);
+    ctx.globalAlpha=alpha;
+    ctx.drawImage(spr.c, -1.3-spr.pad/10, row*0.3-0.1-spr.pad/10, spr.w/10, spr.h/10);
   });
-  ctx.filter='none';
+  ctx.globalAlpha=1;
   ctx.restore(); ctx.restore();
+}
+/* 09.09.2026 «Скины не должны жрать зря», второй, честный заход (владелец справедливо
+   спросил, искал ли я вообще — нет, остановился на первой неудачной идее). Каждая ворсинка
+   ДЕЙСТВИТЕЛЬНО покачивается по-своему (sway от времени) — единой картинкой не заменить,
+   это правда. Но position/hue/lightness/jitterX КАЖДОЙ ворсинки — те же самые каждый кадр
+   (mulberry32(5) — фиксированный сеятель, круговой фильтр Math.hypot тоже не меняется).
+   Раньше это пересчитывалось (3 вызова rnd() + фильтр + сборка строки цвета) заново 169 раз
+   каждый кадр, хотя результат один и тот же. Теперь позиции/цвет/дрожь считаются ОДИН раз
+   и кешируются — каждый кадр эту таблицу просто читают и добавляют актуальный sway. */
+let ryijyStrands=null;
+function ryijyStrandsBuild(){
+  if(!ryijyStrands){
+    ryijyStrands=[];
+    const rnd=mulberry32(5);
+    for(let row=-6;row<=6;row++) for(let col=-6;col<=6;col++){
+      const cx=col*0.11, cy=row*0.11;
+      if(Math.hypot(cx,cy)>1.1) continue;
+      const style='hsla('+(300+rnd()*30)+',50%,'+(50+rnd()*20)+'%,.8)';
+      const jitterX=(rnd()-0.5)*0.04;
+      ryijyStrands.push({cx,cy,style,jitterX,row,col});
+    }
+  }
+  return ryijyStrands;
 }
 function fxCulRyijy(ctx,sk,nowMs){ // Финский рюйю — длинный ворс честно покачивается
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3600)/3600;
   ctx.save(); ctx.scale(11,11);
-  const rnd=mulberry32(5);
-  for(let row=-6;row<=6;row++) for(let col=-6;col<=6;col++){
-    const cx=col*0.11, cy=row*0.11;
-    if(Math.hypot(cx,cy)>1.1) continue;
+  ctx.lineWidth=0.02;
+  ryijyStrandsBuild().forEach(({cx,cy,style,jitterX,row,col})=>{
     const sway=Math.sin(p*Math.PI*2 + row*0.7+col*0.4)*0.015;
-    ctx.strokeStyle='hsla('+(300+rnd()*30)+',50%,'+(50+rnd()*20)+'%,.8)'; ctx.lineWidth=0.02;
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+(rnd()-0.5)*0.04+sway,cy+0.05); ctx.stroke();
-  }
+    ctx.strokeStyle=style;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+jitterX+sway,cy+0.05); ctx.stroke();
+  });
   ctx.restore(); ctx.restore();
 }
 function fxMatPatternWeld(ctx,sk,nowMs){ // Дамаскирование — слои РАЗНЫХ сталей проступают по мере проковки-скручивания
@@ -1578,19 +1816,35 @@ function fxMatShellHex(ctx,sk,nowMs){ // Панцирь черепахи — г�
   });
   ctx.restore(); ctx.restore();
 }
+/* 09.09.2026 «Скины не должны жрать зря»: hue/lightness зависят только от row (+p) — ВСЕ
+   11 прямоугольников одной строки в любой момент времени красятся ОДИНАКОВО. Позиции сами
+   по себе статичны. Собираем все прямоугольники строки в один Path2D один раз — дальше на
+   каждый кадр одна fillStyle+fill(path) на строку (13), а не 143 отдельных fillRect. */
+let nacreRowPaths=null;
+function nacreRowPathsBuild(){
+  if(!nacreRowPaths){
+    nacreRowPaths=[];
+    for(let row=-6;row<=6;row++){
+      const off=(row%2)*0.15;
+      const path=new Path2D();
+      for(let col=-5;col<=5;col++){
+        const cx=col*0.3+off, cy=row*0.11;
+        path.rect(cx-0.14,cy-0.05,0.28,0.09);
+      }
+      nacreRowPaths.push({row,path});
+    }
+  }
+  return nacreRowPaths;
+}
 function fxMatNacre(ctx,sk,nowMs){ // Перламутр — иризация честно плывёт по углу, слои со сдвигом рядов
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%4000)/4000;
   ctx.save(); ctx.scale(8.7,8.7);
-  for(let row=-6;row<=6;row++){
-    const off=(row%2)*0.15;
-    for(let col=-5;col<=5;col++){
-      const cx=col*0.3+off, cy=row*0.11;
-      const hue=(190+row*8+p*120)%360;
-      ctx.fillStyle='hsla('+hue+',70%,'+(55+(row%2)*10)+'%,.55)';
-      ctx.fillRect(cx-0.14,cy-0.05,0.28,0.09);
-    }
-  }
+  nacreRowPathsBuild().forEach(({row,path})=>{
+    const hue=(190+row*8+p*120)%360;
+    ctx.fillStyle='hsla('+hue+',70%,'+(55+(row%2)*10)+'%,.55)';
+    ctx.fill(path);
+  });
   ctx.restore(); ctx.restore();
 }
 function fxCulKanga(ctx,sk,nowMs){ // Суахилийская канга — своего процесса нет (печатный текстиль), только блик поверхности
@@ -1632,27 +1886,48 @@ function fxCulBasketPlait(ctx,sk,nowMs){ // Плетение корзин, пл�
   }
   ctx.restore(); ctx.restore();
 }
+/* 09.09.2026 «Скины не должны жрать зря» (владелец, замер на живом каталоге): вся эта картина
+   (рамка+медальон+90 узлов) не зависит от nowMs вообще — меняется только clip-прямоугольник
+   revealY (ковёр «дотыкается» снизу вверх). Пять скинов зовут эту функцию (Тебриз/Исфахан/
+   Кашан/Кум/Наин, каждый — свой medHue) — раньше каждый заново рисовал 90+ путей каждый кадр,
+   теперь картинка кешируется один раз НА КАЖДЫЙ medHue (5 спрайтов, не 1 — цвет запечён в
+   пикселях), а сам revealY-клип по-прежнему считается и применяется свежо каждый кадр поверх
+   готовой картинки — анимация тканья не пострадала, спрайт просто выглядывает из-под кромки. */
+const persianSprCache={};
+function culPersianCitySprite(medHue, dense){
+  const key=medHue+':'+(dense?1:0);
+  if(!persianSprCache[key]){
+    const S=4, OX=-16, OY=-22, W=32, H=36;
+    const c=document.createElement('canvas'); c.width=W*S; c.height=H*S;
+    const x=ctx2d(c); x.setTransform(S,0,0,S,-OX*S,-OY*S);
+    const yTop=-19, yBot=11;
+    x.strokeStyle='rgba(20,10,10,.85)'; x.lineWidth=0.55; x.strokeRect(-9,yTop,18,yBot-yTop);
+    x.strokeStyle='hsla('+medHue+',60%,62%,.85)'; x.lineWidth=1.3; x.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
+    if(dense){
+      const rnd=mulberry32(31);
+      for(let i=0;i<90;i++){
+        const dx=-8+rnd()*16, dy=yTop+2+rnd()*(yBot-yTop-4);
+        x.fillStyle='hsla('+(medHue+rnd()*30)+',60%,55%,.55)';
+        x.beginPath(); x.arc(dx,dy,0.55,0,6.283); x.fill();
+      }
+    }
+    [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
+      x.fillStyle='hsla('+medHue+',70%,58%,.9)';
+      x.beginPath(); x.arc(cx,cy,2.3,0,6.283); x.fill();
+    });
+    x.fillStyle='hsla('+medHue+',70%,50%,.97)';
+    x.beginPath(); x.moveTo(0,-8); x.lineTo(6.2,-1); x.lineTo(0,6); x.lineTo(-6.2,-1); x.closePath(); x.fill();
+    x.strokeStyle='rgba(20,10,10,.7)'; x.lineWidth=0.3; x.stroke();
+    persianSprCache[key]={c,OX,OY,W,H};
+  }
+  return persianSprCache[key];
+}
 function culPersianCity(ctx, medHue, dense, p){
   const yTop=-19, yBot=11;
   const revealY=yBot-(yBot-yTop)*Math.max(0.06,p);
   ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
-  ctx.strokeStyle='rgba(20,10,10,.85)'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
-  ctx.strokeStyle='hsla('+medHue+',60%,62%,.85)'; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
-  if(dense){
-    const rnd=mulberry32(31);
-    for(let i=0;i<90;i++){
-      const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
-      ctx.fillStyle='hsla('+(medHue+rnd()*30)+',60%,55%,.55)';
-      ctx.beginPath(); ctx.arc(x,y,0.55,0,6.283); ctx.fill();
-    }
-  }
-  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
-    ctx.fillStyle='hsla('+medHue+',70%,58%,.9)';
-    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.fill();
-  });
-  ctx.fillStyle='hsla('+medHue+',70%,50%,.97)';
-  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='rgba(20,10,10,.7)'; ctx.lineWidth=0.3; ctx.stroke();
+  const spr=culPersianCitySprite(medHue, dense);
+  ctx.drawImage(spr.c, spr.OX, spr.OY, spr.W, spr.H);
   ctx.restore();
 }
 function fxCulPersianIsfahan(ctx,sk,nowMs){ // Персидский ковёр, Исфахан — тончайший медальон с пальметтами и вазами
@@ -4901,7 +5176,15 @@ function drawPlane(sh,nowMs){
   /* 08.09.2026: старые 6 инлайн-приёмов (satellites/facets/inlay/filigree/core/aim) удалены —
      заменены темами физика/культура через PREM_FX_MAP (см. fxCosGalaxy и соседние выше).
      Оригинальный код — .knowledge/archive-premium-skins-id9-14-08-09-2026.md, ничего не потеряно. */
-  if(hq) drawPremiumFx2(ctx, skin, fx, nowMs); // 05.09.2026: единая точка входа для всех премиум-скинов
+  /* 09.09.2026 «Скины не должны жрать зря», стратегический итог: было if(hq) (Q.level≥2,
+     «Высокий») — на «дне» (0-1) узор не рисовался ВООБЩЕ, ровный цвет вместо скина. Раньше
+     это было разумной защитой, потому что цена не была измерена. Теперь измерена (все 44
+     реальных узора — максимум ~0.18мс на самом дорогом после сегодняшней уборки, у остальных
+     на порядок дешевле). Порог снят полностью, включая Q.level===0 (настоящее дно) — владелец
+     явно попросил: «делай для дна и проверим на моём Samsung A3 Core». Замера с реального
+     слабого устройства ещё нет — следующий шаг именно он; если A3 Core покажет, что дорого,
+     возвращаем порог назад ровно на том уровне, который покажут реальные цифры, не гадаем. */
+  drawPremiumFx2(ctx, skin, fx, nowMs); // 05.09.2026: единая точка входа для всех премиум-скинов
   /* 28.08.2026 «Тюнинг, шаг 1: декаль на корпусе». Левая половина корпуса — плоская видимая
      грань (fold красит только правый треугольник, см. выше); декаль кладём в её центр масс —
      геометрический центроид треугольника носа/крыла/хвоста (0,-22)/(-16,14)/(0,6):

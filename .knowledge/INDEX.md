@@ -31,6 +31,7 @@ AI-WORKFLOW → INDEX → KNOWN-BUGS + ERROR-CATALOG → STYLE-GUIDE → PERFORM
 | PATTERNS.md | withTrack, Swap-and-Pop, пулы, Суд компасов, батчинг маяков | ДОМ паттернов |
 | CANVAS-2D.md | Памятка Canvas | указатель → PERFORMANCE |
 | STEERING-PHYSICS.md | Reynolds steering (seek/arrive) + пружина Гука — справочная математика, не код | ДОМ формул для «Груз/Фал» и «Ньютон» |
+| SKIN-FX-OPTIMIZATION.md | Оптимизация скинов корабля: методика замера, 6 приёмов кэширования, чёрный список дорогих примитивов (shadowBlur/ctx.filter/getImageData), таблица всех 44 боевых fx с числами — читать ПЕРЕД написанием нового fx-скина | ДОМ оптимизации скинов, 09.09.2026 |
 
 ---
 
