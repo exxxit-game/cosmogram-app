@@ -2870,6 +2870,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <button class="btn pri" id="forgePlay">Полёт</button>
         <button class="btn ghost" id="forgeShareMapBtn">Поделиться</button>
       </div>
+      <!-- 09.09.2026, владелец, живой скрин с телефона (обвёл красным весь блок ниже): всё
+           от «Темп неба» до «Преграды» уходит под спойлер «Точечная настройка» — тот же
+           .setGrp.spoiler, что уже используется в Настройках/Расстановке («Список точек»),
+           открыт/закрыт через forgeHardSpoilerGrp в forge.js. Экран «Сохранить» без него
+           был длинным на весь экран, свёрнутый — помещается целиком. -->
+      <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT">Точечная настройка</span></div>
+      <div id="forgeHardSpoilerPanel" class="hidden">
         <div class="forgeGroupHead">Темп неба</div>
         <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
         <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>

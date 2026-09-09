@@ -605,6 +605,14 @@ function forgeSubTabSet(s){
 wireOnLocal('forgeSubArrangeBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('arrange'); });
 wireOnLocal('forgeSubSkyBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('sky'); });
 wireOnLocal('forgeSubHardBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('hard'); });
+/* 09.09.2026 «Точечная настройка»: одиночный спойлер (не аккордеон с несколькими панелями,
+   как SET_GRPS в ui.js) — просто открыть/закрыть свою же панель, тем же классом .setGrp.spoiler,
+   что уже используется в Настройках/«Список точек» (Расстановка). */
+wireOnLocal('forgeHardSpoilerGrp','click',function(){
+  sfx.click(); haptic('light');
+  this.classList.toggle('open');
+  const p=$('forgeHardSpoilerPanel'); if(p) p.classList.toggle('hidden');
+});
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
