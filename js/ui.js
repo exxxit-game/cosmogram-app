@@ -1373,6 +1373,57 @@ function angarPvWake(){ // касание будит уснувшее превь
   if(!angarPvRaf) angarPvStart();
 }
 
+/* 09.09.2026 «Смотреть явление крупно» (владелец): большое окно — только явление, без корпуса
+   и без обрезки силуэтом, как и просил владелец («без самолёта, чтобы явлением или стилем
+   можно было насладиться отдельно»). Переиспользует angarPvFxReveal(...,'event',0,...) —
+   тот же код, что рисует «явление» на маленькой витрине, просто без таймера (фаза 'event'
+   держится, пока окно открыто) и без корпуса поверх. «Бумажный» (id0) — исключение, у него
+   нет отдельного явления, показываем сам борт (тот же принцип, что в angarShip). */
+let angarPvZoomRaf=0;
+function angarPvZoomDraw(t){
+  if(screenName!=='hangar'){ angarPvZoomRaf=0; return; }
+  const cv=$('angarPvZoomCv'); if(!cv) return;
+  const box=cv.getBoundingClientRect();
+  const d=window.devicePixelRatio||1;
+  const W=box.width, H=box.height;
+  if(W && H){
+    if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
+    const x=cv.getContext('2d');
+    if(x){
+      x.setTransform(cv.width/W,0,0,cv.height/H,0,0);
+      x.clearRect(0,0,W,H);
+      const sk=(angarCat==='color') ? (SKINS_BY_ID.get(angarSel)||SKINS[0]) : (SKINS_BY_ID.get(S.skin)||SKINS[0]);
+      x.save(); x.translate(W/2,H/2);
+      x.scale((W/380)*1.6*3.2,(W/380)*1.6*3.2);
+      const angarFxFn=sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+      if(sk.id===0){ angarShip(x, sk, 1, false); } else { angarPvFxReveal(x, sk, t, 'event', 0, angarFxFn); }
+      x.restore();
+      const nameEl=$('angarPvZoomName');
+      if(nameEl) nameEl.textContent=(angarCat==='color' && typeof sk.name==='number') ? (L.skinNames[sk.name]||'') : (sk.name||'');
+      const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
+      if(factEl && wrapEl){
+        if(sk.fact){ factEl.textContent=sk.fact; wrapEl.classList.remove('hidden'); }
+        else wrapEl.classList.add('hidden');
+      }
+    }
+  }
+  angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
+}
+function angarPvZoomOpen(){
+  const m=$('angarPvZoomModal'); if(!m) return;
+  m.classList.add('open'); sfx.click(); haptic('light');
+  if(!angarPvZoomRaf) angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
+}
+function angarPvZoomClose(){
+  const m=$('angarPvZoomModal'); if(!m) return;
+  m.classList.remove('open');
+  if(angarPvZoomRaf){ cancelAnimationFrame(angarPvZoomRaf); angarPvZoomRaf=0; }
+  sfx.click();
+}
+wireOn('angarPvZoomBtn','click',angarPvZoomOpen);
+wireOn('angarPvZoomClose','click',angarPvZoomClose);
+wireOn('angarPvZoomModal','click',e=>{ if(e.target && e.target.id==='angarPvZoomModal') angarPvZoomClose(); });
+
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4
    (просто контур) — владелец: «пустое подобие» той золотой искры с гранью и свечением,
    что игрок видит в полёте (drawStarJewel, game.js — своя кисть с v1.95.1). Не рисуем
