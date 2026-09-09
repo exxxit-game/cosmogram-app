@@ -714,6 +714,38 @@ async function cinemaClipShare(){
   finally{ _cinemaShareBusy=false; if(b){ b.disabled=false; b.textContent=oldTxt; } }
 }
 
+/* 10.09.2026 «Смотреть явление крупно» (владелец, часть рекламной кампании — статичный
+   скриншот теряет анимацию, значит нужен настоящий видео-шаринг): тот же путь, что
+   cinemaClipShare() выше (системное «Поделиться», File+navigator.share), но пишет не
+   игровой хайлайт, а канвас окна «явление» напрямую, простым cinemaStart/cinemaStop без
+   кольцевой обрезки — ролик не привязан к моменту рекорда, просто N секунд подряд.
+   Длительность (владелец, изучено WebSearch — TikTok/Reels для обучающего контента,
+   плюс собственный цикл анимации узоров 3-6с, паттерн должен повториться хотя бы пару
+   раз): 15 секунд, не 1-2 — короче теряет смысл, никто не успеет разглядеть впервые
+   увиденное явление. */
+const CINEMA_ANGAR_ZOOM_MS = 15000;
+let _cinemaAngarZoomBusy=false;
+function cinemaAngarZoomBusy(){ return _cinemaAngarZoomBusy; }
+async function cinemaAngarZoomShare(canvas, onStart, onEnd){
+  if (_cinemaAngarZoomBusy || cinemaActive()) return;
+  _cinemaAngarZoomBusy=true;
+  if (typeof onStart==='function') onStart();
+  try{
+    _cinemaOwner='angarZoom';
+    const ok = await cinemaStart(canvas);
+    if (!ok){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    await new Promise(r=>setTimeout(r, CINEMA_ANGAR_ZOOM_MS));
+    const blob = await cinemaStop();
+    if (!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    const file=new File([blob],'cosmogram-yavlenie.mp4',{type:'video/mp4'});
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      if (typeof haptic==='function') haptic('light');
+    } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
+  }catch(e){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
+  finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
+}
+
 /* «В сторис» на «Клипе» (05.09.2026, «Доделать Кино полёта») — тот же путь, что cardStory()
    в card.js для картинки, только вместо PNG → mp4: экспортируем клип с вжатой рамкой
    (cinemaExportHighlightCard — та же функция, что уже кормит системное «Поделиться» выше),

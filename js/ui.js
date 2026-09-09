@@ -1400,16 +1400,22 @@ function angarPvZoomDraw(t){
       const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
       const col=a=>base+Math.max(0,a).toFixed(2)+')';
       x.save(); x.translate(W/2,H/2);
+      // 10.09.2026, владелец («полно пустого места, явление размытое») — исследовано (design
+      // principles, много пустого места ), несколькими независимыми источниками: явление —
+      // главный герой кадра, должно быть крупным, не тонуть в пустоте; ×1.5 к прежнему
+      // масштабу + считаем от короткой стороны экрана (min(W,H)), а не только от ширины —
+      // раньше высокий портретный экран не использовался, масштаб был рассчитан под квадрат.
+      const m=Math.min(W,H);
       if(angarPvZoomCat==='color'){
-        x.scale((W/380)*1.6*3.2,(W/380)*1.6*3.2);
+        x.scale((m/380)*1.6*3.2*1.5,(m/380)*1.6*3.2*1.5);
         const angarFxFn=item.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[item.fx] : null;
         if(item.id===0){ angarShip(x, item, 1, false); } else { angarPvFxReveal(x, item, t, 'event', 0, angarFxFn); }
       } else if(angarPvZoomCat==='flash'){
-        x.scale((W/380)*9,(W/380)*9);
+        x.scale((m/380)*9*1.5,(m/380)*9*1.5);
         renderFlashPattern(x, item.style, (t/1600)%1, col);
       } else if(angarPvZoomCat==='trail'){
         x.translate(0,-H*0.12);
-        x.scale((W/380)*6,(W/380)*6);
+        x.scale((m/380)*6*1.5,(m/380)*6*1.5);
         renderTrailPattern(x, item.style, col);
       }
       x.restore();
@@ -1428,6 +1434,7 @@ function angarPvZoomOpen(cat,item){
   const m=$('angarPvZoomModal'); if(!m||!item) return;
   angarPvZoomCat=cat; angarPvZoomItem=item;
   m.classList.add('open'); sfx.click(); haptic('light');
+  angarPvZoomShareGate();
   if(!angarPvZoomRaf) angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
 function angarPvZoomClose(){
@@ -1438,6 +1445,22 @@ function angarPvZoomClose(){
 }
 wireOn('angarPvZoomClose','click',angarPvZoomClose);
 wireOn('angarPvZoomModal','click',e=>{ if(e.target && e.target.id==='angarPvZoomModal') angarPvZoomClose(); });
+/* 10.09.2026 «Поделиться явлением» — та же дверь-гейт, что cardShareGate() в card.js: кнопка
+   скрыта, пока не подтверждено, что этот браузер вообще умеет navigator.share с файлами
+   (видео сюда, не картинку — пробный File с video/mp4, не image/png). */
+function angarPvZoomShareGate(){
+  const b=$('angarPvZoomShare'); if(!b) return;
+  let can=false;
+  try{
+    const probe=new File(['x'],'t.mp4',{type:'video/mp4'});
+    can=!!(navigator.share && navigator.canShare && navigator.canShare({files:[probe]}));
+  }catch(e){}
+  b.classList.toggle('hidden', !can);
+}
+wireOn('angarPvZoomShare','click',()=>{
+  const cv=$('angarPvZoomCv'), b=$('angarPvZoomShare'); if(!cv||!b) return;
+  cinemaAngarZoomShare(cv, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
+});
 
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4
    (просто контур) — владелец: «пустое подобие» той золотой искры с гранью и свечением,

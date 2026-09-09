@@ -1219,16 +1219,29 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    ниже) теперь открывает ЭТО окно, с узором конкретного предмета под пальцем. Показ
    переиспользует angarPvFxReveal(...,'event',...) для скинов, renderFlashPattern/
    renderTrailPattern для вспышек/следов — те же функции, что рисуют превью на самой плитке. */
-#angarPvZoomModal { position:fixed; inset:0; z-index:60; display:none; align-items:center;
-  justify-content:center; padding:20px; background:rgba(4,7,16,.9); }
+/* 10.09.2026, владелец (реальное устройство, скрин): «под окном видно часть игры, это
+   ошибка» — max-height:88vh + отступ модалки специально оставляли просвет как у обычного
+   диалога, но владелец смотрит на это как на готовую карточку для скриншота-шаринга —
+   просвет с игрой снизу читается как баг, не как стиль. На весь экран, без скруглений/
+   отступов модалки; сверху/снизу — safe-area (var(--sat)/var(--sab)), тем же приёмом,
+   что у всех полноэкранных .overlay в игре (см. #settingsScreen и соседей выше). */
+#angarPvZoomModal { position:fixed; inset:0; z-index:60; display:none; background:rgba(4,7,16,.9); }
 #angarPvZoomModal.open { display:flex; }
-#angarPvZoomCard { position:relative; width:100%; max-width:440px; max-height:88vh;
+#angarPvZoomCard { position:relative; width:100%; height:100%;
   display:flex; flex-direction:column;
   background:radial-gradient(ellipse at 50% 35%,#12224a 0%,#0a1030 65%);
-  border:1px solid rgba(255,255,255,.14); border-radius:26px;
-  box-shadow:0 24px 70px rgba(0,0,0,.55), inset 0 0 70px rgba(80,130,220,.12); overflow:hidden; }
-#angarPvZoomName { padding:16px 46px 6px; text-align:center; font-size:16px; font-weight:600; color:var(--ink); }
-#angarPvZoomStage { position:relative; width:100%; aspect-ratio:1/1; flex-shrink:0; }
+  padding-top:var(--sat); padding-bottom:var(--sab); }
+/* 10.09.2026, владелец: «обведи чем-то, чтобы с фоном не сливалось... в рамку, чтобы вообще
+   ни с чем не сливалась» — тень под текстом не спасает на будущих культурных скинах с
+   заведомо светлым/пёстрым узором за спиной. Сплошная плашка (та же ткань, что у карточки
+   факта — rgba(15,31,61,.95) — уже проверенный на этом экране приём) держит контраст
+   независимо от того, что нарисовано позади. Крупнее (16→19px, 600→700), align-self:center
+   вместо full-width — чтобы плашка обтягивала текст, не тянулась на всю ширину экрана. */
+#angarPvZoomName { align-self:center; margin:16px 46px 0; max-width:calc(100% - 92px);
+  text-align:center; font-size:19px; font-weight:700; letter-spacing:.01em; color:var(--ink);
+  background:rgba(15,31,61,.95); border:1px solid rgba(255,255,255,.16);
+  border-radius:14px; padding:10px 18px; }
+#angarPvZoomStage { position:relative; width:100%; flex:1; min-height:0; }
 #angarPvZoomCv { position:absolute; inset:0; width:100%; height:100%; }
 #angarPvZoomFactWrap { padding:0 18px 18px; display:flex; flex-direction:column; align-items:flex-end; }
 /* «в притык, по правому краю» (владелец, живой макет, пятый заход): метка садится ВПЛОТНУЮ
@@ -1247,7 +1260,32 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #angarPvZoomFact { width:100%; background:rgba(15,31,61,.95); border:1px solid var(--line-gold);
   border-radius:16px 0 16px 16px; padding:14px 18px; font-size:15px; line-height:1.5;
   color:var(--ink); text-align:center; overflow-wrap:anywhere; }
-#angarPvZoomClose { position:absolute; top:10px; right:10px; }
+/* 10.09.2026, владелец: «скопируй стиль у кнопки назад (.menuBack), только без обруча по
+   оси и иконка закрыть» — тот же градиент/блюр/свечение, что у .menuBack везде в игре,
+   без её цветного кольца-обводки (тут карточка уже сама себе рамка, вторая обводка сверху
+   была бы лишней), с i-x вместо i-back. */
+#angarPvZoomClose { position:absolute; top:calc(10px + var(--sat)); right:16px; width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+  color:#eaf3ff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:2; transition:transform .12s, box-shadow .2s; }
+#angarPvZoomClose:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
+#angarPvZoomClose .ic { width:13px; height:13px; stroke-width:2.6; filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
+/* 10.09.2026 «Поделиться явлением» (владелец, часть рекламной кампании): та же кнопка,
+   зеркально крестику — слева сверху, тот же .menuBack-язык. Гасится через class="hidden",
+   пока js не подтвердит, что navigator.share с файлами вообще доступен в этом браузере
+   (тем же приёмом, что cardShareGate() в card.js — гейт по возможности, не по аккаунту). */
+#angarPvZoomShare { position:absolute; top:calc(10px + var(--sat)); left:16px; width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+  color:#eaf3ff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:2; transition:transform .12s, box-shadow .2s; }
+#angarPvZoomShare:active { transform:scale(.9); box-shadow:0 0 20px rgba(110,170,255,.6), inset 0 0 12px rgba(120,170,255,.22); }
+#angarPvZoomShare .ic { width:14px; height:14px; stroke-width:2.2; filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); }
+#angarPvZoomShare.recording { animation:angarPvZoomRecPulse 1.1s ease-in-out infinite; }
+@keyframes angarPvZoomRecPulse { 0%,100%{ opacity:1; } 50%{ opacity:.4; } }
 /* Лента слоёв: прокручивается, справа мягкий срез — видно, что есть продолжение */
 #angarTabs { display:flex; justify-content:safe center; gap:8px; width:min(92%,380px); margin-bottom:12px; overflow-x:auto;
   scrollbar-width:none; } /* 09.09.2026 (владелец: «Стиль/Эмодзи и тд съехали влево», повторно —
@@ -2316,6 +2354,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      кнопки .angarFav (index.html CSS), не двумя разными symbol — одна и та же геометрия. -->
 <symbol id="i-star5-outline" viewBox="0 0 24 24"><path d="M12 3.5 14.4 9.3 20.7 9.8 15.9 13.9 17.4 20.1 12 16.7 6.6 20.1 8.1 13.9 3.3 9.8 9.6 9.3z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
+<!-- 10.09.2026 «Поделиться явлением»: обычный универсальный значок «поделиться» (стрелка
+     из коробки вверх) — не бренд, не нужен проверяемый источник, тот же язык .ic-иконок
+     (fill:none, stroke:currentColor, round), что и у остальных значков этого файла. -->
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></symbol>
 <!-- 03.09.2026 «Написать разработчику»: снимок к отзыву — простая линейная пиктограмма
      «изображение» (рамка + горка + солнце), тот же стиль обводки, что у соседей на этой
      странице. Нарисована с нуля под этот стиль (не бренд-иконка, ничего не заимствовано),
@@ -2380,9 +2422,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.194"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.194"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.194"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.195"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.195"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.195"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3031,7 +3073,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div id="angarPvZoomMark"><span>Cosmogram</span></div>
       <div id="angarPvZoomFact"></div>
     </div>
-    <button class="wCorner" id="angarPvZoomClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    <button id="angarPvZoomClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+    <button id="angarPvZoomShare" aria-label="Поделиться" class="hidden"><svg class="ic" aria-hidden="true"><use href="#i-share"></use></svg></button>
   </div>
 </div>
 
@@ -3223,25 +3266,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.194" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.194"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.194"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.194"></script>
-<script defer src="js/game.js?v=1.478.194" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.194"></script>
-<script defer src="js/sync.js?v=1.478.194"></script>
-<script defer src="js/render.js?v=1.478.194"></script>
-<script defer src="js/planetarium.js?v=1.478.194"></script>
-<script defer src="js/goldstar.js?v=1.478.194"></script>
-<script defer src="js/music.js?v=1.478.194"></script>
-<script defer src="js/gyro.js?v=1.478.194"></script>
-<script defer src="js/forge.js?v=1.478.194"></script>
-<script defer src="js/partitura.js?v=1.478.194"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.194"></script>
-<script defer src="js/card.js?v=1.478.194"></script>
-<script defer src="js/star.js?v=1.478.194"></script>
-<script defer src="js/cinema.js?v=1.478.194"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.194"></script>
+<script defer src="js/core.js?v=1.478.195" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.195"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.195"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.195"></script>
+<script defer src="js/game.js?v=1.478.195" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.195"></script>
+<script defer src="js/sync.js?v=1.478.195"></script>
+<script defer src="js/render.js?v=1.478.195"></script>
+<script defer src="js/planetarium.js?v=1.478.195"></script>
+<script defer src="js/goldstar.js?v=1.478.195"></script>
+<script defer src="js/music.js?v=1.478.195"></script>
+<script defer src="js/gyro.js?v=1.478.195"></script>
+<script defer src="js/forge.js?v=1.478.195"></script>
+<script defer src="js/partitura.js?v=1.478.195"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.195"></script>
+<script defer src="js/card.js?v=1.478.195"></script>
+<script defer src="js/star.js?v=1.478.195"></script>
+<script defer src="js/cinema.js?v=1.478.195"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.195"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
