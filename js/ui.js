@@ -1373,15 +1373,19 @@ function angarPvWake(){ // касание будит уснувшее превь
   if(!angarPvRaf) angarPvStart();
 }
 
-/* 09.09.2026 «Смотреть явление крупно» (владелец): большое окно — только явление, без корпуса
-   и без обрезки силуэтом, как и просил владелец («без самолёта, чтобы явлением или стилем
-   можно было насладиться отдельно»). Переиспользует angarPvFxReveal(...,'event',0,...) —
-   тот же код, что рисует «явление» на маленькой витрине, просто без таймера (фаза 'event'
-   держится, пока окно открыто) и без корпуса поверх. «Бумажный» (id0) — исключение, у него
-   нет отдельного явления, показываем сам борт (тот же принцип, что в angarShip). */
-let angarPvZoomRaf=0;
+/* 09.09.2026 «Смотреть явление крупно» (владелец, второй заход — «два меню для одного и
+   того же»): раньше была отдельная кнопка-лупа на витрине (только для надетого скина) И
+   старый текстовый попап #angarFactPop по ⓘ на плитке (для любого предмета, но без узора) —
+   два разных входа на одну и ту же задачу. Кнопка-лупа снята, #angarFactPop снят целиком
+   (angarFactOpen был его единственным вызывающим — см. git history); ⓘ на плитке теперь
+   открывает ЭТО окно, с узором конкретного предмета под пальцем, не обязательно надетого.
+   Открывается по любой из трёх категорий, где вообще бывает .fact (Цвет/Вспышка/След —
+   у Декали фактов нет вообще, ⓘ там не появляется). «Бумажный» (id0) — единственное
+   исключение, но у него и .fact нет, сюда он попасть не может. */
+let angarPvZoomRaf=0, angarPvZoomCat=null, angarPvZoomItem=null;
 function angarPvZoomDraw(t){
   if(screenName!=='hangar'){ angarPvZoomRaf=0; return; }
+  const item=angarPvZoomItem; if(!item) return;
   const cv=$('angarPvZoomCv'); if(!cv) return;
   const box=cv.getBoundingClientRect();
   const d=window.devicePixelRatio||1;
@@ -1392,25 +1396,37 @@ function angarPvZoomDraw(t){
     if(x){
       x.setTransform(cv.width/W,0,0,cv.height/H,0,0);
       x.clearRect(0,0,W,H);
-      const sk=(angarCat==='color') ? (SKINS_BY_ID.get(angarSel)||SKINS[0]) : (SKINS_BY_ID.get(S.skin)||SKINS[0]);
+      const skin=SKINS_BY_ID.get(S.skin)||SKINS[0]; // цвет узора вспышки/следа — от надетого скина, как и на плитке
+      const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
+      const col=a=>base+Math.max(0,a).toFixed(2)+')';
       x.save(); x.translate(W/2,H/2);
-      x.scale((W/380)*1.6*3.2,(W/380)*1.6*3.2);
-      const angarFxFn=sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
-      if(sk.id===0){ angarShip(x, sk, 1, false); } else { angarPvFxReveal(x, sk, t, 'event', 0, angarFxFn); }
+      if(angarPvZoomCat==='color'){
+        x.scale((W/380)*1.6*3.2,(W/380)*1.6*3.2);
+        const angarFxFn=item.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[item.fx] : null;
+        if(item.id===0){ angarShip(x, item, 1, false); } else { angarPvFxReveal(x, item, t, 'event', 0, angarFxFn); }
+      } else if(angarPvZoomCat==='flash'){
+        x.scale((W/380)*9,(W/380)*9);
+        renderFlashPattern(x, item.style, (t/1600)%1, col);
+      } else if(angarPvZoomCat==='trail'){
+        x.translate(0,-H*0.12);
+        x.scale((W/380)*6,(W/380)*6);
+        renderTrailPattern(x, item.style, col);
+      }
       x.restore();
       const nameEl=$('angarPvZoomName');
-      if(nameEl) nameEl.textContent=(angarCat==='color' && typeof sk.name==='number') ? (L.skinNames[sk.name]||'') : (sk.name||'');
+      if(nameEl) nameEl.textContent=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
       const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
       if(factEl && wrapEl){
-        if(sk.fact){ factEl.textContent=sk.fact; wrapEl.classList.remove('hidden'); }
+        if(item.fact){ factEl.textContent=item.fact; wrapEl.classList.remove('hidden'); }
         else wrapEl.classList.add('hidden');
       }
     }
   }
   angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
-function angarPvZoomOpen(){
-  const m=$('angarPvZoomModal'); if(!m) return;
+function angarPvZoomOpen(cat,item){
+  const m=$('angarPvZoomModal'); if(!m||!item) return;
+  angarPvZoomCat=cat; angarPvZoomItem=item;
   m.classList.add('open'); sfx.click(); haptic('light');
   if(!angarPvZoomRaf) angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
@@ -1420,7 +1436,6 @@ function angarPvZoomClose(){
   if(angarPvZoomRaf){ cancelAnimationFrame(angarPvZoomRaf); angarPvZoomRaf=0; }
   sfx.click();
 }
-wireOn('angarPvZoomBtn','click',angarPvZoomOpen);
 wireOn('angarPvZoomClose','click',angarPvZoomClose);
 wireOn('angarPvZoomModal','click',e=>{ if(e.target && e.target.id==='angarPvZoomModal') angarPvZoomClose(); });
 
@@ -1649,14 +1664,6 @@ function angarSwitchCat(cat){
    между языками (набрал «star» на английской раскладке — «Звезда» в русском интерфейсе не
    найдёт). Категории уже решают навигацию; чипы «Все/Новое/Куплено/Не куплено» не требуют
    ни печатать, ни помнить название — тот же приём, что уже есть в Мастерской (workshopSort). */
-/* 06.09.2026 «Подсказки понятны и доступны»: карточка вместо тоста, гаснет по тапу
-   (в любом месте), не по таймеру — тот, кто читает медленно, дочитывает в своём темпе. */
-function angarFactOpen(text){
-  const pop=$('angarFactPop'); if(!pop) return;
-  $('angarFactPopText').textContent=text;
-  pop.classList.remove('hidden');
-}
-wireOn('angarFactPop','click',()=>{ const pop=$('angarFactPop'); if(pop) pop.classList.add('hidden'); });
 let angarFilterMode='all';
 /* 07.09.2026, владелец: временный чип 'hasfact' убран совсем — иконка факта и так видна на
    плитке (.angarFact), отдельный фильтр дублировал её. 'favorite' — новый, ранжирован ВАЖНЕЕ
@@ -1805,7 +1812,7 @@ function angarBuildGrid(){
           const fb=document.createElement('button'); fb.type='button'; fb.className='angarFact';
           fb.innerHTML='<svg class="ic"><use href="#i-info"></use></svg>';
           fb.setAttribute('aria-label', L.angarFactBtn||'Факт');
-          fb.addEventListener('click', e=>{ e.stopPropagation(); angarFactOpen(item.fact); });
+          fb.addEventListener('click', e=>{ e.stopPropagation(); angarPvZoomOpen(angarCat, item); });
           box.appendChild(fb);
         }
         // 07.09.2026 «Избранное» (владелец, пересмотр отклонённого 29.08.2026 решения,
