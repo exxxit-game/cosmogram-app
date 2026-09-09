@@ -1549,6 +1549,11 @@ function verNewer(a,b){ // 05.09.2026: простое посегментное �
   return false;
 }
 
+/* 09.09.2026, владелец (живой скрин, обвёл красным «След»): маска-затухание справа
+   (.scrollFade, index.html) раньше висела на #angarTabs/#forgeSubTabs статично — даже
+   когда все вкладки уже помещались без прокрутки, последняя выглядела «в тени, размытая»
+   без причины. Включаем класс только когда реально есть что прокручивать. */
+function scrollFadeSync(el){ if(el) el.classList.toggle('scrollFade', el.scrollWidth>el.clientWidth+1); }
 let angarTabsBuilt = false;
 function angarBuildTabs(){
   /* 27.08.2026 «Кнопка не ложится на контент»: #angarTabs раньше был мёртвой заготовкой,
@@ -1782,6 +1787,7 @@ function renderHangar(){
   angarBuildTabs();
   angarSel = S[ANGAR_CATS[angarCat].selKey];
   angarRenderTabsSel();
+  scrollFadeSync($('angarTabs'));
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;

@@ -601,6 +601,7 @@ function forgeSubTabSet(s){
   if(arrangeEl) arrangeEl.classList.toggle('hidden', forgeSub!=='arrange');
   if(skyEl) skyEl.classList.toggle('hidden', forgeSub!=='sky');
   if(hardEl) hardEl.classList.toggle('hidden', forgeSub!=='hard');
+  if(typeof scrollFadeSync==='function') scrollFadeSync($('forgeSubTabs')); // 09.09.2026: маска-затухание только при реальном переполнении, см. ui.js
 }
 wireOnLocal('forgeSubArrangeBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('arrange'); });
 wireOnLocal('forgeSubSkyBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('sky'); });
