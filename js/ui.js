@@ -1514,7 +1514,12 @@ function angarVisibleList(){ // список жетонов активной в�
      версии — оставляем видимым всегда, как и было у поиска. */
   if(angarFilterMode==='all') return visible;
   const cfg2 = ANGAR_CATS[angarCat];
-  if(angarFilterMode==='new') return visible.filter(d=>d.id===0 || (d.since && verNewer(d.since, Store.get('angarSeenVersion','0'))));
+  // 09.09.2026, владелец (живой скрин): «Нет в новое» — id0 всегда показывался и в этом
+  // фильтре тоже (та же строка d.id===0||..., что верна для «Все»/«Куплено», где id0
+  // действительно всегда видим/всегда «куплен»). Но «Нет» — постоянный базовый вариант без
+  // since, он не может быть «новым» ни при каком выходе версии — здесь оставляем только
+  // настоящую проверку версии, без исключения для id0.
+  if(angarFilterMode==='new') return visible.filter(d=>d.since && verNewer(d.since, Store.get('angarSeenVersion','0')));
   const owned = d=>S[cfg2.ownedKey].includes(d.id);
   if(angarFilterMode==='owned') return visible.filter(d=>d.id===0 || owned(d));
   // 07.09.2026: 'favorite' заменяет временный 'hasfact' (иконка факта и так видна на плитке).
