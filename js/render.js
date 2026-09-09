@@ -4858,11 +4858,19 @@ function renderFlashPattern(c, style, p, col){
       break;
     }
     case 'metatronCube': {
+      // 09.09.2026 «то же для вспышек»: было 78 отдельных beginPath+stroke (по одному на
+      // отрезок) + 13 отдельных beginPath+fill (по одному на точку) — батчинг по стилю
+      // (PERFORMANCE.md §2.11) сводит это к одному stroke()+одному fill(), координаты
+      // остаются живыми (растут с p), кэшировать саму форму нельзя — это разлёт, не статика.
       const M=[[0,0],[14,0],[28,0],[7,12.12],[14,24.25],[-7,12.12],[-14,24.25],[-14,0],[-28,0],[-7,-12.12],[-14,-24.25],[7,-12.12],[14,-24.25]];
       c.strokeStyle=col(1-p); c.lineWidth=0.25;
-      for(let i=0;i<M.length;i++) for(let j=i+1;j<M.length;j++){ c.beginPath(); c.moveTo(M[i][0]*p,M[i][1]*p); c.lineTo(M[j][0]*p,M[j][1]*p); c.stroke(); }
+      c.beginPath();
+      for(let i=0;i<M.length;i++) for(let j=i+1;j<M.length;j++){ c.moveTo(M[i][0]*p,M[i][1]*p); c.lineTo(M[j][0]*p,M[j][1]*p); }
+      c.stroke();
       c.fillStyle=col(1-p);
-      M.forEach(([x,y])=>{ c.beginPath(); c.arc(x*p,y*p,1.6,0,6.2832); c.fill(); });
+      c.beginPath();
+      M.forEach(([x,y])=>{ c.arc(x*p,y*p,1.6,0,6.2832); });
+      c.fill();
       break;
     }
     case 'flowerOfLife': {
