@@ -60,7 +60,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 300м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
-    relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войди через Telegram, чтобы лететь в эстафете',
+    relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войдите, чтобы лететь в эстафете',
     relayMineTitle:'Статус эстафет', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
@@ -284,7 +284,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
     modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 300m, fly yours — hand off to the next pilot',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
-    relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in via Telegram to fly in the relay',
+    relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in to fly in the relay',
     relayMineTitle:'Relay status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
     relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
     relayFailStart:'Could not start the relay — try again',
@@ -448,7 +448,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
     modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 300m, vuela el tuyo — pásaselo al siguiente',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
-    relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión con Telegram para volar en los relevos',
+    relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión para volar en los relevos',
     relayMineTitle:'Estado de relevos', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
     relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
@@ -627,7 +627,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
     modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 300m, voe o seu — passe para o próximo',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
-    relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre com o Telegram para voar no revezamento',
+    relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre para voar no revezamento',
     relayMineTitle:'Status dos revezamentos', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
     relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
@@ -804,7 +804,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
     modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 300m, vole la tienne — passe le relais',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
-    relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi via Telegram pour voler dans le relais',
+    relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi pour voler dans le relais',
     relayMineTitle:'État des relais', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
     relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
     relayFailStart:'Impossible de démarrer le relais — réessaie',

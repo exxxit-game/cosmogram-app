@@ -2238,7 +2238,10 @@ function relayEnterFromChain(chain){
   return true;
 }
 wireOn('modeRelay', 'click', ()=>{
-  if (!syncAvailable()){ toast(L.relaySignInFirst,'rgba(191,232,255,.45)'); haptic('light'); return; }
+  // 09.09.2026 (владелец): тост «войди через Telegram» был тупиком — сказал и никуда не ведёт,
+  // а вход давно не только через Telegram (Discord/Google туда же, см. syncAuth). Теперь тап
+  // без входа сразу открывает Настройки — туда же, где уже стоят настоящие кнопки входа.
+  if (!syncAvailable()){ toast(L.relaySignInFirst,'rgba(191,232,255,.45)'); haptic('light'); openSettings('modes'); return; }
   sfx.click(); haptic('light');
   if (typeof syncRelayGetOpen!=='function' || typeof syncRelayStart!=='function') return;
   syncRelayGetOpen().then(r=>{
