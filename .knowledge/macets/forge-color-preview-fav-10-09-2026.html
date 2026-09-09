@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: предпросмотр + избранное в «Цвет»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+  body{max-width:420px;margin:0 auto;padding:16px}
+  .setPanel{background:var(--bg-1);border:1px solid var(--line);border-radius:16px;padding:14px}
+  .forgeRow{display:flex;align-items:center;gap:10px;width:100%}
+  .forgeLblBlk{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px}
+  .forgeVal{flex:none;width:26px;text-align:right;font-size:13px;color:#bcd2ff}
+  .fonSwatch{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  input[type=range]{flex:1;accent-color:#7ea6ff}
+  .forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+  .forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);
+    border-radius:10px;padding:8px 14px;font-size:12px;font-family:inherit;text-transform:inherit}
+  .forgeSegBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+  .ptRandomBtn{display:flex;align-items:center;justify-content:center;width:100%;margin:10px 0 4px;
+    padding:11px;border-radius:12px;border:1px solid var(--line-gold);background:rgba(201,164,92,.1);
+    color:var(--cream);font-family:inherit;font-size:13px}
+  .hint{font-size:11px;color:var(--muted);text-transform:none;letter-spacing:.02em;line-height:1.4;margin-top:2px}
+
+  /* --- то, что предлагается добавить --- */
+  #forgePreviewWrap{position:relative;margin-bottom:10px}
+  #forgePreview{width:100%;height:150px;border-radius:14px;border:1px solid rgba(140,170,255,.18);
+    display:block;background:linear-gradient(180deg,hsl(232,55%,20%),hsl(200,55%,12%));overflow:hidden;position:relative}
+  #forgePreview .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.8}
+  /* кнопка «сохранить» — прямо на окне предпросмотра, тот же язык (стекло+свечение), что уже
+     утверждён владельцем для #angarPvZoomClose/#angarPvZoomShare в этой же сессии */
+  #forgePreviewWrap .pvBtn{position:absolute;top:10px;width:34px;height:34px;border-radius:50%;
+    border:none;background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    backdrop-filter:blur(8px);
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+  #forgePreviewWrap .pvBtn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none}
+  /* Перемешать переехал сюда же (владелец) — тот же уже готовый значок #i-shuffle, что
+     стоит за сортировкой «Случайные» в Мастерской, не новая иконка */
+  #forgeShuffleFab{left:10px;color:#bcd2ff}
+  #forgeSaveFav{right:10px;color:#f0c040}
+
+  #forgeFavRow{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  #forgeFavRow .lbl{font-size:11px;letter-spacing:.12em;color:var(--muted);flex:none}
+  .favSwatch{width:26px;height:26px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+  .favEmpty{width:26px;height:26px;border-radius:50%;flex:none;border:1.5px dashed rgba(255,255,255,.25)}
+
+  .note{margin-top:22px;padding:12px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed var(--line-gold);font-size:11px;color:var(--cream);text-transform:none;letter-spacing:.02em;line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="setPanel">
+    <div id="forgePreviewWrap">
+      <div id="forgePreview">
+        <div class="star" style="top:20px;left:40px"></div>
+        <div class="star" style="top:55px;left:120px"></div>
+        <div class="star" style="top:30px;left:220px"></div>
+        <div class="star" style="top:80px;left:300px"></div>
+        <div class="star" style="top:100px;left:60px"></div>
+        <div class="star" style="top:15px;left:260px"></div>
+      </div>
+      <button id="forgeShuffleFab" class="pvBtn" aria-label="Перемешать">
+        <svg viewBox="0 0 24 24"><path d="M3 7h3.5L15 17h3.5M3 17h3.5l2.4-3.2M12.6 8.8L15 7h3.5M16 4.5 18.5 7 16 9.5M16 14.5 18.5 17 16 19.5"/></svg>
+      </button>
+      <button id="forgeSaveFav" class="pvBtn" aria-label="Сохранить в избранное">
+        <svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+      </button>
+    </div>
+
+    <div class="forgeLblBlk">Цвет неба</div>
+    <div class="forgeRow"><span class="fonSwatch" style="background:hsl(232,60%,55%)"></span><input type="range" value="232"><b class="forgeVal">232</b></div>
+    <div class="forgeLblBlk">Второй цвет (переход)</div>
+    <div class="forgeRow"><span class="fonSwatch" style="background:hsl(200,55%,50%)"></span><input type="range" value="200"><b class="forgeVal">200</b></div>
+    <div class="forgeLblBlk">Густота (звёзды и туманности)</div>
+    <div class="forgeRow"><input type="range" value="50"><b class="forgeVal">50</b></div>
+    <div class="forgeLblBlk">Настроение неба</div>
+    <div class="forgeRow"><input type="range" value="50"><b class="forgeVal">50</b></div>
+    <div class="hint">Больше — небо ярче и сочнее, меньше — бледнее и темнее</div>
+    <div class="forgeLblBlk">Туман</div>
+    <div class="forgeSeg">
+      <button class="forgeSegBtn sel">Нет</button>
+      <button class="forgeSegBtn">Лёгкий</button>
+      <button class="forgeSegBtn">Густой</button>
+    </div>
+
+    <div id="forgeFavRow">
+      <span class="lbl">Избранное</span>
+      <span class="favSwatch" style="background:hsl(20,70%,55%)"></span>
+      <span class="favSwatch" style="background:hsl(150,50%,45%)"></span>
+      <span class="favSwatch" style="background:hsl(280,55%,55%)"></span>
+      <span class="favEmpty"></span>
+      <span class="favEmpty"></span>
+    </div>
+  </div>
+
+  <div class="note">
+    Идея: обе кнопки — «Перемешать» и «Сохранить в избранное» — переехали прямо на окно
+    предпросмотра (тот же стеклянный стиль, что уже одобрен у кнопок закрыть/поделиться в
+    «явлении крупно»); значок перемешивания — тот же #i-shuffle, что уже в игре (сортировка
+    «Случайные» в Мастерской), не новый. Ряд «Избранное» — под ползунками, сохранённые цвета
+    кружками, тап по кружку подставляет его обратно на ползунки, пустые места — пунктиром.
+  </div>
+</body>
+</html>
