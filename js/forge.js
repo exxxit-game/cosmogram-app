@@ -899,7 +899,10 @@ function workshopRenderList(){
       // звезда заменена на двухцветный кружок (макет A/Б/В, владелец выбрал В) — читается как
       // «образец цвета», не как обычная звезда-избранное. Пипетка (Б) отклонена — на 26px похожа
       // на карандаш «Изменить», путает с соседней кнопкой.
-      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"></circle><path d="M12 3a9 9 0 0 1 0 18z" fill="#ffd66a"></path></svg></button>'+
+      // 09.09.2026 (владелец, живой скрин): двухцветный кружок тоже не читался как «цвет» —
+      // заменён на #i-color-fan (веер из 3 цветов, макет icon-swatch-fan-realsize.html, владелец
+      // выбрал вариант В). Не currentColor — свои три цвета зашиты в самом symbol.
+      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
       '</div>'+
       '<div class="wCornerRow">'+
       (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2"></rect></svg></button>' : '')+
