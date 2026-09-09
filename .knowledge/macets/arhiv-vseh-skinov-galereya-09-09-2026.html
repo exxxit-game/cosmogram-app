@@ -1,0 +1,168 @@
+<title>Архив всех скинов — галерея (реальный код игры)</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; --accent:#8fb8ff; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:28px 20px 60px}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font-size:24px;font-weight:800;margin:0 0 6px}
+.sub{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 22px;max-width:820px}
+.catHead{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:28px 0 12px;padding-top:20px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,170px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:5px}
+.card canvas{width:100%;aspect-ratio:1/1;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:8px;display:block}
+.card h3{font-size:11.5px;margin:1px 0 0}
+.card p{font-size:9.5px;color:var(--text-dim);margin:0}
+</style>
+<div class="wrap">
+  <h1>Архив всех скинов — живая галерея</h1>
+  <p class="sub">Настоящий код игры (<code>render.js: PREM_FX_MAP/drawPremiumFx2</code>), не приближение — те же функции,
+  что рисуют скин в полёте. Все эти скины сняты с игры 09.09.2026 (<code>.knowledge/archive-all-ship-skins-except-paper-09-09-2026.md</code>),
+  здесь — только чтобы увидеть, как выглядят с анимацией.</p>
+  <div id="cats"></div>
+</div>
+<script src="../../js/core.js"></script>
+<script src="../../js/game.js"></script>
+<script src="../../js/render.js"></script>
+<script>
+const CATALOG = [
+  {cat:'Тир 2 — яркие', items:[
+    {id:4,name:'Неон',fx:'neon',body:'#e4ffd6',fold:'#9fe081',glow:'rgba(120,255,80,.95)',trail:'rgba(120,255,80,'},
+    {id:5,name:'Аврора',fx:'aurora',body:'#e6dcff',fold:'#b0a0e8',glow:'rgba(170,130,255,.95)',trail:'rgba(160,120,255,'},
+    {id:6,name:'Плазма',fx:'plasma',body:'#ffe4cc',fold:'#f09c62',glow:'rgba(255,135,60,.95)',trail:'rgba(255,125,55,'},
+  ]},
+  {cat:'Тир 3 — легендарные', items:[
+    {id:7,name:'Хром',fx:'chrome',body:'#eceff3',fold:'#a7aeba',glow:'rgba(196,200,208,.95)',trail:'rgba(175,182,196,'},
+    {id:8,name:'Призрак',fx:'ghost',body:'#d8f4fa',fold:'#9cd8e4',glow:'rgba(130,235,245,.9)',trail:'rgba(120,225,240,'},
+  ]},
+  {cat:'Физика/культура — Stars', items:[
+    {id:52,name:'Спиральная галактика',fx:'cosGalaxy',body:'#dde6ff',fold:'#9aa8e0',glow:'rgba(120,150,255,.95)',trail:'rgba(120,150,255,'},
+    {id:53,name:'Аккреционный диск',fx:'cosAccretion',body:'#f4f2ff',fold:'#c9c3ea',glow:'rgba(210,200,255,.95)',trail:'rgba(210,200,255,'},
+    {id:54,name:'Квазикристалл',fx:'cosQuasi',body:'#ffe0ec',fold:'#e592b0',glow:'rgba(255,90,140,.95)',trail:'rgba(255,90,140,'},
+    {id:55,name:'Дамасская сталь',fx:'matWootz',body:'#fff0d6',fold:'#e0b46a',glow:'rgba(230,170,70,.95)',trail:'rgba(230,170,70,'},
+    {id:56,name:'Кольчуга',fx:'chainmail6',body:'#d8ffe8',fold:'#8ed9ac',glow:'rgba(70,220,130,.95)',trail:'rgba(70,220,130,'},
+    {id:57,name:'Персидский ковёр',fx:'persianTabriz',body:'#d2f6ff',fold:'#7fc9e0',glow:'rgba(60,190,230,.95)',trail:'rgba(60,190,230,'},
+  ]},
+  {cat:'17 материалов', items:[
+    {id:15,name:'Золото',fx:'matGold',body:'#fff3d6',fold:'#e0b46a',glow:'rgba(230,180,70,.95)',trail:'rgba(230,180,70,'},
+    {id:16,name:'Серебро',fx:'matSilver',body:'#f4f6fa',fold:'#c2cad8',glow:'rgba(190,202,220,.95)',trail:'rgba(190,202,220,'},
+    {id:17,name:'Бронза',fx:'matBronze',body:'#f2ddc6',fold:'#b97a48',glow:'rgba(200,128,66,.95)',trail:'rgba(200,128,66,'},
+    {id:18,name:'Лёд/Хрусталь',fx:'matIce',body:'#dff2fb',fold:'#b6dced',glow:'rgba(140,200,235,.95)',trail:'rgba(90,180,225,'},
+    {id:19,name:'Изумруд',fx:'matEmerald',body:'#0e5030',fold:'#0a3a22',glow:'rgba(30,150,90,.95)',trail:'rgba(60,210,130,'},
+    {id:20,name:'Обсидиан',fx:'matObsidian',body:'#2a2438',fold:'#1c1828',glow:'rgba(130,110,180,.85)',trail:'rgba(220,225,240,'},
+    {id:21,name:'Мрамор',fx:'matMarble',body:'#efe7db',fold:'#d9cfba',glow:'rgba(220,210,195,.9)',trail:'rgba(190,178,160,'},
+    {id:22,name:'Туманность',fx:'matNebula',body:'#160e2e',fold:'#100a20',glow:'rgba(130,90,200,.9)',trail:'rgba(140,110,220,'},
+    {id:23,name:'Опал',fx:'matOpal',body:'#f3efe8',fold:'#d8cdbe',glow:'rgba(230,220,205,.9)',trail:'rgba(220,180,200,'},
+    {id:24,name:'Окисл. медь',fx:'matVerdigris',body:'#c97a4a',fold:'#a05f36',glow:'rgba(150,110,70,.9)',trail:'rgba(80,160,130,'},
+    {id:25,name:'Карбон',fx:'matCarbon',body:'#181a1f',fold:'#101216',glow:'rgba(90,95,105,.85)',trail:'rgba(150,155,165,'},
+    {id:26,name:'Лава',fx:'matLava',body:'#241f1c',fold:'#161310',glow:'rgba(200,90,40,.9)',trail:'rgba(255,120,40,'},
+    {id:27,name:'Ржавое железо',fx:'matRust',body:'#8a5a3a',fold:'#6a4128',glow:'rgba(150,90,40,.9)',trail:'rgba(150,70,30,'},
+    {id:28,name:'Соты/янтарь',fx:'matHoney',body:'#7a4f18',fold:'#5c3b10',glow:'rgba(214,150,50,.9)',trail:'rgba(214,150,50,'},
+    {id:29,name:'Плазма (мат.)',fx:'matPlasma',body:'#160b2e',fold:'#100821',glow:'rgba(150,90,220,.9)',trail:'rgba(130,90,220,'},
+    {id:30,name:'Кварц',fx:'matQuartz',body:'#e9dbe0',fold:'#cbb0bc',glow:'rgba(200,150,175,.9)',trail:'rgba(200,150,175,'},
+    {id:31,name:'Дерево',fx:'matWood',body:'#a5713a',fold:'#7c4f22',glow:'rgba(180,130,70,.9)',trail:'rgba(180,130,70,'},
+  ]},
+  {cat:'9 символов-сигилов', items:[
+    {id:32,name:'Пентаграмма',fx:'sigPenta',body:'#efe0ff',fold:'#c9a8ec',glow:'rgba(190,110,255,.95)',trail:'rgba(190,110,255,'},
+    {id:33,name:'Гексаграмма',fx:'sigHexa',body:'#ffe4d6',fold:'#eb9f7a',glow:'rgba(255,110,60,.95)',trail:'rgba(255,110,60,'},
+    {id:34,name:'Мандала',fx:'sigMandala',body:'#d6fff2',fold:'#7fdfc0',glow:'rgba(60,220,180,.95)',trail:'rgba(60,220,180,'},
+    {id:35,name:'Трикветра',fx:'sigTriquetra',body:'#eaffd0',fold:'#b8e07a',glow:'rgba(170,220,60,.95)',trail:'rgba(170,220,60,'},
+    {id:36,name:'Роза ветров',fx:'sigCompass',body:'#e2e0ff',fold:'#a8a0e8',glow:'rgba(120,100,255,.95)',trail:'rgba(120,100,255,'},
+    {id:37,name:'Инь-Янь',fx:'sigYinyang',body:'#f0f0f0',fold:'#b8b8b8',glow:'rgba(180,180,180,.95)',trail:'rgba(180,180,180,'},
+    {id:38,name:'Цветок жизни',fx:'sigFlower',body:'#dcffdf',fold:'#8fdd9a',glow:'rgba(80,220,110,.95)',trail:'rgba(80,220,110,'},
+    {id:39,name:'Мальтийский крест',fx:'sigMaltese',body:'#ffe0e6',fold:'#eb8ea0',glow:'rgba(240,70,100,.95)',trail:'rgba(240,70,100,'},
+    {id:40,name:'Снежинка',fx:'sigSnowflake',body:'#dcf4ff',fold:'#8fcbe8',glow:'rgba(70,190,235,.95)',trail:'rgba(70,190,235,'},
+  ]},
+  {cat:'4 иллюзии формы', items:[
+    {id:41,name:'Кожаная стёжка',fx:'illLeather',body:'#ffe9cc',fold:'#e0ad6a',glow:'rgba(220,150,60,.95)',trail:'rgba(220,150,60,'},
+    {id:42,name:'Топография',fx:'illTopo',body:'#d8ffe0',fold:'#8fdb9e',glow:'rgba(70,210,120,.95)',trail:'rgba(70,210,120,'},
+    {id:43,name:'Оригами',fx:'illOrigami',body:'#ffe0f0',fold:'#e08eb8',glow:'rgba(230,90,170,.95)',trail:'rgba(230,90,170,'},
+    {id:44,name:'Плетёная решётка',fx:'illLattice',body:'#dcf0ff',fold:'#8fc0e0',glow:'rgba(70,170,220,.95)',trail:'rgba(70,170,220,'},
+  ]},
+  {cat:'4 паттерна', items:[
+    {id:45,name:'Пенроуз',fx:'patPenrose',body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)',trail:'rgba(167,139,250,'},
+    {id:46,name:'Цветочная решётка',fx:'patLattice2',body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)',trail:'rgba(167,139,250,'},
+    {id:47,name:'Плед из кругов',fx:'patCircles',body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)',trail:'rgba(167,139,250,'},
+    {id:48,name:'Кристалл',fx:'illCrystal',body:'#efeee9',fold:'#cdcabf',glow:'rgba(167,139,250,.95)',trail:'rgba(167,139,250,'},
+  ]},
+  {cat:'Космос — Stars', items:[
+    {id:49,name:'Кольца Сатурна',fx:'cosSaturn',body:'#efeee9',fold:'#cdcabf',glow:'rgba(230,190,120,.95)',trail:'rgba(230,190,120,'},
+    {id:50,name:'Аврора (капля)',fx:'cosAurora',body:'#efeee9',fold:'#cdcabf',glow:'rgba(90,220,160,.95)',trail:'rgba(90,220,160,'},
+    {id:51,name:'Пульсар',fx:'cosPulsar',body:'#efeee9',fold:'#cdcabf',glow:'rgba(180,160,255,.95)',trail:'rgba(180,160,255,'},
+  ]},
+];
+
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx,id){
+  const phase=(id.length*37%1000)/1000*Math.PI*2;
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.09)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function fillHull(ctx, sk){
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(0,-22,0,16);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.45,sk.body); g.addColorStop(1,sk.fold);
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
+function extraTierFx(ctx, sk, nowMs){ // копия трёх блоков из render.js:drawPlane() — не входят в PREM_FX_MAP
+  if(sk.fx==='plasma'){
+    const ph=nowMs/180;
+    ctx.globalAlpha=(.14+.08*Math.sin(ph));
+    ctx.fillStyle=PLASMA_HUES[Math.max(4,Math.min(32,Math.round(18+14*Math.sin(ph*.7))))];
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(sk.fx==='neon'){
+    const hue=(nowMs*.06)%360|0;
+    ctx.strokeStyle=NEON_HUES[hue]+'.9)'; ctx.lineWidth=1.7;
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.stroke();
+  } else if(sk.fx==='chrome'){
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.clip();
+    const sx=-34+((nowMs*.05)%68);
+    ctx.drawImage(sheenSprite(),sx-9,-26,18,48);
+    ctx.restore();
+  }
+}
+function mountSkin(cardsEl, sk){
+  const id='skin'+sk.id;
+  cardsEl.insertAdjacentHTML('beforeend', `<div class="card"><canvas id="${id}"></canvas><h3>${sk.name}</h3><p>id ${sk.id} · fx: ${sk.fx}</p></div>`);
+  const cv=document.getElementById(id), ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||150, h=cv.clientHeight||150;
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const scale=4.3*(Math.min(w,h)/150);
+    ctx.save(); ctx.translate(w/2,h/2*1.05); ctx.scale(scale,scale);
+    fillHull(ctx, sk);
+    drawPremiumFx2(ctx, sk, sk.fx, t||0); // НАСТОЯЩАЯ функция игры, render.js
+    extraTierFx(ctx, sk, t||0); // Неон/Хром/Плазма — доп. слой из drawPlane() (render.js), не входит в PREM_FX_MAP
+    edgeStroke(ctx, id);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+const catsEl=document.getElementById('cats');
+CATALOG.forEach(group=>{
+  catsEl.insertAdjacentHTML('beforeend', `<h2 class="catHead">${group.cat}</h2><div class="grid" id="g_${group.cat.replace(/\W/g,'')}"></div>`);
+  const gridEl=document.getElementById('g_'+group.cat.replace(/\W/g,''));
+  group.items.forEach(sk=>mountSkin(gridEl, sk));
+});
+</script>

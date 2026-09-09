@@ -1,0 +1,74 @@
+<title>Один скин — Дамасская сталь</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+h1{font-size:20px;margin:0}
+p{color:var(--text-dim);font-size:13px;max-width:420px;text-align:center;margin:0 0 6px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:16px;padding:14px;width:260px}
+.card canvas{width:100%;aspect-ratio:1/1;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:12px;display:block}
+</style>
+<h1>Дамасская сталь (id 55, fx: matWootz)</h1>
+<p>Реальная функция отрисовки из <code>render.js</code> (<code>fxMatWootz</code>), вставлена сюда дословно —
+не приближение. Снята с игры 09.09.2026, хранится в архиве.</p>
+<div class="card"><canvas id="cv"></canvas></div>
+<script>
+const sk={body:'#fff0d6',fold:'#e0b46a'};
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function clipShipBody(ctx){ ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.clip(); }
+// === дословно из render.js (fxMatWootz) ===
+function fxMatWootz(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3400)/3400;
+  for(let i=-9;i<=9;i++){
+    const y=i*1.4; if(y<-21||y>13) continue;
+    const shine=(Math.sin(p*Math.PI*2+i*0.5)+1)/2; // блеск бежит по полосам-«воде», настоящий узор кристаллизации карбидов
+    ctx.strokeStyle='hsla(210,15%,'+(55+Math.sin(i)*15+shine*20)+'%,'+(0.55+shine*0.35).toFixed(2)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath();
+    for(let x=-15;x<=15;x+=0.8){ const yy=y+Math.sin(x*0.4+i)*0.7; x===-15?ctx.moveTo(x,yy):ctx.lineTo(x,yy); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function fillHull(ctx){
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(0,-22,0,16);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.45,sk.body); g.addColorStop(1,sk.fold);
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
+function edgeStroke(ctx){
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.09)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+function ensureSize(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=cv.clientWidth||260, h=cv.clientHeight||260;
+  if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lw=w; cv._lh=h; cv._ld=dpr; }
+  return {w,h};
+}
+function frame(t){
+  const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+  const scale=4.3*(Math.min(w,h)/150);
+  ctx.save(); ctx.translate(w/2,h/2*1.05); ctx.scale(scale,scale);
+  fillHull(ctx);
+  fxMatWootz(ctx, sk, t||0);
+  edgeStroke(ctx);
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+frame(0);
+</script>

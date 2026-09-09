@@ -44,7 +44,19 @@ const ACH=[
     ru:{n:'Первый скин',d:'Купил свой первый скин в Тюнинге.'}, en:{n:'First Skin',d:'Bought your first skin in Tuning.'},
     es:{n:'Primera piel',d:'Compraste tu primera piel en Tuning.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin em Tuning.'},
     fr:{n:'Première skin',d:'Tu as acheté ta première skin dans Tuning.'}},
-  {id:'h2', cat:'hangar', ic:'👑', need:()=>(typeof SKINS!=='undefined'?SKINS.length:9), rw:400, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
+  {id:'h2', cat:'hangar', ic:'👑', need:()=>(typeof SKINS!=='undefined'?SKINS.length:9), rw:400,
+    /* 09.09.2026: val() раньше был S.ownedSkins.length — просто ЧИСЛО купленных когда-либо id,
+       включая уже удалённые из игры (архив партий). Оно могло случайно совпасть с текущим
+       SKINS.length (need) по количеству, а не по составу — например владелец держал 45 старых
+       id из давно снятых партий, ровно когда SKINS.length тоже стал 45 — достижение открылось
+       бы «сам собой», хотя ни одного из 45 ТЕКУЩИХ скинов игрок не покупал. Поймано при сверке
+       партии «физика/культура-2» (44 новых скина разом подняли и опускали SKINS.length несколько
+       раз за день). Теперь считаем настоящее пересечение: сколько из СЕЙЧАС существующих id
+       реально есть в S.ownedSkins — так v может дойти до need() только когда владеет каждым
+       текущим скином по-настоящему, число в «x/y» на экране Достижений при этом остаётся честным
+       живым прогрессом, не 0/1. */
+    val:()=>{ if(typeof S==='undefined'||!S.ownedSkins||typeof SKINS==='undefined') return 0;
+      const owned=new Set(S.ownedSkins); let n=0; for(const sk of SKINS) if(owned.has(sk.id)) n++; return n; },
     ru:{n:'Вся коллекция',d:'Собрал все скины Тюнинга.'}, en:{n:'Full Collection',d:'Collected every skin in Tuning.'},
     es:{n:'Colección completa',d:'Reuniste todas las pieles de Tuning.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins de Tuning.'},
     fr:{n:'Collection complète',d:'Tu as réuni toutes les skins de Tuning.'}}, // 08.09.2026: было захардкожено need:9, разошлось до 49 реальных скинов — теперь читает SKINS.length живьём, растёт сама с каждым новым сезонным добавлением, обновлять вручную больше не нужно

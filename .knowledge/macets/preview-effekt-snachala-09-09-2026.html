@@ -1,0 +1,166 @@
+<title>Превью: эффект сначала, потом на корпус</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; --accent:#8fb8ff; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:28px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:16px}
+h1{font-size:20px;margin:0;text-align:center}
+p.sub{color:var(--text-dim);font-size:13px;max-width:480px;text-align:center;margin:0}
+.stage{width:340px;height:340px;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:20px;border:1px solid var(--panel-edge);position:relative;overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.phaseLabel{position:absolute;top:10px;left:12px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.15);border-radius:20px;padding:3px 10px}
+.controls{display:flex;gap:10px}
+button{background:var(--panel);color:var(--text);border:1px solid var(--panel-edge);border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.name{font-weight:800;font-size:15px}
+.note{max-width:480px;font-size:12px;color:var(--text-dim);line-height:1.6;background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;padding:12px 16px}
+.progressTrack{width:340px;height:6px;background:var(--panel);border:1px solid var(--panel-edge);border-radius:6px;overflow:hidden}
+.progressFill{height:100%;width:0%;background:var(--accent);transition:background .2s}
+.progressTicks{width:340px;display:flex;font-size:9px;color:var(--text-dim);justify-content:space-between;margin-top:-8px}
+</style>
+<h1>Превью скина — сначала явление, потом переход на корпус</h1>
+<p class="sub">Демонстрация на примере «Аккреционный диск» (тот же реальный код отрисовки, что в макете
+физики/культуры). Три фазы по кругу: явление крупно само по себе → переход → на корпусе, как сейчас
+в игре.</p>
+<div class="stage">
+  <span class="phaseLabel" id="phaseLbl">явление</span>
+  <canvas id="cv"></canvas>
+</div>
+<div class="name">Аккреционный диск чёрной дыры</div>
+<div class="progressTrack"><div class="progressFill" id="progFill"></div></div>
+<div class="progressTicks"><span>0с — явление началось</span><span id="progNow">0.0с</span><span id="progTotal">/6.6с</span></div>
+<div class="controls">
+  <button id="btnReplay">⟲ проиграть заново</button>
+</div>
+<div class="note">
+  Тайминг (09.09.2026, поднято по просьбе «нужно реально успеть насладиться»): <b>3.2с явление</b>
+  в полный кадр → <b>1.4с плавный переход</b> на кинематографичной кривой (виньетка гасит всё
+  снаружи силуэта непрерывно, без рывка) → <b>2с на корпусе</b>, как обычно. Полный цикл — 6.6с,
+  дальше повторяется (полоска прогресса ниже окна показывает, где именно в цикле мы сейчас —
+  если полоска не двигается, это баг, скажи сразу). В игре логичнее один раз при открытии/выборе
+  скина, не бесконечный цикл — сейчас зациклено только для удобства показа.
+</div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function fillHull(ctx){
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(0,-22,0,16);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.45,'#181a1f'); g.addColorStop(1,'#101216');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+// === дословно из fizika-kultura-map-08-09-2026.html (drawAccretion) ===
+function drawAccretion(ctx,p){
+  // 09.09.2026: убран fillRect('#020208') из оригинала — там он был ВНУТРИ clipBody (фон-космос
+  // только внутри силуэта). Здесь узор рисуется БЕЗ обрезки (ради виньетки), и этот прямоугольник
+  // закрашивал чёрным вообще всё — и корпус из fillHull, и то место, где должна проступать виньетка.
+  // Из-за этого корпус физически не мог быть виден ни на одной фазе — реальный баг, не тайминг.
+  // 09.09.2026, второй баг в этой же функции: scale(10,10) был без своего save/restore (в
+  // оригинале был завёрнут вместе с clipBody/fillRect, которые я убрал, и по невнимательности
+  // выкинул и save/restore) — лишний масштаб "утекал" в maskOutsideBody/edgeStroke, вызванные
+  // после, из-за этого они рисовались в неправильных координатах.
+  ctx.save();
+  ctx.scale(10,10);
+  ctx.save(); ctx.scale(1,0.28);
+  for(let r=0.35;r<=1.3;r+=0.09){
+    const speed=Math.pow(1/r,1.5);
+    ctx.save(); ctx.rotate(p*2*Math.PI*speed*0.5);
+    ctx.strokeStyle=`hsla(30,90%,${65-r*15}%,${0.9-r*0.4})`; ctx.lineWidth=0.06;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*1.7); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  const flick=0.6+0.4*Math.sin(p*Math.PI*10);
+  [-1,1].forEach(side=>{
+    const g=ctx.createLinearGradient(0,0,0,side*1.3);
+    g.addColorStop(0,`hsla(210,80%,70%,${0.7*flick})`); g.addColorStop(1,'hsla(210,80%,60%,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0.12,side*1.3); ctx.lineTo(-0.12,side*1.3); ctx.closePath(); ctx.fill();
+  });
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,0.22,0,7); ctx.fill();
+  ctx.restore(); // закрывает save() перед scale(10,10) выше — без этого лишний масштаб утекал наружу
+}
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const lbl=document.getElementById('phaseLbl');
+const progFill=document.getElementById('progFill'), progNow=document.getElementById('progNow');
+function ensureSize(){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=cv.clientWidth||340, h=cv.clientHeight||340;
+  if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); cv._lw=w; cv._lh=h; cv._ld=dpr; }
+  return {w,h};
+}
+// «Кинематографичная» кривая — мягкий плавный разгон и ещё более мягкое, протяжное
+// затухание в конце (в кино камера почти всегда останавливается медленнее, чем стартует).
+function cinematicEase(t){ return t<0.4 ? Math.pow(t/0.4,2)*0.4 : 0.4+(1-Math.pow(1-(t-0.4)/0.6,3))*0.6; }
+
+// Плавная "виньетка" вместо резкого clipBody: всё, что снаружи силуэта корабля,
+// затемняется НЕПРЕРЫВНО (0→1), а не одним рывком в один момент времени — именно
+// рывок при appearance/disappearance читался бы как монтажная склейка, не как переход.
+function maskOutsideBody(ctx, alpha){
+  if(alpha<=0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-60,-60,120,120);
+  BODY_PTS.slice().reverse().forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y));
+  ctx.closePath();
+  ctx.fillStyle=`rgba(5,7,15,${alpha})`;
+  ctx.fill('evenodd');
+  ctx.restore();
+}
+
+/* Владелец: «нужно реально успеть насладиться» — 1.8с показалось коротко для того,
+   чтобы разглядеть узор и оценить его. Подняты тайминги: явление держится дольше (3.2с,
+   почти вдвое), сам переход тоже вдвое длиннее (1.4с) и на плавной кривой, а не резкой —
+   ощущается как один непрерывный кинематографичный кадр, а не два разных ролика встык. */
+const T_EVENT=3200, T_TRANS=1400, T_HOLD=2000; // мс — черновые, но осмысленно увеличенные, владелец подгонит финально
+const T_TOTAL=T_EVENT+T_TRANS+T_HOLD;
+let startTime=performance.now();
+document.getElementById('btnReplay').addEventListener('click',()=>{ startTime=performance.now(); });
+
+function frame(now){
+  const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+  const t = (now-startTime) % T_TOTAL;
+  const p = (now/1000) % 10; // фаза самого явления (своя анимация внутри), не тайминг перехода
+
+  const shipScale = 4.4 * (Math.min(w,h)/160); // тот же zoom=4.4, что и в реальном loopFlash('accDisk',...) макета физики/культуры
+  const baseScale = shipScale * 1.35; // "явление крупно" — заметно больше, без обрезки силуэтом остаётся в кадре
+
+  let scale, tt, phaseName;
+  if(t < T_EVENT){
+    scale = baseScale; tt = 0; phaseName='явление';
+  } else if(t < T_EVENT+T_TRANS){
+    tt = cinematicEase((t-T_EVENT)/T_TRANS);
+    scale = baseScale + (shipScale-baseScale)*tt; phaseName='переход';
+  } else {
+    scale = shipScale; tt = 1; phaseName='на корпусе';
+  }
+  lbl.textContent = phaseName;
+  progFill.style.width = (t/T_TOTAL*100).toFixed(1)+'%';
+  progNow.textContent = (t/1000).toFixed(1)+'с';
+
+  ctx.save(); ctx.translate(w/2, h/2*1.05);
+  ctx.save(); ctx.scale(scale,scale);
+  // порядок ВАЖЕН: корпус — под низ (проступает постепенно), явление — поверх, всегда
+  // целиком видимое (никогда не перекрывается корпусом), лишнее за пределами силуэта
+  // гасится виньеткой — так эффект не "прячется под корпус", а корпус "ловит" эффект.
+  if(tt>0){ ctx.globalAlpha=tt; fillHull(ctx); ctx.globalAlpha=1; }
+  drawAccretion(ctx,p);
+  if(tt>0){
+    maskOutsideBody(ctx, tt); // всё за пределами силуэта плавно темнеет к тому же моменту
+    if(tt>0.7) edgeStroke(ctx); // кромка/блик — последний штрих, только когда переход почти завершён
+  }
+  ctx.restore();
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>

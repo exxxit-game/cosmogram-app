@@ -978,6 +978,21 @@ const PREM_FX_MAP={
   cosSaturn:fxCosSaturn, cosAurora:fxCosAurora, cosPulsar:fxCosPulsar,
   cosGalaxy:fxCosGalaxy, cosAccretion:fxCosAccretion, cosQuasi:fxCosQuasi,
   matWootz:fxMatWootz, chainmail6:fxMatChainmail, persianTabriz:fxCulPersian,
+  // 09.09.2026 «физика/культура партия 2» (первая волна — физика/космос, 9 новых):
+  cosComet:fxCosComet, cosNebula:fxCosNebula, cosGalaxyFloc:fxCosGalaxyFloc,
+  cosLichtPos:fxCosLichtPos, cosLichtNeg:fxCosLichtNeg, cosPlateau:fxCosPlateau,
+  cosPhyllo:fxCosPhyllo, cosSono:fxCosSono, cosFaraday:fxCosFaraday,
+  // 09.09.2026 «физика/культура партия 2» (вторая волна — ремёсла/материалы, 26 новых;
+  // Вуц/6-в-1/Тебриз этой же волны используют matWootz/chainmail6/persianTabriz выше):
+  culTapa:fxCulTapa, culAndesFront:fxCulAndesFront, culTatreez:fxCulTatreez,
+  culNavajoTwoGrey:fxCulNavajoTwoGrey, culNavajoGanado:fxCulNavajoGanado, culNavajoCrystal:fxCulNavajoCrystal,
+  culCintemani:fxCulCintemani, culOlzii:fxCulOlzii, culAlkhanKhee:fxCulAlkhanKhee,
+  culEthiopia:fxCulEthiopia, culJamdani:fxCulJamdani, culTnalak:fxCulTnalak, culRyijy:fxCulRyijy,
+  matPatternWeld:fxMatPatternWeld, matChainmail4:fxMatChainmail4, matMarbleVein:fxMatMarbleVein,
+  matFrost:fxMatFrost, matShellHex:fxMatShellHex, matNacre:fxMatNacre,
+  culKanga:fxCulKanga, culBasketCoil:fxCulBasketCoil, culBasketPlait:fxCulBasketPlait,
+  culPersianIsfahan:fxCulPersianIsfahan, culPersianKashan:fxCulPersianKashan,
+  culPersianQom:fxCulPersianQom, culPersianNain:fxCulPersianNain,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1034,18 +1049,178 @@ function fxCosAccretion(ctx,sk,nowMs){
   ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,0.55,0,6.283); ctx.fill();
   ctx.restore();
 }
+/* ===== 09.09.2026 «физика/культура партия 2» — перенос из macets/fizika-kultura-map-08-09-2026.html
+   дословно (та же система координат BODY_PTS/-22..14/±16, что и clipShipBody — сверено координата
+   в координату). Масштабы — из уже проверенного числом макета (см. project_fizika_kultura_maket_odobren_08_09
+   в памяти: систематический проход, содержание доходит до 9-14 единиц тела из 16 доступных),
+   ПОДЛЕЖИТ финальной проверке живым скриншотом до показа владельцу, как и остальные. ===== */
+function fxCosComet(ctx,sk,nowMs){ // Хвосты комет — ионный (прямая линия) + пылевой (кривая), оба сразу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  const grow=0.35+0.65*Math.sin(p*Math.PI); // у перигелия хвостов почти нет, дальше от Солнца — реально удлиняются
+  const g=ctx.createLinearGradient(0,0,0,13*grow);
+  g.addColorStop(0,'hsla(200,90%,75%,.85)'); g.addColorStop(1,'hsla(200,90%,60%,0)');
+  ctx.strokeStyle=g; ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,13*grow); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,0);
+  for(let t=0.05;t<=10.8*grow;t+=0.3){ const rad=0.5*0.55*(t/6)*(t/6); ctx.lineTo(rad, -Math.abs(t)); }
+  const g2=ctx.createLinearGradient(0,0,8.4*grow,-9.6*grow);
+  g2.addColorStop(0,'hsla(35,70%,80%,.85)'); g2.addColorStop(1,'hsla(35,70%,70%,0)');
+  ctx.strokeStyle=g2; ctx.lineWidth=0.8; ctx.stroke();
+  ctx.fillStyle='#dfe6ff'; ctx.beginPath(); ctx.arc(0,0,1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosNebula(ctx,sk,nowMs){ // Биполярная (hourglass) туманность — растёт, силуэт меняется с ракурсом
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4200)/4200;
+  const grow=0.7+0.3*Math.sin(p*Math.PI*2);
+  const viewSquish=0.4+0.6*Math.abs(Math.cos(p*Math.PI*2*0.6));
+  ctx.save(); ctx.scale(1,viewSquish);
+  [1,-1].forEach(side=>{
+    ctx.save(); ctx.scale(1,side);
+    ctx.beginPath();
+    for(let a=-Math.PI/2;a<=Math.PI/2;a+=0.1){
+      const r=9*grow*Math.pow(Math.abs(Math.cos(a)),0.35);
+      ctx.lineTo(r*Math.sin(a), -r*Math.cos(a)-1);
+    }
+    const g=ctx.createRadialGradient(0,-6,0.7,0,-6,9*grow);
+    g.addColorStop(0,'hsla(320,80%,68%,.85)'); g.addColorStop(1,'hsla(260,80%,45%,.15)');
+    ctx.fillStyle=g; ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,0.6,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosGalaxyFloc(ctx,sk,nowMs){ // Flocculent — короткие рукава, каждый со своей скоростью (диф. ротация)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%7000)/7000;
+  const rnd=mulberry32(7);
+  for(let i=0;i<7;i++){
+    const startAng=rnd()*7, startR=4.5+rnd()*3.5, span=0.6+rnd()*0.7;
+    const ownSpeed=1/(startR/13+0.3);
+    ctx.save(); ctx.rotate(p*2*Math.PI*0.4*ownSpeed);
+    ctx.beginPath();
+    for(let t=0;t<=1;t+=0.08){ const th=startAng+t*span, r=startR+t*6.5; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.strokeStyle='hsla(200,70%,70%,.7)'; ctx.lineWidth=0.45; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle='hsla(45,90%,80%,.9)'; ctx.beginPath(); ctx.arc(0,0,1.3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosLichtPos(ctx,sk,nowMs){ // Лихтенберг, позитивный разряд — дерево реально растёт волной
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2200)/2200;
+  const total=7, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  const rnd=mulberry32(11);
+  (function branch(x,y,ang,len,depth){
+    if(depth<=0||len<0.16) return;
+    if(depth<revealDepth) return;
+    const partial=depth===revealDepth?revealFrac:1;
+    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+    ctx.strokeStyle='hsla(205,80%,'+(70-depth*4)+'%,'+(0.9-depth*0.05).toFixed(2)+')'; ctx.lineWidth=len*0.5;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+    if(partial<1) return;
+    const nb=1+Math.floor(rnd()*2);
+    for(let k=0;k<nb;k++){ const da=(rnd()-0.5)*Math.PI/2.2; branch(x2,y2,ang+da,len*0.72,depth-1); }
+  })(0,10.4,-Math.PI/2,4.4,total);
+  ctx.restore();
+}
+function fxCosLichtNeg(ctx,sk,nowMs){ // Лихтенберг, негативный разряд — кольца расходятся, как круги на воде
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  for(let i=1;i<=6;i++){
+    const rr=((i-1+p)%6)+1;
+    ctx.strokeStyle='hsla(200,70%,70%,'+Math.max(0,0.9-rr*0.12).toFixed(2)+')'; ctx.lineWidth=0.16;
+    ctx.beginPath(); ctx.arc(0,0,rr*1.6,0,6.283); ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxCosPlateau(ctx,sk,nowMs){ // Мыльная плёнка — тройное соединение под 120°, честная иризация цвета по углу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000;
+  const dx=4,dy=dx*Math.sqrt(3)/2;
+  for(let row=-3;row<=3;row++){
+    for(let col=-3;col<=3;col++){
+      const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
+      if(Math.hypot(cx,cy)>14) continue;
+      const ang=((cx+cy)*20+p*360)%90;
+      const n=1.33,d=300,m=1;
+      const thetaI=ang*Math.PI/180, thetaT=Math.asin(Math.min(0.999,Math.sin(thetaI)/n));
+      const lambda=2*n*d*Math.cos(thetaT)/(m+0.5);
+      const hue=Math.max(0,Math.min(300,(700-lambda)/(700-380)*300));
+      ctx.strokeStyle='hsla('+hue+',80%,75%,.85)'; ctx.lineWidth=0.24;
+      for(let k=0;k<3;k++){
+        const a1=(k*120+(col+row)%2*60)*Math.PI/180;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a1)*4,cy+Math.sin(a1)*4); ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+function fxCosPhyllo(ctx,sk,nowMs){ // Филлотаксис Фогеля — r=√n, θ=n·137.5077°, семена появляются по одному
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3800)/3800;
+  const PHI=(1+Math.sqrt(5))/2, GOLDEN_ANGLE=360*(1-1/PHI);
+  const shown=Math.floor(p*220);
+  for(let n=0;n<shown;n++){
+    const r=Math.sqrt(n)*1.04, ang=n*GOLDEN_ANGLE*Math.PI/180;
+    const justBorn=n>shown-6;
+    ctx.fillStyle='hsla('+(45+n*0.3)+',75%,'+(60+(n%2)*8)+'%,'+(justBorn?1:.9)+')';
+    ctx.beginPath(); ctx.arc(r*Math.cos(ang), r*Math.sin(ang), justBorn?0.48:0.36,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxCosSono(ctx,sk,nowMs){ // Сонолюминесценция — пузырёк растёт ~10x, резко схлопывается, вспышка на пике
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const cyclePos=(nowMs%2600)/2600;
+  let r;
+  if(cyclePos<0.75){ r=0.8+(cyclePos/0.75)*8; } else { const c=(cyclePos-0.75)/0.25; r=8.8-(c*8.6); }
+  ctx.strokeStyle='hsla(200,70%,75%,.8)'; ctx.lineWidth=0.24;
+  ctx.beginPath(); ctx.arc(0,0,r,0,6.283); ctx.stroke();
+  if(cyclePos>0.93){
+    const flashA=1-(cyclePos-0.93)/0.07;
+    const g=ctx.createRadialGradient(0,0,0,0,0,4);
+    g.addColorStop(0,'hsla(200,100%,90%,'+flashA.toFixed(2)+')'); g.addColorStop(1,'hsla(200,100%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxCosFaraday(ctx,sk,nowMs){ // Волны Фарадея — квадратная решётка, честная субгармоника (половина частоты)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2400)/2400;
+  const sub=Math.sin(p*Math.PI);
+  for(let i=-3;i<=3;i++){
+    for(let j=-3;j<=3;j++){
+      const up=(i+j)%2===0;
+      const r=1.3+(up?1:-1)*0.4*sub;
+      ctx.fillStyle=up?'hsla(195,80%,70%,.8)':'hsla(195,40%,40%,.6)';
+      ctx.beginPath(); ctx.arc(i*3.4,j*3.4,Math.max(0.4,r),0,6.283); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+/* 09.09.2026, владелец («добавил анимацию квазикристаллу? да»): было медленное общее
+   вращение — заменено на честный реальный процесс: настоящая электронная дифракция
+   копится пятно за пятном по мере накопления электронов на детекторе (классический опыт
+   единичных электронов), не появляется готовой сразу. У каждого из 40 пятен — свой
+   детерминированный (mulberry32) момент появления, с коротким ярким "хитом" в момент
+   прихода. Тот же приём уже проверен в макете fizika-kultura-map-08-09-2026.html. */
+const QUASI_ARRIVAL=(()=>{ const rnd=mulberry32(42); const arr=[]; for(let i=0;i<40;i++) arr.push(rnd()); return arr; })();
 function fxCosQuasi(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
-  const p=(nowMs%9000)/9000;
-  ctx.rotate(p*2*Math.PI*0.12); // очень медленное вращение — квазикристалл честно апериодичен, не "крутится как колесо"
+  const p=(nowMs%4200)/4200;
   const PHI=(1+Math.sqrt(5))/2;
+  let idx=0;
   for(let ray=0;ray<10;ray++){
     const ang=ray*36*Math.PI/180;
     for(let s=0;s<4;s++){
+      const arrival=QUASI_ARRIVAL[idx++];
+      if(p<arrival){ continue; }
+      const justHit=(p-arrival)<0.04;
       const r=Math.pow(PHI,s)*1.55; const x=r*Math.cos(ang), y=r*Math.sin(ang);
-      const rad=0.85-s*0.13;
+      const rad=(0.85-s*0.13)*(justHit?1.5:1);
       const g=ctx.createRadialGradient(x,y,0,x,y,rad);
-      g.addColorStop(0,'hsla(190,90%,80%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
+      g.addColorStop(0,'hsla(190,90%,'+(justHit?95:80)+'%,.95)'); g.addColorStop(1,'hsla(190,90%,60%,0)');
       ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,6.283); ctx.fill();
     }
   }
@@ -1104,6 +1279,404 @@ function fxCulPersian(ctx,sk,nowMs){
   ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
   ctx.strokeStyle='rgba(20,10,10,.7)'; ctx.lineWidth=0.3; ctx.stroke();
   ctx.restore();
+  ctx.restore();
+}
+// 09.09.2026 «физика/культура партия 2» (вторая волна — ремёсла/материалы, 26 новых
+// функций; ещё 3 варианта той же партии — Вуц/6-в-1/Тебриз — переиспользуют функции
+// выше без изменений). Перенос дословный из fizika-kultura-map-08-09-2026.html: тот же
+// приём, что и в первой волне — внутренний ctx.scale(N,N) макета (уже откалиброван по
+// координатам корпуса, см. content-scale правку 08.09.2026) сохранён как есть в своём
+// save/restore, фон-заливка убрана (реальный корпус уже закрашен sk.body в drawPlane).
+function fxCulTapa(ctx,sk,nowMs){ // Тонганская тапа (нгату) — мотив «манулуа» проступает блок за блоком
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3600)/3600;
+  ctx.save(); ctx.scale(9.7,9.7);
+  const order=[]; for(let row=-2;row<=2;row++) for(let col=-2;col<=2;col++) order.push([row,col]);
+  const shown=Math.floor(p*order.length)+1;
+  order.slice(0,shown).forEach(([row,col],idx)=>{
+    const cx=col*0.62, cy=row*0.62;
+    const fresh=idx>=shown-2;
+    ctx.fillStyle='#1c1108';
+    ctx.beginPath(); ctx.moveTo(cx,cy-0.24); ctx.lineTo(cx+0.24,cy); ctx.lineTo(cx,cy+0.24); ctx.lineTo(cx-0.24,cy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=fresh?'#e8b060':'#c98a3a';
+    ctx.beginPath(); ctx.arc(cx,cy-0.09,0.07,0,6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy+0.09,0.07,0,6.283); ctx.fill();
+  });
+  ctx.restore(); ctx.restore();
+}
+function fxCulAndesFront(ctx,sk,nowMs){ // Андское ткачество, лицевая сторона — комплементарная перевязка нарастает рядами
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(10,10);
+  ctx.fillStyle='#c94f4f';
+  const rows=[]; for(let row=-3;row<=3;row++) rows.push(row);
+  const shownRows=Math.floor(p*rows.length)+1;
+  rows.slice(0,shownRows).forEach(row=>{
+    for(let col=-3;col<=3;col++){
+      if((row+col)%2!==0) continue;
+      const cx=col*0.32, cy=row*0.32;
+      ctx.beginPath(); ctx.moveTo(cx,cy-0.14); ctx.lineTo(cx+0.14,cy); ctx.lineTo(cx,cy+0.14); ctx.lineTo(cx-0.14,cy); ctx.closePath(); ctx.fill();
+    }
+  });
+  ctx.restore(); ctx.restore();
+}
+function fxCulTatreez(ctx,sk,nowMs){ // Палестинская татрииз — счётный крест растёт кольцами от центра
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  ctx.save(); ctx.scale(20,20);
+  const cell=0.16;
+  const ring=1+Math.floor(p*4);
+  for(let r=1;r<=Math.min(ring,4);r++){
+    const stitchesShown = r<ring ? 8 : Math.max(1,Math.floor((p*4-(ring-1))*8));
+    for(let k=0;k<stitchesShown;k++){
+      const ang=k*Math.PI/4;
+      const x=Math.cos(ang)*r*cell, y=Math.sin(ang)*r*cell;
+      ctx.fillStyle=r%2===0?'#c94f4f':'#e8ecf7';
+      ctx.fillRect(x-cell*0.4,y-cell*0.4,cell*0.8,cell*0.8);
+    }
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxCulNavajoTwoGrey(ctx,sk,nowMs){ // Навахо, Two Grey Hills — небелёная шерсть, ряды нарастают на станке
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(10,10);
+  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach(row=>{
+    ctx.strokeStyle=row%2===0?'#5a4a30':'#8a7a5a'; ctx.lineWidth=0.05;
+    ctx.beginPath(); ctx.moveTo(-1.3,row*0.16); ctx.lineTo(1.3,row*0.16); ctx.stroke();
+  });
+  ctx.restore(); ctx.restore();
+}
+function fxCulNavajoGanado(ctx,sk,nowMs){ // Навахо, Ganado — ступенчатые ромбы нарастают от края
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(10,10);
+  const ringShow=1+p*3;
+  for(let ring=3; ring>=1; ring--){
+    if(ring>ringShow+0.001) continue;
+    const partial = ring>Math.floor(ringShow)? (ringShow-Math.floor(ringShow)) : 1;
+    ctx.fillStyle = ring%2===0?'#1a1a1a':'#e8ecf7';
+    const s=ring*0.32*Math.max(0.15,partial);
+    ctx.beginPath(); ctx.moveTo(0,-s); ctx.lineTo(s,0); ctx.lineTo(0,s); ctx.lineTo(-s,0); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxCulNavajoCrystal(ctx,sk,nowMs){ // Навахо, Crystal — растительные красители, полосы без каймы
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(10,10);
+  const hues=['#6a5a3a','#b0a070','#4a3f28'];
+  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach(row=>{
+    ctx.fillStyle=hues[(row+9)%3]; ctx.fillRect(-1.3,row*0.16-0.07,2.6,0.13);
+  });
+  ctx.restore(); ctx.restore();
+}
+function culCintemaniUnit(ctx,cx,cy,scale){
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(scale,scale);
+  ctx.fillStyle='#c94f2f';
+  [[0,-1.7],[-1.4,0.6],[1.4,0.6]].forEach(([x,y])=>{ ctx.beginPath(); ctx.arc(x,y,0.85,0,6.283); ctx.fill(); });
+  ctx.strokeStyle='#2a6a4a'; ctx.lineWidth=0.28;
+  for(let i=0;i<2;i++){
+    ctx.beginPath();
+    for(let t=-2.3;t<=2.3;t+=0.1){ const x=t, y=2.3+i*0.75+Math.sin(t*3)*0.35; t===-2.3?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxCulCintemani(ctx,sk,nowMs){ // Турецкий чинтемани — три круга + тигровые полосы, штампуется одно за другим
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([row,col])=>{
+    culCintemaniUnit(ctx, col*11+(row%2)*5.5, row*7-2, 1.0);
+  });
+  ctx.restore();
+}
+function fxCulOlzii(ctx,sk,nowMs){ // Монгольский войлок, Өлзий — замкнутый узел трассируется от начала до узла
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  ctx.save(); ctx.scale(18,18);
+  ctx.strokeStyle='#e8c860'; ctx.lineWidth=0.06; ctx.lineCap='round';
+  ctx.beginPath();
+  const frac=Math.max(0.02,(p%1));
+  for(let t=0;t<=frac;t+=0.01){
+    const th=t*Math.PI*4;
+    const r=0.42+0.14*Math.sin(th*2);
+    const x=r*Math.cos(th), y=r*Math.sin(th)*0.7;
+    t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore(); ctx.restore();
+}
+function fxCulAlkhanKhee(ctx,sk,nowMs){ // Монгольский войлок, Алхан хээ — открытый меандр, повороты только 90°
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  ctx.save(); ctx.scale(10,10);
+  const moves=['R','U','R','D','R','U','U','R','D','D','R','U','R'];
+  let x=-1.1,y=-0.3;
+  const shown=Math.max(1,Math.floor(p*moves.length));
+  ctx.strokeStyle='#e8c860'; ctx.lineWidth=0.09; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(x,y);
+  moves.slice(0,shown).forEach(m=>{ if(m==='R') x+=0.18; else if(m==='U') y-=0.18; else if(m==='D') y+=0.18; ctx.lineTo(x,y); });
+  ctx.stroke();
+  ctx.restore(); ctx.restore();
+}
+function fxCulEthiopia(ctx,sk,nowMs){ // Эфиопский плетёный крест «вечность» — плетение прокладывается луч за лучом
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  ctx.save(); ctx.scale(22,22);
+  ctx.strokeStyle='#d8b860'; ctx.lineWidth=0.045; ctx.lineCap='round';
+  const armFrac=Math.min(1,p*2);
+  [[-0.55,0,0.55,0],[0,-0.55,0,0.55]].forEach(([x0,y0,x1,y1])=>{
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0+(x1-x0)*armFrac, y0+(y1-y0)*armFrac); ctx.stroke();
+  });
+  const braidFrac=Math.max(0,Math.min(1,(p-0.5)*2));
+  const braidsShown=Math.floor(braidFrac*4);
+  for(let i=0;i<braidsShown;i++){
+    const ang=i*Math.PI/2;
+    ctx.save(); ctx.rotate(ang);
+    ctx.beginPath();
+    for(let t=0;t<=1;t+=0.05){ const r=0.2+t*0.35; const x=r, y=Math.sin(t*Math.PI*3)*0.06; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke(); ctx.restore();
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxCulJamdani(ctx,sk,nowMs){ // Бенгальский джамдани — плавающие мотивы мерцают на просвет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  for(let row=-4;row<=3;row++) for(let col=-2;col<=2;col++){
+    if((row+col)%2!==0) continue;
+    const cx=col*6.4, cy=row*5.6-2;
+    const shimmer=(Math.sin(p*Math.PI*2 + (row+col))+1)/2;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.PI/5);
+    ctx.fillStyle='rgba(232,216,168,'+(0.6+shimmer*0.4).toFixed(2)+')';
+    ctx.beginPath(); ctx.ellipse(0,0,1.6,2.5,0,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(120,90,40,'+(0.4+shimmer*0.3).toFixed(2)+')'; ctx.lineWidth=0.18; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function fxCulTnalak(ctx,sk,nowMs){ // Филиппинский т'налак — краска ikat проступает полосой за полосой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  ctx.save(); ctx.scale(10,10);
+  ctx.filter='blur(1.5px)';
+  const rows=[]; for(let row=-2;row<=2;row++) rows.push(row);
+  const shown=Math.floor(p*rows.length)+1;
+  rows.slice(0,shown).forEach((row,idx)=>{
+    const justDyed=idx===shown-1;
+    const alpha=justDyed?0.4+0.6*((p*rows.length)%1):1;
+    ctx.fillStyle=row%2===0?'rgba(201,160,58,'+alpha.toFixed(2)+')':'rgba(138,31,31,'+alpha.toFixed(2)+')';
+    ctx.beginPath(); ctx.moveTo(-1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3-0.1); ctx.lineTo(1.3,row*0.3+0.1); ctx.lineTo(-1.3,row*0.3+0.1); ctx.closePath(); ctx.fill();
+  });
+  ctx.filter='none';
+  ctx.restore(); ctx.restore();
+}
+function fxCulRyijy(ctx,sk,nowMs){ // Финский рюйю — длинный ворс честно покачивается
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3600)/3600;
+  ctx.save(); ctx.scale(11,11);
+  const rnd=mulberry32(5);
+  for(let row=-6;row<=6;row++) for(let col=-6;col<=6;col++){
+    const cx=col*0.11, cy=row*0.11;
+    if(Math.hypot(cx,cy)>1.1) continue;
+    const sway=Math.sin(p*Math.PI*2 + row*0.7+col*0.4)*0.015;
+    ctx.strokeStyle='hsla('+(300+rnd()*30)+',50%,'+(50+rnd()*20)+'%,.8)'; ctx.lineWidth=0.02;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+(rnd()-0.5)*0.04+sway,cy+0.05); ctx.stroke();
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxMatPatternWeld(ctx,sk,nowMs){ // Дамаскирование — слои РАЗНЫХ сталей проступают по мере проковки-скручивания
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  ctx.save(); ctx.scale(10,10);
+  const shown=Math.floor(p*17)+1;
+  for(let i=-8;i<=8;i++){
+    if(i+9>shown) continue;
+    ctx.strokeStyle=i%2===0?'hsla(210,10%,75%,.85)':'hsla(210,10%,35%,.85)'; ctx.lineWidth=0.05;
+    ctx.beginPath(); ctx.moveTo(-1.3,i*0.09); ctx.lineTo(1.3,i*0.09+0.3); ctx.stroke();
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxMatChainmail4(ctx,sk,nowMs){ // Кольчуга 4-в-1 (европейское) — каждое кольцо продето ровно через 4 соседних
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  ctx.save(); ctx.scale(11,11);
+  const R=0.16;
+  const cells=[]; for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++) cells.push([row,col]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([row,col])=>{
+    const off=(row%2)*R;
+    const cx=col*R*1.7+off, cy=row*R*1.5;
+    ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.03;
+    ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,Math.PI/4,0,6.283); ctx.stroke();
+  });
+  ctx.restore(); ctx.restore();
+}
+function fxMatMarbleVein(ctx,sk,nowMs){ // Мраморные жилы — трещина реально растёт и ветвится со временем (геологический процесс)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  ctx.save(); ctx.scale(5.5,5.5);
+  const rnd=mulberry32(21);
+  const total=6, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  function crack(x,y,ang,len,depth){
+    if(depth<=0||len<0.03) return;
+    if(depth<revealDepth) return;
+    const partial= depth===revealDepth? revealFrac : 1;
+    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+    ctx.strokeStyle='rgba(90,90,95,'+(0.5+depth*0.05).toFixed(2)+')'; ctx.lineWidth=len*0.25;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+    if(partial<1) return;
+    if(rnd()<0.6) crack(x2,y2,ang+(rnd()-0.5)*1.4,len*0.6,depth-1);
+    crack(x2,y2,ang+(rnd()-0.5)*0.6,len*0.75,depth-1);
+  }
+  crack(-1.1,-0.9,0.4,0.5,total);
+  crack(0.9,1.0,3.6,0.5,total);
+  ctx.restore(); ctx.restore();
+}
+function fxMatFrost(ctx,sk,nowMs){ // Иней/лёд — дендрит растёт под 60° (гексагональная симметрия льда Ih)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  ctx.save(); ctx.scale(11,11);
+  const total=4, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
+  function branch(x,y,ang,len,depth){
+    if(depth<=0||len<0.02) return;
+    if(depth<revealDepth) return;
+    const partial= depth===revealDepth? revealFrac : 1;
+    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
+    ctx.strokeStyle='hsla(195,80%,85%,.9)'; ctx.lineWidth=len*0.4;
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+    if(partial<1) return;
+    [-60,60].forEach(d=>branch(x2,y2,ang+d*Math.PI/180,len*0.6,depth-1));
+    branch(x2,y2,ang,len*0.75,depth-1);
+  }
+  for(let i=0;i<6;i++) branch(0,0,i*Math.PI/3,0.5,total);
+  ctx.restore(); ctx.restore();
+}
+function fxMatShellHex(ctx,sk,nowMs){ // Панцирь черепахи — гексагональная решётка растёт кольцом наружу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3600)/3600;
+  ctx.save(); ctx.scale(9.2,9.2);
+  const dx=0.4, dy=dx*Math.sqrt(3)/2;
+  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-3;col<=3;col++){
+    const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
+    if(Math.hypot(cx,cy)>1.3) continue;
+    cells.push([cx,cy,Math.hypot(cx,cy)]);
+  }
+  cells.sort((a,b)=>a[2]-b[2]);
+  const shown=Math.floor(p*cells.length)+1;
+  cells.slice(0,shown).forEach(([cx,cy])=>{
+    ctx.strokeStyle='#c9a83a'; ctx.lineWidth=0.025;
+    ctx.beginPath();
+    for(let k=0;k<6;k++){ const a=k*Math.PI/3; const x=cx+Math.cos(a)*dx*0.55, y=cy+Math.sin(a)*dx*0.55; k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.closePath(); ctx.stroke();
+  });
+  ctx.restore(); ctx.restore();
+}
+function fxMatNacre(ctx,sk,nowMs){ // Перламутр — иризация честно плывёт по углу, слои со сдвигом рядов
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000;
+  ctx.save(); ctx.scale(8.7,8.7);
+  for(let row=-6;row<=6;row++){
+    const off=(row%2)*0.15;
+    for(let col=-5;col<=5;col++){
+      const cx=col*0.3+off, cy=row*0.11;
+      const hue=(190+row*8+p*120)%360;
+      ctx.fillStyle='hsla('+hue+',70%,'+(55+(row%2)*10)+'%,.55)';
+      ctx.fillRect(cx-0.14,cy-0.05,0.28,0.09);
+    }
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxCulKanga(ctx,sk,nowMs){ // Суахилийская канга — своего процесса нет (печатный текстиль), только блик поверхности
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.save(); ctx.scale(9.6,9.6);
+  ctx.fillStyle='#f0d840';
+  ctx.beginPath(); ctx.arc(0,-0.15,0.42,0,6.283); ctx.fill();
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.04;
+  ctx.strokeRect(-1.25,-1.25,2.5,2.5);
+  ctx.fillStyle='rgba(20,20,20,.55)';
+  ctx.fillRect(-1.1,0.9,2.2,0.28);
+  ctx.restore(); ctx.restore();
+}
+function fxCulBasketCoil(ctx,sk,nowMs){ // Плетение корзин, койлинг — спираль сшивается виток за витком от центра
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(11,11);
+  ctx.strokeStyle='#c9a860'; ctx.lineWidth=0.08;
+  ctx.beginPath();
+  const frac=Math.max(0.02,p);
+  for(let t=0;t<=frac;t+=0.01){ const th=t*Math.PI*8, r=t*1.1; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.restore(); ctx.restore();
+}
+function fxCulBasketPlait(ctx,sk,nowMs){ // Плетение корзин, плейтинг — ленты прокладываются через одну, полоса за полосой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.save(); ctx.scale(10,10);
+  const lines=[]; for(let i=-6;i<=6;i++) lines.push(i);
+  const shown=Math.floor(p*lines.length*2)+1;
+  let count=0;
+  for(const i of lines){
+    if(count<shown){ ctx.strokeStyle=i%2===0?'#e8c878':'#8a6838'; ctx.lineWidth=0.09;
+      ctx.beginPath(); ctx.moveTo(-1.3,i*0.16); ctx.lineTo(1.3,i*0.16); ctx.stroke(); }
+    count++;
+    if(count<shown){ ctx.strokeStyle=i%2===0?'#e8c878':'#8a6838'; ctx.lineWidth=0.09;
+      ctx.beginPath(); ctx.moveTo(i*0.16,-1.3); ctx.lineTo(i*0.16,1.3); ctx.stroke(); }
+    count++;
+  }
+  ctx.restore(); ctx.restore();
+}
+function culPersianCity(ctx, medHue, dense, p){
+  const yTop=-19, yBot=11;
+  const revealY=yBot-(yBot-yTop)*Math.max(0.06,p);
+  ctx.save(); ctx.beginPath(); ctx.rect(-16,revealY,32,(yBot-revealY)+2); ctx.clip();
+  ctx.strokeStyle='rgba(20,10,10,.85)'; ctx.lineWidth=0.55; ctx.strokeRect(-9,yTop,18,yBot-yTop);
+  ctx.strokeStyle='hsla('+medHue+',60%,62%,.85)'; ctx.lineWidth=1.3; ctx.strokeRect(-7.4,yTop+1.6,14.8,yBot-yTop-3.2);
+  if(dense){
+    const rnd=mulberry32(31);
+    for(let i=0;i<90;i++){
+      const x=-8+rnd()*16, y=yTop+2+rnd()*(yBot-yTop-4);
+      ctx.fillStyle='hsla('+(medHue+rnd()*30)+',60%,55%,.55)';
+      ctx.beginPath(); ctx.arc(x,y,0.55,0,6.283); ctx.fill();
+    }
+  }
+  [[-7.4,yBot-1.6],[7.4,yBot-1.6]].forEach(([cx,cy])=>{
+    ctx.fillStyle='hsla('+medHue+',70%,58%,.9)';
+    ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.fill();
+  });
+  ctx.fillStyle='hsla('+medHue+',70%,50%,.97)';
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(6.2,-1); ctx.lineTo(0,6); ctx.lineTo(-6.2,-1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(20,10,10,.7)'; ctx.lineWidth=0.3; ctx.stroke();
+  ctx.restore();
+}
+function fxCulPersianIsfahan(ctx,sk,nowMs){ // Персидский ковёр, Исфахан — тончайший медальон с пальметтами и вазами
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3800)/3800;
+  culPersianCity(ctx, 350, true, p);
+  ctx.restore();
+}
+function fxCulPersianKashan(ctx,sk,nowMs){ // Персидский ковёр, Кашан — медальон и арабески
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3800)/3800;
+  culPersianCity(ctx, 20, true, p);
+  ctx.restore();
+}
+function fxCulPersianQom(ctx,sk,nowMs){ // Персидский ковёр, Кум — тонкий шёлк, мелкие цветы
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3800)/3800;
+  culPersianCity(ctx, 330, true, p);
+  ctx.restore();
+}
+function fxCulPersianNain(ctx,sk,nowMs){ // Персидский ковёр, Наин — кремовый фон, синий медальон
+  ctx.save(); clipShipBody(ctx);
+  const p=(nowMs%3800)/3800;
+  culPersianCity(ctx, 215, false, p);
   ctx.restore();
 }
 function premSkinPerfReport(){ // вызывается один раз при посадке/окончании забега (game.js)
