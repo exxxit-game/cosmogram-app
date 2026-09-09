@@ -1,0 +1,417 @@
+<title>Карта скинов — Иллюзии, 10 тем, партия 09.09.2026 (черновик)</title>
+<style>
+:root{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+/* 09.09.2026: --card-bg НЕ переключается на светлую тему намеренно — настоящая игра рисует
+   скин ВСЕГДА на тёмном фоне корпуса/космоса (html,body{background:#070b18} в index.html,
+   без media-query), не зависит от системной темы браузера. Узоры на карточках нарисованы
+   светлыми линиями в расчёте именно на тёмный фон — в светлой теме браузера они реально
+   сливались с фоном (владелец поймал вживую) до этой правки. Карточка-канвас — не текст
+   страницы, ей нужен ТОТ ЖЕ фон, что и у настоящего корабля, а не фон отчёта. */
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
+    --text:#171b2e; --text-dim:#5a6288; --accent:#3660c4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a;
+  --text:#e8ecf7; --text-dim:#8b93b3; --card-bg:#05070f; --accent:#8fb8ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px 20px 70px}
+.wrap{max-width:1180px;margin:0 auto}
+h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
+.sub{color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 20px;max-width:880px}
+.pending{background:rgba(217,119,87,.12);border:1px solid rgba(217,119,87,.4);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:26px}
+.pending b{color:#d97757}
+.catHead{font-size:13.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:34px 0 14px;padding-top:24px;border-top:2px solid var(--panel-edge)}
+.catHead:first-of-type{margin-top:0;padding-top:0;border-top:none}
+.topic+.topic{border-top:1px solid var(--panel-edge);padding-top:22px;margin-top:22px}
+.topicHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.topicHead h2{font-size:19px;margin:0;font-weight:800}
+.status{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(143,184,255,.12);border:1px solid rgba(143,184,255,.3);border-radius:20px;padding:2px 10px}
+.topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card canvas{width:100%;aspect-ratio:1/1;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:8px;display:block} /* 09.09.2026: честный градиент из bgGradient() render.js — предыдущая попытка (готовый скриншот) протащила в кадр чужой текст/иконку, откачено */
+.card h3{font-size:12px;margin:1px 0 0}
+.card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
+</style>
+<div class="wrap">
+  <h1 class="title">Иллюзии — 10 тем, партия 09.09.2026</h1>
+  <p class="sub">Топ-10 из 22 исследованных явлений восприятия (<code>project_illyuzii_oktyabr_09_09.md</code>,
+  4 пассажа, все языки) — отобраны по пригодности для скина корабля (визуально, статично или честно
+  анимируемо, не зависит от глаза зрителя/звука/касания). Якорь-идея владельца — «то самое платье».
+  Геометрия/логика проверены числом до рисования (<code>verify_illusions_10.js</code>).</p>
+  <div class="pending">
+    <b>Статус:</b> черновик, НИЧЕГО не одобрено. Тема октября: «Иллюзии».
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>1. #TheDress — то самое платье</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">2015, вирусное фото. Дело не в глазах — в предположении мозга об источнике
+    света: кто решил «фон — синее небо», вычитает синий и видит бело-золотое; кто решил «тёплый
+    солнечный свет» — видит сине-чёрное. Честная оговорка: цвета здесь стилизованы по мотивам
+    реальной фотографии, точные пиксели зависят от конкретной копии снимка/экрана.</p>
+    <div class="grid" id="gridDress"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>2. Вращающиеся змеи — движение без движения</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Китаока, 2005. Реальный механизм — асимметричные ступени яркости на
+    периферии зрения обманывают детекторы движения в мозге. Честная оговорка: здесь анимация
+    настоящая (кольца правда крутятся) — подлинная иллюзия работает НА НЕПОДВИЖНОЙ картинке,
+    обман создаёт только боковое зрение и саккады глаза, не сама картинка.</p>
+    <div class="grid" id="gridSnakes"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>3. Муар — узор, которого нет</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Наложение двух мелких решёток с чуть разным шагом рождает третий, крупный
+    узор, которого нет НИ В ОДНОЙ из решёток по отдельности — при сдвиге узор «плывёт». Честная
+    механика, не выдумка.</p>
+    <div class="grid" id="gridMoire"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>4. Треугольник Пенроуза — невозможный объект</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Ройтерсвард 1934, независимо Пенроузы 1950-е. Перспективный рисунок,
+    который нельзя построить как настоящее твёрдое тело — каждый стык локально честен, а вся
+    фигура физически невозможна. Вдохновил Эшера. Отдельная тема от уже одобренной плитки
+    Пенроуза (та — мозаика, эта — другая работа того же математика).</p>
+    <div class="grid" id="gridPenrose"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>5. Треугольник Канижи — контур из ничего</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Три «пакмана» с вырезанным сектором, развёрнутые к центру, создают чёткий
+    треугольник, которого физически нет в рисунке — мозг достраивает контур (end-stopped нейроны
+    зрительной коры).</p>
+    <div class="grid" id="gridKanizsa"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>6. Шахматная тень — один цвет, два прочтения</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Adelson, 1995. Два квадрата рисуются РОВНО одним и тем же серым — тень
+    рисуется отдельным полупрозрачным слоем поверх всей зоны, не подменяет сами клетки. Мозг честно
+    вычисляет «сколько света упало», а не сырую яркость — тот же принцип светлотности, что уже
+    даёт настоящую разницу восприятия, проверено числом (равные RGB) до рисования.</p>
+    <div class="grid" id="gridChecker"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>7. Иллюзия Цёлльнера — параллели, которых нет</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Цёлльнер, XIX век. Настоящие параллельные линии кажутся наклонными друг
+    к другу — секрет в коротких диагональных штрихах на них, чередующих направление наклона на
+    соседних линиях. Убери штрихи — линии снова честно параллельны.</p>
+    <div class="grid" id="gridZollner"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>8. Решётка Германа — призрачные точки</h2><span class="status">⏳ на утверждение (спорный механизм)</span></div>
+    <p class="topicDesc">На пересечениях белых линий между чёрными квадратами мерещатся серые
+    пятна, исчезающие при взгляде прямо на них. Честная научная оговорка: классическое объяснение
+    «латеральное торможение сетчатки» было ОПРОВЕРГНУТО в 2004 (лёгкая волнистость линий убирает
+    иллюзию, хотя по старой теории не должна была) — точного механизма наука пока не закрыла,
+    сам зрительный эффект при этом настоящий и хорошо задокументирован.</p>
+    <div class="grid" id="gridHermann"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>9. Иллюзия Понцо — размер по перспективе</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Понцо, 1911. Два отрезка РОВНО одинаковой длины (проверено числом до
+    рисования) между сходящимися линиями кажутся разного размера — мозг честно применяет
+    «постоянство размера» (поправку на воспринимаемую глубину), которая отлично работает в
+    настоящем 3D-мире и даёт сбой на плоской картинке.</p>
+    <div class="grid" id="gridPonzo"></div>
+  </div>
+
+  <div class="topic">
+    <div class="topicHead"><h2>10. Спираль Фрейзера — спираль, которой нет</h2><span class="status">⏳ на утверждение</span></div>
+    <p class="topicDesc">Фрейзер, 1908, «закрученный шнур». То, что выглядит одной спиралью —
+    на самом деле отдельные ЗАМКНУТЫЕ концентрические круги (проверено числом: радиус зависит
+    только от номера кольца, не от угла) — обмануты чередующимися косыми тёмными/светлыми
+    штрихами на них.</p>
+    <div class="grid" id="gridFraser"></div>
+  </div>
+
+</div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function fillHull(ctx){ // 09.09.2026: владелец увидел прозрачный корпус — в игре корпус ВСЕГДА непрозрачен (render.js: planeGrad, заливка ДО фикс-паттерна), тут был пропущен базовый слой
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(0,-22,0,16);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.45,'#181a1f'); g.addColorStop(1,'#101216'); // реальные цвета id0 «Бумажный» (game.js), нейтральный корпус-подложка
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
+function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
+function edgeStroke(ctx){
+  const id=(ctx.canvas&&ctx.canvas.id)||'';
+  const phase=hashPhase(id);
+  const sweep=(Math.sin(performance.now()/5400*Math.PI*2+phase)+1)/2;
+  const gx=-16+sweep*32;
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(gx-9,-22,gx+9,14);
+  g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.5,'rgba(255,255,255,.09)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function loopFlash(id, draw, zoom, cycleMs){
+  const cv=document.getElementById(id); const ctx=cv.getContext('2d');
+  function ensureSize(){
+    const dpr=Math.min(devicePixelRatio||1,2);
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    if(cv._lastW!==w || cv._lastH!==h || cv._lastDpr!==dpr){
+      cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+      cv._lastW=w; cv._lastH=h; cv._lastDpr=dpr;
+    }
+    return {w,h};
+  }
+  function frame(t){
+    const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
+    const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
+    ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
+    const p=((t||0)%cycleMs)/cycleMs; fillHull(ctx); draw(ctx,p);
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  frame(0);
+}
+function mountCards(gridId, items){
+  const grid=document.getElementById(gridId);
+  grid.innerHTML = items.map(([id,title,desc])=>
+    `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`
+  ).join('');
+}
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===================== 1. ПЛАТЬЕ ===================== */
+function drawDress(ctx,p){
+  ctx.save(); clipBody(ctx);
+  const a=Math.min(1,p*2.2);
+  const stripeW=3.4;
+  for(let x=-18,i=0;x<18;x+=stripeW,i++){
+    ctx.fillStyle = i%2===0 ? `rgba(72,90,112,${a})` : `rgba(182,148,96,${a})`;
+    ctx.fillRect(x,-24,stripeW,42);
+  }
+  // тонкая косая полоса тени поперёк — намёк на неоднозначность освещения
+  const g=ctx.createLinearGradient(-16,-22,16,14);
+  g.addColorStop(0,'rgba(120,150,255,.14)'); g.addColorStop(.5,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(255,210,120,.14)');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
+
+/* ===================== 2. ВРАЩАЮЩИЕСЯ ЗМЕИ ===================== */
+function drawRotSnakes(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  const rings=[4.5,7.5,10.5];
+  rings.forEach((R,ri)=>{
+    const seg=14;
+    for(let i=0;i<seg;i++){
+      const dir = ri%2===0?1:-1;
+      const a0=(i/seg)*Math.PI*2 + p*Math.PI*2*dir;
+      const a1=a0+(Math.PI*2/seg)*0.9;
+      const lum=[55,95,235,150][i%4]; // 09.09.2026: было 18 — почти неотличимо от card-bg #05070f (числом: дистанция 17.3 из 441), сливалось
+      ctx.fillStyle=`rgb(${lum},${lum},${lum})`;
+      ctx.beginPath();
+      ctx.arc(0,0,R,a0,a1);
+      ctx.arc(0,0,R-1.7,a1,a0,true);
+      ctx.closePath(); ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
+/* ===================== 3. МУАР ===================== */
+function drawMoire(ctx,p){
+  ctx.save(); clipBody(ctx);
+  const step1=2.1;
+  ctx.fillStyle='rgba(235,240,255,.55)';
+  for(let y=-23;y<15;y+=step1) for(let x=-17;x<17;x+=step1){
+    ctx.beginPath(); ctx.arc(x,y,0.45,0,6.29); ctx.fill();
+  }
+  const step2=2.3, shift=Math.sin(p*Math.PI*2)*1.4;
+  ctx.fillStyle='rgba(120,175,255,.55)';
+  for(let y=-23;y<15;y+=step2) for(let x=-17;x<17;x+=step2){
+    ctx.beginPath(); ctx.arc(x+shift,y,0.45,0,6.29); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ===================== 4. ТРЕУГОЛЬНИК ПЕНРОУЗА ===================== */
+function drawPenrose(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2);
+  const R=10, W=3.2;
+  const verts=[0,1,2].map(k=>{ const a=-Math.PI/2+k*Math.PI*2/3; return [Math.cos(a)*R, Math.sin(a)*R]; });
+  for(let i=0;i<3;i++){
+    const A=verts[i], B=verts[(i+1)%3];
+    const dx=B[0]-A[0], dy=B[1]-A[1], len=Math.hypot(dx,dy);
+    const nx=-dy/len*W, ny=dx/len*W;
+    // внешняя (светлая) и внутренняя (тёмная) грань "бруса" — приём объёма
+    ctx.fillStyle='rgba(230,236,255,.92)';
+    ctx.beginPath();
+    ctx.moveTo(A[0]+nx*.4,A[1]+ny*.4); ctx.lineTo(B[0]+nx*.4,B[1]+ny*.4);
+    ctx.lineTo(B[0]-nx*.6,B[1]-ny*.6); ctx.lineTo(A[0]-nx*.6,A[1]-ny*.6);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(120,140,190,.55)';
+    ctx.beginPath();
+    ctx.moveTo(A[0]-nx*.6,A[1]-ny*.6); ctx.lineTo(B[0]-nx*.6,B[1]-ny*.6);
+    ctx.lineTo(B[0]-nx*1.3,B[1]-ny*1.3); ctx.lineTo(A[0]-nx*1.3,A[1]-ny*1.3);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ===================== 5. ТРЕУГОЛЬНИК КАНИЖИ ===================== */
+function drawKanizsa(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2.2);
+  const pts=[[0,-9],[-7.5,5.2],[7.5,5.2]];
+  const cx=(pts[0][0]+pts[1][0]+pts[2][0])/3, cy=(pts[0][1]+pts[1][1]+pts[2][1])/3;
+  const R=4.6;
+  pts.forEach(([x,y])=>{
+    const angToCenter=Math.atan2(cy-y,cx-x);
+    // «пакман»: полный круг МИНУС клин, обращённый к центру — рисуем ДЛИННУЮ дугу
+    // (от +0.55 до -0.55 через весь остальной круг), не сам клин
+    ctx.fillStyle='rgba(232,236,255,.95)';
+    ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.arc(x,y,R, angToCenter+0.55, angToCenter-0.55+Math.PI*2);
+    ctx.closePath(); ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* ===================== 6. ШАХМАТНАЯ ТЕНЬ (Adelson) ===================== */
+function drawChecker(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  const cell=4.2, baseGray=128; // ОДИН И ТОТ ЖЕ тон для обеих отмеченных клеток — проверено числом
+  for(let gy=-3;gy<3;gy++) for(let gx=-3;gx<3;gx++){
+    const dark=(gx+gy)%2===0;
+    ctx.fillStyle = dark ? `rgb(${baseGray-70},${baseGray-70},${baseGray-70})` : `rgb(${baseGray+70},${baseGray+70},${baseGray+70})`;
+    ctx.fillRect(gx*cell,gy*cell,cell,cell);
+  }
+  // клетка A (тон=baseGray, светлая позиция) и клетка Б (тон=baseGray, будет под тенью) — рисуем явно поверх сетки, одним и тем же значением
+  ctx.fillStyle=`rgb(${baseGray},${baseGray},${baseGray})`;
+  ctx.fillRect(-2*cell,-2*cell,cell,cell); // клетка A, вне тени
+  ctx.fillRect(1*cell,1*cell,cell,cell);   // клетка Б, будет накрыта тенью ниже
+  // тень — отдельный полупрозрачный слой поверх ПРАВОЙ-НИЖНЕЙ трети, не трогает сами клетки выше
+  const reveal=Math.min(1,p*1.6);
+  const g=ctx.createRadialGradient(4,4,1,4,4,9);
+  g.addColorStop(0,`rgba(0,0,0,${0.55*reveal})`); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(4,4,9,0,6.29); ctx.fill();
+  ctx.restore();
+}
+
+/* ===================== 7. ЦЁЛЛЬНЕРА ===================== */
+function drawZollner(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2);
+  const lines=5;
+  for(let i=0;i<lines;i++){
+    const y=-11+i*5.2;
+    ctx.strokeStyle='rgba(232,236,255,.9)'; ctx.lineWidth=0.9;
+    ctx.beginPath(); ctx.moveTo(-13,y); ctx.lineTo(13,y); ctx.stroke();
+    const tickAng = (i%2===0? 22: -22)*Math.PI/180; // чередующийся наклон штрихов — сам механизм иллюзии
+    ctx.strokeStyle='rgba(232,236,255,.9)'; ctx.lineWidth=0.6;
+    for(let x=-11;x<=11;x+=3.2){
+      const dx=Math.cos(tickAng)*1.7, dy=Math.sin(tickAng)*1.7;
+      ctx.beginPath(); ctx.moveTo(x-dx,y-dy); ctx.lineTo(x+dx,y+dy); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+/* ===================== 8. РЕШЁТКА ГЕРМАНА ===================== */
+function drawHermann(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2);
+  const cell=4.4, gap=0.7;
+  for(let gy=-2;gy<2;gy++) for(let gx=-2;gx<2;gx++){
+    ctx.fillStyle='rgba(45,50,68,.95)'; // 09.09.2026: было rgba(10,12,20) — численно дистанция 8.7 из 441 от card-bg #05070f, реально сливалось (найдено владельцем вживую)
+    ctx.fillRect(gx*cell+gap/2, gy*cell+gap/2, cell-gap, cell-gap);
+  }
+  ctx.restore();
+}
+
+/* ===================== 9. ПОНЦО ===================== */
+function drawPonzo(ctx,p){ // 09.09.2026: было похоже на дорожный знак (голые линии) — те же координаты (иллюзия и проверка числом не тронуты), стиль сменён на шов корпуса + инкрустация, как у уже одобренных «Граней»/«Инкрустации»
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2);
+  // сходящиеся швы корпуса (не рельсы дороги) — двойной штрих металла
+  [[-2,-14,-11,12],[2,-14,11,12]].forEach(([x1,y1,x2,y2])=>{
+    ctx.strokeStyle='rgba(120,140,190,.55)'; ctx.lineWidth=2.2;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle='rgba(232,236,255,.85)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+  // два вставленных камня РОВНО одинаковой длины (по 8 единиц) — проверено числом до рисования, координаты те же
+  ctx.lineCap='round';
+  [[-4,-6,4,-6],[-4,6,4,6]].forEach(([x1,y1,x2,y2])=>{
+    ctx.strokeStyle='rgba(120,80,20,.7)'; ctx.lineWidth=3.2;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,210,120,.95)'; ctx.lineWidth=1.9;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle='rgba(255,240,200,.9)'; ctx.lineWidth=0.7;
+    ctx.beginPath(); ctx.moveTo(x1,y1-0.5); ctx.lineTo(x2,y2-0.5); ctx.stroke();
+  });
+  ctx.lineCap='butt';
+  ctx.restore();
+}
+
+/* ===================== 10. СПИРАЛЬ ФРЕЙЗЕРА ===================== */
+function drawFraser(ctx,p){
+  ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+  ctx.globalAlpha=Math.min(1,p*2);
+  for(let ring=1; ring<=5; ring++){
+    const R=ring*2; // радиус зависит ТОЛЬКО от номера кольца — честный замкнутый круг, не спираль
+    const seg=Math.round(R*6);
+    for(let i=0;i<seg;i++){
+      const a=i/seg*Math.PI*2;
+      const dark = i%2===0;
+      ctx.strokeStyle = dark ? 'rgba(45,50,68,.95)' : 'rgba(235,240,255,.95)'; // 09.09.2026: тёмный штрих был rgba(15,18,28) — дистанция 19.7 из 441 от card-bg, тоже сливался
+      ctx.lineWidth=1.5;
+      const tw=0.35; // косой штрих — "закрученный шнур"
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a-tw)*R, Math.sin(a-tw)*R);
+      ctx.lineTo(Math.cos(a+tw)*(R+0.9), Math.sin(a+tw)*(R+0.9));
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+mountCards('gridDress',[['dress1','Платье','Реальный механизм цветового постоянства — мозг вычитает предполагаемый цвет освещения.']]);
+mountCards('gridSnakes',[['snakes1','Вращающиеся змеи','Асимметричные ступени яркости — обманывают боковое зрение (здесь честно анимировано).']]);
+mountCards('gridMoire',[['moire1','Муар','Две решётки с разным шагом — узор существует только в наложении.']]);
+mountCards('gridPenrose',[['penrose1','Невозможный треугольник','Каждый стык локально честен — вся фигура физически невозможна.']]);
+mountCards('gridKanizsa',[['kanizsa1','Треугольник из ничего','Три выреза — мозг достраивает несуществующий контур.']]);
+mountCards('gridChecker',[['checker1','Шахматная тень','Два квадрата — один и тот же серый, проверено числом.']]);
+mountCards('gridZollner',[['zollner1','Наклон без наклона','Параллельные линии, честные штрихи создают иллюзию наклона.']]);
+mountCards('gridHermann',[['hermann1','Призрачные точки','Пятна на пересечениях — механизм спорный, эффект настоящий.']]);
+mountCards('gridPonzo',[['ponzo1','Иллюзия Понцо','Два одинаковых отрезка — перспектива крадёт восприятие размера.']]);
+mountCards('gridFraser',[['fraser1','Спираль Фрейзера','Замкнутые круги, не спираль — проверено числом (радиус не от угла).']]);
+
+loopFlash('dress1', drawDress, 4.3, 2200);
+loopFlash('snakes1', drawRotSnakes, 4.3, 2600);
+loopFlash('moire1', drawMoire, 4.3, 3000);
+loopFlash('penrose1', drawPenrose, 4.3, 1800);
+loopFlash('kanizsa1', drawKanizsa, 4.3, 1800);
+loopFlash('checker1', drawChecker, 4.3, 2200);
+loopFlash('zollner1', drawZollner, 4.3, 1800);
+loopFlash('hermann1', drawHermann, 4.3, 1800);
+loopFlash('ponzo1', drawPonzo, 4.3, 1800);
+loopFlash('fraser1', drawFraser, 4.3, 1800);
+</script>

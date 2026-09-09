@@ -7,7 +7,7 @@
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
     --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
-    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+    --text:#171b2e; --text-dim:#5a6288; --accent:#3660c4; /* 09.09.2026: --card-bg убран отсюда — узоры на канвасе рассчитаны на тёмный фон настоящей игры, в светлой теме браузера сливались */
   }
 }
 :root[data-theme="dark"]{
@@ -35,7 +35,7 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
 .topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,210px));gap:12px}
 .card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
-.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card canvas{width:100%;aspect-ratio:1/1;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:8px;display:block} /* 09.09.2026: честный градиент из bgGradient() render.js — попытка с готовым скриншотом протащила чужой текст/иконку в кадр, откачено */
 .card h3{font-size:12px;margin:1px 0 0}
 .card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
 .compare{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:14px 16px;margin-top:10px}
@@ -346,6 +346,13 @@ function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.m
    будет выглядеть в реальном игровом поле (маленький, быстро движущийся спрайт), а не как
    эффектная витрина. Фаза берётся из ctx.canvas.id — у каждой карточки своя, без правки
    всех вызовов edgeStroke(ctx) по отдельности. */
+function fillHull(ctx){ // 09.09.2026: владелец увидел прозрачный корпус — в игре корпус ВСЕГДА непрозрачен (render.js: planeGrad, заливка ДО фикс-паттерна)
+  ctx.save(); clipBody(ctx);
+  const g=ctx.createLinearGradient(0,-22,0,16);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(.45,'#181a1f'); g.addColorStop(1,'#101216');
+  ctx.fillStyle=g; fillBody(ctx);
+  ctx.restore();
+}
 function hashPhase(id){ let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0; return (h%1000)/1000*Math.PI*2; }
 function edgeStroke(ctx){
   const id=(ctx.canvas&&ctx.canvas.id)||'';
@@ -384,7 +391,7 @@ function loop(id, draw, zoom){
        подбирались числа zoom для КАЖДОЙ темы, дальше масштаб честно следует за контейнером */
     const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
     ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
-    draw(ctx,0); ctx.restore();
+    fillHull(ctx); draw(ctx,0); ctx.restore();
   }
   render(); requestAnimationFrame(render);
   if(window.ResizeObserver){ new ResizeObserver(render).observe(cv); }
@@ -406,7 +413,7 @@ function loopFlash(id, draw, zoom, cycleMs){
     const {w,h}=ensureSize(); ctx.clearRect(0,0,w,h);
     const autoScale=(zoom||4.2)*(Math.min(w,h)/160);
     ctx.save(); ctx.translate(w/2, h/2*1.05); ctx.scale(autoScale, autoScale);
-    const p=((t||0)%cycleMs)/cycleMs; draw(ctx,p); ctx.restore();
+    const p=((t||0)%cycleMs)/cycleMs; fillHull(ctx); draw(ctx,p); ctx.restore();
     requestAnimationFrame(frame);
   }
   frame(0);

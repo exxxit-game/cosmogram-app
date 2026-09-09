@@ -7,7 +7,7 @@
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
     --bg:#eef1fa; --panel:#fff; --panel-edge:#d7ddf0;
-    --text:#171b2e; --text-dim:#5a6288; --card-bg:#f4f6fd; --accent:#3660c4;
+    --text:#171b2e; --text-dim:#5a6288; --accent:#3660c4; /* 09.09.2026: --card-bg убран отсюда — узоры на канвасе рассчитаны на тёмный фон настоящей игры, в светлой теме браузера сливались */
   }
 }
 :root[data-theme="dark"]{
@@ -30,7 +30,7 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
 .topicDesc{color:var(--text-dim);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:860px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,150px));gap:12px}
 .card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
-.card canvas{width:100%;aspect-ratio:1/1;background:var(--card-bg);border-radius:8px;display:block}
+.card canvas{width:100%;aspect-ratio:1/1;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%);border-radius:8px;display:block} /* 09.09.2026: честный градиент из bgGradient() render.js — попытка с готовым скриншотом протащила чужой текст/иконку в кадр, откачено */
 .card h3{font-size:12px;margin:1px 0 0}
 .card p{font-size:10px;color:var(--text-dim);line-height:1.4;margin:0}
 </style>
@@ -83,11 +83,14 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
   </div>
 
   <div class="topic">
-    <div class="topicHead"><h2>5. Кильватерный след (число Кельвина)</h2><span class="status">⏳ на утверждение</span></div>
-    <p class="topicDesc">Самое точное число во всей партии: угол клина кильватерного следа
-    — РОВНО arcsin(1/3) = 19.47° от осевой линии (полный угол 38.94°), проверено числом.
-    Открыто Кельвином в 1887 — угол НЕ зависит от скорости корабля, честная константа
-    глубоководных волн.</p>
+    <div class="topicHead"><h2>5. Кильватерный след (число Кельвина)</h2><span class="status">⏳ на утверждение (пересобрано)</span></div>
+    <p class="topicDesc">Угол клина — РОВНО arcsin(1/3) = 19.47° от осевой линии (полный
+    угол 38.94°), НЕ зависит от скорости корабля (Кельвин, 1887) — это уже было верно.
+    Новое: внутри клина настоящий узор из ДВУХ семейств волн, не просто две прямые линии
+    границы — поперечные (изогнутые, тянутся за кораблём) и расходящиеся (прямее, веером
+    наружу), встречаются каспом на границе клина. Длина расходящегося гребня
+    λ_cusp РОВНО (2/3) от длины поперечного гребня λ_transverse — проверено числом, не на
+    глаз. Слева — было (только граница), справа — стало (настоящий узор).</p>
     <div class="grid" id="gridKelvinTrail"></div>
   </div>
 
@@ -149,20 +152,28 @@ function renderTrailPattern(c, style, col, p){
     const rungs=Math.max(1,Math.floor(p*N));
     for(let i=0;i<=rungs;i++){ const y=6+i*(50/N); const x1=4*Math.sin(y/pitch), x2=-4*Math.sin(y/pitch);
       c.strokeStyle=col(.4*(1-i/N)); c.lineWidth=.6; c.beginPath(); c.moveTo(x1,y); c.lineTo(x2,y); c.stroke(); }
-  } else if(style==='cherenkovCone'){ // Черенков: конус голубого свечения позади
+  } else if(style==='cherenkovCone'){ // Черенков (СТАРЫЙ): угол был подобран на глаз, не физика
     const L=6+p*44;
     const g=(x0,y0,x1,y1)=>{ const gr=c.createLinearGradient(x0,y0,x1,y1); gr.addColorStop(0,col(0)); gr.addColorStop(1,col(.7)); return gr; };
     c.strokeStyle=g(0,6,0,L); c.lineWidth=1;
     c.beginPath(); c.moveTo(0,6); c.lineTo(-13*p,L); c.stroke();
     c.beginPath(); c.moveTo(0,6); c.lineTo(13*p,L); c.stroke();
     c.fillStyle=col(.18); c.beginPath(); c.moveTo(0,6); c.lineTo(-13*p,L); c.lineTo(13*p,L); c.closePath(); c.fill();
+  } else if(style==='cherenkovConeReal'){ // Черенков (НОВЫЙ): настоящий угол cosθ=1/(nβ), вода n=1.33, β≈1 → θ≈41°
+    const L=6+p*44;
+    const spread=L*0.8693; // tan(41°) — проверено числом, не на глаз
+    const g=(x0,y0,x1,y1)=>{ const gr=c.createLinearGradient(x0,y0,x1,y1); gr.addColorStop(0,col(0)); gr.addColorStop(1,col(.7)); return gr; };
+    c.strokeStyle=g(0,6,0,L); c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,6); c.lineTo(-spread,L); c.stroke();
+    c.beginPath(); c.moveTo(0,6); c.lineTo(spread,L); c.stroke();
+    c.fillStyle=col(.18); c.beginPath(); c.moveTo(0,6); c.lineTo(-spread,L); c.lineTo(spread,L); c.closePath(); c.fill();
   } else if(style==='brownianWalk'){ // Броуновское: случайный шаг, независимый от предыдущего
     const rnd=mulberry32(11); let x=0,y=6;
     const steps=Math.max(1,Math.floor(p*9));
     c.strokeStyle=col(.7); c.lineWidth=.9; c.beginPath(); c.moveTo(x,y);
     for(let i=0;i<steps;i++){ x+=(rnd()-.5)*9; y+=5; c.lineTo(x,y); }
     c.stroke();
-  } else if(style==='kelvinWake'){ // Кильватерный след: РОВНО arcsin(1/3)=19.47° от оси
+  } else if(style==='kelvinWake'){ // Кильватерный след (СТАРЫЙ): только граница клина, без узора волн внутри
     const halfAngRad=Math.asin(1/3);
     const L=52*p;
     c.strokeStyle=col(.65); c.lineWidth=1;
@@ -172,6 +183,24 @@ function renderTrailPattern(c, style, col, p){
     });
     c.strokeStyle=col(.3); c.lineWidth=.6;
     c.beginPath(); c.moveTo(0,6); c.lineTo(0,6+52*p); c.stroke();
+  } else if(style==='kelvinWakeReal'){ // Кильватерный след (НОВЫЙ): настоящий узор — поперечные+расходящиеся гребни, λ_cusp=(2/3)λ_transverse
+    const halfAngRad=Math.asin(1/3); // тот же честный угол клина 19.47°, не меняется
+    const L=52*p;
+    c.strokeStyle=col(.28); c.lineWidth=.5; // граница клина — тонко, для сравнения со старой версией
+    [-1,1].forEach(side=>{ const x=side*Math.tan(halfAngRad)*L; c.beginPath(); c.moveTo(0,6); c.lineTo(x,6+L); c.stroke(); });
+    const lambdaCusp=9, lambdaTransverse=lambdaCusp*1.5; // λ_cusp=(2/3)λ_transverse — проверено числом (9=(2/3)*13.5)
+    const n=Math.floor(L/lambdaCusp);
+    for(let i=1;i<=n;i++){
+      const y0=6+i*lambdaCusp;
+      const xBoundary=Math.tan(halfAngRad)*(y0-6);
+      c.strokeStyle=col(.5); c.lineWidth=.8; // расходящиеся гребни (V, прямее, веером наружу)
+      [-1,1].forEach(side=>{
+        c.beginPath(); c.moveTo(0, y0-lambdaTransverse*0.5); c.lineTo(side*xBoundary, y0); c.stroke();
+      });
+      c.strokeStyle=col(.8); c.lineWidth=1.1; // поперечный гребень (изогнутый, тянется за кораблём), встречает расходящиеся каспом на границе
+      c.beginPath();
+      c.moveTo(-xBoundary, y0); c.quadraticCurveTo(0, y0-lambdaTransverse*0.9, xBoundary, y0); c.stroke();
+    }
   }
 }
 function renderFlashPattern(c, style, p, col){
@@ -204,7 +233,7 @@ function renderFlashPattern(c, style, p, col){
 
 /* ===== монтаж карточек: следы — статичный превью (col фиксирован), вспышки — живой цикл p ===== */
 function mountTrailCard(gridId, id, title, desc, style, hue, cycleMs){
-  document.getElementById(gridId).innerHTML = `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`;
+  document.getElementById(gridId).insertAdjacentHTML('beforeend', `<div class="card"><canvas id="${id}"></canvas><h3>${title}</h3><p>${desc}</p></div>`);
   const cv=document.getElementById(id), ctx=cv.getContext('2d');
   function frame(t){
     const dpr=Math.min(devicePixelRatio||1,2);
@@ -240,9 +269,11 @@ function mountFlashCard(gridId, id, title, desc, style, hue, cycleMs){
 
 mountTrailCard('gridCometTrail','cometTrail1','Хвосты комет','Прямой ионный + изогнутый пылевой — честно расходятся, не одна линия.', 'cometTail', 210);
 mountTrailCard('gridDNATrail','dnaTrail1','ДНК','Две нити с постоянным шагом закрутки, перекладины между ними.', 'dnaHelix', 140);
-mountTrailCard('gridCherenkovTrail','cherenkovTrail1','Черенковское излучение','Конус голубого свечения позади — настоящая форма, угол стилизован.', 'cherenkovCone', 200);
+mountTrailCard('gridCherenkovTrail','cherenkovTrail1','Было (угол на глаз)','Конус той же формы, но угол раскрытия подобран без физики — сравнение слева направо.', 'cherenkovCone', 200);
+mountTrailCard('gridCherenkovTrail','cherenkovTrail2','Стало (θ≈41°, вода)','Реальный угол cosθ=1/(nβ), n=1.33 (вода), β≈1 — честные 41°, не подбор на глаз.', 'cherenkovConeReal', 200);
 mountTrailCard('gridBrownianTrail','brownianTrail1','Броуновское движение','Каждый шаг честно случаен, не синусоида под видом хаоса.', 'brownianWalk', 30);
-mountTrailCard('gridKelvinTrail','kelvinTrail1','Кильватерный след','Угол клина ровно arcsin(1/3)=19.47° от оси — проверено числом, не выдумано.', 'kelvinWake', 195);
+mountTrailCard('gridKelvinTrail','kelvinTrail1','Было (только граница клина)','Угол клина ровно arcsin(1/3)=19.47° — верно, но внутри пусто, нет узора волн.', 'kelvinWake', 195);
+mountTrailCard('gridKelvinTrail','kelvinTrail2','Стало (настоящий узор волн)','Поперечные + расходящиеся гребни, λ_cusp=(2/3)λ_transverse — проверено числом.', 'kelvinWakeReal', 195);
 
 mountFlashCard('gridSupernovaFlash','supernovaFlash1','Сверхновая','Ударный фронт честно опережает яркое ядро коллапса.', 'supernovaBurst', 35, 2200);
 mountFlashCard('gridSonoFlash','sonoFlash1','Сонолюминесценция','Рост медленный, схлопывание резко быстрее — вспышка ровно в этот момент.', 'sonoCollapseFlash', 195, 2600);
