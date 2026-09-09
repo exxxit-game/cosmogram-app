@@ -26,7 +26,7 @@ const PT_ICON_SVG={
   seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>',
   gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
 };
-const PT_MAX=50;
+const PT_MAX=150; // 09.09.2026 (владелец): было 50, поднято по прямой просьбе
 let ptSelIdx=-1;
 
 /* 01.09.2026 «Настроение неба» — гармония и случайное небо. Источник: обычный поворот круга
@@ -152,7 +152,7 @@ function ptRender(justPoppedIdx){
   });
   const cnt=$('ptCnt'); if(cnt) cnt.textContent=pins.length;
   const tray=$('ptTray');
-  if(tray){ tray.classList.toggle('nearMax',pins.length>=45&&pins.length<PT_MAX); tray.classList.toggle('atMax',pins.length>=PT_MAX); }
+  if(tray){ tray.classList.toggle('nearMax',pins.length>=135&&pins.length<PT_MAX); tray.classList.toggle('atMax',pins.length>=PT_MAX); } // 09.09.2026: 45 было 90% от старых 50, 135 — та же доля от новых 150
   ptRenderPanel();
   ptRenderList();
 }
