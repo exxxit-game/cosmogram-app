@@ -565,6 +565,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   if(typeof ptSyncTrayAvailability==='function') ptSyncTrayAvailability(); // 02.09.2026: «Состав» мог включить/выключить вид — лоток стикеров должен это честно показать
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill();
+  forgeFavRowSync(); // 10.09.2026: свежий список избранного при каждом входе — мог измениться в другой вкладке/сессии
   forgeTabSet('play'); workshopFillLabels(); workshopRenderList(); // 06.09.2026: «Играть/Создать» — вход всегда на «Играть», Мастерская больше не отдельный экран
 } // v1.85.0: небо оживает при входе в конструктор; 01.09.2026: Партитура — своя лента, тот же вход
 
@@ -752,6 +753,37 @@ function forgeFavSave(cfg, name, btn){
     setTimeout(function(){ btn.style.background=prevBg; btn.style.borderColor=prevBorder; btn.style.color=prevColor; }, 900);
   }
 }
+/* 10.09.2026 «Избранное на месте» (владелец, живой скрин + макет forge-color-preview-fav-
+   10-09-2026.html, одобрено): экран из 10 ячеек по-прежнему не отдельный экран (это заняло бы
+   отдельную задачу) — а сам ряд прямо под вкладкой «Цвет», кружками. Тап по своему сохранённому
+   кружку подставляет цвет назад на ползунки тем же путём, что и ручной ввод (forgeSyncWidgets) —
+   один канал синхронизации на оба направления, не два разных. */
+function forgeFavRowSync(){
+  const row=$('forgeFavRow'); if(!row) return;
+  const list=Store.get('skyFavorites')||[];
+  row.innerHTML='';
+  for(let i=0;i<FORGE_FAV_MAX;i++){
+    const fav=list[i];
+    if(fav){
+      const b=document.createElement('button');
+      b.className='favSwatch';
+      const psl=forgePreviewMoodSL(fav.mood);
+      b.style.background='hsl('+fav.h1+','+psl.S0+'%,'+psl.L0+'%)';
+      if(fav.name) b.title=fav.name;
+      b.addEventListener('click',function(){
+        forgeCfg.h1=fav.h1; forgeCfg.h2=fav.h2; forgeCfg.dens=fav.dens; forgeCfg.mood=fav.mood; forgeCfg.fog=fav.fog;
+        if(typeof ptH2Touched!=='undefined') ptH2Touched=true; // применённая пара уже согласована сама с собой — авто-гармония не должна её тут же переписать
+        forgeSyncWidgets(); sfx.click(); haptic('light');
+      });
+      row.appendChild(b);
+    } else {
+      const e=document.createElement('span');
+      e.className='favEmpty';
+      row.appendChild(e);
+    }
+  }
+}
+wireOnLocal('forgeSaveFavBtn','click',function(){ forgeFavSave(forgeCfg, '', $('forgeSaveFavBtn')); forgeFavRowSync(); });
 
 /* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
 function forgeBoot(){ // true = есть трасса друга: этот запуск открывается в конструкторе, а не в полёте
