@@ -1847,11 +1847,16 @@ function renderHangar(){
   angarBuildTabs();
   angarSel = S[ANGAR_CATS[angarCat].selKey];
   angarRenderTabsSel();
-  scrollFadeSync($('angarTabs'));
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
   const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
+  /* 09.09.2026, владелец (живой скрин, обвёл красным «След»): scrollFadeSync мерил ширину
+     ДО того, как вкладкам проставлялся текст (пустые кнопки на первом рендере) — маска-
+     подсказка «тут можно прокрутить» никогда не включалась на первом входе в Тюнинг, даже
+     когда реальное переполнение уже есть (подтверждено численно: 360px экран — 4px
+     переполнения, hasScrollFadeClass было false). Перенесено после простановки текста. */
+  scrollFadeSync($('angarTabs'));
   angarFillFilterChips();
   angarBuildGrid(); // сама теперь обходит все жетоны активной вкладки (angarItemFill) — отдельный forEach здесь не нужен
   angarPvStart();
