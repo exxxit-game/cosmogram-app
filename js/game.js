@@ -2690,7 +2690,7 @@ function ghostLoad(){ // вызывается из startGame
          на всех» снова переставало существовать, а игрок неделями получал одну и ту же
          заученную трассу. Гонка с призраком имеет смысл только на общем поле; в зачётных
          режимах поле задаёт день, и призрак там просто тень. */
-      const ownSky = (runMode==='classic');
+      const ownSky = (runMode==='classic' || runMode==='caravan'); // 05.09.2026: Caravan — тоже свежий случайный сид на забег, как Classic
       if (ownSky && fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); mapSeedKey=String(fg.seed); mapSeqReset(); S.seed=fg.seed; } }
     return;
   }
@@ -2701,7 +2701,7 @@ function ghostLoad(){ // вызывается из startGame
   const g=ghostParse(grTrack);
   if (g){ ghost=g; ghostTagT=4; // первые 4 секунды — подпись «ЕЩЁ РАЗ?» (v1.87.0 отобрала у своей тени слова, 13.08.2026 вернула по просьбе владельца)
     // v1.282.20: то же правило для своего призрака — сид поднимаем только в личном небе
-    if (runMode==='classic' && grSeed && typeof keyRNG==='function'){
+    if ((runMode==='classic' || runMode==='caravan') && grSeed && typeof keyRNG==='function'){ // 05.09.2026: Caravan — тоже своё небо
       mapRNG=keyRNG(String(grSeed)); mapSeedKey=String(grSeed); mapSeqReset(); S.seed=grSeed; } }
 }
 function ghostStep(){ // призрак идёт по своей траектории синхронно с текущей дистанцией

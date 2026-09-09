@@ -464,7 +464,7 @@ function cinemaHighlightStart(canvas){
   if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (первый полёт/тест) — не перехватываем
   _cinemaOwner='highlight';
   const mode = (typeof controlMode==='function') ? controlMode() : 'touch'; // game.js, только чтение — как и S/Store/Q везде в этом файле
-  const modeKey = mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch');
+  const modeKey = (typeof S!=='undefined' && S.mode==='caravan') ? 'bestCaravan' : (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // 05.09.2026: Caravan — свой рекорд, не по управлению (тот же приём, что в ui.js gameOver())
   _cinemaHighlightBest = (typeof Store!=='undefined') ? saneNumberSafe(Store.get(modeKey, 0)) : 0; // та же формула, что ui.js/gameOver считает рекордом
   cinemaStart(canvas, 12_000_000, 20_000_000).then(ok=>{
     if(!ok){ _cinemaOwner=null; return; }
