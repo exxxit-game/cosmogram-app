@@ -1643,6 +1643,11 @@ function angarBuildGrid(){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
+        if(angarCat==='decal'){
+          head.classList.add('angarCatHeadToggle');
+          head.dataset.cat=item.cat;
+          head.classList.toggle('open', S.angarDecalCollapsed.indexOf(item.cat)<0);
+        }
         grid.appendChild(head);
         lastCat = item.cat;
       }
@@ -1777,6 +1782,7 @@ function angarBuildGrid(){
         })();
       }
       el.addEventListener('click',()=>{ angarPick(item.id); });
+      if(angarCat==='decal' && item.cat && item.cat!=='none' && S.angarDecalCollapsed.indexOf(item.cat)>=0) el.classList.add('angarHiddenGroup');
       grid.appendChild(el);
     });
     angarBuilt = true;
@@ -1881,10 +1887,31 @@ function angarBuyPremium(item, els){
     });
   });
 }
+/* 09.09.2026 «Свёрнутые группы Эмодзи»: сам подзаголовок группы — тап по нему прячет/показывает
+   её плитки без перестройки всей сетки (angarBuilt не сбрасывается — состояние живёт в классах
+   .open/.angarHiddenGroup, персист — в S.angarDecalCollapsed/Store). Соседние плитки той же
+   группы — все .angarIt между этим подзаголовком и следующим .angarCatHead. */
+function angarToggleDecalGroup(cat){
+  const arr=S.angarDecalCollapsed; const i=arr.indexOf(cat);
+  const collapsedNow = i<0; // ещё не было в списке свёрнутых — сворачиваем сейчас
+  if(collapsedNow) arr.push(cat); else arr.splice(i,1);
+  Store.set('angarDecalCollapsed', arr);
+  sfx.click(); haptic('light');
+  const grid=$('angarGrid'); if(!grid) return;
+  const head=grid.querySelector('.angarCatHeadToggle[data-cat="'+cat+'"]');
+  if(!head) return;
+  head.classList.toggle('open', !collapsedNow);
+  let n=head.nextElementSibling;
+  while(n && !n.classList.contains('angarCatHead')){
+    n.classList.toggle('angarHiddenGroup', collapsedNow);
+    n=n.nextElementSibling;
+  }
+}
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
+  const head=e.target.closest('.angarCatHeadToggle'); if(head){ angarToggleDecalGroup(head.dataset.cat); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
@@ -3177,6 +3204,9 @@ Store.init(()=>{
   S.favDecals = saneArray(Store.get('favDecals',[]),[]);
   S.favLaunchFx = saneArray(Store.get('favLaunchFx',[]),[]);
   S.favTrails = saneArray(Store.get('favTrails',[]),[]);
+  // 09.09.2026 «Свёрнутые группы Эмодзи»: список ключей категорий (item.cat), которые владелец
+  // свернул — переживает перезапуск, тем же приёмом, что и favX выше.
+  S.angarDecalCollapsed = saneArray(Store.get('angarDecalCollapsed',[]),[]);
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);
