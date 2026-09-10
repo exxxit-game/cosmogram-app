@@ -366,6 +366,16 @@ function forgePreviewMoodSL(mood){
 let _fSkyT=0, _fSkyRun=false;
 function forgeSkyPaint(dt){ // живое мини-небо конструктора: выбранные небо/туман/состав/жар летают в превью
   const cv=$('forgePreview'); if(!cv||!cv.getContext) return;
+  /* 10.09.2026 (владелец, живой скрин): «картинка сплюснутая» — canvas без явных width/height
+     рисовал в стандартный буфер браузера (300×150), а CSS вдвое ниже (75px, см. #forgePreview)
+     растягивал/сжимал ЭТУ картинку в новую рамку, искажая пропорции. Ни разу не совпадало с
+     реальным размером блока — просто раньше (150px) почти случайно близко подходило к буферу
+     по умолчанию, поэтому искажение не бросалось в глаза. Синхронизирую буфер с настоящим
+     размером блока на экране (тот же приём, что уже у angarPvZoomCv в ui.js). */
+  const box=cv.getBoundingClientRect();
+  if(box.width && box.height && (cv.width!==Math.round(box.width) || cv.height!==Math.round(box.height))){
+    cv.width=Math.round(box.width); cv.height=Math.round(box.height);
+  }
   const x=cv.getContext('2d'); if(!x) return;
   const W=cv.width, H=cv.height, cfg=forgeCfg;
   const g=x.createLinearGradient(0,0,0,H); // та же формула оттенка, что в свотчах выбора неба
