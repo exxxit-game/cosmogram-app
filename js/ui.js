@@ -751,11 +751,22 @@ function ghostUpload(category, track, skin, best, seed){
     if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('ghost_fail', category);
   });
 }
+  /* 10.09.2026 (владелец: «так у всех почти» — большинство рекордов, включая давние
+     собственные владельца, без ленты вообще). Найдено живой проверкой базы: cosmogram-sync
+     после upsert честно перечитывает scores и возвращает accepted[cat]/accepted.dist —
+     РЕАЛЬНОЕ число, что легло в базу после её же округления/потолков (CAPS, score_strict).
+     Здесь же в ghostUpload раньше слался локально посчитанный sc/distM — тот же забег, но
+     не всегда то же число. cosmogram-sync/ghost_up отклоняет ленту 403'unverified', если
+     best>cur.best (защита от подделки) — малейшее расхождение клиента с сервером и лента
+     молча не сохранялась НАВСЕГДА для этого рекорда, до следующего личного лучшего. Правило
+     починки то же, что и у cosmogram-workshop/daily/relay сегодня: не гадать число, а взять
+     то, что реально подтвердил сервер — afterSubmit уже резолвится телом ответа (sync.js:303,
+     r.json()), просто раньше никто не читал res, только сам факт «долетело». */
   if (isRecord && trackForGhost)
-    afterSubmit.then(()=>ghostUpload(cat, trackForGhost, ghSkin, sc, ghSeed));
+    afterSubmit.then(res=>ghostUpload(cat, trackForGhost, ghSkin, (res&&res.accepted&&res.accepted[cat]!=null)?res.accepted[cat]:sc, ghSeed));
   // v1.280.0 «Хартия»: дистанция — тоже честная категория с призраком, отдельно от того, каким способом её пролетели
   if (isDistRecord && trackForGhost)
-    afterSubmit.then(()=>ghostUpload('dist', trackForGhost, ghSkin, distM, ghSeed));
+    afterSubmit.then(res=>ghostUpload('dist', trackForGhost, ghSkin, (res&&res.accepted&&res.accepted.dist!=null)?res.accepted.dist:distM, ghSeed));
   // v1.100.1 «Трибуна чемпиона»: прыжок дня уходит в зал — результат всегда, лента (коридорные координаты) едет тоже всегда
   // (22.08.2026: скрыть её больше нельзя — тот же принцип «улика, не украшение», что и у обычных призраков)
   if (S.mode==='daily' && sc>0 && !S.wasRestored && rec.length>=20 && // v1.282.20: восстановленный прыжок дня в зал не идёт
@@ -3054,6 +3065,9 @@ function renderTopFor(screen, getCat, ids){
       }
     }
     if(!d.top || !d.top.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
+    // 10.09.2026: Слалом/Биатлон/Спидран несут ленту прямо в строке топа — см. FIXED_COURSE_KEY выше
+    topFixedTrackByPid={};
+    if (FIXED_COURSE_KEY[askCat]) d.top.forEach(r=>{ if(r.pid && typeof r.track==='string') topFixedTrackByPid[r.pid]={track:r.track, skin:r.skin, name:r.name}; });
     list.innerHTML=d.top.map((r,i)=>'<div class="topIt'+(r.me?' me':'')+'" style="animation-delay:'+(Math.min(i,10)*60)+'ms"><span class="topN'+(i<3?' m'+(i+1):'')+'">'+(i+1)+
       /* 03.09.2026 «Рекорд должен быть рекордом»: корона над 1-2-3 местом — цвет берёт CSS
          по классу m1/m2/m3, символ один и тот же (index.html i-crown). */
@@ -3081,6 +3095,21 @@ function renderTop(){ renderTopFor('ach', ()=>topCat, {list:'topList',me:'topMe'
 function renderTopComp(){ renderTopFor('modesTop', ()=>topCatComp, {list:'compTopList',me:'compTopMe',wouldBe:'compTopWouldBe',join:'compTopJoin',dcLogin:'compDcLogin'}); }
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
    Учимся тактике и манёврам рекордсмена + живая витрина скинов (его самолётик виден в полёте). */
+/* 10.09.2026 (владелец: «нужно чтобы в соревнованиях тоже были кнопки просмотра и призрак»):
+   Слалом/Биатлон/Спидран — свои таблицы (cosmogram-daily), не scores/ghosts. Кнопки
+   .topGh/.topWatch рисуются на их строках тем же общим шаблоном (renderTopFor ниже их не
+   различает), но раньше вели в syncGhostGet → GHOST_CATS в cosmogram-sync, где этих трёх
+   категорий просто никогда не было — 400 bad_request, «небо не сохранилось» врало на
+   каждую строку. У этих трёх трасса ВСЕГДА одна и та же (ETERNAL_DAY), лента едет прямо
+   в самой строке топа (track/skin добавлены в _top ниже, cosmogram-daily), отдельный сид
+   не нужен вообще — ключ трассы уже известен заранее, тот же, что startGame() сам строит
+   для runMode==='slalom'/'biathlon'/'speedrun' (см. mapSeedKey, ui.js:336-338): ДЕНЬ·режим. */
+const FIXED_COURSE_KEY = {
+  slalom: (typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'')+'·slalom',
+  biathlon: (typeof BIATHLON_ETERNAL_DAY!=='undefined'?BIATHLON_ETERNAL_DAY:'')+'·biathlon',
+  speedrun: (typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?SPEEDRUN_ETERNAL_DAY:'')+'·speedrun',
+};
+let topFixedTrackByPid={}; // pid → {track,skin,name} — только для категорий из FIXED_COURSE_KEY, перестраивается на каждый renderTopFor
 let foreignGhost=null;
 function ghostSetForeign(f){
   foreignGhost=(f && typeof f.track==='string')?{track:f.track, skin:Math.floor(Number(f.skin))||0,
@@ -3115,9 +3144,24 @@ function wireTopGhostButtons(listId, getCat, screen){
   wireOn(listId, 'click', e=>{
     const b=e.target.closest('.topWatch'); if(!b) return;
     const pid=Math.floor(Number(b.dataset.wt));
-    if(!pid || typeof syncGhostGet!=='function' || b._busy) return;
+    if(!pid || b._busy) return;
+    const cat0=getCat();
+    const fixedKey=FIXED_COURSE_KEY[cat0];
+    if (fixedKey){ // Слалом/Биатлон/Спидран: лента уже в памяти, без сети — см. FIXED_COURSE_KEY выше
+      sfx.click(); haptic('light');
+      const row=topFixedTrackByPid[pid];
+      if (!row || !row.track){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      const g=ghostParse(row.track);
+      if(!g){ toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      g.cx=true;
+      champTrack=g; theaterDay=fixedKey; theaterRecord=true;
+      theaterChamp={ name:String(row.name||'').slice(0,64), skin:Math.floor(Number(row.skin))||0 };
+      runMode='theater'; startGame();
+      return;
+    }
+    if (typeof syncGhostGet!=='function') return;
     sfx.click(); haptic('light'); b._busy=1; b.textContent='…';
-    const gen=runNow(), cat0=getCat(); // то же поколение, что у соседней двери: медленный ответ не должен запускать игру задним числом
+    const gen=runNow(); // то же поколение, что у соседней двери: медленный ответ не должен запускать игру задним числом
     syncGhostGet(pid, cat0).then(d=>{
       b._busy=0; b.innerHTML=ic('play');
       if(!runSame(gen) || screenName!==screen) return; // зритель ушёл, пока летел ответ
@@ -3135,9 +3179,23 @@ function wireTopGhostButtons(listId, getCat, screen){
   wireOn(listId, 'click', e=>{
     const b=e.target.closest('.topGh'); if(!b) return;
     const pid=Math.floor(Number(b.dataset.gh));
-    if(!pid || typeof syncGhostGet!=='function') return;
+    if(!pid) return;
+    const cat0=getCat(); // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку
+    const fixedKey=FIXED_COURSE_KEY[cat0];
+    if (fixedKey){ // Слалом/Биатлон/Спидран: лента уже в памяти, без сети — см. FIXED_COURSE_KEY выше
+      sfx.click(); haptic('light');
+      const row=topFixedTrackByPid[pid];
+      if (!row || !row.track){ b.innerHTML=ic('ghost'); toast(L.ghostNone,'rgba(255,159,176,.5)'); haptic('error'); return; }
+      b.innerHTML=ic('check');
+      ghostSetForeign({track:row.track, skin:row.skin, name:row.name, pid:pid, cat:cat0, best:Math.floor(Number(b.dataset.best))||0, seed:null});
+      foreignFrom='top'; runMode=cat0; // сама трасса всегда одна и та же — сид не нужен, но режим должен совпасть с дисциплиной ленты
+      toast(L.ghostWith(row.name||''),'rgba(191,232,255,.45)');
+      startGame();
+      return;
+    }
+    if(typeof syncGhostGet!=='function') return;
     sfx.click(); haptic('light'); b.textContent='…';
-    const gen=runNow(), cat0=getCat(); // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку
+    const gen=runNow();
     syncGhostGet(pid, cat0).then(d=>{
       /* v1.282.20: этот колбэк ЗАПУСКАЕТ игру. Медленный ответ (до 10с) перезапускал забег
          прямо посреди полёта: состояние стиралось без посадки, очки и лента уходили в никуда,
