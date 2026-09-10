@@ -30,6 +30,13 @@
       "autoPort": true
     },
     {
+      "name": "cosmogram-live",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/6c91cddc-2718-4815-9d16-89ce9e20838a/scratchpad/static-server.js", "C:/Users/admin/Documents/GitHub/cosmogram-app"],
+      "port": 8941,
+      "autoPort": true
+    },
+    {
       "name": "cosmogram-scratchpad-current",
       "runtimeExecutable": "node",
       "runtimeArgs": ["C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/4ee623e2-3027-4ede-858d-0ace2dc63e3c/scratchpad/static-server.js", "C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/4ee623e2-3027-4ede-858d-0ace2dc63e3c/scratchpad"],
