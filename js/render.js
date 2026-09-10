@@ -1053,6 +1053,8 @@ const PREM_FX_MAP={
   // 10.09.2026 «Оптика и материалы», 7 новых (8 из 15 в макете дублировали уже живые скины):
   matOpalPhoton:fxMatOpalPhoton, matLabradorite:fxMatLabradorite, matMoonstone:fxMatMoonstone,
   bioMorpho:fxBioMorpho, bioBeetlePol:fxBioBeetlePol, cosHalo:fxCosHalo, culGirih:fxCulGirih,
+  // 10.09.2026 «Гофра и родственные конструкции», 4 темы одобрены ещё 06.09.2026, докодированы теперь:
+  matCorrugC:fxMatCorrugC, matLayeredLam:fxMatLayeredLam, matSteelWall:fxMatSteelWall, matBellows:fxMatBellows,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1575,6 +1577,99 @@ function fxCulGirih(ctx,sk,nowMs){
   [[0,-8],[-7,4],[7,4]].forEach(function(pt){ ctx.save(); ctx.translate(pt[0],pt[1]); ctx.stroke(paths.small); ctx.restore(); });
   ctx.strokeStyle='hsla(15,50%,45%,.6)'; ctx.lineWidth=0.22;
   ctx.stroke(paths.big);
+  ctx.restore();
+}
+/* 10.09.2026 «Гофра и родственные конструкции» — 4 темы, одобренные владельцем ещё 06.09.2026
+   (фото похожей игрушки из слоёного картона, .knowledge/GENERATIVE-GEOMETRY.md «седьмая волна»),
+   но так и не закодированные. Реальные числа взяты оттуда же, не выдуманы заново:
+   гофра C высота/длина=0.512, стальная стенка балки 0.14-0.18, сильфон 0.867 (U-профиль, не
+   синусоида) — три РАЗНЫЕ глубины одного явления, честно разные на глаз, не три раза одно и то же.
+   Геометрия статична у всех — кэш Path2D/массив (приём 3.2/3.1 из SKIN-FX-OPTIMIZATION.md),
+   живой только блик, по образцу уже проверенных matWootz/matShellHex. */
+function corrugRowPath(period,amp,W,yBase){ // одна волнистая строка — переиспользуется профилем C и стенкой балки (разный period/amp)
+  const path=new Path2D();
+  for(let x=-W;x<=W;x+=period/8){ const y=yBase+Math.sin((x/period)*Math.PI*2)*amp; x===-W?path.moveTo(x,y):path.lineTo(x,y); }
+  return path;
+}
+let corrugCPaths=null;
+function corrugCPathsBuild(){ // профиль C: длина волны 7.82мм/высота 4.0мм → отношение 0.512, в масштабе борта период 3.2, амплитуда 0.82
+  if(corrugCPaths) return corrugCPaths;
+  corrugCPaths=[];
+  for(let i=-10;i<=8;i++){ const y=i*1.5; if(y<-21||y>13) continue; corrugCPaths.push({i,path:corrugRowPath(3.2,0.82,15,y)}); }
+  return corrugCPaths;
+}
+function fxMatCorrugC(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  ctx.lineWidth=0.4;
+  corrugCPathsBuild().forEach(function(r){
+    const shine=(Math.sin(p*Math.PI*2+r.i*0.5)+1)/2;
+    ctx.strokeStyle='hsla(28,42%,'+(38+shine*22)+'%,'+(0.65+shine*0.3).toFixed(2)+')';
+    ctx.stroke(r.path);
+  });
+  ctx.restore();
+}
+function fxMatLayeredLam(ctx,sk,nowMs){ // слоистая ламинация — срезы-контуры стопкой, ровно та техника с фото владельца
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3600)/3600;
+  const bandH=2.6, n=15;
+  for(let i=0;i<n;i++){
+    const y=-22+i*bandH; if(y>14) break;
+    const shine=(Math.sin(p*Math.PI*2+i*0.42)+1)/2;
+    ctx.fillStyle='hsla(32,38%,'+(30+((i%2)?10:0)+shine*14)+'%,.92)';
+    ctx.fillRect(-20,y,40,bandH-0.35); // тонкий зазор между полосами — сам срез-шов, без него читалось бы одним пятном
+  }
+  ctx.restore();
+}
+let steelWallPaths=null;
+function steelWallPathsBuild(){ // стальная стенка балки: реальная пара 27.5/200мм → отношение 0.1375, в масштабе борта период 16, амплитуда 1.1 — заметно шире и площе гофры C
+  if(steelWallPaths) return steelWallPaths;
+  steelWallPaths=[];
+  for(let i=-6;i<=5;i++){ const y=i*3.2; if(y<-21||y>13) continue; steelWallPaths.push({i,path:corrugRowPath(16,1.1,18,y)}); }
+  return steelWallPaths;
+}
+function fxMatSteelWall(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4200)/4200;
+  ctx.lineWidth=0.5;
+  steelWallPathsBuild().forEach(function(r){
+    const shine=(Math.sin(p*Math.PI*2+r.i*0.6)+1)/2;
+    ctx.strokeStyle='hsla(210,12%,'+(45+shine*25)+'%,'+(0.6+shine*0.3).toFixed(2)+')';
+    ctx.stroke(r.path);
+  });
+  ctx.restore();
+}
+function bellowsUPath(pitch,height,W){ // сильфон — честно U-профиль (плоское дно/верх), не синусоида, как у трёх соседей выше
+  const path=new Path2D();
+  let x=-W, up=true;
+  path.moveTo(x, up?-height/2:height/2);
+  while(x<W){
+    const x2=x+pitch/2;
+    path.lineTo(x2, up?-height/2:height/2);
+    path.lineTo(x2, up?height/2:-height/2);
+    x=x2; up=!up;
+  }
+  return path;
+}
+let bellowsPath=null;
+function bellowsPathBuild(){ // реальный US Bellows: высота 13мм, шаг 15мм → отношение 0.867 (почти квадратная волна), 10 гофр — в масштабе борта шаг 3, высота 2.6
+  if(bellowsPath) return bellowsPath;
+  bellowsPath=bellowsUPath(3,2.6,16);
+  return bellowsPath;
+}
+function fxMatBellows(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  const path=bellowsPathBuild();
+  ctx.lineWidth=0.55;
+  for(let row=-2;row<=2;row++){
+    const y=row*4.4; if(y<-20||y>12) continue;
+    const shine=(Math.sin(p*Math.PI*2+row*0.8)+1)/2;
+    ctx.save(); ctx.translate(0,y);
+    ctx.strokeStyle='hsla(205,18%,'+(50+shine*28)+'%,'+(0.65+shine*0.3).toFixed(2)+')';
+    ctx.stroke(path);
+    ctx.restore();
+  }
   ctx.restore();
 }
 /* 09.09.2026 «Скины не должны жрать зря»: волнистая форма каждой полосы (~38 точек × 19 строк)
