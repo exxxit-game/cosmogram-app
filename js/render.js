@@ -1050,6 +1050,9 @@ const PREM_FX_MAP={
   culKanga:fxCulKanga, culBasketCoil:fxCulBasketCoil, culBasketPlait:fxCulBasketPlait,
   culPersianIsfahan:fxCulPersianIsfahan, culPersianKashan:fxCulPersianKashan,
   culPersianQom:fxCulPersianQom, culPersianNain:fxCulPersianNain,
+  // 10.09.2026 «Оптика и материалы», 7 новых (8 из 15 в макете дублировали уже живые скины):
+  matOpalPhoton:fxMatOpalPhoton, matLabradorite:fxMatLabradorite, matMoonstone:fxMatMoonstone,
+  bioMorpho:fxBioMorpho, bioBeetlePol:fxBioBeetlePol, cosHalo:fxCosHalo, culGirih:fxCulGirih,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1295,15 +1298,58 @@ function phylloSeedsBuild(){
   }
   return phylloSeeds;
 }
+/* 10.09.2026 «Скины не должны жрать зря», четвёртый заход (владелец: «поискать соединения
+   техник, которых ещё не пробовали»). Третий заход (спрайт-кэш на семя) честно НЕ сработал —
+   drawImage() мелкой картинки дороже голого fill без градиента, откачено (см. git history).
+   Здесь другая идея, не «заменить fill на drawImage», а «объединить много fill в один»: seeds
+   упорядочены по n, а hue растёт МОНОТОННО с n (45+n·0.3°) — значит соседние по индексу семена
+   почти одного оттенка. Заранее (один раз) режем 220 семян на 10 корзин по ~22 штуки, на
+   корзину — один Path2D (несколько moveTo+arc подряд без closePath — canvas сам корректно
+   заливает несколько несвязанных окружностей одним fill()). Пока корзина ПОЛНОСТЬЮ проросла —
+   одна заливка средним оттенком корзины на всю (разброс оттенка внутри корзины ~6.6°, на глаз
+   не видно — та же логика, что уже была у квантования в предыдущей неудачной попытке, только
+   в этот раз это ускоряет отрисовку, а не подменяет её другим примитивом). Только пограничная
+   корзина (на стыке «выросло/ещё нет») и последние 6 «свежих» (ярче/крупнее) остаются honest
+   поштучно — их и так мало. */
+const PHYLLO_BUCKETS=10;
+let phylloBucketPaths=null;
+function phylloBucketPathsBuild(){
+  if(phylloBucketPaths) return phylloBucketPaths;
+  const seeds=phylloSeedsBuild();
+  const per=Math.ceil(220/PHYLLO_BUCKETS);
+  phylloBucketPaths=[];
+  for(let b=0;b<PHYLLO_BUCKETS;b++){
+    const start=b*per, end=Math.min(220,start+per);
+    const path=new Path2D();
+    let hueSum=0;
+    for(let n=start;n<end;n++){ const s=seeds[n]; path.moveTo(s.x+0.36,s.y); path.arc(s.x,s.y,0.36,0,6.283); hueSum+=s.hue; }
+    phylloBucketPaths.push({path:path, start:start, end:end, avgHue:hueSum/(end-start)});
+  }
+  return phylloBucketPaths;
+}
 function fxCosPhyllo(ctx,sk,nowMs){ // Филлотаксис Фогеля — r=√n, θ=n·137.5077°, семена появляются по одному
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3800)/3800;
   const shown=Math.floor(p*220);
   const seeds=phylloSeedsBuild();
-  for(let n=0;n<shown;n++){
-    const s=seeds[n], justBorn=n>shown-6;
-    ctx.fillStyle='hsla('+s.hue+',75%,'+s.light+'%,'+(justBorn?1:.9)+')';
-    ctx.beginPath(); ctx.arc(s.x, s.y, justBorn?0.48:0.36,0,6.283); ctx.fill();
+  const settledEnd=Math.max(0,shown-6); // граница «осевших» — последние 6 остаются honest поштучно (ярче/крупнее)
+  phylloBucketPathsBuild().forEach(function(bk){
+    if(bk.start>=settledEnd) return;
+    if(bk.end<=settledEnd){
+      ctx.fillStyle='hsla('+bk.avgHue.toFixed(1)+',75%,60%,.9)';
+      ctx.fill(bk.path);
+    } else { // пограничная корзина — доиграть поштучно, их не больше ~22
+      for(let n=bk.start;n<settledEnd;n++){
+        const s=seeds[n];
+        ctx.fillStyle='hsla('+s.hue+',75%,'+s.light+'%,.9)';
+        ctx.beginPath(); ctx.arc(s.x,s.y,0.36,0,6.283); ctx.fill();
+      }
+    }
+  });
+  for(let n=settledEnd;n<shown;n++){
+    const s=seeds[n];
+    ctx.fillStyle='hsla('+s.hue+',75%,'+s.light+'%,1)';
+    ctx.beginPath(); ctx.arc(s.x,s.y,0.48,0,6.283); ctx.fill();
   }
   ctx.restore();
 }
@@ -1389,6 +1435,146 @@ function fxCosQuasi(ctx,sk,nowMs){
     ctx.drawImage(spr.c, sp.x-spr.R, sp.y-spr.R, spr.R*2, spr.R*2);
   });
   ctx.fillStyle='hsla(190,90%,90%,1)'; ctx.beginPath(); ctx.arc(0,0,0.3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+/* 10.09.2026 «Оптика и материалы» (владелец, из .knowledge/macets/optika-materialy-15-tem-
+   08-09-2026.html — 7 из 15 тем макета оказались новыми, остальные 8 уже в игре, проверено
+   отдельным проходом). Перенос с макетной системы координат (которая уже совпадала с
+   clipShipBody/±16) на настоящую: без своего fillHull — базовый цвет корпуса уже кладёт sk.body
+   ДО вызова fx (тот же порядок, что у всех остальных скинов), fx рисует только узор поверх. */
+let opalSpots=null;
+function opalSpotsBuild(){ // 26 сфер, честная физика: размер сферы (150-350нм) определяет цвет
+  if(opalSpots) return opalSpots;
+  const rnd=mulberry32(5);
+  opalSpots=[];
+  for(let i=0;i<26;i++){
+    const x=-10+rnd()*20, y=-18+rnd()*28;
+    const sizeNm=150+rnd()*200;
+    const t=Math.max(0,Math.min(1,(sizeNm-150)/200));
+    const hue=Math.round((240*(1-t))/20)*20; // квантуем до кратного 20° — конечный набор спрайтов, не 26 разных
+    const r=+(1.3+rnd()*1.4).toFixed(1);
+    opalSpots.push({x:x,y:y,hue:hue,r:r,phase:i*0.7});
+  }
+  return opalSpots;
+}
+let opalSprites=null;
+function opalDotSprite(hue,r){ // тот же приём кэша, что quasiDotSprite выше — offscreen-спрайт на пару (оттенок,радиус)
+  if(!opalSprites) opalSprites={};
+  const key=hue+'_'+r;
+  if(opalSprites[key]) return opalSprites[key];
+  const S=2, R=Math.ceil(r)+1, W=R*2; // 10.09.2026: замер живьём — S=4 (как у quasiDotSprite) давало 0.18ms на 26 мягких блюр-точек, S=2 достаточно (точки и так мягкие, не резкие, как у Квазикристалла)
+  const c=document.createElement('canvas'); c.width=W*S; c.height=W*S;
+  const x=c.getContext('2d'); x.setTransform(S,0,0,S,R*S,R*S);
+  const g=x.createRadialGradient(0,0,0,0,0,r);
+  g.addColorStop(0,'hsla('+hue+',85%,80%,.85)'); g.addColorStop(1,'hsla('+hue+',85%,60%,0)');
+  x.fillStyle=g; x.beginPath(); x.arc(0,0,r,0,6.283); x.fill();
+  const spr={c:c,R:R};
+  opalSprites[key]=spr;
+  return spr;
+}
+function fxMatOpalPhoton(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3600)/3600;
+  opalSpotsBuild().forEach(function(sp){
+    const shimmer=(Math.sin(p*Math.PI*2+sp.phase)+1)/2;
+    const spr=opalDotSprite(sp.hue,sp.r);
+    ctx.globalAlpha=0.6+shimmer*0.4;
+    ctx.drawImage(spr.c, sp.x-spr.R, sp.y-spr.R, spr.R*2, spr.R*2);
+  });
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function fxMatLabradorite(ctx,sk,nowMs){ // вспышка честно только в узком окне поворота, не постоянно — одна заливка, без цикла, дёшево
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  const facing=Math.max(0,Math.cos(p*Math.PI*2));
+  const win=Math.pow(facing,8);
+  if(win>0.02){
+    const hue=(200+p*360)%360;
+    const g=ctx.createLinearGradient(-14,-10,14,10);
+    g.addColorStop(0,'hsla('+hue+',90%,60%,0)'); g.addColorStop(.5,'hsla('+hue+',90%,65%,'+win.toFixed(2)+')'); g.addColorStop(1,'hsla('+hue+',90%,60%,0)');
+    ctx.fillStyle=g; ctx.fillRect(-20,-24,40,48);
+  }
+  ctx.restore();
+}
+function fxMatMoonstone(ctx,sk,nowMs){ // адуляресценция — мягко, почти всегда видно, никогда резко не выключается
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4400)/4400;
+  const gy=-18+((p*2)%1)*32;
+  const g=ctx.createLinearGradient(0,gy-9,0,gy+9);
+  g.addColorStop(0,'hsla(220,40%,85%,0)'); g.addColorStop(.5,'hsla(220,45%,88%,.55)'); g.addColorStop(1,'hsla(220,40%,85%,0)');
+  ctx.fillStyle=g; ctx.fillRect(-20,-24,40,48);
+  ctx.restore();
+}
+function fxBioMorpho(ctx,sk,nowMs){ // sk.body уже честный структурный синий — здесь только движущийся блик, сам цвет с углом НЕ меняется
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  const sweep=-20+((p*2)%1)*40;
+  const g=ctx.createLinearGradient(sweep-8,-22,sweep+8,14);
+  g.addColorStop(0,'hsla(215,85%,45%,0)'); g.addColorStop(.5,'hsla(200,95%,75%,.55)'); g.addColorStop(1,'hsla(215,85%,45%,0)');
+  ctx.fillStyle=g; ctx.fillRect(-20,-24,40,48);
+  ctx.restore();
+}
+function fxBioBeetlePol(ctx,sk,nowMs){ // настоящий механизм (не украшение): через один фильтр круговой поляризации ярко, через другой — ПОЛНОСТЬЮ чёрное
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000;
+  const bright=(Math.cos(p*Math.PI*2)+1)/2;
+  const rot=p*Math.PI*2*0.3;
+  for(let r=1;r<=9;r+=1.1){
+    const a0=rot+r*0.4, a1=a0+Math.PI*1.5;
+    ctx.strokeStyle='hsla(140,80%,'+((35+r*3)*bright).toFixed(1)+'%,'+(0.8*bright).toFixed(2)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,-3,r,a0,a1); ctx.stroke();
+  }
+  if(bright>0.04){
+    ctx.save(); ctx.rotate(p*Math.PI*2);
+    const g=ctx.createLinearGradient(0,-9,0,9);
+    g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,'+(.35*bright).toFixed(2)+')'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.fillRect(-9,-9,18,18);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  const R=8.5;
+  ctx.strokeStyle='hsla(200,70%,80%,.5)'; ctx.lineWidth=0.35;
+  ctx.beginPath(); ctx.arc(0,0,R,0,6.283); ctx.stroke();
+  const twinkle=(Math.sin(p*Math.PI*2)+1)/2;
+  [-1,1].forEach(function(side){
+    const g=ctx.createRadialGradient(side*R,0,0,side*R,0,1.6);
+    g.addColorStop(0,'hsla(35,90%,85%,'+(0.5+twinkle*0.4).toFixed(2)+')'); g.addColorStop(1,'hsla(35,90%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(side*R,0,1.6,0,6.283); ctx.fill();
+  });
+  ctx.fillStyle='hsla(45,90%,88%,.9)'; ctx.beginPath(); ctx.arc(0,0,1.0,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function girihStarPath(R){
+  const path=new Path2D();
+  for(let i=0;i<10;i++){
+    const a=i*(Math.PI*2/10)-Math.PI/2;
+    const r=(i%2===0)?R:R*0.5; // 10-лучевая звезда — угол между лучами кратен 36°
+    const x=Math.cos(a)*r, y=Math.sin(a)*r;
+    i===0?path.moveTo(x,y):path.lineTo(x,y);
+  }
+  path.closePath();
+  return path;
+}
+let girihPaths=null;
+function girihPathsBuild(){ // геометрия статична — путь строится один раз, каждый кадр только stroke() (приём 3.2 из SKIN-FX-OPTIMIZATION.md)
+  if(girihPaths) return girihPaths;
+  girihPaths={big:girihStarPath(10), small:girihStarPath(4.2)};
+  return girihPaths;
+}
+function fxCulGirih(ctx,sk,nowMs){
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%8000)/8000;
+  ctx.rotate(p*Math.PI*2*0.08); // очень медленно — геометрия, не карусель
+  const paths=girihPathsBuild();
+  ctx.strokeStyle='hsla(15,60%,35%,.85)'; ctx.lineWidth=0.35;
+  [[0,-8],[-7,4],[7,4]].forEach(function(pt){ ctx.save(); ctx.translate(pt[0],pt[1]); ctx.stroke(paths.small); ctx.restore(); });
+  ctx.strokeStyle='hsla(15,50%,45%,.6)'; ctx.lineWidth=0.22;
+  ctx.stroke(paths.big);
   ctx.restore();
 }
 /* 09.09.2026 «Скины не должны жрать зря»: волнистая форма каждой полосы (~38 точек × 19 строк)
@@ -1717,15 +1903,42 @@ function ryijyStrandsBuild(){
   }
   return ryijyStrands;
 }
+/* 10.09.2026 «Скины не должны жрать зря», пятый заход (владелец: «поискать соединения техник»).
+   Каждая ворсинка правда покачивается по-своему — геометрию (moveTo/lineTo) сэкономить нельзя,
+   это уже честно установлено (см. комментарий выше). Но здесь были ещё ~169 отдельных
+   ctx.strokeStyle= и ctx.stroke() ВЫЗОВОВ за кадр — а это ровно то, что независимый источник
+   (веб-поиск, «minimize state changes») называет отдельной, самостоятельной ценой, не только
+   геометрия. Группирую по оттенку (10 корзин) — Path2D строится заново каждый кадр (не кэш,
+   позиции живые), но ОДИН stroke() на корзину вместо одного на ворсинку — 10 вызовов вместо 169. */
+const RYIJY_BUCKETS=10;
+let ryijyBucketed=null;
+function ryijyBucketsBuild(){
+  if(ryijyBucketed) return ryijyBucketed;
+  const strands=ryijyStrandsBuild();
+  const byHue={};
+  strands.forEach(function(s){
+    const m=/hsla\((\d+(?:\.\d+)?)/.exec(s.style);
+    const hue=m?+m[1]:300;
+    const key=Math.round(hue/3)*3;
+    if(!byHue[key]) byHue[key]=[];
+    byHue[key].push(s);
+  });
+  ryijyBucketed=Object.keys(byHue).map(function(k){ return {hue:+k, items:byHue[k]}; });
+  return ryijyBucketed;
+}
 function fxCulRyijy(ctx,sk,nowMs){ // Финский рюйю — длинный ворс честно покачивается
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3600)/3600;
   ctx.save(); ctx.scale(11,11);
   ctx.lineWidth=0.02;
-  ryijyStrandsBuild().forEach(({cx,cy,style,jitterX,row,col})=>{
-    const sway=Math.sin(p*Math.PI*2 + row*0.7+col*0.4)*0.015;
-    ctx.strokeStyle=style;
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+jitterX+sway,cy+0.05); ctx.stroke();
+  ryijyBucketsBuild().forEach(function(bk){
+    const path=new Path2D();
+    bk.items.forEach(function(s){
+      const sway=Math.sin(p*Math.PI*2+s.row*0.7+s.col*0.4)*0.015;
+      path.moveTo(s.cx,s.cy); path.lineTo(s.cx+s.jitterX+sway,s.cy+0.05);
+    });
+    ctx.strokeStyle='hsla('+bk.hue+',50%,60%,.8)';
+    ctx.stroke(path);
   });
   ctx.restore(); ctx.restore();
 }
