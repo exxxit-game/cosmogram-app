@@ -503,7 +503,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.214'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.215'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -1385,6 +1385,25 @@ function resize(){
     // поймал бы ещё старый/пустой кадр.
     const gap=vhGap;
     requestAnimationFrame(()=>{ if(typeof BEACON!=='undefined' && BEACON.signalShot) BEACON.signalShot('vh_underreport', gap+'px'); });
+  }
+  /* 11.09.2026 (владелец, живой скрин: iPhone 16, «полу раскрытое» окно Telegram, чёрная
+     полоса снизу и под HUD, и под экраном итога полёта) — тот же класс бага, что vh_underreport
+     выше, но сигнал там шлётся, только если сам Telegram ПРИЗНАЁТ занижение (isExpanded &&
+     viewportStableHeight < innerHeight). Этот скрин — на случай, когда Telegram вовсе не
+     считает себя расширенным (isExpanded лжёт или ещё не успел) и сосед выше молчит.
+     window.visualViewport — то самое API, которое KNOWN-BUGS.md («vh_underreport») называет
+     непроверенным путём: разница между ним и window.innerHeight — это и есть разрыв layout/
+     visual viewport в WebKit, независимо от того, что говорит сам Telegram. Порог 20px —
+     тот же, что уже стоит несколькими строками выше для viewportStableHeight, не новое число. */
+  if (typeof window!=='undefined' && window.visualViewport){
+    const vvh = window.visualViewport.height;
+    const vvDiff = Math.round(window.innerHeight - vvh);
+    if (Math.abs(vvDiff) > 20 && typeof BEACON!=='undefined' && BEACON.signalShot){
+      const vsh = (rt && rt.viewportStableHeight) ? Math.round(rt.viewportStableHeight) : -1;
+      const exp = rt ? !!rt.isExpanded : null;
+      const fsg = rt ? !!rt.isFullscreen : null;
+      requestAnimationFrame(()=>{ BEACON.signalShot('viewport_mismatch', 'vvDiff:'+vvDiff+' ih:'+Math.round(window.innerHeight)+' vvh:'+Math.round(vvh)+' vsh:'+vsh+' exp:'+exp+' fs:'+fsg+' cgImm:'+cgImm); });
+    }
   }
 }
 /* 22.08.2026 «Рамка коридора без мигания»: жалоба владельца — в Telegram линии коридора
