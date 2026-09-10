@@ -1317,11 +1317,24 @@ function angarPvDraw(t){
   x.save(); x.translate(W/2,H/2+10);
   x.rotate(RM?0.06:Math.sin(t/1400)*0.10); // борт покачивается — под бережным небом стоит ровно
   angarShip(x, sk, 1.6, true);
-  // огонёк двигателя — живой только когда живо всё превью
-  x.globalAlpha = RM?.85:(.6+.4*Math.sin(t/70));
-  x.fillStyle=sk.trail+'.95)';
-  x.beginPath(); x.arc(0,11*1.6,3.0*1.6,0,6.283); x.fill();
-  x.globalAlpha=1; x.restore();
+  /* 10.09.2026 (владелец, живой скрин с кругом): «точка появляется раньше самолёта» — огонёк
+     двигателя рисовался БЕЗ проверки той же фазы явления, что внутри angarShip() прячет сам
+     корпус (hullAlpha=0 на «явлении», sk.fx-узор ещё сам по себе, борта не видно вообще).
+     Тот же расчёт fxState/hullAlpha, что уже есть в angarShip() — повторяю здесь один раз для
+     огонька, angarPvFxPhase() без побочных эффектов при повторном вызове тем же ключом (сама
+     функция это гарантирует, см. её комментарий). */
+  const angarFxFnPv = sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  const fxEntryPv = angarFxFnPv || (!sk.fx && sk.id!==0);
+  const fxStatePv = fxEntryPv ? angarPvFxPhase(sk.id) : null;
+  const hullAlphaPv = fxStatePv ? (fxStatePv.phase==='event' ? 0 : fxStatePv.tt) : 1;
+  // огонёк двигателя — живой только когда живо всё превью, и только вместе с корпусом, не раньше
+  if(hullAlphaPv>0){
+    x.globalAlpha = hullAlphaPv*(RM?.85:(.6+.4*Math.sin(t/70)));
+    x.fillStyle=sk.trail+'.95)';
+    x.beginPath(); x.arc(0,11*1.6,3.0*1.6,0,6.283); x.fill();
+    x.globalAlpha=1;
+  }
+  x.restore();
   ANGAR_PV.kadrov++;
 }
 /* 06.09.2026 «Полное имя у витрины»: та же логика «на что сейчас смотрит игрок», что уже
