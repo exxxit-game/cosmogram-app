@@ -90,11 +90,16 @@ function ptXToAt(track,clientX){
 function ptAtToPct(at){ return (at/ptLen()*100).toFixed(2)+'%'; }
 function ptClampAt(v){ return Math.max(0,Math.min(ptLen(),v)); }
 function ptOverRect(x,y,el){ const r=el.getBoundingClientRect(); return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; }
-function ptPinSizeFor(n){ if(n<=10) return 48; if(n<=20) return 40; if(n<=35) return 32; return 26; }
+/* 10.09.2026 (владелец, живой скрин: стикеры вылезают за трассу сверху/снизу, и сами
+   крупные для нового окна) — трасса (.track) стала вдвое ниже 09.09→10.09 (120px→60px,
+   см. index.html:1866), а размеры стикеров/шаг между рядами остались старые — 3-рядный
+   стек, рассчитанный под 120px, физически не помещался в 60px. Тот же множитель ×0.5,
+   что уже применён к высоте трассы, доведён до конца: и сами стикеры, и ROW_H. */
+function ptPinSizeFor(n){ if(n<=10) return 24; if(n<=20) return 20; if(n<=35) return 16; return 13; }
 function ptSpreadOffsets(pins){
   const sorted=pins.map((p,i)=>({i,at:p.at})).sort((a,b)=>a.at-b.at);
   const offs=new Array(pins.length).fill(0);
-  const THRESH=ptLen()*0.035, ROWS=3, ROW_H=28;
+  const THRESH=ptLen()*0.035, ROWS=3, ROW_H=14;
   let streak=0;
   for(let k=1;k<sorted.length;k++){
     if(sorted[k].at-sorted[k-1].at<THRESH){ streak++; offs[sorted[k].i]=(streak%ROWS)*ROW_H; } else streak=0;
@@ -123,14 +128,13 @@ function ptRender(justPoppedIdx){
   track.classList.toggle('has-pins',pins.length>0);
   const pinSz=ptPinSizeFor(pins.length);
   track.style.setProperty('--pinSz',pinSz+'px');
-  /* 02.09.2026: было 60-pinSz/2 — центрирует только РЯД 0, а ряды 1-2 (ptSpreadOffsets,
-     до 2×28px вниз) добавляются исключительно вниз, не трогая запас над рядом 0. При
-     плотных точках (сегодняшние пресеты — «Пульсар» и другие) 3-й ряд реально вылезал
-     за нижний край окна (измерено вживую: низ 136px при высоте окна 120px). Центруем
-     весь трёхрядный стек (ROWS=3, ROW_H=28 — см. ptSpreadOffsets), не только первый ряд:
-     сдвигаем базу на (ROWS-1)*ROW_H/2 вверх. Проверено численно для всех 4 размеров
-     стикера (48/40/32/26px) × 3 ряда — везде укладывается в [0,120] с запасом. */
-  const pinTop=60-pinSz/2-28;
+  /* 02.09.2026: было 60-pinSz/2 — центрирует только РЯД 0, а ряды 1-2 (ptSpreadOffsets)
+     добавляются исключительно вниз. Центруем весь трёхрядный стек: сдвигаем базу на
+     (ROWS-1)*ROW_H/2 вверх. 10.09.2026: окно .track стало вдвое ниже (120px→60px) —
+     центр («60») и сдвиг стека («28») пересчитаны на тот же множитель ×0.5 (30 и 14),
+     заодно со стикерами/ROW_H выше. Проверено численно для всех 4 размеров стикера
+     (24/20/16/13px) × 3 ряда — везде укладывается в [0,60] с запасом ≥4px. */
+  const pinTop=30-pinSz/2-14;
   const offs=ptSpreadOffsets(pins);
   pins.forEach((p,i)=>{
     const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;

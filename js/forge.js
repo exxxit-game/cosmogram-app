@@ -947,7 +947,11 @@ function workshopRenderList(){
       '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
       '</div>'+
       '<div class="wCornerRow">'+
-      (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2"></rect></svg></button>' : '')+
+      // 10.09.2026 (владелец, живой макет): rect-ы восклицательного знака были без заливки —
+      // наследовали тот же currentColor, что и сам треугольник, и сливались с ним, читаясь
+      // как сплошная «пирамида». Добавлена заливка fill="#0b1626" — тот же приём выреза,
+      // что уже у соседних «Закрепить»/«Скрыть» (см. .wPin/.wHide выше в этом файле).
+      (canReport ? '<button class="wCorner wCornerDanger" data-act="report" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>' : '')+
       // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
       // без лишнего клика» — Закрепить/Скрыть тоже открытые значки в углу, залитые как
       // жалоба, «⋯»/скрывающий wModRow убраны совсем.
@@ -978,7 +982,7 @@ function workshopRenderList(){
       const voted = mine.indexOf(t.code)>=0;
       row.querySelector('[data-role="hearts"]').textContent=String(t.hearts||0);
       row.querySelector('.wVote').classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
-      row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'Сыграно: '+(t.plays||0));
+      row.querySelector('[data-role="plays"]').textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0));
       row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
       row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться'; // 08.09.2026: значок без подписи (владелец), title остаётся для доступности
