@@ -1217,6 +1217,21 @@ function angarShip(x, sk, s, bolshoy){
       }
     }
   }
+  /* 10.09.2026, владелец («след не отображается в окне просмотра. или и не должен?») — тот же
+     пробел, что чинили у Вспышки 29.08.2026 (владелец тогда: «окно вообще не знало о вспышке»):
+     след показывался только на плитке в сетке (angarBuildGrid, renderTrailPattern), в большое
+     окно сверху так и не добавили следом. Тот же приём, что у вспышки чуть выше — только цепляем
+     angarSel/S.trail вместо angarSel/S.launchFx, и позиция ниже корпуса (след тянется сзади). */
+  if(bolshoy && hullAlpha>0){
+    const pvTrail = angarCat==='trail' ? angarSel : S.trail;
+    if(pvTrail!==0 && pvTrail){ const tr=TRAILS_BY_ID.get(pvTrail);
+      if(tr && tr.style && tr.style!=='none'){
+        const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
+        const col=a=>base+Math.max(0,a).toFixed(2)+')';
+        x.save(); x.globalAlpha=hullAlpha; x.translate(0,14); renderTrailPattern(x, tr.style, col); x.restore();
+      }
+    }
+  }
   if(hullAlpha>0){
     x.globalAlpha=hullAlpha;
     x.fillStyle=sk.body;
