@@ -58,7 +58,7 @@ const I18N = {
     modeSlalom:'Без касаний', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд «Без касаний»', slalomDQ:'Срыв — задел ворота', // 06.09.2026; 08.09.2026: «Слалом» — чужой вид спорта (склон, лыжи); «Створ» — навигационный термин, малопонятный без объяснения; «Без касаний» (владелец) — прямо называет правило, оно и так уже было в описании ниже
     modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
-    modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 300м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой
+    modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой; 10.09.2026: было 300м, владелец — «мало, конец сразу»
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войдите, чтобы лететь в эстафете',
     relayMineTitle:'Статус эстафет', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом
@@ -282,7 +282,7 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
     modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
     biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
-    modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 300m, fly yours — hand off to the next pilot',
+    modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 1000m, fly yours — hand off to the next pilot',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in to fly in the relay',
     relayMineTitle:'Relay status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
@@ -446,7 +446,7 @@ const I18N = {
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
     modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
     biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
-    modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 300m, vuela el tuyo — pásaselo al siguiente',
+    modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 1000m, vuela el tuyo — pásaselo al siguiente',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión para volar en los relevos',
     relayMineTitle:'Estado de relevos', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
@@ -625,7 +625,7 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
     modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
     biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
-    modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 300m, voe o seu — passe para o próximo',
+    modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 1000m, voe o seu — passe para o próximo',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre para voar no revezamento',
     relayMineTitle:'Status dos revezamentos', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
@@ -802,7 +802,7 @@ const I18N = {
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
     modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
     biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
-    modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 300m, vole la tienne — passe le relais',
+    modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 1000m, vole la tienne — passe le relais',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi pour voler dans le relais',
     relayMineTitle:'État des relais', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
