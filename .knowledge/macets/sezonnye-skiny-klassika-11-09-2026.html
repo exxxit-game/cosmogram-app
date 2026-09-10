@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: скины месяца рядом с «Бумажным»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --ok:#8fff9f;
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-btn:14px; --r-card:16px;
+  }
+  body{ margin:0; background:#050a14; font-family:var(--font-ui); color:var(--ink);
+    display:flex; flex-wrap:wrap; gap:28px; justify-content:center; padding:28px 16px; }
+  .note{ width:380px; background:var(--bg-1); border:1px solid var(--line-gold); border-radius:var(--r-card);
+    padding:14px 16px; font-size:13px; line-height:1.55; color:var(--cream); }
+  .note b{ color:var(--gold-hi); }
+  .note .tag{ display:inline-block; background:rgba(240,192,64,.15); border:1px solid rgba(240,192,64,.4);
+    color:var(--gold-hi); font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px;
+    border-radius:8px; margin-bottom:8px; }
+  .frame{ width:380px; background:radial-gradient(ellipse at 50% 0%, #14264a 0%, var(--bg-0) 70%);
+    border-radius:28px; border:1px solid rgba(255,255,255,.06); padding:22px 0 26px;
+    box-shadow:0 30px 70px rgba(0,0,0,.55); }
+  .hdr{ text-align:center; font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase;
+    margin-bottom:14px; }
+  .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(92%,380px); margin:0 auto; }
+  .catHead{ grid-column:1/-1; font-size:11px; letter-spacing:.08em; color:var(--muted);
+    text-transform:uppercase; margin-top:6px; }
+  .it{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; position:relative; }
+  .dot{ position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
+    padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55);
+    transition:border-color .2s, background .2s; }
+  .it.sel .dot{ border-color:rgba(190,225,255,.55); background:rgba(120,170,255,.10);
+    box-shadow:0 0 20px rgba(120,170,255,.16); }
+  .it.sel .nm{ color:#eaf2ff; }
+  /* «скин месяца» — не новый значок в углу (углы уже заняты факт/избранным/новинкой),
+     а тёплый золотой абрис самой плитки: тот же язык, что game уже использует для
+     «особенного» (записи/достижения — везде --gold-hi), просто применённый к border+glow,
+     как .sel уже делает для «выбран», другим оттенком. */
+  .it.season .dot{ border-color:rgba(240,192,64,.5);
+    background:radial-gradient(circle at 50% 30%, rgba(240,192,64,.10), rgba(16,26,50,.55) 75%);
+    box-shadow:0 0 16px rgba(240,192,64,.14); }
+  .plane{ width:56px; height:56px; }
+  .nm{ font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase;
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; min-height:1em; }
+  .pr{ position:absolute; left:4px; right:4px; bottom:4px; margin:0;
+    padding:4px 6px; border-radius:10px; font-size:10px; letter-spacing:.02em;
+    background:rgba(8,14,28,.82); border:1px solid rgba(190,225,255,.35); color:#f2f7ff;
+    display:flex; align-items:center; justify-content:center; gap:3px; }
+  .pr.own{ color:var(--ok); border-color:rgba(95,216,138,.4); }
+  .pr .coin{ width:10px; height:10px; border-radius:50%; background:radial-gradient(circle at 35% 30%,var(--gold-hi),var(--gold) 70%); flex:none; }
+  .pr .coin.stars{ background:radial-gradient(circle at 35% 30%,#eaf2ff,#7fb8ff 70%); }
+  .fact{ position:absolute; top:4px; left:4px; width:18px; height:18px; border-radius:50%;
+    background:rgba(10,16,32,.65); color:var(--muted); display:grid; place-items:center; border:1px solid var(--line);
+    font-size:11px; font-style:italic; font-family:Georgia,serif; }
+  .legend{ display:flex; gap:14px; justify-content:center; margin-top:16px; font-size:10px; color:var(--muted); letter-spacing:.03em; }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .sw{ width:14px; height:14px; border-radius:5px; border:1.5px solid rgba(240,192,64,.5);
+    background:radial-gradient(circle at 50% 30%, rgba(240,192,64,.10), rgba(16,26,50,.55) 75%); }
+</style>
+</head>
+<body>
+
+  <div class="note">
+    <span class="tag">Макет · структура, не финальное искусство</span><br>
+    Показана ВЕРХНЯЯ часть вкладки «Цвет» в Тюнинге. Три плитки в первой строке:
+    «Бумажный» (как сейчас) + два скина месяца — один за игровую валюту (золотой кружок),
+    один за Stars (голубой кружок). Заголовка «Классика» больше нет — так же тихо,
+    как уже сделано для бесплатных декалей/вспышек в коде. Единственная новая примета —
+    тёплая золотая рамка плитки (её же язык, что у остальных «особенных» вещей в игре) —
+    без надписи, без даты, без таймера.<br><br>
+    <b>Силуэты кораблей — плейсхолдер</b>, не итоговый рисунок скинов месяца — их дизайн
+    решаем отдельно, это макет только про расположение и рамку.
+  </div>
+
+  <div class="frame">
+    <div class="grid">
+      <!-- Бумажный — как сейчас, без изменений -->
+      <div class="it sel">
+        <div class="dot">
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#efeee9" stroke="#cdcabf" stroke-width="0.6"/></svg>
+          <div class="pr own">✓</div>
+        </div>
+        <div class="nm">Бумажный</div>
+      </div>
+
+      <!-- Скин месяца — игровая валюта -->
+      <div class="it season">
+        <div class="dot">
+          <div class="fact">i</div>
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#f0c040" stroke="#c9a45c" stroke-width="0.6"/></svg>
+          <div class="pr"><span class="coin"></span>320</div>
+        </div>
+        <div class="nm">Огонь кометы</div>
+      </div>
+
+      <!-- Скин месяца — Stars -->
+      <div class="it season">
+        <div class="dot">
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#bcd8ff" stroke="#7fb8ff" stroke-width="0.6"/></svg>
+          <div class="pr"><span class="coin stars"></span>60</div>
+        </div>
+        <div class="nm">Стеклянный шторм</div>
+      </div>
+
+      <div class="catHead">Астрономия</div>
+
+      <div class="it">
+        <div class="dot"><svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#d8b46a" stroke="#c9a45c" stroke-width="0.6"/></svg><div class="pr own">✓</div></div>
+        <div class="nm">Кольца Сатурна</div>
+      </div>
+      <div class="it">
+        <div class="dot"><svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#c9b8ff" stroke="#a89be0" stroke-width="0.6"/></svg><div class="pr own">✓</div></div>
+        <div class="nm">Пульсар-маяк</div>
+      </div>
+      <div class="it sel">
+        <div class="dot"><svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#f0a6c8" stroke="#d888ae" stroke-width="0.6"/></svg><div class="pr own">Выбран</div></div>
+        <div class="nm">Биполярная т...</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="sw"></span> скин месяца — тёплая рамка, без надписи</span>
+    </div>
+  </div>
+
+</body>
+</html>

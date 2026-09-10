@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: 2 новых скина в компанию к «Бумажному»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --ok:#8fff9f;
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r-card:16px;
+  }
+  body{ margin:0; background:#050a14; font-family:var(--font-ui); color:var(--ink);
+    display:flex; flex-wrap:wrap; gap:28px; justify-content:center; padding:28px 16px; }
+  .note{ width:380px; background:var(--bg-1); border:1px solid var(--line-gold); border-radius:var(--r-card);
+    padding:14px 16px; font-size:13px; line-height:1.55; color:var(--cream); }
+  .note b{ color:var(--gold-hi); }
+  .note .tag{ display:inline-block; background:rgba(240,192,64,.15); border:1px solid rgba(240,192,64,.4);
+    color:var(--gold-hi); font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px;
+    border-radius:8px; margin-bottom:8px; }
+  .frame{ width:380px; background:radial-gradient(ellipse at 50% 0%, #14264a 0%, var(--bg-0) 70%);
+    border-radius:28px; border:1px solid rgba(255,255,255,.06); padding:22px 0 26px; }
+  .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(92%,380px); margin:0 auto; }
+  .it{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; position:relative; }
+  .dot{ position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
+    padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55); }
+  .it.sel .dot{ border-color:rgba(190,225,255,.55); background:rgba(120,170,255,.10); }
+  .plane{ width:56px; height:56px; }
+  .nm{ font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase; text-align:center; }
+  .pr{ position:absolute; left:4px; right:4px; bottom:4px; padding:4px 6px; border-radius:10px; font-size:10px;
+    background:rgba(8,14,28,.82); border:1px solid rgba(190,225,255,.35); color:#f2f7ff;
+    display:flex; align-items:center; justify-content:center; }
+  .pr.q{ color:var(--gold-hi); border-color:rgba(240,192,64,.4); }
+</style>
+</head>
+<body>
+
+  <div class="note">
+    <span class="tag">Макет · 2 из архива, не придуманы заново</span><br>
+    Взял не с нуля, а из уже существующего архива (`.knowledge/archive-all-ship-skins-
+    except-paper-09-09-2026.md`) — из набора «17 материалов»: там уже были готовые, настоящие,
+    без лишних эффектов скины ровно того же скромного уровня, что «Бумажный». Отрисовка
+    (`matWood`/`matSilver` в render.js) никуда не делась — просто сейчас на них никто не
+    ссылается из `SKINS[]`.<br><br>
+    <b>Дерево</b> (было id 31) — тёплая древесина.<br>
+    <b>Карбон</b> (было id 25) — тёмный уголь, вместо Серебра: оно на превью сливалось
+    с бледным «Бумажным», почти неотличимо в маленькой плитке — заменил на то, что даёт
+    настоящий контраст и по тону, и по светлоте.<br><br>
+    Оба раньше были бесплатными (`tempFree`). Цену не проставил — <b>сколько это должно
+    стоить теперь, реши сам</b>: снова 0 или небольшая цена, чтобы отличаться от полностью
+    бесплатного стартового «Бумажного».
+  </div>
+
+  <div class="frame">
+    <div class="grid">
+      <div class="it sel">
+        <div class="dot">
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#efeee9" stroke="#cdcabf" stroke-width="0.6"/></svg>
+          <div class="pr">✓</div>
+        </div>
+        <div class="nm">Бумажный</div>
+      </div>
+      <div class="it">
+        <div class="dot">
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#a5713a" stroke="#7c4f22" stroke-width="0.6"/></svg>
+          <div class="pr q">?</div>
+        </div>
+        <div class="nm">Дерево</div>
+      </div>
+      <div class="it">
+        <div class="dot">
+          <svg class="plane" viewBox="0 0 24 24"><path d="M12 2 L20 20 L12 16 L4 20 Z" fill="#181a1f" stroke="#101216" stroke-width="0.6"/></svg>
+          <div class="pr q">?</div>
+        </div>
+        <div class="nm">Карбон</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
