@@ -1327,7 +1327,12 @@ function angarPvDraw(t){
      Иконок/Вспышки — angarShip() сама подменяет надетое на angarSel на своей активной
      вкладке (см. её собственный комментарий) — здесь только скин, остальное уже внутри. */
   const sk = (angarCat==='color') ? (SKINS_BY_ID.get(angarSel)||SKINS[0]) : (SKINS_BY_ID.get(S.skin)||SKINS[0]);
-  const W=380, H=130, d=(window.devicePixelRatio||1); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
+  const W=380, H=130, d=Math.min(window.devicePixelRatio||1, dprCap); // 27.08.2026: держим в паре с #angarSky в index.html — иначе холст растянется мимо CSS-бокса
+  // 11.09.2026 (владелец, реальное устройство Samsung A3 Core): этот холст рисовал в СЫРОЕ
+  // разрешение экрана (devicePixelRatio), обходя dprCap — ту же самую защиту, которой уже
+  // подчиняется настоящий полёт (core.js, gfxCap). На слабом GPU это давало зависающий кадр
+  // именно здесь, хотя сам полёт оставался гладким. Тот же потолок, что уже есть у игры,
+  // не новое число.
   if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
   const x=cv.getContext('2d'); if(!x) return;
   x.setTransform(cv.width/W,0,0,cv.width/W,0,0);
@@ -1427,7 +1432,13 @@ function angarPvZoomDraw(t){
   const item=angarPvZoomItem; if(!item) return;
   const cv=$('angarPvZoomCv'); if(!cv) return;
   const box=cv.getBoundingClientRect();
-  const d=window.devicePixelRatio||1;
+  /* 11.09.2026 (владелец, реальное устройство Samsung A3 Core, «зависший рисунок» именно
+     здесь): этот холст рисовал в сыром devicePixelRatio, в обход dprCap — той же защиты,
+     которой подчиняется настоящий полёт (core.js, gfxCap). Хуже того, эта функция вообще
+     не проверяла ярус качества — крутилась бесконечно на любом устройстве, хотя у соседней
+     витрины скина (angarPvStart) такая защита уже была («один честный кадр — и тишина» на
+     Q.level===0/RM). Тот же приём, тот же потолок — не новое число. */
+  const d=Math.min(window.devicePixelRatio||1, dprCap);
   const W=box.width, H=box.height;
   if(W && H){
     if(cv.width!==Math.round(W*d)||cv.height!==Math.round(H*d)){ cv.width=Math.round(W*d); cv.height=Math.round(H*d); }
@@ -1467,6 +1478,10 @@ function angarPvZoomDraw(t){
       }
     }
   }
+  // 11.09.2026: тот же «слабый ярус — один кадр и тишина», что уже есть у angarPvStart —
+  // раньше эта функция всегда перезаписывалась в цикл, независимо от устройства.
+  const slabo=(typeof Q!=='undefined' && Q.level===0) || RM;
+  if(slabo){ angarPvZoomRaf=0; return; }
   angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
 function angarPvZoomOpen(cat,item){
