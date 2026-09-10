@@ -1330,7 +1330,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    а не к отдельной строке-кнопке. Только у Эмодзи (angarCat==='decal') — Вспышка/След/Цвет эту
    возможность не просили, .angarCatHead у них остаётся прежним, не кликабельным подзаголовком. */
 .angarCatHeadToggle{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; pointer-events:auto; }
-.angarCatHeadToggle::after{ content:'▾'; opacity:.5; font-size:12px; letter-spacing:0; }
+/* 10.09.2026 (владелец, живой макет «идеально, да»): было opacity:.5, 12px — тот же
+   стиль, что у общего .btn.spoiler/.setRow.spoiler (Настройки/Конструктор), но здесь
+   стрелка сидит на и без того мелком (11px) приглушённом подзаголовке .angarCatHead —
+   тускло на тусклом, почти не видна. Правлю только этот селектор, общий .spoiler-паттерн
+   в других местах не трогаю — там она читается нормально на более крупном тексте рядом. */
+.angarCatHeadToggle::after{ content:'▾'; opacity:.9; font-size:15px; letter-spacing:0; color:var(--gold-hi); }
 .angarCatHeadToggle.open::after{ content:'▴'; }
 .angarIt.angarHiddenGroup{ display:none; } /* .angarIt (ниже по файлу, тоже 1 класс) иначе побеждает по порядку — нужны оба класса в селекторе */
 .angarIt { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
@@ -2317,13 +2322,49 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      первого скрипта, значит переживёт даже полный отказ сети. Прячется инлайн-скриптом после
      последнего <script> внизу страницы (js/ui.js) — к этому моменту все теги успели отработать. -->
 <div id="bootLoad" style="position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:12px;background:#070b18;color:#dfe8ff;
-  font-family:system-ui,sans-serif;">
-  <div style="width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);
-    border-top-color:#8fd0ff;animation:bootSpin 0.9s linear infinite;"></div>
-  <div style="font-size:14px;opacity:.7;">Небо загружается…</div>
+  align-items:center;justify-content:center;gap:16px;background:#070b18;color:#f4f6fb;
+  font-family:system-ui,sans-serif;overflow:hidden;">
+  <div class="bootStar" style="left:87.4%;top:84.8%;animation-delay:0.21s"></div>
+  <div class="bootStar" style="left:39.8%;top:83.5%;animation-delay:0.42s"></div>
+  <div class="bootStar" style="left:37.4%;top:47.0%;animation-delay:1.87s"></div>
+  <div class="bootStar" style="left:24.2%;top:12.8%;animation-delay:2.81s"></div>
+  <div class="bootStar" style="left:40.0%;top:18.4%;animation-delay:1.49s"></div>
+  <div class="bootStar" style="left:28.9%;top:11.3%;animation-delay:2.17s"></div>
+  <div class="bootStar" style="left:31.0%;top:29.0%;animation-delay:0.09s"></div>
+  <div class="bootStar" style="left:86.1%;top:19.0%;animation-delay:2.50s"></div>
+  <div class="bootStar" style="left:42.4%;top:18.7%;animation-delay:1.66s"></div>
+  <div class="bootStar" style="left:35.8%;top:65.8%;animation-delay:1.81s"></div>
+  <div class="bootStar" style="left:10.3%;top:17.6%;animation-delay:1.20s"></div>
+  <div class="bootStar" style="left:5.9%;top:91.8%;animation-delay:1.09s"></div>
+  <div class="bootStar" style="left:62.6%;top:55.7%;animation-delay:2.72s"></div>
+  <div class="bootStar" style="left:28.4%;top:36.9%;animation-delay:1.34s"></div>
+  <div class="bootStar" style="left:39.3%;top:73.0%;animation-delay:1.20s"></div>
+  <div class="bootStar" style="left:39.4%;top:21.3%;animation-delay:0.56s"></div>
+  <div class="bootStar" style="left:68.5%;top:9.4%;animation-delay:0.66s"></div>
+  <div class="bootStar" style="left:70.8%;top:74.8%;animation-delay:2.76s"></div>
+  <div class="bootStar" style="left:86.2%;top:74.9%;animation-delay:2.09s"></div>
+  <div class="bootStar" style="left:58.7%;top:47.4%;animation-delay:2.92s"></div>
+  <div style="width:44px;height:44px;position:relative">
+    <div style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(240,192,64,.22)"></div>
+    <div style="position:absolute;inset:0;animation:bootOrbit 2.4s linear infinite">
+      <div style="position:absolute;top:-2px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+        background:#f0c040;box-shadow:0 0 8px 2px rgba(240,192,64,.6)"></div>
+    </div>
+  </div>
+  <div style="font-size:14px;letter-spacing:.03em;color:#9fb0c8;">Небо загружается…</div>
 </div>
-<style>@keyframes bootSpin{to{transform:rotate(360deg)}}</style>
+<!-- 10.09.2026 (владелец, живой макет: «сделать красивее» → «идеально, да»): был голый серый
+     спиннер (bootSpin) — заменён на тихое мерцание звёзд + золотую точку по орбите, тот же
+     принцип «пока грузится небо» (чистый HTML/CSS выше, без JS), звёзды — фиксированные
+     координаты (детерминированный псевдослучайный разброс, не Math.random() — до первого
+     скрипта его бы и не было). border-radius/цвета — те же токены, что и у остального интерфейса
+     (--gold-hi #f0c040), просто не через CSS-переменную здесь (:root ещё не гарантированно
+     распарсен до этого инлайн-блока, тот же принцип «переживёт даже полный отказ сети»). -->
+<style>
+@keyframes bootOrbit{to{transform:rotate(360deg)}}
+@keyframes bootTwinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+.bootStar{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:bootTwinkle 3s ease-in-out infinite}
+</style>
 <!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
@@ -2462,9 +2503,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.212"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.212"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.212"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.213"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.213"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.213"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2583,6 +2624,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        игрока живут там, где им место, — рекорды на итогах забега и в Достижениях,
        кошелёк в Ангаре, там же, где его тратят. Страж 110 сторожит невозврат. -->
   <div class="scrMid">
+    <!-- 10.09.2026 (владелец, живой скрин: «не в тему смотрится» между Конструктором и
+         Коллекцией — «если она такая важная, пусть появляется над кнопкой начать полёт»):
+         была строкой ПОСЛЕ .stack, между главными кнопками режима и сеткой Коллекция/
+         Достижения — терялась не на своём месте. id/скрытость/пульсация (#tiltBtn,
+         tiltPulse) не тронуты, переставлена только позиция в разметке. -->
+    <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
     <div class="stack">
       <button class="btn pri hero" id="startBtn">Начать полёт</button>
       <button class="btn sec" id="modesBtn">Соревнования</button>
@@ -2590,7 +2637,6 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            переехал на главный экран отдельной кнопкой, рядом по важности со стартом забега. -->
       <button class="btn sec" id="konstruktorBtn">Конструктор</button>
     </div>
-    <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
     <div class="grid2" id="menuRow">
       <button class="btn ghost" id="hangarBtn">ТЮНИНГ</button>
       <button class="btn ghost" id="achBtn"><span id="achBtnTxt">Достижения</span><span class="achBadge hidden" id="achBadge"></span></button>
@@ -3322,25 +3368,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.212" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.212"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.212"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.212"></script>
-<script defer src="js/game.js?v=1.478.212" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.212"></script>
-<script defer src="js/sync.js?v=1.478.212"></script>
-<script defer src="js/render.js?v=1.478.212"></script>
-<script defer src="js/planetarium.js?v=1.478.212"></script>
-<script defer src="js/goldstar.js?v=1.478.212"></script>
-<script defer src="js/music.js?v=1.478.212"></script>
-<script defer src="js/gyro.js?v=1.478.212"></script>
-<script defer src="js/forge.js?v=1.478.212"></script>
-<script defer src="js/partitura.js?v=1.478.212"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.212"></script>
-<script defer src="js/card.js?v=1.478.212"></script>
-<script defer src="js/star.js?v=1.478.212"></script>
-<script defer src="js/cinema.js?v=1.478.212"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.212"></script>
+<script defer src="js/core.js?v=1.478.213" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.213"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.213"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.213"></script>
+<script defer src="js/game.js?v=1.478.213" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.213"></script>
+<script defer src="js/sync.js?v=1.478.213"></script>
+<script defer src="js/render.js?v=1.478.213"></script>
+<script defer src="js/planetarium.js?v=1.478.213"></script>
+<script defer src="js/goldstar.js?v=1.478.213"></script>
+<script defer src="js/music.js?v=1.478.213"></script>
+<script defer src="js/gyro.js?v=1.478.213"></script>
+<script defer src="js/forge.js?v=1.478.213"></script>
+<script defer src="js/partitura.js?v=1.478.213"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.213"></script>
+<script defer src="js/card.js?v=1.478.213"></script>
+<script defer src="js/star.js?v=1.478.213"></script>
+<script defer src="js/cinema.js?v=1.478.213"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.213"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
