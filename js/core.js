@@ -503,7 +503,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.213'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.214'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -965,6 +965,13 @@ function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один заз�
   const thB=th?th.getBoundingClientRect().bottom:0, ppB=pp?pp.getBoundingClientRect().bottom:0;
   const corrTop=Math.round(Math.max(thB,ppB)+6)+'px';
   document.documentElement.style.setProperty('--corrEdgeTop', corrTop);
+  /* 10.09.2026 (владелец, живой скрин: «0:22.1 · ЦЕЛЬ 10 000» далеко от HUD в Соревнованиях) —
+     CSS #modeHud (index.html) уже год как комментирует «--modeHudTop меряет реальный низ
+     #telemHud (syncScoreHudGap, core.js)», но эта функция такую переменную никогда не
+     устанавливала — #modeHud всегда падал на запасное 142px, не совпадающее с реальной
+     высотой HUD. thB/corrTop уже посчитаны прямо здесь для #corrEdge тем же самым намерением
+     («реальный низ телеметрии + запас») — переиспользован тот же corrTop, не придумано новое число. */
+  document.documentElement.style.setProperty('--modeHudTop', corrTop);
 }
 // v1.102.1 «Ровная земля»: событийный замер — шквал Telegram (полный экран, вьюпорт, инсеты
 // сыплются пачкой) слипается в ОДИН замер после 350мс тишины; прямые вызовы остаются мгновенными
