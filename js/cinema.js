@@ -746,6 +746,39 @@ async function cinemaAngarZoomShare(canvas, onStart, onEnd){
   finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
 }
 
+/* 11.09.2026 «В Историю Telegram» у явления (владелец: «нет кнопки шеринга, когда я внутри
+   Telegram» — navigator.share с файлами выше внутри Telegram почти всегда недоступен, тот
+   самый живой пробел из [[project_yavlenie_share_klikabelnaya_ssylka]]): та же запись канваса,
+   что cinemaAngarZoomShare() выше (cinemaStart/cinemaStop, 15 секунд), но вместо системного
+   «Поделиться файлом» — путь cinemaClipStory() ниже (грузим на сервер, tg.shareToStory с
+   кликабельной кнопкой «Играть»). Отдельная функция, не общая с cinemaClipStory() — та шлёт
+   cinemaExportHighlightCard() (хайлайт полёта), эта — сам канвас явления напрямую. Своя кнопка
+   (#angarPvZoomStory), не общий гейт с cinemaAngarZoomShare() — владелец явно захотел ДВЕ
+   отдельные кнопки в ряду, не одну умную. */
+async function cinemaAngarZoomStory(canvas, onStart, onEnd){
+  if (_cinemaAngarZoomBusy || cinemaActive()) return;
+  _cinemaAngarZoomBusy=true;
+  if (typeof onStart==='function') onStart();
+  try{
+    _cinemaOwner='angarZoom';
+    const ok = await cinemaStart(canvas);
+    if (!ok){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    await new Promise(r=>setTimeout(r, CINEMA_ANGAR_ZOOM_MS));
+    const blob = await cinemaStop();
+    if (!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    const dataUrl=await blobToDataURL(blob);
+    const r=await syncFetch(SYNC_URL,{action:'clip_url',initData:tg.initData,mp4:dataUrl});
+    const ans=await r.json();
+    if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
+    tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:(typeof L!=='undefined'&&L.cardStoryBtn)||'Играть'}});
+    if (typeof haptic==='function') haptic('light');
+  }catch(e){
+    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_story_fail', String((e&&e.message)||e).slice(0,60));
+    if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)');
+  }
+  finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
+}
+
 /* «В сторис» на «Клипе» (05.09.2026, «Доделать Кино полёта») — тот же путь, что cardStory()
    в card.js для картинки, только вместо PNG → mp4: экспортируем клип с вжатой рамкой
    (cinemaExportHighlightCard — та же функция, что уже кормит системное «Поделиться» выше),

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: один ряд — язычок слева, кнопки справа под руку</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#12224a; --bg-2:#0a1030;
+    --gold:#c9a45c; --gold-hi:#dba93c; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:300px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+  .card{background:radial-gradient(ellipse at 50% 35%,var(--bg-1) 0%,var(--bg-2) 65%);
+    border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+  .stage{position:relative;width:100%;height:140px}
+  .factWrap{padding:0 18px 18px;display:flex;flex-direction:column;position:relative}
+
+  /* --- БЫЛО (макет прошлой версии): язычок и кнопки в разных углах --- */
+  .before .row{display:flex;justify-content:flex-end;align-items:flex-end}
+  .before .mark{background:var(--gold-hi);border-radius:8px 8px 0 0;padding:3px 10px;margin-bottom:-1px;position:relative;z-index:1}
+  .before .mark span{font-size:10px;letter-spacing:.03em;color:#2c1f08;text-transform:uppercase;font-weight:600}
+  .before .factCard{width:100%;background:rgba(15,31,61,.95);border:1px solid var(--line-gold);border-radius:16px 0 16px 16px;
+    padding:12px 14px 40px;font-size:12px;line-height:1.5;color:var(--ink);position:relative}
+  .before .roundBtn{position:absolute;bottom:6px;width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#eaf3ff;display:flex;align-items:center;justify-content:center}
+  .before .roundBtn svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none}
+  .before .shareBtn{right:6px}
+  .before .storyBtn{right:44px}
+
+  /* --- СТАЛО (владелец: «в один ряд, в размер язычка, кнопки под правую руку — их больше
+       правшей»): один ряд НАД карточкой факта. Язычок — та же самая плашка-таб, что и раньше,
+       только теперь СЛЕВА (align-items:flex-start вместо flex-end). Кнопки — справа, тот же
+       круглый стеклянный язык игры (.pvBtn/#angarPvZoomClose), но сжаты до высоты язычка
+       (26px вместо 32px), чтобы ряд читался одной линией, а не двумя разными высотами.
+       Карточка факта — скруглённый угол «0» уехал с правого верхнего угла на левый (туда,
+       где теперь язычок) — тот же приём «одна общая форма», что раньше был справа. --- */
+  .after .row{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+  .after .mark{background:var(--gold-hi);border-radius:8px 8px 0 0;padding:3px 10px;margin-bottom:-1px;position:relative;z-index:1;flex:none}
+  .after .mark span{font-size:10px;letter-spacing:.03em;color:#2c1f08;text-transform:uppercase;font-weight:600}
+  .after .btnRow{display:flex;gap:6px;flex:none}
+  .after .roundBtn{width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#eaf3ff;display:flex;align-items:center;justify-content:center}
+  .after .roundBtn svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none}
+  .after .factCard{width:100%;background:rgba(15,31,61,.95);border:1px solid var(--line-gold);border-radius:0 16px 16px 16px;
+    padding:12px 14px;font-size:12px;line-height:1.5;color:var(--ink);margin-top:-1px}
+
+  .note{margin-top:22px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:720px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:5px}
+</style>
+</head>
+<body>
+  <h1>Один ряд: язычок слева, кнопки справа — под правую руку</h1>
+  <div class="sub">Вторая правка того же угла за сегодня — макет от прошлой версии (два кружка снизу) заменён этим целиком.</div>
+  <div class="cols">
+    <div class="col">
+      <div class="colTitle">Было (прошлый макет, не пошёл)</div>
+      <div class="card before">
+        <div class="stage"></div>
+        <div class="factWrap">
+          <div class="row"><div class="mark"><span>Cosmogram</span></div></div>
+          <div class="factCard">Быстрый звёздный ветер, сжатый медленным экваториальным поясом, раздувает две полярные доли — реальный механизм, ~13% планетарных туманностей биполярны
+            <button class="roundBtn storyBtn" aria-label="В Историю Telegram"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle></svg></button>
+            <button class="roundBtn shareBtn" aria-label="Поделиться файлом"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="colTitle after">Стало — один ряд, поменялись местами</div>
+      <div class="card after">
+        <div class="stage"></div>
+        <div class="factWrap">
+          <div class="row">
+            <div class="mark"><span>Cosmogram</span></div>
+            <div class="btnRow">
+              <button class="roundBtn" aria-label="В Историю Telegram"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle></svg></button>
+              <button class="roundBtn" aria-label="Поделиться файлом"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg></button>
+            </div>
+          </div>
+          <div class="factCard">Быстрый звёздный ветер, сжатый медленным экваториальным поясом, раздувает две полярные доли — реальный механизм, ~13% планетарных туманностей биполярны</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Как задумано (владелец: «в один ряд, в размер язычка», «поменять местами, под правую руку — правшей больше»):</b>
+    <ul>
+      <li>Один общий ряд над карточкой факта — язычок «Cosmogram» переехал налево (был справа), кнопки — направо, туда, где раньше был язычок. Ближе к большому пальцу правой руки при обычном хвате телефона.</li>
+      <li>Кнопки сжаты до 26px (высота язычка), были 32px — весь ряд теперь читается одной линией, не двумя разными по высоте штуками.</li>
+      <li>Карточка факта: скруглённый угол «0» (тот, что делает язычок и карточку одной формой без зазора) переехал с правого верхнего на левый верхний — туда, где теперь сидит язычок.</li>
+      <li>Если доступна только одна кнопка (например, вне Telegram — только «Поделиться файлом») — вторая просто не рисуется, ряд не разъезжается, кнопка стоит там же, у правого края.</li>
+    </ul>
+  </div>
+</body>
+</html>

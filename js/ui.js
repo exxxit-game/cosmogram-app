@@ -1582,7 +1582,7 @@ function angarPvZoomOpen(cat,item){
   const m=$('angarPvZoomModal'); if(!m||!item) return;
   angarPvZoomCat=cat; angarPvZoomItem=item;
   m.classList.add('open'); sfx.click(); haptic('light');
-  angarPvZoomShareGate();
+  angarPvZoomShareGate(); angarPvZoomStoryGate();
   if(!angarPvZoomRaf) angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
 function angarPvZoomClose(){
@@ -1595,7 +1595,14 @@ wireOn('angarPvZoomClose','click',angarPvZoomClose);
 wireOn('angarPvZoomModal','click',e=>{ if(e.target && e.target.id==='angarPvZoomModal') angarPvZoomClose(); });
 /* 10.09.2026 «Поделиться явлением» — та же дверь-гейт, что cardShareGate() в card.js: кнопка
    скрыта, пока не подтверждено, что этот браузер вообще умеет navigator.share с файлами
-   (видео сюда, не картинку — пробный File с video/mp4, не image/png). */
+   (видео сюда, не картинку — пробный File с video/mp4, не image/png).
+   11.09.2026 (владелец: «нет кнопки шеринга, когда я внутри Telegram» — внутри Telegram
+   navigator.share с файлами выше почти всегда недоступен, кнопка молчала именно там, где
+   чаще всего смотрят на явление): рядом встала #angarPvZoomStory — ДВЕ независимые кнопки
+   со своими гейтами (владелец явно выбрал два отдельных значка, не один умный), макет
+   podelitsya-istoriya-knopka-11-09-2026.html, одобрено вторым заходом («в один ряд, кнопки
+   под правую руку»). Каждая гасится сама по себе — на некоторых окружениях (Telegram
+   Desktop) могут быть видны обе разом, это ожидаемо, не баг. */
 function angarPvZoomShareGate(){
   const b=$('angarPvZoomShare'); if(!b) return;
   let can=false;
@@ -1605,9 +1612,19 @@ function angarPvZoomShareGate(){
   }catch(e){}
   b.classList.toggle('hidden', !can);
 }
+function angarPvZoomStoryGate(){
+  const b=$('angarPvZoomStory'); if(!b) return;
+  const can=typeof tg!=='undefined' && tg && tg.shareToStory && tg.initData &&
+    typeof tgv==='function' && tgv('7.8') && typeof SYNC_URL!=='undefined';
+  b.classList.toggle('hidden', !can);
+}
 wireOn('angarPvZoomShare','click',()=>{
   const cv=$('angarPvZoomCv'), b=$('angarPvZoomShare'); if(!cv||!b) return;
   cinemaAngarZoomShare(cv, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
+});
+wireOn('angarPvZoomStory','click',()=>{
+  const cv=$('angarPvZoomCv'), b=$('angarPvZoomStory'); if(!cv||!b) return;
+  cinemaAngarZoomStory(cv, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
 });
 
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4
