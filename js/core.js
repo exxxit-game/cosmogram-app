@@ -503,7 +503,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION='1.478.217'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION='1.478.218'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 let MUTED=false; // настройка звука (экран настроек), персист 'muted'
 let VIBRO=true; // настройка виброотклика, персист 'vibro'
 let CONTRAST=false, COLORBLIND=false; // v1.280.0: усиление контраста/насыщенности на canvas, персист 'contrast'/'colorblind'
@@ -988,7 +988,18 @@ function tgFullscreenFailed(e){
 }
 function tgImmersion(on){
   const t=tgApp(); if(!t) return;
-  cgImm=on; // v1.102.1: фиксируем намерение ДО просьбы — подушка пересчитается честно и сразу
+  /* 11.09.2026 (владелец, живой скрин Telegram: «✕»/«Поделиться» под родной шапкой) —
+     v1.102.1 закрепил оптимизм cgImm=on ДО ответа Telegram, чтобы подушка не мигала —
+     верно, когда запрос реально уходит и рано или поздно придёт fullscreenChanged/
+     fullscreenFailed, который его исправит. Но на клиенте без Bot API 8.0 requestFullscreen
+     ниже даже не вызывается — событие-исправление никогда не придёт, и cgImm=true
+     остаётся ложью НАВСЕГДА: --sat теряет пол в 96px (tgInsetsSync), верхние элементы
+     (angarPvZoomClose/Share) уезжают под настоящую шапку мессенджера. Оптимизм оправдан,
+     только когда запрос действительно уйдёт (willAsk) или полный экран уже честно есть
+     (alreadyFs) — иначе cgImm=false, без обещаний, которые некому будет проверить. */
+  const alreadyFs=!!t.isFullscreen;
+  const willAsk=tgVerAtLeast(t,'8.0') && !!t.requestFullscreen && !alreadyFs;
+  cgImm = on ? (alreadyFs || willAsk) : false;
   try{
     if (on){
       if (tgVerAtLeast(t,'8.0')){
