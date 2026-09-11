@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: «В Историю» явления — свой вертикальный кадр, не сырой холст окна</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#12224a; --bg-2:#0a1030;
+    --gold:#c9a45c; --gold-hi:#dba93c; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5;max-width:760px}
+  .cols{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:220px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+
+  /* --- ТЕЛЕФОН/ИСТОРИЯ: рамка 9:16, то, что реально видит зритель истории в Telegram --- */
+  .phone{width:220px;height:391px;border-radius:26px;background:#000;
+    border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative}
+
+  /* === БЫЛО: сырой canvas #angarPvZoomCv «как есть» (реально измерено сейчас, живой браузер:
+     Stage 375×425 — почти квадрат, НЕ 9:16), Telegram вписывает это видео в вертикальную рамку
+     истории и добивает чёрным сверху/снизу (леттербокс). Внутри самого этого куска — ещё одни
+     чёрные поля: явление вписано в min(ширина,высота) холста с запасом 8%, а высота холста
+     заметно больше ширины, так что сверху/снизу самого узора тоже пусто. Два слоя чёрного поля
+     друг на друге. */
+  .before .clip{position:absolute;left:0;right:0;top:78px;height:194px;background:radial-gradient(ellipse at 50% 35%,var(--bg-1) 0%,var(--bg-2) 65%)}
+  .before .barTop{position:absolute;left:0;right:0;top:0;height:78px;background:#000}
+  .before .barBot{position:absolute;left:0;right:0;bottom:0;height:119px;background:#000}
+  .before .lobe{position:absolute;left:50%;width:64px;height:40px;border-radius:50%;
+    background:radial-gradient(ellipse at 50% 35%, #f7d488 0%, #dba93c 45%, #8a611f 80%, transparent 100%);
+    filter:drop-shadow(0 0 6px rgba(219,169,60,.4))}
+  .before .lobeTop{top:96px;transform:translateX(-50%) rotate(-6deg)}
+  .before .lobeBot{top:150px;transform:translateX(-50%) rotate(4deg)}
+  .before .waist{position:absolute;left:50%;top:167px;width:6px;height:6px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 6px rgba(255,255,255,.8)}
+  .before .cap{position:absolute;left:10px;bottom:8px;right:10px;font-size:9px;color:#ff9fb0;text-align:center;line-height:1.5}
+
+  /* === СТАЛО: отдельная композиция ПОД формат истории (не переиспользуем layout окна зума) —
+     кадр строится вертикальным с самого начала (canvas 1080×1920 или близкая пропорция),
+     тот же фон, что у окна явления, но без чужих полей (шапки-имени, карточки факта, кнопок —
+     их в кадре истории просто нет, это не скриншот интерфейса). Явление — главный герой,
+     занимает ширину кадра почти целиком. */
+  .after .bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,var(--bg-1) 0%,var(--bg-2) 70%)}
+  .after .lobe{position:absolute;left:50%;width:150px;height:94px;border-radius:50%;
+    background:radial-gradient(ellipse at 50% 35%, #f7d488 0%, #dba93c 45%, #8a611f 80%, transparent 100%);
+    filter:drop-shadow(0 0 14px rgba(219,169,60,.5))}
+  .after .lobeTop{top:96px;transform:translateX(-50%) rotate(-6deg)}
+  .after .lobeBot{top:196px;transform:translateX(-50%) rotate(4deg)}
+  .after .waist{position:absolute;left:50%;top:229px;width:14px;height:14px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 14px rgba(255,255,255,.85)}
+  .after .name{position:absolute;left:16px;right:16px;top:318px;text-align:center;
+    font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+  .after .mark{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+    background:var(--gold-hi);border-radius:8px;padding:3px 10px}
+  .after .mark span{font-family:var(--font-disp);font-size:9px;letter-spacing:.03em;color:#2c1f08;text-transform:uppercase}
+
+  .note{margin-top:24px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:760px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:6px}
+  .note .tag{display:inline-block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    color:#8fd0ff;background:rgba(90,160,255,.12);border:1px solid rgba(90,160,255,.35);
+    border-radius:6px;padding:1px 6px;margin-right:6px}
+</style>
+</head>
+<body>
+  <h1>«В Историю» у явления — своя вертикальная композиция, не запись окна зума «как есть»</h1>
+  <div class="sub">Форма туманности здесь — условный узор для макета (сам рисунок явления рисует canvas, не трогаю). Важна ПРОПОРЦИЯ И КОМПОНОВКА кадра, не пиксельная точность формы.</div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="colTitle">Было — записан сырой #angarPvZoomCv</div>
+      <div class="phone before">
+        <div class="barTop"></div>
+        <div class="clip">
+          <div class="lobe lobeTop"></div>
+          <div class="waist"></div>
+          <div class="lobe lobeBot"></div>
+        </div>
+        <div class="barBot"><div class="cap">чёрные поля — леттербокс Telegram + пустой холст внутри</div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="colTitle after">Стало — отдельный кадр под формат истории</div>
+      <div class="phone after">
+        <div class="bg"></div>
+        <div class="lobe lobeTop"></div>
+        <div class="waist"></div>
+        <div class="lobe lobeBot"></div>
+        <div class="name">Биполярная туманность</div>
+        <div class="mark"><span>Cosmogram</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Что нашёл (живой браузер, реальные числа, не на глаз):</b>
+    <ul>
+      <li><span class="tag">причина 1</span>Окно зума явления (<code>#angarPvZoomStage</code>) сверстано под просмотр В ИГРЕ — рядом всегда шапка с именем и карточка факта снизу. Измерено вживую: холст там 375×425 — почти квадрат, а история в Telegram вертикальная 9:16. Когда пишем этот холст «как есть» и отдаём в <code>tg.shareToStory</code>, сам Telegram добивает разницу чёрным сверху и снизу — это первый слой чёрных полей на твоём скрине.</li>
+      <li><span class="tag">причина 2</span>Внутри самого холста явление вписано с запасом в короткую сторону (ширину) — а холст заметно выше, чем шире. Получается второй, свой собственный запас пустоты сверху/снизу узора, поверх Telegram-леттербокса. Отсюда и мелкий/невнятный силуэт на итоговом видео.</li>
+      <li><span class="tag">баг</span>Отдельно нашёл техническую причину, почему на слабых телефонах (как раз таких, как твой Samsung A3 Core, с которого пришёл этот отчёт) видео может быть кадром «в неправильный момент»: на слабом уровне качества анимация окна явления рисует только ОДИН кадр и останавливается (для экономии заряда — это верно для самого окна). Но этот один кадр иногда попадает в момент, когда карточка факта ещё не успела занять своё место, и холст на секунду шире, чем должен быть — со слабых телефонов видео может улетать в историю с ещё более случайными пропорциями, чем на быстрых. Это не про красоту, это баг — починю его в любом случае, отдельно от макета.</li>
+      <li><b>Предлагаю (то, что нужно твоё «да» отдельно от бага выше):</b> для «В Историю» у явления рисовать НЕ окно зума, а свой собственный кадр — с самого начала вертикальный (пропорция экрана истории), без чужой мебели интерфейса (шапка, кнопки, карточка факта). Явление — крупно, во всю ширину кадра, тот же фон, что и в окне зума. Имя явления — под ним, коротким текстом. Плашка «Cosmogram» — внизу кадра. Кнопка «Поделиться» файлом (не история) явления, скорее всего, тоже получит выгоду от этого — она пишет тот же холст, тот же вопрос применится и к ней, если одобришь.</li>
+    </ul>
+  </div>
+</body>
+</html>

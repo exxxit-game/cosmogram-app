@@ -1578,6 +1578,85 @@ function angarPvZoomDraw(t){
   if(slabo){ angarPvZoomRaf=0; return; }
   angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
+/* 11.09.2026 (владелец, реальный скрин истории: «изображение потом ужас» — золотое кольцо на
+   чёрном, много пустоты) — макет yavlenie-istoriya-vertikalny-kadr-11-09-2026.html, одобрено
+   («Да»): «Поделиться»/«В Историю» у явления раньше писали #angarPvZoomCv «как есть» — тот
+   холст свёрстан под просмотр В ИГРЕ (рядом шапка с именем, карточка факта), измерено вживую
+   375×425, почти квадрат, а история в Telegram — вертикальная 9:16. Telegram добивал разницу
+   чёрным (леттербокс), а внутри самого холста явление ещё и вписано в короткую сторону — два
+   слоя пустоты друг на друге. Плюс отдельный баг: на слабом ярусе (Q.level===0) окно зума
+   рисует один кадр и останавливается ради заряда — тот единственный кадр иногда ловил холст ДО
+   того, как карточка факта заняла место, с чужой шириной. Own canvas ниже не имеет этой
+   болезни вообще: свой размер, никогда не зависит от разметки окна зума. */
+function angarPvStoryDraw(x, BW, BH, tMs){
+  x.clearRect(0,0,BW,BH);
+  const bg=x.createRadialGradient(BW*0.5,BH*0.35,0,BW*0.5,BH*0.35,Math.max(BW,BH)*0.8);
+  bg.addColorStop(0,'#12224a'); bg.addColorStop(1,'#0a1030');
+  x.fillStyle=bg; x.fillRect(0,0,BW,BH);
+
+  const item=angarPvZoomItem, cat=angarPvZoomCat;
+  if(item){
+    x.save();
+    x.translate(BW/2, BH*0.4);
+    const m=BW; // короткая сторона портретного кадра — узор занимает её почти целиком, как у экрана зума (min(W,H))
+    const skin=(typeof SKINS_BY_ID!=='undefined')?(SKINS_BY_ID.get(S.skin)||SKINS[0]):null;
+    const base=skin?skin.glow.slice(0,skin.glow.lastIndexOf(',')+1):'rgba(255,255,255,';
+    const col=a=>base+Math.max(0,a).toFixed(2)+')';
+    if(cat==='color'){
+      const fitC=ANGAR_PV_FIT_COLOR[item.id]||1;
+      x.scale((m/380)*1.6*3.2*1.5*fitC,(m/380)*1.6*3.2*1.5*fitC);
+      const fn=item.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[item.fx] : null;
+      if(item.id===0){ angarShip(x, item, 1, false); } else { angarPvFxReveal(x, item, tMs, 'event', 0, fn); }
+    } else if(cat==='flash'){
+      const fitF=ANGAR_PV_FIT_FLASH[item.id]||1;
+      x.scale((m/380)*9*1.5*fitF,(m/380)*9*1.5*fitF);
+      renderFlashPattern(x, item.style, (tMs/1600)%1, col);
+    } else if(cat==='trail'){
+      const fitT=ANGAR_PV_FIT_TRAIL[item.id]||1;
+      x.scale((m/380)*6*1.5*fitT,(m/380)*6*1.5*fitT);
+      renderTrailPattern(x, item.style, col);
+    }
+    x.restore();
+  }
+
+  x.textAlign='center'; x.textBaseline='alphabetic';
+  const name=item?((cat==='color' && typeof item.name==='number')?((typeof L!=='undefined'&&L.skinNames&&L.skinNames[item.name])||''):(item.name||'')):'';
+  if(name){
+    const fs=Math.round(BW*0.052);
+    x.font='700 '+fs+'px "Exo 2", sans-serif';
+    x.fillStyle='#f4f6fb';
+    x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=Math.round(BW*0.012);
+    x.fillText(name, BW/2, BH*0.82, BW*0.86);
+    x.shadowBlur=0;
+  }
+
+  const tagW=Math.round(BW*0.4), tagH=Math.round(BW*0.1), tagY=BH*0.91, r=6;
+  const tx=BW/2-tagW/2, ty=tagY-tagH/2;
+  x.fillStyle='#dba93c';
+  x.beginPath();
+  x.moveTo(tx+r,ty); x.arcTo(tx+tagW,ty,tx+tagW,ty+tagH,r); x.arcTo(tx+tagW,ty+tagH,tx,ty+tagH,r);
+  x.arcTo(tx,ty+tagH,tx,ty,r); x.arcTo(tx,ty,tx+tagW,ty,r); x.closePath(); x.fill();
+  x.font='600 '+Math.round(BW*0.034)+'px "Exo 2", sans-serif';
+  x.fillStyle='#2c1f08';
+  x.fillText('COSMOGRAM', BW/2, tagY+BW*0.012);
+}
+/* Собственный офскрин-канвас под запись — не размер живого окна, поэтому не ловит ни его
+   разметку, ни его же экономию заряда (Q.level===0 «один кадр и тишина» там оправдана для
+   бесконечного UI-цикла, тут — 15-секундная ограниченная запись по явному тапу, не то же
+   самое). Рисует на протяжении всей записи, даже на слабом ярусе — иначе на нём же ролик
+   останется застывшим кадром 15 секунд подряд. */
+function angarPvStoryCanvasStart(){
+  const d=Math.min(window.devicePixelRatio||1, (typeof dprCap!=='undefined'?dprCap:2));
+  const BW=270, BH=480; // логический короб 9:16, тот же приём «короб × dpr», что у angarPvZoomDraw
+  const cv=document.createElement('canvas');
+  cv.width=Math.round(BW*d); cv.height=Math.round(BH*d);
+  const x=cv.getContext('2d');
+  x.setTransform(d,0,0,d,0,0);
+  let raf=0; const t0=performance.now();
+  const loop=()=>{ angarPvStoryDraw(x, BW, BH, performance.now()-t0); raf=requestAnimationFrame(loop); };
+  raf=requestAnimationFrame(loop);
+  return { canvas:cv, stop(){ if(raf){ cancelAnimationFrame(raf); raf=0; } } };
+}
 function angarPvZoomOpen(cat,item){
   const m=$('angarPvZoomModal'); if(!m||!item) return;
   angarPvZoomCat=cat; angarPvZoomItem=item;
@@ -1619,12 +1698,14 @@ function angarPvZoomStoryGate(){
   b.classList.toggle('hidden', !can);
 }
 wireOn('angarPvZoomShare','click',()=>{
-  const cv=$('angarPvZoomCv'), b=$('angarPvZoomShare'); if(!cv||!b) return;
-  cinemaAngarZoomShare(cv, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
+  const b=$('angarPvZoomShare'); if(!b||!angarPvZoomItem) return;
+  const sc=angarPvStoryCanvasStart();
+  cinemaAngarZoomShare(sc.canvas, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ sc.stop(); b.disabled=false; b.classList.remove('recording'); });
 });
 wireOn('angarPvZoomStory','click',()=>{
-  const cv=$('angarPvZoomCv'), b=$('angarPvZoomStory'); if(!cv||!b) return;
-  cinemaAngarZoomStory(cv, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
+  const b=$('angarPvZoomStory'); if(!b||!angarPvZoomItem) return;
+  const sc=angarPvStoryCanvasStart();
+  cinemaAngarZoomStory(sc.canvas, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ sc.stop(); b.disabled=false; b.classList.remove('recording'); });
 });
 
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4
