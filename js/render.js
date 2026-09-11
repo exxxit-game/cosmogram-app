@@ -2749,14 +2749,19 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
     /* 04.09.2026 «Эксклюзивные скины за Stars»: 6 языков следа/частиц, каждый под свой
        премиум-скин (game.js:SKINS trailFx). Отобраны живьём через макет — тот же приём,
        что fx корпуса выше по файлу. Лента/Нить-жемчуг сюда не входят — им нужна связная
-       линия между кадрами, не независимая частица, см. drawStructuredTrail() ниже. */
-    if(hq && p.trailFx==='sparks'){ // Искры: мелкие частицы, редкая яркая вспышка на миг
+       линия между кадрами, не независимая частица, см. drawStructuredTrail() ниже.
+       11.09.2026 «Аудит Вспышек/Следов»: порог hq (Q.level≥2) снят у всех трёх — та же
+       методика и тот же вывод, что у скинов 09.09.2026 (SKIN-FX-OPTIMIZATION.md). Замер
+       живьём (7×50, медиана): один fillStyle+arc/path на частицу, не дороже соседних
+       незапертых веток того же цикла. На «дне» вместо следа не было вообще ничего —
+       та же самая беда, что была у скинов до чистки. */
+    if(p.trailFx==='sparks'){ // Искры: мелкие частицы, редкая яркая вспышка на миг
       const flash = p.flashAt!=null && Math.abs((1-p.life)-p.flashAt)<0.08;
       ctx.fillStyle = flash ? 'rgba(255,255,255,'+clamp(p.life,0,1).toFixed(2)+')' : partCol(p.color, p.life*.8);
       ctx.beginPath(); ctx.arc(p.x,p.y,p.size*(flash?1.6:1),0,6.283); ctx.fill();
       drawn++; continue;
     }
-    if(hq && p.trailFx==='cometdust'){ // Кометная пыль: вытянутые кувыркающиеся обломки
+    if(p.trailFx==='cometdust'){ // Кометная пыль: вытянутые кувыркающиеся обломки
       const rot=(p.rot||0)+(1-p.life)*(p.spin||0)*8;
       ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(rot);
       ctx.fillStyle = partCol(p.color, p.life*.85);
@@ -2765,7 +2770,7 @@ function drawFx(hq,sh){ // частицы + попапы: и в игре, и п�
       ctx.restore();
       drawn++; continue;
     }
-    if(hq && p.trailFx==='debris'){ // Обломки-спутники: рыхлый дрейфующий рой, не строгая линия
+    if(p.trailFx==='debris'){ // Обломки-спутники: рыхлый дрейфующий рой, не строгая линия
       const dx=Math.sin(fxNow/500+(p.jx||0))*2, dy=Math.cos(fxNow/450+(p.jy||0))*2;
       ctx.fillStyle = partCol(p.color, p.life*.75);
       ctx.beginPath(); ctx.arc(p.x+dx,p.y+dy,p.size*.8,0,6.283); ctx.fill();
@@ -5428,7 +5433,12 @@ function drawPlane(sh,nowMs){
   const tr=(typeof TRAILS_BY_ID!=='undefined'?TRAILS_BY_ID.get(S.trail):null)||{style:''}; // 05.09.2026: след — независимый выбор, не от скина
   const trailFx=tr.style||'';
   const STRUCTURED_TRAILS=['ribbon','pearls','loopKnot','snakeWave','heartKnot','trailConstellation','paperclip','rainbowArc','waterWaves','celticTwist','celticBraid']; // 05.09.2026: расширено — связные следы, не только 2 премиум
-  if(hq && STRUCTURED_TRAILS.includes(trailFx)){
+  /* 11.09.2026 «Аудит Вспышек/Следов»: порог hq (Q.level≥2) снят — та же методика и тот
+     же вывод, что у скинов 09.09.2026 (SKIN-FX-OPTIMIZATION.md). Замер живьём drawStructuredTrail()
+     реальными данными trailHistBuf (7×50, медиана): худший — Кельтская коса 0.166мс, при
+     бюджете кадра ~10мс запас ×60. На «дне» вместо следа не было вообще ничего — та же
+     самая беда, что была у скинов до чистки, тем же числом не подтверждённая. */
+  if(STRUCTURED_TRAILS.includes(trailFx)){
     drawStructuredTrail(trailFx,skin.trail,nowMs);
     if(S.running&&!S.paused){ trailHistBuf.push({x:p.x,y:p.y}); if(trailHistBuf.length>28) trailHistBuf.shift(); }
   }
