@@ -843,6 +843,86 @@ function forgeFavRowSync(){
 }
 wireOnLocal('forgeSaveFavBtn','click',function(){ forgeFavSave(forgeCfg, '', $('forgeSaveFavBtn')); forgeFavRowSync(); });
 
+/* 11.09.2026 «Лаборатория цвета» (владелец, макет laboratoriya-tsveta-11-09-2026.html, одобрено):
+   всплывающий помощник подбора пары «Цвет неба»/«Второй цвет» по одной из 7 именованных схем
+   гармонии (.knowledge/COLOR-THEORY.md). Ползунки ptHue1/ptHue2 остаются главным способом —
+   лаборатория лишь подставляет в НИХ готовую пару и закрывается, отдельного «применить» нет
+   (тот же живой принцип, что у всей остальной вкладки). У схем с 3-4 цветами в реальном
+   определении (Триадная/Сплит/Тетрада/Квадрат) — честное упрощение до ОДНОГО партнёра (у неба
+   всего 2 цветовых слота, не больше), formula комментарий у каждой схемы ниже называет упрощение
+   прямо, не выдаёт его за полную схему. */
+const FORGE_HARMONY=[
+  {k:'comp',  t:'Комплементарная',       off:180, note:'Противоположные цвета круга — самый контрастный, «энергичный» вариант. Полная и точная схема — в ней тоже ровно 2 цвета.'},
+  {k:'analog',t:'Аналоговая',            off:30,  note:'Соседний сектор круга — самая безопасная, спокойная пара. Полная и точная схема — тоже 2 цвета.'},
+  {k:'triad', t:'Триадная',              off:120, note:'120° по кругу — контрастно, но сбалансированно. Полная схема — 3 цвета через 120°, у неба 2 слота — берём одного партнёра.'},
+  {k:'split', t:'Сплит-комплементарная', off:150, note:'Рядом с противоположным — высокий контраст с меньшим напряжением, чем чистая комплементарная пара. Полная схема — 3 цвета, берём ближайшего соседа.'},
+  {k:'tetrad',t:'Тетрада',               off:60,  note:'Одна из сторон прямоугольника гармонии — самая «шумная» из семи схем. Полная схема — 4 цвета, у неба 2 слота — берём одну сторону.'},
+  {k:'square',t:'Квадрат',               off:90,  note:'Ровно четверть круга — тоже 4 цвета в полной схеме, но уравновешеннее тетрады. Берём одну четверть.'},
+  {k:'mono',  t:'Монохромная',           off:0,   note:'Один тон — самая спокойная схема, второй цвет неба совпадает с первым. Полная и точная схема — разница только по светлоте/насыщенности, у нас через «Настроение».'},
+];
+let forgeHarmonyScheme='comp';
+function forgeHarmonyAngle(){ return ((forgeCfg.h1%360)+360)%360; }
+function forgeHarmonyTargetH2(){
+  const sc=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; })||FORGE_HARMONY[0];
+  return Math.round((forgeHarmonyAngle()+sc.off)%360);
+}
+function forgeHarmonyMarkerPos(deg){ // угол → {left,top} в процентах внутри круга (r=42%, чуть внутри края)
+  const rad=(deg-90)*Math.PI/180, r=42;
+  return { left:(50+r*Math.cos(rad)).toFixed(1)+'%', top:(50+r*Math.sin(rad)).toFixed(1)+'%' };
+}
+function forgeHarmonySync(){
+  const h1=forgeHarmonyAngle(), h2=forgeHarmonyTargetH2();
+  const pa=forgeHarmonyMarkerPos(h1), pb=forgeHarmonyMarkerPos(h2);
+  const ma=$('forgeHarmonyMarkA'), mb=$('forgeHarmonyMarkB');
+  if(ma){ ma.style.left=pa.left; ma.style.top=pa.top; }
+  if(mb){ mb.style.left=pb.left; mb.style.top=pb.top; }
+  const holeTxt=$('forgeHarmonyHoleTxt'); if(holeTxt) holeTxt.textContent=h1+'°\n→ '+h2+'°';
+  const prev=$('forgeHarmonyPreview');
+  if(prev){ const psl=forgePreviewMoodSL(forgeCfg.mood);
+    prev.style.background='linear-gradient(180deg, hsl('+h1+','+psl.S0+'%,'+psl.L0+'%), hsl('+h2+','+psl.S1+'%,'+psl.L1+'%))'; }
+  const note=$('forgeHarmonyNote'); const sc=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; });
+  if(note && sc) note.textContent=sc.note;
+  const row=$('forgeHarmonySchemes');
+  if(row) for(let i=0;i<row.children.length;i++) row.children[i].classList.toggle('sel', row.children[i].dataset.k===forgeHarmonyScheme);
+}
+function forgeHarmonyApply(){
+  forgeCfg.h2=forgeHarmonyTargetH2();
+  if(typeof ptH2Touched!=='undefined') ptH2Touched=true; // применённая пара уже согласована сама с собой — авто-гармония не должна её тут же переписать
+  forgeSyncWidgets();
+}
+function forgeHarmonySetH1FromEvent(ev){
+  const wheel=$('forgeHarmonyWheel'); if(!wheel) return;
+  const rect=wheel.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  const clientX=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX;
+  const clientY=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY;
+  const ang=Math.atan2(clientY-cy, clientX-cx)*180/Math.PI+90;
+  forgeCfg.h1=Math.round(((ang%360)+360)%360);
+  forgeHarmonyApply(); forgeHarmonySync();
+}
+function forgeHarmonyOpen(){
+  const m=$('forgeHarmonyModal'); if(m) m.classList.add('open');
+  forgeHarmonySync(); sfx.click(); haptic('light');
+}
+function forgeHarmonyClose(){ const m=$('forgeHarmonyModal'); if(m) m.classList.remove('open'); }
+(function forgeHarmonyInit(){
+  const row=$('forgeHarmonySchemes'); if(!row) return;
+  FORGE_HARMONY.forEach(function(sc){
+    const b=document.createElement('button'); b.type='button'; b.className='forgeChip'; b.textContent=sc.t; b.dataset.k=sc.k;
+    b.addEventListener('click', function(){ forgeHarmonyScheme=sc.k; forgeHarmonyApply(); forgeHarmonySync(); sfx.click(); haptic('light'); });
+    row.appendChild(b);
+  });
+  wireOnLocal('forgeHarmonyBtn','click',forgeHarmonyOpen);
+  wireOnLocal('forgeHarmonyClose','click',forgeHarmonyClose);
+  const wheel=$('forgeHarmonyWheel');
+  if(wheel){
+    let dragging=false;
+    wheel.addEventListener('pointerdown', function(ev){ dragging=true; forgeHarmonySetH1FromEvent(ev); });
+    wheel.addEventListener('pointermove', function(ev){ if(dragging) forgeHarmonySetH1FromEvent(ev); });
+    window.addEventListener('pointerup', function(){ dragging=false; });
+  }
+})();
+
 /* ---------- Deep-link: ?startapp=map_CG2.xxx (и #map= для браузера); CG1 — старые ссылки ---------- */
 function forgeBoot(){ // true = есть трасса друга: этот запуск открывается в конструкторе, а не в полёте
   try{
