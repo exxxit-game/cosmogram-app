@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: панели Конструктора во всю ширину + кнопки внутри блока с небом</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#12224a; --bg-2:#0a1030;
+    --gold:#c9a45c; --gold-hi:#dba93c; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5;max-width:760px}
+  .measured{font-size:11.5px;color:#8fd0ff;margin-bottom:22px;line-height:1.6;
+    background:rgba(90,160,255,.08);border:1px dashed rgba(90,160,255,.35);border-radius:10px;padding:9px 12px;max-width:760px}
+  .row{margin-bottom:36px}
+  .rowTitle{font-size:13px;font-weight:700;color:var(--gold-hi);margin-bottom:12px}
+  .cols{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:240px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+
+  /* --- телефон-рамка, чтобы был виден настоящий край экрана --- */
+  .phone{width:240px;background:#070c18;border-radius:22px;border:1px solid rgba(255,255,255,.1);
+    padding:14px 0;overflow:hidden}
+  .screenPad{padding:0 11px} /* обычный боковой отступ экрана (11px) — там, где он остаётся */
+
+  /* === РЯД 1: панель «Цвет» — было (15px по бокам) / стало (во всю ширину) === */
+  .skyPanel{height:64px;border-radius:16px;background:rgba(22,38,56,.55);
+    border:1px solid var(--line);position:relative;overflow:hidden}
+  .skyPanel .fill{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 30%,#1a2f5c 0%,#0a1030 70%)}
+  .before .skyPanel{margin:0 15px}
+  .after .skyPanel{margin:0;border-radius:16px;width:100%}
+  .gapTag{font-size:9.5px;color:#ff9fb0;margin-top:6px}
+
+  /* === РЯД 2: карточка «Играть» — было (кнопки отдельным блоком) / стало (кнопки внутри банера) === */
+  .card{border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden}
+  .banner{position:relative;height:88px;background:radial-gradient(ellipse at 40% 30%,#1a2f5c 0%,#0a1030 75%)}
+  .banner .name{position:absolute;top:8px;left:8px;color:#fff;font-size:11px;font-weight:700}
+  .actRowSep{display:flex;gap:8px;padding:9px 11px}
+  .actRowSep button, .actRowIn button{flex:1;padding:7px 0;font-size:10.5px;font-weight:600;
+    border-radius:10px;border:1px solid var(--line-gold);background:rgba(15,31,61,.6);color:var(--ink);
+    text-transform:uppercase;letter-spacing:.03em}
+  .actRowIn{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:6px}
+  .actRowIn button{background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.22);
+    backdrop-filter:blur(3px);padding:6px 0}
+
+  .note{margin-top:8px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:800px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:6px}
+</style>
+</head>
+<body>
+  <h1>Конструктор: панели во всю ширину экрана + кнопки внутри блока с небом</h1>
+  <div class="sub">По живым скринам с телефона (владелец, красные пометки) — панели «Цвет»/«Карта» уже
+    видны, но с полями по бокам, а кнопки «Полёт»/«Изменить» в списке «Играть» стоят отдельным
+    блоком под небом, хотя место есть внутри самого блока.</div>
+  <div class="measured">
+    <b>Измерено вживую (getBoundingClientRect, не на глаз):</b> панель «Цвет» (<code>#forgeSkyPanel</code>) —
+    15px слева/справа от края экрана. Панель «Карта» (<code>#ptPanel</code>) — 11px слева/справа.
+    Разные числа для двух вкладок одного экрана — тоже находка, не только сама ширина.
+    Карточка в списке «Играть» (<code>.wBanner</code>) уже во всю ширину (0.8px, это я уже чинил
+    раньше) — там дело только в кнопках, зазор до них сейчас 8px.
+  </div>
+
+  <div class="row">
+    <div class="rowTitle">1. Панель «Цвет» (и так же «Карта») — во всю ширину экрана</div>
+    <div class="cols">
+      <div class="col">
+        <div class="colTitle">Было — 15px с каждой стороны</div>
+        <div class="phone before">
+          <div class="skyPanel"><div class="fill"></div></div>
+        </div>
+        <div class="gapTag">зазор виден по бокам</div>
+      </div>
+      <div class="col">
+        <div class="colTitle after">Стало — вровень с краями экрана</div>
+        <div class="phone after">
+          <div class="skyPanel"><div class="fill"></div></div>
+        </div>
+        <div class="gapTag" style="color:#8fd0ff">зазора нет, как у карточки в «Играть»</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="rowTitle">2. Карточка «Играть» — кнопки внутри блока с небом, не отдельным рядом</div>
+    <div class="cols">
+      <div class="col">
+        <div class="colTitle">Было — отдельный блок под небом</div>
+        <div class="phone before">
+          <div class="screenPad">
+            <div class="card">
+              <div class="banner"><div class="name">МЕТЕОРИТНЫЙ ДОЖДЬ</div></div>
+              <div class="actRowSep"><button>Полёт</button><button>Изменить</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="colTitle after">Стало — кнопки лежат на небе</div>
+        <div class="phone after">
+          <div class="screenPad">
+            <div class="card">
+              <div class="banner">
+                <div class="name">МЕТЕОРИТНЫЙ ДОЖДЬ</div>
+                <div class="actRowIn"><button>Полёт</button><button>Изменить</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Что меняется:</b>
+    <ul>
+      <li>Панели «Цвет»/«Карта» растягиваются до самого края экрана — тот же приём полного
+        разлива, что уже сделан у карточки «Играть» (<code>.wBanner{margin:0 -11px ...}</code>),
+        применённый здесь к <code>#forgeSkyPanel</code>/<code>#ptPanel</code>.</li>
+      <li>Кнопки «Полёт»/«Изменить» переезжают со своего отдельного ряда прямо на нижний край
+        блока с небом (полупрозрачные, поверх картинки, как уже есть у иконок избранного/лайка
+        на этой же карточке) — сама карточка становится короче ровно на высоту старого ряда
+        кнопок + 8px зазора до него.</li>
+      <li>Не трогаю: сами пропорции неба/явления внутри превью, цвет/скругление панелей,
+        расположение слайдеров и остального содержимого «Цвет»/«Карта» ниже панели.</li>
+    </ul>
+  </div>
+</body>
+</html>
