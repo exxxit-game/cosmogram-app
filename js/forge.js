@@ -767,7 +767,40 @@ function forgeFavSave(cfg, name, btn){
    10-09-2026.html, одобрено): экран из 10 ячеек по-прежнему не отдельный экран (это заняло бы
    отдельную задачу) — а сам ряд прямо под вкладкой «Цвет», кружками. Тап по своему сохранённому
    кружку подставляет цвет назад на ползунки тем же путём, что и ручной ввод (forgeSyncWidgets) —
-   один канал синхронизации на оба направления, не два разных. */
+   один канал синхронизации на оба направления, не два разных.
+   11.09.2026 (владелец: «сделать чтобы можно было удалить», выбрал вариант «долгое нажатие» через
+   явный вопрос): долгое нажатие (550мс, forgeFavAttachPress) удаляет вместо применения — обычный
+   быстрый тап по-прежнему применяет небо как раньше, долгое нажатие его не подменяет, только
+   добавляется рядом. */
+const FORGE_FAV_HOLD_MS=550;
+function forgeFavAttachPress(b, idx){
+  let timer=null, longFired=false;
+  const cancel=function(){ if(timer){ clearTimeout(timer); timer=null; } b.classList.remove('pressing'); };
+  b.addEventListener('pointerdown', function(){
+    longFired=false; b.classList.add('pressing');
+    timer=setTimeout(function(){ longFired=true; b.classList.remove('pressing'); forgeFavDelete(idx); }, FORGE_FAV_HOLD_MS);
+  });
+  b.addEventListener('pointerup', cancel);
+  b.addEventListener('pointerleave', cancel);
+  b.addEventListener('pointercancel', cancel);
+  b.addEventListener('click', function(e){
+    if(longFired){ e.preventDefault(); e.stopPropagation(); longFired=false; return; }
+    const list=Store.get('skyFavorites')||[]; const fav=list[idx]; if(!fav) return;
+    forgeCfg.h1=fav.h1; forgeCfg.h2=fav.h2; forgeCfg.dens=fav.dens; forgeCfg.mood=fav.mood; forgeCfg.fog=fav.fog;
+    if(typeof ptH2Touched!=='undefined') ptH2Touched=true; // применённая пара уже согласована сама с собой — авто-гармония не должна её тут же переписать
+    forgeSyncWidgets(); sfx.click(); haptic('light');
+  });
+}
+function forgeFavDelete(idx){
+  const list=Store.get('skyFavorites')||[]; if(idx<0||idx>=list.length) return;
+  const msg=L.forgeFavDeleteConfirm||'Удалить это небо из избранного?';
+  const go=function(){
+    list.splice(idx,1); Store.set('skyFavorites', list);
+    forgeFavRowSync(); toast(L.forgeFavDeleted||'Удалено из избранного','rgba(255,159,176,.5)'); haptic('light');
+  };
+  if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, function(ok){ if(ok) go(); }); }
+  else if(typeof confirm==='function'){ if(confirm(msg)) go(); }
+}
 function forgeFavRowSync(){
   const row=$('forgeFavRow'); if(!row) return;
   const list=Store.get('skyFavorites')||[];
@@ -780,11 +813,7 @@ function forgeFavRowSync(){
       const psl=forgePreviewMoodSL(fav.mood);
       b.style.background='hsl('+fav.h1+','+psl.S0+'%,'+psl.L0+'%)';
       if(fav.name) b.title=fav.name;
-      b.addEventListener('click',function(){
-        forgeCfg.h1=fav.h1; forgeCfg.h2=fav.h2; forgeCfg.dens=fav.dens; forgeCfg.mood=fav.mood; forgeCfg.fog=fav.fog;
-        if(typeof ptH2Touched!=='undefined') ptH2Touched=true; // применённая пара уже согласована сама с собой — авто-гармония не должна её тут же переписать
-        forgeSyncWidgets(); sfx.click(); haptic('light');
-      });
+      forgeFavAttachPress(b, i);
       row.appendChild(b);
     } else {
       const e=document.createElement('span');
