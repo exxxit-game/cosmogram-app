@@ -399,9 +399,10 @@ const BEACON=(()=>{
       const lvl=(typeof Q!=='undefined')?Q.level:'?';
       const mode=(typeof Q!=='undefined')?Q.mode:'?';
       const tier=(typeof gfxTier==='function')?gfxTier():'?';
-      const deltas=await new Promise(resolve=>{
-        const arr=[]; let last=performance.now(); const stop=last+2500;
-        function tick(now){ arr.push(now-last); last=now;
+      const probeStart=performance.now();
+      const samples=await new Promise(resolve=>{
+        const arr=[]; let last=probeStart; const stop=probeStart+2500;
+        function tick(now){ arr.push({d:now-last, at:now-probeStart}); last=now;
           if(now<stop && arr.length<300) requestAnimationFrame(tick); else resolve(arr); }
         requestAnimationFrame(tick);
       });
@@ -413,8 +414,19 @@ const BEACON=(()=>{
          их по отдельности (каждый на своей строке в startGame()) было бы избыточно для того
          же самого куска синхронного кода, что уже ловит эта самая задержка. Владелец прямо
          просил «первые кадры» в список — вот их место. */
-      const setupMs=Math.max(0, deltas.length?deltas[0]:0); // rAF-таймстамп иногда чуть раньше synchronous performance.now() (старт кадра, не момент коллбэка) — честный пол на нуле, не отрицательное число в отчёте
-      deltas.shift(); deltas.sort((a,b)=>a-b);
+      const setupMs=Math.max(0, samples.length?samples[0].d:0); // rAF-таймстамп иногда чуть раньше synchronous performance.now() (старт кадра, не момент коллбэка) — честный пол на нуле, не отрицательное число в отчёте
+      const rest=samples.slice(1);
+      /* 11.09.2026 «На какой миллисекунде скачок», продолжение разбора: живой отчёт с
+         настоящего Samsung (владелец, host/ua/setup уже видны) показал max:1956ms при
+         audio+wake+gyro+cal+setup в сумме ~27ms — скачок не в размеченных шагах взлёта и
+         не в первом кадре. Мало знать САМ скачок — нужно знать КОГДА внутри окна он
+         случился, чтобы сверить со сторожем звука (audioKeepIv, ui.js — тикает каждые
+         2000ms, окно замера 2500ms — почти на каждом взлёте попадает внутрь хотя бы раз).
+         maxAt — смещение от начала зонда (≈от взлёта) до самого длинного кадра. */
+      let maxIdx=0;
+      for(let i=1;i<rest.length;i++) if(rest[i].d>rest[maxIdx].d) maxIdx=i;
+      const maxAt=rest.length?rest[maxIdx].at:0;
+      const deltas=rest.map(s=>s.d).sort((a,b)=>a-b);
       const p50=deltas[Math.floor(deltas.length*0.5)]||0;
       const p95=deltas[Math.floor(deltas.length*0.95)]||0;
       const max=deltas[deltas.length-1]||0;
@@ -428,7 +440,7 @@ const BEACON=(()=>{
         : '';
       lastProfile='dpr:'+dpr+'/'+effDpr+'(cap'+capV+') cvs:'+cvsW+'x'+cvsH+
         ' cpu:'+hc+' mem:'+mem+' tier:'+tier+' Q:'+lvl+'/'+mode+
-        ' frame p50:'+p50.toFixed(0)+'ms p95:'+p95.toFixed(0)+'ms max:'+max.toFixed(0)+'ms'+tt+
+        ' frame p50:'+p50.toFixed(0)+'ms p95:'+p95.toFixed(0)+'ms max:'+max.toFixed(0)+'ms@'+maxAt.toFixed(0)+'ms'+tt+
         ' setup:'+setupMs.toFixed(0)+'ms';
       signal('device_profile', lastProfile);
     }catch(e){}
