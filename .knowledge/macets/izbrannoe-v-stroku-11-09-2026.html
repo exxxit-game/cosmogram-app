@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: «Избранное» — золотая подпись, 7 ячеек, в одну строку</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:340px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+  .setPanel{background:var(--bg-1);border:1px solid var(--line);border-radius:16px;padding:14px}
+
+  .forgeRow{display:flex;align-items:center;gap:10px;width:100%;padding:4px 0}
+  .forgeLblGold{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:none;width:92px;text-align:left;line-height:1.25}
+  .forgeLblBlk{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px;text-transform:uppercase}
+  input[type=range]{flex:1;accent-color:#7ea6ff;height:20px}
+  .forgeVal{flex:none;width:26px;text-align:right;font-size:13px;color:#bcd2ff}
+
+  /* --- БЫЛО: реальные текущие классы/размеры из index.html/forge.js --- */
+  #favRowBefore{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 16px}
+  .favSwatchBefore,.favEmptyBefore{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+  .favEmptyBefore{border:1.5px dashed var(--line);box-shadow:none}
+
+  /* --- СТАЛО: та же .favSwatch/.favEmpty (кружки не трогаю), только их теперь 7, не 10,
+       и вся строка — один .forgeRow вместе с подписью, как у Тумана/Настроения. --- */
+  #favRowAfter{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:nowrap}
+  .favSwatchAfter,.favEmptyAfter{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+  .favEmptyAfter{border:1.5px dashed var(--line);box-shadow:none}
+
+  .note{margin-top:22px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:720px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:5px}
+</style>
+</head>
+<body>
+  <h1>«Избранное» на вкладке «Цвет» — подпись золотом, 7 ячеек вместо 10, одной строкой</h1>
+  <div class="sub">Реальные классы из index.html/forge.js. Три требования в одной правке одного файла — вносятся вместе, одним разом.</div>
+  <div class="cols">
+    <div class="col">
+      <div class="colTitle">Было</div>
+      <div class="setPanel">
+        <div class="forgeRow"><span class="forgeLblGold">Настроение</span><input type="range" value="50"><b class="forgeVal">50</b></div>
+        <div class="forgeLblBlk" style="margin-top:10px">Избранное</div>
+        <div id="favRowBefore">
+          <span class="favSwatchBefore" style="background:#6a8fd0"></span>
+          <span class="favEmptyBefore"></span><span class="favEmptyBefore"></span><span class="favEmptyBefore"></span>
+          <span class="favEmptyBefore"></span><span class="favEmptyBefore"></span><span class="favEmptyBefore"></span>
+          <span class="favEmptyBefore"></span><span class="favEmptyBefore"></span><span class="favEmptyBefore"></span>
+        </div>
+        <div class="forgeRow" style="margin-top:10px"><span class="forgeLblGold">Туман</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="colTitle after">Стало</div>
+      <div class="setPanel">
+        <div class="forgeRow"><span class="forgeLblGold">Настроение</span><input type="range" value="50"><b class="forgeVal">50</b></div>
+        <div class="forgeRow" style="margin-top:10px">
+          <span class="forgeLblGold">Избранное</span>
+          <div id="favRowAfter">
+            <span class="favSwatchAfter" style="background:#6a8fd0"></span>
+            <span class="favEmptyAfter"></span><span class="favEmptyAfter"></span><span class="favEmptyAfter"></span>
+            <span class="favEmptyAfter"></span><span class="favEmptyAfter"></span><span class="favEmptyAfter"></span>
+          </div>
+        </div>
+        <div class="forgeRow" style="margin-top:10px"><span class="forgeLblGold">Туман</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Три правки (владелец, 11.09.2026), одним пакетом:</b>
+    <ul>
+      <li><b>Подпись золотом.</b> «Избранное» было отдельным <code>.forgeLblBlk</code> (серый, заглавными вразрядку, СВОЯ строка сверху) — теперь тот же <code>.forgeLbl</code>, что у Цвет неба/Второй цвет/Густота/Настроение/Туман в этой же вкладке (золотой, 92px, тот же <code>#forgeSkyPanel .forgeLbl</code>, который уже красит остальные пять подписей).</li>
+      <li><b>7 ячеек вместо 10.</b> <code>FORGE_FAV_MAX</code> (forge.js) — это не только счётчик кружков на экране, но и реальный предел сохранения: сколько своих «небес» может держать игрок. Меняется само число, кружков рисуется ровно столько же, сколько разрешено сохранить — одно значение, не два места.</li>
+      <li><b>Одна строка.</b> Подпись и кружки — теперь один <code>.forgeRow</code>, тот же приём, что уже даёт «Туман» в этой самой вкладке. 92px (подпись) + 7×22px (кружки) + зазоры — влезает в ширину панели с запасом (проверено на 10 кружках без подписи в одной строке — 10.09.2026, тогда не влезло; 7 с подписью — меньше суммарно, проверю ещё раз вживую перед отправкой).</li>
+    </ul>
+  </div>
+</body>
+</html>

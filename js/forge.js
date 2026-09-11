@@ -761,13 +761,16 @@ function forgeMiniSwatchPaint(cv, cfg){
 }
 
 /* 08.09.2026 «Избранная палитра» (первый шаг, владелец: «возможность скопировать небо к себе
-   в избранное», зелёная точка на живом скрине под сердечком): 10 свободных ячеек, копируем
+   в избранное», зелёная точка на живом скрине под сердечком): свободные ячейки, копируем
    только сами данные неба (h1/h2/густота/настроение/туман), не весь конфиг трассы — экран
-   просмотра/выбора ячейки ещё не построен, это отдельная задача. */
-const FORGE_FAV_MAX=10;
+   просмотра/выбора ячейки ещё не построен, это отдельная задача.
+   11.09.2026 (владелец, макет izbrannoe-v-stroku-11-09-2026.html, одобрено): было 10 — подпись
+   и кружки переезжают в одну строку (см. index.html), 7 умещается вместе с подписью, 10 нет.
+   Число одно — и предел сохранения, и число кружков в строке, не два разных места. */
+const FORGE_FAV_MAX=7;
 function forgeFavSave(cfg, name, btn){
   const list=Store.get('skyFavorites')||[];
-  if(list.length>=FORGE_FAV_MAX){ toast(L.workshopFavFull||'Избранное заполнено (10 из 10)','rgba(255,159,176,.5)'); return; }
+  if(list.length>=FORGE_FAV_MAX){ toast(L.workshopFavFull||'Избранное заполнено ('+FORGE_FAV_MAX+' из '+FORGE_FAV_MAX+')','rgba(255,159,176,.5)'); return; }
   list.push({h1:cfg.h1, h2:cfg.h2, dens:cfg.dens, mood:cfg.mood, fog:cfg.fog, name:name||''});
   Store.set('skyFavorites', list);
   toast(L.workshopFavSaved||'Сохранено в избранное','rgba(255,215,106,.5)');
