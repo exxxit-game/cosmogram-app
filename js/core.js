@@ -335,10 +335,16 @@ const Store = {
   },
   /* v1.282.15: слияние вынесено отдельно — и чтобы читалось, и чтобы страж мог его
      проверить, не поднимая настоящий мост Telegram. */
-  MAX_KEYS:{best:1,wallet:1,bestGyro:1,bestTouch:1,bestKeys:1,bestDist:1,bestBullet:1,srBest:1,srBestRSG:1},
+  MAX_KEYS:{best:1,bestGyro:1,bestTouch:1,bestKeys:1,bestDist:1,bestBullet:1,srBest:1,srBestRSG:1},
   /* v1.284.9: рекорды отдельно от кошелька. Для облака они слиты в один список MAX_KEYS, и
      там это уместно. Здесь — нет: рекорд не убывает никогда, а кошелёк убывает при каждой
-     покупке. Взять максимум для кошелька значило бы отменять списание звёзд. */
+     покупке. Взять максимум для кошелька значило бы отменять списание звёзд.
+     11.09.2026 (живой репорт владельца, два телефона — устаревшее устройство вернуло
+     потраченные ✦, купленное осталось): этот же вывод только что объяснял, почему кошелёк
+     не попал в RECORD_KEYS — но 'wallet' всё ещё оставался в MAX_KEYS СТРОКОЙ ВЫШЕ, тот же
+     Math.max() бил по нему из соседней функции слияния. Убран отсюда — вне слияния своего
+     же ключа (keep) кошелёк теперь просто принимает чужое значение (диск/облако), не
+     максимум с ним; устаревший источник больше не может отменить трату. */
   RECORD_KEYS:{best:1,bestGyro:1,bestTouch:1,bestKeys:1,bestDist:1,bestBullet:1,srBest:1,srBestRSG:1},
   /* v1.284.9 «Две вкладки». Диск — такой же чужой источник, как облако: пока мы держим свой
      снимок в памяти, соседняя вкладка пишет туда рекорды и покупки. Снимок снимался ровно
@@ -352,6 +358,23 @@ const Store = {
      иначе покупка скина откатывалась бы соседней вкладкой. Исключение — рекорды: они
      не убывают ни при каких обстоятельствах, даже по собственной просьбе устаревшей вкладки.
      Удаления с диска не переносим намеренно: пропажа ключа у соседа не должна стирать наш. */
+  /* 11.09.2026, тот же заход, что и фикс кошелька выше (владелец: «да» — почистить achQ и
+     stats тем же приёмом): 'stats' — не один рекорд, а ЦЕЛЫЙ объект счётчиков за всю жизнь
+     аккаунта (games/deaths/totalStars/totalDist/bestCombo/...), все поля только растут,
+     ни одно не тратится (в отличие от wallet). Целиком объект в MAX_KEYS не положить —
+     Math.max(cur,nv) там сравнивает ЧИСЛА, не объекты. Сливаем по каждому полю отдельно,
+     тем же принципом, что и у отдельно стоящих рекордов: устаревшее устройство не может
+     откатить назад ни один счётчик слиянием, каждое поле берёт максимум само по себе. */
+  _mergeStatsObj(cur,nv){
+    if(!nv || typeof nv!=='object' || Array.isArray(nv)) return cur;
+    if(!cur || typeof cur!=='object' || Array.isArray(cur)) return nv;
+    const out={...cur};
+    for(const sk in nv){
+      const a=out[sk], b=nv[sk];
+      out[sk] = (typeof a==='number' && typeof b==='number') ? Math.max(a,b) : (a==null ? b : a);
+    }
+    return out;
+  },
   _mergeDisk(keep){
     let raw=null;
     try{ raw=localStorage.getItem('cosmogram_v2'); }catch(e){ return; } // хранилище запрещено — сливать не с чем
@@ -365,7 +388,8 @@ const Store = {
         continue;
       }
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
-      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx'||k==='ach') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx'||k==='ach'||k==='achQ') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else if(k==='stats') this.mem[k]=this._mergeStatsObj(cur,nv);
       else this.mem[k]=nv;
     }
   },
@@ -377,7 +401,8 @@ const Store = {
       const cur=this.mem[k];
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv); // рекорд не крадём ни в одну сторону
       else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
-      else if(k==='ach' && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // и открытые достижения тоже
+      else if((k==='ach'||k==='achQ') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // открытые достижения и ещё не показанная очередь — тоже не пропадают
+      else if(k==='stats') this.mem[k]=this._mergeStatsObj(cur,nv); // счётчики за всю жизнь — по каждому полю максимум, не целиком перезаписью
       else this.mem[k]=nv;
     }
   },
@@ -509,7 +534,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION = '1.478.236'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION = '1.478.237'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 /* 11.09.2026 «Разбивка взлёта»: живой отчёт с Samsung A3 Core показал зонд дребезга
    (deviceProfileProbe, skymail.js) с max:1160ms в первые 2.5с взлёта — но зонд не блокирующий,
    он стартует и сразу отдаёт управление, а сам скачок мог случиться в ЛЮБОМ из тяжёлых шагов
