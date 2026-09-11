@@ -2678,6 +2678,15 @@ function diagReport(){
   const Ln=[];
   Ln.push('Cosmogram v'+GAME_VERSION);
   Ln.push('platform: '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?'));
+  /* 11.09.2026 (владелец, три раза подряд — «увеличить список на максимум», волна тестов
+     «от телефона до телевизора», подтвердил «оба варианта» доступа): platform выше молчит,
+     ОТКУДА игра вообще открыта — из настоящего Telegram (initData/tg.platform живой) или
+     напрямую браузером (ТВ без Telegram вообще, только веб-вход Discord/Google). Одна явная
+     строка вместо того, чтобы гадать по отсутствию других полей. Полный user agent — тоже
+     сюда: для ТВ это единственный способ узнать точную платформу (Tizen/WebOS/Android TV/
+     обычный Chrome-на-телевизоре) без специального кода под каждую из них. */
+  Ln.push('host: '+((typeof tg!=='undefined'&&tg&&tg.initData)?'telegram':'browser'));
+  Ln.push('ua: '+(navigator.userAgent||'?'));
   Ln.push('screen: '+W+'x'+H+' dpr '+(window.devicePixelRatio||1));
   Ln.push('sensor: '+(HAS_GYRO?((gyroSrc||'none')+' pkts '+tgPkt+'/'+webPkt+' γ'+Math.round(lastGamma||0)+'° β'+Math.round(lastBeta||0)+'°'+(input.baseG!=null?' zero '+Math.round(input.baseG)+'°':' no-zero')+' tx '+(+input.tiltX.toFixed(2))):'none'));
   if (gyroLastErr) Ln.push('sensor-err: '+gyroLastErr);
