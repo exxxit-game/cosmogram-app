@@ -340,24 +340,29 @@ function startGame(saved){
   /* v1.282.15: ключ трассы называется ОДИН раз и живёт рядом с самим потоком — из него
      же шьются личные потоки каждого спавна (см. withTrack в core.js). Разъехаться им
      нельзя: иначе поле снова станет зависеть от того, что делал игрок. */
+  /* 11.09.2026 (владелец, через друга: «в других режимах не вижу правильности в том что можно
+     запоминать где что находится»): Биатлон/Без-касаний (Слалом) сняты с вечного сида. Причина
+     не «скопировали по аналогии со Speedrun и не подумали» — настоящий биатлон/слалом переставляют
+     трассу перед КАЖДЫМ стартом, это часть сути дисциплины, а не случайность; вечный сид как у
+     Speedrun (SSG — официальная категория спидраннинга) им не подходил жанрово. Speedrun остаётся
+     как есть — там постоянство трассы genre-accurate, второй (случайный) режим для него будет
+     отдельным RSG-вариантом, не заменой. Сервер (cosmogram-daily) сид никогда не хранил и не
+     проверял — day был чистой формальностью, менять на сервере нечего, старые рекорды снесены
+     напрямую в базе (biathlon_runs/slalom_runs, оба пусты). */
   mapSeedKey = (runMode==='daily') ? trackDayKey() // v1.282.20: ключ трассы — по общему времени; 07.09.2026: 1CC убран; 07.09.2026: 100% удалён
     : runMode==='theater' ? String(theaterDay||trackDayKey())
     : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
-    : runMode==='slalom' ? (SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: та же трасса навсегда — честное сравнение времени между игроками
-    : runMode==='biathlon' ? (BIATHLON_ETERNAL_DAY+'·biathlon') // 06.09.2026: тот же приём — одна трасса навсегда
     : runMode==='relay' ? (S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg)) // 06.09.2026: во время просмотра — сид ЭТАПА, который показываем; дальше relayHandoffToLive() в game.js переставит на сид своего этапа
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
-    : String(freshSeed);
+    : String(freshSeed); // 11.09.2026: Слалом/Биатлон сюда же, свежий сид каждый забег, как Caravan/Классика
   mapSeqReset();
   if (typeof nebulaReseed==='function') nebulaReseed(); // v1.282.15: узор туманностей — свой на забег; раньше он менялся раз в секунду прямо в полёте
   mapRNG = (runMode==='daily') ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
     : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
-    : runMode==='slalom' ? keyRNG(SLALOM_ETERNAL_DAY+'·slalom') // 06.09.2026: тот же приём — одна трасса навсегда
-    : runMode==='biathlon' ? keyRNG(BIATHLON_ETERNAL_DAY+'·biathlon') // 06.09.2026: тот же приём — одна трасса навсегда
     : runMode==='relay' ? keyRNG(S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg))
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
-    : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке
+    : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке; 11.09.2026: Слалом/Биатлон тоже сюда
   if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
   if (typeof calReset==='function') calReset(false,undefined,'takeoff'); else { input.baseG=null; input.baseB=null; } // автокалибровка нуля на старте — из неподвижной позы (v1.4.5); v1.109.1: источник — каждый взлёт это честный сброс, не дребезг, но партии 18 не хватало его в разбивке
   input.tiltX=0; input.tiltY=0; // сброс low-pass — не тянет из меню
