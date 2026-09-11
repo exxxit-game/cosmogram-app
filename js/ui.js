@@ -255,6 +255,28 @@ function caravanCardFill(){
   }
   CARAVAN_TIERS.forEach(function(v,i){ seg.children[i].textContent=caravanTierLabel(v); seg.children[i].classList.toggle('sel',cur===v); });
 }
+/* 11.09.2026 «Speedrun RSG»: тот же каркас/приём, что у Caravan выше — постоянная трасса
+   (SSG, было и остаётся единственным вариантом до сих пор) плюс новая, случайная (RSG).
+   Owner: «в других режимах не вижу правильности в том что можно запоминать» — но Speedrun сам
+   по себе genre-accurate (SSG — официальная категория спидраннинга), поэтому не замена, а
+   второй вариант рядом; см. [[project_biathlon_slalom_random_seed]] в памяти. */
+function speedrunRSGGet(){ return !!Store.get('speedrunRSG', false); }
+function speedrunRSGSet(v){ Store.set('speedrunRSG', !!v); speedrunCardFill(); }
+function speedrunCardFill(){
+  const flyBtn=$('modeSpeedrunFly'), seg=$('speedrunVariantSeg'); if(!flyBtn||!seg) return;
+  const rsg=speedrunRSGGet();
+  const desc=flyBtn.querySelector('.modeDesc'); if(desc) desc.textContent = rsg?L.modeSpeedrunRSGD:L.modeSpeedrunD;
+  if(!seg.children.length){
+    [false,true].forEach(function(v){
+      const b=document.createElement('button');
+      b.type='button'; b.className='forgeSegBtn';
+      b.addEventListener('click', function(){ speedrunRSGSet(v); sfx.click(); haptic('light'); });
+      seg.appendChild(b);
+    });
+  }
+  seg.children[0].textContent=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
+  seg.children[1].textContent=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
+}
 function modesFill(){ // подписи + отметка выбранного режима
   setText('modesTitle',L.modes);
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
@@ -272,7 +294,7 @@ function modesFill(){ // подписи + отметка выбранного р
   // 07.09.2026: 1CC убран из игры (владелец: «бесконечная возможность крутить небо дня в 1
   // жизнь, бред» — 2 попытки в день на общий месячный сид убивали саму идею «одного шанса»,
   // ради которой аркадный 1CC вообще существует).
-  put('modeSpeedrun',L.modeSpeedrun,L.modeSpeedrunD);
+  speedrunCardFill(); // 11.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Постоянная/Случайная
   caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Пуля/Блиц
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
@@ -325,7 +347,8 @@ function startGame(saved){
      открытой, и ключ savedRun ещё и зеркалится в облако, то есть переживает смену телефона.
      theater исключён: из просмотра автосейв не рождается вовсе. */
   if (saved && saved.mode && saved.mode!=='theater') runMode=saved.mode; // v1.93 «Одна попытка»: крах не жжёт попытку — автосейв дня возвращает ровно в тот же прыжок
-  audio(); keepAwake();
+  { const __t=performance.now(); audio(); TAKEOFF_T.audio=performance.now()-__t; } // 11.09.2026 «Разбивка взлёта»: см. TAKEOFF_T в core.js
+  { const __t=performance.now(); keepAwake(); TAKEOFF_T.wake=performance.now()-__t; }
   if (typeof BEACON!=='undefined' && BEACON.deviceProfileProbe) BEACON.deviceProfileProbe(); // 27.08.2026: паспорт слабого борта — разрешение/DPR/ядра/дребезг кадров, разово за сессию, именно с момента взлёта (там настоящая нагрузка)
   /* 24.08.2026: initBg() раньше звалась ровно один раз при загрузке скрипта (js/game.js,
      верхний уровень) и ни разу больше — 140 фоновых звёзд оставались одним и тем же
@@ -349,22 +372,23 @@ function startGame(saved){
      отдельным RSG-вариантом, не заменой. Сервер (cosmogram-daily) сид никогда не хранил и не
      проверял — day был чистой формальностью, менять на сервере нечего, старые рекорды снесены
      напрямую в базе (biathlon_runs/slalom_runs, оба пусты). */
+  const srRSG = runMode==='speedrun' && typeof speedrunRSGGet==='function' && speedrunRSGGet(); // 11.09.2026 «Speedrun RSG»: второй вариант, читается один раз на взлёте, как caravanTierGet()
   mapSeedKey = (runMode==='daily') ? trackDayKey() // v1.282.20: ключ трассы — по общему времени; 07.09.2026: 1CC убран; 07.09.2026: 100% удалён
     : runMode==='theater' ? String(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще
+    : (runMode==='speedrun' && !srRSG) ? (SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: постоянный ключ, не привязан к дате вообще (SSG — вариант по умолчанию)
     : runMode==='relay' ? (S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg)) // 06.09.2026: во время просмотра — сид ЭТАПА, который показываем; дальше relayHandoffToLive() в game.js переставит на сид своего этапа
     : runMode==='custom' && typeof forgeCfgGet==='function' ? String(forgeCfgGet().seed||0)
-    : String(freshSeed); // 11.09.2026: Слалом/Биатлон сюда же, свежий сид каждый забег, как Caravan/Классика
+    : String(freshSeed); // 11.09.2026: Слалом/Биатлон/Speedrun-RSG сюда же, свежий сид каждый забег, как Caravan/Классика
   mapSeqReset();
   if (typeof nebulaReseed==='function') nebulaReseed(); // v1.282.15: узор туманностей — свой на забег; раньше он менялся раз в секунду прямо в полёте
   mapRNG = (runMode==='daily') ? dailyRNG()
     : runMode==='theater' ? keyRNG(theaterDay||trackDayKey())
-    : runMode==='speedrun' ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
+    : (runMode==='speedrun' && !srRSG) ? keyRNG(SPEEDRUN_ETERNAL_DAY+'·speedrun') // 03.09.2026 «Set Seed»: тот же поток каждый забег, навсегда — SSG, не по дню
     : runMode==='relay' ? keyRNG(S.relaySeed+'·relay·'+(S.relayWatching?(S.relayLeg-1):S.relayLeg))
     : runMode==='custom' && typeof forgeCfgGet==='function' ? keyRNG(String(forgeCfgGet().seed||0)) // v1.108.1: тот же код друга — та же расстановка, не только те же настройки
-    : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке; 11.09.2026: Слалом/Биатлон тоже сюда
-  if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0) gyroKick(); // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно)
-  if (typeof calReset==='function') calReset(false,undefined,'takeoff'); else { input.baseG=null; input.baseB=null; } // автокалибровка нуля на старте — из неподвижной позы (v1.4.5); v1.109.1: источник — каждый взлёт это честный сброс, не дребезг, но партии 18 не хватало его в разбивке
+    : keyRNG(String(freshSeed)); // v1.280.0 «Честная Классика»: свой сид каждый забег — раньше был голый Math.random(), из которого нечего восстановить; призрак теперь может унести этот сид и показать те же самые препятствия при просмотре/гонке; 11.09.2026: Слалом/Биатлон/Speedrun-RSG тоже сюда
+  if (typeof gyroKick==='function' && typeof tgPkt==='number' && tgPkt===0){ const __t=performance.now(); gyroKick(); TAKEOFF_T.gyro=performance.now()-__t; } // мост мог заглохнуть при загрузке — перезапуск по жесту «играть» (идемпотентно); 11.09.2026: время моста — тоже в разбивку взлёта
+  if (typeof calReset==='function'){ const __t=performance.now(); calReset(false,undefined,'takeoff'); TAKEOFF_T.cal=performance.now()-__t; } else { input.baseG=null; input.baseB=null; } // автокалибровка нуля на старте — из неподвижной позы (v1.4.5); v1.109.1: источник — каждый взлёт это честный сброс, не дребезг, но партии 18 не хватало его в разбивке; 11.09.2026: время — тоже в разбивку взлёта
   input.tiltX=0; input.tiltY=0; // сброс low-pass — не тянет из меню
   tDown=false; tActive=false; input.touchX=null; input.touchY=null; // залипший жест (пропавший touchend в WebView) не паркует самолётик и не глушит гироскоп
   if (typeof echoReset==='function') echoReset(); // эхо-шлейф Призрака: чистый забег
@@ -374,6 +398,7 @@ function startGame(saved){
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     caravanTime:(runMode==='caravan'?caravanTierGet():60), // 07.09.2026 «Пуля/Блиц»: выбор игрока на кнопке режима, снимается один раз на старте — смена переключателя посреди полёта (невозможна физически, экран другой) всё равно не задела бы текущий забег
+    speedrunRSG:srRSG, // 11.09.2026 «Speedrun RSG»: тот же приём, что у caravanTime — снимается один раз на старте, не читается заново посреди полёта
     biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,relayLegDone:0,seed:freshSeed,
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
@@ -568,8 +593,9 @@ function gameOver(){
   if (isDistRecord){ Store.set('bestDist',distM); if (!isRecord) haptic('success'); }
   let srNewBest=false; // Спидран: рекорд — лучшее время до цели (v1.42.0)
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored){ // v1.282.20: часы восстановленного забега начинались бы с нуля — такой рекорд нечестен
-    const prevSr=saneNumber(Store.get('srBest',0),0);
-    if (!prevSr || S.time<prevSr){ Store.set('srBest',S.time); srNewBest=true; }
+    const srKey = S.speedrunRSG ? 'srBestRSG' : 'srBest'; // 11.09.2026 «Speedrun RSG»: свой личный рекорд, не мешается с постоянным SSG
+    const prevSr=saneNumber(Store.get(srKey,0),0);
+    if (!prevSr || S.time<prevSr){ Store.set(srKey,S.time); srNewBest=true; }
   }
   let slalomNewBest=false; // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — рекорд считается только на настоящей победе
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored){
@@ -791,7 +817,7 @@ function ghostUpload(category, track, skin, best, seed){
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
-    syncSpeedrunSubmit({ day:SPEEDRUN_ETERNAL_DAY, time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed»: постоянный ключ
+    syncSpeedrunSubmit({ day:(S.speedrunRSG?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY), time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed» / 11.09.2026 «RSG»: свой постоянный ключ на каждый вариант, одна и та же таблица
       track: ghostPackDaily() });
   // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — только настоящая победа (slalomWin), не срыв
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored && rec.length>=20 &&
@@ -2396,11 +2422,14 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
 });
 wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
 wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSpeedrun','speedrun'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
+[['modeDaily','daily'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
   wireOn(pair[0], 'click', ()=>{
     if (pair[1]==='daily'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 07.09.2026: 1CC убран; 07.09.2026: 100% удалён
     setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
 });
+// 11.09.2026 «Speedrun RSG»: тот же честный каркас, что уже у Caravan/Эстафеты — #modeSpeedrunFly
+// настоящий <button>, вышел из общего массива выше (карточка теперь не один клик, а кнопка+переключатель).
+wireOn('modeSpeedrunFly','click',()=>{ setRunMode('speedrun'); sfx.click(); haptic('light'); runStart(); });
 /* 07.09.2026 «Пуля/Блиц»: Caravan вышел из общего массива выше — у карточки теперь два честных
    отдельных элемента (#modeCaravanFly — настоящая кнопка полёта, #caravanTierSeg — переключатель
    тайминга под ней, свои клики на forgeSegBtn в caravanCardFill()). Ни closest(), ни keydown-хаки
@@ -3088,7 +3117,7 @@ function renderTopFor(screen, getCat, ids){
   const topPromise = (askCat==='daily' && typeof syncDailyTop==='function')
     ? syncDailyTop(typeof trackDayKey==='function'?trackDayKey():'')
     : (askCat==='speedrun' && typeof syncSpeedrunTop==='function')
-    ? syncSpeedrunTop(typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?SPEEDRUN_ETERNAL_DAY:'') // 03.09.2026 «Set Seed»: постоянный ключ
+    ? syncSpeedrunTop(typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?(speedrunRSGGet()?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY):'') // 03.09.2026 «Set Seed» / 11.09.2026 «RSG»: таблица зависит от текущего выбранного варианта на кнопке режима
     : (askCat==='slalom' && typeof syncSlalomTop==='function')
     ? syncSlalomTop(typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'') // 06.09.2026: тот же приём, что у Спидрана
     : (askCat==='biathlon' && typeof syncBiathlonTop==='function')

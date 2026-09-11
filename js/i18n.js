@@ -47,6 +47,10 @@ const I18N = {
 
     modeClassic:'Классика',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
+    // 11.09.2026 «Speedrun RSG»: второй вариант рядом с постоянной трассой (SSG) — свежий сид
+    // каждый забег, тот же каркас, что уже у Caravan (forgeSeg-переключатель под кнопкой полёта).
+    modeSpeedrunRSGD:'10 000 очков на время — новая трасса каждый забег',
+    speedrunSSG:'Постоянная', speedrunRSG:'Случайная',
     // v1.70.0: Пакт и «Без ударов» удалены — их ручки переехали в конструктор «Своя трасса»
     srGoal:'Цель', srFinish:'Финиш!', srNewBest:'Новый рекорд времени',
     modeDaily:'Небо месяца', modeDailyD:'Одно небо на всех игроков — весь месяц, поставь рекорд', dlNewBest:'Новый рекорд неба месяца',
@@ -278,6 +282,8 @@ const I18N = {
     modes:'Flight modes', modesBack:'Back',
     modeClassic:'Classic',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
+    modeSpeedrunRSGD:'10,000 points against the clock — a new track every run',
+    speedrunSSG:'Fixed', speedrunRSG:'Random',
     // v1.70.0: Pact and Hitless removed — their knobs moved into the Custom track builder
     srGoal:'Goal', srFinish:'Finish!', srNewBest:'New time record',
     modeDaily:'Track of the month', modeDailyD:'One track for every player, all month — set the record', dlNewBest:'New track of the month record',
@@ -442,6 +448,8 @@ const I18N = {
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia',
     modes:'Modos de vuelo', modesBack:'Atrás', modeClassic:'Clásico',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
+    modeSpeedrunRSGD:'10.000 puntos contra el reloj — una pista nueva en cada carrera',
+    speedrunSSG:'Fija', speedrunRSG:'Aleatoria',
     srGoal:'Meta', srFinish:'¡Meta!', srNewBest:'Nuevo récord de tiempo',
     modeDaily:'Pista del mes', modeDailyD:'Una pista para todos los jugadores, todo el mes — marca el récord',
     dlNewBest:'Nuevo récord de la pista del mes', dailyOnce:'2 intentos', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
@@ -621,6 +629,8 @@ const I18N = {
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância',
     modes:'Modos de voo', modesBack:'Voltar', modeClassic:'Clássico',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
+    modeSpeedrunRSGD:'10.000 pontos contra o relógio — uma pista nova a cada corrida',
+    speedrunSSG:'Fixa', speedrunRSG:'Aleatória',
     srGoal:'Meta', srFinish:'Chegada!', srNewBest:'Novo recorde de tempo',
     modeDaily:'Pista do mês', modeDailyD:'Uma pista para todos os jogadores, o mês inteiro — bata o recorde',
     dlNewBest:'Novo recorde da pista do mês', dailyOnce:'2 tentativas', dailyLeft:(n)=>n+(n===1?' restante':' restantes'),
@@ -799,6 +809,8 @@ const I18N = {
     modes:'Modes de vol', modesBack:'Retour',
     modeClassic:'Classique',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
+    modeSpeedrunRSGD:'10 000 points contre la montre — une piste nouvelle à chaque course',
+    speedrunSSG:'Fixe', speedrunRSG:'Aléatoire',
     srGoal:'Objectif', srFinish:'Arrivée !', srNewBest:'Nouveau record de temps',
     modeDaily:'Trace du mois', modeDailyD:'Une trace pour tous les joueurs, tout le mois — décroche le record', dlNewBest:'Nouveau record de la Trace du mois',
     dailyOnce:'2 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Plus de tentatives aujourd’hui · ton vol : '+s+' · nouvelles tentatives demain, même ciel tout le mois',

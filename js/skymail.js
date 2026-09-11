@@ -405,13 +405,31 @@ const BEACON=(()=>{
           if(now<stop && arr.length<300) requestAnimationFrame(tick); else resolve(arr); }
         requestAnimationFrame(tick);
       });
-      deltas.shift(); deltas.sort((a,b)=>a-b); // первый замер после промиса не показателен
+      /* 11.09.2026 «Разбивка взлёта», продолжение: первый замер раньше просто отбрасывался
+         («не показателен») — но это и есть время от запуска зонда до первой возможности
+         браузера вообще нарисовать кадр, то есть ВЕСЬ синхронный код startGame() после этой
+         точки (сид/состояние/echoReset и т.д.) плюс первый настоящий кадр полёта разом. Не
+         шум — единственное число, которое отвечает на «а что с первыми кадрами», раз мерить
+         их по отдельности (каждый на своей строке в startGame()) было бы избыточно для того
+         же самого куска синхронного кода, что уже ловит эта самая задержка. Владелец прямо
+         просил «первые кадры» в список — вот их место. */
+      const setupMs=Math.max(0, deltas.length?deltas[0]:0); // rAF-таймстамп иногда чуть раньше synchronous performance.now() (старт кадра, не момент коллбэка) — честный пол на нуле, не отрицательное число в отчёте
+      deltas.shift(); deltas.sort((a,b)=>a-b);
       const p50=deltas[Math.floor(deltas.length*0.5)]||0;
       const p95=deltas[Math.floor(deltas.length*0.95)]||0;
       const max=deltas[deltas.length-1]||0;
+      /* 11.09.2026 «Разбивка взлёта»: сам зонд не блокирующий — синхронный код startGame()
+         (ui.js), способный вызвать реальный скачок (AudioContext/keepAwake/мост Telegram/
+         калибровка датчика), успевает отработать целиком задолго до того, как этот promise
+         разрешится (2.5 реальных секунды против миллисекунд синхронного кода) — читаем
+         TAKEOFF_T (core.js) здесь безопасно, значения уже настоящие, не нулевые заготовки. */
+      const tt=(typeof TAKEOFF_T!=='undefined')
+        ? ' audio:'+TAKEOFF_T.audio.toFixed(0)+'ms wake:'+TAKEOFF_T.wake.toFixed(0)+'ms gyro:'+TAKEOFF_T.gyro.toFixed(0)+'ms cal:'+TAKEOFF_T.cal.toFixed(0)+'ms'
+        : '';
       lastProfile='dpr:'+dpr+'/'+effDpr+'(cap'+capV+') cvs:'+cvsW+'x'+cvsH+
         ' cpu:'+hc+' mem:'+mem+' tier:'+tier+' Q:'+lvl+'/'+mode+
-        ' frame p50:'+p50.toFixed(0)+'ms p95:'+p95.toFixed(0)+'ms max:'+max.toFixed(0)+'ms';
+        ' frame p50:'+p50.toFixed(0)+'ms p95:'+p95.toFixed(0)+'ms max:'+max.toFixed(0)+'ms'+tt+
+        ' setup:'+setupMs.toFixed(0)+'ms';
       signal('device_profile', lastProfile);
     }catch(e){}
   }
