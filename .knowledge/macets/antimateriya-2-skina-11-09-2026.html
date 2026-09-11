@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: 2 скина по антиматерии — «Рождение пары» (След) и «Аннигиляция 511 кэВ» (Вспышка)</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#0a1030;
+    --gold:#c9a45c; --gold-hi:#dba93c; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:22px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:22px;line-height:1.6;max-width:820px}
+  .sub b{color:var(--gold-hi)}
+
+  .section{margin-bottom:34px}
+  .secTitle{font-size:13px;letter-spacing:.04em;color:var(--gold-hi);margin-bottom:2px;text-transform:uppercase}
+  .secWhat{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;max-width:780px}
+  .secWhat b{color:var(--ink)}
+
+  .strip{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .frame{width:120px}
+  .frameLabel{font-size:10px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:.03em}
+  canvas{display:block;border-radius:12px;background:radial-gradient(ellipse at 50% 30%,var(--bg-1) 0%,var(--bg-2) 75%);
+    border:1px solid var(--line)}
+
+  .colorRow{display:flex;gap:14px;margin-top:16px}
+  .colorTag{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  .note{margin-top:16px;padding:12px 14px;border-radius:10px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.4);font-size:11.5px;color:var(--cream);line-height:1.65;max-width:780px}
+  .note b{color:var(--gold-hi)}
+  .footNote{margin-top:30px;padding:14px 16px;border-radius:12px;background:rgba(90,160,255,.06);
+    border:1px solid rgba(90,160,255,.25);font-size:12px;color:var(--ink);line-height:1.7;max-width:820px}
+  .footNote b{color:#8fd0ff}
+</style>
+</head>
+<body>
+  <h1>2 скина из исследования антиматерии — макет, ничего ещё не в игре</h1>
+  <div class="sub">Оба узора построены по настоящей физике из <b>.knowledge/RESEARCH-2026-09-ANTIMATTER.md</b>
+  (проверил геометрию численно до отрисовки — короткий скрипт, дуги ровно зеркальны и без излома в точке вилки).
+  Числа (цвет, точный радиус, категория «Вспышка/След», название, цена) — ничего не выбрано окончательно,
+  жду твоего слова.</div>
+
+  <div class="section">
+    <div class="secTitle">1. «Рождение пары» — След (кандидат)</div>
+    <div class="secWhat">Гамма-квант (невидимый) у ядра рождает пару электрон-позитрон — один путь
+      раздваивается на <b>два зеркальных дуговых рукава</b>, закрученных в противоположные стороны
+      (реальное следствие противоположных зарядов в магнитном поле). Стебель — невидимый фотон (едва
+      заметная пунктирная линия), вилка — момент рождения пары.</div>
+    <div class="strip" id="stripA"></div>
+    <div class="colorRow">
+      <span class="colorTag"><span class="swatch" style="background:#8fd0ff"></span>вариант А — холодный дуплет (голубой/розовый)</span>
+      <span class="colorTag"><span class="swatch" style="background:#dba93c"></span>вариант Б — единый золотой (как большинство premium-следов)</span>
+    </div>
+    <div class="note"><b>Физика источника:</b> порог рождения пары — 1.022 МэВ (удвоенная энергия покоя
+      электрона), радиус дуги в реальности пропорционален импульсу частицы, направление закрутки — знаку
+      заряда. В макете радиус дуги — 22px условно, не связан с реальной игровой скоростью корабля.</div>
+  </div>
+
+  <div class="section">
+    <div class="secTitle">2. «Аннигиляция 511 кэВ» — Вспышка (кандидат)</div>
+    <div class="secWhat">Электрон и позитрон при встрече превращаются РОВНО в два гамма-фотона
+      по <b>511 кэВ каждый</b>, летящих в точно противоположных направлениях (сохранение импульса) —
+      тот же принцип, на котором работают настоящие ПЭТ-сканеры. Строго два луча под 180°, ничего
+      больше — ни на одну уже сделанную вспышку (конусы/шары/кольца) не похоже.</div>
+    <div class="strip" id="stripB"></div>
+    <div class="colorRow">
+      <span class="colorTag"><span class="swatch" style="background:#fff"></span>вариант А — чистый белый (как настоящий гамма-квант)</span>
+      <span class="colorTag"><span class="swatch" style="background:#8fd0ff"></span>вариант Б — голубоватый (легче отличить от других белых вспышек)</span>
+    </div>
+    <div class="note"><b>Физика источника:</b> 511 кэВ — точная, не круглая энергия (это удвоенная
+      энергия покоя электрона E=mc²), поэтому число в названии — не украшение, а честная константа.</div>
+  </div>
+
+  <div class="footNote"><b>Что не решено:</b> категория (Вспышка/След/и то и другое), финальный цвет,
+    длительность/скорость анимации, куда именно в каталог (тема «Октябрь: Иллюзии» уже одобрена и занята —
+    это была бы отдельная новая тема или добавление к существующей физике/космос), название на русском для
+    игрока (рабочие названия здесь — не финальные). Жду решения по каждому пункту, где отмечено «не
+    додумываю».</div>
+
+<script>
+const TAU = Math.PI*2;
+function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; c.style.width=w+'px'; c.style.height=h+'px'; return c; }
+
+// ---------- Панель A: «Рождение пары» — filmstrip следа в 4 стадии ----------
+const R=22, forkY=14, sweep=70*Math.PI/180;
+function armPoint(side,t){ const ang=t*sweep;
+  return side<0 ? {x:-R+R*Math.cos(ang), y:forkY+R*Math.sin(ang)} : {x:R-R*Math.cos(ang), y:forkY+R*Math.sin(ang)}; }
+
+function drawPairFrame(ctx, stage, colA, colB){
+  ctx.save(); ctx.translate(60, 14);
+  // корпус-метка (условный нос корабля)
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-4,2); ctx.lineTo(4,2); ctx.closePath(); ctx.fill();
+  // стебель — невидимый фотон, едва заметный пунктир
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.setLineDash([2,3]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,2); ctx.lineTo(0,forkY); ctx.stroke(); ctx.setLineDash([]);
+  if(stage>0){
+    const steps=18;
+    [[-1,colA],[1,colB]].forEach(([side,col])=>{
+      for(let i=0;i<steps;i++){
+        const t0=i/steps, t1=(i+1)/steps;
+        if(t0>stage) return;
+        const age = 1-t0; // ближе к вилке — ярче со временем
+        const p0=armPoint(side,t0), p1=armPoint(side,Math.min(t1,stage));
+        ctx.strokeStyle=col(0.25+0.65*Math.min(1,(stage-t0)*3));
+        ctx.lineWidth=2.4*(1-t0*.4);
+        ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+      }
+    });
+  }
+  ctx.restore();
+}
+
+const stripA = document.getElementById('stripA');
+const framesA = [0.0, 0.35, 0.7, 1.0];
+const labelsA = ['фотон летит','рождение пары','рукава расходятся','полный узор'];
+framesA.forEach((stage,i)=>{
+  const wrap=document.createElement('div'); wrap.className='frame';
+  const cv=mkCanvas(120,110); const ctx=cv.getContext('2d');
+  const colA = a=>`rgba(143,208,255,${a})`, colB = a=>`rgba(255,158,201,${a})`;
+  drawPairFrame(ctx, stage, colA, colB);
+  wrap.appendChild(cv);
+  const lab=document.createElement('div'); lab.className='frameLabel'; lab.textContent=labelsA[i];
+  wrap.appendChild(lab);
+  stripA.appendChild(wrap);
+});
+
+// золотой моно-вариант, отдельная мини-плашка справа философии ради — используем 5-й кадр
+(function(){
+  const wrap=document.createElement('div'); wrap.className='frame';
+  const cv=mkCanvas(120,110); const ctx=cv.getContext('2d');
+  const gold=a=>`rgba(219,169,60,${a})`;
+  drawPairFrame(ctx, 1.0, gold, gold);
+  wrap.appendChild(cv);
+  const lab=document.createElement('div'); lab.className='frameLabel'; lab.textContent='вариант Б: золотой';
+  wrap.appendChild(lab);
+  stripA.appendChild(wrap);
+})();
+
+// ---------- Панель B: «Аннигиляция 511 кэВ» — filmstrip вспышки в 4 стадии ----------
+function drawAnnihFrame(ctx, p, colFn){
+  ctx.save(); ctx.translate(60, 55);
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-4,2); ctx.lineTo(4,2); ctx.closePath(); ctx.fill();
+  const len0=4, len1=46, lw=2.6*(1-p*.4);
+  ctx.strokeStyle=colFn(1-p*0.85); ctx.lineWidth=lw;
+  [0, Math.PI].forEach(ang=>{
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ang)*len0, Math.sin(ang)*len0*0.4);
+    const L=len0+p*(len1-len0);
+    ctx.lineTo(Math.cos(ang)*L, Math.sin(ang)*L*0.4);
+    ctx.stroke();
+  });
+  // яркая точка встречи в момент p~0
+  if(p<0.15){ ctx.fillStyle=`rgba(255,255,255,${1-p*6})`; ctx.beginPath(); ctx.arc(0,0,4-p*20,0,TAU); ctx.fill(); }
+  ctx.restore();
+}
+const stripB = document.getElementById('stripB');
+const framesB = [0.06, 0.35, 0.65, 1.0];
+const labelsB = ['встреча','разлёт начался','середина пути','рассеялись'];
+framesB.forEach((p,i)=>{
+  const wrap=document.createElement('div'); wrap.className='frame';
+  const cv=mkCanvas(120,110); const ctx=cv.getContext('2d');
+  drawAnnihFrame(ctx, p, a=>`rgba(255,255,255,${a})`);
+  wrap.appendChild(cv);
+  const lab=document.createElement('div'); lab.className='frameLabel'; lab.textContent=labelsB[i];
+  wrap.appendChild(lab);
+  stripB.appendChild(wrap);
+});
+(function(){
+  const wrap=document.createElement('div'); wrap.className='frame';
+  const cv=mkCanvas(120,110); const ctx=cv.getContext('2d');
+  drawAnnihFrame(ctx, 1.0, a=>`rgba(143,208,255,${a})`);
+  wrap.appendChild(cv);
+  const lab=document.createElement('div'); lab.className='frameLabel'; lab.textContent='вариант Б: голубой';
+  wrap.appendChild(lab);
+  stripB.appendChild(wrap);
+})();
+</script>
+</body>
+</html>
