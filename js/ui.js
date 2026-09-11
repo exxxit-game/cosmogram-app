@@ -2690,6 +2690,14 @@ function diagReport(){
   let padsN=0, padId=''; try{ if(navigator.getGamepads){ const ps=Array.from(navigator.getGamepads()).filter(p=>p&&p.connected);
     padsN=ps.length; padId=ps.length?ps[0].id.split('(')[0].trim():''; } }catch(e){}
   Ln.push('helm: '+(padsN?padsN+' · '+padId:'none')); // v1.99.6 «Паспорт штурвала»
+  /* 11.09.2026 (владелец, перед волной тестов «от телефона до телевизора»): на ТВ нет ни
+     тача, ни курсора — только пульт/геймпад через клавиатурные события (input.js уже
+     слушает ArrowLeft/Right/Up/Down+Enter, подтверждено кодом). Без этой строки по одному
+     отчёту нельзя было бы отличить «телефон без тача сам не пожалуется» от «тач в принципе
+     недоступен на этом устройстве» — matchMedia(pointer) честно различает грубый палец,
+     точную мышь и отсутствие указателя вовсе (ровно ТВ-случай). */
+  Ln.push('input: touch '+(('ontouchstart' in window)?'yes':'no')+' pts '+(navigator.maxTouchPoints||0)+
+    ' pointer '+(matchMedia('(pointer:coarse)').matches?'coarse':(matchMedia('(pointer:fine)').matches?'fine':'none')));
   Ln.push('world: '+W+'x'+H+' sc '+(Math.round(SC*100)/100)+' sheet '+canvas.width+'x'+canvas.height+' cap '+capPx);
   Ln.push('canvas: '+(typeof canvasContextLost!=='undefined'&&canvasContextLost?'context-lost':'ready')+' dpr-cap '+dprCap);
   Ln.push('motion: '+(RM?'reduce':'full')+' ink '+(P3?'display-p3':'srgb'));
