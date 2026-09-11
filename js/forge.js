@@ -997,7 +997,15 @@ let workshopSortMode='new';
 // логика 'mine' в workshopRenderList() ниже не тронуты — понадобятся будущей кнопке в «Создать».
 // «Избранное» тоже не отдельная вкладка — тап по уже выбранной «Лайки» ещё раз переключает
 // workshopLikedOnly, подпись меняется на «Твои», список сужается до лайкнутых тобой же.
-const WORKSHOP_SORTS=['new','top','plays','random'];
+// 12.09.2026, владелец (живой макет): «выбор автора» звучало, будто остальные небеса хуже —
+// заменено на простую золотую звезду без текста, как отдельный знак отличия, не категория.
+// Реально работающий механизм — не выдумка: список кодов, которые владелец сам добавляет сюда
+// (тот же масштаб, что PICO-8/оригинальный LittleBigPlanet «Team Picks» — один человек время от
+// времени отмечает то, что понравилось, см. .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md,
+// группа E) — пусто по умолчанию, не показывает звезду никому, пока владелец явно не попросит
+// добавить конкретный код.
+const WORKSHOP_FEATURED_CODES=[];
+const WORKSHOP_SORTS=['new','top','fav']; // 12.09.2026: «плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
 let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
@@ -1009,8 +1017,8 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
     WORKSHOP_SORTS.forEach(function(s){
       const b=document.createElement('button'); b.className='forgeChip'; b.dataset.sort=s;
       b.addEventListener('click', function(){
-        if(s==='top' && workshopSortMode==='top'){ workshopLikedOnly=!workshopLikedOnly; } // повторный тап по уже выбранной «Лайки» — переключатель все/твои
-        else { workshopSortMode=s; workshopLikedOnly=false; } // смена вкладки — переключатель сбрасывается, «Твои» не переживает уход на другую вкладку
+        if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
+        else { workshopSortMode=s; workshopLikedOnly=false; }
         workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
       }); // 07.09.2026: было без workshopFillLabels() — режим менялся честно, но подсветка .sel навсегда оставалась на «Новые» (владелец, живой скрин)
       sortEl.appendChild(b);
@@ -1018,18 +1026,29 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   }
   if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
     const chip=sortEl.children[i];
-    if(s==='random'){
-      // 08.09.2026: значок без слова — «Закреплённые»/«Случайные» слишком длинные, тот же
-      // #i-shuffle, что уже стоит у «Случайное небо» в Партитуре, не выдуман заново.
-      chip.classList.add('iconOnly');
-      chip.title=L.workshopSort_random||'Случайные';
-      if(!chip.querySelector('svg')) chip.innerHTML='<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
-    } else {
-      chip.classList.remove('iconOnly');
-      chip.textContent = (s==='top' && workshopLikedOnly) ? (L.workshopSort_topLiked||'Твои') : (L['workshopSort_'+s] || s);
-    }
-    chip.classList.toggle('sel', s===workshopSortMode);
+    chip.textContent = L['workshopSort_'+s] || s;
+    // 'fav' и 'top' оба реально шлют sort='top' на сервер — различает их только workshopLikedOnly,
+    // поэтому подсветка каждого чипа явно проверяет этот флаг, не только совпадение sort-строки.
+    const sel = s==='fav' ? (workshopSortMode==='top' && workshopLikedOnly) : (s===workshopSortMode && !(s==='top' && workshopLikedOnly));
+    chip.classList.toggle('sel', sel);
   });
+  // 12.09.2026: «Сюрприз» — был 4-й вкладкой в этом же ряду (sort='random', значок без подписи),
+  // владелец сам заметил, что подписи не влезали в 375px без прокрутки, а прокрутка здесь уже
+  // была временным костылём один раз (#forgeSubTabs) — не тем, к чему возвращаться намеренно.
+  // Переехал в отдельную кнопку рядом с рядом сортировки (#workshopSurprise, index.html),
+  // подпись у значка теперь есть всегда (Nielsen Norman Group: иконка без подписи неоднозначна
+  // на любом возрасте — тот же вывод, что и в исследовании .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md).
+  const surpriseBtn=$('workshopSurprise');
+  if(surpriseBtn){
+    surpriseBtn.classList.toggle('sel', workshopSortMode==='random');
+    if(!surpriseBtn.dataset.wired){
+      surpriseBtn.dataset.wired='1';
+      surpriseBtn.addEventListener('click', function(){
+        workshopSortMode='random'; workshopLikedOnly=false;
+        workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
+      });
+    }
+  }
 }
 function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
 function workshopRenderList(){
@@ -1047,7 +1066,24 @@ function workshopRenderList(){
     let tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
     const mine=workshopMyVotes();
     if(likedOnly) tracks=tracks.filter(function(t){ return mine.indexOf(t.code)>=0; }); // «Твои» — сужаем уже полученный топ по лайкам, без отдельного запроса на сервер
-    if(!tracks.length){ listEl.innerHTML=''; if(emptyEl){ emptyEl.classList.remove('hidden'); if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty; } return; }
+    if(!tracks.length){
+      listEl.innerHTML='';
+      if(emptyEl){
+        emptyEl.classList.remove('hidden');
+        if(likedOnly){
+          // 12.09.2026, владелец, живой тест руками: пустое «Избранное» было тупиком — фраза
+          // без действия, непонятно, что делать дальше. Настоящая кнопка вместо тупика.
+          emptyEl.innerHTML=(L.workshopEmptyFav||'пока пусто — сохрани понравившееся небо, и оно появится здесь')+
+            '<br><button class="btn ghost" id="workshopFavEmptyCTA" style="margin-top:10px">'+(L.workshopFavEmptyCTA||'Смотреть Топ')+'</button>';
+          const cta=$('workshopFavEmptyCTA');
+          if(cta) cta.addEventListener('click', function(){
+            workshopSortMode='top'; workshopLikedOnly=false;
+            workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
+          });
+        } else if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty;
+      }
+      return;
+    }
     if(emptyEl) emptyEl.classList.add('hidden');
     // 05.09.2026: isOwner решает сервер (настоящий Telegram id, не клиентский флаг) — здесь только
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
@@ -1096,6 +1132,19 @@ function workshopRenderList(){
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
       const status=t.status||'normal'; row.dataset.status=status;
+      // 12.09.2026, владелец (живой замер): звезда — новый узел на самой карточке (.wRow), не
+      // внутри .wBanner — измерено вживую, что внутри банера между верхней строкой (имя/значки)
+      // и нижней (запуски/автор) остаётся всего ~4px, коллизия с треугольником «Пожаловаться»
+      // при первой попытке встать в тот же правый столбик. Здесь звезда встаёт НАД этим
+      // столбиком, тем же правым краем (right:8px), 26px — тот же размер, что у «Пожаловаться».
+      if(WORKSHOP_FEATURED_CODES.indexOf(t.code)>=0){
+        row.style.position='relative';
+        const star=document.createElement('div');
+        star.className='wPickStar';
+        star.title=L.workshopPickTitle||'Отмечено автором игры';
+        star.innerHTML='<svg viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>';
+        row.appendChild(star);
+      }
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
