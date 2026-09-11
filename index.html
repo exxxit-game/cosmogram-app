@@ -1821,29 +1821,52 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    с «Изменить», тем же стилем (.btn.ghost), «пусть с двух сторон красиво будет». */
 .wRow{display:flex;flex-direction:column;padding:10px 11px;border:1px solid var(--line);
   border-radius:var(--r-card);background:rgba(22,38,56,.45)}
-.wBanner{position:relative;height:146px;border-radius:12px;overflow:hidden;margin-bottom:8px}
+/* 11.09.2026 «Меньше места» (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html,
+   одобрено — каждое число ниже измерено вживую двоичным поиском/getBoundingClientRect на
+   настоящем DOM, включая худший случай (8 значков препятствий + самое длинное имя из
+   возможных), не подобрано на глаз, см. [[feedback_izmeryat_ne_gadat_geometriya]]):
+   146px → 100px — настоящий минимум, при котором верхний ряд (имя+флаги) и нижний блок
+   (запуски/автор/значки) ещё не накладываются, с 2px запаса. Картинка ещё и «вылезает» за
+   отступ самой карточки (11px слева/справа, тот же, что у .wRow) — владелец: «окно над
+   кнопками не на всю ширину экрана», банер и кнопки и так были одной ширины МЕЖДУ СОБОЙ
+   (измерено), просто отступ карточки давил на всё сразу; теперь давит только на текст/кнопки,
+   картинка стоит вплотную к истинному краю карточки. Верхние углы скругления — те же 16px,
+   что у самой карточки (var(--r-card)), раз теперь банер сидит на её же границе. */
+.wBanner{position:relative;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden;
+  margin:0 -11px 8px -11px;width:calc(100% + 22px)}
 .wBanner canvas{width:100%;height:100%;display:block}
 .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
   background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
 .wBannerText{position:absolute;left:10px;right:10px;bottom:7px;pointer-events:none}
-/* 08.09.2026 (владелец, живой макет, финальный порядок): Сыграно → Создал → Название →
-   значки препятствий. «Создал» — заглавными и жирным (наследует общий uppercase страницы).
+/* 08.09.2026 (владелец, живой макет, финальный порядок): Сыграно → Создал → значки
+   препятствий. «Создал» — заглавными и жирным (наследует общий uppercase страницы).
    Значки препятствий — настоящий набор Партитуры (js/partitura.js PT_ICON_SVG/PT_KIND_COLOR),
    не текстовые таблетки: уже существовал, просто в другом месте игры. Каждая строка своя,
-   слева — справа честно свободное место про запас. */
+   слева — справа честно свободное место про запас.
+   11.09.2026: «Название» переехало наверх, в .wTopRow (см. ниже) — этой строки в
+   .wBannerText больше нет. */
 /* «Сыграно» — тот же золотой заглавный язык, что подписи в Конструкторе (.panel.quickEdit .k). */
 .wPlaysHint{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold);display:block}
 .wAuthorHint{font-size:9.5px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wName{font-size:14px;font-weight:700;color:#fff;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 11.09.2026: было — отдельная строка внизу картинки (margin-top:5px). Теперь живёт внутри
+   .wTopRow, в один ряд с «Пожаловаться»/«Закрепить»/«Скрыть» — flex:1 забирает всё свободное
+   место строки, min-width:0 даёт обрезке-многоточию отработать (без него flex-элемент не
+   сжимается меньше содержимого, и text-overflow:ellipsis не срабатывает). */
+.wName{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;flex:1;min-width:0;margin:0}
 .wStickerRow{display:flex;gap:5px;margin-top:6px}
 .wSticker{width:22px;height:22px;border-radius:7px;background:rgba(6,10,20,.55);
   display:flex;align-items:center;justify-content:center;flex:none}
 .wSticker svg{width:14px;height:14px}
 .wStickerMore{color:var(--muted)!important;font-size:10px;font-weight:700}
-.wVote{display:flex;align-items:center;gap:5px;
-  padding:6px 11px;border-radius:999px;background:rgba(6,10,20,.55);
-  border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:13px;font-weight:700}
-.wVote .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
+/* 11.09.2026: было — крупная плашка в левом верхнем углу (padding 6px 11px, 13px). Теперь
+   живёт в .wCornerStack (правый нижний угол, столбиком) — сжата, чтобы столбик из двух
+   кружков не был выше, чем нужно (измерено: с этим размером зазор до значков препятствий
+   при 8 штуках — 114px, с большим запасом). */
+.wVote{display:flex;align-items:center;gap:3px;
+  padding:4px 8px;border-radius:999px;background:rgba(6,10,20,.55);
+  border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:11px;font-weight:700}
+.wVote .ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
 .wVote.voted{background:rgba(255,159,176,.22);border-color:rgba(255,159,176,.7);color:#ff9fb0;
   box-shadow:0 0 14px rgba(255,120,150,.5)}
 .wVote.voted .ic{fill:currentColor;stroke:none}
@@ -1851,20 +1874,41 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    отменил прятать её за «⋯» («без спойлеров») — открытый значок в углу, тем же кружком-
    бейджем, что «⋯» само. .wCornerRow держит один или два таких кружка рядом (гость видит
    только жалобу; модератор — «⋯» под Закрепить/Скрыть; на СВОЁМ небе жалобы нет вообще —
-   см. myId/author_id в forge.js). */
-/* 08.09.2026 (владелец, живой скрин): «в избранное» сперва встала под сердечком — владелец
-   поправил: «в один ряд с лайк, а не под него». Теперь сердечко и звезда — один ряд слева,
-   тем же приёмом, что .wCornerRow справа (только растёт от левого края). На ВСЕХ карточках. */
-.wLeftRow{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:6px}
-.wCornerRow{position:absolute;top:8px;right:8px;display:flex;gap:6px}
+   см. myId/author_id в forge.js).
+   11.09.2026: было — сам absolute-позиционированный (top:8px;right:8px). Теперь живёт
+   внутри .wTopRow (та сама absolute), здесь только flex:none, чтобы не сжимался рядом с
+   именем. */
+.wCornerRow{display:flex;gap:6px;flex:none}
+/* 11.09.2026: новый общий верхний ряд — имя (растёт) слева, значки-кружки (Пожаловаться/
+   Закрепить/Скрыть) справа. Раньше имя стояло отдельной строкой внизу картинки — теперь
+   освобождает эту строку целиком, а тут делит место со значками, которые и так уже
+   резервировали верхнюю полосу картинки под себя. */
+.wTopRow{position:absolute;top:8px;left:8px;right:8px;display:flex;align-items:center;
+  justify-content:space-between;gap:6px}
 .wCorner{width:26px;height:26px;border-radius:50%;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
-  display:flex;align-items:center;justify-content:center;cursor:pointer}
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .wCorner .ic{width:14px;height:14px;fill:currentColor}
 .wCorner:disabled{opacity:.4;cursor:default}
 .wCornerDanger{color:#e0533d;border-color:rgba(224,83,61,.55)}
+/* 11.09.2026 (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html, одобрено):
+   было — «цвет»(fav)+«лайк»(vote) один ряд слева сверху (.wLeftRow, тот же приём, что у
+   .wCornerRow справа). Владелец, третий заход: «имя в один ряд с пожаловаться, цвет+лайк —
+   в правый нижний угол». Первая проба (обычный ряд в углу) реально накладывалась на значки
+   препятствий при 8 штуках — поймано вживую, не на глаз. Столбик (не ряд) + свой кружок
+   .wCornerStack .wCorner помельче (22px вместо 26px) убирает это без остатка. Порядок —
+   цвет сверху, лайк снизу (владелец, финальная правка). */
+.wCornerStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;
+  align-items:center;gap:4px}
+.wCornerStack .wCorner{width:22px;height:22px}
+.wCornerStack .wCorner .ic{width:12px;height:12px}
 .wActionRow{display:flex;gap:10px}
-.wActionRow button{flex:1;padding:8px 14px;font-size:13px;text-align:center;
+/* 11.09.2026 (владелец: «до сих пор лишнее вокруг вижу?») — кнопка наследовала margin:6px 0
+   от общего базового стиля кнопок игры (чужое правило, просто долетало): 6px сверху+снизу
+   «съедались» внутри самого ряда без всякого видимого отступа в CSS .wActionRow. Найдено
+   через getComputedStyle живьём. Обнулено ТОЛЬКО здесь — общий стиль кнопок в остальной
+   игре не тронут, нигде больше это не переиспользуется. */
+.wActionRow button{flex:1;padding:8px 14px;font-size:13px;text-align:center;margin:0;
   font-weight:600;letter-spacing:.04em;border-radius:var(--r-btn);cursor:pointer}
 /* 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно без
    лишнего клика» — Закрепить/Скрыть тоже открытые кружки-значки в углу (см. .wCorner
@@ -2590,9 +2634,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.237"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.237"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.237"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.238"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.238"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.238"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3500,25 +3544,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.237" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.237"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.237"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.237"></script>
-<script defer src="js/game.js?v=1.478.237" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.237"></script>
-<script defer src="js/sync.js?v=1.478.237"></script>
-<script defer src="js/render.js?v=1.478.237"></script>
-<script defer src="js/planetarium.js?v=1.478.237"></script>
-<script defer src="js/goldstar.js?v=1.478.237"></script>
-<script defer src="js/music.js?v=1.478.237"></script>
-<script defer src="js/gyro.js?v=1.478.237"></script>
-<script defer src="js/forge.js?v=1.478.237"></script>
-<script defer src="js/partitura.js?v=1.478.237"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.237"></script>
-<script defer src="js/card.js?v=1.478.237"></script>
-<script defer src="js/star.js?v=1.478.237"></script>
-<script defer src="js/cinema.js?v=1.478.237"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.237"></script>
+<script defer src="js/core.js?v=1.478.238" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.238"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.238"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.238"></script>
+<script defer src="js/game.js?v=1.478.238" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.238"></script>
+<script defer src="js/sync.js?v=1.478.238"></script>
+<script defer src="js/render.js?v=1.478.238"></script>
+<script defer src="js/planetarium.js?v=1.478.238"></script>
+<script defer src="js/goldstar.js?v=1.478.238"></script>
+<script defer src="js/music.js?v=1.478.238"></script>
+<script defer src="js/gyro.js?v=1.478.238"></script>
+<script defer src="js/forge.js?v=1.478.238"></script>
+<script defer src="js/partitura.js?v=1.478.238"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.238"></script>
+<script defer src="js/card.js?v=1.478.238"></script>
+<script defer src="js/star.js?v=1.478.238"></script>
+<script defer src="js/cinema.js?v=1.478.238"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.238"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: карточка Мастерской — минимум, найден двоичным поиском</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --line:rgba(255,255,255,.08); --r-card:16px; --r-btn:12px;
+    --gold:#c9a45c; --gold-hi:#f0c040; --muted:#7d8aa8; --ink:#f4f6fb;
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:600;
+    letter-spacing:.02em;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:#fce1b6;margin-bottom:4px;text-transform:none;font-weight:700}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5;font-weight:500}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:300px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+
+  /* --- Реальные классы карточки Мастерской (index.html .wRow/.wBanner/... + forge.js) --- */
+  .wRow{display:flex;flex-direction:column;padding:10px 11px;border:1px solid var(--line);
+    border-radius:var(--r-card);background:rgba(22,38,56,.45)}
+  .wBanner{position:relative;border-radius:12px;overflow:hidden;margin-bottom:8px;
+    background:linear-gradient(180deg,#2a0e10,#3a1210)}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wBannerText{position:absolute;left:10px;right:10px;bottom:7px;pointer-events:none}
+  .wPlaysHint{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold);display:block}
+  .wAuthorHint{font-size:9.5px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wStickerRow{display:flex;gap:5px;margin-top:6px}
+  .wSticker{width:22px;height:22px;border-radius:7px;background:rgba(6,10,20,.55);
+    display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .wActionRow{display:flex;gap:10px}
+  .wActionRow button{flex:1;padding:8px 14px;font-size:13px;text-align:center;
+    font-weight:600;letter-spacing:.04em;border-radius:var(--r-btn);border:1px solid var(--line);
+    background:rgba(22,38,56,.6);color:var(--ink)}
+  /* «Было»: кнопка наследует margin:6px 0 от общего базового стиля кнопок игры (не своё
+     правило, чужое, просто долетает) — 6px сверху + 6px снизу «съедаются» внутри самого
+     ряда, хотя видимого отступа в CSS для .wActionRow нет. Найдено через getComputedStyle
+     живьём, не на глаз. «Стало» — margin:0 СКОПИРОВАН только сюда (.wActionRow button),
+     общий стиль кнопок игры не тронут — нигде больше это не переиспользуется. */
+  .after .wActionRow button{margin:0}
+
+  /* --- БЫЛО: банер 146px, лайк+цвет плавают левым верхним углом, имя лежит в тёмном
+       скриме внизу картинки отдельной строкой (реальная сегодняшняя раскладка). --- */
+  .before .wBanner{height:146px}
+  .before .wTopRow{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:6px}
+  .before .wReport{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;
+    background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .before .wVote{display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;
+    background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700}
+  .before .wFav{width:26px;height:26px;border-radius:50%;background:rgba(6,10,20,.55);
+    border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex:none;font-size:12px}
+  .before .wName{font-size:14px;font-weight:700;color:#fff;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* --- СТАЛО (владелец, третий заход, всё проверено вживую в браузере — не на глаз):
+       — Название неба переезжает наверх, в один ряд с «Пожаловаться» (было отдельной
+         строкой внизу).
+       — Цвет (избранное) и лайк — переезжают в правый нижний угол картинки, СТОЛБИКОМ
+         (не в ряд — вживую наложились на значки препятствий при 8 штуках; столбик +
+         чуть меньше размер решает это без остатка), цвет сверху, лайк снизу.
+       — Банер: 146px → 118px. Измерено на настоящем «Разминка» + синтетическом
+         худшем случае (8 значков FORGE_KINDS + имя длиннее любого реального сейчас) —
+         ничего не накладывается, реальный зазор у самого тесного места ~114px.
+       — Итоговая высота всей карточки: 220.4px → 192.4px (измерено, не оценено). --- */
+  /* Владелец: «окно над кнопками не на всю ширину экрана» — банер и кнопки уже были ровно
+     одной ширины МЕЖДУ СОБОЙ (проверено вживую), просто у самой карточки есть свой отступ
+     (11px слева/справа), из-за которого ВСЁ (и банер, и кнопки) отступает от истинного края
+     экрана. Картинка теперь «вылезает» ровно на этот отступ — до края самой карточки (которая
+     и так уже у края экрана), текст/кнопки остаются с отступом, как были. */
+  .after .wBanner{height:100px;margin-left:-11px;margin-right:-11px;border-radius:16px 16px 12px 12px;width:calc(100% + 22px)}
+  .after .wTopRow{position:absolute;top:8px;left:8px;right:8px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .after .wName2{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  .after .wReport{width:26px;height:26px;border-radius:50%;flex:none;
+    background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .after .wCornerStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .after .wFavSm{width:22px;height:22px;border-radius:50%;background:rgba(6,10,20,.55);
+    border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .after .wVoteSm{display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:999px;
+    background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:700}
+
+  .note{margin-top:22px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:#fce1b6;text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:700px;font-weight:500}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:5px}
+  .measureTag{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);
+    color:#8cf5a0;font-size:10px;padding:2px 8px;border-radius:6px;z-index:6;font-weight:700}
+</style>
+</head>
+<body>
+  <h1>Карточка Мастерской — минимальная высота, найдена двоичным поиском в реальном DOM</h1>
+  <div class="sub">Четвёртая версия. Владелец спросил про размер окна превью на вкладке «Цвет» (#forgePreview — там 75px, «не интерактивно, чисто место на экране») как ориентир и попросил ужать ещё. Банер карточки Мастерской нельзя ужать ДО 75px — сверху всегда нужно имя+пожаловаться, снизу запуски+автор+значки, этого контента больше, чем у голого превью-неба — но настоящий безопасный минимум для НЕГО нашёлся двоичным поиском (не оценкой): 98px, взял 100px с 2px запаса.</div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="colTitle">Было — 220px, измерено</div>
+      <div class="wRow before">
+        <div class="wBanner">
+          <div class="wScrim"></div>
+          <div class="wTopRow"><button class="wVote">♥&nbsp;0</button><button class="wFav">🎨</button></div>
+          <div class="wReport">⚑</div>
+          <div class="wBannerText">
+            <div class="wPlaysHint">ЗАПУСКИ: 1</div>
+            <div class="wAuthorHint">АВТОР: ОЧЕНЬДЛИННОЕИМЯИГРОКА12345</div>
+            <div class="wName">Очень длинное название неба игрока для теста</div>
+            <div class="wStickerRow">
+              <div class="wSticker">⬡</div><div class="wSticker">▬</div><div class="wSticker">◈</div><div class="wSticker">✳</div>
+              <div class="wSticker">●</div><div class="wSticker">◉</div><div class="wSticker">◆</div><div class="wSticker">◎</div>
+            </div>
+          </div>
+        </div>
+        <div class="wActionRow"><button>ПОЛЁТ</button><button>ИЗМЕНИТЬ</button></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="colTitle after">Стало — 162px (банер-минимум + убран чужой margin у кнопок)</div>
+      <div class="wRow after">
+        <div class="wBanner">
+          <div class="measureTag">100px</div>
+          <div class="wScrim"></div>
+          <div class="wTopRow">
+            <div class="wName2">Очень длинное название неба игрока для теста</div>
+            <div class="wReport">⚑</div>
+          </div>
+          <div class="wCornerStack">
+            <button class="wFavSm">🎨</button>
+            <button class="wVoteSm">♥&nbsp;0</button>
+          </div>
+          <div class="wBannerText">
+            <div class="wPlaysHint">ЗАПУСКИ: 1</div>
+            <div class="wAuthorHint">АВТОР: ОЧЕНЬДЛИННОЕИМЯИГРОКА12345</div>
+            <div class="wStickerRow">
+              <div class="wSticker">⬡</div><div class="wSticker">▬</div><div class="wSticker">◈</div><div class="wSticker">✳</div>
+              <div class="wSticker">●</div><div class="wSticker">◉</div><div class="wSticker">◆</div><div class="wSticker">◎</div>
+            </div>
+          </div>
+        </div>
+        <div class="wActionRow"><button>ПОЛЁТ</button><button>ИЗМЕНИТЬ</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Путь до этого варианта (владелец, 11.09.2026, третий заход — всё проверено вживую в Browser-инструменте, не на бумаге):</b>
+    <ul>
+      <li><b>Имя — наверх, в ряд с «Пожаловаться».</b> Освобождает всю строку, где раньше имя стояло отдельно внизу.</li>
+      <li><b>Цвет+лайк — в правый нижний угол картинки, столбиком (не в ряд).</b> Первая проба (в ряд, обычный размер) реально накладывалась на значки препятствий при 8 штуках — поймано вживую, не на глаз. Столбик + размер чуть меньше (22px вместо 26px) убирает это полностью: при 8 значках зазор до ближайшего — 114px, с запасом.</li>
+      <li><b>Порядок в столбике</b> — цвет (избранное) сверху, лайк снизу (владелец, последняя правка).</li>
+      <li><b>Банер: 146px → 100px.</b> Настоящий минимум найден двоичным поиском по живому DOM (не подбором на глаз) — 98px, взят с 2px запаса.</li>
+      <li><b>Почему не 75px, как у превью «Цвет».</b> То окно — чистая картинка, ничего сверху/снизу. Здесь всегда есть контент поверх (имя+флаг наверху, запуски+автор+значки внизу) — меньше 98px эти два блока начинают наезжать друг на друга, проверено тем же двоичным поиском.</li>
+      <li><b>Ряд «Полёт»/«Изменить» — ещё 12px.</b> Владелец спросил «до сих пор лишнее вокруг вижу?» — да, нашлось: кнопка наследует <code>margin:6px 0</code> от общего стиля кнопок игры (чужое правило, просто долетает), 6px сверху+снизу съедались внутри ряда без всякого видимого отступа в CSS самого ряда. Обнулено ТОЛЬКО здесь (<code>.wActionRow button</code>) — общий стиль кнопок в остальной игре не тронут.</li>
+      <li><b>Итог всей карточки: 220.4px → 162.4px</b> (было −28px, потом −46px, теперь −58px) — все числа измерены на настоящем DOM, не оценены на глаз.</li>
+      <li><b>Картинка — на всю ширину карточки.</b> Владелец заметил: «окно над кнопками не на всю ширину экрана». Проверено — банер и кнопки уже были одной ширины МЕЖДУ СОБОЙ, просто у карточки свой отступ 11px слева/справа, из-за которого отступает вообще всё. Теперь только картинка «вылезает» ровно на этот отступ, до истинного края карточки (та и так уже у края экрана) — выигрыш ещё ~22px ширины, текст/кнопки остаются с отступом как были.</li>
+      <li>Кнопки «Полёт»/«Изменить» — не трогал (32.8px, обычный удобный размер тапа — комфорт для игроков, как просил).</li>
+    </ul>
+  </div>
+</body>
+</html>

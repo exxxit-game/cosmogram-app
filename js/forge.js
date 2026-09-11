@@ -1058,25 +1058,19 @@ function workshopRenderList(){
     // крупный значок в левом углу баннера, светится при лайке. Редкие действия
     // (Пожаловаться/Закрепить/Скрыть) — за «⋯» в правом углу, не видны, пока не нужны.
     // Играть переименован в «В полёт», без иконки, стоит парой с «Изменить» тем же стилем.
+    // 11.09.2026 «Меньше места» (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html,
+    // одобрено, четыре захода — всё сверено вживую в браузере, не на глаз, см. [[feedback_izmeryat_ne_gadat_geometriya]]):
+    // название переехало наверх, в один ряд с «Пожаловаться»/«Закрепить»/«Скрыть» (.wTopRow) —
+    // раньше стояло отдельной строкой внизу. Цвет+лайк — переехали из левого верхнего угла в
+    // правый нижний, столбиком, поменьше (.wCornerStack) — в ряд рядом со значками препятствий
+    // реально накладывались при 8 штуках, столбик+меньше размер это снял. Банер 146px→100px —
+    // настоящий минимум, найден двоичным поиском по живому DOM, не подобран на глаз.
     listEl.innerHTML=tracks.map(function(t){
       const own = !!(myId && t.author_id===myId); // 08.09.2026: «это моё небо», отдельно от «я модератор»
       const canReport = !own; // нельзя пожаловаться на своё же
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
-      // 08.09.2026 (владелец, живой скрин, поправка): «избранное» сперва встало под сердечком,
-      // владелец поправил — «в один ряд с лайк, а не под него». Один общий ряд слева (wLeftRow).
-      // Клик по звезде — сразу в первый свободный слот (экран из 10 ячеек ещё не построен).
-      '<div class="wLeftRow">'+
-      '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
-      // 08.09.2026 (владелец, живой скрин): «звезда путает, учитывая что это связано с цветом» —
-      // звезда заменена на двухцветный кружок (макет A/Б/В, владелец выбрал В) — читается как
-      // «образец цвета», не как обычная звезда-избранное. Пипетка (Б) отклонена — на 26px похожа
-      // на карандаш «Изменить», путает с соседней кнопкой.
-      // 09.09.2026 (владелец, живой скрин): двухцветный кружок тоже не читался как «цвет» —
-      // заменён на #i-color-fan (веер из 3 цветов, макет icon-swatch-fan-realsize.html, владелец
-      // выбрал вариант В). Не currentColor — свои три цвета зашиты в самом symbol.
-      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
-      '</div>'+
+      '<div class="wTopRow"><div class="wName"></div>'+
       '<div class="wCornerRow">'+
       // 10.09.2026 (владелец, живой макет): rect-ы восклицательного знака были без заливки —
       // наследовали тот же currentColor, что и сам треугольник, и сливались с ним, читаясь
@@ -1088,9 +1082,16 @@ function workshopRenderList(){
       // жалоба, «⋯»/скрывающий wModRow убраны совсем.
       (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
       '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
+      '</div></div>'+
+      // 11.09.2026: «цвет+лайк» — тот же .wVote/.wCorner data-act="fav", просто переехали
+      // из отдельного верхнего левого .wLeftRow в правый нижний угол картинки, столбиком
+      // (.wCornerStack), цвет сверху/лайк снизу — владелец подтвердил именно этот порядок.
+      '<div class="wCornerStack">'+
+      '<button class="wCorner" data-act="fav" title="В избранное"><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
+      '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
       '</div>'+
       '<div class="wBannerText"><div class="wPlaysHint" data-role="plays"></div><div class="wAuthorHint" data-role="author"></div>'+
-      '<div class="wName"></div><div class="wStickerRow" data-role="stickers"></div></div></div>'+
+      '<div class="wStickerRow" data-role="stickers"></div></div></div>'+
       '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
       '</div>'; }).join('');
     tracks.forEach(function(t,i){
