@@ -61,6 +61,12 @@ function setBack(visible){
 // раньше жил только внутри tg.BackButton.onClick; вынесен отдельно, чтобы тем же самым
 // правилом пользовалась и history-ловушка для аппаратной/жестовой «Назад» вне Telegram.
 function backAction(){
+  // 11.09.2026 (владелец, живое устройство): «✕» окна «явления» гасится там, где есть родная
+  // «Назад» Telegram (см. .ghost у #angarPvZoomClose) — значит родная «Назад» обязана сама
+  // закрывать именно это окно первой, раньше обычного перехода по экрану. Проверка — первой
+  // строкой, до screenName: модалка лежит ПОВЕРХ экрана «ангар», не является отдельным screenName.
+  const zoomModal=$('angarPvZoomModal');
+  if(zoomModal && zoomModal.classList.contains('open')){ angarPvZoomClose(); return; }
   if(screenName==='game') pauseGame();
   else if(screenName==='pause') resumeGame();
   else if(screenName==='hangar') toMenu();
@@ -112,6 +118,9 @@ function pauseGhostSync(){
   // setScreen()), а там родная «Назад» Telegram всегда скрыта (setBack(name!=='menu')) — это
   // «Закрыть» карточки, не «Назад» экрана, заменить её в этот момент нечем.
   document.querySelectorAll('.menuBack:not(#firstFlightClose)').forEach(function(el){ el.classList.toggle('ghost', nativeBack); });
+  // 11.09.2026: тот же приём для «✕» окна «явления» — не .menuBack (свой стиль, без обруча,
+  // владелец 10.09.2026), но та же логика «родная Назад есть — своя дверь гаснет».
+  toggleCls('angarPvZoomClose','ghost', nativeBack);
 }
 pauseGhostSync();
 function setScreen(name){
