@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: явление не заходит за золотой язычок «Cosmogram»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#12224a; --bg-2:#0a1030;
+    --gold:#c9a45c; --gold-hi:#dba93c; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5}
+  .fixNote{font-size:11.5px;color:#ffb3b3;margin-bottom:18px;text-transform:none;line-height:1.5;
+    background:rgba(255,90,90,.08);border:1px dashed rgba(255,140,140,.4);border-radius:10px;padding:9px 12px;max-width:600px}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:280px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .colTitle.after{color:var(--gold-hi)}
+  /* Ниже — ТЕ ЖЕ значения, что #angarPvZoomCard/#angarPvZoomStage/#angarPvZoomFactWrap/
+     #angarPvZoomMark/#angarPvZoomFact в index.html (не пересочинено на глаз): Card без
+     горизонтальных отступов (canvas во всю ширину), 18px-инсет только у FactWrap. */
+  .card{background:radial-gradient(ellipse at 50% 35%,var(--bg-1) 0%,var(--bg-2) 65%);
+    border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+  .stage{position:relative;width:100%;height:280px;overflow:hidden}
+  /* Упрощённая, но узнаваемая форма «Биполярной туманности» — реальная задача не в точности
+     узора (canvas-рендерер не трогаем), а в том, докуда доля дотягивается по вертикали
+     относительно язычка. */
+  .lobe{position:absolute;left:50%;width:190px;height:118px;border-radius:50%;
+    background:radial-gradient(ellipse at 50% 35%, #f7b8ec 0%, #b24fc9 45%, #5a2a86 80%, transparent 100%)}
+  .lobeTop{top:10px;transform:translateX(-50%)}
+  .lobeBot{transform:translateX(-50%)}
+  .waist{position:absolute;left:50%;top:128px;width:13px;height:13px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 10px rgba(255,255,255,.7)}
+  .factWrap{padding:0 18px 18px;display:flex;flex-direction:column;align-items:flex-end}
+  .mark{background:var(--gold-hi);border-radius:8px 8px 0 0;padding:3px 10px;margin-bottom:-1px;position:relative;z-index:1}
+  .mark span{font-size:10px;letter-spacing:.03em;color:#2c1f08;text-transform:uppercase;font-weight:600}
+  .factCard{width:100%;background:rgba(15,31,61,.95);border:1px solid var(--line-gold);border-radius:16px 0 16px 16px;
+    padding:12px 14px;font-size:12px;line-height:1.5;color:var(--ink)}
+
+  /* --- БЫЛО: реальные измеренные координаты (getBoundingClientRect на живом устройстве) —
+       низ канваса и верх язычка на ОДНОЙ линии, зазор 0px. Доля рисуется вплоть до самого края. --- */
+  .before .lobeBot{bottom:-46px}
+
+  /* --- СТАЛО: канвас получает жёсткий clip снизу РОВНО на высоту язычка (25px, измерено
+       живьём) + небольшой запас — форма физически не может нарисоваться в эту полосу, для
+       ЛЮБОГО явления, не только для этого. Доля останавливается на своём естественном крае,
+       выше полосы. Язычок НИКУДА не переезжает — то же место, что и слева. --- */
+  .after .lobeBot{bottom:30px}
+  .after .reserve{position:absolute;left:0;right:0;bottom:0;height:31px;background:rgba(255,90,90,.08);border-top:1px dashed rgba(255,140,140,.5)}
+
+  .note{margin-top:22px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:720px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:5px}
+</style>
+</head>
+<body>
+  <h1>«Явление» не заходит за золотой язычок — жёсткий резерв снизу, не разовая правка</h1>
+  <div class="sub">Форма туманности упрощена (сам узор рисует canvas, не макет) — важна именно граница снизу, она взята из реальных измерений (getBoundingClientRect на живой странице).</div>
+  <div class="fixNote"><b>Правка после замечания владельца:</b> в первой версии этого макета язычок был приклеен поверх холста и съехал в сторону от карточки факта под ним. Исправлено — теперь та же структура, что в коде: язычок стоит НИЖЕ холста, вплотную к карточке факта, с тем же отступом 18px, что и она. Место язычка не меняется этой правкой вообще, слева и справа он на одном и том же месте.</div>
+  <div class="cols">
+    <div class="col">
+      <div class="colTitle">Было — зазор 0px (измерено)</div>
+      <div class="card before">
+        <div class="stage">
+          <div class="lobe lobeTop"></div>
+          <div class="waist"></div>
+          <div class="lobe lobeBot"></div>
+        </div>
+        <div class="factWrap">
+          <div class="mark"><span>Cosmogram</span></div>
+          <div class="factCard">Быстрый звёздный ветер, сжатый медленным экваториальным поясом, раздувает две полярные доли — реальный механизм, ~13% планетарных туманностей биполярны</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="colTitle after">Стало — резерв над язычком, доля выше линии</div>
+      <div class="card after">
+        <div class="stage">
+          <div class="lobe lobeTop"></div>
+          <div class="waist"></div>
+          <div class="lobe lobeBot"></div>
+          <div class="reserve"></div>
+        </div>
+        <div class="factWrap">
+          <div class="mark"><span>Cosmogram</span></div>
+          <div class="factCard">Быстрый звёздный ветер, сжатый медленным экваториальным поясом, раздувает две полярные доли — реальный механизм, ~13% планетарных туманностей биполярны</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Что меняется (владелец, живой скрин с кругом, 11.09.2026):</b>
+    <ul>
+      <li>Сегодняшняя более ранняя правка («явление должно доходить до карточки факта, не висеть в пустоте») разрешила рисунку тянуться до самого низа холста — для этой туманности (две доли друг над другом, самая высокая форма из всех) это ровно совпало с линией язычка. Измерено вживую: зазор между низом канваса и язычком — 0px, впритык.</li>
+      <li><b>Язычок остаётся там же</b> — он и так уже «только в углу» (справа, прижат к карточке факта, «внахлёст» — это отдельная, уже одобренная ранее правка стыковки с карточкой, её не трогаю). Проблема не в его месте, а в том, что рисунок явления имеет право дотянуться ДО НЕГО вплотную — холст (Stage) шире карточки факта (у неё свой отступ 18px), поэтому явление визуально «доходит» ровно до линии, где начинается язычок.</li>
+      <li><b>Фикс — жёсткий предел снизу, один раз, для ВСЕХ явлений.</b> Канвас получает обрезку (clip) на реальную высоту язычка + небольшой запас — форма физически не может нарисоваться в эту полосу, кто бы что ни рисовал (сегодняшняя туманность, любая будущая тема). Не подбираю число под одну эту туманность — иначе завтра найдётся другая высокая форма с той же бедой.</li>
+      <li>Проверю после «да» на нескольких явлениях разной формы (не только на туманности) — вдруг где-то обрезка будет заметна как ровный срез, а не как естественный край; если так — вернусь с этим отдельно, не буду тихо оставлять как есть.</li>
+    </ul>
+  </div>
+</body>
+</html>
