@@ -118,11 +118,11 @@ const CINEMA_CODECS=[
   {id:'h264', str:'avc1.42001E', mux:'avc'},
   {id:'vp9',  str:'vp09.00.10.08', mux:'vp9'},
 ];
-async function pickVideoCodec(w, h){
+async function pickVideoCodec(w, h, bitrate){
   w = w||1080; h = h||1920;
   if (typeof VideoEncoder==='undefined') return null; // старый браузер — честно ничего, не гадаем
   for (const codec of CINEMA_CODECS){
-    const cfg={ codec:codec.str, width:w, height:h, bitrate:2_000_000, framerate:30, hardwareAcceleration:'no-preference' };
+    const cfg={ codec:codec.str, width:w, height:h, bitrate:bitrate||2_000_000, framerate:30, hardwareAcceleration:'no-preference' };
     try{
       const r = await VideoEncoder.isConfigSupported(cfg);
       if (r && r.supported) return { id:codec.id, mux:codec.mux, config:cfg };
@@ -209,11 +209,11 @@ async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
 // довод — запись всё это время была выключена этим же рубильником, значит в той ленте
 // cinemaStart вообще ни разу не вызывался, ей нечем ни подтвердить, ни опровергнуть баг.
 const CINEMA_DISABLED = false;
-async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption){
+async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bitrate){
   if (CINEMA_DISABLED) return false;
   if (_cinemaRec) return false; // уже пишем — вторая запись поверх первой не начинается
   if (!canvas || !canvas.width || !canvas.height) return false;
-  const picked = await pickVideoCodec(canvas.width, canvas.height);
+  const picked = await pickVideoCodec(canvas.width, canvas.height, bitrate);
   if (!picked) return false; // честный отказ — на этом устройстве нет рабочего кодека
 
   // 30.08.2026: прототип вжигания текста — отдельный канвас-компоновщик, живой канвас игры не трогаем
@@ -723,7 +723,16 @@ async function cinemaClipShare(){
    плюс собственный цикл анимации узоров 3-6с, паттерн должен повториться хотя бы пару
    раз): 15 секунд, не 1-2 — короче теряет смысл, никто не успеет разглядеть впервые
    увиденное явление. */
-const CINEMA_ANGAR_ZOOM_MS = 15000;
+/* 11.09.2026, владелец: «зачем нам нужно было 15 секунд? разве явление требует 15 секунд?» —
+   верно, то число было выбрано под вирусность в сторис (нужно успеть разглядеть незнакомое
+   явление); для личного «поделиться файлом» не нужно — узор обычно зациклен за несколько
+   секунд, дольше только раздувает время записи и файл без пользы. 4 секунды — чуть больше
+   одного цикла у самых медленных явлений (проверено по cycleMs в fx-партиях, большинство
+   1600-4600мс). Заодно поднят битрейт (владелец: «подними качество, пробуй варианты») — при
+   таком коротком ролике 6 Мбит/с даёт файл сопоставимого размера со старым (15с×2Мбит/с),
+   но втрое плотнее бит на кадр — меньше плоских градиентов от сжатия. */
+const CINEMA_ANGAR_ZOOM_MS = 4000;
+const CINEMA_ANGAR_ZOOM_BITRATE = 6_000_000;
 let _cinemaAngarZoomBusy=false;
 function cinemaAngarZoomBusy(){ return _cinemaAngarZoomBusy; }
 async function cinemaAngarZoomShare(canvas, onStart, onEnd){
@@ -732,7 +741,7 @@ async function cinemaAngarZoomShare(canvas, onStart, onEnd){
   if (typeof onStart==='function') onStart();
   try{
     _cinemaOwner='angarZoom';
-    const ok = await cinemaStart(canvas);
+    const ok = await cinemaStart(canvas, null, null, null, CINEMA_ANGAR_ZOOM_BITRATE);
     if (!ok){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
     await new Promise(r=>setTimeout(r, CINEMA_ANGAR_ZOOM_MS));
     const blob = await cinemaStop();
@@ -743,40 +752,6 @@ async function cinemaAngarZoomShare(canvas, onStart, onEnd){
       if (typeof haptic==='function') haptic('light');
     } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
   }catch(e){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
-  finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
-}
-
-/* 11.09.2026 «В Историю Telegram» у явления (владелец: «нет кнопки шеринга, когда я внутри
-   Telegram» — navigator.share с файлами выше внутри Telegram почти всегда недоступен, тот
-   самый живой пробел из [[project_yavlenie_share_klikabelnaya_ssylka]]): та же запись канваса,
-   что cinemaAngarZoomShare() выше (cinemaStart/cinemaStop, 15 секунд), но вместо системного
-   «Поделиться файлом» — путь cinemaClipStory() ниже (грузим на сервер, tg.shareToStory без
-   widget_link — владелец 11.09.2026 попросил убрать кнопку «Играть» с истории, некрасиво
-   поверх видео). Отдельная функция, не общая с cinemaClipStory() — та шлёт
-   cinemaExportHighlightCard() (хайлайт полёта), эта — сам канвас явления напрямую. Своя кнопка
-   (#angarPvZoomStory), не общий гейт с cinemaAngarZoomShare() — владелец явно захотел ДВЕ
-   отдельные кнопки в ряду, не одну умную. */
-async function cinemaAngarZoomStory(canvas, onStart, onEnd){
-  if (_cinemaAngarZoomBusy || cinemaActive()) return;
-  _cinemaAngarZoomBusy=true;
-  if (typeof onStart==='function') onStart();
-  try{
-    _cinemaOwner='angarZoom';
-    const ok = await cinemaStart(canvas);
-    if (!ok){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
-    await new Promise(r=>setTimeout(r, CINEMA_ANGAR_ZOOM_MS));
-    const blob = await cinemaStop();
-    if (!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
-    const dataUrl=await blobToDataURL(blob);
-    const r=await syncFetch(SYNC_URL,{action:'clip_url',initData:tg.initData,mp4:dataUrl});
-    const ans=await r.json();
-    if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
-    tg.shareToStory(ans.url);
-    if (typeof haptic==='function') haptic('light');
-  }catch(e){
-    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_story_fail', String((e&&e.message)||e).slice(0,60));
-    if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)');
-  }
   finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
 }
 

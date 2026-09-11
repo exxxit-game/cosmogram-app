@@ -1230,8 +1230,14 @@ function angarShip(x, sk, s, bolshoy){
      (PREM_FX_MAP). Однотонным (без sk.fx вообще) явление — большое пульсирующее свечение
      их же цвета (angarPvFxPlainGlow), оседающее в обычную ауру. Исключение — «Бумажный»
      (id0, владелец явно попросил кроме него): дефолтный старт-скин, без явления, сразу корпус. */
-  const angarFxFn = bolshoy && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
-  const fxEntry = bolshoy && (angarFxFn || (!sk.fx && sk.id!==0));
+  /* 11.09.2026 (владелец, живой скрин «Коллекция»/«След»: «всё сразу отображается и вспышка
+     и след и явления скина... одно другому мешает, они не должны все сразу работать в одном
+     окне») — явление/узор скина, вспышка (правка 29.08.2026) и след (правка 10.09.2026)
+     добавлялись в это окно по отдельности, каждый раз по отдельной просьбе — вместе они
+     конкурируют за один и тот же маленький борт. Теперь каждый показывается только на СВОЕЙ
+     вкладке (angarCat), не на всех сразу — тот же принцип применён к вспышке/следу выше. */
+  const angarFxFn = bolshoy && angarCat==='color' && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  const fxEntry = bolshoy && angarCat==='color' && (angarFxFn || (!sk.fx && sk.id!==0));
   const fxState = fxEntry ? angarPvFxPhase(sk.id) : null;
   const hullAlpha = fxState ? (fxState.phase==='event' ? 0 : fxState.tt) : 1;
   if(bolshoy && hullAlpha>0){ // в небе борт светится так же, как в полёте: аура кормы и аура корпуса
@@ -1254,8 +1260,8 @@ function angarShip(x, sk, s, bolshoy){
      04.09.2026 (владелец, живое устройство): рисовалась ПОСЛЕ борта — ложилась поверх
      корпуса вместо подложки под ним. Перенесена сюда, до заливки корпуса — тот же порядок,
      что теперь и в render.js:drawScene (drawLaunchFlash до drawPlane). */
-  if(bolshoy && hullAlpha>0){
-    const pvFlash = angarCat==='flash' ? angarSel : S.launchFx;
+  if(bolshoy && hullAlpha>0 && angarCat==='flash'){
+    const pvFlash = angarSel;
     /* 07.09.2026, владелец: «Нет» (id0) явным исключением — раньше полагались на то, что
        0 сам по себе ложный в if(pvFlash) (работало и так), но владелец просил явное «для
        Нет вообще не смотрим в каталог вспышек», не полагаться на совпадение с ложным нулём. */
@@ -1287,8 +1293,8 @@ function angarShip(x, sk, s, bolshoy){
      след показывался только на плитке в сетке (angarBuildGrid, renderTrailPattern), в большое
      окно сверху так и не добавили следом. Тот же приём, что у вспышки чуть выше — только цепляем
      angarSel/S.trail вместо angarSel/S.launchFx, и позиция ниже корпуса (след тянется сзади). */
-  if(bolshoy && hullAlpha>0){
-    const pvTrail = angarCat==='trail' ? angarSel : S.trail;
+  if(bolshoy && hullAlpha>0 && angarCat==='trail'){
+    const pvTrail = angarSel;
     if(pvTrail!==0 && pvTrail){ const tr=TRAILS_BY_ID.get(pvTrail);
       if(tr && tr.style && tr.style!=='none'){
         const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
@@ -1407,8 +1413,8 @@ function angarPvDraw(t){
      функция это гарантирует, см. её комментарий). Поднято ДО поворота ниже (было — после
      angarShip()) по той же причине, что и сам фикс покачивания: нужно знать фазу ДО поворота,
      не после. */
-  const angarFxFnPv = sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
-  const fxEntryPv = angarFxFnPv || (!sk.fx && sk.id!==0);
+  const angarFxFnPv = angarCat==='color' && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  const fxEntryPv = angarCat==='color' && (angarFxFnPv || (!sk.fx && sk.id!==0));
   const fxStatePv = fxEntryPv ? angarPvFxPhase(sk.id) : null;
   const hullAlphaPv = fxStatePv ? (fxStatePv.phase==='event' ? 0 : fxStatePv.tt) : 1;
   x.save(); x.translate(W/2,H/2+10);
@@ -1661,7 +1667,7 @@ function angarPvZoomOpen(cat,item){
   const m=$('angarPvZoomModal'); if(!m||!item) return;
   angarPvZoomCat=cat; angarPvZoomItem=item;
   m.classList.add('open'); sfx.click(); haptic('light');
-  angarPvZoomShareGate(); angarPvZoomStoryGate();
+  angarPvZoomShareGate();
   if(!angarPvZoomRaf) angarPvZoomRaf=requestAnimationFrame(angarPvZoomDraw);
 }
 function angarPvZoomClose(){
@@ -1675,13 +1681,9 @@ wireOn('angarPvZoomModal','click',e=>{ if(e.target && e.target.id==='angarPvZoom
 /* 10.09.2026 «Поделиться явлением» — та же дверь-гейт, что cardShareGate() в card.js: кнопка
    скрыта, пока не подтверждено, что этот браузер вообще умеет navigator.share с файлами
    (видео сюда, не картинку — пробный File с video/mp4, не image/png).
-   11.09.2026 (владелец: «нет кнопки шеринга, когда я внутри Telegram» — внутри Telegram
-   navigator.share с файлами выше почти всегда недоступен, кнопка молчала именно там, где
-   чаще всего смотрят на явление): рядом встала #angarPvZoomStory — ДВЕ независимые кнопки
-   со своими гейтами (владелец явно выбрал два отдельных значка, не один умный), макет
-   podelitsya-istoriya-knopka-11-09-2026.html, одобрено вторым заходом («в один ряд, кнопки
-   под правую руку»). Каждая гасится сама по себе — на некоторых окружениях (Telegram
-   Desktop) могут быть видны обе разом, это ожидаемо, не баг. */
+   11.09.2026: рядом стояла ещё «В Историю» (#angarPvZoomStory, tg.shareToStory) — владелец
+   попросил убрать целиком (качество видео не устроило ни в исходном, ни в переработанном
+   виде), осталась только эта кнопка. */
 function angarPvZoomShareGate(){
   const b=$('angarPvZoomShare'); if(!b) return;
   let can=false;
@@ -1691,21 +1693,14 @@ function angarPvZoomShareGate(){
   }catch(e){}
   b.classList.toggle('hidden', !can);
 }
-function angarPvZoomStoryGate(){
-  const b=$('angarPvZoomStory'); if(!b) return;
-  const can=typeof tg!=='undefined' && tg && tg.shareToStory && tg.initData &&
-    typeof tgv==='function' && tgv('7.8') && typeof SYNC_URL!=='undefined';
-  b.classList.toggle('hidden', !can);
-}
+/* 11.09.2026, владелец: «удаляй возможность делиться в сторис» — качество видео (кодек/
+   сжатие) не устроило ни в исходном, ни в переработанном виде, кнопка и весь её путь
+   (cinemaAngarZoomStory, тот же кодек-конвейер, что и у «Поделиться») убраны целиком.
+   «Поделиться» (файлом, navigator.share) — тот же путь, не тронут, владелец не просил. */
 wireOn('angarPvZoomShare','click',()=>{
   const b=$('angarPvZoomShare'); if(!b||!angarPvZoomItem) return;
   const sc=angarPvStoryCanvasStart();
   cinemaAngarZoomShare(sc.canvas, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ sc.stop(); b.disabled=false; b.classList.remove('recording'); });
-});
-wireOn('angarPvZoomStory','click',()=>{
-  const b=$('angarPvZoomStory'); if(!b||!angarPvZoomItem) return;
-  const sc=angarPvStoryCanvasStart();
-  cinemaAngarZoomStory(sc.canvas, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ sc.stop(); b.disabled=false; b.classList.remove('recording'); });
 });
 
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4

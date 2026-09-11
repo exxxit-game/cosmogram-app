@@ -1066,8 +1066,7 @@ function workshopRenderList(){
     // реально накладывались при 8 штуках, столбик+меньше размер это снял. Банер 146px→100px —
     // настоящий минимум, найден двоичным поиском по живому DOM, не подобран на глаз.
     listEl.innerHTML=tracks.map(function(t){
-      const own = !!(myId && t.author_id===myId); // 08.09.2026: «это моё небо», отдельно от «я модератор»
-      const canReport = !own; // нельзя пожаловаться на своё же
+      const canReport = true; // 11.09.2026, владелец: «верни кнопку пожаловаться, хочу её снова видеть» — раньше пряталась на своих же треках (!own, own=t.author_id===myId), теперь видна всегда, в том числе на своих
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
       '<div class="wTopRow"><div class="wName"></div>'+
