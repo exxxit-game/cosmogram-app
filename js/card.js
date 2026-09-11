@@ -301,7 +301,8 @@ async function cardSend(){
   b._busy=0;
 }
 /* v1.97.1 «Сторис»: та же карточка — в истории. PNG → сервер (card_url) → публичный адрес →
-   tg.shareToStory(media_url, {widget_link}) — у истории кнопка «Играть». Дорога уже построена шагом Г. */
+   tg.shareToStory(media_url) — без widget_link (11.09.2026, владелец попросил убрать кнопку
+   «Играть» поверх истории, некрасиво). Дорога уже построена шагом Г. */
 function cardStoryGate(){
   const b=$('cardStory'); if(!b) return;
   const can=typeof tg!=='undefined' && tg && tg.shareToStory && tg.initData &&
@@ -316,7 +317,7 @@ async function cardStory(){
     const r=await syncFetch(SYNC_URL,{action:'card_url',initData:tg.initData,png});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
-    tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:L.cardStoryBtn||'Играть'}});
+    tg.shareToStory(ans.url);
     sfx.click(); haptic('light');
   }catch(e){ if(typeof toast==='function') toast(L.cardChatErr||'Не вышло — сохрани файлом','rgba(255,159,176,.5)'); haptic('error'); }
   b._busy=0;

@@ -146,7 +146,7 @@ const I18N = {
     cardHint:'Сохрани — и кинь друзьям', cardRec:'Рекорд побит!', cardBeat:'Сможешь больше?', // v1.96.0: скриншот не нужен — есть файл
     cardSave:'Сохранить', cardShare:'Поделиться текстом', // v1.96.0 «Одна дверь»: файл — главная дверь, текст — тихая
     cardChat:'В чат', cardChatErr:'Не вышло — сохрани файлом', // v1.97.0 «Живая карточка»: картинка сама летит в чат
-    cardStory:'В сторис', cardStoryBtn:'Играть', // v1.97.1 «Сторис»: та же карточка — в истории
+    cardStory:'В сторис', // v1.97.1 «Сторис»: та же карточка — в истории
     statusStar:'✨ В статус', statusStarOk:'Искра в статусе — на 3 дня', // v1.98.0 «Звезда-статус»
     statusStarErr:'Не вышло — попробуй позже', statusStarDeny:'Telegram не дал разрешения',
     passTime:'Время', passHits:'Удары', passBonus:'Бонусы', passSmooth:'Плавность',
@@ -325,7 +325,7 @@ const I18N = {
     cardHint:'Save it — send it to friends', cardRec:'New record!', cardBeat:'Can you beat it?', // v1.96.0: no screenshot — there is a file
     cardSave:'Save', cardShare:'Share as text', // v1.96.0 "One door": file is the main door, text is the quiet one
     cardChat:'To chat', cardChatErr:'No luck — save it as a file', // v1.97.0 "Living card": the image flies to chat itself
-    cardStory:'To story', cardStoryBtn:'Play', // v1.97.1 "Story": the same card goes to stories
+    cardStory:'To story', // v1.97.1 "Story": the same card goes to stories
     statusStar:'✨ To status', statusStarOk:'Star is on — for 3 days', // v1.98.0 "Star Status"
     statusStarErr:'No luck — try later', statusStarDeny:'Telegram said no',
     passTime:'Time', passHits:'Hits', passBonus:'Bonuses', passSmooth:'Smooth',
@@ -488,7 +488,7 @@ const I18N = {
     fpHunt:'Safari de buscadores', fpPulse:'Púlsar',
     cardBtn:'Tarjeta', cardTitle:'Tarjeta de resultado', cardHint:'Guárdala y compártela con amigos',
     cardRec:'¡Récord superado!', cardBeat:'¿Puedes superarlo?', cardSave:'Guardar', cardShare:'Compartir como texto',
-    cardChat:'Al chat', cardChatErr:'No se pudo — guarda el archivo', cardStory:'A la historia', cardStoryBtn:'Jugar',
+    cardChat:'Al chat', cardChatErr:'No se pudo — guarda el archivo', cardStory:'A la historia',
     statusStar:'✨ Al estado', statusStarOk:'Chispa en el estado — por 3 días',
     statusStarErr:'No se pudo — intenta más tarde', statusStarDeny:'Telegram no dio permiso',
     passTime:'Tiempo', passHits:'Golpes', passBonus:'Bonos', passSmooth:'Fluidez',
@@ -669,7 +669,7 @@ const I18N = {
     fpHunt:'Safári de perseguidores', fpPulse:'Pulsar',
     cardBtn:'Cartão', cardTitle:'Cartão de resultado', cardHint:'Salve e mande para os amigos',
     cardRec:'Recorde batido!', cardBeat:'Consegue superar?', cardSave:'Salvar', cardShare:'Compartilhar como texto',
-    cardChat:'No chat', cardChatErr:'Não deu — salve como arquivo', cardStory:'No stories', cardStoryBtn:'Jogar',
+    cardChat:'No chat', cardChatErr:'Não deu — salve como arquivo', cardStory:'No stories',
     statusStar:'✨ No status', statusStarOk:'Brilho no status — por 3 dias',
     statusStarErr:'Não deu — tente mais tarde', statusStarDeny:'O Telegram não deu permissão',
     passTime:'Tempo', passHits:'Batidas', passBonus:'Bônus', passSmooth:'Fluidez',
@@ -851,7 +851,7 @@ const I18N = {
     cardHint:'Enregistre-la — envoie-la à tes amis', cardRec:'Nouveau record !', cardBeat:'Peux-tu faire mieux ?',
     cardSave:'Enregistrer', cardShare:'Partager en texte',
     cardChat:'Vers le chat', cardChatErr:'Ça n\u2019a pas marché — enregistre-la en fichier',
-    cardStory:'Vers story', cardStoryBtn:'Jouer',
+    cardStory:'Vers story',
     statusStar:'✨ En statut', statusStarOk:'Étoile activée — pour 3 jours',
     statusStarErr:'Ça n\u2019a pas marché — réessaie plus tard', statusStarDeny:'Telegram a refusé',
     passTime:'Temps', passHits:'Impacts', passBonus:'Bonus', passSmooth:'Fluidité',

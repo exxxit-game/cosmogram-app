@@ -750,8 +750,9 @@ async function cinemaAngarZoomShare(canvas, onStart, onEnd){
    Telegram» — navigator.share с файлами выше внутри Telegram почти всегда недоступен, тот
    самый живой пробел из [[project_yavlenie_share_klikabelnaya_ssylka]]): та же запись канваса,
    что cinemaAngarZoomShare() выше (cinemaStart/cinemaStop, 15 секунд), но вместо системного
-   «Поделиться файлом» — путь cinemaClipStory() ниже (грузим на сервер, tg.shareToStory с
-   кликабельной кнопкой «Играть»). Отдельная функция, не общая с cinemaClipStory() — та шлёт
+   «Поделиться файлом» — путь cinemaClipStory() ниже (грузим на сервер, tg.shareToStory без
+   widget_link — владелец 11.09.2026 попросил убрать кнопку «Играть» с истории, некрасиво
+   поверх видео). Отдельная функция, не общая с cinemaClipStory() — та шлёт
    cinemaExportHighlightCard() (хайлайт полёта), эта — сам канвас явления напрямую. Своя кнопка
    (#angarPvZoomStory), не общий гейт с cinemaAngarZoomShare() — владелец явно захотел ДВЕ
    отдельные кнопки в ряду, не одну умную. */
@@ -770,7 +771,7 @@ async function cinemaAngarZoomStory(canvas, onStart, onEnd){
     const r=await syncFetch(SYNC_URL,{action:'clip_url',initData:tg.initData,mp4:dataUrl});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
-    tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:(typeof L!=='undefined'&&L.cardStoryBtn)||'Играть'}});
+    tg.shareToStory(ans.url);
     if (typeof haptic==='function') haptic('light');
   }catch(e){
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_story_fail', String((e&&e.message)||e).slice(0,60));
@@ -784,8 +785,9 @@ async function cinemaAngarZoomStory(canvas, onStart, onEnd){
    (cinemaExportHighlightCard — та же функция, что уже кормит системное «Поделиться» выше),
    грузим на сервер (action:'clip_url', сервер уже готов — см. decodeAndUploadClipMp4 в
    cosmogram-sync, был задеплоен 30.08.2026 вместе с «Моментом полёта», просто не был вызван
-   ни одной кнопкой до сих пор), получаем публичный URL, зовём tg.shareToStory(url, {widget_link}).
-   Дверь видна только там, где мост версии 7.8+ уже умеет shareToStory — тот же принцип
+   ни одной кнопкой до сих пор), получаем публичный URL, зовём tg.shareToStory(url) — без
+   widget_link (11.09.2026, убрано по просьбе владельца, см. выше). Дверь видна только там,
+   где мост версии 7.8+ уже умеет shareToStory — тот же принцип
    feature-gating, что у cardStoryGate(). */
 function blobToDataURL(blob){
   return new Promise((res,rej)=>{
@@ -813,7 +815,7 @@ async function cinemaClipStory(){
     const r=await syncFetch(SYNC_URL,{action:'clip_url',initData:tg.initData,mp4:dataUrl});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.url) throw new Error(ans.error||('http_'+r.status));
-    tg.shareToStory(ans.url,{widget_link:{url:'https://t.me/realcosmogrambot/app',name:(typeof L!=='undefined'&&L.cardStoryBtn)||'Играть'}});
+    tg.shareToStory(ans.url);
     if (typeof haptic==='function') haptic('light');
   }catch(e){
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_story_fail', String((e&&e.message)||e).slice(0,60));
