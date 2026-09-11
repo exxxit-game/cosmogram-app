@@ -5382,18 +5382,38 @@ function renderFlashPattern(c, style, p, col){
 function flashDur(price){
   return .45 + Math.min(1, Math.max(0, ((price||0)-500)/1000))*.3;
 }
+let _launchFlashActive=false, _launchFlashX=0, _launchFlashY=0; // см. drawLaunchFlash — позиция ловится один раз на старте, не следует за рулём
 function drawLaunchFlash(){
   // 29.08.2026: было S.flash — уже занято золотой вспышкой подбора звезды (см. выше в этом
   // файле, ~строка 1280), которая перетирала это значение каждый кадр. Переименовано.
   if(!S.launchFx) return;
   const fl=FLASHES_BY_ID.get(S.launchFx); if(!fl || fl.style==='none') return;
   const dur=flashDur(fl.price);
-  if(S.time>=dur) return;
+  if(S.time>=dur){ _launchFlashActive=false; return; }
   const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
   const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1); // 'rgba(r,g,b,' — тот же приём, что уже в drawPlane для ауры
   const col=a=>base+Math.max(0,a).toFixed(2)+')';
   const p=clamp(S.time/dur,0,1);
-  ctx.save(); ctx.translate(renderPlaneX,renderPlaneY);
+  /* 11.09.2026, владелец (живой макет с анимацией, 12 честных кадров на вариант, выбрал
+     «над носом»): было — вспышка по центру борта, корпус (04.09.2026, a702965) перекрывал
+     почти весь узор, особенно густые (Куб Метатрона/Шри-Янтра/Печать) — почти не видно.
+     Чистый откат к «поверх корпуса» (как было до a702965) владелец тоже отклонял — не
+     подошло тогда. Третий вариант: узор целиком уходит выше носа (нос — y:-22, узор — y:-46,
+     запас ~24 единицы, силуэт борта не задет вообще) + мягкое сияние вокруг узора, тот же
+     приём aura-градиента, что уже красит корпус. Те же числа, что и в macet, не выдуманы
+     заново — .knowledge/macets/vspyshka-nad-korablem-anim-11-09-2026.html.
+     11.09.2026, второй заход (владелец, сразу вслед): «она может дёргаться в сторону» —
+     если координата бралась КАЖДЫЙ кадр от renderPlaneX/Y, руль (доступен сразу после
+     старта) дёргал вспышку вместе с собой. Владелец явно хочет обратное: «появляется
+     красиво, и он может по ней пролетать» — вспышка ловит позицию ОДИН раз, в первый кадр
+     своего окна (_launchFlashActive false→true), дальше держит её неподвижно всё время
+     показа; руль уводит борт от неё, а не наоборот. */
+  if(!_launchFlashActive){ _launchFlashActive=true; _launchFlashX=renderPlaneX; _launchFlashY=renderPlaneY-46; }
+  ctx.save(); ctx.translate(_launchFlashX,_launchFlashY);
+  const fg=ctx.createRadialGradient(0,0,2,0,0,26);
+  fg.addColorStop(0,base+'.30)'); fg.addColorStop(1,base+'0)');
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=fg;
+  ctx.beginPath(); ctx.arc(0,0,26,0,6.283); ctx.fill(); ctx.restore();
   renderFlashPattern(ctx, fl.style, p, col);
   ctx.restore();
 }

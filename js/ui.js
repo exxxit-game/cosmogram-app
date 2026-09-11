@@ -1233,7 +1233,21 @@ function angarShip(x, sk, s, bolshoy){
         const base=sk.glow.slice(0,sk.glow.lastIndexOf(',')+1);
         const col=a=>base+Math.max(0,a).toFixed(2)+')';
         const p=(performance.now()%1600)/1600;
-        x.save(); x.globalAlpha=hullAlpha; x.translate(0,-4); renderFlashPattern(x, fl.style, p, col); x.restore();
+        /* 11.09.2026, владелец (живой макет с анимацией, выбрал «над носом»): узор густых
+           вспышек (Куб Метатрона/Шри-Янтра/Печать) почти не читался под корпусом — тот же
+           приём, что и в render.js:drawLaunchFlash (ядро, правка по его явной просьбе):
+           узор над носом + мягкое сияние вокруг. Числа здесь — НЕ те же самые: это окно
+           (angarPvDraw, H=130, s=1.6) вчетверо ниже макета/полёта, «-46» там обрезал верх
+           густых узоров о крышку канваса (измерено: topPx=0 живьём). Пересчитано численно
+           под реальный запас этого окна (75px от центра борта до верхнего края): сдвиг -28
+           (не впритык к носу) + сам узор ×0.5 — проверено на 3 самых густых, худший случай
+           (Шри-Янтра) укладывается с запасом ~7px. */
+        x.save(); x.globalAlpha=hullAlpha; x.translate(0,-28); x.scale(.5,.5);
+        const fg=x.createRadialGradient(0,0,2,0,0,26);
+        fg.addColorStop(0,base+'.30)'); fg.addColorStop(1,base+'0)');
+        x.save(); x.globalCompositeOperation='lighter'; x.fillStyle=fg;
+        x.beginPath(); x.arc(0,0,26,0,6.283); x.fill(); x.restore();
+        renderFlashPattern(x, fl.style, p, col); x.restore();
       }
     }
   }
