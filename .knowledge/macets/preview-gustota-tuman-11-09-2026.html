@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: живой предпросмотр учитывает Густоту и Туман</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5;max-width:640px}
+  .wrap{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .panel{width:340px;background:var(--bg-1);border:1px solid var(--line);border-radius:16px;padding:14px}
+  canvas{width:100%;height:150px;border-radius:14px;border:1px solid rgba(140,170,255,.18);display:block;margin-bottom:14px}
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .lbl{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:none;width:92px}
+  input[type=range]{flex:1;accent-color:#7ea6ff}
+  .val{flex:none;width:30px;text-align:right;font-size:12px;color:#bcd2ff}
+  .seg{display:flex;gap:6px;flex:1}
+  .segBtn{flex:1;border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+    padding:6px 4px;font-size:11px;text-align:center;cursor:pointer;font-family:inherit}
+  .segBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+  .qseg .segBtn.sel{background:rgba(240,192,64,.14);border-color:rgba(240,192,64,.4);color:var(--gold-hi)}
+  .readout{font-size:10.5px;color:var(--muted);text-transform:none;letter-spacing:.02em;margin-top:2px}
+  .note{margin-top:20px;padding:12px 14px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed var(--line-gold);font-size:11.5px;color:var(--cream);text-transform:none;letter-spacing:.02em;line-height:1.6;max-width:700px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:4px}
+</style>
+</head>
+<body>
+  <h1>Живой предпросмотр «Цвет»: Густота и Туман теперь видны</h1>
+  <div class="sub">Настоящая формула отрисовки из <code>forgeSkyPaint()</code> (градиент/звёзды),
+  только число звёзд теперь зависит от «Густоты» И безопасного потолка текущего Q.level
+  одновременно (не абсолютное число), а туман рисуется той же радиальной виньеткой, что уже
+  есть в <code>forgeMiniSwatchPaint()</code> (карточки Мастерской) — интенсивность растёт
+  с уровнем. Подвигай ползунки — окно настоящее, не картинка.</div>
+
+  <div class="wrap">
+    <div class="panel">
+      <canvas id="cv" width="312" height="150"></canvas>
+      <div class="row"><span class="lbl">Густота</span><input type="range" id="dens" min="10" max="100" value="50"><span class="val" id="densV">50</span></div>
+      <div class="row"><span class="lbl">Туман</span>
+        <div class="seg" id="fogSeg">
+          <div class="segBtn sel" data-v="0">Нет</div>
+          <div class="segBtn" data-v="1">Лёгкий</div>
+          <div class="segBtn" data-v="2">Густой</div>
+        </div>
+      </div>
+      <div class="row"><span class="lbl">Q.level зрителя</span>
+        <div class="seg qseg" id="qSeg">
+          <div class="segBtn" data-v="0">Дно</div>
+          <div class="segBtn sel" data-v="1">Средний</div>
+          <div class="segBtn" data-v="2">Высокий</div>
+          <div class="segBtn" data-v="3">Ультра</div>
+        </div>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Формула (проверить числом, не на глаз):</b>
+    <ul>
+      <li>Потолок числа звёзд по Q.level для ЭТОГО маленького окна: Дно 24, Средний 40, Высокий 56, Ультра 80 — заведомо ниже любого риска, окно рисуется только пока открыт экран Конструктора, не во время самого полёта.</li>
+      <li>Число звёзд = 12 (минимум при Густоте=10, одинаков для всех уровней — «пусто» должно оставаться пустым везде) + доля от (потолок−12) пропорционально положению Густоты между 10 и 100.</li>
+      <li>Итог: автор трассы всегда видит СВОЙ выбор густоты правильно на СВОЁМ устройстве — а если кто-то другой откроет его трассу на более слабом телефоне, у него автоматически будет меньше звёзд, безопасно, без обхода сегодняшней защиты.</li>
+      <li>Туман: та же радиальная виньетка, что уже одобрена в карточках Мастерской, интенсивность 0 / 0.35 / 0.55 по уровню — Лёгкий заметно слабее, не бинарно.</li>
+    </ul>
+  </div>
+
+<script>
+const cv=document.getElementById('cv'), x=cv.getContext('2d');
+let dens=50, fog=0, qlevel=1;
+const QCAP=[24,40,56,80];
+
+function starCount(){
+  const cap=QCAP[qlevel];
+  const t=(dens-10)/90;
+  return Math.round(12 + t*(cap-12));
+}
+
+function paint(){
+  const W=cv.width, H=cv.height;
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'hsl(232,55%,42%)'); g.addColorStop(1,'hsl(200,55%,30%)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  let seed=12345; const rnd=()=>{ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
+  const n=starCount();
+  for(let i=0;i<n;i++){
+    const sx=rnd()*W, sy=rnd()*H;
+    x.globalAlpha=.25+rnd()*.55; x.fillStyle=rnd()>.85?'#ffe9b8':'#dfe8ff';
+    x.beginPath(); x.arc(sx,sy,rnd()*1.4+.4,0,6.283); x.fill();
+  }
+  x.globalAlpha=1;
+  if(fog>0){
+    const inten=fog===1?.35:.55;
+    const v=x.createRadialGradient(W/2,H/2,10,W/2,H/2,W*.6);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,'+inten+')');
+    x.fillStyle=v; x.fillRect(0,0,W,H);
+  }
+  document.getElementById('readout').textContent =
+    'Звёзд сейчас: '+n+' из потолка '+QCAP[qlevel]+' для этого уровня · Туман: '+['выкл','лёгкий','густой'][fog];
+}
+
+document.getElementById('dens').addEventListener('input', e=>{ dens=+e.target.value; document.getElementById('densV').textContent=dens; paint(); });
+document.getElementById('fogSeg').addEventListener('click', e=>{ const b=e.target.closest('.segBtn'); if(!b) return;
+  [...b.parentElement.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); fog=+b.dataset.v; paint(); });
+document.getElementById('qSeg').addEventListener('click', e=>{ const b=e.target.closest('.segBtn'); if(!b) return;
+  [...b.parentElement.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); qlevel=+b.dataset.v; paint(); });
+paint();
+</script>
+</body>
+</html>

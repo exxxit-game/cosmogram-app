@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: «Лаборатория цвета» — всплывающая поверх вкладки «Цвет»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --line-gold:rgba(201,164,92,.45);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:500;color:var(--ink)}
+  body{padding:20px}
+  h1{font-size:15px;color:var(--cream);margin-bottom:4px;text-transform:none}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px;text-transform:none;line-height:1.5;max-width:640px}
+  .cols{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .phoneWrap{width:340px}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+
+  /* --- фон: вкладка «Цвет» как есть, затемнена под модалкой --- */
+  .phone{position:relative;background:var(--bg-1);border:1px solid var(--line);border-radius:18px;padding:14px;overflow:hidden}
+  .forgeRow{display:flex;align-items:center;gap:10px;width:100%;padding:4px 0}
+  .forgeLbl{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:none;width:82px}
+  .forgeVal{flex:none;width:26px;text-align:right;font-size:13px;color:#bcd2ff}
+  .fonSwatch{flex:none;width:20px;height:20px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  input[type=range]{flex:1;accent-color:#7ea6ff;height:20px}
+  .labBtn{display:flex;align-items:center;gap:6px;margin-top:6px;margin-bottom:2px;padding:8px 12px;
+    border-radius:10px;border:1px dashed var(--line-gold);background:rgba(201,164,92,.08);color:var(--cream);
+    font-size:11.5px;letter-spacing:.04em;width:fit-content;cursor:pointer}
+  .labBtn svg{width:14px;height:14px;stroke:var(--gold-hi);fill:none;stroke-width:2}
+
+  .dim{position:absolute;inset:0;background:rgba(4,7,16,.72);backdrop-filter:blur(1px)}
+
+  /* --- модалка --- */
+  .modal{position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);
+    background:var(--bg-2);border:1px solid var(--line-gold);border-radius:18px;padding:16px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .modalHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .modalTitle{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi)}
+  .modalX{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-size:14px;cursor:pointer}
+
+  .wheelWrap{display:flex;justify-content:center;margin:6px 0 14px}
+  .wheel{position:relative;width:168px;height:168px;border-radius:50%;
+    background:conic-gradient(from 0deg,
+      hsl(0,70%,55%),hsl(60,70%,55%),hsl(120,70%,55%),hsl(180,70%,55%),
+      hsl(240,70%,55%),hsl(300,70%,55%),hsl(360,70%,55%));
+    box-shadow:0 0 0 1px rgba(255,255,255,.12), inset 0 0 24px rgba(0,0,0,.35)}
+  .wheelHole{position:absolute;left:50%;top:50%;width:74px;height:74px;border-radius:50%;
+    background:var(--bg-2);transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
+  .wheelHole b{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;line-height:1.3}
+  .marker{position:absolute;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%);
+    box-shadow:0 0 0 2px var(--bg-2), 0 0 8px rgba(0,0,0,.4)}
+  .markerA{background:#eaf2ff;box-shadow:0 0 0 2px var(--bg-2), 0 0 10px rgba(255,255,255,.6)}
+  .markerB{background:transparent;border:2.5px solid #eaf2ff;box-shadow:0 0 0 2px var(--bg-2)}
+  .markerLbl{position:absolute;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+
+  .schemes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px}
+  .forgeChip{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+    padding:6px 10px;font-size:11px;cursor:pointer;text-align:center}
+  .forgeChip.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+
+  .previewBar{height:36px;border-radius:10px;margin-bottom:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+  .schemeNote{font-size:10.5px;color:var(--muted);text-transform:none;line-height:1.4;letter-spacing:.02em;margin-bottom:2px}
+
+  .note{margin-top:20px;padding:12px 14px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed var(--line-gold);font-size:11.5px;color:var(--cream);text-transform:none;letter-spacing:.02em;line-height:1.6;max-width:700px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:4px}
+</style>
+</head>
+<body>
+  <h1>«Лаборатория цвета» — всплывающая поверх «Цвет»</h1>
+  <div class="sub">Кнопка «Подобрать гармонию» открывает круг (12 секторов, как у Иттена) поверх
+  текущей вкладки. Белая точка — текущий «Цвет неба» (её можно подвинуть по кругу пальцем).
+  Тапнул схему — контурная точка сама встаёт на нужное место, «Второй цвет» и полоса
+  предпросмотра обновляются СРАЗУ, без отдельной кнопки «Применить» (как и все остальные
+  ползунки вкладки). Крестик просто закрывает — выбор уже применён.</div>
+
+  <div class="cols">
+    <div class="phoneWrap">
+      <div class="colTitle">Слева — вкладка «Цвет» как сейчас, с новой кнопкой</div>
+      <div class="phone">
+        <div class="forgeRow"><span class="forgeLbl">Цвет неба</span><span class="fonSwatch" style="background:hsl(232,60%,55%)"></span><input type="range" value="232"><b class="forgeVal">232</b></div>
+        <div class="labBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>Подобрать гармонию</div>
+        <div class="forgeRow"><span class="forgeLbl">Второй цвет</span><span class="fonSwatch" style="background:hsl(200,55%,50%)"></span><input type="range" value="200"><b class="forgeVal">200</b></div>
+        <div class="forgeRow"><span class="forgeLbl">Густота</span><input type="range" value="50"><b class="forgeVal">50</b></div>
+        <div class="forgeRow"><span class="forgeLbl">Настроение</span><input type="range" value="50"><b class="forgeVal">50</b></div>
+      </div>
+    </div>
+
+    <div class="phoneWrap">
+      <div class="colTitle">Справа — то же самое, кнопка нажата</div>
+      <div class="phone" style="min-height:520px">
+        <div class="forgeRow"><span class="forgeLbl">Цвет неба</span><span class="fonSwatch" style="background:hsl(232,60%,55%)"></span><input type="range" value="232"><b class="forgeVal">232</b></div>
+        <div class="labBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>Подобрать гармонию</div>
+        <div class="forgeRow"><span class="forgeLbl">Второй цвет</span><span class="fonSwatch" style="background:hsl(200,55%,50%)"></span><input type="range" value="200"><b class="forgeVal">200</b></div>
+
+        <div class="dim"></div>
+        <div class="modal">
+          <div class="modalHead"><span class="modalTitle">Гармония цвета</span><span class="modalX">✕</span></div>
+
+          <div class="wheelWrap">
+            <div class="wheel">
+              <!-- h1=232° (текущий «Цвет неба») -->
+              <div class="marker markerA" style="left:23%;top:15%"></div>
+              <!-- h2 по комплементарной схеме: 232+180=52° -->
+              <div class="marker markerB" style="left:77%;top:85%"></div>
+              <div class="wheelHole"><b>232°<br>→ 52°</b></div>
+            </div>
+          </div>
+
+          <div class="schemes">
+            <span class="forgeChip sel">Комплементарная</span>
+            <span class="forgeChip">Аналоговая</span>
+            <span class="forgeChip">Триадная</span>
+            <span class="forgeChip">Сплит-комп.</span>
+            <span class="forgeChip">Тетрада</span>
+            <span class="forgeChip">Квадрат</span>
+            <span class="forgeChip">Монохромная</span>
+          </div>
+
+          <div class="previewBar" style="background:linear-gradient(180deg, hsl(232,55%,45%), hsl(52,55%,45%))"></div>
+          <div class="schemeNote">Противоположные цвета круга — самый контрастный, «энергичный» вариант. Второй цвет встал на 52° сам.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Как это работает:</b>
+    <ul>
+      <li>Круг — 12 секторов (круг Иттена), белая точка — текущий «Цвет неба», её можно двигать пальцем по кругу — тогда сама схема пересчитается от нового места.</li>
+      <li>7 карточек — реальные именованные схемы гармонии из <code>.knowledge/COLOR-THEORY.md</code>, не выдуманные: Комплементарная (h1+180°), Аналоговая (h1±30°), Триадная (h1+120°), Сплит-комплементарная (h1+150° или +210°, показываются оба варианта), Тетрада/Квадрат (h1+90°, упрощение — у нас только 2 цвета неба, не 4), Монохромная (второй цвет = первому, разница только через «Настроение»).</li>
+      <li>Честная оговорка в самом инструменте: у Тетрады/Квадрата/Триадной в реальности больше двух цветов — подсказка так и скажет («полная схема — 4 цвета, у нас два слота неба, берём соседний»), не выдаёт себя за точную схему, если это не так.</li>
+      <li>Изменения — сразу живые (как везде во вкладке), крестик просто закрывает лабораторию, отдельной кнопки «Применить» нет.</li>
+    </ul>
+  </div>
+</body>
+</html>
