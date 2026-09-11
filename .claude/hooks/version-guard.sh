@@ -29,7 +29,7 @@ if [[ "$tool" == "Bash" && "$cmd" == git\ commit* ]]; then
     if echo "$staged" | grep -qx "$f"; then needs_bump=true; fi
   done
   if [[ "$needs_bump" == true ]]; then
-    ver_touched=$(git diff --cached -- js/core.js 2>/dev/null | grep -c "GAME_VERSION=")
+    ver_touched=$(git diff --cached -- js/core.js 2>/dev/null | grep -cE "GAME_VERSION[[:space:]]*=")
     if [[ "$ver_touched" -eq 0 ]]; then
       echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Закон К10: в этом коммите меняются игровые файлы, а GAME_VERSION (js/core.js) не тронута. Адрес модуля (?v=) не сменится — браузер вправе отдать старый кэш. Сначала поднять версию в трёх местах (sw.js const V, js/core.js GAME_VERSION, все ?v= в index.html — bump_version.py или его ручной эквивалент), потом коммит."}}'
       exit 0
