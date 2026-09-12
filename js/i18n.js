@@ -106,6 +106,7 @@ const I18N = {
     workshopSignInFirst:'войди через Telegram, чтобы увидеть свои небеса',
     workshopSort_new:'Новые', workshopSort_top:'Топ', workshopSort_fav:'Избранное', workshopSort_mine:'Мои', workshopSort_random:'Сюрприз', workshopSort_trending:'Растёт',
     workshopFeatured:'Отмечено золотой звездой', workshopUnfeatured:'Метка снята', // 12.09.2026: тост-подтверждение тапа по звезде «Выбор автора», тот же приём, что у workshopPinned/workshopUnpinned
+    workshopVoteLocked:'Долети до конца, чтобы оценить', // 12.09.2026 «Честный лайк»: голос без хотя бы одного честного прохождения не принимается
     // 12.09.2026, владелец: «кнопка лайки — это просто лайки», второй, углублённый заход
     // исследования (.knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md) — «Лайки»→«Топ» (не
     // меняет sort='top' на сервере, только подпись: сырая сумма лайков честнее читается как

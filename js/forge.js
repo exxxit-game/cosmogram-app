@@ -729,9 +729,18 @@ function forgeWorkshopEdit(code){ // «Открыть»: открыть чужо
   forgeSyncWidgets();
   toast(L.forgeGuest,'rgba(255,215,106,.5)'); haptic('success');
 }
-function forgeWorkshopPlay(code){ // «Играть»: применить + честно засчитать «сыграли» + взлёт, тот же незачётный забег, что у любой чужой трассы
+/* 12.09.2026 «Честный запуск» (владелец, находка сессии): раньше workshopPlayed() стреляло
+   ПРЯМО ЗДЕСЬ, в момент тапа «Полёт» — до взлёта, до единого метра полёта. «Запуски» на
+   карточке считали не прохождения, а нажатия кнопки. Roblox/Trackmania Exchange — тот же
+   принцип, что уже применён у нас в forgeVerifyCode/S.mapWin выше (mapOver, gameOver): голос
+   засчитывается только после того, как забег реально СОСТОЯЛСЯ. Здесь — тот же S.mapWin,
+   не новая идея, перенос уже существующего честного правила на «Запуски».
+   workshopPlayingCode запоминает, какой код летит СЕЙЧАС — mapOver() ниже решает, зачесть ли
+   «сыграли» по факту (S.mapWin), не по факту тапа. */
+let workshopPlayingCode = null;
+function forgeWorkshopPlay(code){ // «Играть»: применить + взлёт; «сыграли» засчитывается в mapOver(), только если долетел до конца
   if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
-  if(typeof workshopPlayed==='function') workshopPlayed(code);
+  workshopPlayingCode = code;
   forgePlay();
 }
 // Маленький статичный свотч карточки Мастерской — тот же язык (звёзды/дальняя стая/туман/
@@ -942,7 +951,22 @@ function forgeBoot(){ // true = есть трасса друга: этот за�
 }
 
 /* ---------- Финиш трассы: цифры забега, но ничего не пишется (не в зачёт) ---------- */
+function workshopPlayedCodes(){ return saneArray(Store.get('workshopPlayedCodes',[]),[]); } // 12.09.2026: те же коды, что честно долетены — используется, чтобы разрешить голос только после прохождения
 function mapOver(sc){
+  // 12.09.2026 «Честный запуск»: «сыграли» уходит на сервер и в локальный список честно
+  // пройденных ТОЛЬКО если это был код из Мастерской (workshopPlayingCode) и долетел до конца
+  // (S.mapWin) — умер по дороге или это своя непубличная трасса — не считается вообще, не
+  // только не шлётся на сервер. Список локальный (Store), не новая таблица на сервере —
+  // сервер по-прежнему не может независимо доказать прохождение, это честная client-side
+  // мера, не полная защита от подмены через devtools.
+  if(workshopPlayingCode){
+    if(S.mapWin){
+      if(typeof workshopPlayed==='function') workshopPlayed(workshopPlayingCode);
+      const played=workshopPlayedCodes();
+      if(played.indexOf(workshopPlayingCode)<0){ played.push(workshopPlayingCode); Store.set('workshopPlayedCodes',played); }
+    }
+    workshopPlayingCode=null;
+  }
   ['myRank','toRecord','toLoc'].forEach(function(id){ const el=$(id); if(el) el.textContent=''; });
   ['newRecord','duelRes'].forEach(function(id){ const el=$(id); if(el) el.innerHTML=''; });
   /* v1.282.14: гасим и то, что ставит только gameOver. Своя трасса — не в зачёт, но экран
@@ -1017,6 +1041,15 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
     sortEl.innerHTML='';
     WORKSHOP_SORTS.forEach(function(s){
       const b=document.createElement('button'); b.className='forgeChip'; b.dataset.sort=s;
+      // 12.09.2026, владелец (живой скрин с телефона, после разъяснения — «тогда да, лайк»):
+      // «Избранное» заменено на то же сердце, что уже стоит на каждой карточке (.wVote) —
+      // единственный значок в этом ряду без слова, потому что смысл уже знаком игроку с этого
+      // же экрана, не выдуман заново. Остальные чипы (см. правку «Сюрприз» рядом) подпись
+      // держат — там своего готового значения у иконки не было (NN/g: голая иконка неоднозначна).
+      if(s==='fav'){
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
+      }
       b.addEventListener('click', function(){
         if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
         else { workshopSortMode=s; workshopLikedOnly=false; }
@@ -1027,7 +1060,8 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   }
   if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
     const chip=sortEl.children[i];
-    chip.textContent = L['workshopSort_'+s] || s;
+    if(s==='fav') chip.title = L['workshopSort_'+s] || s; // значок без видимого слова — title остаётся для подсказки при наведении/скринридера
+    else chip.textContent = L['workshopSort_'+s] || s;
     // 'fav' и 'top' оба реально шлют sort='top' на сервер — различает их только workshopLikedOnly,
     // поэтому подсветка каждого чипа явно проверяет этот флаг, не только совпадение sort-строки.
     const sel = s==='fav' ? (workshopSortMode==='top' && workshopLikedOnly) : (s===workshopSortMode && !(s==='top' && workshopLikedOnly));
@@ -1221,6 +1255,16 @@ wireOnLocal('workshopList','click',function(e){
     return;
   }
   if(act.dataset.act==='vote'){
+    // 12.09.2026 «Честный лайк» (владелец, находка сессии — Roblox/Trackmania Exchange:
+    // «qualified play», голос не считается, если не доехал): уже поставленный лайк снять
+    // можно всегда, а поставить новый — только если этот код реально долетен до конца
+    // (workshopPlayedCodes, пишется в mapOver() по S.mapWin). Честно: проверка только
+    // клиентская (Store), сервер не может сам доказать прохождение без отдельного журнала —
+    // не полная защита, но останавливает случайный/бездумный лайк без единого запуска.
+    const already = workshopMyVotes().indexOf(code)>=0;
+    if(!already && workshopPlayedCodes().indexOf(code)<0){
+      toast(L.workshopVoteLocked||'Долети до конца, чтобы оценить', 'rgba(255,159,176,.5)'); haptic('light'); return;
+    }
     workshopVote(code).then(function(res){
       if(!res || !res.ok) return;
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
