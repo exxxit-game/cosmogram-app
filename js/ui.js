@@ -906,6 +906,8 @@ function ghostUpload(category, track, skin, best, seed){
     (genS=>syncDailyStats(S.dailyDay||trackDayKey()).then(st=>{ // «сегодня её взяли N из M» — чувство живого мира без гонки
       if (!runSame(genS)) return; // v1.282.20: счётчик звезды дня не зажигается на итогах классики
       if (st && st.ok && screenName==='over'){ $('dayStats').textContent=L.goldStarStats(st.catchers,st.flyers); $('dayStats').classList.remove('hidden'); } }))(runNow());
+  // 12.09.2026: оффер «Полёт без рук» — экран итогов, не середина полёта, см. js/gyro.js
+  if (typeof gyroOverOfferDue==='function' && gyroOverOfferDue()) gyroOverOfferShow();
   setScreen('over');
   const f=$('flash'); f.style.transition='none'; f.style.opacity=.7;
   requestAnimationFrame(()=>{ f.style.transition='opacity .5s'; f.style.opacity=0; });

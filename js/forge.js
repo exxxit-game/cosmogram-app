@@ -992,6 +992,9 @@ function mapOver(sc){
      всегда гасит #overMore explicitly — здесь это тоже нужно, тем же приёмом. */
   toggleCls('overMore','hidden',true);
   const odbEl=$('overDetailsBtn'); if(odbEl) odbEl.classList.remove('open');
+  // 12.09.2026: тот же оффер «Полёт без рук», что и в gameOver() (ui.js) — своя/чужая трасса
+  // из Конструктора тоже честно «первый полёт», если это он и есть.
+  if (typeof gyroOverOfferDue==='function' && gyroOverOfferDue()) gyroOverOfferShow();
   setScreen('over');
   const f=$('flash');
   if(f){ f.style.transition='none'; f.style.opacity=.7;
