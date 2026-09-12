@@ -689,6 +689,13 @@ function workshopModerate(code, status){ // 05.09.2026: закрепить/ск�
     return r.json().catch(()=>null);
   });
 }
+function workshopModerateFeatured(code, featured){ // 12.09.2026: «Выбор автора» — тот же moderate, отдельное поле от status (см. cosmogram-workshop)
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'moderate', code:code, featured:featured}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
 
 /* 05.09.2026 «Удалить мои данные»: отдельная комната cosmogram-privacy, тот же приём, что
    у Мастерской — своё identity-подтверждение, необратимое действие держим подальше от

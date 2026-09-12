@@ -999,13 +999,14 @@ let workshopSortMode='new';
 // workshopLikedOnly, подпись меняется на «Твои», список сужается до лайкнутых тобой же.
 // 12.09.2026, владелец (живой макет): «выбор автора» звучало, будто остальные небеса хуже —
 // заменено на простую золотую звезду без текста, как отдельный знак отличия, не категория.
-// Реально работающий механизм — не выдумка: список кодов, которые владелец сам добавляет сюда
-// (тот же масштаб, что PICO-8/оригинальный LittleBigPlanet «Team Picks» — один человек время от
-// времени отмечает то, что понравилось, см. .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md,
-// группа E) — пусто по умолчанию, не показывает звезду никому, пока владелец явно не попросит
-// добавить конкретный код.
-const WORKSHOP_FEATURED_CODES=[];
-const WORKSHOP_SORTS=['new','top','fav']; // 12.09.2026: «плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
+// Реально работающий механизм (тот же масштаб, что PICO-8/оригинальный LittleBigPlanet «Team
+// Picks» — один человек время от времени отмечает то, что понравилось, см. .knowledge/
+// RESEARCH-2026-09-WORKSHOP-DISCOVERY.md, группа E): раньше был статический список кодов
+// прямо в этом файле, владелец не мог пометить трек сам без правки кода — 12.09.2026 (второй
+// заход) перенесено на сервер (forge_workshop.featured, действие moderate), звезда теперь
+// настоящая кнопка в самой карточке, видимая владельцу всегда, остальным — только на
+// реально помеченных треках.
+const WORKSHOP_SORTS=['new','top','fav','trending']; // 12.09.2026 (второй заход): добавлен 'trending' — реальный сорт на сервере (formula Royal Road, cosmogram-workshop). «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
 let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
@@ -1040,6 +1041,7 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   // на любом возрасте — тот же вывод, что и в исследовании .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md).
   const surpriseBtn=$('workshopSurprise');
   if(surpriseBtn){
+    const surpriseLbl=surpriseBtn.querySelector('.lbl'); if(surpriseLbl) surpriseLbl.textContent=L.workshopSort_random||'Сюрприз';
     surpriseBtn.classList.toggle('sel', workshopSortMode==='random');
     if(!surpriseBtn.dataset.wired){
       surpriseBtn.dataset.wired='1';
@@ -1153,8 +1155,13 @@ function workshopRenderList(){
       // 12.09.2026: значок теперь всегда существует в шаблоне (.wPickStar.hidden) — просто
       // снимаем класс, а не создаём/удаляем узел; тот же .wCorner, что и «Пожаловаться»/
       // «В избранное» — обычный участник .wCornerStack, не position:absolute.
+      // 12.09.2026 (второй заход, владелец): честный флаг с сервера (forge_workshop.featured
+      // через moderate) вместо статического WORKSHOP_FEATURED_CODES — раньше пометить трек
+      // мог только я правкой кода, теперь сам владелец тапом. Игрокам звезда видна только у
+      // реально помеченных треков; владельцу — всегда (пустой контур на непомеченных), чтобы
+      // было чем нажать.
       const pickStarBtn=row.querySelector('.wPickStar');
-      if(pickStarBtn) pickStarBtn.classList.toggle('hidden', WORKSHOP_FEATURED_CODES.indexOf(t.code)<0);
+      if(pickStarBtn) pickStarBtn.classList.toggle('hidden', !t.featured && !isOwner);
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
@@ -1182,6 +1189,8 @@ function workshopRenderList(){
       // .textContent вместо .title (title оставлен браузером как обычный tooltip у текста).
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.textContent=L.workshopReport||'Пожаловаться';
       const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.textContent=L.workshopFav||'Скопировать палитру';
+      row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
+      if(pickStarBtn) pickStarBtn.classList.toggle('active', !!t.featured); // заливка звезды — CSS, тот же приём, что .wPin.active
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
         pinBtn.title=L.workshopPin||'Закрепить';
@@ -1248,6 +1257,19 @@ wireOnLocal('workshopList','click',function(e){
       toast(next==='pinned' ? (L.workshopPinned||'Закреплено') : (L.workshopUnpinned||'Откреплено'), 'rgba(255,214,140,.5)');
     });
     haptic('light');
+  }
+  if(act.dataset.act==='pickstar'){
+    // 12.09.2026 «Выбор автора»: та же логика, что pin/hide выше — кнопка видна только
+    // владельцу (или уже помеченным трекам всем), сервер сам проверяет OWNER_ID ещё раз.
+    const next = row.dataset.featured==='1' ? false : true;
+    workshopModerateFeatured(code, next).then(function(res){
+      if(!res || !res.ok) return;
+      row.dataset.featured = next ? '1' : '0';
+      act.classList.toggle('active', next);
+      toast(next ? (L.workshopFeatured||'Отмечено золотой звездой') : (L.workshopUnfeatured||'Метка снята'), 'rgba(255,214,140,.5)');
+    });
+    haptic('light');
+    return;
   }
   if(act.dataset.act==='hide'){
     const next = row.dataset.status==='hidden' ? 'normal' : 'hidden';
