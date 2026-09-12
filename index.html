@@ -2122,8 +2122,29 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 /* 10.09.2026 (владелец, живой макет): было border-radius:999px + padding:8px 18px + min-height:36px —
    полная капсула ВНУТРИ капсулы-тоста разной высоты (кривизна не совпадает) плюс лишний воздух вокруг
    короткого слова «Вернуть» при 11px шрифте. var(--r-btn) — тот же радиус, что у всех кнопок игры. */
-.count{font-size:10px;color:var(--muted);text-align:center;margin:10px 0;letter-spacing:.04em}
-.count b{color:var(--cream)}
+/* 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено): «Точек»/«Сбросить»
+   были текстом+кнопкой в конце страницы, переехали в один инструментальный ряд под лентой. */
+.ptTopTools{display:flex;gap:8px;justify-content:center;padding:8px 4px 2px}
+.ptToolBtn{background:rgba(15,31,61,.7);border:1px solid var(--line);color:var(--cream);
+  font-family:inherit;font-size:11px;letter-spacing:.03em;border-radius:var(--r-btn);
+  padding:8px 14px;cursor:pointer}
+.ptToolBtn b{color:var(--gold-hi)}
+.ptToolBtnDanger{color:var(--muted)}
+/* Список точек — раньше аккордеон внутри страницы (.setGrp.spoiler), теперь отдельный лист
+   снизу экрана, тот же приём, что уже даёт .ptToast (fixed+transition), только крупнее. */
+#ptListOverlay{position:fixed;inset:0;z-index:45;background:rgba(6,10,20,.72);
+  display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;
+  transition:opacity .2s}
+#ptListOverlay.show{opacity:1;pointer-events:auto}
+#ptListCard{width:100%;max-width:560px;max-height:64%;background:var(--bg-1,#0f1f3d);
+  border-top:1px solid var(--line-gold,rgba(201,164,92,.45));border-radius:16px 16px 0 0;
+  padding:14px 14px 18px;overflow-y:auto;transform:translateY(100%);transition:transform .25s ease}
+#ptListOverlay.show #ptListCard{transform:translateY(0)}
+#ptListCardHead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+#ptListCardHead b{flex:1;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi)}
+#ptListCardHead span{font-size:10.5px;color:var(--muted)}
+#ptListClose{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;
+  padding:4px 6px;line-height:1}
 .evtRow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);
   cursor:pointer;min-height:44px}
 .evtRow:last-child{border-bottom:none}
@@ -2710,9 +2731,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.249"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.249"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.249"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.250"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.250"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.250"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3210,8 +3231,18 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         </div>
         <div class="ruler" id="ptRuler"></div>
       </div>
+      <!-- 12.09.2026 (владелец, макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено
+           «да» дважды — второй раз после исправления палитры на 2 ряда): «Точек»/«Сбросить»
+           переехали в свой инструментальный ряд прямо под лентой — раньше счётчик был текстом
+           под лотком, а «Сбросить всё» полноширинной кнопкой в самом низу под списком (решение
+           07.09.2026, тут не нарушается — на этом экране нет «Полёт»/«Поделиться», они только
+           в «Сохранить», спорить не с кем). Список точек стал отдельным листом снизу экрана
+           вместо аккордеона внутри страницы — открывается тем же «Точек: N». -->
+      <div class="ptTopTools" id="ptTopTools">
+        <button class="ptToolBtn" id="ptListGrp" type="button">Точек: <b id="ptCnt">0</b></button>
+        <button class="ptToolBtn ptToolBtnDanger" id="forgeResetBtn" type="button">Сбросить</button>
+      </div>
       <div class="tray" id="ptTray"></div>
-      <div class="count" id="ptCount">Точек: <b id="ptCnt">0</b> / 150</div>
       <div class="panel quickEdit" id="ptQuickEdit">
         <div class="k"><span class="kTitle"><span id="ptPanelIcon" class="kIcon"></span><span id="ptPanelTitle">Точка</span></span><span class="del" id="ptDelBtn">удалить</span></div>
         <div class="atrow">
@@ -3233,12 +3264,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         </div>
         <div id="ptPauseHint" class="hint" style="display:none">Гарантия передышки в этой точке — рядом не появится препятствие.</div>
       </div>
-      <div class="setGrp spoiler" id="ptListGrp"><span class="setGrpT">Список точек</span><span class="setGrpSub" id="ptListSub">пусто</span></div>
-      <div class="setPanel hidden" id="ptListPanel"></div>
-      <!-- 07.09.2026, владелец (скрин + разметка): «Сбросить всё» — редкое, служебное
-           действие, не должно стоять НАД «Начать полёт»/«Поделиться» и спорить с ними
-           за внимание. Переехало вниз, сразу под список точек — тише, но под рукой. -->
-      <button class="btn ghost small" id="forgeResetBtn" style="margin-top:10px">Сбросить всё</button>
+    </div>
+    <div id="ptListOverlay">
+      <div id="ptListCard">
+        <div id="ptListCardHead"><b>Список точек</b><span id="ptListSub">пусто</span><button id="ptListClose" type="button" aria-label="Закрыть">✕</button></div>
+        <div id="ptListPanel"></div>
+      </div>
     </div>
     </div>
     <div id="forgeSubSky" class="hidden">
@@ -3635,25 +3666,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.249" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.249"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.249"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.249"></script>
-<script defer src="js/game.js?v=1.478.249" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.249"></script>
-<script defer src="js/sync.js?v=1.478.249"></script>
-<script defer src="js/render.js?v=1.478.249"></script>
-<script defer src="js/planetarium.js?v=1.478.249"></script>
-<script defer src="js/goldstar.js?v=1.478.249"></script>
-<script defer src="js/music.js?v=1.478.249"></script>
-<script defer src="js/gyro.js?v=1.478.249"></script>
-<script defer src="js/forge.js?v=1.478.249"></script>
-<script defer src="js/partitura.js?v=1.478.249"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.249"></script>
-<script defer src="js/card.js?v=1.478.249"></script>
-<script defer src="js/star.js?v=1.478.249"></script>
-<script defer src="js/cinema.js?v=1.478.249"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.249"></script>
+<script defer src="js/core.js?v=1.478.250" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.250"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.250"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.250"></script>
+<script defer src="js/game.js?v=1.478.250" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.250"></script>
+<script defer src="js/sync.js?v=1.478.250"></script>
+<script defer src="js/render.js?v=1.478.250"></script>
+<script defer src="js/planetarium.js?v=1.478.250"></script>
+<script defer src="js/goldstar.js?v=1.478.250"></script>
+<script defer src="js/music.js?v=1.478.250"></script>
+<script defer src="js/gyro.js?v=1.478.250"></script>
+<script defer src="js/forge.js?v=1.478.250"></script>
+<script defer src="js/partitura.js?v=1.478.250"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.250"></script>
+<script defer src="js/card.js?v=1.478.250"></script>
+<script defer src="js/star.js?v=1.478.250"></script>
+<script defer src="js/cinema.js?v=1.478.250"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.250"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

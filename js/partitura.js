@@ -164,9 +164,12 @@ function ptRender(justPoppedIdx){
 function ptRenderPanel(){
   const qe=$('ptQuickEdit'); if(!qe) return;
   const pins=ptPins();
-  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); return; }
+  const tray=$('ptTray'); // 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено):
+  // лоток и панель точки делят одно место под лентой — показана только одна из двух сразу
+  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); if(tray) tray.classList.remove('hidden'); return; }
   const p=pins[ptSelIdx];
   qe.classList.add('show');
+  if(tray) tray.classList.add('hidden');
   const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
   const title=$('ptPanelTitle'); if(title) title.textContent=p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':(PT_KIND_LABEL[kindName]||'');
   const icon=$('ptPanelIcon'); if(icon) icon.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
@@ -240,7 +243,10 @@ function ptRenderList(){
     row.addEventListener('click',ev=>{
       if(ev.target===rm){ ptRemovePin(i); return; }
       ptSelIdx=i; ptRender();
-      const qe=$('ptQuickEdit'); if(qe) qe.scrollIntoView({behavior:'smooth',block:'center'});
+      // 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено): список —
+      // отдельный лист поверх экрана, не соседняя панель; scrollIntoView больше не нужен,
+      // панель точки и так сразу видна под лентой, как только лист закрылся
+      const ov=$('ptListOverlay'); if(ov) ov.classList.remove('show');
     });
     listPanel.appendChild(row);
   });
@@ -331,8 +337,16 @@ function ptWireOnce(){
     if(ptSelIdx<0) return; const pins=ptPins(); const v=Math.round(+ev.target.value);
     pins[ptSelIdx].at=isFinite(v)?ptClampAt(v):pins[ptSelIdx].at; ptRender();
   });
-  const lg=$('ptListGrp'), lp=$('ptListPanel');
-  if(lg&&lp) lg.addEventListener('click',()=>{ lg.classList.toggle('open'); lp.classList.toggle('hidden'); });
+  // 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено): «Точек: N»
+  // теперь открывает отдельный лист снизу экрана (не аккордеон внутри страницы, как раньше)
+  const lg=$('ptListGrp'), ov=$('ptListOverlay'), lc=$('ptListClose');
+  if(lg&&ov) lg.addEventListener('click',()=>{ sfx.click(); haptic('light'); ptRenderList(); ov.classList.add('show'); });
+  if(lc&&ov) lc.addEventListener('click',()=>{ sfx.click(); haptic('light'); ov.classList.remove('show'); });
+  // уход на соседнюю подвкладку («Цвет»/«Сохранить») закрывает лист «Карты» — иначе он
+  // молча остаётся открытым и «выпрыгивает» без причины при возврате на «Карту»
+  ['forgeSubSkyBtn','forgeSubHardBtn'].forEach(function(id){
+    const b=$(id); if(b&&ov) b.addEventListener('click',()=>ov.classList.remove('show'));
+  });
   // 01.09.2026 «Свой фон»: свободный цвет неба — формат уже поддерживает (extFlags бит1,
   // forgeBitsPack/Unpack). Лента красится живьём в эти цвета (ptPaintTrackBg), тот же приём,
   // что уже был в одобренном макете.
@@ -408,6 +422,7 @@ function ptFill(){
   const t=$('ptTitle'); if(t) t.textContent='Расстановка';
   const s=$('ptSub'); if(s) s.textContent='Точки на дистанции — где будет передышка или препятствие';
   ptH2Touched=false; // новое открытие экрана — авто-гармония снова ведёт второй цвет, пока автор сам его не тронет
+  const ov0=$('ptListOverlay'); if(ov0) ov0.classList.remove('show'); // 12.09.2026: свежее открытие Конструктора не должно наследовать открытый лист прошлого раза
   ptWireTray();
   ptWireOnce();
   ptSyncLenUI();
