@@ -342,11 +342,10 @@ function ptWireOnce(){
   const lg=$('ptListGrp'), ov=$('ptListOverlay'), lc=$('ptListClose');
   if(lg&&ov) lg.addEventListener('click',()=>{ sfx.click(); haptic('light'); ptRenderList(); ov.classList.add('show'); });
   if(lc&&ov) lc.addEventListener('click',()=>{ sfx.click(); haptic('light'); ov.classList.remove('show'); });
-  // уход на соседнюю подвкладку («Цвет»/«Сохранить») закрывает лист «Карты» — иначе он
-  // молча остаётся открытым и «выпрыгивает» без причины при возврате на «Карту»
-  ['forgeSubSkyBtn','forgeSubHardBtn'].forEach(function(id){
-    const b=$(id); if(b&&ov) b.addEventListener('click',()=>ov.classList.remove('show'));
-  });
+  // 12.09.2026: уход с «Карты» на другой шаг закрывает лист — иначе он молча остаётся открытым
+  // и «выпрыгивает» без причины при возврате. Раньше висело на кнопках-пилюлях (forgeSubSkyBtn/
+  // forgeSubHardBtn), теперь их нет — три шага переключаются только через forgeSubTabSet
+  // (js/forge.js), она и закрывает лист сама при уходе с «arrange», см. там же.
   // 01.09.2026 «Свой фон»: свободный цвет неба — формат уже поддерживает (extFlags бит1,
   // forgeBitsPack/Unpack). Лента красится живьём в эти цвета (ptPaintTrackBg), тот же приём,
   // что уже был в одобренном макете.

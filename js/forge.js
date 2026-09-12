@@ -611,31 +611,67 @@ function forgeTabSet(t){
   const playEl=$('forgeTabPlay'), createEl=$('forgeTabCreate');
   if(playEl) playEl.classList.toggle('hidden', forgeTab!=='play');
   if(createEl) createEl.classList.toggle('hidden', forgeTab!=='create');
-  if(forgeTab==='play') workshopRenderList(); // список мог устареть, пока игрок был на «Создать»
-  if(forgeTab==='create') forgeSubTabSet('arrange'); // 06.09.2026 «Переосмысление, часть 2»: вход в «Создать» всегда начинается с Расстановки
+  if(forgeTab==='play'){ workshopRenderList(); forgeStepExit(); } // список мог устареть, пока игрок был на «Создать»
+  if(forgeTab==='create'){ forgeStepEnter(); forgeSubTabSet('arrange'); } // 06.09.2026 «Переосмысление, часть 2»: вход в «Создать» всегда начинается с Расстановки
 }
 wireOnLocal('forgeTabPlayBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('play'); });
 wireOnLocal('forgeTabCreateBtn','click',function(){ sfx.click(); haptic('light'); forgeTabSet('create'); });
 
-/* 06.09.2026 «Переосмысление, часть 2»: три саб-вкладки внутри «Создать» — тот же приём
-   переключения, что у forgeTabSet() выше, просто на уровень ниже (Расстановка/Небо/Сложность
-   вместо Играть/Создать). */
+/* 12.09.2026 (макеты karta-/tsvet-/sohranit-polnoekranny-shag-12-09-2026.html, одобрено):
+   «Создать» — три полноэкранных ШАГА, не три вкладки на одной странице. Обычная шапка
+   экрана (круглая «Назад» + «Конструктор» + Играть/Создать) на время шага полностью
+   прячется — её сменяет forgeStepHead/forgeStepBack/forgeStepConfirmWrap. */
+function forgeStepEnter(){
+  const back=$('forgeBack'), title=$('forgeTitle'), tabs=$('forgeTabs');
+  if(back) back.classList.add('hidden');
+  if(title) title.classList.add('hidden');
+  if(tabs) tabs.classList.add('hidden');
+}
+function forgeStepExit(){
+  const back=$('forgeBack'), title=$('forgeTitle'), tabs=$('forgeTabs');
+  if(back) back.classList.remove('hidden');
+  if(title) title.classList.remove('hidden');
+  if(tabs) tabs.classList.remove('hidden');
+}
+const FORGE_STEP_ORDER=['arrange','sky','hard'];
+const FORGE_STEP_TITLE={arrange:'Карта',sky:'Цвет',hard:'Сохранить'};
+const FORGE_STEP_CONFIRM_LBL={arrange:'Подтвердить карту',sky:'Подтвердить цвет'};
 let forgeSub='arrange';
 function forgeSubTabSet(s){
+  const leftArrange=(forgeSub==='arrange'&&s!=='arrange');
   forgeSub=(s==='sky')?'sky':(s==='hard')?'hard':'arrange';
-  const arrangeBtn=$('forgeSubArrangeBtn'), skyBtn=$('forgeSubSkyBtn'), hardBtn=$('forgeSubHardBtn');
-  if(arrangeBtn) arrangeBtn.classList.toggle('sel', forgeSub==='arrange');
-  if(skyBtn) skyBtn.classList.toggle('sel', forgeSub==='sky');
-  if(hardBtn) hardBtn.classList.toggle('sel', forgeSub==='hard');
   const arrangeEl=$('forgeSubArrange'), skyEl=$('forgeSubSky'), hardEl=$('forgeSubHard');
   if(arrangeEl) arrangeEl.classList.toggle('hidden', forgeSub!=='arrange');
   if(skyEl) skyEl.classList.toggle('hidden', forgeSub!=='sky');
   if(hardEl) hardEl.classList.toggle('hidden', forgeSub!=='hard');
-  if(typeof scrollFadeSync==='function') scrollFadeSync($('forgeSubTabs')); // 09.09.2026: маска-затухание только при реальном переполнении, см. ui.js
+  // 12.09.2026: уход с «Карты» закрывает её лист точек, если он остался открытым — раньше
+  // это висело на кнопках-пилюлях forgeSubSkyBtn/forgeSubHardBtn (js/partitura.js), теперь
+  // единственная точка перехода между шагами — здесь.
+  if(leftArrange){ const lov=$('ptListOverlay'); if(lov) lov.classList.remove('show'); }
+  const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE[forgeSub];
+  const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
+  document.querySelectorAll('.forgeStepDot').forEach(function(d){
+    const di=FORGE_STEP_ORDER.indexOf(d.dataset.sub);
+    d.classList.toggle('cur', di===idx);
+    d.classList.toggle('done', di<idx); // только пройденные назад — прыжок вперёд без подтверждения не даём
+  });
+  const cw=$('forgeStepConfirmWrap'); if(cw) cw.classList.toggle('hidden', forgeSub==='hard'); // на «Сохранить» уже есть настоящие Полёт/Поделиться
+  const cl=$('forgeStepConfirmLbl'); if(cl && FORGE_STEP_CONFIRM_LBL[forgeSub]) cl.textContent=FORGE_STEP_CONFIRM_LBL[forgeSub];
 }
-wireOnLocal('forgeSubArrangeBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('arrange'); });
-wireOnLocal('forgeSubSkyBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('sky'); });
-wireOnLocal('forgeSubHardBtn','click',function(){ sfx.click(); haptic('light'); forgeSubTabSet('hard'); });
+wireOnLocal('forgeStepBack','click',function(){
+  sfx.click(); haptic('light');
+  const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
+  if(idx<=0) forgeTabSet('play'); else forgeSubTabSet(FORGE_STEP_ORDER[idx-1]);
+});
+wireOnLocal('forgeStepConfirmBtn','click',function(){
+  sfx.click(); haptic('light');
+  const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
+  if(idx<FORGE_STEP_ORDER.length-1) forgeSubTabSet(FORGE_STEP_ORDER[idx+1]);
+});
+wireOnLocal('forgeStepDots','click',function(ev){
+  const dot=ev.target.closest('.forgeStepDot'); if(!dot||!dot.classList.contains('done')) return; // вперёд без подтверждения не прыгаем
+  sfx.click(); haptic('light'); forgeSubTabSet(dot.dataset.sub);
+});
 /* 09.09.2026 «Точечная настройка»: одиночный спойлер (не аккордеон с несколькими панелями,
    как SET_GRPS в ui.js) — просто открыть/закрыть свою же панель, тем же классом .setGrp.spoiler,
    что уже используется в Настройках/«Список точек» (Расстановка). */
