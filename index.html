@@ -1887,12 +1887,19 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    Закрепить/Скрыть) справа. Раньше имя стояло отдельной строкой внизу картинки — теперь
    освобождает эту строку целиком, а тут делит место со значками, которые и так уже
    резервировали верхнюю полосу картинки под себя. */
-.wTopRow{position:absolute;top:8px;left:8px;right:8px;display:flex;align-items:center;
+/* 13.09.2026: z-index:5 — выше .wInfoOverlay (z-index:4). Без этого открытая панель
+   физически перекрывала кнопку (i), второй тап по ней не долетал, закрыть было нельзя
+   (владелец поймал вживую: тап открыл, повторный тап в ту же точку не закрыл). */
+.wTopRow{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;
   justify-content:space-between;gap:6px}
 .wCorner{width:26px;height:26px;border-radius:50%;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .wCorner .ic{width:14px;height:14px;fill:currentColor}
+/* 13.09.2026: восстановлено вместе с иконкой «Пожаловаться» внутри (i) — точная строка,
+   что стояла на .wCorner-версии этой же кнопки до 12.09.2026 (git 02a1cb9), удалена тогда
+   вместе с переездом на текстовую кнопку. */
+.wCornerDanger{color:#e0533d;border-color:rgba(224,83,61,.55)}
 .wCorner:disabled{opacity:.4;cursor:default}
 /* 11.09.2026 (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html, одобрено):
    было — «цвет»(fav)+«лайк»(vote) один ряд слева сверху (.wLeftRow, тот же приём, что у
@@ -1939,8 +1946,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .wInfoOverlay.open{display:flex}
 .wInfoOverlay .wInfoLine{color:#eaf2ff;font-size:12px;text-align:center;font-weight:600;
   text-shadow:0 1px 3px rgba(0,0,0,.6)}
-.wInfoOverlay .wInfoActions{display:flex;gap:6px}
-.wInfoOverlay .wInfoActions .btn{flex:1;font-size:11px;padding:7px}
+/* 13.09.2026: кнопки внутри стали значками .wCorner (владелец: «иконками нравится больше»,
+   раньше — на всю ширину текстом) — ряд теперь центрируется, не растягивается на всю ширину. */
+.wInfoOverlay .wInfoActions{display:flex;gap:10px;justify-content:center}
 .wActionRow{display:flex;gap:10px}
 /* 11.09.2026 (владелец: «до сих пор лишнее вокруг вижу?») — кнопка наследовала margin:6px 0
    от общего базового стиля кнопок игры (чужое правило, просто долетало): 6px сверху+снизу
@@ -1977,8 +1985,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    #ptPanel этого не получил (добавлен позже, отдельным заходом), поэтому .setGrp/.forgeRow внутри
    него — обычные блочные дети, прижатые к левому краю без auto-центрирования. Трек/лента стикеров
    не ломается — они сами задают width:100%, растягиваются как и раньше. */
-#ptPanel{padding-top:8px; display:flex; flex-direction:column; align-items:center;
-  width:100%; margin-left:auto; margin-right:auto} /* 01.09.2026: владелец — «окно узкое
+#ptPanel{position:relative; padding-top:8px; display:flex; flex-direction:column; align-items:center;
+  width:100%; margin-left:auto; margin-right:auto} /* position:relative добавлено 12.09.2026 —
+  якорь для плавающего пузырька точки (.panel.quickEdit) и #ptDragValue, оба position:absolute
+  внутри этой панели. 01.09.2026: владелец — «окно узкое
   для стикеров», лента+лоток и так помещаются в свой .setPanel (min(92%,380px)), но на широких
   экранах пустуют. Собственная ширина (не унаследованная) — тот же приём, что у .forgePresets ниже.
   07.09.2026, владелец (замер вживую — 0px слева, 23px справа): align-items:center у .scrBody
@@ -2061,14 +2071,23 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    не додумано) — субпиксельное округление процента от дробной ширины родителя, тот же класс
    бага, что уже решён у .wBanner в Мастерской. Тот же приём здесь: жёсткий bleed через calc,
    не проценты. */
-.trackBox{border:1px solid rgba(201,164,92,.45);border-radius:16px;overflow:hidden;background:#0f1f3d;
-  width:calc(100% + 1px);margin-left:-0.5px}
-.track{position:relative;width:100%;height:60px;touch-action:none} /* 10.09.2026 (владелец): вдвое ниже — падение стикера считается только по X (ptXToAt), высота на точность не влияет, чисто место на экране */
-.trackFooter{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;
-  background:rgba(8,14,28,.55);border-top:1px solid rgba(255,255,255,.08)}
-.trackFooter .forgeLbl2{font-size:9.5px;font-weight:700;color:var(--muted);flex:none;letter-spacing:.08em;text-transform:uppercase}
-.trackFooter input[type=range]{flex:1;accent-color:var(--gold);height:20px}
-.trackFooter b{flex:none;width:48px;text-align:left;font-size:11px;color:var(--gold-hi)}
+/* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено): .trackBox (рамка-
+   коробка) убрана целиком — лента теперь просто тонкая линия на фоне неба экрана, тем же
+   приёмом, что у самого первого макета «3 шага» (тонкая линия .track, не панель). Высота
+   .track (60px) НЕ трогается — она держит место для 3-рядного стека меток при скоплении точек
+   (ptSpreadOffsets, js/partitura.js), просто больше не рисуется как видимая коробка. */
+.track{position:relative;width:100%;height:60px;touch-action:none;border-radius:16px;overflow:hidden} /* border-radius/overflow
+  добавлены 12.09.2026 — раньше скругление давала .trackBox снаружи (теперь убрана), а лента
+  сама красится вживую в цвета неба инлайн-стилем (ptPaintTrackBg, js/partitura.js) и без
+  своего скругления рисовалась бы прямоугольником */
+.track::before{content:'';position:absolute;left:0;right:0;top:50%;height:7px;border-radius:5px;
+  transform:translateY(-50%);background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.55));
+  box-shadow:0 0 10px rgba(255,255,255,.25);pointer-events:none}
+.ptLenRow{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;margin-top:10px;
+  background:rgba(15,31,61,.7);border:1px solid var(--line);border-radius:18px}
+.ptLenRow .forgeLbl2{font-size:9.5px;font-weight:700;color:var(--muted);flex:none;letter-spacing:.08em;text-transform:uppercase}
+.ptLenRow input[type=range]{flex:1;accent-color:var(--gold);height:20px}
+.ptLenRow b{flex:none;width:48px;text-align:left;font-size:11px;color:var(--gold-hi)}
 .ptInfBtn{flex:none;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:transparent;
   color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 .ptInfBtn.sel{border-color:rgba(201,164,92,.45);color:var(--gold-hi);background:rgba(201,164,92,.14)}
@@ -2076,10 +2095,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .fonSwatch{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
 /* 10.09.2026: .ptRandomBtn (старая полноширинная текстовая кнопка «Перемешать») удалена —
    тот же #ptRandomSkyBtn переехал значком на окно предпросмотра (.pvBtn), см. форму выше. */
-.track::after{content:'стикеры снизу — перетащи сюда';position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:center;font-size:11px;color:var(--muted);opacity:.5;pointer-events:none;
-  padding:0 20px;text-align:center;letter-spacing:.04em;z-index:2}
-.track.has-pins::after{content:''}
+/* 12.09.2026: .track::after («стикеры снизу — перетащи сюда») убран — при 0 точек текст
+   на inset:0 наезжал на новые угловые круглые кнопки #ptListGrp/#forgeResetBtn. */
 .track.dropok::before{content:'';position:absolute;inset:0;border:2px dashed rgba(201,164,92,.45);pointer-events:none}
 .ruler{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:6px;padding:0 2px}
 .pin{position:absolute;top:36px;width:var(--pinSz,48px);height:var(--pinSz,48px);border-radius:50%;display:flex;align-items:center;
@@ -2098,19 +2115,20 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   white-space:nowrap;pointer-events:none;letter-spacing:.03em;opacity:0;transition:opacity .15s}
 .pin-lbl.sel{opacity:1}
 /* 01.09.2026 «Сетка вместо скролла»: макет macet-01-09-lotok-stikerov.html — владелец не хочет
-   листание вбок (не на всех устройствах очевиден свайп) и не хочет прятать лоток под спойлер
-   (сам лоток — единственная безсловесная подсказка, как со стикерами работать, прятать его
-   значит терять её). auto-fit сам решает, сколько в ряд — 10 в одну строку на широкой карточке
-   выше, 2 ряда на узкой — без двух отдельных breakpoint-ов. */
-/* 04.09.2026 (владелец): было auto-fit — на узком экране влезало 6 в первый ряд, 4 остаток
-   во второй, неровно. Стикеров ровно 10 (2 особых + 8 FORGE_KINDS) — фиксированные 5 колонок
-   дают ровно 2×5 всегда, а не «сколько поместится». */
-.tray{display:grid;width:100%;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 4px}
-.stickerItem{display:flex;flex-direction:column;align-items:center;gap:4px}
-.stickerCap{font-size:7.5px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.15}
-.sticker{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:12px;border:1.5px solid rgba(255,255,255,.22);background:#0f1f3d;cursor:grab;touch-action:none;
+   листание вбок... — ОТМЕНЕНО 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html,
+   одобрено «намного лучше»): реальный референс «3 шага» (сам одобренный образец «прямого
+   манипулирования») показывает лоток именно одной прокручиваемой строкой, не сеткой — решение
+   04.09.2026 держалось в отрыве от этого образца. */
+/* 12.09.2026: владелец прямо попросил вернуть 2 ряда вместо горизонтальной прокрутки —
+   10 стикеров (Передышка, Заметка + 8 видов) укладываются в сетку 5×2 без остатка. */
+.tray{display:grid;grid-template-columns:repeat(5,1fr);width:100%;gap:10px 6px;padding:10px 4px 12px;justify-items:center}
+.stickerItem{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+.stickerCap{font-size:8.5px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.15;white-space:nowrap}
+.sticker{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;border:2px solid rgba(255,255,255,.25);background:#0f1f3d;cursor:grab;touch-action:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:var(--ink)}
+.stickerItem.armed .sticker{border-color:var(--gold-hi);box-shadow:0 0 14px rgba(240,192,64,.5);transform:translateY(-3px)}
+.stickerItem.armed .stickerCap{color:var(--gold-hi)}
 .sticker svg{display:block;width:60%;height:60%}
 .sticker.dragging{opacity:.25}
 .tray.nearMax .sticker{opacity:.55;transition:opacity .2s}
@@ -2134,14 +2152,22 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 /* 10.09.2026 (владелец, живой макет): было border-radius:999px + padding:8px 18px + min-height:36px —
    полная капсула ВНУТРИ капсулы-тоста разной высоты (кривизна не совпадает) плюс лишний воздух вокруг
    короткого слова «Вернуть» при 11px шрифте. var(--r-btn) — тот же радиус, что у всех кнопок игры. */
-/* 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено): «Точек»/«Сбросить»
-   были текстом+кнопкой в конце страницы, переехали в один инструментальный ряд под лентой. */
-.ptTopTools{display:flex;gap:8px;justify-content:center;padding:8px 4px 2px}
-.ptToolBtn{background:rgba(15,31,61,.7);border:1px solid var(--line);color:var(--cream);
-  font-family:inherit;font-size:11px;letter-spacing:.03em;border-radius:var(--r-btn);
-  padding:8px 14px;cursor:pointer}
-.ptToolBtn b{color:var(--gold-hi)}
-.ptToolBtnDanger{color:var(--muted)}
+/* 12.09.2026 (владелец, живой скрин с красными пометками — «уже решили», макет «исправление 2»
+   того же вечера, «сделай красиво, не просто впихни»): «Точек»/«Сбросить» — круглые значки по
+   разным углам самой ленты, ровно тот же визуальный язык, что уже есть у ⓘ/★ на плитках Ангара
+   (.angarFact/.angarFav, index.html:1397-1408, см. STYLE-GUIDE.md §5) — не текстовые пилюли. */
+.ptCornerBtn{position:absolute;top:6px;z-index:3;width:20px;height:20px;border-radius:50%;
+  background:rgba(10,16,32,.65);border:1px solid var(--line);color:var(--muted);
+  display:grid;place-items:center;font-family:inherit;font-size:10px;cursor:pointer}
+.ptCornerBtn .ic{width:12px;height:12px}
+.ptCornerLeft{left:6px}
+.ptCornerLeft b{color:var(--gold-hi);font-size:10px}
+.ptCornerRight{right:6px}
+/* «Сбросить» — второе нажатие подряд подтверждает (RESEARCH-2026-09-CREATOR-CONTROLS.md,
+   тап понятнее и безопаснее непрерывного жеста; тот же принцип, другое применение здесь).
+   В состоянии подтверждения значок сменяется словом «Точно?» — кружок расширяется под текст. */
+.ptCornerRight.confirming{width:auto;padding:0 8px;background:rgba(224,83,61,.85);
+  border-color:var(--danger);color:#fff;font-size:9px;letter-spacing:.02em}
 /* Список точек — раньше аккордеон внутри страницы (.setGrp.spoiler), теперь отдельный лист
    снизу экрана, тот же приём, что уже даёт .ptToast (fixed+transition), только крупнее. */
 #ptListOverlay{position:fixed;inset:0;z-index:45;background:rgba(6,10,20,.72);
@@ -2167,7 +2193,17 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .evtRow .nm{flex:1;font-size:11px;letter-spacing:.04em;color:var(--cream)}
 .evtRow .rm{color:#e0533d;font-size:18px;padding:4px 6px;flex-shrink:0;line-height:1}
 .evtEmpty{font-size:10.5px;color:var(--muted);text-align:center;padding:6px 0;text-transform:none;letter-spacing:.02em}
-.panel.quickEdit{display:none;margin:14px 0}
+/* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено «намного лучше»/«делай»
+   после того, как версия «панель под лентой» того же вечера была отвергнута — см. память
+   feedback_sveryaysya_s_igroy_pered_dobavleniem.md, «два разных мира»): панель точки больше не
+   блок в потоке страницы — плавающий пузырёк, позиционируется в JS (ptRenderPanel) прямо у
+   самой точки на ленте (RESEARCH-2026-09-SINGLE-STEP-FLOW.md п.2, Shneiderman Direct
+   Manipulation / отказ Sims 4 от панели рядом с моделью). Внутренние классы (.atrow/.nudge/
+   .atval и т.д.) не тронуты — та же самая разметка/логика, только контейнер стал плавающим. */
+.panel.quickEdit{display:none;position:absolute;z-index:10;width:262px;max-width:calc(100% - 8px);
+  background:rgba(10,18,32,.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border:1px solid var(--line-gold);border-radius:14px;padding:12px 14px;
+  box-shadow:0 10px 28px rgba(0,0,0,.5)}
 .panel.quickEdit.show{display:block}
 .panel.quickEdit .k{font-size:11px;letter-spacing:.12em;color:var(--gold);margin-bottom:14px;
   display:flex;justify-content:space-between;align-items:center}
@@ -2193,6 +2229,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   padding:10px;color:var(--ink);font-size:13px;font-family:inherit;text-transform:none;letter-spacing:.02em;
   font-weight:400;resize:none;margin-top:12px}
 #ptQuickEdit .hint{font-size:10.5px;color:var(--muted);margin-top:8px;line-height:1.5;letter-spacing:.02em;text-transform:none}
+/* 12.09.2026 (макет karta-pryamoe-manipulirovanie-12-09-2026.html, Vogel & Baudisch «Shift»,
+   CHI 2007): значение метров всплывает НАД пальцем во время перетаскивания точки — палец не
+   закрывает то, что видно. Заполняется/двигается в ptStartPinDrag (js/partitura.js). */
+#ptDragValue{position:absolute;z-index:20;background:var(--gold-hi);color:#1c1200;font-weight:700;
+  font-size:12px;padding:5px 10px;border-radius:10px;display:none;transform:translate(-50%,-140%);
+  pointer-events:none;white-space:nowrap}
+#ptDragValue.show{display:block}
 /* кузница — не аккордеон: кнопкам-действиям возвращаем стекло, спойлер остаётся тихой строкой (v1.86.0) */
 .forgePanel .btn.pri,.forgePanel .btn.ghost:not(.spoiler){
   border:1px solid rgba(160,210,255,.18);border-radius:var(--r-btn);
@@ -2743,9 +2786,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.251"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.251"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.251"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.253"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.253"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.253"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3226,35 +3269,36 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          если они когда-нибудь понадобятся, элементы просто не отрисованы (getElementById
          вернёт null, код там уже проверяет if(el) перед записью). -->
     <div class="setPanel forgePanel" id="ptPanel">
+      <!-- 12.09.2026 (владелец, макет karta-tochno-kak-referens-12-09-2026.html, одобрено «намного
+           лучше»/«делай», после того как первая правка того же вечера была отвергнута как
+           «панель под картинкой» — см. RESEARCH-2026-09-SINGLE-STEP-FLOW.md п.2, Sims 4 отказ от
+           панели рядом с моделью в пользу правки прямо на объекте): лента — просто тонкая линия,
+           без рамки-коробки; правка точки — плавающий пузырёк прямо у самой точки (ptEditBubble
+           ниже), не блок под лотком. «Сбросить» требует второго нажатия подряд
+           (RESEARCH-2026-09-CREATOR-CONTROLS.md — тап понятнее и безопаснее непрерывного жеста,
+           тот же дух, другое применение). «Точек»/«Сбросить» — по разным углам самой ленты
+           (владелец, живой скрин с красными пометками: это уже решили раньше тем же вечером в
+           макете «исправление 2» — общая пилюля НАД лентой из макета karta-tochno-kak-referens
+           потеряла то решение при следующей правке, возвращаю). -->
       <div class="track-wrap">
-        <div class="trackBox">
-          <div class="track" id="ptTrack"></div>
-          <div class="trackFooter">
-            <!-- 01.09.2026: кнопка «∞» убрана — владелец вживую: показывала условные «5000м» на
-                 линейке ПОКА была включена (плейсхолдер для рендера, не настоящий предел) —
-                 читалось как «бесконечность упёрлась в 5000», противоречиво. Настоящих причин
-                 делать бесконечную трассу нет («никто не будет бесконечную трассу делать» —
-                 владелец). Потолок ползунка поднят взамен: 10000 → 25000. Формат кода
-                 по-прежнему поддерживает l=0 (forgeSanitize, forge.js) — старые уже разосланные
-                 коды друзей с бесконечной трассой останутся читаемыми, просто создать новую
-                 такую через интерфейс больше нельзя. -->
-            <span class="forgeLbl2" id="ptLenLbl">Длина</span>
-            <input type="range" id="ptLenSlider" min="1000" max="25000" step="250" value="1500">
-            <b id="ptLenVal">1500м</b>
-          </div>
+        <div class="track" id="ptTrack">
+          <button class="ptCornerBtn ptCornerLeft" id="ptListGrp" type="button" aria-label="Список точек"><b id="ptCnt">0</b></button>
+          <button class="ptCornerBtn ptCornerRight" id="forgeResetBtn" type="button" aria-label="Сбросить всё"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
+        </div>
+        <div class="ptLenRow">
+          <!-- 01.09.2026: кнопка «∞» убрана — владелец вживую: показывала условные «5000м» на
+               линейке ПОКА была включена (плейсхолдер для рендера, не настоящий предел) —
+               читалось как «бесконечность упёрлась в 5000», противоречиво. Настоящих причин
+               делать бесконечную трассу нет («никто не будет бесконечную трассу делать» —
+               владелец). Потолок ползунка поднят взамен: 10000 → 25000. Формат кода
+               по-прежнему поддерживает l=0 (forgeSanitize, forge.js) — старые уже разосланные
+               коды друзей с бесконечной трассой останутся читаемыми, просто создать новую
+               такую через интерфейс больше нельзя. -->
+          <span class="forgeLbl2" id="ptLenLbl">Длина</span>
+          <input type="range" id="ptLenSlider" min="1000" max="25000" step="250" value="1500">
+          <b id="ptLenVal">1500м</b>
         </div>
         <div class="ruler" id="ptRuler"></div>
-      </div>
-      <!-- 12.09.2026 (владелец, макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено
-           «да» дважды — второй раз после исправления палитры на 2 ряда): «Точек»/«Сбросить»
-           переехали в свой инструментальный ряд прямо под лентой — раньше счётчик был текстом
-           под лотком, а «Сбросить всё» полноширинной кнопкой в самом низу под списком (решение
-           07.09.2026, тут не нарушается — на этом экране нет «Полёт»/«Поделиться», они только
-           в «Сохранить», спорить не с кем). Список точек стал отдельным листом снизу экрана
-           вместо аккордеона внутри страницы — открывается тем же «Точек: N». -->
-      <div class="ptTopTools" id="ptTopTools">
-        <button class="ptToolBtn" id="ptListGrp" type="button">Точек: <b id="ptCnt">0</b></button>
-        <button class="ptToolBtn ptToolBtnDanger" id="forgeResetBtn" type="button">Сбросить</button>
       </div>
       <div class="tray" id="ptTray"></div>
       <div class="panel quickEdit" id="ptQuickEdit">
@@ -3266,7 +3310,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
           <div class="nudge" id="ptPlus1">+1</div>
           <div class="nudge" id="ptPlus10">+10</div>
         </div>
-        <div class="nudgehint">±1/±10 или впиши число сам</div>
+        <div class="nudgehint">±1/±10 — или тащи точку по ленте</div>
         <div id="ptKindLbl" class="hint" style="display:none"></div>
         <div id="ptDirRow" style="display:none">
           <div class="hint" style="margin-bottom:6px">Сторона</div>
@@ -3278,6 +3322,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         </div>
         <div id="ptPauseHint" class="hint" style="display:none">Гарантия передышки в этой точке — рядом не появится препятствие.</div>
       </div>
+      <!-- значение метров НАД пальцем во время перетаскивания точки (Vogel & Baudisch «Shift»,
+           CHI 2007) — палец не закрывает то, что видно; заполняется/двигается в ptStartPinDrag. -->
+      <div id="ptDragValue"></div>
     </div>
     <div id="ptListOverlay">
       <div id="ptListCard">
@@ -3686,25 +3733,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.251" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.251"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.251"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.251"></script>
-<script defer src="js/game.js?v=1.478.251" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.251"></script>
-<script defer src="js/sync.js?v=1.478.251"></script>
-<script defer src="js/render.js?v=1.478.251"></script>
-<script defer src="js/planetarium.js?v=1.478.251"></script>
-<script defer src="js/goldstar.js?v=1.478.251"></script>
-<script defer src="js/music.js?v=1.478.251"></script>
-<script defer src="js/gyro.js?v=1.478.251"></script>
-<script defer src="js/forge.js?v=1.478.251"></script>
-<script defer src="js/partitura.js?v=1.478.251"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.251"></script>
-<script defer src="js/card.js?v=1.478.251"></script>
-<script defer src="js/star.js?v=1.478.251"></script>
-<script defer src="js/cinema.js?v=1.478.251"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.251"></script>
+<script defer src="js/core.js?v=1.478.253" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.253"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.253"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.253"></script>
+<script defer src="js/game.js?v=1.478.253" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.253"></script>
+<script defer src="js/sync.js?v=1.478.253"></script>
+<script defer src="js/render.js?v=1.478.253"></script>
+<script defer src="js/planetarium.js?v=1.478.253"></script>
+<script defer src="js/goldstar.js?v=1.478.253"></script>
+<script defer src="js/music.js?v=1.478.253"></script>
+<script defer src="js/gyro.js?v=1.478.253"></script>
+<script defer src="js/forge.js?v=1.478.253"></script>
+<script defer src="js/partitura.js?v=1.478.253"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.253"></script>
+<script defer src="js/card.js?v=1.478.253"></script>
+<script defer src="js/star.js?v=1.478.253"></script>
+<script defer src="js/cinema.js?v=1.478.253"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.253"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

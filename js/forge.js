@@ -21,6 +21,7 @@ function wireOnLocal(id, ev, fn){
 
 /* ---------- Схема конфига и кодек ---------- */
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
+const FORGE_RESET_ICON='<svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg>'; // 12.09.2026: круглый значок-корзина у forgeResetBtn в покое (index.html .ptCornerBtn), текст только в состоянии «Точно?»
 const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
@@ -505,7 +506,11 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
     ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],
-    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],['forgeResetBtn',L.forgeResetBtn]];
+    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn]];
+  // 12.09.2026: forgeResetBtn убрана из этого цикла — теперь круглый значок-корзина
+  // (index.html, .ptCornerBtn), не текст; textContent затирал бы иконку. aria-label
+  // остаётся на кнопке в HTML напрямую, L.forgeResetBtn по-прежнему используется как
+  // подпись состояния «Точно?»/возврата, см. wireOnLocal('forgeResetBtn',...) ниже.
   // 07.09.2026: «Начать по-другому»/forgeStartOverLbl снята вместе с общей рамкой — «Сбросить
   // всё» и «Небо друга» разъехались по разным местам экрана, общей подписи над ними больше нет.
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
@@ -646,8 +651,19 @@ function forgeSubTabSet(s){
   if(hardEl) hardEl.classList.toggle('hidden', forgeSub!=='hard');
   // 12.09.2026: уход с «Карты» закрывает её лист точек, если он остался открытым — раньше
   // это висело на кнопках-пилюлях forgeSubSkyBtn/forgeSubHardBtn (js/partitura.js), теперь
-  // единственная точка перехода между шагами — здесь.
-  if(leftArrange){ const lov=$('ptListOverlay'); if(lov) lov.classList.remove('show'); }
+  // единственная точка перехода между шагами — здесь. Заодно снимает «взведённый» стикер,
+  // закрывает пузырёк выбранной точки и гасит недоподтверждённое «Сбросить» — начатое на
+  // «Карте» действие не должно тихо висеть/сработать после ухода с неё.
+  if(leftArrange){
+    const lov=$('ptListOverlay'); if(lov) lov.classList.remove('show');
+    if(typeof ptArmedType!=='undefined') ptArmedType=null;
+    document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed'));
+    if(typeof ptSelIdx!=='undefined' && ptSelIdx>=0){ ptSelIdx=-1; if(typeof ptRender==='function') ptRender(); }
+    if(forgeResetArmed){
+      clearTimeout(forgeResetTimer); forgeResetArmed=false;
+      const rb=$('forgeResetBtn'); if(rb){ rb.classList.remove('confirming'); rb.innerHTML=FORGE_RESET_ICON; }
+    }
+  }
   const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE[forgeSub];
   const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
   document.querySelectorAll('.forgeStepDot').forEach(function(d){
@@ -1069,7 +1085,7 @@ let workshopSortMode='new';
 // заход) перенесено на сервер (forge_workshop.featured, действие moderate), звезда теперь
 // настоящая кнопка в самой карточке, видимая владельцу всегда, остальным — только на
 // реально помеченных треках.
-const WORKSHOP_SORTS=['new','top','fav','trending']; // 12.09.2026 (второй заход): добавлен 'trending' — реальный сорт на сервере (formula Royal Road, cosmogram-workshop). «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
+const WORKSHOP_SORTS=['new','top','trending','fav']; // 13.09.2026: владелец прямо попросил порядок «новые, топ, растёт, лайк» — trending и fav поменяны местами (было 'new','top','fav','trending'). «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
 let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
@@ -1216,8 +1232,15 @@ function workshopRenderList(){
       // сервер/клик-хендлер не тронуты, только положение и текст вместо иконки).
       '<div class="wInfoOverlay">'+
       '<div class="wInfoLine" data-role="info-line"></div>'+
-      '<div class="wInfoActions"><button class="btn ghost" data-act="fav"></button>'+
-      '<button class="btn ghost" data-act="report"></button></div>'+
+      // 13.09.2026, владелец: «было иконками и занимало меньше места, иконками нравится
+      // больше» — вернул значком-веером/треугольником, ровно те SVG, что стояли ДО вчерашнего
+      // переезда в (i) (см. git 02a1cb9): data-act="fav" был «В избранное» (#i-color-fan),
+      // data-act="report" был .wCornerDanger (треугольник). Внутри самой панели (i) остаются —
+      // владелец не просил убирать объединение, только вернуть вид кнопок.
+      '<div class="wInfoActions">'+
+      '<button class="wCorner" data-act="fav" title=""><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
+      '<button class="wCorner wCornerDanger" data-act="report" title=""><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>'+
+      '</div>'+
       '</div>'+
       '<div class="wBannerText"><div class="wStickerRow" data-role="stickers"></div></div></div>'+
       '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
@@ -1242,7 +1265,11 @@ function workshopRenderList(){
       // всегда видимых строк под картинкой (владелец: ни то ни другое не помогает решить
       // «лететь или нет», см. .knowledge/RESEARCH... вместе с остальным второстепенным).
       const infoLine=row.querySelector('[data-role="info-line"]');
-      if(infoLine) infoLine.textContent=(t.author_name||'')+' · '+(L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0));
+      // 13.09.2026: было голое имя автора без слова «Автор» — непонятно, что это подпись
+      // создателя неба, а не название чего-то ещё (владелец). Готовый ключ L.workshopAuthor
+      // уже существовал (08.09.2026, для более ранней раскладки карточки) — просто не был
+      // переиспользован здесь при переезде строки в панель (i) 12.09.2026.
+      if(infoLine) infoLine.textContent=(L.workshopAuthor?L.workshopAuthor(t.author_name||''):'Автор: '+(t.author_name||''))+' · '+(L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0));
       // 08.09.2026 (владелец, живой макет): значки препятствий — настоящий набор Партитуры
       // (js/partitura.js PT_ICON_SVG/PT_KIND_COLOR/PT_KIND_LABEL), не текстовые таблетки —
       // тот же язык, что уже есть в Расстановке, просто переиспользован здесь. Измерено
@@ -1258,10 +1285,11 @@ function workshopRenderList(){
       row.querySelector('.wVote').classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
       row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
       row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
-      // 12.09.2026: обе кнопки теперь текстовые внутри (i)-панели, не безымянные значки —
-      // .textContent вместо .title (title оставлен браузером как обычный tooltip у текста).
-      const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.textContent=L.workshopReport||'Пожаловаться';
-      const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.textContent=L.workshopFav||'Скопировать палитру';
+      // 13.09.2026: обратно значки, не текст (владелец: «иконками нравится больше», см.
+      // комментарий у разметки .wInfoActions выше) — .title вместо .textContent, ровно как
+      // было до переезда в (i)-панель (git 02a1cb9, до 12.09.2026).
+      const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться';
+      const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.title=L.workshopFav||'Скопировать палитру';
       row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
       if(pickStarBtn) pickStarBtn.classList.toggle('active', !!t.featured); // заливка звезды — CSS, тот же приём, что .wPin.active
       if(isOwner){
@@ -1373,7 +1401,27 @@ wireOnLocal('workshopList','click',function(e){
 /* ---------- Привязка событий ---------- */
 wireOnLocal('forgePlay', 'click', forgePlay);
 wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
-wireOnLocal('forgeResetBtn', 'click', forgeResetAll);
+/* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено): «Сбросить» —
+   рядом с лентой, куда рука тянется ставить точки (RESEARCH-2026-09-CREATOR-CONTROLS.md, тап
+   безопаснее непрерывного жеста) — сбрасывает ВЕСЬ forgeCfg (не только точки), случайный тап
+   слишком дорог. Второе нажатие подряд (в течение RESET_CONFIRM_MS) подтверждает; не подтвердил
+   — гаснет само, кнопка возвращается в исходный вид без всякого действия. */
+const RESET_CONFIRM_MS=3000;
+let forgeResetArmed=false, forgeResetTimer=null;
+wireOnLocal('forgeResetBtn', 'click', function(){
+  const btn=this;
+  if(!forgeResetArmed){
+    forgeResetArmed=true; btn.classList.add('confirming'); btn.textContent='Точно?';
+    sfx.click(); haptic('light');
+    forgeResetTimer=setTimeout(function(){
+      forgeResetArmed=false; btn.classList.remove('confirming'); btn.innerHTML=FORGE_RESET_ICON;
+    },RESET_CONFIRM_MS);
+    return;
+  }
+  clearTimeout(forgeResetTimer); forgeResetArmed=false;
+  btn.classList.remove('confirming'); btn.innerHTML=FORGE_RESET_ICON;
+  forgeResetAll();
+});
 wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); }); // 08.09.2026 (владелец, живой баг): вело в 'modes' (Соревнования) — хвост с 05.09.2026, когда кнопка Конструктора переехала с modeForge (внутри Соревнований) на главное меню, а «Назад» тогда забыли поправить. Единственный реальный вход теперь — konstruktorBtn с главного меню (проверено: «Открыть в Конструкторе» из Галереи — не отдельный вход, а переключение вкладки на уже открытом экране).
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
    меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой

@@ -122,6 +122,15 @@ function ptShowToast(text,undoFn){
 }
 
 function ptRender(justPoppedIdx){
+  ptRenderPins(justPoppedIdx);
+  ptRenderPanel();
+  ptRenderList();
+}
+/* 12.09.2026: вынесено из ptRender() — во время перетаскивания точки (ptStartPinDrag) нужно
+   перерисовывать только сами метки на ленте на каждый кадр движения пальца, не пересобирать
+   список точек и не дёргать панель (та временно спрятана во время драга). ptRender() по-прежнему
+   делает всё три шага, как раньше — поведение вне драга не меняется ни на бит. */
+function ptRenderPins(justPoppedIdx){
   const track=$('ptTrack'); if(!track) return;
   const pins=ptPins();
   track.querySelectorAll('.pin,.pin-lbl').forEach(e=>e.remove());
@@ -145,6 +154,7 @@ function ptRender(justPoppedIdx){
     track.appendChild(lbl);
     const el=document.createElement('div');
     el.className='pin '+p.type+(i===ptSelIdx?' sel':'')+(i===justPoppedIdx?' pop':'');
+    el.dataset.idx=i; // 12.09.2026: пузырёк точки находит свой якорь по этому индексу (ptRenderPanel)
     el.style.left=ptAtToPct(p.at);
     el.style.top=(pinTop+offs[i])+'px';
     const sw=document.createElement('div'); sw.className='sw';
@@ -157,19 +167,19 @@ function ptRender(justPoppedIdx){
   const cnt=$('ptCnt'); if(cnt) cnt.textContent=pins.length;
   const tray=$('ptTray');
   if(tray){ tray.classList.toggle('nearMax',pins.length>=135&&pins.length<PT_MAX); tray.classList.toggle('atMax',pins.length>=PT_MAX); } // 09.09.2026: 45 было 90% от старых 50, 135 — та же доля от новых 150
-  ptRenderPanel();
-  ptRenderList();
 }
 
 function ptRenderPanel(){
   const qe=$('ptQuickEdit'); if(!qe) return;
   const pins=ptPins();
-  const tray=$('ptTray'); // 12.09.2026 (макет karta-s-redaktirovaniem-tochki-12-09-2026.html, одобрено):
-  // лоток и панель точки делят одно место под лентой — показана только одна из двух сразу
-  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); if(tray) tray.classList.remove('hidden'); return; }
+  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); return; }
   const p=pins[ptSelIdx];
   qe.classList.add('show');
-  if(tray) tray.classList.add('hidden');
+  // 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено «намного лучше»/«делай»):
+  // пузырёк — не блок в потоке, а плавающий якорь прямо у точки на ленте (Direct Manipulation,
+  // RESEARCH-2026-09-SINGLE-STEP-FLOW.md п.2). Лоток больше не прячется — ему незачем, пузырёк
+  // не делит с ним место.
+  ptPositionBubble(qe, p);
   const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
   const title=$('ptPanelTitle'); if(title) title.textContent=p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':(PT_KIND_LABEL[kindName]||'');
   const icon=$('ptPanelIcon'); if(icon) icon.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
@@ -198,6 +208,22 @@ function ptRenderPanel(){
   const mb=$('ptMarkerBox'); if(mb) mb.style.display=p.type==='marker'?'block':'none';
   const ph=$('ptPauseHint'); if(ph) ph.style.display=p.type==='pause'?'block':'none';
   if(p.type==='marker'){ const ta=$('ptNoteText'); if(ta){ ta.value=p.note||''; ta.oninput=()=>{ p.note=ta.value; ptRenderList(); }; } }
+}
+/* 12.09.2026: якорит пузырёк точки прямо у самой метки на ленте — тот же приём, что уже
+   проверен в макете (openBubble). Ставит ниже точки, если сверху не хватает места, иначе
+   выше; зажимает по горизонтали в границах #ptPanel, чтобы не вылезал за экран. */
+function ptPositionBubble(qe,p){
+  const panel=$('ptPanel'), track=$('ptTrack'); if(!panel||!track) return;
+  const pinEl=track.querySelector('.pin[data-idx="'+ptSelIdx+'"]');
+  const panelR=panel.getBoundingClientRect();
+  const anchorR=pinEl?pinEl.getBoundingClientRect():track.getBoundingClientRect();
+  const cx=anchorR.left+anchorR.width/2-panelR.left;
+  const qw=qe.offsetWidth||262;
+  let left=cx-qw/2; left=Math.max(4,Math.min(panelR.width-qw-4,left));
+  qe.style.left=left+'px';
+  const anchorBottom=anchorR.bottom-panelR.top, anchorTop=anchorR.top-panelR.top;
+  const below=anchorTop<140;
+  qe.style.top=(below?anchorBottom+10:anchorTop-8-qe.offsetHeight)+'px';
 }
 
 function ptFmtTime(s){ const m=Math.floor(s/60), sec=Math.round(s%60); return m+':'+String(sec).padStart(2,'0'); }
@@ -266,11 +292,30 @@ function ptNudge(d){
 
 let ptGhostEl=null;
 function ptMoveGhost(x,y){ if(ptGhostEl){ ptGhostEl.style.left=x+'px'; ptGhostEl.style.top=y+'px'; } }
+/* 12.09.2026 (Vogel & Baudisch «Shift», CHI 2007, RESEARCH-2026-09-CREATOR-CONTROLS.md тема C):
+   значение метров всплывает НАД пальцем во время перетаскивания — палец не закрывает то, что
+   видно. #ptDragValue — отдельный плавающий бейдж, не часть пузырька (тот скрыт во время драга). */
+function ptDragValueShow(panel,x,y,text){
+  const dv=$('ptDragValue'); if(!dv) return;
+  const panelR=panel.getBoundingClientRect();
+  dv.textContent=text; dv.classList.add('show');
+  dv.style.left=(x-panelR.left)+'px'; dv.style.top=(y-panelR.top)+'px';
+}
 function ptStartPinDrag(ev,i){
   ev.stopPropagation(); ptSelIdx=i; ptRender();
-  const track=$('ptTrack');
-  const onMove=e=>{ const pins=ptPins(); if(!pins[i]) return; pins[i].at=ptXToAt(track,e.clientX); ptRender(); ptSelIdx=i; };
-  const onUp=()=>{ document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp); ptRender(); };
+  const track=$('ptTrack'), panel=$('ptPanel'), qe=$('ptQuickEdit');
+  if(qe) qe.classList.remove('show'); // прячем пузырёк на время драга — значение уже видно над пальцем
+  const onMove=e=>{
+    const pins=ptPins(); if(!pins[i]) return;
+    pins[i].at=ptXToAt(track,e.clientX); ptSelIdx=i;
+    ptRenderPins(); // лёгкая перерисовка меток без пересборки панели/пузырька на каждый кадр
+    if(panel) ptDragValueShow(panel,e.clientX,track.getBoundingClientRect().top,pins[i].at+(L.unitM||'м'));
+  };
+  const onUp=()=>{
+    document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp);
+    const dv=$('ptDragValue'); if(dv) dv.classList.remove('show');
+    ptRender();
+  };
   document.addEventListener('pointermove',onMove);
   document.addEventListener('pointerup',onUp);
 }
@@ -283,6 +328,18 @@ function ptSyncTrayAvailability(){ // 02.09.2026: «Состав» может п
     const excluded=!(forgeCfg.e>>(+s.dataset.k)&1);
     item.classList.toggle('excluded',excluded);
   });
+}
+/* 12.09.2026 (RESEARCH-2026-09-CREATOR-CONTROLS.md тема C — WCAG 2.5.7 «tap anywhere on the
+   slider track», Gmail-кейс, TapDrag: тап на источник → тап на цель обгоняет длинный драг):
+   «взведённый» тип стикера — тап по стикеру взводит его, следующий тап по свободному месту
+   ленты ставит точку туда. Перетаскивание стикера на ленту (ниже) остаётся рабочим как было —
+   это ДОПОЛНИТЕЛЬНЫЙ способ, не замена. */
+let ptArmedType=null;
+function ptArmSticker(item,d){
+  const same=ptArmedType&&ptArmedType.t===d.t&&ptArmedType.k===d.k;
+  ptArmedType=same?null:d;
+  document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed'));
+  if(!same) item.classList.add('armed');
 }
 function ptWireTray(){
   const tray=$('ptTray'); if(!tray||tray._ptWired) return; tray._ptWired=1;
@@ -299,17 +356,22 @@ function ptWireTray(){
     tray.appendChild(item);
   });
   ptSyncTrayAvailability();
+  const track=$('ptTrack');
   tray.addEventListener('pointerdown',ev=>{
     const s=ev.target.closest('.sticker'); if(!s) return;
-    if(s.closest('.stickerItem').classList.contains('excluded')) return; // 02.09.2026: вид выключен в «Составе» — стикер не тащится, не спорит с «полностью исключить из игры»
+    const item=s.closest('.stickerItem');
+    if(item.classList.contains('excluded')) return; // 02.09.2026: вид выключен в «Составе» — стикер не тащится, не спорит с «полностью исключить из игры»
     const pins=ptPins(); if(pins.length>=PT_MAX) return;
+    const x0=ev.clientX, y0=ev.clientY; let moved=false;
     s.classList.add('dragging');
     if(!ptGhostEl){ ptGhostEl=document.createElement('div'); ptGhostEl.className='ptGhost'; (document.getElementById('uiScaleRoot')||document.body).appendChild(ptGhostEl); } // 09.09.2026 «Размер текста»: та же причина, что у ptToast выше
     ptGhostEl.style.display='flex'; ptGhostEl.style.background=getComputedStyle(s).background;
     ptGhostEl.innerHTML=s.innerHTML; ptGhostEl.style.color=getComputedStyle(s).color;
     ptMoveGhost(ev.clientX,ev.clientY);
-    const track=$('ptTrack');
-    const onMove=e=>{ ptMoveGhost(e.clientX,e.clientY); if(track) track.classList.toggle('dropok',ptOverRect(e.clientX,e.clientY,track)); };
+    const onMove=e=>{
+      if(Math.hypot(e.clientX-x0,e.clientY-y0)>8) moved=true;
+      ptMoveGhost(e.clientX,e.clientY); if(track) track.classList.toggle('dropok',ptOverRect(e.clientX,e.clientY,track));
+    };
     const onUp=e=>{
       document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp);
       s.classList.remove('dragging'); ptGhostEl.style.display='none'; if(track) track.classList.remove('dropok');
@@ -320,10 +382,29 @@ function ptWireTray(){
         sfx.click(); haptic('medium');
         ptRender(ptSelIdx);
         ptShowToast('Поставил '+ptPinName(p),()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); });
+      } else if(!moved){
+        // 12.09.2026: тап без переноса на ленту (и без промаха мимо неё) — не «ничего не
+        // произошло», а «взвести этот тип», см. комментарий у ptArmedType выше
+        ptArmSticker(item,{t:s.dataset.t,k:+s.dataset.k});
+        sfx.click(); haptic('light');
       }
     };
     document.addEventListener('pointermove',onMove);
     document.addEventListener('pointerup',onUp);
+  });
+  if(track) track.addEventListener('click',ev=>{
+    if(ev.target.closest('.pin')) return; // клик по самой точке обрабатывается её собственным pointerdown/ptStartPinDrag
+    if(ptArmedType){
+      const at=ptXToAt(track,ev.clientX);
+      const p={at,type:ptArmedType.t,kind:ptArmedType.k};
+      const pins=ptPins(); pins.push(p); ptSelIdx=pins.length-1;
+      document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed')); ptArmedType=null;
+      sfx.click(); haptic('medium');
+      ptRender(ptSelIdx);
+      ptShowToast('Поставил '+ptPinName(p),()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); });
+    } else if(ptSelIdx>=0){
+      ptSelIdx=-1; ptRender();
+    }
   });
 }
 function ptWireOnce(){
@@ -422,6 +503,7 @@ function ptFill(){
   const s=$('ptSub'); if(s) s.textContent='Точки на дистанции — где будет передышка или препятствие';
   ptH2Touched=false; // новое открытие экрана — авто-гармония снова ведёт второй цвет, пока автор сам его не тронет
   const ov0=$('ptListOverlay'); if(ov0) ov0.classList.remove('show'); // 12.09.2026: свежее открытие Конструктора не должно наследовать открытый лист прошлого раза
+  ptArmedType=null; ptSelIdx=-1; // 12.09.2026: тем же принципом — не наследуем взведённый стикер/выбранную точку прошлого раза
   ptWireTray();
   ptWireOnce();
   ptSyncLenUI();
