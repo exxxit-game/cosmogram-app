@@ -1009,6 +1009,12 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
    Меню больше не парадное крыльцо, а чёрный ход через паузу. */
 function bootFly(){
   const saved = Store.get('savedRun', null);
+  // 13.09.2026 «Честный долёт после разрыва сессии» (владелец, баг 1): workshopPlayingCode
+  // (js/forge.js) — обычная переменная модуля, не переживала перезапуск сама по себе, хотя
+  // S.mode/forgeCfg восстанавливались честно. Долетал до конца код Мастерской, экран итогов
+  // показывал трофей, а mapOver() не знал, какой код зачесть — лайк оставался заблокирован
+  // навсегда. Теперь код едет тем же снимком, что и остальной забег.
+  if(saved && saved.wpc) workshopPlayingCode = saved.wpc;
   startGame(saved || undefined); // автосейв — возвращаем ровно в тот же полёт
   // v1.282.20: благодать на разгон — только свежему взлёту. Восстановленному забегу она
   // давала 2.5 секунды неуязвимости за каждый перезапуск, то есть бесконечный полёт циклом
@@ -1042,7 +1048,8 @@ function autosave(){
        знак дня он больше не приносит. */
     Store.set('savedRun',{score:S.score,mission:S.mission,lives:S.lives,dist:S.dist,
       smooth:S.smooth,time:S.time,hits:S.hits,bonuses:S.bonuses,goldStar:!!S.goldStar,restored:1,
-      starsCollected:S.starsCollected,comboMax:S.comboMax,hueShift:S.hueShift,mode:S.mode,dailyDay:S.dailyDay||''}); // v1.93: крах дня помнит дисциплину и день взлёта
+      starsCollected:S.starsCollected,comboMax:S.comboMax,hueShift:S.hueShift,mode:S.mode,dailyDay:S.dailyDay||'',
+      wpc:workshopPlayingCode||''}); // v1.93: крах дня помнит дисциплину и день взлёта; 13.09.2026: и код Мастерской — иначе честный долёт после разрыва сессии не засчитывался (баг 1, владелец)
   }
 }
 
