@@ -2033,22 +2033,29 @@ function angarBuildGrid(){
            06.09.2026: + название под плиткой, тем же правилом, что у Вспышки выше.
            07.09.2026, владелец: «Нет» — тоже переезжает внутрь коробки (.noneLbl), тем же
            приёмом, что у Вспышки/Эмодзи. Самолётик-ориентир для «Нет» больше не рисуем —
-           след всё равно не к чему привязывать, одинокий треугольник только мешал бы подписи. */
+           след всё равно не к чему привязывать, одинокий треугольник только мешал бы подписи.
+           13.09.2026 (владелец, живой скрин: «след на модель налазит у многих») — след
+           начинается «чуть ниже носа (y≈8)» по всем стилям (см. комментарий у самой функции
+           renderTrailPattern), а порядок отрисовки был обратный: сперва треугольник-ориентир,
+           потом след ПОВЕРХ него — у плотных/ярких узоров (не только «Искры») след перекрывал
+           сам ориентир. Меняем порядок разом для всех стилей: сперва след, треугольник —
+           последним, поверх. */
         el.innerHTML='<span class="ch"><canvas class="flashPv" width="52" height="52"></canvas>'+
           (item.id===0?'<span class="noneLbl">'+item.name+'</span>':'')+'<span class="pr"></span></span>'+
           (item.id===0?'':'<span class="nm">'+item.name+'</span>');
         const x=el.querySelector('canvas').getContext('2d');
         const skin=SKINS_BY_ID.get(S.skin)||SKINS[0];
-        if(item.id!==0){
-          x.fillStyle='#eaf2ff'; x.globalAlpha=.9;
-          x.beginPath(); x.moveTo(26,14); x.lineTo(21,25); x.lineTo(26,22); x.lineTo(31,25); x.closePath(); x.fill();
-          x.globalAlpha=1;
-        }
         if(item.style && item.style!=='none'){
           const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
           const col=a=>base+Math.max(0,a).toFixed(2)+')';
           x.setTransform(1.55,0,0,1.55,26,4);
           renderTrailPattern(x, item.style, col);
+          x.setTransform(1,0,0,1,0,0);
+        }
+        if(item.id!==0){
+          x.fillStyle='#eaf2ff'; x.globalAlpha=.9;
+          x.beginPath(); x.moveTo(26,14); x.lineTo(21,25); x.lineTo(26,22); x.lineTo(31,25); x.closePath(); x.fill();
+          x.globalAlpha=1;
         }
         el.setAttribute('aria-label', item.name);
       } else {
