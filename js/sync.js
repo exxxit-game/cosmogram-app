@@ -30,7 +30,14 @@ function syncInitData(){ return (tg && tg.initData) || null; } // подпись
 function syncWebAuth(){ const w=Store.get('tgWebAuth',null); return (w && w.id && w.hash) ? w : null; } // веб-сессия виджета (живёт ~неделю, потом вход в один тап)
 function syncDcAuth(){ const w=Store.get('dcAuth',null); return (w && w.sess) ? w : null; } // сессия Discord: HMAC-подпись нашего сервера (v1.52.0 «Второй вход»)
 function syncGAuth(){ const w=Store.get('gAuth',null); return (w && w.sess) ? w : null; } // 23.08.2026: сессия Google — тот же приём, что у Discord
-function syncAuth(){ const d=syncInitData(); if(d) return {initData:d}; const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; const g=syncGAuth(); if(g) return {gAuth:g}; return null; }
+function syncTgAuth(){ const w=Store.get('tgAuthSess',null); return (w && w.sess) ? w : null; } // 13.09.2026: своя серверная сессия для Telegram — см. коммент у syncAuth() ниже
+/* 13.09.2026 (владелец: «не могу поставить лайк, даже когда прошёл небо» — initData живёт весь
+   сеанс мини-аппа у Telegram, но сервер проверяет подпись не старше 5 минут): initData шлём
+   ВСЕГДА, когда мы внутри Telegram, — сервер сам решает, свежа она или протухла. tgAuth шлём
+   РЯДОМ, не вместо: сервер сперва пробует initData, и только если её подпись не прошла (сессия
+   дольше 5 минут), откатывается на tgAuth (живёт 7 дней). Если слать только initData — сервер
+   никогда даже не увидит tgAuth, и протухание так и осталось бы непочиненным. */
+function syncAuth(){ const d=syncInitData(); if(d){ const t=syncTgAuth(); return t ? {initData:d, tgAuth:t} : {initData:d}; } const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; const g=syncGAuth(); if(g) return {gAuth:g}; return null; }
 function syncAvailable(){ return !!syncAuth(); }
 function ghostAccessStateForAuth(isAuthed, labels){
   const text = (labels && labels.accGuest) || 'Sign in with Telegram';
@@ -211,12 +218,23 @@ function syncEnqueue(scores){
   for(const c in scores) m[c]=Math.max(m[c]||0, scores[c]||0);
   Store.set('syncQ',[m]);
 }
+/* 13.09.2026: сервер (cosmogram-sync) минтит/обновляет tgSess и подкладывает его в тело ЛЮБОГО
+   своего ответа, когда личность опознана как Telegram (см. jsonTg() там) — единственное место,
+   которое клиент обязан подслушать, не мешая никому из вызывающих кодов читать тело как обычно.
+   Читаем через .clone(): оригинальный Response уходит вызывающему нетронутым, тело можно
+   прочитать только один раз, а syncPost/workshopPost/syncDailyPost/relayPost все текут через
+   этот единственный syncFetch() — значит, один перехват здесь покрывает их все. */
+function syncCaptureTgSess(r){
+  if(!r || typeof r.clone!=='function') return;
+  try{ r.clone().json().then(d=>{ if(d && d.tgSess) Store.set('tgAuthSess',{sess:d.tgSess}); }).catch(()=>{}); }catch(e){}
+}
 function syncFetch(url, body){
   const ctl=(typeof AbortController==='function')?new AbortController():null;
   const t=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },POST_TIMEOUT):0;
   return fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json','apikey':SYNC_KEY},
     body:JSON.stringify(body), signal:ctl?ctl.signal:undefined})
+    .then(r=>{ syncCaptureTgSess(r); return r; })
     .finally(()=>{ if(t) clearTimeout(t); });
 }
 function syncPost(payload){
