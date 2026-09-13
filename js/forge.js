@@ -1333,7 +1333,11 @@ wireOnLocal('workshopList','click',function(e){
       toast(L.workshopVoteLocked||'Долети до конца, чтобы оценить', 'rgba(255,159,176,.5)'); haptic('light'); return;
     }
     workshopVote(code).then(function(res){
-      if(!res || !res.ok) return;
+      // 13.09.2026, владелец («не могу поставить лайк, даже когда прошёл небо» — прошёл
+      // честно, гейт выше пропустил, но сети не было, workshopVote() молча вернул null):
+      // раньше при неудаче лайк просто ничего не делал, без единой подсказки — с точки
+      // зрения игрока «сломано», хотя причина честная (нет соединения). Один явный тост.
+      if(!res || !res.ok){ toast(L.syncOffline||'Нет соединения — попробуй позже','rgba(255,159,176,.5)'); return; }
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
       Store.set('workshopMyVotes',mine);
