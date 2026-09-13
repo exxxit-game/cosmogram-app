@@ -209,7 +209,7 @@ const I18N = {
     authFailed:'Вход не удался — попробуйте ещё раз',
     /* 13.08.2026 «Ангар-витрина»: слова экрана покупки. Кошелёк переехал под кнопку и
        получил подпись — голое число под кнопкой читалось как ещё одна цена. */
-    hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', walletYours:'Ваши звёзды',
+    hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', hangarUnwear:'Снять', walletYours:'Ваши звёзды',
     premiumTgOnly:'Покупка за Stars доступна только в Telegram', // 04.09.2026 «Эксклюзивные скины за Stars»
     brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
     calibrated:'Гироскоп откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
@@ -386,7 +386,7 @@ const I18N = {
     overDetails:'Flight details',
     combo:'Combo', notEnough:'Not enough stars', owned:'Selected', buy:ic('star4','i-s4'),
     authFailed:'Sign-in failed — try again',
-    hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', walletYours:'Your stars',
+    hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', hangarUnwear:'Unequip', walletYours:'Your stars',
     premiumTgOnly:'Star purchases are available in Telegram only',
     brandSub:'One sky for everyone',
     calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
@@ -548,7 +548,7 @@ const I18N = {
     overDetails:'Detalles del vuelo', combo:'Combo',
     notEnough:'Faltan estrellas', owned:'Elegido', buy:ic('star4','i-s4'),
     authFailed:'Error al iniciar sesión — inténtalo de nuevo',
-    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Tus estrellas',
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', hangarUnwear:'Quitar', walletYours:'Tus estrellas',
     premiumTgOnly:'La compra con Stars solo está disponible en Telegram',
     brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
     calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
@@ -729,7 +729,7 @@ const I18N = {
     overDetails:'Detalhes do voo', combo:'Combo',
     notEnough:'Faltam estrelas', owned:'Selecionado', buy:ic('star4','i-s4'),
     authFailed:'Falha no login — tente novamente',
-    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', walletYours:'Suas estrelas',
+    hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', hangarUnwear:'Retirar', walletYours:'Suas estrelas',
     premiumTgOnly:'Compra com Stars disponível apenas no Telegram',
     brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
     calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
@@ -912,7 +912,7 @@ const I18N = {
     overDetails:'Détails du vol',
     combo:'Combo', notEnough:'Pas assez d\u2019étoiles', owned:'Sélectionné', buy:ic('star4','i-s4'),
     authFailed:'Échec de la connexion — réessayez',
-    hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', walletYours:'Tes \u00e9toiles',
+    hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', hangarUnwear:'Retirer', walletYours:'Tes \u00e9toiles',
     premiumTgOnly:'Achat en Stars disponible uniquement sur Telegram',
     brandSub:'Un ciel pour tous',
     calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',

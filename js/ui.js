@@ -1785,7 +1785,11 @@ function angarItemFill(el, item){
     // (starJewelHtml() рисует игровой жетон, тут он неверен по смыслу — деньги настоящие).
     const priceHtml = item.premium ? ('⭐ '+Math.round(item.price)) : (starJewelHtml()+Math.round(item.price));
     if(worn){
-      pr.innerHTML = L.owned;
+      // 13.09.2026, владелец: «кнопка надеть/снять вместо нет» — на уже надетой плитке
+      // (кроме color, там нельзя остаться без скина) статичная плашка «Выбран» (L.owned)
+      // заменена настоящей кнопкой «Снять», см. angarUnwear() и делегированный клик ниже.
+      pr.innerHTML = angarCat==='color' ? L.owned :
+        '<button type="button" class="btn pri small angarUnwearBtn">'+(L.hangarUnwear||'Снять')+'</button>';
     } else if(angarSel===item.id){
       pr.innerHTML = '<button type="button" class="btn pri small angarTileBuy">'+
         (owned ? L.hangarWear : (L.hangarBuy+' '+priceHtml))+'</button>';
@@ -1826,7 +1830,13 @@ function angarVisibleList(){ // список жетонов активной в�
   // что раньше был у ленты вкладок (ANGAR_DECAL_CATS). «Нет» (id0) не входит ни в одну
   // категорию по построению — держим её первой плиткой списка один раз, не по разу на
   // категорию (была именно эта жалоба владельца — «пустые места в декали»).
-  const none = cfg.list.filter(d=>d.id===0);
+  // 13.09.2026, владелец: плитку «Нет» больше не показываем как выбираемый жетон у
+  // декалей/вспышки/следа (id0 там — настоящее «ничего», не предмет) — снять надетое
+  // теперь можно тапом по кнопке «Снять» прямо на уже надетой плитке (angarUnwear ниже),
+  // как в macets/snyat-cherez-plitku-12-09-2026.html. У цвета (color) id0 — настоящий
+  // скин «Бумажный» (cat:'classic', см. комментарий 06.09.2026 ниже), не «ничего» — его
+  // по-прежнему показываем как обычную первую плитку.
+  const none = angarCat==='color' ? cfg.list.filter(d=>d.id===0) : [];
   /* 29.08.2026 «2 бесплатных вместо Избранного» (владелец, после трёх неудачных заходов со
      звёздочкой): пустые клетки рядом с «Без украшений» заполняют 2 фиксированных id
      (ANGAR_FREEBIE) — не выбор игрока, не клон-дубликат. Просто эти два предмета показаны
@@ -2192,6 +2202,30 @@ function angarApplyPremiumFlash(item){
   if(S.launchFx===item.flash) return;
   S.launchFx=item.flash; Store.set('launchFx', item.flash);
 }
+/* 13.09.2026 «Снять через плитку, не через «Нет»» (владелец, .knowledge/macets/
+   snyat-cherez-plitku-12-09-2026.html, одобрено): тап по «Снять» на уже надетой плитке
+   переключает выбор категории на id0 («ничего») напрямую, без отдельной плитки «Нет» в
+   сетке. Только для decal/flash/trail — у color нельзя остаться без скина (angarUnwear
+   для 'color' не вызывается вообще, кнопка там не рисуется, см. angarItemFill выше).
+   Тост+«вернуть» — тот же приём, что уже одобрен в Конструкторе (ptShowToast,
+   js/partitura.js, список точек «Убрал · Вернуть»), не новый узор. */
+function angarUnwear(){
+  if(angarCat==='color') return;
+  const cfg = ANGAR_CATS[angarCat];
+  const item = cfg.list.find(it=>it.id===S[cfg.selKey]);
+  if(!item || item.id===0) return;
+  const grid=$('angarGrid'); if(!grid) return;
+  const els=grid.querySelectorAll('.angarIt');
+  const refill=()=>{ angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); }); angarBuyFill(); angarPvWake(); };
+  S[cfg.selKey]=0; Store.set(cfg.selKey,0); sfx.click(); haptic('light');
+  refill();
+  if(typeof ptShowToast==='function'){
+    ptShowToast('Снял «'+item.name+'»', ()=>{
+      S[cfg.selKey]=item.id; Store.set(cfg.selKey,item.id); sfx.click(); haptic('light');
+      refill();
+    });
+  }
+}
 /* 04.09.2026 «Эксклюзивные скины за Stars»: настоящие деньги, не игровая валюта — отдельный
    путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
    см. syncBuySkinInvoice). Владение подтверждает ТОЛЬКО ответ premium_owned после оплаты —
@@ -2243,6 +2277,7 @@ function angarToggleDecalGroup(cat){
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
+  if(e.target.closest('.angarUnwearBtn')){ e.stopPropagation(); angarUnwear(); }
   const head=e.target.closest('.angarCatHeadToggle'); if(head){ angarToggleDecalGroup(head.dataset.cat); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
