@@ -1,0 +1,111 @@
+'use strict';
+/* 13.09.2026 «Ворота финиша» — владелец, пункт 5 из собранных багов: долёт до цели («Длина»/
+   Слалом/Биатлон/Эстафета) обрывался резко, без ощущения финиша — startDying() (крен, падение,
+   дым) честно взят из СМЕРТИ и один на все исходы, победу от гибели отличал только текст
+   ПОСЛЕ, на экране итогов. Разобрано с владельцем через 15+ живых макетов (снятые по пути:
+   «лента» — буквальная реализация вместо метафоры; «точка»-маяк — теряется на фоне звёзд;
+   метеоритный рой — читается как препятствие, от которого уворачиваются, не как цель; стены
+   коридора — не существуют на телефоне, DOM #corrEdge живёт только на широких экранах).
+   Одобрено явным «да»: арка растёт по мере приближения (видна заранее — «разбился рядом, но
+   видел, что почти долетел»), на пересечении сама арка разлетается цветным салютом (набор
+   confetti() — тот же язык, что уже читается как победа при рекорде, не третий отдельный).
+
+   Законы модуля — тот же приём, что у goldstar.js (свой self-contained IIFE, мосты finishX):
+   — LEAD_M метров до цели арка входит в поле зрения (владелец выбрал явно, 13.09.2026);
+   — у целей БЕЗ честного «оставшегося расстояния» (Спидран — по очкам, Caravan — по времени)
+     remain остаётся null — арки заранее не бывает, салют идёт прямо на месте корабля в момент
+     победы, ровно как раньше делал startDying(), только не смерть;
+   — игра ничего не знает о частицах отсюда: finishSetRemain(m) — кормить честным расстоянием
+     каждый кадр (или null), finishTrigger() — вместо startDying() в момент победы;
+   — сам модуль ничего не знает о режимах — не модальный монолит, а чистая функция состояния. */
+const FINISH=(()=>{
+  const LEAD_M=300; // 13.09.2026, владелец: за сколько метров до финиша арка входит в поле зрения
+  const COLS=['255,215,106','168,200,255','255,159,176','143,255,159']; // 04.09.2026 confetti() — тот же набор 4 цветов, что уже победа/рекорд
+  let remain=null, active=false, shockA=0, shards=[];
+
+  function reset(){ remain=null; active=false; shockA=0; shards=[]; } // зовёт startGame: новый взлёт — чистый лист
+  function setRemain(m){ if(!active) remain=(m==null)?null:Math.max(0,m); }
+
+  function farY(){ return fieldT()+fieldH()*.16; } // высоко над рабочей зоной корабля — «далеко впереди»
+  function gateY(prox){ const fy=farY(); return fy+(plane.y-6-fy)*prox; } // к prox=1 арка стоит ровно там, где корабль — салют не «прыгнет» в сторону
+  function gateArcPoint(u,prox){
+    const fl=fieldL(), fw=fieldW(), x=fl+14+(fw-28)*u, arcH=22;
+    return { x, y: gateY(prox) - Math.sin(Math.PI*u)*arcH*.55 + arcH*.5 };
+  }
+
+  function trigger(){ // вместо startDying() в момент победы — арка (если была) разлетается на месте корабля
+    active=true; shockA=1; shards=[];
+    const prox=1, cx=plane.x, cy=plane.y-6, N=26;
+    for(let i=0;i<N;i++){
+      const u=i/(N-1), p=remain!=null? gateArcPoint(u,prox) : {x:cx+(Math.random()-.5)*40,y:cy+(Math.random()-.5)*14};
+      const ang=Math.atan2(p.y-cy,p.x-cx)+((Math.random()-.5)*.7), sp=1.7+Math.random()*3.0, flake=Math.random()<.5;
+      shards.push({x:p.x,y:p.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp-.7,
+        life:.6+Math.random()*.55,age:0,size:flake?(2.4+Math.random()*2.2):(1.6+Math.random()*1.6),
+        rot:Math.random()*6.283,vr:(Math.random()-.5)*9,flake,col:COLS[(Math.random()*4)|0]});
+    }
+    remain=null;
+  }
+
+  function tick(dt){
+    if(!active) return;
+    for(let i=shards.length-1;i>=0;i--){ const s=shards[i]; s.age+=dt;
+      if(s.age>s.life){ shards.splice(i,1); continue; }
+      s.x+=s.vx*dt*30; s.y+=s.vy*dt*30; s.vy+=dt*.7; s.rot+=s.vr*dt; }
+    if(shockA>0) shockA=Math.max(0,shockA-dt*1.3);
+    if(!active) return;
+    if(!shards.length && shockA<=0) active=false; // всё погасло — модулю больше нечего делать
+  }
+
+  function draw(){
+    if(remain!=null && remain<LEAD_M && !active){
+      const prox=Math.pow(1-remain/LEAD_M,3), glowA=.14+.6*prox, lw=1.1+3.2*prox;
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      ctx.shadowColor='rgba(255,215,106,'+Math.min(1,glowA+.2)+')'; ctx.shadowBlur=5+18*prox;
+      const c0=gateArcPoint(0,prox), c1=gateArcPoint(1,prox);
+      const g=ctx.createLinearGradient(c0.x,0,c1.x,0);
+      g.addColorStop(0,'rgba(255,215,106,'+(glowA*.1)+')'); g.addColorStop(.5,'rgba(255,236,180,'+glowA+')'); g.addColorStop(1,'rgba(255,215,106,'+(glowA*.1)+')');
+      ctx.strokeStyle=g; ctx.lineWidth=lw;
+      ctx.beginPath();
+      for(let i=0;i<=28;i++){ const p=gateArcPoint(i/28,prox); i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    if(!active) return;
+    /* 13.09.2026 (владелец, живой замер пикселей канваса: «просил цветной салют, вижу просто
+       белый») — было И тонкое цветное кольцо ударной волны, И заливка ВСЕГО экрана тёплым
+       белым (fillRect на весь canvas) поверх — обе они непрозрачные и крупные, сами осколки
+       (1.6-4.6px) рядом с ними физически терялись. Первая правка (два кольца, gold+blue) не
+       помогла — 'lighter' складывает две ЯРКИЕ полупрозрачные краски В ТОЙ ЖЕ точке в светлый,
+       почти белый оттенок (это свойство аддитивного смешения, не баг конкретных чисел). Кольцо
+       теперь ОДНО, приглушённое (пик .28, не .5) — маленький сдержанный акцент под настоящим
+       героем сцены, самими цветными осколками, а не второй источник белого рядом с первым. */
+    if(shockA>0){
+      const cy=plane.y-6, r=(1-shockA)*160;
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      ctx.strokeStyle='rgba('+COLS[0]+','+(shockA*.28)+')'; ctx.lineWidth=1.6*shockA+.4;
+      ctx.beginPath(); ctx.arc(plane.x,cy,r,0,6.283); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(const s of shards){ const a=1-s.age/s.life; if(a<=0) continue;
+      if(s.flake){ ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot);
+        ctx.fillStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.fillRect(-s.size*1.5,-s.size*.6,s.size*3,s.size*1.2); ctx.restore();
+      } else {
+        ctx.strokeStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.lineWidth=s.size*1.1; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(s.x-s.vx*.4,s.y-s.vy*.4); ctx.lineTo(s.x,s.y); ctx.stroke();
+        ctx.fillStyle='rgba('+s.col+','+Math.min(1,a*1.3).toFixed(2)+')';
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.size*.6,0,6.283); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  return { reset, setRemain, trigger, tick, draw,
+    _state:()=>({active,remain,shardsN:shards.length,shockA}),
+    _poke:(m)=>{ remain=m; } }; // страж: задать remain напрямую, без честного расстояния из S.dist
+})();
+const finishReset=()=>FINISH.reset();
+const finishSetRemain=(m)=>FINISH.setRemain(m);
+const finishTrigger=()=>FINISH.trigger();
+const finishTick=(dt)=>FINISH.tick(dt);
+const finishDraw=()=>FINISH.draw();

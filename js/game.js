@@ -1999,7 +1999,7 @@ const S = {
     // 05.09.2026: nearMiss — счётчик ЭТОГО забега (сброс на взлёте), отдельно от Stats.nearMiss
     // (тот пожизненный, никогда не обнуляется) — паспорт полёта («Подробности полёта») хочет
     // именно «сколько было впритык В ЭТОМ полёте», как у dist/time/starsCollected рядом.
-  dying:0, dyingT:0, pausing:0, // «Склейка»: slow-mo занавес смерти / плавная остановка паузы
+  dying:0, dyingT:0, dyingWin:0, pausing:0, // «Склейка»: slow-mo занавес смерти / плавная остановка паузы; dyingWin — 13.09.2026 «Ворота финиша», тот же занавес-таймер, но без крена/падения/дыма (победа, не гибель)
   smooth:1, // Smooth Flight: плавность пилотирования 0.5..1.0 → финальный множитель 0.75..1.0
   hueShift:0, skin:0, ownedSkins:[0],
   decal:0, ownedDecals:[0,1,2], // 28.08.2026 «Тюнинг, шаг 1»: та же пара, что у skin/ownedSkins, отдельная независимая категория. 29.08.2026: id1,2 сразу во владении бесплатно — см. ANGAR_FREEBIE в ui.js
@@ -2798,10 +2798,12 @@ function update(dt){
   }
   if (S.dying){ // «Склейка»: крен, падение, дымный след — ввод ниже почти не влияет (заглушен занавесом)
     S.dyingT-=dt;
-    plane.vx=lerp(plane.vx,0,.06); plane.vy=lerp(plane.vy,3,.05);
-    plane.bank=lerp(plane.bank,1.15,.04);
-    if (Math.random()<.3) burst(plane.x+rand(-6,6), plane.y+10, 'rgba(160,165,180,.45)', 2);
-    if (S.dyingT<=0){ S.dying=0; gameOver(); return; }
+    if (!S.dyingWin){ // 13.09.2026 «Ворота финиша»: победа — курс не меняется, ни крена, ни падения, ни дыма; сам занавес-таймер общий
+      plane.vx=lerp(plane.vx,0,.06); plane.vy=lerp(plane.vy,3,.05);
+      plane.bank=lerp(plane.bank,1.15,.04);
+      if (Math.random()<.3) burst(plane.x+rand(-6,6), plane.y+10, 'rgba(160,165,180,.45)', 2);
+    }
+    if (S.dyingT<=0){ S.dying=0; S.dyingWin=0; gameOver(); return; }
   }
   const flPlane=fieldL(); // v1.99.9: в коридоре чести нет безопасной полосы у края
   // 06.09.2026 «Солнечный ветер»: порыв как function(дистанция) — не постоянный снос, качается
@@ -2879,8 +2881,9 @@ function update(dt){
     S.flash=Math.max(S.flash,.25); // мягкий золотой «динг» — глаза целы, событие видно
     sfx.mission(); haptic('medium');
   }
-  if (S.mode==='custom' && S.customL>0 && S.dist>=S.customL && !S.dying){ // Своя трасса: финиш на длине автора — занавес как у Спидрана (v1.68.0)
-    startDying(); S.mapWin=1;
+  if (S.mode==='custom' && S.customL>0){ // Своя трасса: финиш на длине автора — занавес как у Спидрана (v1.68.0)
+    if (!S.dying) finishSetRemain(S.customL-S.dist); // 13.09.2026 «Ворота финиша»: честное оставшееся расстояние — арка знает, когда появиться
+    if (S.dist>=S.customL && !S.dying){ startFinish(); S.mapWin=1; }
   }
 
   // ---- препятствия ----
@@ -3033,6 +3036,7 @@ function update(dt){
     }
   }
   goldTick(dt); // v1.100.2 «Золотая звезда дня»: маяк дня живёт рядом со звёздами — один тик, ноль влияния на трассу
+  finishTick(dt); // 13.09.2026 «Ворота финиша»: тот же приём, что у goldTick() выше — частицы салюта живут своей жизнью, ноль влияния на трассу
 
   // ---- бонусы ----
   for (let i=powerups.length-1;i>=0;i--){
@@ -3115,7 +3119,7 @@ function update(dt){
     const elMH=elModeHud, tSec=Math.floor(S.time*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec;
       elMH.textContent=fmtTime(S.time)+' · '+L.srGoal+' '+fmtN(SR_GOAL); }
-    if (S.score>=SR_GOAL && !S.dying){ startDying(); S.srWin=1; } // занавес как при смерти, но это победа
+    if (S.score>=SR_GOAL && !S.dying){ startFinish(); S.srWin=1; } // 13.09.2026 «Ворота финиша»: победа по очкам — «оставшегося расстояния» нет, арки заранее не будет, салют на месте корабля
   }
   else if (S.mode==='caravan'){ // Caravan (v1.478.74): обратный отсчёт вместо «пока не умер» — время решает, не смерть
     // 07.09.2026 «Пуля/Блиц»: раньше время забега было одной константой (CARAVAN_TIME=60).
@@ -3124,12 +3128,13 @@ function update(dt){
     const CT=S.caravanTime||CARAVAN_TIME;
     const elMH=elModeHud, left=Math.max(0,CT-S.time), tSec=Math.floor(left*10)/10;
     if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
-    if (S.time>=CT && !S.dying){ startDying(); S.caravanTimeUp=1; } // занавес как при смерти, но это не смерть — время вышло
+    if (S.time>=CT && !S.dying){ startFinish(); S.caravanTimeUp=1; } // 13.09.2026 «Ворота финиша»: победа по времени — арки заранее не будет, тот же приём, что у Спидрана выше
   }
   else if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
     const elMH=elModeHud, distI=Math.floor(S.dist);
     if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,SLALOM_DIST)+'/'+SLALOM_DIST+(L.unitM||'м'); }
-    if (S.dist>=SLALOM_DIST && !S.dying){ startDying(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
+    if (!S.dying) finishSetRemain(SLALOM_DIST-S.dist); // 13.09.2026 «Ворота финиша»
+    if (S.dist>=SLALOM_DIST && !S.dying){ startFinish(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
   }
   else if (S.mode==='biathlon'){ // 06.09.2026: скорость+рубежи — штраф прибавляется к S.time на выходе из каждого рубежа
     const elMH=elModeHud, distI=Math.floor(S.dist);
@@ -3140,10 +3145,11 @@ function update(dt){
       if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
       S.biathlonSnapSpawned=S.starsSpawned; S.biathlonSnapCollected=S.starsCollected; // 1й рубеж закрыт — со 2го считаем только новые звёзды
     }
+    if (!S.dying) finishSetRemain(BIATHLON_DIST-S.dist); // 13.09.2026 «Ворота финиша»
     if (S.dist>=BIATHLON_DIST && !S.dying){
       const missed=Math.max(0,(S.starsSpawned-S.biathlonSnapSpawned)-(S.starsCollected-S.biathlonSnapCollected));
       if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
-      startDying(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
+      startFinish(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
     }
   }
   else if (S.mode==='relay'){
@@ -3153,7 +3159,8 @@ function update(dt){
     } else {
       const distI=Math.floor(S.dist);
       if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=L.modeRelay+' '+S.relayLeg+'/'+RELAY_LEGS_TOTAL+' · '+Math.min(distI,RELAY_LEG_DIST)+'/'+RELAY_LEG_DIST+(L.unitM||'м'); }
-      if (S.dist>=RELAY_LEG_DIST && !S.dying){ startDying(); S.relayLegDone=1; } // долетел до конца своего этапа — сдаём эстафету (ui.js gameOver)
+      if (!S.dying) finishSetRemain(RELAY_LEG_DIST-S.dist); // 13.09.2026 «Ворота финиша»
+      if (S.dist>=RELAY_LEG_DIST && !S.dying){ startFinish(); S.relayLegDone=1; } // долетел до конца своего этапа — сдаём эстафету (ui.js gameOver)
     }
   }
   else if (S.mode==='daily'){ // Трасса дня: метка ритуала на табло — это небо сегодня одно на всех (v1.47.0); 05.09.2026: 'daily' последним — страж 122 ищет `S.mode==='daily'){` регуляркой
@@ -3200,6 +3207,18 @@ function startDying(){ // «Склейка»: финальный удар — sl
   S.dying=1; S.dyingT=.9; S.invuln=1e9;
   burst(plane.x, plane.y, '#ffd0a0', 26); // яркая вспышка гибели
   burst(plane.x, plane.y, 'rgba(160,165,180,.5)', 14); // дым
+}
+/* 13.09.2026 «Ворота финиша» (владелец, пункт 5 из собранных багов): долёт до цели раньше шёл
+   через startDying() — тот же крен/падение/дым, что у настоящей гибели, отличие только текстом
+   ПОСЛЕ, на итогах. Тот же занавес-таймер (S.dying/S.dyingT), но с флагом dyingWin — курс не
+   меняется (см. блок «Склейка» выше). Сам салют — отдельный self-contained модуль (js/finish.js,
+   тот же приём, что у goldstar.js): арка растёт по мере приближения там, где у цели есть честное
+   «оставшееся расстояние» (finishSetRemain(), кормится каждый кадр у Длины/Слалома/Биатлона/
+   Эстафеты — Спидран/Caravan финишируют по очкам/времени, ворот заранее не бывает), на
+   пересечении разлетается цветным салютом (набор confetti() — тот же язык, что уже победа). */
+function startFinish(){
+  S.dying=1; S.dyingT=.9; S.dyingWin=1; S.invuln=1e9;
+  finishTrigger();
 }
 function confetti(){ // фонтан при новом рекорде — вау-момент на экране итогов
   const cols=['rgba(255,215,106,','rgba(168,200,255,','rgba(255,159,176,','rgba(143,255,159,'];

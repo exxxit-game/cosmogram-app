@@ -395,7 +395,7 @@ function startGame(saved){
   if (typeof trailHistReset==='function') trailHistReset(); // 04.09.2026: связные следы премиум (Лента/Нить-жемчуг) — чистый забег
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 06.09.2026: Слалом — 1 жизнь вместо 3; 07.09.2026: 1CC убран; 07.09.2026: Ironman ушёл в Конструктор
-    combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа
+    combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,dyingWin:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа; dyingWin — 13.09.2026 «Ворота финиша»
     gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,srWin:0,caravanTimeUp:0,starsSpawned:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     caravanTime:(runMode==='caravan'?caravanTierGet():60), // 07.09.2026 «Пуля/Блиц»: выбор игрока на кнопке режима, снимается один раз на старте — смена переключателя посреди полёта (невозможна физически, экран другой) всё равно не задела бы текущий забег
     speedrunRSG:srRSG, // 11.09.2026 «Speedrun RSG»: тот же приём, что у caravanTime — снимается один раз на старте, не читается заново посреди полёта
@@ -460,6 +460,7 @@ function startGame(saved){
   input.byMouse=false;
   rec=[]; recFrame=0; if (typeof morseArm==='function') morseArm(); // морзянка: позывной в шлейфе
   if (typeof goldReset==='function') goldReset(); // v1.100.2 «Золотая звезда дня»: маяк переставлен на этот взлёт (своим кубиком дня)
+  if (typeof finishReset==='function') finishReset(); // 13.09.2026 «Ворота финиша»: новый взлёт — чистый лист, тот же приём, что у goldReset() выше
   /* v1.282.20: раньше сброс пропускался при восстановлении автосейва — и вёрсты оставались от
      ПРОШЛОГО забега: восстановленный на 1 км после забега на 4 км молчал всполохами до 5 км.
      Теперь чистим всегда, а вёрсты честно подводим под уже пройденное. */

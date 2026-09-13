@@ -5,7 +5,7 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.478.263';
+const V = '1.478.264';
 const CACHE = 'cosmogram-v' + V;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 // 01.09.2026: partitura.js добавлен в index.html вместе с Партитурой, но забыт здесь — страж 29
@@ -13,7 +13,7 @@ const CACHE = 'cosmogram-v' + V;
 // и в index.html (partitura.js зависит от forgeCfg/FORGE_KINDS).
 const JS_FILES = [
   'i18n','core','blackbox','skymail','input','game','ach','sync','render','planetarium',
-  'goldstar','music','gyro','forge','partitura','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min'
+  'goldstar','finish','music','gyro','forge','partitura','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min'
 ];
 const SHELL = [
   './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше
