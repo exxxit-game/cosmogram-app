@@ -1,0 +1,164 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#03040a;margin:0;padding:32px 24px;font-family:-apple-system,sans-serif;color:#e4e9ff}
+  h1{font-size:17px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff;letter-spacing:.01em}
+  p.sub{text-align:center;font-size:12px;color:#7d85ab;margin:0 0 10px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.55}
+  .row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .col{text-align:center}
+  canvas{background:#03040a;border-radius:18px;border:1px solid #1a1f3d;display:block;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .replay{margin-top:14px;font-size:11px;color:#7d85ab;background:#12162c;border:1px solid #262c50;border-radius:9px;padding:7px 16px;cursor:pointer;letter-spacing:.03em}
+  .replay:hover{color:#c7cfff;border-color:#3a4180}
+  .legend{font-size:11px;color:#6b7394;text-align:center;max-width:500px;margin:20px auto 0;line-height:1.7}
+  .legend b{color:#ffd76a;font-weight:600}
+</style></head>
+<body>
+<h1>Ворота финиша — v2</h1>
+<p class="sub">Та же идея (арка видна издалека, разгорается по мере приближения, победная вспышка —
+  тот же язык, что у поимки звезды дня), но с настоящей глубиной: слоистое свечение, звёзды и искры
+  тянутся к арке, на пересечении — вспышка заливает весь экран, не только центр.</p>
+<div class="row">
+  <div class="col">
+    <canvas id="a" width="320" height="520"></canvas>
+    <div><button class="replay" onclick="run()">▶ ещё раз</button></div>
+  </div>
+</div>
+<div class="legend">
+  <b>Далеко</b> — призрачная нить света на горизонте, едва тёплая на фоне холодного космоса.<br>
+  <b>Ближе</b> — арка разгорается, звёзды рядом с ней вытягиваются в лёгкие золотые нити, стремясь к ней.<br>
+  <b>Пересечение</b> — экран заливает тёплым светом целиком, кольцо и 12 игл (код из goldstar.js), послесвечение гаснет медленно.
+</div>
+<script>
+function run(){
+  const cv=document.getElementById('a'); const c=cv.getContext('2d');
+  const W=320,H=520;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px'; c.setTransform(dpr,0,0,dpr,0,0);
+
+  const planeY0=H*0.88, gateY0=H*0.14;
+  let t=0,last=performance.now();
+  const CROSS=4.4, TAIL=1.6, DUR=CROSS+TAIL+0.5;
+  let planeY=planeY0, crossed=false, catchT=0, sparkA=[], flashScreen=0;
+
+  // многослойный звёздный фон: дальний слой почти неподвижен, ближний ощутимо ползёт вниз навстречу
+  const farStars=[], nearStars=[], nebula=[];
+  for(let i=0;i<70;i++) farStars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*.6,tw:Math.random()*6.283});
+  for(let i=0;i<40;i++) nearStars.push({x:Math.random()*W,y:Math.random()*H,r:.8+Math.random()*1.3,sp:.5+Math.random()*.8});
+  for(let i=0;i<3;i++) nebula.push({x:Math.random()*W,y:H*0.2+Math.random()*H*0.5,r:90+Math.random()*70,hue:i%2?'168,150,255':'255,180,120',a:.05+Math.random()*.05});
+
+  function drawPlane(x,y,heat){
+    c.save(); c.translate(x,y);
+    if(heat>0){ c.shadowColor='rgba(255,215,106,'+Math.min(1,heat)+')'; c.shadowBlur=10+26*heat; }
+    // лёгкий хвостовой светящийся след
+    if(heat>0.05){
+      const g=c.createLinearGradient(0,8,0,34);
+      g.addColorStop(0,'rgba(255,225,170,'+(.5*heat)+')'); g.addColorStop(1,'rgba(255,225,170,0)');
+      c.fillStyle=g; c.beginPath(); c.moveTo(-3,10); c.lineTo(3,10); c.lineTo(1.5,34); c.lineTo(-1.5,34); c.closePath(); c.fill();
+    }
+    c.fillStyle='#f3f6ff';
+    c.beginPath(); c.moveTo(0,-11); c.lineTo(-8,10); c.lineTo(0,5); c.lineTo(8,10); c.closePath(); c.fill();
+    c.restore();
+  }
+  function easeOut(x){ return 1-Math.pow(1-x,3); }
+  function easeInOutSine(x){ return -(Math.cos(Math.PI*x)-1)/2; }
+
+  function frame(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+    c.clearRect(0,0,W,H);
+
+    // фон: глубокий космос с лёгким градиентом + туманности
+    const bg=c.createRadialGradient(W/2,H*0.25,0,W/2,H*0.25,H*0.8);
+    bg.addColorStop(0,'#0c1030'); bg.addColorStop(1,'#03040a');
+    c.fillStyle=bg; c.fillRect(0,0,W,H);
+    c.save(); c.globalCompositeOperation='lighter';
+    for(const n of nebula){ const g=c.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+      g.addColorStop(0,'rgba('+n.hue+','+n.a+')'); g.addColorStop(1,'rgba('+n.hue+',0)');
+      c.fillStyle=g; c.beginPath(); c.arc(n.x,n.y,n.r,0,6.283); c.fill(); }
+    c.restore();
+
+    const approachP=Math.min(1,t/CROSS), prox=easeInOutSine(approachP);
+    planeY = planeY0 - (planeY0-gateY0-10) * easeOut(approachP);
+    const heat = crossed ? Math.max(0, 1-(t-CROSS)/1.4) : prox*0.5;
+
+    // дальние звёзды: мерцают, почти неподвижны
+    for(const s of farStars){ s.tw+=dt*1.4;
+      c.fillStyle='rgba(220,226,255,'+(.35+.25*Math.sin(s.tw))+')'; c.fillRect(s.x,s.y,s.r,s.r); }
+    // ближние звёзды: ползут вниз, у арки вытягиваются в золотые нити, тянущиеся к ней
+    for(const s of nearStars){ s.y+=s.sp*46*dt; if(s.y>H){ s.y=0; s.x=Math.random()*W; }
+      const distToGate=Math.abs(s.y-gateY0), pull=Math.max(0,1-distToGate/90)*prox;
+      if(pull>0.05){
+        c.save(); c.globalCompositeOperation='lighter';
+        const gx=W/2+(s.x-W/2)*(1-pull*0.35), gy=gateY0;
+        const grad=c.createLinearGradient(s.x,s.y,gx,gy);
+        grad.addColorStop(0,'rgba(255,255,255,0)'); grad.addColorStop(1,'rgba(255,215,140,'+(.55*pull)+')');
+        c.strokeStyle=grad; c.lineWidth=.8; c.beginPath(); c.moveTo(s.x,s.y); c.lineTo(s.x+(gx-s.x)*.5,s.y+(gy-s.y)*.5); c.stroke();
+        c.restore();
+      }
+      c.fillStyle='rgba(255,255,255,.8)'; c.fillRect(s.x,s.y,s.r,s.r);
+    }
+
+    if(!crossed){
+      const vis=Math.min(1,t/0.9);
+      const glowA=(0.12+0.68*prox)*vis;
+      const lw=1.1+4.2*prox;
+      const arcH=30+14*prox+Math.sin(t*2.6)*2.5*prox;
+      const hueWarm = prox; // холодный→тёплый по мере приближения
+      const r1=170+80*(1-hueWarm), g1=200+15*hueWarm, b1=255-95*hueWarm; // от голубовато-белого к тёплому золоту
+      c.save(); c.globalCompositeOperation='lighter';
+      // внешнее мягкое свечение (широкий бloom)
+      c.shadowColor='rgba('+r1+','+g1+','+b1+','+Math.min(1,glowA+.2)+')'; c.shadowBlur=10+36*prox;
+      const grad=c.createLinearGradient(26,0,W-26,0);
+      grad.addColorStop(0,'rgba('+r1+','+g1+','+b1+','+(glowA*0.1)+')');
+      grad.addColorStop(.5,'rgba('+r1+','+g1+','+b1+','+glowA+')');
+      grad.addColorStop(1,'rgba('+r1+','+g1+','+b1+','+(glowA*0.1)+')');
+      c.strokeStyle=grad; c.lineWidth=lw;
+      c.beginPath(); c.moveTo(26,gateY0+arcH*0.55); c.quadraticCurveTo(W/2,gateY0-arcH*0.55,W-26,gateY0+arcH*0.55); c.stroke();
+      // тонкая яркая жила по центру дуги (core)
+      c.shadowBlur=4+10*prox;
+      c.strokeStyle='rgba(255,250,240,'+Math.min(1,glowA*1.3)+')'; c.lineWidth=Math.max(.5,lw*0.28);
+      c.beginPath(); c.moveTo(26,gateY0+arcH*0.55); c.quadraticCurveTo(W/2,gateY0-arcH*0.55,W-26,gateY0+arcH*0.55); c.stroke();
+      // опоры с мягким основанием
+      c.strokeStyle='rgba('+r1+','+g1+','+b1+','+(glowA*0.65)+')'; c.lineWidth=lw*0.55;
+      c.beginPath(); c.moveTo(26,gateY0+arcH*0.55); c.lineTo(26,gateY0+arcH*0.55+30); c.stroke();
+      c.beginPath(); c.moveTo(W-26,gateY0+arcH*0.55); c.lineTo(W-26,gateY0+arcH*0.55+30); c.stroke();
+      c.restore();
+
+      if(approachP>=1){ crossed=true; catchT=.8; flashScreen=1; sparkA=[]; for(let i=0;i<12;i++) sparkA.push(Math.random()*6.283); }
+    } else {
+      // экран целиком заливает тёплым светом в момент пересечения, гаснет плавно
+      if(flashScreen>0){
+        flashScreen=Math.max(0,flashScreen-dt*1.8);
+        c.save(); c.globalCompositeOperation='lighter';
+        c.fillStyle='rgba(255,225,175,'+(flashScreen*.55)+')'; c.fillRect(0,0,W,H);
+        c.restore();
+      }
+      // ДОСЛОВНО catchT-эффект из goldstar.js — вспышка/кольцо/12 игл, только cx,cy = точка ворот
+      if (catchT>0){
+        catchT=Math.max(0, catchT-dt);
+        const k=1-catchT/.8, fade=1-k, cx=W/2, cy=gateY0;
+        c.save(); c.globalCompositeOperation='lighter';
+        const g=c.createRadialGradient(cx,cy,0,cx,cy,150+60*k);
+        g.addColorStop(0,'rgba(255,240,190,'+(.8*fade)+')');
+        g.addColorStop(.4,'rgba(255,210,110,'+(.35*fade)+')');
+        g.addColorStop(1,'rgba(255,180,80,0)');
+        c.fillStyle=g; c.beginPath(); c.arc(cx,cy,210,0,7); c.fill();
+        c.strokeStyle='rgba(255,224,150,'+(.7*fade)+')'; c.lineWidth=2;
+        c.beginPath(); c.arc(cx,cy,20+90*k,0,7); c.stroke();
+        c.strokeStyle='rgba(255,220,140,'+(.9*fade)+')';
+        for(const a of sparkA){ const d=40+130*k;
+          c.beginPath(); c.moveTo(cx+Math.cos(a)*d*.6, cy+Math.sin(a)*d*.6);
+          c.lineTo(cx+Math.cos(a)*d, cy+Math.sin(a)*d); c.stroke(); }
+        c.restore();
+      }
+    }
+    drawPlane(W/2, planeY, heat);
+    if(t<DUR) requestAnimationFrame(frame); else {
+      c.fillStyle='rgba(228,233,255,.65)'; c.font='12px sans-serif'; c.textAlign='center';
+      c.fillText('→ экран итогов', W/2, H-18);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+run();
+</script>
+</body></html>

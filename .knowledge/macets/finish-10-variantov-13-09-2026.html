@@ -1,0 +1,203 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#03040a;margin:0;padding:28px 20px;font-family:-apple-system,sans-serif;color:#e4e9ff}
+  h1{font-size:17px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#7d85ab;margin:0 0 22px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.5}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;max-width:1000px;margin:0 auto}
+  .col{text-align:center;background:#0a0d1e;border-radius:14px;padding:14px 10px}
+  h2{font-size:12.5px;font-weight:600;margin:0 0 8px;color:#ffd76a}
+  canvas{background:#03040a;border-radius:12px;border:1px solid #1a1f3d;display:block;margin:0 auto}
+  .replay{margin-top:8px;font-size:10.5px;color:#7d85ab;background:#12162c;border:1px solid #262c50;border-radius:8px;padding:5px 12px;cursor:pointer}
+  .replay:hover{color:#c7cfff;border-color:#3a4180}
+</style></head>
+<body>
+<h1>10 вариантов момента финиша</h1>
+<p class="sub">Общий каркас у всех одинаковый (звёзды, корабль, та же вспышка/кольцо/иглы из goldstar.js
+  на пересечении) — отличается только то, что разгорается впереди по мере приближения.</p>
+<div class="grid">
+  <div class="col"><h2>1. Ворота-арка</h2><canvas id="c1" width="220" height="300"></canvas><button class="replay" onclick="R1()">▶ ещё раз</button></div>
+  <div class="col"><h2>2. Рассветная полоса</h2><canvas id="c2" width="220" height="300"></canvas><button class="replay" onclick="R2()">▶ ещё раз</button></div>
+  <div class="col"><h2>3. Диафрагма</h2><canvas id="c3" width="220" height="300"></canvas><button class="replay" onclick="R3()">▶ ещё раз</button></div>
+  <div class="col"><h2>4. Расходящиеся кольца</h2><canvas id="c4" width="220" height="300"></canvas><button class="replay" onclick="R4()">▶ ещё раз</button></div>
+  <div class="col"><h2>5. Созвездие-знак</h2><canvas id="c5" width="220" height="300"></canvas><button class="replay" onclick="R5()">▶ ещё раз</button></div>
+  <div class="col"><h2>6. Занавес авроры</h2><canvas id="c6" width="220" height="300"></canvas><button class="replay" onclick="R6()">▶ ещё раз</button></div>
+  <div class="col"><h2>7. Кольцо туманности</h2><canvas id="c7" width="220" height="300"></canvas><button class="replay" onclick="R7()">▶ ещё раз</button></div>
+  <div class="col"><h2>8. Два маяка</h2><canvas id="c8" width="220" height="300"></canvas><button class="replay" onclick="R8()">▶ ещё раз</button></div>
+  <div class="col"><h2>9. Световой тоннель</h2><canvas id="c9" width="220" height="300"></canvas><button class="replay" onclick="R9()">▶ ещё раз</button></div>
+  <div class="col"><h2>10. Пылевой знак ✓</h2><canvas id="c10" width="220" height="300"></canvas><button class="replay" onclick="R10()">▶ ещё раз</button></div>
+</div>
+<script>
+function easeOut(x){ return 1-Math.pow(1-x,3); }
+function easeIn(x){ return x*x*x; }
+function goldFlash(c,cx,cy,catchT,sparkA){
+  const k=1-catchT/.8, fade=1-k;
+  c.save(); c.globalCompositeOperation='lighter';
+  const g=c.createRadialGradient(cx,cy,0,cx,cy,120+50*k);
+  g.addColorStop(0,'rgba(255,240,190,'+(.8*fade)+')');
+  g.addColorStop(.4,'rgba(255,210,110,'+(.35*fade)+')');
+  g.addColorStop(1,'rgba(255,180,80,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(cx,cy,170,0,7); c.fill();
+  c.strokeStyle='rgba(255,224,150,'+(.7*fade)+')'; c.lineWidth=2;
+  c.beginPath(); c.arc(cx,cy,16+70*k,0,7); c.stroke();
+  c.strokeStyle='rgba(255,220,140,'+(.9*fade)+')';
+  for(const a of sparkA){ const d=32+100*k;
+    c.beginPath(); c.moveTo(cx+Math.cos(a)*d*.6, cy+Math.sin(a)*d*.6);
+    c.lineTo(cx+Math.cos(a)*d, cy+Math.sin(a)*d); c.stroke(); }
+  c.restore();
+}
+function drawPlane(c,x,y,heat){
+  c.save(); c.translate(x,y);
+  if(heat>0){ c.shadowColor='rgba(255,215,106,'+Math.min(1,heat)+')'; c.shadowBlur=7+18*heat; }
+  c.fillStyle='#f3f6ff';
+  c.beginPath(); c.moveTo(0,-9); c.lineTo(-6.5,8); c.lineTo(0,3.5); c.lineTo(6.5,8); c.closePath(); c.fill();
+  c.restore();
+}
+function scaffold(canvasId, drawApproach){
+  return function(){
+    const c=document.getElementById(canvasId).getContext('2d');
+    const W=220,H=300, planeY0=H*0.86, finY=H*0.18;
+    let t=0,last=performance.now(),crossed=false,catchT=0,sparkA=[],flash=0,planeY=planeY0;
+    const state={};
+    const stars=[]; for(let i=0;i<36;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:.4+Math.random()*.7});
+    const CROSS=3.0, DUR=CROSS+1.3;
+    function frame(now){
+      const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+      c.clearRect(0,0,W,H);
+      c.fillStyle='rgba(220,226,255,.5)';
+      for(const s of stars) c.fillRect(s.x,s.y,s.r,s.r);
+      const approachP=Math.min(1,t/CROSS), prox=easeIn(approachP);
+      planeY=planeY0-(planeY0-finY-5)*easeOut(approachP);
+      const heat=crossed?Math.max(0,1-(t-CROSS)/1.1):prox*0.22;
+      if(!crossed){
+        drawApproach(c,W,H,finY,prox,t,dt,state);
+        if(approachP>=1){ crossed=true; catchT=.8; flash=1; sparkA=[]; for(let i=0;i<12;i++) sparkA.push(Math.random()*6.283); }
+      } else {
+        if(flash>0){ flash=Math.max(0,flash-dt*1.9); c.save(); c.globalCompositeOperation='lighter'; c.fillStyle='rgba(255,225,175,'+(flash*.4)+')'; c.fillRect(0,0,W,H); c.restore(); }
+        if(catchT>0){ catchT=Math.max(0,catchT-dt); goldFlash(c,W/2,finY,catchT,sparkA); }
+      }
+      drawPlane(c,W/2,planeY,heat);
+      if(t<DUR) requestAnimationFrame(frame); else { c.fillStyle='rgba(228,233,255,.5)'; c.font='10px sans-serif'; c.textAlign='center'; c.fillText('→ итоги', W/2, H-9); }
+    }
+    requestAnimationFrame(frame);
+  };
+}
+
+function vGate(c,W,H,finY,prox,t){
+  const arcH=16+11*prox+Math.sin(t*2.6)*2*prox, glowA=0.14+0.58*prox, lw=1+3*prox;
+  c.save(); c.globalCompositeOperation='lighter'; c.shadowColor='rgba(255,215,106,'+Math.min(1,glowA+.2)+')'; c.shadowBlur=5+18*prox;
+  const g=c.createLinearGradient(16,0,W-16,0);
+  g.addColorStop(0,'rgba(255,215,106,'+(glowA*.1)+')'); g.addColorStop(.5,'rgba(255,236,180,'+glowA+')'); g.addColorStop(1,'rgba(255,215,106,'+(glowA*.1)+')');
+  c.strokeStyle=g; c.lineWidth=lw;
+  c.beginPath(); c.moveTo(16,finY+arcH*.5); c.quadraticCurveTo(W/2,finY-arcH*.5,W-16,finY+arcH*.5); c.stroke();
+  c.restore();
+}
+function vDawn(c,W,H,finY,prox){
+  const bandH=5+46*prox;
+  c.save(); c.globalCompositeOperation='lighter';
+  const g=c.createLinearGradient(0,finY-bandH/2,0,finY+bandH/2);
+  g.addColorStop(0,'rgba(255,180,90,0)'); g.addColorStop(.5,'rgba(255,222,160,'+(.12+.48*prox)+')'); g.addColorStop(1,'rgba(255,180,90,0)');
+  c.fillStyle=g; c.fillRect(0,finY-bandH/2,W,bandH);
+  c.strokeStyle='rgba(255,247,221,'+(.14+.5*prox)+')'; c.lineWidth=1+1*prox;
+  c.beginPath(); c.moveTo(0,finY); c.lineTo(W,finY); c.stroke();
+  c.restore();
+}
+function vIris(c,W,H,finY,prox){
+  const cx=W/2, cy=finY, R=12+42*prox, N=8;
+  c.save(); c.globalCompositeOperation='lighter';
+  for(let i=0;i<N;i++){
+    const a0=i*(6.283/N);
+    c.save(); c.translate(cx,cy); c.rotate(a0+prox*0.5);
+    c.fillStyle='rgba(255,225,160,'+(.06+.26*prox)+')';
+    c.beginPath(); c.moveTo(0,0); c.arc(0,0,R,0,6.283/N*0.85); c.closePath(); c.fill();
+    c.restore();
+  }
+  c.strokeStyle='rgba(255,247,221,'+(.18+.45*prox)+')'; c.lineWidth=1.2;
+  c.beginPath(); c.arc(cx,cy,R,0,6.283); c.stroke();
+  c.restore();
+}
+function vRings(c,W,H,finY,prox,t,dt,state){
+  state.rings=state.rings||[]; state.acc=(state.acc||0)+dt;
+  const rate=0.46-0.38*prox;
+  if(state.acc>rate){ state.acc=0; state.rings.push({r:2,a:1}); }
+  c.save(); c.globalCompositeOperation='lighter';
+  for(let i=state.rings.length-1;i>=0;i--){ const rg=state.rings[i]; rg.r+=76*dt; rg.a-=dt*0.55;
+    if(rg.a<=0){ state.rings.splice(i,1); continue; }
+    c.strokeStyle='rgba(255,225,160,'+rg.a.toFixed(2)+')'; c.lineWidth=1.3;
+    c.beginPath(); c.arc(W/2,finY,rg.r,0,6.283); c.stroke();
+  }
+  c.fillStyle='rgba(255,247,221,'+(.35+.45*prox)+')'; c.beginPath(); c.arc(W/2,finY,2+3*prox,0,6.283); c.fill();
+  c.restore();
+}
+function vConstellation(c,W,H,finY,prox){
+  const cx=W/2, cy=finY, R=22;
+  const pts=[]; for(let i=0;i<5;i++){ const a=-Math.PI/2+i*(6.283*2/5); pts.push([cx+Math.cos(a)*R, cy+Math.sin(a)*R]); }
+  c.save(); c.globalCompositeOperation='lighter';
+  c.strokeStyle='rgba(255,236,190,'+(.12+.58*prox)+')'; c.lineWidth=1.1;
+  c.beginPath();
+  for(let i=0;i<=5;i++){ const p=pts[(i*2)%5]; if(i===0) c.moveTo(p[0],p[1]); else c.lineTo(p[0],p[1]); }
+  c.stroke();
+  c.fillStyle='rgba(255,247,221,'+(.28+.55*prox)+')';
+  for(const p of pts){ c.beginPath(); c.arc(p[0],p[1],1.5,0,6.283); c.fill(); }
+  c.restore();
+}
+function vAurora(c,W,H,finY,prox,t){
+  c.save(); c.globalCompositeOperation='lighter';
+  const cols=['rgba(140,255,190,','rgba(200,170,255,','rgba(255,225,150,'];
+  for(let i=0;i<3;i++){
+    const baseX=W*0.28+i*W*0.22;
+    c.beginPath();
+    for(let y=finY-34;y<=finY+50;y+=6){
+      const x=baseX+Math.sin(y*0.07+t*1.6+i)*9*prox;
+      if(y===finY-34) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.strokeStyle=cols[i]+(.06+.28*prox)+')'; c.lineWidth=9; c.stroke();
+  }
+  c.restore();
+}
+function vNebulaRing(c,W,H,finY,prox){
+  c.save(); c.globalCompositeOperation='lighter';
+  c.translate(W/2,finY); c.rotate(-0.2); c.scale(1,0.32);
+  const R=15+28*prox;
+  const g=c.createRadialGradient(0,0,R*0.6,0,0,R*1.15);
+  g.addColorStop(0,'rgba(255,225,160,0)'); g.addColorStop(.7,'rgba(255,225,160,'+(.14+.4*prox)+')'); g.addColorStop(1,'rgba(255,225,160,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(0,0,R*1.15,0,6.283); c.fill();
+  c.restore();
+}
+function vBeacons(c,W,H,finY,prox){
+  c.save(); c.globalCompositeOperation='lighter';
+  for(const bx of [W*0.16,W*0.84]){
+    const R=8+18*prox;
+    const g=c.createRadialGradient(bx,finY,0,bx,finY,R);
+    g.addColorStop(0,'rgba(255,247,221,'+(.45+.35*prox)+')'); g.addColorStop(1,'rgba(255,215,106,0)');
+    c.fillStyle=g; c.beginPath(); c.arc(bx,finY,R,0,6.283); c.fill();
+    c.fillStyle='rgba(255,250,235,.85)'; c.beginPath(); c.arc(bx,finY,1.4+1.6*prox,0,6.283); c.fill();
+  }
+  c.restore();
+}
+function vTunnel(c,W,H,finY,prox){
+  c.save(); c.globalCompositeOperation='lighter';
+  const R=16+100*prox;
+  const g=c.createRadialGradient(W/2,finY,0,W/2,finY,R);
+  g.addColorStop(0,'rgba(255,247,225,'+(.3+.3*prox)+')');
+  g.addColorStop(.5,'rgba(255,222,160,'+(.1+.18*prox)+')');
+  g.addColorStop(1,'rgba(255,180,90,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(W/2,finY,R,0,6.283); c.fill();
+  c.restore();
+}
+function vCheck(c,W,H,finY,prox){
+  const cx=W/2, cy=finY;
+  c.save(); c.globalCompositeOperation='lighter';
+  c.strokeStyle='rgba(255,236,190,'+(.16+.6*prox)+')'; c.lineWidth=2.2; c.lineCap='round'; c.lineJoin='round';
+  c.beginPath();
+  c.moveTo(cx-12,cy); c.lineTo(cx-4,cy+8); c.lineTo(cx+12,cy-9);
+  c.stroke();
+  c.restore();
+}
+
+const R1=scaffold('c1',vGate), R2=scaffold('c2',vDawn), R3=scaffold('c3',vIris), R4=scaffold('c4',vRings),
+      R5=scaffold('c5',vConstellation), R6=scaffold('c6',vAurora), R7=scaffold('c7',vNebulaRing),
+      R8=scaffold('c8',vBeacons), R9=scaffold('c9',vTunnel), R10=scaffold('c10',vCheck);
+[R1,R2,R3,R4,R5,R6,R7,R8,R9,R10].forEach(f=>f());
+</script>
+</body></html>

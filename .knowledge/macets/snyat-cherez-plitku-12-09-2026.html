@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Коллекция — снять тапом по «Выбран» (макет, не игра)</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d;
+  --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb;
+  --line-gold:rgba(201,164,92,.45); --muted:#7d8aa8; --cream:#fce1b6; --ok:#8fff9f;
+  --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);}
+body{-webkit-tap-highlight-color:transparent;user-select:none;padding:20px 16px 60px;}
+h1{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-hi);margin:0 0 4px}
+.sub{font-size:11.5px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:400px}
+.angarIt{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.ch{position:relative;width:100%;aspect-ratio:1.12;border-radius:18px;display:grid;place-items:center;
+  background:rgba(15,25,45,.6);border:1px solid rgba(255,255,255,.1)}
+.angarIt.sel .ch{border-color:rgba(190,225,255,.55);background:rgba(120,170,255,.10);box-shadow:0 0 20px rgba(120,170,255,.16)}
+.dotpv{width:30px;height:30px;border-radius:50%}
+.nm{font-size:11px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.angarIt.sel .nm{color:#eaf2ff}
+.pr{position:absolute;left:4px;right:4px;bottom:4px;margin:0;padding:4px 6px;border-radius:10px;
+  font-size:10px;letter-spacing:.02em;background:rgba(8,14,28,.82);
+  border:1px solid rgba(190,225,255,.35);color:#f2f7ff;
+  display:flex;align-items:center;justify-content:center;gap:3px}
+.pr.own{color:var(--ok);border-color:rgba(95,216,138,.4)}
+.pr.worn{background:transparent;border:none;padding:0;cursor:pointer}
+.wornBtn{width:100%;border:1px solid rgba(95,216,138,.5);background:rgba(95,216,138,.12);
+  color:var(--ok);font-family:inherit;font-size:10px;letter-spacing:.02em;border-radius:10px;
+  padding:4px 6px;cursor:pointer}
+.wornBtn:active{background:rgba(95,216,138,.22)}
+.wearBtn{width:100%;border:none;background:rgba(120,170,255,.55);color:#0c1830;font-family:inherit;
+  font-size:10px;font-weight:700;letter-spacing:.02em;border-radius:10px;padding:4px 6px;cursor:pointer}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--bg-1);border:1px solid var(--line-gold);border-radius:999px;padding:11px 8px 11px 18px;
+  display:flex;align-items:center;gap:12px;font-size:11px;color:var(--cream);letter-spacing:.04em;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#toast .undo{background:rgba(201,164,92,.18);border:1px solid var(--line-gold);border-radius:14px;
+  padding:6px 12px;color:var(--gold-hi);cursor:pointer}
+.note{margin-top:26px;font-size:10.5px;color:#4a5a75;line-height:1.6}
+</style>
+</head>
+<body>
+<h1>След — без плитки «Нет»</h1>
+<p class="sub">Тап по уже надетому предмету (плашка «Выбран») снимает его сразу — плашки «Нет»<br>в сетке больше нет, слот свободен для настоящего предмета.</p>
+
+<div class="grid" id="grid"></div>
+
+<div id="toast"><span id="toastTxt"></span><span class="undo" id="toastUndo">вернуть</span></div>
+
+<p class="note">Реальные размеры/цвета плашки — из index.html (.angarIt .pr, .angarIt .pr.own):<br>
+фон rgba(8,14,28,.82), рамка rgba(190,225,255,.35), радиус 10px; «Выбран» — свой цвет --ok (#8fff9f).<br>
+Тост — тот же приём, что уже одобрен в Конструкторе (список точек, «Убрал · Вернуть»).</p>
+
+<script>
+const ITEMS = [
+  {id:1, name:'Обломки-спут…', color:'#5b8bd0', owned:true},
+  {id:2, name:'Нить-жемчуг', color:'#7ecbe0', owned:true, worn:true},
+  {id:3, name:'Искры', color:'#e8e8e8', owned:true},
+  {id:4, name:'Кометная пыль', color:'#c9a45c', owned:true},
+  {id:5, name:'Лента', color:'#8b5bd0', owned:true},
+  {id:6, name:'Метки пути', color:'#5bd0a0', owned:true},
+];
+let selId = null;
+let lastRemoved = null;
+
+function render(){
+  const g = document.getElementById('grid'); g.innerHTML='';
+  ITEMS.forEach(it=>{
+    const el = document.createElement('div');
+    el.className = 'angarIt' + (it.worn?' sel':'');
+    const pvColor = it.color;
+    let prHtml;
+    if(it.worn){
+      prHtml = '<div class="pr worn"><button type="button" class="wornBtn" data-act="unwear" data-id="'+it.id+'">Выбран</button></div>';
+    } else if(selId===it.id){
+      prHtml = '<div class="pr"><button type="button" class="wearBtn" data-act="wear" data-id="'+it.id+'">Надеть</button></div>';
+    } else {
+      prHtml = '<div class="pr own">✓</div>';
+    }
+    el.innerHTML = '<div class="ch"><div class="dotpv" style="background:'+pvColor+'"></div>'+prHtml+'</div>'+
+      '<div class="nm">'+it.name+'</div>';
+    el.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-act]')) return; // сама плашка обрабатывается отдельно ниже
+      selId = it.id; render();
+    });
+    g.appendChild(el);
+  });
+  g.querySelectorAll('[data-act="wear"]').forEach(b=>b.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const id = +b.dataset.id;
+    ITEMS.forEach(it=>it.worn = (it.id===id));
+    selId = null;
+    render();
+  }));
+  g.querySelectorAll('[data-act="unwear"]').forEach(b=>b.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const id = +b.dataset.id;
+    const item = ITEMS.find(it=>it.id===id);
+    item.worn = false;
+    lastRemoved = id;
+    render();
+    showToast('Снял «'+item.name+'»');
+  }));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastTxt').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+document.getElementById('toastUndo').addEventListener('click', ()=>{
+  if(lastRemoved==null) return;
+  const item = ITEMS.find(it=>it.id===lastRemoved);
+  if(item) item.worn = true;
+  lastRemoved = null;
+  document.getElementById('toast').classList.remove('show');
+  render();
+});
+render();
+</script>
+</body>
+</html>

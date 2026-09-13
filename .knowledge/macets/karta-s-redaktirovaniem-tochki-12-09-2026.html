@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Конструктор — «Карта», исправлено (макет, не игра)</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d;
+  --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);overflow:hidden;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;}
+
+#devSwitch{position:fixed;top:0;left:0;right:0;z-index:999;display:flex;gap:6px;justify-content:center;align-items:center;
+  padding:6px;background:#000;border-bottom:2px solid #444;font-size:11px;}
+#devSwitch button{background:#222;color:#aaa;border:1px solid #555;border-radius:6px;padding:5px 10px;font-family:var(--font-ui);cursor:pointer;}
+#devSwitch button.on{background:var(--gold);color:#1a1200;border-color:var(--gold);font-weight:700;}
+#devLabel{color:#888;padding:5px 4px;}
+
+.stage{position:absolute;top:30px;left:0;right:0;bottom:0;overflow:hidden;}
+#sky{position:absolute;inset:0;background:linear-gradient(180deg,hsl(214 62% 24%),hsl(230 55% 11%));}
+#stars{position:absolute;inset:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:#fff;}
+
+#stepHead{position:absolute;top:14px;left:0;right:0;text-align:center;z-index:5;pointer-events:none;}
+#stepTitle{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);
+  text-shadow:0 0 14px rgba(240,192,64,.35);font-weight:600;}
+#dots{display:flex;gap:7px;justify-content:center;margin-top:8px;}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);}
+.dot.cur{background:var(--gold-hi);width:20px;border-radius:4px;box-shadow:0 0 10px rgba(240,192,64,.6);}
+
+#trackWrap{position:absolute;left:0;right:0;top:0;bottom:0;}
+#track{position:absolute;left:20px;right:20px;top:150px;height:7px;border-radius:5px;
+  background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.55));
+  box-shadow:0 0 10px rgba(255,255,255,.25);cursor:pointer;}
+.obst{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);
+  border:2px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;animation:pop .2s ease;cursor:pointer;color:#fff;}
+.obst.sel{border-color:var(--gold-hi);box-shadow:0 0 14px rgba(240,192,64,.65);transform:translate(-50%,-50%) scale(1.12);}
+.obst svg{width:14px;height:14px;}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.2);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+#lenRow{position:absolute;left:16px;right:16px;top:172px;z-index:5;display:flex;align-items:center;gap:10px;}
+#lenRow label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(244,246,251,.6);flex:none;}
+#lenRow input[type=range]{flex:1;accent-color:var(--gold-hi);}
+#lenRow .lenVal{font-size:11px;color:var(--gold-hi);flex:none;font-weight:600;}
+
+#topTools{position:absolute;right:14px;top:70px;z-index:5;display:flex;gap:8px;}
+#topTools button{background:rgba(11,22,38,.55);border:1px solid rgba(255,255,255,.15);color:rgba(244,246,251,.75);
+  font-family:var(--font-ui);font-size:10px;letter-spacing:.04em;border-radius:14px;padding:6px 10px;cursor:pointer;}
+#topTools button:active{transform:scale(.96);}
+
+/* ===== зона у нижнего края превью — две заменяющие друг друга сцены ===== */
+#edgeZone{position:absolute;left:0;right:0;bottom:74px;z-index:5;}
+
+/* --- палитра (режим «ставить») — сетка 5×2, та же, что у реального .tray (index.html:2096) --- */
+#palette{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 12px 10px;
+  background:linear-gradient(0deg,rgba(6,10,20,.6),transparent);}
+.palCell{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
+.palIcon{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;transition:.15s;color:#fff;}
+.palIcon svg{width:60%;height:60%;}
+.palCell.sel .palIcon{border-color:var(--gold-hi);box-shadow:0 0 14px rgba(240,192,64,.5);transform:translateY(-3px);}
+.palCell span{font-size:7.5px;letter-spacing:.03em;text-transform:uppercase;color:rgba(244,246,251,.65);white-space:nowrap;}
+.palCell.sel span{color:var(--gold-hi);}
+#placeHint{text-align:center;font-size:10px;color:rgba(244,246,251,.45);padding-bottom:4px;}
+
+/* --- панель точки (режим «редактировать») --- */
+#editPanel{background:rgba(10,18,32,.82);backdrop-filter:blur(6px);border-top:1px solid var(--line-gold);
+  padding:10px 16px 12px;}
+#editHead{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#editIcon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;color:#fff;}
+#editIcon svg{width:14px;height:14px;}
+#editTitle{font-size:12px;font-weight:600;flex:1;}
+#editClose,#editDel{background:none;border:none;color:rgba(244,246,251,.55);font-family:var(--font-ui);font-size:11px;cursor:pointer;padding:4px 6px;}
+#editDel{color:var(--danger);}
+#nudgeRow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.nudgeBtn{flex:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:var(--ink);
+  font-family:var(--font-ui);font-size:11px;border-radius:8px;padding:6px 9px;cursor:pointer;}
+.nudgeBtn:active{transform:scale(.95);}
+#atVal{flex:1;text-align:center;background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  color:var(--gold-hi);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:6px 0;width:0;}
+#nudgeHint{font-size:9.5px;color:rgba(244,246,251,.4);text-align:center;margin-bottom:8px;}
+#dirRow{display:none;margin-bottom:8px;}
+#dirRow .dLbl{font-size:10px;color:rgba(244,246,251,.55);margin-bottom:5px;}
+.segRow{display:flex;gap:6px;}
+.segRow button{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:var(--ink);
+  font-family:var(--font-ui);font-size:10.5px;border-radius:8px;padding:7px 0;cursor:pointer;}
+.segRow button.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.12);}
+#noteBox{display:none;margin-bottom:6px;}
+#noteBox textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  color:var(--ink);font-family:var(--font-ui);font-size:11px;padding:7px;resize:none;}
+#pauseHint,#kindHint{font-size:10px;color:rgba(244,246,251,.45);line-height:1.35;}
+
+/* --- список точек (оверлей) --- */
+#listOverlay{position:absolute;inset:0;z-index:8;background:rgba(6,10,20,.72);backdrop-filter:blur(3px);
+  display:none;align-items:flex-end;}
+#listOverlay.show{display:flex;}
+#listCard{width:100%;max-height:62%;background:var(--bg-1);border-top:1px solid var(--line-gold);
+  border-radius:16px 16px 0 0;padding:14px 14px 18px;overflow-y:auto;}
+#listHead{display:flex;align-items:center;margin-bottom:8px;}
+#listHead b{flex:1;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi);}
+#listClose{background:none;border:none;color:rgba(244,246,251,.6);font-size:16px;cursor:pointer;}
+.listRow{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+.listRow .ic{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;color:#fff;}
+.listRow .ic svg{width:12px;height:12px;}
+.listRow .t{flex:1;font-size:12px;}
+.listRow .m{font-size:10.5px;color:rgba(244,246,251,.4);}
+#listEmpty{text-align:center;font-size:11px;color:rgba(244,246,251,.4);padding:20px 0;}
+
+#confirmWrap{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:6;}
+#confirmBtn{font-family:var(--font-ui);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;
+  border:none;border-radius:30px;padding:14px 34px;box-shadow:0 6px 20px rgba(201,164,92,.35);cursor:pointer;
+  display:flex;align-items:center;gap:8px;}
+#confirmBtn svg{width:16px;height:16px;}
+
+.note{position:fixed;bottom:4px;left:0;right:0;text-align:center;font-size:10px;color:#5a6a85;z-index:1000;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div id="devSwitch">
+  <span id="devLabel">МАКЕТ · «Карта», исправлено 12.09.2026</span>
+  <button id="modePlace" class="on">показать: палитра</button>
+  <button id="modeEditKind">точка-преграда</button>
+  <button id="modeEditComet">точка-комета (направление)</button>
+  <button id="modeEditNote">точка-заметка</button>
+  <button id="modeEditPause">точка-передышка</button>
+  <button id="modeList">список точек</button>
+</div>
+
+<div class="stage">
+  <div id="sky"><div id="stars"></div></div>
+  <div id="stepHead">
+    <div id="stepTitle">КАРТА</div>
+    <div id="dots"><span class="dot cur"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>
+  <div id="trackWrap">
+    <div id="track"></div>
+    <div id="obstLayer"></div>
+  </div>
+  <div id="lenRow">
+    <label>Длина</label><input type="range" id="lenSlider" min="1000" max="25000" step="250" value="1500">
+    <span class="lenVal" id="lenVal">1500м</span>
+  </div>
+  <div id="topTools">
+    <button id="pointsBtn">Точек: 0</button>
+    <button id="resetBtn">Сбросить</button>
+  </div>
+
+  <div id="edgeZone">
+    <div id="palette"></div>
+    <div id="placeHint">Перетащи стикер на трассу — или коснись точки на трассе, чтобы править её</div>
+    <div id="editPanel" style="display:none">
+      <div id="editHead">
+        <div id="editIcon"></div>
+        <div id="editTitle">Точка</div>
+        <button id="editDel">удалить</button>
+        <button id="editClose">✕</button>
+      </div>
+      <div id="nudgeRow">
+        <button class="nudgeBtn" data-n="-10">−10</button>
+        <button class="nudgeBtn" data-n="-1">−1</button>
+        <input id="atVal" value="0"><span style="color:rgba(244,246,251,.5);font-size:11px;margin:0 2px;">м</span>
+        <button class="nudgeBtn" data-n="1">+1</button>
+        <button class="nudgeBtn" data-n="10">+10</button>
+      </div>
+      <div id="nudgeHint">±1/±10 или впиши число сам</div>
+      <div id="kindHint"></div>
+      <div id="dirRow">
+        <div class="dLbl">Сторона</div>
+        <div class="segRow" id="dirSeg"><button data-d="l">Слева</button><button data-d="r" class="sel">Справа</button></div>
+      </div>
+      <div id="noteBox">
+        <textarea rows="2" placeholder="заметка для себя…"></textarea>
+      </div>
+      <div id="pauseHint" style="display:none">Гарантия передышки в этой точке — рядом не появится препятствие.</div>
+    </div>
+  </div>
+
+  <div id="listOverlay">
+    <div id="listCard">
+      <div id="listHead"><b>Список точек</b><button id="listClose">✕</button></div>
+      <div id="listBody"></div>
+    </div>
+  </div>
+
+  <div id="confirmWrap">
+    <button id="confirmBtn"><span>Подтвердить карту</span>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1c1200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+<div class="note">цвета/иконки — реальные (PT_KIND_COLOR/PT_ICON_SVG, js/partitura.js), не придуманные для макета</div>
+
+<script>
+/* ===== реальные данные из js/partitura.js — сверено, не придумано ===== */
+const PT_KIND_LABEL={rock:'Астероид',debris:'Обломок',drift:'Дрейфер',mine:'Мина',sat:'Спутник',comet:'Комета',seeker:'Ловец',gate:'Ворота'};
+const PT_KIND_COLOR={rock:'#d99a4e',debris:'#6fa3e0',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffe14a',gate:'#22b8dd'};
+const PT_ICON_SVG={
+  pause:'<svg viewBox="0 0 24 24"><rect x="6.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/><rect x="13.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/></svg>',
+  marker:'<svg viewBox="0 0 24 24"><path d="M3 21l1.2-5.6L15.6 3.9a1.6 1.6 0 0 1 2.3 0l2.2 2.2a1.6 1.6 0 0 1 0 2.3L8.6 19.8 3 21z" fill="currentColor"/></svg>',
+  rock:'<svg viewBox="0 0 24 24"><polygon points="12,2.5 18,6.5 20.5,13 16,20 8,19.5 3.5,13.5 5.5,6" fill="currentColor"/></svg>',
+  debris:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="2" fill="currentColor"/><rect x="3" y="11.2" width="18" height="1.6" fill="rgba(0,0,0,.3)"/></svg>',
+  drift:'<svg viewBox="0 0 24 24"><polygon points="2,12 7,5.5 17,5 22,12 16,19 6,18.5" fill="currentColor"/></svg>',
+  mine:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="12" x2="22" y2="12"/><line x1="16.2" y1="16.2" x2="19.1" y2="19.1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="7.8" y1="16.2" x2="4.9" y2="19.1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="7.8" y1="7.8" x2="4.9" y2="4.9"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="16.2" y1="7.8" x2="19.1" y2="4.9"/></g></svg>',
+  sat:'<svg viewBox="0 0 24 24"><rect x="10" y="9.5" width="4" height="5" rx="1" fill="currentColor"/><rect x="1.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><rect x="16.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><line x1="7.5" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="12" x2="16.5" y2="12" stroke="currentColor" stroke-width="1.6"/></svg>',
+  comet:'<svg viewBox="0 0 24 24"><circle cx="16" cy="8" r="3.4" fill="currentColor"/><path d="M14 10.2C10 12 5.5 15 2 21c5.5-2.6 9.5-5.3 12.6-9.4z" fill="currentColor" opacity=".55"/></svg>',
+  seeker:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>',
+  gate:'<svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+};
+const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate'];
+const TRAY=[{t:'pause',cap:'Передышка'},{t:'marker',cap:'Заметка'}].concat(FORGE_KINDS.map(k=>({t:'kind',k,cap:PT_KIND_LABEL[k]})));
+
+function swColor(d){ return d.t==='kind'?PT_KIND_COLOR[d.k]:'#8fa3c8'; }
+function swIcon(d){ return d.t==='kind'?PT_ICON_SVG[d.k]:PT_ICON_SVG[d.t]; }
+
+/* ---- демонстрационные точки на ленте (для наглядности макета) ---- */
+const pins=[
+  {at:320, pct:.21, type:'pause'},
+  {at:640, pct:.43, type:'kind', kind:'rock'},
+  {at:980, pct:.65, type:'kind', kind:'comet', dir:'r'},
+  {at:1210, pct:.81, type:'marker', note:'тут резкий поворот, не забыть'},
+];
+let selIdx=-1;
+
+function buildStars(){
+  const layer=document.getElementById('stars'); layer.innerHTML='';
+  for(let i=0;i<40;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=1+Math.random()*2;
+    s.style.width=sz+'px'; s.style.height=sz+'px';
+    s.style.left=(Math.random()*100)+'%'; s.style.top=(Math.random()*80)+'%';
+    s.style.opacity=.25+Math.random()*.6;
+    layer.appendChild(s);
+  }
+}
+buildStars();
+
+function renderPalette(){
+  const p=document.getElementById('palette'); p.innerHTML='';
+  TRAY.forEach(d=>{
+    const cell=document.createElement('div'); cell.className='palCell';
+    cell.innerHTML=`<div class="palIcon" style="background:${swColor(d)}">${swIcon(d)}</div><span>${d.cap}</span>`;
+    p.appendChild(cell);
+  });
+}
+renderPalette();
+
+function renderObstacles(){
+  const layer=document.getElementById('obstLayer'); layer.innerHTML='';
+  const trackTop=document.getElementById('track').getBoundingClientRect().top-document.querySelector('.stage').getBoundingClientRect().top+3;
+  pins.forEach((p,i)=>{
+    const d=p.type==='kind'?{t:'kind',k:p.kind}:{t:p.type};
+    const el=document.createElement('div'); el.className='obst'+(i===selIdx?' sel':'');
+    el.style.left=`calc(20px + (100% - 40px) * ${p.pct})`;
+    el.style.top=trackTop+'px';
+    el.style.background=swColor(d);
+    el.innerHTML=swIcon(d);
+    el.onclick=(e)=>{ e.stopPropagation(); selIdx=i; renderObstacles(); openEdit(); };
+    layer.appendChild(el);
+  });
+  const pb=document.getElementById('pointsBtn'); if(pb) pb.textContent='Точек: '+pins.length;
+}
+renderObstacles();
+
+document.getElementById('track').addEventListener('click',()=>{
+  selIdx=-1; renderObstacles(); closeEdit();
+});
+
+function pinName(p){ return p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':PT_KIND_LABEL[p.kind]; }
+
+function openEdit(){
+  const p=pins[selIdx]; if(!p) return;
+  document.getElementById('palette').style.display='none';
+  document.getElementById('placeHint').style.display='none';
+  const ep=document.getElementById('editPanel'); ep.style.display='block';
+  const d=p.type==='kind'?{t:'kind',k:p.kind}:{t:p.type};
+  document.getElementById('editIcon').style.background=swColor(d);
+  document.getElementById('editIcon').innerHTML=swIcon(d);
+  document.getElementById('editTitle').textContent=pinName(p);
+  document.getElementById('atVal').value=p.at;
+  const kh=document.getElementById('kindHint');
+  kh.style.display=p.type==='kind'?'block':'none';
+  if(p.type==='kind') kh.textContent='Здесь всегда будет '+pinName(p).toLowerCase()+' — не случайный вид.';
+  const dirRow=document.getElementById('dirRow');
+  const showDir=p.type==='kind'&&(p.kind==='comet'||p.kind==='drift');
+  dirRow.style.display=showDir?'block':'none';
+  if(showDir){
+    document.querySelectorAll('#dirSeg button').forEach(b=>b.classList.toggle('sel',b.dataset.d===(p.dir||'r')));
+  }
+  document.getElementById('noteBox').style.display=p.type==='marker'?'block':'none';
+  if(p.type==='marker') document.getElementById('noteBox').querySelector('textarea').value=p.note||'';
+  document.getElementById('pauseHint').style.display=p.type==='pause'?'block':'none';
+}
+function closeEdit(){
+  document.getElementById('editPanel').style.display='none';
+  document.getElementById('palette').style.display='flex';
+  document.getElementById('placeHint').style.display='block';
+}
+document.getElementById('editClose').onclick=()=>{ selIdx=-1; renderObstacles(); closeEdit(); };
+document.getElementById('editDel').onclick=()=>{
+  if(selIdx<0) return; pins.splice(selIdx,1); selIdx=-1; renderObstacles(); closeEdit();
+};
+document.querySelectorAll('.nudgeBtn').forEach(b=>{
+  b.onclick=()=>{ if(selIdx<0) return; pins[selIdx].at=Math.max(0,pins[selIdx].at+(+b.dataset.n)); document.getElementById('atVal').value=pins[selIdx].at; };
+});
+document.querySelectorAll('#dirSeg button').forEach(b=>{
+  b.onclick=()=>{ if(selIdx<0) return; pins[selIdx].dir=b.dataset.d; document.querySelectorAll('#dirSeg button').forEach(x=>x.classList.toggle('sel',x===b)); };
+});
+
+document.getElementById('lenSlider').addEventListener('input',e=>{
+  document.getElementById('lenVal').textContent=e.target.value+'м';
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  pins.length=0; selIdx=-1; renderObstacles(); closeEdit();
+});
+
+/* ---- список точек ---- */
+function renderList(){
+  const body=document.getElementById('listBody');
+  if(!pins.length){ body.innerHTML='<div id="listEmpty">пока пусто</div>'; return; }
+  body.innerHTML='';
+  pins.slice().sort((a,b)=>a.at-b.at).forEach((p)=>{
+    const realIdx=pins.indexOf(p);
+    const d=p.type==='kind'?{t:'kind',k:p.kind}:{t:p.type};
+    const row=document.createElement('div'); row.className='listRow';
+    row.innerHTML=`<div class="ic" style="background:${swColor(d)}">${swIcon(d)}</div><div class="t">${pinName(p)}</div><div class="m">${p.at}м</div>`;
+    row.onclick=()=>{ selIdx=realIdx; renderObstacles(); openEdit(); document.getElementById('listOverlay').classList.remove('show'); };
+    body.appendChild(row);
+  });
+}
+document.getElementById('pointsBtn').addEventListener('click',()=>{
+  renderList(); document.getElementById('listOverlay').classList.add('show');
+});
+document.getElementById('listClose').addEventListener('click',()=>{
+  document.getElementById('listOverlay').classList.remove('show');
+});
+
+/* ---- переключатели демонстрации (только для показа макета владельцу, не часть макета) ---- */
+function setDemoMode(m){
+  document.querySelectorAll('#devSwitch button').forEach(b=>b.classList.remove('on'));
+  document.getElementById('listOverlay').classList.remove('show');
+  if(m==='place'){ document.getElementById('modePlace').classList.add('on'); selIdx=-1; renderObstacles(); closeEdit(); }
+  else if(m==='kind'){ document.getElementById('modeEditKind').classList.add('on'); selIdx=1; renderObstacles(); openEdit(); }
+  else if(m==='comet'){ document.getElementById('modeEditComet').classList.add('on'); selIdx=2; renderObstacles(); openEdit(); }
+  else if(m==='note'){ document.getElementById('modeEditNote').classList.add('on'); selIdx=3; renderObstacles(); openEdit(); }
+  else if(m==='pause'){ document.getElementById('modeEditPause').classList.add('on'); selIdx=0; renderObstacles(); openEdit(); }
+  else if(m==='list'){ document.getElementById('modeList').classList.add('on'); renderList(); document.getElementById('listOverlay').classList.add('show'); }
+}
+document.getElementById('modePlace').onclick=()=>setDemoMode('place');
+document.getElementById('modeEditKind').onclick=()=>setDemoMode('kind');
+document.getElementById('modeEditComet').onclick=()=>setDemoMode('comet');
+document.getElementById('modeEditNote').onclick=()=>setDemoMode('note');
+document.getElementById('modeEditPause').onclick=()=>setDemoMode('pause');
+document.getElementById('modeList').onclick=()=>setDemoMode('list');
+
+document.getElementById('confirmBtn').addEventListener('click',()=>{
+  const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(201,164,92,.95);color:#1c1200;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:999;';
+  t.textContent='Карта подтверждена ✓ (дальше — «Цвет»)'; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1600);
+});
+</script>
+</body>
+</html>

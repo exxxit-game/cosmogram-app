@@ -1,0 +1,125 @@
+<title>Макет: хамелеон — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Хамелеон — 5 тем (честный шорт-лист, решётка гуанина, не пигмент)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/CHAMELEON-COLOR-CHANGE.md (Teyssier et al., Nature Comm. 2015). На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    ctx.fillStyle=bodyColor; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// helper: honeycomb-ish lattice of dots whose spacing breathes (guanine crystal spacing)
+function latticeDots(ctx,spacing,hue,alpha){
+  for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++){
+    const x=col*spacing+((row%2)*spacing*0.5), y=row*spacing*0.87;
+    if(x<-14||x>14||y<-19||y>13) continue;
+    ctx.fillStyle='hsla('+hue+',75%,60%,'+alpha+')';
+    ctx.beginPath(); ctx.arc(x,y,spacing*0.28,0,6.283); ctx.fill();
+  }
+}
+// 1. Решётка гуанина — расстояние дышит, цвет сдвигается синий↔красный (30% реальная разница)
+function drawGuanineLattice(ctx,now){
+  const p=(now%3000)/3000;
+  const k=0.5+0.5*Math.sin(p*2*Math.PI); // 0=расслаблено(близко,синий) 1=возбуждено(далеко,красный)
+  const spacing=2.6+k*0.8; // 30% реальной разницы
+  const hue=220-k*160; // синий→красный
+  latticeDots(ctx,spacing,hue,0.75);
+}
+// 2. Два слоя иридофоров — видимый цвет сверху + инфракрасный слой глубже (45% ИК-отражение)
+function drawTwoIridophoreLayers(ctx,now){
+  const p=(now%3000)/3000;
+  ctx.fillStyle='rgba(150,60,40,.35)'; // D-слой, ИК-отражатель, тёплый тон
+  ctx.beginPath(); ctx.arc(0,-4,13,0,6.283); ctx.fill();
+  const k=0.5+0.5*Math.sin(p*2*Math.PI);
+  const hue=140+k*80;
+  latticeDots(ctx,2.4,hue,0.7); // S-слой поверх
+}
+// 3. Социальный сигнал — territorial flash: яркая вспышка вызова, затем "капитуляция" тускнеет
+function drawSocialSignal(ctx,now){
+  const p=(now%2600)/2600;
+  const challenge = p<0.6;
+  const bright = challenge ? (0.5+0.5*Math.sin(p/0.6*Math.PI)) : 0.1;
+  const hue = challenge ? [50,10,0][Math.floor(p*9)%3] : 100;
+  ctx.fillStyle='hsla('+hue+',90%,55%,'+(0.3+bright*0.6)+')';
+  ctx.beginPath(); ctx.arc(0,-4,12,0,6.283); ctx.fill();
+}
+// 4. Панцирный хамелеон — калейдоскопичный (Амбилобе), несколько цветов сразу
+function drawPantherChameleon(ctx,now){
+  const p=(now%4000)/4000;
+  const hues=[10,50,140,200,300];
+  hues.forEach((hue,i)=>{
+    const a=i/5*6.283+p*1.5;
+    ctx.fillStyle='hsla('+hue+',85%,55%,.55)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*6,Math.sin(a)*6*0.7-4,4,0,6.283); ctx.fill();
+  });
+}
+// 5. Вуалевый хамелеон — ограниченная палитра зелёный/жёлтый/коричневый, темнеет до бирюзы при стрессе
+function drawVeiledChameleon(ctx,now){
+  const p=(now%3200)/3200;
+  const stressed = p>0.6;
+  const hue = stressed? 180 : 90;
+  const light = stressed? 30 : 45;
+  ctx.fillStyle='hsla('+hue+',60%,'+light+'%,.6)';
+  ctx.beginPath(); ctx.arc(0,-4,12,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(50,60%,50%,.5)'; ctx.lineWidth=1.2;
+  for(let i=-2;i<=2;i++){ ctx.beginPath(); ctx.moveTo(-12,i*4-4); ctx.lineTo(12,i*4-4); ctx.stroke(); }
+}
+
+mountCards([
+  {id:'h1', name:'Решётка гуанина — дышащий цвет', body:'#0e1420', drawFn:drawGuanineLattice, zoom:6.5, fact:'Расстояние между нанокристаллами: 30% разница расслаблено↔возбуждено, 233-480нм'},
+  {id:'h2', name:'Два слоя иридофоров', body:'#141018', drawFn:drawTwoIridophoreLayers, zoom:6.5, fact:'Верхний — видимый цвет, глубокий — 45% отражения ИК 700-1400нм (терморегуляция)'},
+  {id:'h3', name:'Социальный сигнал, не камуфляж', body:'#101418', drawFn:drawSocialSignal, zoom:6.5, fact:'Territorial flash: жёлтый/красный/белый = вызов, тусклый = капитуляция'},
+  {id:'h4', name:'Панцирный хамелеон', body:'#181020', drawFn:drawPantherChameleon, zoom:6.5, fact:'Furcifer pardalis, популяция Амбилобе — несколько цветов сразу'},
+  {id:'h5', name:'Вуалевый хамелеон', body:'#0e1810', drawFn:drawVeiledChameleon, zoom:6.5, fact:'Ограниченная палитра зелёный/жёлтый/коричневый, бирюза при стрессе'},
+]);
+</script>

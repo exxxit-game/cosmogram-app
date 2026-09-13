@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Конструктор — 3 шага, 3 варианта (макет, не игра)</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d;
+  --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);overflow:hidden;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;}
+
+/* --- debug variant switcher (НЕ часть макета, только для показа трёх вариантов) --- */
+#devSwitch{position:fixed;top:0;left:0;right:0;z-index:999;display:flex;gap:6px;justify-content:center;
+  padding:6px;background:#000;border-bottom:2px solid #444;font-size:11px;}
+#devSwitch button{background:#222;color:#aaa;border:1px solid #555;border-radius:6px;padding:5px 10px;font-family:var(--font-ui);cursor:pointer;}
+#devSwitch button.on{background:var(--gold);color:#1a1200;border-color:var(--gold);font-weight:700;}
+#devLabel{color:#888;padding:5px 4px;}
+
+.stage{position:absolute;top:30px;left:0;right:0;bottom:0;overflow:hidden;}
+
+/* ================= общий каркас неба/трассы (превью) ================= */
+#sky{position:absolute;inset:0;transition:background 1.1s ease;}
+#stars{position:absolute;inset:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:#fff;}
+#trackWrap{position:absolute;left:0;right:0;top:0;bottom:0;}
+#track{position:absolute;left:20px;right:20px;top:150px;height:7px;border-radius:5px;
+  background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.55));
+  box-shadow:0 0 10px rgba(255,255,255,.25);cursor:pointer;}
+.obst{position:absolute;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);
+  border:2px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;font-size:12px;animation:pop .25s ease;}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.2);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+
+/* верхний заголовок шага */
+#stepHead{position:absolute;top:14px;left:0;right:0;text-align:center;z-index:5;pointer-events:none;}
+#stepTitle{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);
+  text-shadow:0 0 14px rgba(240,192,64,.35);font-weight:600;}
+#dots{display:flex;gap:7px;justify-content:center;margin-top:8px;}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:.3s;}
+.dot.done{background:var(--gold);box-shadow:0 0 8px rgba(201,164,92,.7);}
+.dot.cur{background:var(--gold-hi);width:20px;border-radius:4px;box-shadow:0 0 10px rgba(240,192,64,.6);}
+
+/* нижняя кнопка "подтвердить" — общая для всех вариантов */
+#confirmWrap{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:6;}
+#confirmBtn{font-family:var(--font-ui);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;
+  border:none;border-radius:30px;padding:14px 34px;box-shadow:0 6px 20px rgba(201,164,92,.35);cursor:pointer;
+  display:flex;align-items:center;gap:8px;}
+#confirmBtn:active{transform:scale(.97);}
+#confirmBtn svg{width:16px;height:16px;}
+
+/* ================= ВАРИАНТ A: прямое манипулирование — контролы на краю превью ================= */
+/* --- Карта: длина трассы + горизонтально прокручиваемая полоса из 10 реальных типов --- */
+body[data-v="a"] #lenRowA{position:absolute;left:16px;right:16px;top:172px;z-index:5;display:flex;align-items:center;gap:10px;}
+body[data-v="a"] #lenRowA label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(244,246,251,.6);flex:none;}
+body[data-v="a"] #lenRowA input[type=range]{flex:1;accent-color:var(--gold-hi);}
+body[data-v="a"] #lenRowA .lenVal{font-size:11px;color:var(--gold-hi);flex:none;font-weight:600;}
+body[data-v="a"] #topToolsA{position:absolute;right:14px;top:70px;z-index:5;display:flex;gap:8px;}
+body[data-v="a"] #topToolsA button{background:rgba(11,22,38,.55);border:1px solid rgba(255,255,255,.15);color:rgba(244,246,251,.75);
+  font-family:var(--font-ui);font-size:10px;letter-spacing:.04em;border-radius:14px;padding:6px 10px;cursor:pointer;}
+
+body[data-v="a"] #paletteA{position:absolute;left:0;right:0;bottom:74px;z-index:5;
+  display:flex;gap:12px;overflow-x:auto;padding:10px 16px 12px;
+  background:linear-gradient(0deg,rgba(6,10,20,.6),transparent);scrollbar-width:none;}
+body[data-v="a"] #paletteA::-webkit-scrollbar{display:none;}
+body[data-v="a"] .palCellA{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;}
+body[data-v="a"] .palIcon{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.25);
+  background:rgba(11,22,38,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;
+  transition:.15s;}
+body[data-v="a"] .palCellA.sel .palIcon{border-color:var(--gold-hi);box-shadow:0 0 14px rgba(240,192,64,.5);transform:translateY(-3px);}
+body[data-v="a"] .palCellA span{font-size:8.5px;letter-spacing:.03em;text-transform:uppercase;color:rgba(244,246,251,.65);white-space:nowrap;}
+body[data-v="a"] .palCellA.sel span{color:var(--gold-hi);}
+
+/* --- Цвет: основное всегда видно, редкое — за "Тонкая настройка" --- */
+body[data-v="a"] #colorEdgeA{position:absolute;left:0;right:0;bottom:74px;z-index:5;
+  background:linear-gradient(0deg,rgba(6,10,20,.62),transparent);padding:12px 18px 10px;}
+body[data-v="a"] .miniSlideRow{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+body[data-v="a"] .miniSlideRow label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,246,251,.65);width:64px;flex:none;}
+body[data-v="a"] .miniSlideRow input[type=range]{flex:1;accent-color:var(--gold-hi);}
+body[data-v="a"] #harmonyBtnA{display:flex;align-items:center;gap:6px;background:rgba(201,164,92,.14);
+  border:1px solid var(--line-gold);color:var(--gold-hi);font-family:var(--font-ui);font-size:11px;letter-spacing:.05em;
+  border-radius:14px;padding:7px 12px;margin:2px 0 8px;cursor:pointer;}
+body[data-v="a"] #fineToggleA{background:none;border:none;color:rgba(244,246,251,.55);font-family:var(--font-ui);
+  font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:4px 0;cursor:pointer;display:flex;align-items:center;gap:4px;}
+body[data-v="a"] #fineBodyA{max-height:0;overflow:hidden;transition:max-height .28s ease;}
+body[data-v="a"] #fineBodyA.open{max-height:220px;}
+body[data-v="a"] .favRowA{display:flex;gap:6px;margin:6px 0 8px;}
+body[data-v="a"] .favDotA{width:20px;height:20px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.25);}
+body[data-v="a"] .fogRowA{display:flex;gap:6px;margin-bottom:4px;}
+body[data-v="a"] .fogRowA button{flex:1;background:rgba(11,22,38,.55);border:1px solid rgba(255,255,255,.15);
+  color:rgba(244,246,251,.7);font-family:var(--font-ui);font-size:10px;border-radius:10px;padding:7px 0;cursor:pointer;}
+body[data-v="a"] .fogRowA button.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.12);}
+
+/* --- Сохранить: имя + Полёт/Поделиться + точечная настройка (заглушка) --- */
+body[data-v="a"] #nameCardA{position:absolute;left:16px;right:16px;top:40%;transform:translateY(-50%);z-index:5;
+  background:rgba(11,22,38,.6);backdrop-filter:blur(6px);border:1px solid var(--line-gold);border-radius:16px;
+  padding:18px 22px;text-align:center;}
+body[data-v="a"] #nameCardA input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-gold);
+  color:var(--ink);font-family:var(--font-ui);font-size:16px;text-align:center;padding:6px 0;outline:none;}
+body[data-v="a"] #nameCardA input::placeholder{color:rgba(244,246,251,.4);}
+body[data-v="a"] .flightRowA{display:flex;gap:10px;margin-top:16px;}
+body[data-v="a"] .flightRowA button{flex:1;font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;border-radius:12px;padding:11px 0;cursor:pointer;}
+body[data-v="a"] .flightRowA .ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--ink);}
+body[data-v="a"] .flightRowA .pri{background:rgba(24,40,72,.7);border:1px solid rgba(190,225,255,.45);color:#f2f7ff;}
+body[data-v="a"] #pointTuneA{margin-top:14px;background:none;border:none;color:rgba(244,246,251,.55);
+  font-family:var(--font-ui);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+body[data-v="a"] #pointTuneStubA{margin-top:8px;font-size:10.5px;color:rgba(244,246,251,.4);display:none;}
+body[data-v="a"] #pointTuneStubA.open{display:block;}
+
+/* ================= ВАРИАНТ B: нижний лоток — фикс. зона, меняется только содержимое ================= */
+body[data-v="b"] .stage{top:30px;}
+body[data-v="b"] #skyZoneB{position:absolute;left:0;right:0;top:0;height:58%;overflow:hidden;pointer-events:none;}
+body[data-v="b"] #trayB{position:absolute;left:0;right:0;bottom:0;top:58%;background:var(--bg-2);
+  border-top:1px solid var(--line-gold);border-radius:20px 20px 0 0;padding:14px 16px 74px;
+  box-shadow:0 -8px 24px rgba(0,0,0,.35);overflow:auto;}
+body[data-v="b"] #trayB h4{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;}
+body[data-v="b"] .palRowB{display:flex;gap:10px;flex-wrap:wrap;}
+body[data-v="b"] .palIconB{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--bg-1);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;}
+body[data-v="b"] .palIconB.sel{border-color:var(--gold-hi);box-shadow:0 0 0 3px rgba(240,192,64,.18);}
+body[data-v="b"] .sliderRowB{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+body[data-v="b"] .sliderRowB label{font-size:11px;color:rgba(244,246,251,.75);width:76px;flex:none;}
+body[data-v="b"] .sliderRowB input[type=range]{flex:1;accent-color:var(--gold-hi);}
+body[data-v="b"] #trayB input[type=text]{width:100%;background:var(--bg-1);border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);font-family:var(--font-ui);font-size:15px;padding:12px 14px;outline:none;}
+
+/* ================= ВАРИАНТ C: полноэкранная сцена — панель гаснет/появляется ================= */
+body[data-v="c"] .stage{top:0;}
+body[data-v="c"] #stepHead{top:38px;}
+body[data-v="c"] #glassC{position:absolute;left:12px;right:12px;bottom:80px;z-index:5;
+  background:rgba(9,16,30,.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.10);border-radius:22px;
+  padding:14px 16px;opacity:0;pointer-events:none;transform:translateY(10px);transition:.35s ease;}
+body[data-v="c"] #glassC.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+body[data-v="c"] .palRowC{display:flex;gap:10px;justify-content:center;}
+body[data-v="c"] .palIconC{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+body[data-v="c"] .palIconC.sel{border-color:var(--gold-hi);box-shadow:0 0 12px rgba(240,192,64,.5);}
+body[data-v="c"] .sliderRowC{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+body[data-v="c"] .sliderRowC label{font-size:10px;color:rgba(244,246,251,.7);width:70px;flex:none;}
+body[data-v="c"] .sliderRowC input[type=range]{flex:1;accent-color:var(--gold-hi);}
+body[data-v="c"] #glassC input[type=text]{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-gold);
+  color:var(--ink);font-family:var(--font-ui);font-size:16px;text-align:center;padding:8px 0;outline:none;}
+body[data-v="c"] #hintC{position:absolute;left:0;right:0;bottom:80px;text-align:center;z-index:4;
+  font-size:11px;color:rgba(244,246,251,.55);letter-spacing:.04em;pointer-events:none;transition:.3s;}
+body[data-v="c"] #hintC.hide{opacity:0;}
+
+/* переходы между шагами (Shared Axis: сдвиг+fade) */
+.stepPanel{position:absolute;inset:0;transition:opacity .32s ease, transform .32s ease;}
+.stepPanel.leaving{opacity:0;transform:translateX(-26px);}
+.stepPanel.entering{opacity:0;transform:translateX(26px);}
+.stepPanel.active{opacity:1;transform:translateX(0);}
+
+.toast{position:absolute;left:50%;top:16%;transform:translate(-50%,-8px);background:rgba(201,164,92,.95);color:#1c1200;
+  font-weight:700;font-size:13px;letter-spacing:.05em;padding:9px 18px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none;z-index:20;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* ================= 12.09.2026: подсказка «нужна помощь?» + жестовая анимация (идея владельца,
+   пустое место на шаге «Карта») — только в макете, ничего похожего в реальной игре не нашлось
+   (проверено кодом и .knowledge/), это набросок, не готовое решение. ================= */
+#helpAsk{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:8;
+  background:rgba(11,22,38,.62);backdrop-filter:blur(6px);border:1px solid var(--line-gold);border-radius:16px;
+  padding:16px 20px;text-align:center;opacity:0;pointer-events:none;transition:.4s ease;}
+#helpAsk.show{opacity:1;pointer-events:auto;}
+#helpAsk p{margin:0 0 12px;font-size:13px;color:rgba(244,246,251,.85);}
+#helpAsk .row{display:flex;gap:10px;justify-content:center;}
+#helpAsk button{font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:12px;padding:8px 18px;cursor:pointer;}
+#helpAsk .yes{background:rgba(24,40,72,.7);border:1px solid rgba(190,225,255,.45);color:#f2f7ff;}
+#helpAsk .no{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--ink);}
+
+#gestureHint{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;transition:.35s ease;}
+#gestureHint.show{opacity:1;}
+#gestureHint .ghSticker{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--gold-hi);
+  box-shadow:0 0 12px rgba(240,192,64,.6);}
+#gestureHint .ghFinger{position:absolute;width:34px;height:34px;opacity:.92;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));}
+#gestureHint .ghLabel{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);font-size:11px;
+  color:rgba(244,246,251,.7);letter-spacing:.03em;white-space:nowrap;}
+@keyframes ghDrag{
+  0%{ transform:translate(var(--gh-x0), var(--gh-y0)); }
+  15%{ transform:translate(var(--gh-x0), var(--gh-y0)); }
+  55%{ transform:translate(var(--gh-x1), var(--gh-y1)); }
+  85%{ transform:translate(var(--gh-x1), var(--gh-y1)); }
+  100%{ transform:translate(var(--gh-x0), var(--gh-y0)); }
+}
+#gestureHint .ghFinger, #gestureHint .ghSticker{ animation:ghDrag 2.6s ease-in-out infinite; }
+</style>
+</head>
+<body data-v="a">
+
+<div id="devSwitch">
+  <span id="devLabel">МАКЕТ · вариант:</span>
+  <button data-set="a">A · прямое манипулирование</button>
+  <button data-set="b">B · нижний лоток</button>
+  <button data-set="c">C · полноэкранная сцена</button>
+</div>
+
+<div class="stage">
+  <div id="sky"><div id="stars"></div></div>
+
+  <div id="stepHead">
+    <div id="stepTitle">КАРТА</div>
+    <div id="dots"><span class="dot cur" data-d="1"></span><span class="dot" data-d="2"></span><span class="dot" data-d="3"></span></div>
+  </div>
+
+  <!-- зона трассы/превью (видна во всех шагах и вариантах) -->
+  <div id="trackWrap">
+    <div id="track"></div>
+    <div id="obstLayer"></div>
+  </div>
+
+  <!-- ===== ВАРИАНТ A: палитра/слайдеры/имя прямо на краю превью ===== -->
+  <div id="lenRowA" style="display:none">
+    <label>Длина</label><input type="range" id="lenSliderA" min="500" max="3000" step="100" value="1500">
+    <span class="lenVal" id="lenValA">1500м</span>
+  </div>
+  <div id="topToolsA" style="display:none">
+    <button id="pointsBtnA">Точек: 0</button>
+    <button id="resetBtnA">Сбросить</button>
+  </div>
+  <div id="paletteA"></div>
+  <div id="colorEdgeA" style="display:none"></div>
+  <div id="nameCardA" style="display:none">
+    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Дайте имя</div>
+    <input type="text" id="nameInputA" placeholder="Моё небо">
+    <div class="flightRowA">
+      <button class="ghost">Поделиться</button>
+      <button class="pri">Полёт</button>
+    </div>
+    <button id="pointTuneA">Точечная настройка ▾</button>
+    <div id="pointTuneStubA">Настройка каждой точки отдельно — ещё не спроектирована в этом заходе,
+      честно оставлено пустым местом, не придумано за тебя.</div>
+  </div>
+
+  <!-- ===== ВАРИАНТ B: нижний лоток, фиксированная зона ===== -->
+  <div id="skyZoneB" style="display:none"></div>
+  <div id="trayB" style="display:none">
+    <h4 id="trayTitleB">Выбери преграду и коснись трассы</h4>
+    <div id="trayBodyB"></div>
+  </div>
+
+  <!-- ===== ВАРИАНТ C: стеклянная панель, гаснет/появляется ===== -->
+  <div id="hintC" style="display:none">Коснись экрана, чтобы увидеть управление</div>
+  <div id="glassC" style="display:none"></div>
+
+  <div id="confirmWrap">
+    <button id="confirmBtn">
+      <span id="confirmLbl">Подтвердить карту</span>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1c1200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- 12.09.2026: набросок владельца — пустое место на шаге «Карта» использовано под жестовую
+       подсказку. Спрашиваем один раз, не навязываем; "нет" не показываем больше в этой сессии. -->
+  <div id="helpAsk">
+    <p>Нужна помощь с расстановкой?</p>
+    <div class="row"><button class="no" id="helpNo">Нет</button><button class="yes" id="helpYes">Да</button></div>
+  </div>
+  <div id="gestureHint">
+    <div class="ghLabel">Перетащи на трассу</div>
+    <div class="ghFinger"><svg viewBox="0 0 24 24" fill="#f4f6fb"><path d="M13 3a1.5 1.5 0 0 0-1.5 1.5V12a.5.5 0 0 1-1 0V6.5a1.5 1.5 0 0 0-3 0V14a6 6 0 0 0 6 6h1a6 6 0 0 0 6-6V9a1.5 1.5 0 0 0-3 0v2.5a.5.5 0 0 1-1 0V7a1.5 1.5 0 0 0-3 0v3.5a.5.5 0 0 1-1 0V4.5A1.5 1.5 0 0 0 13 3z"/></svg></div>
+    <div class="ghSticker"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const OBST = [
+  {id:'rest',  label:'Передышка', color:'#7ecbe0'},
+  {id:'note',  label:'Заметка',   color:'#dba93c'},
+  {id:'ast',   label:'Астероид',  color:'#c9a45c'},
+  {id:'debris',label:'Обломок',   color:'#5b8bd0'},
+  {id:'drift', label:'Дрейфер',   color:'#c15bcf'},
+  {id:'mine',  label:'Мина',      color:'#e0533d'},
+  {id:'sat',   label:'Спутник',   color:'#5a6b8c'},
+  {id:'comet', label:'Комета',    color:'#8b3a3a'},
+  {id:'catch', label:'Ловец',     color:'#8a6d4f'},
+  {id:'gate',  label:'Ворота',    color:'#4fd0c4'},
+];
+/* честно: цвета/иконки здесь — приблизительная замена для макета (компоновка), не сверены
+   пиксель-в-пиксель с реальными SVG из игры — по-хорошему их надо доставать оттуда, если
+   этот вариант пойдёт дальше макета */
+const state = { step:1, obstacles:[], sel:'rest', color:{h1:210,h2:265,dens:50,mood:50}, fog:0, len:1500, name:'' };
+
+function iconSvg(color){
+  return `<svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="${color}"/></svg>`;
+}
+
+/* ---------- звёзды ---------- */
+function buildStars(){
+  const layer = document.getElementById('stars');
+  layer.innerHTML='';
+  const n = 40;
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div'); s.className='star';
+    const sz = 1+Math.random()*2;
+    s.style.width=sz+'px'; s.style.height=sz+'px';
+    s.style.left=(Math.random()*100)+'%'; s.style.top=(Math.random()*80)+'%';
+    s.style.opacity = .25+Math.random()*.6;
+    layer.appendChild(s);
+  }
+}
+
+/* ---------- превью неба (живое, видно во всех 3 шагах) ---------- */
+function renderSky(){
+  const c = state.color;
+  const c1 = `hsl(${c.h1} 65% ${18+c.mood*0.18}%)`;
+  const c2 = `hsl(${c.h2} 60% ${10+c.mood*0.12}%)`;
+  document.getElementById('sky').style.background = `linear-gradient(180deg, ${c1}, ${c2})`;
+  document.getElementById('stars').style.opacity = 0.35 + (c.dens/100)*0.65;
+}
+
+/* ---------- палитра преград ---------- */
+function paletteHtml(cls){
+  return OBST.map(o=>`<div class="${cls}${o.id===state.sel?' sel':''}" data-o="${o.id}" title="${o.label}">${iconSvg(o.color)}</div>`).join('');
+}
+function wirePalette(container, cls){
+  container.querySelectorAll('.'+cls).forEach(el=>{
+    el.onclick = ()=>{ state.sel = el.dataset.o; renderStepUI(); };
+  });
+}
+function paletteHtmlLabeled(){
+  return OBST.map(o=>`<div class="palCellA${o.id===state.sel?' sel':''}" data-o="${o.id}">
+    <div class="palIcon">${iconSvg(o.color)}</div><span>${o.label}</span></div>`).join('');
+}
+function wirePaletteLabeled(container){
+  container.querySelectorAll('.palCellA').forEach(el=>{
+    el.onclick = ()=>{ state.sel = el.dataset.o; renderStepUI(); };
+  });
+}
+
+/* ---------- расстановка на трассе ---------- */
+document.getElementById('track').addEventListener('click', (e)=>{
+  if(state.step!==1) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  const type = OBST.find(o=>o.id===state.sel);
+  state.obstacles.push({pct, type:type.id, color:type.color});
+  renderObstacles();
+  const pb = document.getElementById('pointsBtnA'); if(pb) pb.textContent = 'Точек: '+state.obstacles.length;
+});
+function renderObstacles(){
+  const layer = document.getElementById('obstLayer');
+  layer.innerHTML='';
+  const trackTop = document.getElementById('track').getBoundingClientRect().top - document.querySelector('.stage').getBoundingClientRect().top + 3;
+  state.obstacles.forEach(o=>{
+    const el = document.createElement('div'); el.className='obst';
+    el.style.left = `calc(20px + (100% - 40px) * ${o.pct})`;
+    el.style.top = trackTop+'px';
+    el.style.background = o.color;
+    layer.appendChild(el);
+  });
+}
+
+/* ---------- слайдеры цвета (общая логика, разная разметка) ---------- */
+function colorSlidersHtml(rowCls, labelStyle){
+  return `
+  <div class="${rowCls}"><label>Цвет неба</label><input type="range" min="0" max="360" value="${state.color.h1}" data-c="h1"></div>
+  <div class="${rowCls}"><label>Второй цвет</label><input type="range" min="0" max="360" value="${state.color.h2}" data-c="h2"></div>
+  <div class="${rowCls}"><label>Густота</label><input type="range" min="0" max="100" value="${state.color.dens}" data-c="dens"></div>
+  <div class="${rowCls}"><label>Настроение</label><input type="range" min="0" max="100" value="${state.color.mood}" data-c="mood"></div>`;
+}
+function wireSliders(container){
+  container.querySelectorAll('input[type=range]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{ state.color[inp.dataset.c]=+inp.value; renderSky(); });
+  });
+}
+/* Цвет для варианта A: основное (2 слайдера+гармония) всегда видно,
+   редкое (Густота/Настроение/Туман/Избранное) — за "Тонкая настройка"
+   (Nielsen: раскрывать по частоте использования, не по проценту) */
+function colorPanelHtmlA(){
+  return `
+  <div class="miniSlideRow"><label>Цвет неба</label><input type="range" min="0" max="360" value="${state.color.h1}" data-c="h1"></div>
+  <div class="miniSlideRow"><label>Второй цвет</label><input type="range" min="0" max="360" value="${state.color.h2}" data-c="h2"></div>
+  <button id="harmonyBtnA">🎲 Подобрать гармонию</button>
+  <button id="fineToggleA">Тонкая настройка ▾</button>
+  <div id="fineBodyA">
+    <div class="miniSlideRow" style="margin-top:6px;"><label>Густота</label><input type="range" min="0" max="100" value="${state.color.dens}" data-c="dens"></div>
+    <div class="miniSlideRow"><label>Настроение</label><input type="range" min="0" max="100" value="${state.color.mood}" data-c="mood"></div>
+    <div class="fogRowA">
+      <button data-fog="0" class="${state.fog===0?'sel':''}">Нет</button>
+      <button data-fog="1" class="${state.fog===1?'sel':''}">Лёгкий</button>
+      <button data-fog="2" class="${state.fog===2?'sel':''}">Густой</button>
+    </div>
+    <div class="favRowA">${Array.from({length:7}).map(()=>'<div class="favDotA"></div>').join('')}</div>
+  </div>`;
+}
+function wireColorPanelA(container){
+  wireSliders(container);
+  container.querySelector('#fineToggleA').onclick = (e)=>{
+    document.getElementById('fineBodyA').classList.toggle('open');
+    e.target.textContent = document.getElementById('fineBodyA').classList.contains('open') ? 'Тонкая настройка ▴' : 'Тонкая настройка ▾';
+  };
+  container.querySelectorAll('.fogRowA button').forEach(b=>{
+    b.onclick = ()=>{ state.fog=+b.dataset.fog; renderStepUI(); document.getElementById('fineBodyA').classList.add('open'); };
+  });
+  container.querySelector('#harmonyBtnA').onclick = ()=>{
+    state.color.h2 = (state.color.h1+140)%360; renderSky(); renderStepUI();
+  };
+}
+
+/* ---------- рендер интерфейса под текущий шаг+вариант ---------- */
+function renderStepUI(){
+  const v = document.body.dataset.v;
+  const titles = ['','КАРТА','ЦВЕТ','СОХРАНИТЬ'];
+  document.getElementById('stepTitle').textContent = titles[state.step];
+  document.querySelectorAll('.dot').forEach(d=>{
+    const n=+d.dataset.d;
+    d.classList.toggle('cur', n===state.step);
+    d.classList.toggle('done', n<state.step);
+  });
+  const confirmLbl = document.getElementById('confirmLbl');
+  confirmLbl.textContent = state.step===1?'Подтвердить карту':state.step===2?'Подтвердить цвет':'Сохранить и играть';
+  /* вариант A на шаге 3 уже показывает настоящие «Полёт»/«Поделиться» в самой карточке —
+     нижняя общая кнопка тут дублировала бы их, прячем */
+  document.getElementById('confirmWrap').style.display = (v==='a' && state.step===3) ? 'none' : 'flex';
+
+  // скрыть всё сначала
+  ['paletteA','colorEdgeA','nameCardA','lenRowA','topToolsA','skyZoneB','trayB','glassC','hintC'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+
+  if(v==='a'){
+    if(state.step===1){
+      document.getElementById('lenRowA').style.display='flex';
+      document.getElementById('topToolsA').style.display='flex';
+      document.getElementById('pointsBtnA').textContent = 'Точек: '+state.obstacles.length;
+      const p = document.getElementById('paletteA');
+      p.style.display='flex'; p.innerHTML = paletteHtmlLabeled();
+      wirePaletteLabeled(p);
+    } else if(state.step===2){
+      const c = document.getElementById('colorEdgeA');
+      c.style.display='block'; c.innerHTML = colorPanelHtmlA();
+      wireColorPanelA(c);
+    } else {
+      document.getElementById('nameCardA').style.display='block';
+      document.getElementById('pointTuneA').onclick = (e)=>{
+        document.getElementById('pointTuneStubA').classList.toggle('open');
+        e.target.textContent = document.getElementById('pointTuneStubA').classList.contains('open') ? 'Точечная настройка ▴' : 'Точечная настройка ▾';
+      };
+    }
+  } else if(v==='b'){
+    document.getElementById('skyZoneB').style.display='block';
+    const tray = document.getElementById('trayB'); tray.style.display='block';
+    const title = document.getElementById('trayTitleB');
+    const body = document.getElementById('trayBodyB');
+    if(state.step===1){
+      title.textContent='Выбери преграду и коснись трассы';
+      body.innerHTML = `<div class="palRowB">${paletteHtml('palIconB')}</div>`;
+      wirePalette(body,'palIconB');
+    } else if(state.step===2){
+      title.textContent='Настрой небо';
+      body.innerHTML = colorSlidersHtml('sliderRowB');
+      wireSliders(body);
+    } else {
+      title.textContent='Сохрани своё небо';
+      body.innerHTML = `<input type="text" id="nameInputB" placeholder="Имя для неба">`;
+    }
+  } else if(v==='c'){
+    const glass = document.getElementById('glassC');
+    document.getElementById('hintC').style.display='block';
+    glass.style.display='block';
+    if(state.step===1){
+      glass.innerHTML = `<div class="palRowC">${paletteHtml('palIconC')}</div>`;
+      wirePalette(glass,'palIconC');
+    } else if(state.step===2){
+      glass.innerHTML = colorSlidersHtml('sliderRowC');
+      wireSliders(glass);
+    } else {
+      glass.innerHTML = `<input type="text" id="nameInputC" placeholder="Имя для неба">`;
+    }
+  }
+  renderObstacles();
+}
+
+/* ---------- переход между шагами ---------- */
+function goStep(n){
+  if(n<1||n>3){ showToast('Небо сохранено ✓'); return; }
+  state.step = n;
+  const stage = document.querySelector('.stage');
+  stage.style.opacity=0; stage.style.transform='translateX(18px)';
+  setTimeout(()=>{
+    renderStepUI();
+    if(document.body.dataset.v==='c'){
+      document.getElementById('glassC').classList.remove('show');
+    }
+    stage.style.transition='opacity .3s ease, transform .3s ease';
+    stage.style.opacity=1; stage.style.transform='translateX(0)';
+  },160);
+}
+function showToast(msg){
+  const t = document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+document.getElementById('confirmBtn').addEventListener('click', ()=>{ goStep(state.step+1); });
+
+document.getElementById('lenSliderA').addEventListener('input', (e)=>{
+  state.len = +e.target.value;
+  document.getElementById('lenValA').textContent = state.len+'м';
+});
+document.getElementById('resetBtnA').addEventListener('click', ()=>{
+  state.obstacles = []; renderObstacles(); renderStepUI();
+});
+
+/* вариант C: тап по сцене показывает панель */
+document.querySelector('.stage').addEventListener('click',(e)=>{
+  if(document.body.dataset.v!=='c') return;
+  if(e.target.closest('#glassC')||e.target.closest('#confirmBtn')) return;
+  const g = document.getElementById('glassC');
+  g.classList.add('show');
+  document.getElementById('hintC').classList.add('hide');
+});
+
+/* переключатель вариантов (только для показа макета) */
+document.querySelectorAll('#devSwitch button[data-set]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.body.dataset.v = b.dataset.set;
+    document.querySelectorAll('#devSwitch button[data-set]').forEach(x=>x.classList.toggle('on', x===b));
+    renderStepUI();
+  });
+});
+document.querySelector('#devSwitch button[data-set="a"]').classList.add('on');
+
+/* 12.09.2026: подсказка «нужна помощь?» — спрашиваем один раз на шаге «Карта», пока пусто.
+   Честно: реального прецедента с такой же анимацией в игре нет, это первый набросок. */
+let helpAsked = false;
+function maybeAskHelp(){
+  if(helpAsked || document.body.dataset.v!=='a' || state.step!==1 || state.obstacles.length>0) return;
+  helpAsked = true;
+  setTimeout(()=>{
+    if(state.step===1 && state.obstacles.length===0) document.getElementById('helpAsk').classList.add('show');
+  }, 1800);
+}
+function placeGestureHint(){
+  const track = document.getElementById('track').getBoundingClientRect();
+  const firstIcon = document.querySelector('#paletteA .palCellA .palIcon');
+  if(!firstIcon) return;
+  const stage = document.querySelector('.stage').getBoundingClientRect();
+  const start = firstIcon.getBoundingClientRect();
+  const x0 = start.left - stage.left + start.width/2 - 13;
+  const y0 = start.top - stage.top + start.height/2 - 13;
+  const x1 = track.left - stage.left + track.width*0.3 - 13;
+  const y1 = track.top - stage.top + track.height/2 - 13;
+  const gh = document.getElementById('gestureHint');
+  ['ghFinger','ghSticker'].forEach(cls=>{
+    const el = gh.querySelector('.'+cls);
+    el.style.left = x0+'px'; el.style.top = y0+'px';
+    el.style.setProperty('--gh-x0','0px'); el.style.setProperty('--gh-y0','0px');
+    el.style.setProperty('--gh-x1',(x1-x0)+'px'); el.style.setProperty('--gh-y1',(y1-y0)+'px');
+  });
+}
+document.getElementById('helpYes').addEventListener('click', ()=>{
+  document.getElementById('helpAsk').classList.remove('show');
+  placeGestureHint();
+  document.getElementById('gestureHint').classList.add('show');
+});
+document.getElementById('helpNo').addEventListener('click', ()=>{
+  document.getElementById('helpAsk').classList.remove('show');
+});
+/* тронул трассу сам — подсказка своё дело сделала, гасим */
+document.getElementById('track').addEventListener('click', ()=>{
+  document.getElementById('gestureHint').classList.remove('show');
+}, {capture:true});
+
+buildStars(); renderSky(); renderStepUI();
+setTimeout(maybeAskHelp, 100);
+</script>
+</body>
+</html>

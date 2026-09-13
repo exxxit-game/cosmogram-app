@@ -1,0 +1,81 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 24px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 28px}
+  .row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
+  .col{text-align:center}
+  h2{font-size:13px;font-weight:600;margin:0 0 4px}
+  .tag{font-size:11px;color:#8b93b8;margin:0 0 10px}
+  canvas{background:radial-gradient(ellipse at 50% 30%,#151d3a 0%,#080c1c 75%);border-radius:14px;border:1px solid #262c4a}
+  .replay{margin-top:10px;font-size:11px;color:#6b7394;background:#161c33;border:1px solid #2a3155;border-radius:8px;padding:6px 14px;cursor:pointer}
+  .replay:hover{color:#aeb8ff}
+</style></head>
+<body>
+<h1>Момент финиша цели (Длина / Спидран / Слалом / Биатлон / эстафета)</h1>
+<p class="sub">Один и тот же занавес 0.9с — сейчас переиспользует смерть, предложение даёт свой вид</p>
+<div class="row">
+  <div class="col">
+    <h2>Было — «смерть»</h2>
+    <div class="tag">crash-вспышка #ffd0a0 + дым + крен/падение</div>
+    <canvas id="a" width="260" height="200"></canvas>
+    <div><button class="replay" onclick="run('a','before')">▶ ещё раз</button></div>
+  </div>
+  <div class="col">
+    <h2>Станет — «финиш»</h2>
+    <div class="tag">золотая вспышка #ffd76a (как у звезды дня), без дыма, без падения</div>
+    <canvas id="b" width="260" height="200"></canvas>
+    <div><button class="replay" onclick="run('b','after')">▶ ещё раз</button></div>
+  </div>
+</div>
+<script>
+function drawPlane(c,x,y,bank,glow){
+  c.save(); c.translate(x,y); c.rotate(bank*0.5);
+  if(glow){ c.shadowColor='rgba(255,215,106,.9)'; c.shadowBlur=18; }
+  c.fillStyle='#eef2ff';
+  c.beginPath(); c.moveTo(0,-11); c.lineTo(-8,10); c.lineTo(0,5); c.lineTo(8,10); c.closePath(); c.fill();
+  c.restore();
+}
+function run(id, mode){
+  const c=document.getElementById(id).getContext('2d');
+  const W=260,H=200;
+  let t=0; const DUR=0.9;
+  let px=W/2, py=H*0.55, bank=0, vy=0;
+  const particles=[];
+  function burst(x,y,color,n){ for(let i=0;i<n;i++){ particles.push({x,y,vx:(Math.random()-.5)*4.5,vy:(Math.random()-.5)*4.5,life:.5+Math.random()*.5,age:0,color}); } }
+  // старт эффекта
+  if(mode==='before'){ burst(px,py,'255,208,160',20); burst(px,py,'160,165,180',12); }
+  else { burst(px,py,'255,215,106',22); }
+  let last=performance.now();
+  function frame(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+    c.clearRect(0,0,W,H);
+    // звёздный фон
+    c.fillStyle='rgba(255,255,255,.5)';
+    for(let i=0;i<40;i++){ const sx=(i*53.7)%W, sy=(i*91.3+t*20)%H; c.fillRect(sx,sy,1,1); }
+    if(mode==='before'){
+      vy = vy*(1-.05)+3*.05; py+=vy*dt*30; bank = bank*(1-.04)+1.15*.04;
+      if(Math.random()<.3*30*dt) burst(px+(Math.random()-.5)*12,py+10,'160,165,180',1);
+    } else {
+      bank*=0.9; // выравнивается, не кренится
+      py += Math.sin(t*6)*0.15; // лёгкая плавучая дрожь, не падение
+    }
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i]; p.age+=dt; if(p.age>p.life){ particles.splice(i,1); continue; }
+      p.x+=p.vx; p.y+=p.vy;
+      const a=1-p.age/p.life;
+      c.fillStyle='rgba('+p.color+','+a.toFixed(2)+')';
+      c.beginPath(); c.arc(p.x,p.y,2.4,0,6.283); c.fill();
+    }
+    drawPlane(c,px,py,bank, mode==='after');
+    if(t<DUR+0.5) requestAnimationFrame(frame); else {
+      c.fillStyle='rgba(220,226,255,.55)'; c.font='12px sans-serif'; c.textAlign='center';
+      c.fillText(mode==='before'?'→ экран итогов (как смерть)':'→ экран итогов (как победа)', W/2, H-14);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+run('a','before'); run('b','after');
+</script>
+</body></html>

@@ -1,0 +1,160 @@
+<title>Макет: соты пчелы — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Соты пчелы — 5 тем (математика + биология шестиугольника)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/HONEYCOMB-HEXAGON-MATH.md (гипотеза Кеплера, доказательство Хейлса 1999). На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    ctx.fillStyle=bodyColor; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function hexPath(ctx,cx,cy,r,rot){
+  ctx.beginPath();
+  for(let k=0;k<6;k++){ const a=rot+k*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.closePath();
+}
+function honeyGrid(ctx,r,rot,strokeA){
+  const dx=r*1.73, dy=r*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(42,80%,55%,'+strokeA+')'; ctx.lineWidth=0.35;
+    hexPath(ctx,cx,cy,r*0.95,rot); ctx.stroke();
+  }
+}
+// 1. Разрыв Варрон/Паппа → Хейлс 1999 — соты появляются постепенно, "доказано спустя 2000 лет"
+function drawHalesProof(ctx,now){
+  const p=(now%3500)/3500;
+  const shown=Math.max(0.15,Math.min(1,p*4));
+  const dx=2.4*1.73, dy=2.4*1.5;
+  const cells=[]; for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    cells.push([cx,cy]);
+  }
+  const n=Math.floor(shown*cells.length);
+  cells.slice(0,n).forEach(([cx,cy])=>{
+    ctx.strokeStyle='hsla(42,85%,60%,.8)'; ctx.lineWidth=0.4;
+    hexPath(ctx,cx,cy,2.28,0); ctx.stroke();
+  });
+}
+// 2. Треугольник/квадрат/шестиугольник — три силуэта рядом, шестиугольник "побеждает" по периметру
+function drawTilingTrio(ctx,now){
+  const p=(now%2400)/2400;
+  const hi=Math.floor(p*3);
+  const shapes=[[3,-9],[4,0],[6,9]]; // [стороны, x-смещение]
+  shapes.forEach(([sides,x],i)=>{
+    ctx.save(); ctx.translate(x,0);
+    ctx.beginPath();
+    for(let k=0;k<sides;k++){ const a=-Math.PI/2+k*2*Math.PI/sides; const r=4; const px=r*Math.cos(a), py=r*Math.sin(a); k===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+    ctx.closePath();
+    ctx.strokeStyle= i===hi? 'rgba(255,210,90,1)':'rgba(255,255,255,.35)';
+    ctx.lineWidth=i===hi?1.6:0.8;
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+// 3. Спор физика воска vs поведение пчёл — два наложенных объяснения, "debate"
+function drawOpenDebate(ctx,now){
+  const p=(now%3000)/3000;
+  const mix=0.5+0.5*Math.sin(p*2*Math.PI); // перетягивание каната между двумя объяснениями
+  honeyGrid(ctx,2.6,0,0.35+mix*0.4); // «физика воска» — золотой слой
+  ctx.save();
+  const dx=2.6*1.73, dy=2.6*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(200,85%,62%,'+(0.75-mix*0.4)+')'; ctx.lineWidth=0.4; // «поведение пчёл» — голубой слой, чуть повёрнут
+    hexPath(ctx,cx,cy,2.28,0.18); ctx.stroke();
+  }
+  ctx.restore();
+}
+// 4. Круг→шестиугольник — ячейки стягиваются из кругов в решётку (кинематографичный процесс)
+function drawCircleToHex(ctx,now){
+  const p=(now%2600)/2600;
+  const k=Math.abs(Math.sin(p*Math.PI)); // 0=круг, 1=шестиугольник
+  const dx=2.6*1.73, dy=2.6*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(42,85%,58%,.75)'; ctx.lineWidth=0.4;
+    if(k<0.05){ ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.stroke(); }
+    else{
+      ctx.beginPath();
+      for(let s=0;s<32;s++){
+        const a=s/32*6.283;
+        const hexR=2.3/Math.cos(((a+Math.PI/6)%(Math.PI/3))-Math.PI/6);
+        const r=2.3*(1-k)+Math.min(hexR,3.2)*k;
+        const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+        s===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+  }
+}
+// 5. Наклон ~13° — опровергнутое объяснение (Одер и Швабе, 2020), лёгкий устойчивый крен решётки
+function drawTilt13(ctx,now){
+  const p=(now%4000)/4000;
+  const tilt=13*Math.PI/180;
+  honeyGrid(ctx,2.6,tilt,0.8);
+  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.setLineDash([1,2]); ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(0,12); ctx.stroke(); ctx.setLineDash([]);
+}
+
+mountCards([
+  {id:'s1', name:'Доказательство Хейлса, 1999', body:'#1c1608', drawFn:drawHalesProof, zoom:6.5, fact:'Варрон/Паппа (античность) знали на глаз — строго доказано только спустя 2000 лет'},
+  {id:'s2', name:'Три фигуры-мостильщицы', body:'#101418', drawFn:drawTilingTrio, zoom:6.5, fact:'Треугольник/квадрат/шестиугольник — единственные замостители плоскости, гексагон выигрывает по периметру'},
+  {id:'s3', name:'Открытый научный спор', body:'#0c1420', drawFn:drawOpenDebate, zoom:6.5, fact:'Физика воска vs поведение пчёл — Наций: «формирование ячеек всё ещё предмет спора»'},
+  {id:'s4', name:'Круг → шестиугольник', body:'#181008', drawFn:drawCircleToHex, zoom:6.5, fact:'Круглые ячейки физически стягиваются и спрямляются в решётку'},
+  {id:'s5', name:'Наклон ~13°', body:'#141810', drawFn:drawTilt13, zoom:6.5, fact:'Одер и Швабе, 2020 — учебниковое объяснение наклона опровергнуто'},
+]);
+</script>

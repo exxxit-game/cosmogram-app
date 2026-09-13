@@ -1,0 +1,128 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#03040a;margin:0;padding:28px 20px;font-family:-apple-system,sans-serif;color:#e4e9ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#7d85ab;margin:0 0 20px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.55}
+  .row{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+  .col{text-align:center}
+  h2{font-size:13px;font-weight:600;margin:0 0 4px;color:#ffd76a}
+  canvas{background:#03040a;border-radius:16px;border:1px solid #1a1f3d;display:block;box-shadow:0 16px 46px rgba(0,0,0,.5)}
+  .replay{margin-top:10px;font-size:11px;color:#7d85ab;background:#12162c;border:1px solid #262c50;border-radius:9px;padding:6px 14px;cursor:pointer}
+  .replay:hover{color:#c7cfff;border-color:#3a4180}
+</style></head>
+<body>
+<h1>Ворота — новый момент пересечения</h1>
+<p class="sub">Арка остаётся той же. Вместо безликой вспышки+иглы (goldstar) — сама дуга ворот
+  разлетается на светящиеся осколки вдоль своей формы, следом идёт ударная волна кольцом,
+  и на долю секунды кадр слегка «дёргает» (пуш-зум) — импульс от прохождения, не просто вспышка.</p>
+<div class="row">
+  <div class="col"><canvas id="a" width="300" height="440"></canvas><div><button class="replay" onclick="run()">▶ ещё раз</button></div></div>
+</div>
+<script>
+function run(){
+  const cv=document.getElementById('a'); const c=cv.getContext('2d');
+  const W=300,H=440, planeY0=H*0.86, gateY0=H*0.16;
+  let t=0,last=performance.now();
+  const CROSS=3.4, DUR=CROSS+1.8;
+  let planeY=planeY0, crossed=false, shards=[], shock=0, punch=0;
+  const stars=[]; for(let i=0;i<70;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*.8,tw:Math.random()*6.283});
+
+  function easeOut(x){ return 1-Math.pow(1-x,3); }
+  function easeIn(x){ return x*x*x; }
+  function drawPlane(x,y,heat){
+    c.save(); c.translate(x,y);
+    if(heat>0){ c.shadowColor='rgba(255,215,106,'+Math.min(1,heat)+')'; c.shadowBlur=10+24*heat; }
+    c.fillStyle='#f3f6ff';
+    c.beginPath(); c.moveTo(0,-11); c.lineTo(-8,10); c.lineTo(0,5); c.lineTo(8,10); c.closePath(); c.fill();
+    c.restore();
+  }
+  function gateArcPoint(u){ // u: 0..1 вдоль дуги, возвращает {x,y}
+    const x=26+(W-52)*u;
+    const arcH=27;
+    const y=gateY0 - Math.sin(Math.PI*u)*arcH*0.55 + arcH*0.5;
+    return {x,y};
+  }
+  // 04.09.2026 confetti(): тот же набор 4 цветов, что уже читается как «победа»/рекорд в игре —
+  // не новый третий цветовой язык поверх золота (вспышки) и золота (goldstar), а тот же самый.
+  const CONFETTI_COLS=['255,215,106','168,200,255','255,159,176','143,255,159'];
+  function makeShatter(){
+    const N=26;
+    for(let i=0;i<N;i++){
+      const u=i/(N-1), p=gateArcPoint(u);
+      const ang=Math.atan2(p.y-gateY0, p.x-W/2)+((Math.random()-.5)*0.7);
+      const sp=1.7+Math.random()*3.0;
+      const flake=Math.random()<0.5;
+      shards.push({x:p.x,y:p.y,vx:Math.cos(ang)*sp+(Math.random()-.5)*0.7,vy:Math.sin(ang)*sp-0.7,
+        life:.6+Math.random()*.55,age:0,size:flake?(2.4+Math.random()*2.2):(1.6+Math.random()*1.6),
+        rot:Math.random()*6.283,vr:(Math.random()-.5)*9,flake,col:CONFETTI_COLS[(Math.random()*4)|0]});
+    }
+  }
+  function frame(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+    c.save();
+    if(punch>0){ punch=Math.max(0,punch-dt*5.5); const s=1+punch*0.04; c.setTransform(s,0,0,s, W/2*(1-s), H/2*(1-s)); }
+    c.clearRect(-20,-20,W+40,H+40);
+    const bg=c.createRadialGradient(W/2,H*0.22,0,W/2,H*0.22,H*0.85);
+    bg.addColorStop(0,'#0c1030'); bg.addColorStop(1,'#03040a');
+    c.fillStyle=bg; c.fillRect(0,0,W,H);
+    for(const s of stars){ s.tw+=dt*1.5; c.fillStyle='rgba(220,226,255,'+(.35+.3*Math.sin(s.tw))+')'; c.fillRect(s.x,s.y,s.r,s.r); }
+
+    const approachP=Math.min(1,t/CROSS), prox=easeIn(approachP);
+    planeY = planeY0 - (planeY0-gateY0-8) * easeOut(approachP);
+    const heat = crossed ? Math.max(0, 1-(t-CROSS)/1.3) : prox*0.35;
+
+    if(!crossed){
+      const glowA=0.16+0.62*prox, lw=1.2+3.6*prox;
+      c.save(); c.globalCompositeOperation='lighter';
+      c.shadowColor='rgba(255,215,106,'+Math.min(1,glowA+.2)+')'; c.shadowBlur=6+22*prox;
+      const g=c.createLinearGradient(26,0,W-26,0);
+      g.addColorStop(0,'rgba(255,215,106,'+(glowA*.1)+')'); g.addColorStop(.5,'rgba(255,236,180,'+glowA+')'); g.addColorStop(1,'rgba(255,215,106,'+(glowA*.1)+')');
+      c.strokeStyle=g; c.lineWidth=lw;
+      c.beginPath();
+      for(let i=0;i<=40;i++){ const p=gateArcPoint(i/40); if(i===0) c.moveTo(p.x,p.y); else c.lineTo(p.x,p.y); }
+      c.stroke();
+      c.restore();
+      if(approachP>=1){ crossed=true; shock=1; punch=1; makeShatter(); }
+    } else {
+      if(shock>0){
+        shock=Math.max(0,shock-dt*1.3);
+        const r=(1-shock)*260;
+        c.save(); c.globalCompositeOperation='lighter';
+        c.strokeStyle='rgba(255,225,170,'+(shock*.55)+')'; c.lineWidth=3*shock+.5;
+        c.beginPath(); c.arc(W/2,gateY0,r,0,6.283); c.stroke();
+        if(shock>0.75){ const fa=(shock-0.75)/0.25; c.fillStyle='rgba(255,225,175,'+(fa*.4)+')'; c.fillRect(0,0,W,H); }
+        c.restore();
+      }
+      for(let i=shards.length-1;i>=0;i--){ const s=shards[i]; s.age+=dt; if(s.age>s.life){ shards.splice(i,1); continue; }
+        const px=s.x, py=s.y;
+        s.x+=s.vx*dt*30; s.y+=s.vy*dt*30; s.vy+=dt*0.7; s.rot+=s.vr*dt;
+        const a=1-s.age/s.life;
+        c.save(); c.globalCompositeOperation='lighter';
+        if(s.flake){
+          // конфетти-хлопья: маленький вращающийся цветной прямоугольник
+          c.translate(s.x,s.y); c.rotate(s.rot);
+          c.fillStyle='rgba('+s.col+','+a.toFixed(2)+')';
+          c.fillRect(-s.size,-s.size*0.4,s.size*2,s.size*0.8);
+        } else {
+          // искры: яркая точка с гаснущим хвостом по направлению движения
+          c.strokeStyle='rgba('+s.col+','+a.toFixed(2)+')'; c.lineWidth=s.size*0.7; c.lineCap='round';
+          c.beginPath(); c.moveTo(px,py); c.lineTo(s.x,s.y); c.stroke();
+          c.fillStyle='rgba(255,250,240,'+Math.min(1,a*1.3).toFixed(2)+')';
+          c.beginPath(); c.arc(s.x,s.y,s.size*0.55,0,6.283); c.fill();
+        }
+        c.restore();
+      }
+    }
+    drawPlane(W/2, planeY, heat);
+    c.restore();
+    if(t<DUR) requestAnimationFrame(frame); else {
+      c.fillStyle='rgba(228,233,255,.6)'; c.font='12px sans-serif'; c.textAlign='center';
+      c.fillText('→ экран итогов', W/2, H-16);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+run();
+</script>
+</body></html>

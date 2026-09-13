@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 24px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:440px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
+  .col{text-align:center}
+  h2{font-size:13px;font-weight:600;margin:0 0 4px}
+  .tag{font-size:11px;color:#8b93b8;margin:0 0 10px;max-width:260px}
+  canvas{background:radial-gradient(ellipse at 50% 30%,#151d3a 0%,#080c1c 75%);border-radius:14px;border:1px solid #262c4a}
+  .replay{margin-top:10px;font-size:11px;color:#6b7394;background:#161c33;border:1px solid #2a3155;border-radius:8px;padding:6px 14px;cursor:pointer}
+  .replay:hover{color:#aeb8ff}
+</style></head>
+<body>
+<h1>Финишная лента — пересечь и разорвать</h1>
+<p class="sub">Лента появляется впереди по курсу (видна ~1с до пересечения — предупреждает о финише,
+  чего сейчас вообще нет), корабль пролетает сквозь неё, она рвётся на две половины и разлетается,
+  золотая вспышка в точке разрыва — вместо оранжевой вспышки смерти + дыма.</p>
+<div class="row">
+  <div class="col">
+    <h2>Лента приближается → разрыв</h2>
+    <div class="tag">полный цикл: видна впереди, корабль долетает, рвёт её пополам</div>
+    <canvas id="a" width="280" height="360"></canvas>
+    <div><button class="replay" onclick="run()">▶ ещё раз</button></div>
+  </div>
+</div>
+<script>
+function run(){
+  const c=document.getElementById('a').getContext('2d');
+  const W=280,H=360;
+  const planeY0=H*0.75;      // корабль летит вверх экрана, стартовая позиция
+  const ribbonY0=H*0.18;     // лента появляется далеко впереди (наверху)
+  let t=0;
+  const APPROACH=1.1;   // секунд лента видна до пересечения
+  const TEAR=0.55;       // секунд длится разрыв/разлёт половин
+  const particles=[];
+  function burst(x,y,color,n){ for(let i=0;i<n;i++){ particles.push({x,y,vx:(Math.random()-.5)*5.5,vy:(Math.random()-.5)*5.5,life:.45+Math.random()*.45,age:0,color}); } }
+  let last=performance.now(), torn=false, planeY=planeY0, ribbonY=ribbonY0;
+  const DUR=APPROACH+TEAR+0.7;
+  function drawPlane(x,y,glow){
+    c.save(); c.translate(x,y);
+    if(glow){ c.shadowColor='rgba(255,215,106,.95)'; c.shadowBlur=20; }
+    c.fillStyle='#eef2ff';
+    c.beginPath(); c.moveTo(0,-11); c.lineTo(-8,10); c.lineTo(0,5); c.lineTo(8,10); c.closePath(); c.fill();
+    c.restore();
+  }
+  function frame(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+    c.clearRect(0,0,W,H);
+    c.fillStyle='rgba(255,255,255,.5)';
+    for(let i=0;i<55;i++){ const sx=(i*47.3)%W, sy=(i*83.1+t*40)%H; c.fillRect(sx,sy,1,1); }
+    // корабль плавно летит вверх весь клип, чуть замедляется у самой ленты (занавес)
+    const approachP = Math.min(1, t/APPROACH);
+    planeY = planeY0 - (planeY0-ribbonY0-6) * (t<APPROACH ? easeOut(approachP) : 1);
+    if (t>=APPROACH && !torn){
+      torn=true;
+      burst((0+W)/2, ribbonY0, '255,215,106', 30);
+    }
+    // лента: целая до пересечения, две половины после
+    const midX=W/2;
+    if(!torn){
+      const glow = 8+Math.sin(t*10)*3;
+      c.save(); c.shadowColor='rgba(255,215,106,.8)'; c.shadowBlur=glow;
+      const grad=c.createLinearGradient(20,0,W-20,0);
+      grad.addColorStop(0,'rgba(255,215,106,.15)'); grad.addColorStop(.5,'rgba(255,236,180,.95)'); grad.addColorStop(1,'rgba(255,215,106,.15)');
+      c.strokeStyle=grad; c.lineWidth=4; c.beginPath(); c.moveTo(20,ribbonY0); c.lineTo(W-20,ribbonY0); c.stroke();
+      c.restore();
+    } else {
+      const tearT=Math.min(1,(t-APPROACH)/TEAR);
+      const drop=tearT*tearT*70, spread=tearT*14;
+      c.save(); c.globalAlpha=Math.max(0,1-tearT*0.9); c.strokeStyle='rgba(255,225,150,.85)'; c.lineWidth=4;
+      c.beginPath(); c.moveTo(20,ribbonY0+drop*0.3-spread); c.lineTo(midX-6,ribbonY0+drop-spread*1.6); c.stroke();
+      c.beginPath(); c.moveTo(midX+6,ribbonY0+drop-spread*1.6); c.lineTo(W-20,ribbonY0+drop*0.3-spread); c.stroke();
+      c.restore();
+    }
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i]; p.age+=dt; if(p.age>p.life){ particles.splice(i,1); continue; }
+      p.x+=p.vx; p.y+=p.vy;
+      const a=1-p.age/p.life;
+      c.fillStyle='rgba('+p.color+','+a.toFixed(2)+')';
+      c.beginPath(); c.arc(p.x,p.y,2.6,0,6.283); c.fill();
+    }
+    drawPlane(midX, planeY, torn);
+    if(t<DUR) requestAnimationFrame(frame); else {
+      c.fillStyle='rgba(220,226,255,.6)'; c.font='12px sans-serif'; c.textAlign='center';
+      c.fillText('→ экран итогов', W/2, H-16);
+    }
+  }
+  function easeOut(x){ return 1-Math.pow(1-x,3); }
+  requestAnimationFrame(frame);
+}
+run();
+</script>
+</body></html>

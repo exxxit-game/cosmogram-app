@@ -1,0 +1,171 @@
+<title>Макет: чёрные дыры — 7 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Чёрные дыры — 7 тем (честно 7, не 10 — источник даёт ровно столько сильных отдельных механизмов)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/BLACK-HOLE-PHYSICS.md, числа проверены. На корпусе, живая анимация, тот же приём, что у всей игры.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// 1. Радиус Шварцшильда — горизонт + фотонная сфера в 1.5х, растущий/дышащий масштаб
+function drawSchwarzschild(ctx,now){
+  const p=(now%3000)/3000;
+  const breathe=0.9+0.15*Math.sin(p*2*Math.PI);
+  const Rh=5*breathe;
+  ctx.strokeStyle='rgba(180,160,255,.55)'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.arc(0,0,Rh*1.5,0,6.283); ctx.stroke();
+  const g=ctx.createRadialGradient(0,0,0,0,0,Rh);
+  g.addColorStop(0,'#000'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,Rh,0,6.283); ctx.fill();
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,Rh*0.7,0,6.283); ctx.fill();
+}
+// 2. Фотонное кольцо M87* — яркое кольцо вокруг тени, чуть ярче снизу (линзирование)
+function drawPhotonRingM87(ctx,now){
+  const p=(now%4000)/4000;
+  const R=11;
+  for(let i=0;i<40;i++){
+    const a=i/40*6.283;
+    const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
+    ctx.strokeStyle='hsla(28,90%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
+    ctx.lineWidth=1.6+boost*1.2;
+    ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
+}
+// 3. Фотонное кольцо Sgr A* — тот же приём, другой масштаб/оттенок (реальные разные угловые размеры)
+function drawPhotonRingSgrA(ctx,now){
+  const R=8;
+  for(let i=0;i<40;i++){
+    const a=i/40*6.283;
+    const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
+    ctx.strokeStyle='hsla(200,85%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
+    ctx.lineWidth=1.4+boost*1.1;
+    ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
+}
+// 4. Асимметричный аккреционный диск — Doppler-усиление, одна сторона ярче/голубее, другая тусклее/краснее
+function drawDopplerDisk(ctx,now){
+  const p=(now%3400)/3400;
+  ctx.save(); ctx.rotate(p*2*Math.PI*0.5); ctx.scale(1,0.3);
+  for(let r=3;r<=12;r+=1){
+    const a0=0, a1=Math.PI*1.9;
+    for(let a=a0;a<a1;a+=0.15){
+      const bright = 0.35+0.65*Math.max(0,Math.sin(a));
+      const hue = 200-bright*160;
+      ctx.strokeStyle='hsla('+hue+',90%,'+(45+bright*30)+'%,'+(0.5+bright*0.4)+')';
+      ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.arc(0,0,r,a,a+0.15); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
+}
+// 5. Спагеттификация — объект вытягивается в нить при падении к центру
+function drawSpaghetti(ctx,now){
+  const p=(now%2200)/2200;
+  const t=p;
+  const y=-16+t*28;
+  const stretch=1+t*t*9;
+  ctx.save(); ctx.translate(0,y); ctx.scale(1/Math.sqrt(stretch),stretch);
+  ctx.fillStyle='rgba(200,210,255,'+(0.9-t*0.3)+')';
+  ctx.beginPath(); ctx.ellipse(0,0,1.6,1.6,0,0,6.283); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='rgba(0,0,0,.85)'; ctx.beginPath(); ctx.arc(0,14,3,0,6.283); ctx.fill();
+}
+// 6. Гравитационное линзирование — фон звёзд честно огибает центр (Эддингтон 1919)
+function drawLensing(ctx,now){
+  const p=(now%5000)/5000;
+  const stars=14;
+  for(let i=0;i<stars;i++){
+    const baseAng=i/stars*6.283 + p*0.3;
+    const R0=13;
+    const bend=3.2*Math.exp(-Math.abs(Math.sin(baseAng))*0.2);
+    const x=R0*Math.cos(baseAng), y=R0*Math.sin(baseAng)*0.55;
+    ctx.strokeStyle='rgba(220,225,255,.5)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(x*0.4,y*0.4,bend,baseAng,baseAng+1.4); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x,y,0.5,0,6.283); ctx.fill();
+  }
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
+}
+// 7. Эргосфера / увлечение пространства (Керр) — спиральное закручивание вокруг горизонта
+function drawErgosphere(ctx,now){
+  const p=(now%2600)/2600;
+  ctx.strokeStyle='rgba(180,160,255,.6)'; ctx.lineWidth=1;
+  for(let k=0;k<3;k++){
+    ctx.beginPath();
+    for(let i=0;i<=60;i++){
+      const t=i/60;
+      const ang=t*4.4+p*6.283+k*2.1;
+      const r=2+t*10;
+      const x=r*Math.cos(ang), y=r*Math.sin(ang)*0.7;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
+}
+
+mountCards([
+  {id:'b1', name:'Горизонт + фотонная сфера', body:'#141024', drawFn:drawSchwarzschild, zoom:6.5, fact:'Rs=2GM/c² — Земля ≈9мм, Солнце ≈3км'},
+  {id:'b2', name:'Фотонное кольцо — M87*', body:'#1c1408', drawFn:drawPhotonRingM87, zoom:6.5, fact:'EHT, 10.04.2019, тень крупнее горизонта в 2.6 раза'},
+  {id:'b3', name:'Фотонное кольцо — Sgr A*', body:'#0c1622', drawFn:drawPhotonRingSgrA, zoom:6.5, fact:'EHT, 12.05.2022, центр Млечного Пути, 27000 св. лет'},
+  {id:'b4', name:'Асимметричный аккреционный диск', body:'#12162a', drawFn:drawDopplerDisk, zoom:6.5, fact:'Доплеровское усиление — одна сторона честно ярче/голубее'},
+  {id:'b5', name:'Спагеттификация', body:'#0c1220', drawFn:drawSpaghetti, zoom:6.5, fact:'Растяжение по 1/M² — у сверхмассивной дыры незаметно у горизонта'},
+  {id:'b6', name:'Гравитационное линзирование', body:'#10182c', drawFn:drawLensing, zoom:6.5, fact:'Эддингтон, затмение 29.05.1919, подтвердил ОТО'},
+  {id:'b7', name:'Эргосфера (Керр)', body:'#181026', drawFn:drawErgosphere, zoom:6.5, fact:'Frame-dragging — пространство закручивается вокруг вращающейся дыры'},
+]);
+</script>

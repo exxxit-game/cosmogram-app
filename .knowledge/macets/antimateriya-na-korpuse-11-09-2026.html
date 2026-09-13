@@ -1,0 +1,246 @@
+<title>Антиматерия — 10 скинов на корпусе</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#111740 55%,#145271 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.price{font-size:11px;color:#ffd76a;margin-top:2px}
+</style>
+<h1>Антиматерия — как эти 10 будут выглядеть НА КОРПУСЕ (не диаграмма, готовый скин)</h1>
+<p class="sub">То же тело корабля, тот же приём (clipBody/fillBody/edgeStroke), что у всех остальных партий этой игры. Каждая карточка крутится в реальном времени — не статичная картинка.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,price,body,drawFn,zoom,cycleMs})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const pr=document.createElement('div'); pr.className='price'; pr.textContent='✦ '+price;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(pr);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom,cycleMs);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom,cycleMs){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    const p=(now%cycleMs)/cycleMs;
+    drawFn(ctx,p,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- 1. Рождение пары ----------
+function drawPairProd(ctx,p){
+  ctx.scale(0.75,0.75);
+  const pulse=0.7+0.3*Math.sin(p*2*Math.PI*2);
+  const R=14, forkY=-6, sweep=70*Math.PI/180;
+  const arm=(side,t)=> side<0 ? {x:-R+R*Math.cos(t*sweep), y:forkY+R*Math.sin(t*sweep)}
+                               : {x: R-R*Math.cos(t*sweep), y:forkY+R*Math.sin(t*sweep)};
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,forkY); ctx.stroke();
+  [[-1,'143,208,255'],[1,'255,158,201']].forEach(([side,col])=>{
+    ctx.strokeStyle='rgba('+col+','+pulse.toFixed(2)+')'; ctx.lineWidth=3;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){ const t=i/20; const pt=arm(side,t); i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y); }
+    ctx.stroke();
+  });
+}
+// ---------- 2. Аннигиляция 511 кэВ ----------
+function drawAnnih511(ctx,p){
+  ctx.scale(0.3,0.3);
+  const grow=Math.min(1,p*2.2);
+  const len0=4, len1=46*grow;
+  ctx.strokeStyle='rgba(255,255,255,'+(0.95-grow*0.25).toFixed(2)+')'; ctx.lineWidth=2.6;
+  [0,Math.PI].forEach(ang=>{
+    ctx.beginPath(); ctx.moveTo(Math.cos(ang)*len0,Math.sin(ang)*len0*0.4);
+    ctx.lineTo(Math.cos(ang)*len1,Math.sin(ang)*len1*0.4); ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,255,255,'+(0.9-grow*0.5).toFixed(2)+')'; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
+}
+// ---------- 3. Трек с изломом ----------
+function drawAndersonKink(ctx){
+  ctx.scale(0.5,0.5);
+  const R1=40, th1=35*Math.PI/180, R2=18, th2=55*Math.PI/180;
+  ctx.strokeStyle='rgba(180,220,255,.95)'; ctx.lineWidth=3;
+  ctx.beginPath();
+  for(let i=0;i<=14;i++){ const th=i/14*th1; const x=-R1+R1*Math.cos(th), y=R1*Math.sin(th); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  const junc={x:-R1+R1*Math.cos(th1), y:R1*Math.sin(th1)};
+  const tang={x:-Math.sin(th1), y:Math.cos(th1)};
+  const norm={x:-tang.y, y:tang.x};
+  const C2={x:junc.x+norm.x*R2, y:junc.y+norm.y*R2};
+  const a0=Math.atan2(junc.y-C2.y, junc.x-C2.x);
+  for(let i=0;i<=14;i++){ const a=a0-(i/14*th2); const x=C2.x+R2*Math.cos(a), y=C2.y+R2*Math.sin(a); ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.4)'; ctx.fillRect(junc.x-1,junc.y-5,2,10);
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(30,0); ctx.quadraticCurveTo(34,20,32,40); ctx.stroke();
+}
+// ---------- 4. Позитроний ----------
+let positroniumCache=null;
+function positroniumRings(){
+  if(positroniumCache) return positroniumCache;
+  const p1=new Path2D(), p2=new Path2D();
+  const r=26;
+  for(let i=0;i<=40;i++){ const a=i/40*6.283;
+    p1.moveTo(r*Math.cos(a)+2, r*Math.sin(a)); p1.arc(r*Math.cos(a), r*Math.sin(a), 2, 0, 6.283);
+    p2.moveTo(-r*Math.cos(a)+2, -r*Math.sin(a)); p2.arc(-r*Math.cos(a), -r*Math.sin(a), 2, 0, 6.283);
+  }
+  positroniumCache={p1,p2}; return positroniumCache;
+}
+function drawPositronium(ctx,p,now){
+  ctx.scale(0.5,0.5);
+  const {p1,p2}=positroniumRings();
+  ctx.save(); ctx.rotate((now%3000)/3000*6.283);
+  ctx.fillStyle='rgba(143,208,255,.75)'; ctx.fill(p1);
+  ctx.fillStyle='rgba(255,158,201,.75)'; ctx.fill(p2);
+  ctx.restore();
+}
+// ---------- 5. ASACUSA ----------
+let asacusaCache=null;
+function asacusaRings(){
+  if(asacusaCache) return asacusaCache;
+  const pE=new Path2D(), pP=new Path2D();
+  const rE=14, rP=34;
+  for(let i=0;i<=30;i++){ const a=i/30*6.283;
+    pE.moveTo(rE*Math.cos(a)+1.6, rE*Math.sin(a)*.6); pE.arc(rE*Math.cos(a), rE*Math.sin(a)*.6, 1.6, 0, 6.283);
+    pP.moveTo(rP*Math.cos(a)+2, rP*Math.sin(a)*.6); pP.arc(rP*Math.cos(a), rP*Math.sin(a)*.6, 2, 0, 6.283);
+  }
+  asacusaCache={pE,pP}; return asacusaCache;
+}
+function drawAsacusa(ctx,p,now){
+  ctx.scale(0.4,0.4);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
+  const {pE,pP}=asacusaRings();
+  ctx.save(); ctx.rotate((now%900)/900*6.283); ctx.fillStyle='rgba(255,158,201,.7)'; ctx.fill(pE); ctx.restore();
+  ctx.save(); ctx.rotate((now%4200)/4200*6.283); ctx.fillStyle='rgba(143,208,255,.75)'; ctx.fill(pP); ctx.restore();
+}
+// ---------- 6. Антидейтрон ----------
+function drawAntideuteron(ctx,p){
+  ctx.scale(0.75,0.75);
+  const R=14, forkY=-6, sweep=70*Math.PI/180;
+  const arm=(side,t)=> side<0 ? {x:-R+R*Math.cos(t*sweep), y:forkY+R*Math.sin(t*sweep)}
+                               : {x: R-R*Math.cos(t*sweep), y:forkY+R*Math.sin(t*sweep)};
+  [[-1,'143,208,255'],[1,'255,158,201']].forEach(([side,col])=>{
+    ctx.strokeStyle='rgba('+col+',.95)'; ctx.lineWidth=3;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){ const t=1-i/20; const pt=arm(side,t); i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y); }
+    ctx.stroke();
+  });
+  const pulse=0.6+0.4*Math.sin(p*2*Math.PI*3);
+  ctx.fillStyle='rgba(255,255,255,'+pulse.toFixed(2)+')'; ctx.beginPath(); ctx.arc(0,forkY,4,0,6.283); ctx.fill();
+}
+// ---------- 7. Спиральный отскок ----------
+function drawVanAllenBounce(ctx,p){
+  ctx.scale(0.28,0.28);
+  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-50,20); ctx.quadraticCurveTo(0,-30,50,20); ctx.stroke();
+  ctx.strokeStyle='rgba(143,208,255,.5)'; ctx.lineWidth=1.4;
+  ctx.beginPath();
+  for(let i=0;i<=80;i++){ const s=i/80;
+    const guideY = 20 + (-30-20)*(4*s*(1-s));
+    const amp = 10*Math.sin(Math.PI*s);
+    const perp = Math.cos(28*s)*amp;
+    const x=-50+100*s, y=guideY+perp*0.5;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  const s=p;
+  const guideY2 = 20 + (-30-20)*(4*s*(1-s));
+  const amp2 = 10*Math.sin(Math.PI*s);
+  const perp2 = Math.cos(28*s)*amp2;
+  const px=-50+100*s, py=guideY2+perp2*0.5;
+  ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(px,py,2.4,0,6.283); ctx.fill();
+}
+// ---------- 8. ALPHA-g ----------
+function drawAlphaGFall(ctx,p,now){
+  ctx.scale(0.55,0.55);
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(-20,-16); ctx.lineTo(20,-16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-20,18); ctx.lineTo(20,18); ctx.stroke(); ctx.setLineDash([]);
+  const g=110;
+  for(let k=0;k<5;k++){
+    const t=Math.max(0,((now%1300)/1300)*0.85 - k*0.05);
+    const y=-16+0.5*g*t*t; if(y>18) continue;
+    ctx.globalAlpha=1-k*0.2;
+    ctx.fillStyle='rgba(200,220,255,.95)'; ctx.beginPath(); ctx.arc(0,y,3.4-k*0.4,0,6.283); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+// ---------- 9. CP-нарушение ----------
+function drawCPViolation(ctx,p){
+  ctx.scale(0.27,0.27);
+  const pulse=0.6+0.4*Math.sin(p*2*Math.PI);
+  const n=5, gap=26;
+  for(let k=0;k<n;k++){
+    const cx=(k-(n-1)/2)*gap;
+    const rare = k===2;
+    const branches = rare?2:3;
+    for(let b=0;b<branches;b++){
+      const ang=(-0.7+ b*(1.4/(branches-1)));
+      ctx.strokeStyle = rare? 'rgba(219,169,60,'+pulse.toFixed(2)+')' : 'rgba(255,255,255,.35)';
+      ctx.lineWidth = rare?2.2:1.3;
+      ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx+Math.sin(ang)*14, 10-Math.cos(ang)*22); ctx.stroke();
+    }
+  }
+}
+// ---------- 10. Веер треков ----------
+function drawSpectrometerFan(ctx,p){
+  ctx.scale(0.34,0.34);
+  ctx.translate(0,32); // спускаем начало веера в широкую часть корпуса, а не в узкий нос
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(0,-40); ctx.lineTo(0,0); ctx.stroke();
+  const tracks=[ {R:16,  col:'143,208,255'}, {R:26, col:'170,180,255'}, {R:36, col:'210,160,255'}, {R:46, col:'255,158,201'} ];
+  tracks.forEach(({R,col},idx)=>{
+    const hi = Math.abs((p*tracks.length)%tracks.length - idx) < 0.5;
+    ctx.strokeStyle='rgba('+col+','+(hi?1:0.65)+')'; ctx.lineWidth=hi?3.4:2.4;
+    ctx.beginPath();
+    for(let a=0;a<=60;a++){ const th=a/60*1.35; const x=R*Math.sin(th), y=-R*Math.cos(th)+R; a===0?ctx.moveTo(0,-40):ctx.lineTo(x,-40+y); }
+    ctx.stroke();
+  });
+}
+
+mountCards([
+  {id:'c1', name:'Рождение пары', price:100, body:'#12162a', drawFn:drawPairProd, zoom:6.5, cycleMs:2600},
+  {id:'c2', name:'Аннигиляция 511 кэВ', price:100, body:'#141418', drawFn:drawAnnih511, zoom:6.5, cycleMs:1400},
+  {id:'c3', name:'Трек с изломом кривизны', price:100, body:'#0f1830', drawFn:drawAndersonKink, zoom:6.5, cycleMs:1},
+  {id:'c4', name:'Позитроний', price:100, body:'#161022', drawFn:drawPositronium, zoom:6.5, cycleMs:1},
+  {id:'c5', name:'ASACUSA — вложенная орбита', price:100, body:'#101828', drawFn:drawAsacusa, zoom:6.5, cycleMs:1},
+  {id:'c6', name:'Антидейтрон', price:100, body:'#12162a', drawFn:drawAntideuteron, zoom:6.5, cycleMs:2600},
+  {id:'c7', name:'Спиральный отскок в ловушке', price:100, body:'#0c1422', drawFn:drawVanAllenBounce, zoom:6.5, cycleMs:2200},
+  {id:'c8', name:'Свободное падение антивещества', price:100, body:'#0a1220', drawFn:drawAlphaGFall, zoom:6.5, cycleMs:1300},
+  {id:'c9', name:'CP-нарушение', price:100, body:'#161410', drawFn:drawCPViolation, zoom:6.5, cycleMs:1800},
+  {id:'c10', name:'Веер треков — спектрометр', price:100, body:'#10141c', drawFn:drawSpectrometerFan, zoom:6.5, cycleMs:2400},
+]);
+</script>

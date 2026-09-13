@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Конструктор — «Сохранить» на весь экран (макет, не игра)</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d; --muted:#7d8aa8; --cream:#fce1b6;
+  --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);overflow:hidden;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;}
+#note{position:fixed;bottom:2px;left:0;right:0;text-align:center;font-size:9.5px;color:#4a5a75;z-index:1000;pointer-events:none;}
+.stage{position:absolute;inset:0;overflow:hidden;}
+#sky{position:absolute;inset:0;background:linear-gradient(180deg,hsl(214 62% 24%),hsl(230 55% 11%));}
+#stars{position:absolute;inset:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:#fff;}
+#backBtn{position:absolute;top:16px;left:16px;z-index:6;width:38px;height:38px;border-radius:50%;
+  background:rgba(11,22,38,.6);border:1px solid rgba(255,255,255,.16);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+#backBtn svg{width:18px;height:18px}
+#stepHead{position:absolute;top:16px;left:0;right:0;text-align:center;z-index:5;pointer-events:none;}
+#stepTitle{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);
+  text-shadow:0 0 14px rgba(240,192,64,.35);font-weight:600;}
+#dots{display:flex;gap:7px;justify-content:center;margin-top:8px;pointer-events:auto;}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:.2s;}
+.dot.done{background:var(--gold);box-shadow:0 0 8px rgba(201,164,92,.7);}
+.dot.cur{background:var(--gold-hi);width:20px;border-radius:4px;box-shadow:0 0 10px rgba(240,192,64,.6);}
+
+/* 3-й шаг уже показывает настоящие «Полёт»/«Поделиться» в самой карточке —
+   нижняя общая кнопка «подтвердить» тут дублировала бы их, поэтому её нет вовсе
+   (то же решение, что уже было в первом макете). */
+#content{position:absolute;top:76px;left:0;right:0;bottom:18px;overflow-y:auto;padding:0 16px;}
+#panelWrap{width:min(94%,560px);margin:0 auto;}
+
+.nameInput{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-gold);
+  color:var(--ink);font-family:inherit;font-size:16px;padding:14px 4px;text-align:center;outline:none}
+.nameInput::placeholder{color:rgba(244,246,251,.4)}
+
+.flightRow{display:flex;gap:10px;margin:16px 0 6px}
+.flightRow button{flex:1;font-family:inherit;font-size:13px;font-weight:600;letter-spacing:.03em;
+  border-radius:14px;padding:14px;cursor:pointer;text-transform:uppercase}
+.flightRow .ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:var(--ink)}
+.flightRow .pri{background:rgba(24,40,72,.7);border:1px solid rgba(190,225,255,.45);color:#f2f7ff}
+
+.spoiler{margin-top:18px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  border-radius:12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--cream)}
+.spoiler .arrow{transition:.2s}
+.spoiler.open .arrow{transform:rotate(180deg)}
+#tunePanel{display:none;margin-top:10px}
+#tunePanel.open{display:block}
+.groupHead{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);
+  border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.groupHead:first-child{border-top:none;margin-top:0;padding-top:0}
+.forgeRow{display:flex;align-items:center;gap:10px;padding:9px 0}
+.forgeLbl{width:110px;flex:none;font-size:11px;color:var(--gold)}
+.forgeRow input[type=range]{flex:1;accent-color:var(--gold-hi)}
+.forgeVal{width:26px;flex:none;text-align:right;font-size:11px;color:var(--gold-hi);font-weight:600}
+.hint{font-size:10px;color:var(--muted);padding-left:120px;margin-top:-4px}
+.lblBlk{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+.segRow{display:flex;gap:6px;flex-wrap:wrap}
+.segRow button{flex:1;min-width:34px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:11px;border-radius:8px;padding:8px 4px;cursor:pointer;text-align:center}
+.segRow button.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.12)}
+.chip{margin-top:8px;width:100%;text-align:left;background:rgba(255,255,255,.04);border:1px solid var(--line);
+  color:var(--cream);font-family:inherit;font-size:10.5px;border-radius:8px;padding:8px 10px;cursor:pointer}
+.chip.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.1)}
+.chipsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:6px}
+.chipsGrid button{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:11px;border-radius:8px;padding:9px 4px;cursor:pointer}
+.chipsGrid button.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.12)}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div id="sky"><div id="stars"></div></div>
+  <button id="backBtn" aria-label="Назад"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div id="stepHead">
+    <div id="stepTitle">СОХРАНИТЬ</div>
+    <div id="dots">
+      <span class="dot done" data-d="1"></span>
+      <span class="dot done" data-d="2"></span>
+      <span class="dot cur" data-d="3"></span>
+    </div>
+  </div>
+
+  <div id="content"><div id="panelWrap">
+    <input class="nameInput" maxlength="35" placeholder="Имя для неба">
+    <div class="flightRow">
+      <button class="ghost">Поделиться</button>
+      <button class="pri">Полёт</button>
+    </div>
+
+    <div class="spoiler" id="spoilerBtn"><span>Точечная настройка</span><span class="arrow">▾</span></div>
+    <div id="tunePanel">
+      <div class="groupHead">Темп неба</div>
+      <div class="forgeRow"><span class="forgeLbl">Плотность</span><input type="range" min="10" max="100" step="5" value="50"><b class="forgeVal">50</b></div>
+      <div class="forgeRow"><span class="forgeLbl">Скорость</span><input type="range" min="10" max="100" step="5" value="50"><b class="forgeVal">50</b></div>
+      <div class="forgeRow"><span class="forgeLbl">Солнечный ветер</span><input type="range" min="0" max="100" step="5" value="0"><b class="forgeVal">0</b></div>
+      <div class="hint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
+
+      <div class="groupHead">Старт</div>
+      <div class="lblBlk">Жизни</div>
+      <div class="segRow"><button>1</button><button class="sel">2</button><button>3</button></div>
+      <div class="lblBlk">Стартовая жара</div>
+      <div class="segRow"><button class="sel">1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button></div>
+      <div class="hint" style="padding-left:0;margin-top:4px">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+      <button class="chip">Ровный жар — без разгона</button>
+
+      <div class="groupHead">Бонусы</div>
+      <div class="segRow"><button>Выкл</button><button>Редко</button><button class="sel">Норма</button><button>Часто</button></div>
+      <button class="chip">Высокая ставка — 1 жизнь, бонусов нет, очки ×4</button>
+
+      <div class="groupHead">Преграды</div>
+      <div class="chipsGrid" id="kindsGrid"></div>
+    </div>
+  </div></div>
+</div>
+<div id="note">макет оболочки шага 3 — содержимое то же самое, реальное (index.html #forgeSubHard); нижней общей кнопки нет — «Полёт»/«Поделиться» уже настоящие, внутри карточки</div>
+<script>
+const NAMES=['Астероид','Обломок','Дрейфер','Мина','Спутник','Комета','Ловец','Ворота'];
+const grid=document.getElementById('kindsGrid');
+NAMES.forEach(n=>{ const b=document.createElement('button'); b.textContent=n; b.className='sel';
+  b.onclick=()=>b.classList.toggle('sel'); grid.appendChild(b); });
+function buildStars(){
+  const layer=document.getElementById('stars');
+  for(let i=0;i<50;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=1+Math.random()*2;
+    s.style.width=sz+'px'; s.style.height=sz+'px';
+    s.style.left=(Math.random()*100)+'%'; s.style.top=(Math.random()*90)+'%';
+    s.style.opacity=.2+Math.random()*.6;
+    layer.appendChild(s);
+  }
+}
+buildStars();
+document.querySelectorAll('.segRow').forEach(row=>{
+  row.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    row.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+  });
+});
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('sel')));
+document.getElementById('spoilerBtn').addEventListener('click',function(){
+  this.classList.toggle('open'); document.getElementById('tunePanel').classList.toggle('open');
+});
+function toast(msg){
+  const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(201,164,92,.95);color:#1c1200;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:999;';
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+document.querySelector('.flightRow .pri').addEventListener('click',()=>toast('Полетели — настоящая кнопка, как сейчас'));
+document.querySelector('.flightRow .ghost').addEventListener('click',()=>toast('Поделиться — настоящая кнопка, как сейчас'));
+document.getElementById('backBtn').addEventListener('click',()=>toast('Назад — на «Цвет»'));
+document.querySelectorAll('.dot.done').forEach(d=>d.addEventListener('click',()=>toast('Прыжок назад на пройденный шаг')));
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#03040a;margin:0;padding:32px 24px;font-family:-apple-system,sans-serif;color:#e4e9ff}
+  h1{font-size:17px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#7d85ab;margin:0 0 10px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.55}
+  .row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  canvas{background:#03040a;border-radius:18px;border:1px solid #1a1f3d;display:block;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .replay{margin-top:14px;font-size:11px;color:#7d85ab;background:#12162c;border:1px solid #262c50;border-radius:9px;padding:7px 16px;cursor:pointer;display:block;margin-left:auto;margin-right:auto}
+  .replay:hover{color:#c7cfff;border-color:#3a4180}
+  .legend{font-size:11px;color:#6b7394;text-align:center;max-width:500px;margin:20px auto 0;line-height:1.7}
+  .legend b{color:#ffd76a;font-weight:600}
+</style></head>
+<body>
+<h1>Схождение — без арки, без стен</h1>
+<p class="sub">Работает на ЛЮБОМ экране (только канвас, ни одного DOM-элемента вроде corrEdge, которого
+  на телефоне не бывает). Не портал, а сама цель — звёзды и пыль вдоль курса начинают стягиваться
+  к одной точке впереди, точка разгорается по мере приближения, на пересечении — тот же
+  goldstar-эффект (вспышка/кольцо/иглы).</p>
+<div class="row">
+  <canvas id="a" width="320" height="520"></canvas>
+</div>
+<button class="replay" onclick="run()">▶ ещё раз</button>
+<div class="legend">
+  <b>Далеко</b> — среди обычных звёзд одна начинает мягко разгораться, чуть ярче остальных.<br>
+  <b>Ближе</b> — соседние звёзды и пылинки вытягиваются в тонкие нити и стекаются к ней, она растёт.<br>
+  <b>Пересечение</b> — та же вспышка/кольцо/12 игл из goldstar.js, экран мягко заливает теплом.
+</div>
+<script>
+function run(){
+  const cv=document.getElementById('a'); const c=cv.getContext('2d');
+  const W=320,H=520;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px'; c.setTransform(dpr,0,0,dpr,0,0);
+
+  const planeY0=H*0.88, targetY0=H*0.16, targetX0=W*0.5;
+  let t=0,last=performance.now();
+  const CROSS=4.2, DUR=CROSS+2.0;
+  let planeY=planeY0, crossed=false, catchT=0, sparkA=[], flashScreen=0;
+
+  const stars=[]; for(let i=0;i<90;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*1.1,sp:.3+Math.random()*.9,tw:Math.random()*6.283});
+
+  function drawPlane(x,y,heat){
+    c.save(); c.translate(x,y);
+    if(heat>0){ c.shadowColor='rgba(255,215,106,'+Math.min(1,heat)+')'; c.shadowBlur=8+22*heat; }
+    c.fillStyle='#f3f6ff';
+    c.beginPath(); c.moveTo(0,-11); c.lineTo(-8,10); c.lineTo(0,5); c.lineTo(8,10); c.closePath(); c.fill();
+    c.restore();
+  }
+  function easeOut(x){ return 1-Math.pow(1-x,3); }
+  function easeIn(x){ return x*x*x; }
+
+  function frame(now){
+    const dt=Math.min(.033,(now-last)/1000); last=now; t+=dt;
+    c.clearRect(0,0,W,H);
+    const bg=c.createRadialGradient(W/2,H*0.22,0,W/2,H*0.22,H*0.85);
+    bg.addColorStop(0,'#0b0f2c'); bg.addColorStop(1,'#03040a');
+    c.fillStyle=bg; c.fillRect(0,0,W,H);
+
+    const approachP=Math.min(1,t/CROSS), prox=easeIn(approachP);
+    planeY = planeY0 - (planeY0-targetY0-6) * easeOut(approachP);
+    const heat = crossed ? Math.max(0, 1-(t-CROSS)/1.4) : prox*0.4;
+
+    if(!crossed){
+      const targetR = 2.2 + 16*prox;
+      // рядовые звёзды: те, что близко к цели по пути, вытягиваются к ней тонкой золотой нитью
+      for(const s of stars){
+        s.tw+=dt*1.6;
+        const dx=targetX0-s.x, dy=targetY0-s.y, d=Math.sqrt(dx*dx+dy*dy);
+        const pull = Math.max(0, 1 - d/150) * prox;
+        if(pull>0.04){
+          c.save(); c.globalCompositeOperation='lighter';
+          const grad=c.createLinearGradient(s.x,s.y,targetX0,targetY0);
+          grad.addColorStop(0,'rgba(255,255,255,0)');
+          grad.addColorStop(1,'rgba(255,214,138,'+(.6*pull)+')');
+          c.strokeStyle=grad; c.lineWidth=.7;
+          c.beginPath(); c.moveTo(s.x,s.y); c.lineTo(s.x+dx*.55,s.y+dy*.55); c.stroke();
+          c.restore();
+        }
+        c.fillStyle='rgba(220,226,255,'+(.4+.3*Math.sin(s.tw))+')'; c.fillRect(s.x,s.y,s.r,s.r);
+      }
+      // сама цель: разгорающаяся звезда-маяк
+      c.save(); c.globalCompositeOperation='lighter';
+      const g=c.createRadialGradient(targetX0,targetY0,0,targetX0,targetY0,targetR*7);
+      g.addColorStop(0,'rgba(255,247,221,'+Math.min(1,.5+prox*.5)+')');
+      g.addColorStop(.35,'rgba(255,215,106,'+(.3+.35*prox)+')');
+      g.addColorStop(1,'rgba(255,180,80,0)');
+      c.fillStyle=g; c.beginPath(); c.arc(targetX0,targetY0,targetR*7,0,6.283); c.fill();
+      c.fillStyle='#fff7dd'; c.beginPath(); c.arc(targetX0,targetY0,Math.max(1,targetR*0.4),0,6.283); c.fill();
+      c.restore();
+
+      if(approachP>=1){ crossed=true; catchT=.8; flashScreen=1; sparkA=[]; for(let i=0;i<12;i++) sparkA.push(Math.random()*6.283); }
+    } else {
+      for(const s of stars){ s.tw+=dt*1.6; c.fillStyle='rgba(220,226,255,'+(.4+.3*Math.sin(s.tw))+')'; c.fillRect(s.x,s.y,s.r,s.r); }
+      if(flashScreen>0){
+        flashScreen=Math.max(0,flashScreen-dt*1.6);
+        c.save(); c.globalCompositeOperation='lighter';
+        c.fillStyle='rgba(255,225,175,'+(flashScreen*.5)+')'; c.fillRect(0,0,W,H);
+        c.restore();
+      }
+      if (catchT>0){
+        catchT=Math.max(0, catchT-dt);
+        const k=1-catchT/.8, fade=1-k, cx=targetX0, cy=targetY0;
+        c.save(); c.globalCompositeOperation='lighter';
+        const g=c.createRadialGradient(cx,cy,0,cx,cy,150+60*k);
+        g.addColorStop(0,'rgba(255,240,190,'+(.8*fade)+')');
+        g.addColorStop(.4,'rgba(255,210,110,'+(.35*fade)+')');
+        g.addColorStop(1,'rgba(255,180,80,0)');
+        c.fillStyle=g; c.beginPath(); c.arc(cx,cy,210,0,7); c.fill();
+        c.strokeStyle='rgba(255,224,150,'+(.7*fade)+')'; c.lineWidth=2;
+        c.beginPath(); c.arc(cx,cy,20+90*k,0,7); c.stroke();
+        c.strokeStyle='rgba(255,220,140,'+(.9*fade)+')';
+        for(const a of sparkA){ const d=40+130*k;
+          c.beginPath(); c.moveTo(cx+Math.cos(a)*d*.6, cy+Math.sin(a)*d*.6);
+          c.lineTo(cx+Math.cos(a)*d, cy+Math.sin(a)*d); c.stroke(); }
+        c.restore();
+      }
+    }
+    drawPlane(W/2, planeY, heat);
+    if(t<DUR) requestAnimationFrame(frame); else {
+      c.fillStyle='rgba(228,233,255,.65)'; c.font='12px sans-serif'; c.textAlign='center';
+      c.fillText('→ экран итогов', W/2, H-18);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+run();
+</script>
+</body></html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Конструктор — «Цвет» на весь экран (макет, не игра)</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d; --muted:#7d8aa8; --cream:#fce1b6;
+  --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg-0);color:var(--ink);font-family:var(--font-ui);overflow:hidden;}
+body{-webkit-tap-highlight-color:transparent;user-select:none;}
+#note{position:fixed;bottom:2px;left:0;right:0;text-align:center;font-size:9.5px;color:#4a5a75;z-index:1000;pointer-events:none;}
+.stage{position:absolute;inset:0;overflow:hidden;}
+#sky{position:absolute;inset:0;background:linear-gradient(180deg,hsl(214 62% 24%),hsl(230 55% 11%));}
+#stars{position:absolute;inset:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:#fff;}
+#backBtn{position:absolute;top:16px;left:16px;z-index:6;width:38px;height:38px;border-radius:50%;
+  background:rgba(11,22,38,.6);border:1px solid rgba(255,255,255,.16);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+#backBtn svg{width:18px;height:18px}
+#stepHead{position:absolute;top:16px;left:0;right:0;text-align:center;z-index:5;pointer-events:none;}
+#stepTitle{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);
+  text-shadow:0 0 14px rgba(240,192,64,.35);font-weight:600;}
+#dots{display:flex;gap:7px;justify-content:center;margin-top:8px;pointer-events:auto;}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:.2s;}
+.dot.done{background:var(--gold);box-shadow:0 0 8px rgba(201,164,92,.7);}
+.dot.cur{background:var(--gold-hi);width:20px;border-radius:4px;box-shadow:0 0 10px rgba(240,192,64,.6);}
+
+#content{position:absolute;top:76px;left:0;right:0;bottom:78px;overflow-y:auto;padding:0 16px;}
+#panelWrap{width:min(94%,560px);margin:0 auto;}
+
+#previewWrap{position:relative;width:100%;aspect-ratio:16/10;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(201,164,92,.45);background:linear-gradient(180deg,hsl(232 62% 26%),hsl(200 55% 12%));}
+#previewWrap::after{content:'предпросмотр неба — упрощённая заливка вместо canvas (сам рисующий цикл не трогаем)';
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:10px;color:rgba(244,246,251,.4);padding:0 24px}
+.pvBtn{position:absolute;top:10px;width:36px;height:36px;border-radius:50%;background:rgba(11,22,38,.55);
+  border:1px solid rgba(255,255,255,.2);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pvBtn svg{width:16px;height:16px}
+#shuffleBtn{right:56px}
+#favBtn{right:10px}
+
+.forgeRow{display:flex;align-items:center;gap:10px;padding:10px 0}
+.forgeLbl{width:92px;flex:none;font-size:11px;color:var(--gold);letter-spacing:.02em}
+.forgeRow input[type=range]{flex:1;accent-color:var(--gold-hi)}
+.forgeVal{width:26px;flex:none;text-align:right;font-size:11px;color:var(--gold-hi);font-weight:600}
+.fonSwatch{width:20px;height:20px;border-radius:6px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.hint{font-size:10px;color:var(--muted);padding-left:102px;margin-top:-4px}
+
+.favRow{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.favDot{width:22px;height:22px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.28)}
+
+.segRow{display:flex;gap:6px}
+.segRow button{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:10.5px;border-radius:8px;padding:8px 4px;cursor:pointer;text-align:center}
+.segRow button.sel{border-color:var(--gold-hi);color:var(--gold-hi);background:rgba(240,192,64,.12)}
+
+.labBtn{width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:rgba(201,164,92,.14);border:1px solid var(--line-gold);color:var(--gold-hi);
+  font-family:inherit;font-size:12px;font-weight:600;border-radius:14px;padding:12px;cursor:pointer}
+.labBtn svg{width:16px;height:16px}
+
+#confirmWrap{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;z-index:6;}
+#confirmBtn{font-family:var(--font-ui);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;
+  border:none;border-radius:30px;padding:14px 34px;box-shadow:0 6px 20px rgba(201,164,92,.35);cursor:pointer;
+  display:flex;align-items:center;gap:8px;}
+#confirmBtn svg{width:16px;height:16px;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div id="sky"><div id="stars"></div></div>
+  <button id="backBtn" aria-label="Назад"><svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <div id="stepHead">
+    <div id="stepTitle">ЦВЕТ</div>
+    <div id="dots">
+      <span class="dot done" data-d="1"></span>
+      <span class="dot cur" data-d="2"></span>
+      <span class="dot" data-d="3"></span>
+    </div>
+  </div>
+
+  <div id="content"><div id="panelWrap">
+    <div id="previewWrap">
+      <button class="pvBtn" id="shuffleBtn" aria-label="Перемешать"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h4l12 16h4M4 20h4L12 12M16 4h4v4M16 20h4v-4"/></svg></button>
+      <button class="pvBtn" id="favBtn" aria-label="Сохранить в избранное"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="17" cy="17" r="3"/></svg></button>
+    </div>
+
+    <div class="forgeRow"><span class="forgeLbl">Цвет неба</span><span class="fonSwatch" id="sw1" style="background:hsl(232,60%,45%)"></span><input type="range" id="h1" min="0" max="359" value="232"><b class="forgeVal" id="h1v">232</b></div>
+    <div class="forgeRow"><span class="forgeLbl">Второй цвет</span><span class="fonSwatch" id="sw2" style="background:hsl(200,60%,45%)"></span><input type="range" id="h2" min="0" max="359" value="200"><b class="forgeVal" id="h2v">200</b></div>
+    <div class="forgeRow"><span class="forgeLbl">Густота</span><input type="range" id="dens" min="10" max="100" step="5" value="50"><b class="forgeVal" id="densv">50</b></div>
+    <div class="forgeRow"><span class="forgeLbl">Настроение</span><input type="range" id="mood" min="0" max="100" value="50"><b class="forgeVal" id="moodv">50</b></div>
+    <div class="hint">Бледнее и темнее ↔ ярче и солнечнее</div>
+
+    <div class="forgeRow" style="margin-top:8px;align-items:flex-start"><span class="forgeLbl" style="padding-top:2px">Избранное</span>
+      <div class="favRow"><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div></div>
+    </div>
+    <div class="forgeRow" style="align-items:flex-start"><span class="forgeLbl" style="padding-top:2px">Туман</span>
+      <div class="segRow"><button class="sel">Нет</button><button>Лёгкий</button><button>Густой</button></div>
+    </div>
+
+    <button class="labBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Подобрать гармонию</button>
+    <div class="hint" style="padding-left:0;text-align:center;margin-top:8px">откроет ту же «Лабораторию цвета», что уже есть в игре — круг Иттена, 7 схем</div>
+  </div></div>
+
+  <div id="confirmWrap">
+    <button id="confirmBtn"><span>Подтвердить цвет</span>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#1c1200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+<div id="note">макет оболочки шага 2 — содержимое то же самое, реальное (index.html #forgeSubSky), только перенесено в новую оболочку; сама «Лаборатория цвета» не открыта здесь, она не меняется</div>
+<script>
+function buildStars(){
+  const layer=document.getElementById('stars');
+  for(let i=0;i<50;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=1+Math.random()*2;
+    s.style.width=sz+'px'; s.style.height=sz+'px';
+    s.style.left=(Math.random()*100)+'%'; s.style.top=(Math.random()*90)+'%';
+    s.style.opacity=.2+Math.random()*.6;
+    layer.appendChild(s);
+  }
+}
+buildStars();
+function wireRange(id,vid,swid){
+  const el=document.getElementById(id), v=document.getElementById(vid);
+  el.addEventListener('input',()=>{ v.textContent=el.value; if(swid) document.getElementById(swid).style.background='hsl('+el.value+',60%,45%)'; });
+}
+wireRange('h1','h1v','sw1'); wireRange('h2','h2v','sw2'); wireRange('dens','densv'); wireRange('mood','moodv');
+document.querySelectorAll('.segRow button').forEach(b=>b.addEventListener('click',function(){
+  this.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); this.classList.add('sel');
+}));
+function toast(msg){
+  const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(201,164,92,.95);color:#1c1200;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:999;';
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1600);
+}
+document.getElementById('confirmBtn').addEventListener('click',()=>toast('Дальше — «Сохранить» (пока не в этом заходе)'));
+document.getElementById('backBtn').addEventListener('click',()=>toast('Назад — на «Карту»'));
+document.querySelector('.dot.done').addEventListener('click',()=>toast('Прыжок назад на «Карту» (уже пройден шаг)'));
+document.querySelector('.labBtn').addEventListener('click',()=>toast('Открыла бы «Лабораторию цвета» — тот же модал, что уже есть'));
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<title>Макет: камуфляж головоногих — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Камуфляж головоногих — 5 тем (честный шорт-лист файла, не натянуто до 10)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/CEPHALOPOD-CAMOUFLAGE.md. На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// 1. Хроматофор — мышечный ирис, обратимо мерцающие пигментные мешочки
+function drawChromatophore(ctx,now){
+  const spots=[[-8,-10,60],[7,-9,320],[-6,3,20],[8,4,260],[0,-3,200],[-3,9,40],[5,9,300]];
+  spots.forEach(([x,y,hue],i)=>{
+    const p=((now+i*300)%1400)/1400;
+    const r=1+2.2*Math.abs(Math.sin(p*Math.PI));
+    ctx.fillStyle='hsla('+hue+',80%,50%,.85)';
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill();
+  });
+}
+// 2. Слоистая кожа — хроматофор поверх иридофора поверх лейкофора (3 слоя)
+function drawLayeredSkin(ctx,now){
+  const p=(now%3000)/3000;
+  ctx.fillStyle='rgba(255,255,255,.18)'; // лейкофор — рассеивающая белая подложка
+  ctx.beginPath(); ctx.arc(0,0,12,0,6.283); ctx.fill();
+  const hue=(200+p*160)%360; // иридофор — структурный сдвиг оттенка
+  ctx.fillStyle='hsla('+hue+',80%,65%,.35)';
+  ctx.beginPath(); ctx.ellipse(0,0,10,7,p*3,0,6.283); ctx.fill();
+  for(let i=0;i<6;i++){ // хроматофор — активный верхний слой
+    const a=i/6*6.283+p*2;
+    ctx.fillStyle='hsla(20,85%,55%,.7)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*6,Math.sin(a)*6*0.7,1.4,0,6.283); ctx.fill();
+  }
+}
+// 3. Цветовая загадка — узор честно подстраивается под фон, хотя зверь не видит цвет
+function drawColorBlindMatch(ctx,now){
+  const p=(now%4000)/4000;
+  const hue=(p*360)%360;
+  ctx.fillStyle='hsla('+hue+',60%,35%,.9)'; ctx.beginPath(); ctx.arc(0,0,13,0,6.283); ctx.fill();
+  for(let i=0;i<14;i++){
+    const rnd=(i*37)%100/100;
+    const x=(rnd-0.5)*20, y=((i*53)%100/100-0.5)*24;
+    ctx.fillStyle='hsla('+hue+',60%,'+(20+rnd*40)+'%,.8)';
+    ctx.beginPath(); ctx.arc(x,y,1+rnd,0,6.283); ctx.fill();
+  }
+}
+// 4. Бегущее облако — тёмная волна пробегает по телу
+function drawPassingCloud(ctx,now){
+  const p=(now%1800)/1800;
+  const x=-16+p*32;
+  ctx.fillStyle='rgba(255,220,170,.35)'; ctx.fillRect(-16,-22,32,38); // светлый базовый тон кожи
+  const g=ctx.createLinearGradient(x-5,0,x+5,0);
+  g.addColorStop(0,'rgba(30,20,15,0)'); g.addColorStop(0.5,'rgba(30,20,15,.95)'); g.addColorStop(1,'rgba(30,20,15,0)');
+  ctx.fillStyle=g; ctx.fillRect(-16,-22,32,38);
+}
+// 5. Папиллы — рельеф кожи вздувается 3D-буграми
+function drawPapillae(ctx,now){
+  const p=(now%2600)/2600;
+  const rise=Math.abs(Math.sin(p*Math.PI));
+  const pts=[[-7,-8],[6,-7],[-5,2],[7,3],[0,-2],[-3,8],[4,8]];
+  pts.forEach(([x,y])=>{
+    const r=0.8+2*rise;
+    const g=ctx.createRadialGradient(x-r*0.3,y-r*0.3,0,x,y,r);
+    g.addColorStop(0,'rgba(230,220,200,.8)'); g.addColorStop(1,'rgba(100,90,80,.2)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill();
+  });
+}
+
+mountCards([
+  {id:'c1', name:'Хроматофор — мышечный ирис', body:'#161022', drawFn:drawChromatophore, zoom:6.5, fact:'10-30 волокон, ~10мкм→~300мкм, обратимо, доли секунды на цикл'},
+  {id:'c2', name:'Слоистая кожа (3 механизма)', body:'#101822', drawFn:drawLayeredSkin, zoom:6.5, fact:'Хроматофор+иридофор+лейкофор — три разных физики в одном органе'},
+  {id:'c3', name:'Цветовая загадка камуфляжа', body:'#141420', drawFn:drawColorBlindMatch, zoom:6.5, fact:'Зверь не видит цвет, но честно подстраивает его под фон — открытый вопрос науки'},
+  {id:'c4', name:'Бегущее облако', body:'#101018', drawFn:drawPassingCloud, zoom:6.5, fact:'Названный оптический эффект — тёмная волна пробегает по телу'},
+  {id:'c5', name:'Папиллы — рельеф кожи', body:'#181410', drawFn:drawPapillae, zoom:6.5, fact:'Мышечно-гидростатический рельеф за секунды — камуфляж дорого стоит энергетически'},
+]);
+</script>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Макет: «Нравится этот режим?» на экране итогов</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6;
+    --ink:#f4f6fb; --muted:#7d8aa8; --line:rgba(255,255,255,.08);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg-0);font-family:var(--font-ui);font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+  body{padding:24px;display:flex;gap:28px;flex-wrap:wrap}
+  .colTitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;text-align:center}
+  .phone{width:340px;background:radial-gradient(ellipse at 50% 0%, #1a2f52, var(--bg-0));
+    border:1px solid var(--line);border-radius:22px;padding:22px 18px;text-align:center}
+  .lbl{font-size:13px;color:var(--gold-hi);letter-spacing:.1em;margin-bottom:2px}
+  .score{font-size:56px;font-weight:800;color:var(--gold-hi);text-shadow:0 0 24px rgba(240,192,64,.4);line-height:1;margin-bottom:6px}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:6px 16px;font-size:11px;color:var(--muted);margin-bottom:18px}
+  .btn{display:block;width:100%;border-radius:14px;padding:13px;font-family:inherit;font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase;font-size:14px;margin-bottom:10px;border:1px solid var(--line);
+    background:rgba(22,38,56,.55);color:var(--ink)}
+  .btn.pri{background:linear-gradient(180deg,#3a6fd8,#2952b0);border-color:transparent;color:#fff;font-size:16px;padding:15px}
+  .quiet{display:flex;gap:8px;margin-bottom:10px}
+  .quiet .btn{margin-bottom:0;font-size:12px;padding:11px}
+  .small{font-size:11px;color:var(--muted);background:transparent;border-color:var(--line);font-weight:600;padding:10px}
+
+  /* --- новое: опрос --- */
+  .surveyWrap{margin:6px 0 14px;padding:12px 10px;border-radius:14px;background:rgba(120,170,255,.06);
+    border:1px dashed rgba(190,225,255,.25)}
+  .surveyQ{font-size:11.5px;color:var(--muted);text-transform:none;letter-spacing:.02em;margin-bottom:9px;font-weight:600}
+  .surveyRow{display:flex;gap:6px}
+  .surveyBtn{flex:1;border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--ink);
+    border-radius:10px;padding:9px 4px;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:none;
+    display:flex;flex-direction:column;align-items:center;gap:3px}
+  .surveyBtn .ic{font-size:16px;line-height:1}
+  .surveyBtn.good:active,.surveyBtn.good.sel{border-color:rgba(140,230,160,.5);background:rgba(140,230,160,.12);color:#c8f5cf}
+  .surveyBtn.mid:active,.surveyBtn.mid.sel{border-color:rgba(240,192,64,.5);background:rgba(240,192,64,.12);color:var(--cream)}
+  .surveyBtn.bad:active,.surveyBtn.bad.sel{border-color:rgba(255,140,140,.5);background:rgba(255,140,140,.12);color:#ffd0d0}
+  .thanks{font-size:11px;color:var(--muted);text-transform:none;letter-spacing:.02em;text-align:center;padding:10px 0}
+
+  .note{margin-top:24px;padding:14px 16px;border-radius:12px;background:rgba(201,164,92,.08);
+    border:1px dashed rgba(201,164,92,.45);font-size:12px;color:var(--cream);text-transform:none;
+    letter-spacing:.02em;line-height:1.6;max-width:700px}
+  .note b{color:var(--gold-hi)}
+  .note ul{margin:6px 0 0 18px}
+  .note li{margin-bottom:5px}
+</style>
+</head>
+<body>
+  <div style="width:100%">
+    <h1 style="font-size:15px;color:var(--cream);text-transform:none;margin-bottom:16px">«Нравится этот режим?» — макет для экрана итогов</h1>
+  </div>
+
+  <div>
+    <div class="colTitle">До ответа</div>
+    <div class="phone">
+      <div class="lbl">Финиш!</div>
+      <div class="score">347</div>
+      <div class="pill">Только уклонение</div>
+      <button class="btn pri">Ещё раз</button>
+      <div class="quiet">
+        <button class="btn small">Карточка</button>
+        <button class="btn small">Вызов</button>
+      </div>
+
+      <div class="surveyWrap">
+        <div class="surveyQ">Нравится «Без касаний»?</div>
+        <div class="surveyRow">
+          <button class="surveyBtn good"><span class="ic">👍</span>Да</button>
+          <button class="surveyBtn mid"><span class="ic">🤔</span>Нужно улучшить</button>
+          <button class="surveyBtn bad"><span class="ic">👎</span>Нет</button>
+        </div>
+      </div>
+
+      <button class="btn small">Подробности полёта</button>
+      <button class="btn small">Меню</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="colTitle">После ответа (тап «Нужно улучшить»)</div>
+    <div class="phone">
+      <div class="lbl">Финиш!</div>
+      <div class="score">347</div>
+      <div class="pill">Только уклонение</div>
+      <button class="btn pri">Ещё раз</button>
+      <div class="quiet">
+        <button class="btn small">Карточка</button>
+        <button class="btn small">Вызов</button>
+      </div>
+
+      <div class="surveyWrap">
+        <div class="surveyQ">Нравится «Без касаний»?</div>
+        <div class="surveyRow">
+          <button class="surveyBtn good"><span class="ic">👍</span>Да</button>
+          <button class="surveyBtn mid sel"><span class="ic">🤔</span>Нужно улучшить</button>
+          <button class="surveyBtn bad"><span class="ic">👎</span>Нет</button>
+        </div>
+        <div class="thanks">Спасибо — учтём.</div>
+      </div>
+
+      <button class="btn small">Подробности полёта</button>
+      <button class="btn small">Меню</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Как задумано:</b>
+    <ul>
+      <li>Появляется тихим блоком между «тихой тройкой» (Карточка/Вызов) и «Подробности полёта» — не спорит за внимание с «Ещё раз», но и не спрятана в самый низ мимо взгляда.</li>
+      <li>Название режима — реальное игровое имя (как оно называется в «Соревнования»): «Небо месяца», Speedrun, Caravan, «Без касаний», Биатлон, Эстафета, Классика — каждый видит вопрос про ТОТ режим, в котором только что летал.</li>
+      <li>Один тап — сразу ответ (нажал «Да»/«Нужно улучшить»/«Нет» → подсветилась выбранная кнопка, короткое «Спасибо — учтём», опрос сворачивается). Без отдельного текстового поля — «Написать разработчику» уже существует для развёрнутого отзыва, этот опрос — быстрый физический тап, не вторая форма.</li>
+      <li>Показывается РОВНО ОДИН РАЗ на весь путь игрока в этом режиме — после ответа (или если разок явно закрыт/проигнорирован N экранов подряд — решить) больше не появляется никогда, ни в этом режиме, ни при следующих посадках.</li>
+      <li>Хранится в новой небольшой таблице в Supabase (player_id + режим + оценка + когда) — не смешивается с track_votes (та уже занята сердечками Мастерской, про трассы игроков, не про дисциплины).</li>
+    </ul>
+  </div>
+</body>
+</html>
