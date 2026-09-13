@@ -1085,7 +1085,7 @@ let workshopSortMode='new';
 // заход) перенесено на сервер (forge_workshop.featured, действие moderate), звезда теперь
 // настоящая кнопка в самой карточке, видимая владельцу всегда, остальным — только на
 // реально помеченных треках.
-const WORKSHOP_SORTS=['new','top','trending','fav']; // 13.09.2026: владелец прямо попросил порядок «новые, топ, растёт, лайк» — trending и fav поменяны местами (было 'new','top','fav','trending'). «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
+const WORKSHOP_SORTS=['new','top','trending','fav','random']; // 13.09.2026: «Сюрприз» вернулся в общий ряд пятым чипом (владелец, прямая правка) — был вынесен 12.09.2026 отдельной кнопкой из-за подписи, которая не влезала; теперь идёт значком без подписи, тем же приёмом, что уже есть у 'fav' ниже — вернулось меньше места, чем занимала отдельная кнопка снаружи ряда. «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
 let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
@@ -1099,11 +1099,17 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
       // 12.09.2026, владелец (живой скрин с телефона, после разъяснения — «тогда да, лайк»):
       // «Избранное» заменено на то же сердце, что уже стоит на каждой карточке (.wVote) —
       // единственный значок в этом ряду без слова, потому что смысл уже знаком игроку с этого
-      // же экрана, не выдуман заново. Остальные чипы (см. правку «Сюрприз» рядом) подпись
-      // держат — там своего готового значения у иконки не было (NN/g: голая иконка неоднозначна).
+      // же экрана, не выдуман заново.
+      // 13.09.2026, владелец (живой скрин, «лайк не закрашен»): значок рисовался fill="currentColor",
+      // но currentColor наследовал общий серый/белый цвет чипа (.forgeChip/.forgeChip.sel) — сердце
+      // технически было залито, просто не тем цветом, который в игре УЖЕ значит «лайк» (.wVote.voted,
+      // #ff9fb0). Свой цвет через инлайновый style — не зависит от .sel, всегда узнаваемо розовое.
       if(s==='fav'){
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
+      } else if(s==='random'){
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
       }
       b.addEventListener('click', function(){
         if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
@@ -1115,31 +1121,13 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   }
   if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
     const chip=sortEl.children[i];
-    if(s==='fav') chip.title = L['workshopSort_'+s] || s; // значок без видимого слова — title остаётся для подсказки при наведении/скринридера
+    if(s==='fav'||s==='random') chip.title = L['workshopSort_'+s] || s; // значок без видимого слова — title остаётся для подсказки при наведении/скринридера
     else chip.textContent = L['workshopSort_'+s] || s;
     // 'fav' и 'top' оба реально шлют sort='top' на сервер — различает их только workshopLikedOnly,
     // поэтому подсветка каждого чипа явно проверяет этот флаг, не только совпадение sort-строки.
     const sel = s==='fav' ? (workshopSortMode==='top' && workshopLikedOnly) : (s===workshopSortMode && !(s==='top' && workshopLikedOnly));
     chip.classList.toggle('sel', sel);
   });
-  // 12.09.2026: «Сюрприз» — был 4-й вкладкой в этом же ряду (sort='random', значок без подписи),
-  // владелец сам заметил, что подписи не влезали в 375px без прокрутки, а прокрутка здесь уже
-  // была временным костылём один раз (#forgeSubTabs) — не тем, к чему возвращаться намеренно.
-  // Переехал в отдельную кнопку рядом с рядом сортировки (#workshopSurprise, index.html),
-  // подпись у значка теперь есть всегда (Nielsen Norman Group: иконка без подписи неоднозначна
-  // на любом возрасте — тот же вывод, что и в исследовании .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md).
-  const surpriseBtn=$('workshopSurprise');
-  if(surpriseBtn){
-    const surpriseLbl=surpriseBtn.querySelector('.lbl'); if(surpriseLbl) surpriseLbl.textContent=L.workshopSort_random||'Сюрприз';
-    surpriseBtn.classList.toggle('sel', workshopSortMode==='random');
-    if(!surpriseBtn.dataset.wired){
-      surpriseBtn.dataset.wired='1';
-      surpriseBtn.addEventListener('click', function(){
-        workshopSortMode='random'; workshopLikedOnly=false;
-        workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
-      });
-    }
-  }
 }
 function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
 function workshopRenderList(){
