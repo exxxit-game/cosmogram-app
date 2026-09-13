@@ -3326,7 +3326,16 @@ function renderTopFor(screen, getCat, ids){
   const topFmt = v => (askCat==='speedrun'||askCat==='slalom'||askCat==='biathlon') ? fmtTime(v) : fmtN(v)+(askCat==='dist'?' '+(L.unitM||'м'):'');
   topPromise.then(d=>{
     if(screenName!==screen || getCat()!==askCat) return; // игрок уже ушёл или переключил категорию — не трогаем DOM
-    if(!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+    /* 13.09.2026 (владелец: баг 2 — «Таблица пока не отвечает» одинаково и на офлайне, и
+       на реальном сбое сервера, явный вопрос → «различать текстом», рекомендованный
+       вариант): navigator.onLine — тот же приём, что уже у Мастерской для того же случая
+       (js/forge.js:1328, страж 184) и у самих сетевых функций (js/sync.js). Обе строки уже
+       жили в игре (L.syncOffline/L.topTgOnly) — новых текстов не потребовалось. */
+    if(!d || !d.ok){
+      const offline = typeof navigator!=='undefined' && navigator.onLine===false;
+      list.innerHTML='<div class="topMsg">'+(offline?(L.syncOffline||L.topTgOnly):L.topTgOnly)+'</div>';
+      return;
+    }
     me.textContent = d.me ? (L.topMe+'#'+d.me.rank+' · '+topFmt(d.me.best)) : '';
     /* Гостю — его собственное место в чужой таблице и приглашение. Считаем здесь, а не на
        сервере: сервер не знает, кто это, и спрашивать его второй раз не о чем. */
