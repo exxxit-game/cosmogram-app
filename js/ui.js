@@ -2784,12 +2784,18 @@ function diagRows(){
   // молча в BEACON (js/sync.js), а не на верхнюю, самую заметную строку экрана игрока.
   // 02.09.2026: «Полёт без рук пока заперт» тоже убрана — не поломка, а прогресс игры,
   // уже объясняется правильно в Настройках, где этот режим реально открывают.
-  /* 13.09.2026 ВРЕМЕННО (владелец просил разбор пункта 3: «лишнее место под заголовком») —
-     живое число --sat-menu с его собственного устройства, снять сразу после того, как он
-     пришлёт число, эта строка не для игроков. */
-  try{ R.push({st:'info', txt:'DEBUG --sat-menu: '+getComputedStyle(document.documentElement).getPropertyValue('--sat-menu').trim(), rare:true}); }catch(e){}
   return R;
 }
+/* 13.09.2026 ВРЕМЕННО (пункт 3, «везде кажется лишним») — живой ползунок --menu-buf
+   (index.html #diagBufSlider), владелец двигает на своём устройстве и видит эффект сразу
+   на всех экранах меню без сборки нового билда на каждое число. Убрать целиком (вместе с
+   разметкой в index.html и переменной --menu-buf) как только названо итоговое число —
+   тогда оно вписывается напрямую в calc(), эта прослойка больше не нужна. */
+wireOn('diagBufSlider','input',function(){
+  const v=this.value;
+  document.documentElement.style.setProperty('--menu-buf', v+'px');
+  const lbl=$('diagBufVal'); if(lbl) lbl.textContent=v;
+});
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
