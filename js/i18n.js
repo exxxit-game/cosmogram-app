@@ -288,7 +288,10 @@ const I18N = {
     setWellAll:'Всё звучит', setWellSome:'Кое-что приглушено', setWellNone:'Тишина', // v1.91.0: шёпот самочувствия групп
     csCap:'Позывной — звучит в морзянке и вибрацией',
     diagVibro:'Проверка вибрации', vibChTg:'Канал: Telegram API — импульсы отчётливые', vibChWeb:'Канал: только системная вибрация — предел веба', vibChNone:'Вибрация недоступна — проверь настройки телефона',
-    again:'Тень прошлой попытки', // 29.08.2026 «семантика, не загадка»: было «ЕЩЁ РАЗ?» — фраза с экрана «Игра окончена», пересаженная на переключатель без контекста
+    again:'Призрак прошлой попытки', // 29.08.2026 «семантика, не загадка»: было «ЕЩЁ РАЗ?» — фраза с экрана «Игра окончена», пересаженная на переключатель без контекста
+    // 13.09.2026, владелец (обводка на скрине): «тень» заменить на «призрак» — везде в игре
+    // (ghostGo/ghostWith ниже, топ «смотреть полёт» и т.п.) этот же самый попутчик уже
+    // называется «призрак», только у этого переключателя молча остался старый термин.
     ghostTag:'ЕЩЁ РАЗ?', // тот же текст, что был у настройки раньше — но теперь только здесь, плавающая подпись над собственной тенью в полёте (render.js)
     ghostGo:'Полететь с призраком этого рекорда', ghostNone:'Небо этого полёта не сохранилось',
     topWatch:'Смотреть этот полёт', topWatchNoSky:'Небо того полёта не сохранилось — показать нечего',
@@ -453,7 +456,7 @@ const I18N = {
     setWellAll:'All sounding', setWellSome:'Partly muted', setWellNone:'Silence', // v1.91.0: group wellness whispers
     csCap:'Callsign — sounds in morse trail and vibration',
     diagVibro:'Haptic morse test', vibChTg:'Channel: Telegram API — crisp impulses', vibChWeb:'Channel: system vibration only — web limit', vibChNone:'No vibration — check phone settings',
-    again:'Shadow of last run',
+    again:'Ghost of last run',
     ghostTag:'AGAIN?',
     ghostGo:'Fly with this record’s ghost', ghostNone:'This flight’s sky wasn’t saved',
     topWatch:'Watch this flight', topWatchNoSky:'That flight’s sky wasn’t saved — nothing to show',
@@ -635,7 +638,7 @@ const I18N = {
     vibChWeb:'Canal: solo vibración del sistema — límite de la web',
     vibChNone:'Vibración no disponible — revisa los ajustes del teléfono',
     topWatch:'Ver este vuelo', topWatchNoSky:'El cielo de ese vuelo no se guardó — no hay nada que mostrar', ghostGo:'Volar con el fantasma de este récord',
-    again:'Sombra del intento anterior',
+    again:'Fantasma del intento anterior',
     ghostTag:'¿OTRA VEZ?',
     ghostNone:'El cielo de ese vuelo no se guardó',
     ghostWith:(n)=>'El fantasma de '+(n||'un jugador')+' vuela contigo',
@@ -816,7 +819,7 @@ const I18N = {
     vibChWeb:'Canal: só vibração do sistema — limite da web',
     vibChNone:'Vibração indisponível — confira as configurações do telefone',
     topWatch:'Ver este voo', topWatchNoSky:'O céu daquele voo não foi guardado — não há o que mostrar', ghostGo:'Voar com o fantasma deste recorde',
-    again:'Sombra da tentativa anterior',
+    again:'Fantasma da tentativa anterior',
     ghostTag:'DE NOVO?',
     ghostNone:'O céu daquele voo não foi guardado',
     ghostWith:(n)=>'O fantasma de '+(n||'um jogador')+' voa com você',
@@ -979,7 +982,7 @@ const I18N = {
     setWellAll:'Tout sonore', setWellSome:'Partiellement muet', setWellNone:'Silence',
     csCap:'Indicatif — résonne dans la traînée morse et la vibration',
     diagVibro:'Test morse haptique', vibChTg:'Canal : API Telegram — impulsions nettes', vibChWeb:'Canal : vibration système uniquement — limite web', vibChNone:'Aucune vibration — vérifie les réglages du téléphone',
-    again:'Ombre de la dernière tentative',
+    again:'Fantôme de la dernière tentative',
     ghostTag:'ENCORE\u00a0?', // во французском перед знаком вопроса неразрывный пробел — так требует типографика языка
     ghostGo:'Voler avec le fantôme de ce record', ghostNone:'Le ciel de ce vol n’a pas été enregistré',
     topWatch:'Regarder ce vol', topWatchNoSky:'Le ciel de ce vol n’a pas été enregistré — rien à montrer',
