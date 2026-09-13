@@ -1911,10 +1911,13 @@ function angarBuildTabs(){
   if(angarTabsBuilt) return;
   const tabs=$('angarTabs');
   if(tabs){
+    // 13.09.2026, владелец (живой скрин с обводкой): «Эмодзи» — четвёртой вкладкой, после
+    // «Следа», не второй. Порядок клика/подсветки/textContent ниже — по id, DOM-порядок не
+    // трогает: переставлена только сама строка разметки.
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
-                      '<button class="angarTab" id="angarTabDecal"></button>'+
                       '<button class="angarTab" id="angarTabFlash"></button>'+
-                      '<button class="angarTab" id="angarTabTrail"></button>';
+                      '<button class="angarTab" id="angarTabTrail"></button>'+
+                      '<button class="angarTab" id="angarTabDecal"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
     $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
     $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
