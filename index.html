@@ -1280,32 +1280,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #brandName .wm-stripe.s-gold { background:#dba93c; bottom:-9px; margin-left:-.21px; }
 #brandName .wm-stripe.s-white { background:#fff; bottom:-6px; margin-left:-.11px; }
 #brandName .wm-stripe.s-red { background:#d6183a; bottom:-3px; }
-/* 15.09.2026 (владелец: «красный текст и золотой контур, как COSMOGRAM» — сделай так «Одно небо
-   для всех»): тот же 4-слойный приём, что у #brandName (тень/золото/белый/красный) — золото и
-   белый слои дают эффект контура/объёма из-под красной заливки, ровно как владелец описал и
-   показал на реальном скриншоте игры. Кольца text-shadow — те же 96 точек по кругу, что у
-   #brandName (см. комментарий 04.09.2026 выше, «обводка через тени» без игольчатых митров),
-   просчитаны тем же скриптом с радиусом ×0.57 (28.52/50 — реальное отношение размеров двух
-   надписей). Без rotate/skewX — владелец просил цвет и контур, не наклон, тут текст остаётся
-   прямым. */
-#brandSub { position:relative; display:inline-block; margin-top:14px;
-  font-family:'Russo One',var(--font-disp); font-size:clamp(18.6px,5.58vw,28.52px); line-height:1.3;
-  letter-spacing:.02em; text-transform:uppercase; transform:rotate(-6deg) skewX(-4deg); }
-#brandSub span { white-space:nowrap; }
-#brandSub .wm-base { visibility:hidden; }
-#brandSub .wm-shadow,#brandSub .wm-gold,#brandSub .wm-white,#brandSub .wm-red { position:absolute; top:0; left:0; }
-#brandSub .wm-shadow { color:#04060d; transform:translate(2.3px,3.4px); filter:blur(.25px); }
-#brandSub .wm-gold { color:#dba93c;
-  text-shadow: 5.13px 0.00px 0 #dba93c, 5.12px 0.34px 0 #dba93c, 5.09px 0.67px 0 #dba93c, 5.03px 1.00px 0 #dba93c, 4.96px 1.33px 0 #dba93c, 4.86px 1.65px 0 #dba93c, 4.74px 1.96px 0 #dba93c, 4.60px 2.27px 0 #dba93c, 4.44px 2.56px 0 #dba93c, 4.27px 2.85px 0 #dba93c, 4.07px 3.12px 0 #dba93c, 3.86px 3.38px 0 #dba93c, 3.63px 3.63px 0 #dba93c, 3.38px 3.86px 0 #dba93c, 3.12px 4.07px 0 #dba93c, 2.85px 4.27px 0 #dba93c, 2.57px 4.44px 0 #dba93c, 2.27px 4.60px 0 #dba93c, 1.96px 4.74px 0 #dba93c, 1.65px 4.86px 0 #dba93c, 1.33px 4.96px 0 #dba93c, 1.00px 5.03px 0 #dba93c, 0.67px 5.09px 0 #dba93c, 0.34px 5.12px 0 #dba93c, 0.00px 5.13px 0 #dba93c, -0.34px 5.12px 0 #dba93c, -0.67px 5.09px 0 #dba93c, -1.00px 5.03px 0 #dba93c, -1.33px 4.96px 0 #dba93c, -1.65px 4.86px 0 #dba93c, -1.96px 4.74px 0 #dba93c, -2.27px 4.60px 0 #dba93c, -2.56px 4.44px 0 #dba93c, -2.85px 4.27px 0 #dba93c, -3.12px 4.07px 0 #dba93c, -3.38px 3.86px 0 #dba93c, -3.63px 3.63px 0 #dba93c, -3.86px 3.38px 0 #dba93c, -4.07px 3.12px 0 #dba93c, -4.27px 2.85px 0 #dba93c, -4.44px 2.56px 0 #dba93c, -4.60px 2.27px 0 #dba93c, -4.74px 1.96px 0 #dba93c, -4.86px 1.65px 0 #dba93c, -4.96px 1.33px 0 #dba93c, -5.03px 1.00px 0 #dba93c, -5.09px 0.67px 0 #dba93c, -5.12px 0.34px 0 #dba93c, -5.13px 0.00px 0 #dba93c, -5.12px -0.34px 0 #dba93c, -5.09px -0.67px 0 #dba93c, -5.03px -1.00px 0 #dba93c, -4.96px -1.33px 0 #dba93c, -4.86px -1.65px 0 #dba93c, -4.74px -1.96px 0 #dba93c, -4.60px -2.27px 0 #dba93c, -4.44px -2.57px 0 #dba93c, -4.27px -2.85px 0 #dba93c, -4.07px -3.12px 0 #dba93c, -3.86px -3.38px 0 #dba93c, -3.63px -3.63px 0 #dba93c, -3.38px -3.86px 0 #dba93c, -3.12px -4.07px 0 #dba93c, -2.85px -4.27px 0 #dba93c, -2.57px -4.44px 0 #dba93c, -2.27px -4.60px 0 #dba93c, -1.96px -4.74px 0 #dba93c, -1.65px -4.86px 0 #dba93c, -1.33px -4.96px 0 #dba93c, -1.00px -5.03px 0 #dba93c, -0.67px -5.09px 0 #dba93c, -0.34px -5.12px 0 #dba93c, -0.00px -5.13px 0 #dba93c, 0.34px -5.12px 0 #dba93c, 0.67px -5.09px 0 #dba93c, 1.00px -5.03px 0 #dba93c, 1.33px -4.96px 0 #dba93c, 1.65px -4.86px 0 #dba93c, 1.96px -4.74px 0 #dba93c, 2.27px -4.60px 0 #dba93c, 2.57px -4.44px 0 #dba93c, 2.85px -4.27px 0 #dba93c, 3.12px -4.07px 0 #dba93c, 3.38px -3.86px 0 #dba93c, 3.63px -3.63px 0 #dba93c, 3.86px -3.38px 0 #dba93c, 4.07px -3.12px 0 #dba93c, 4.27px -2.85px 0 #dba93c, 4.44px -2.57px 0 #dba93c, 4.60px -2.27px 0 #dba93c, 4.74px -1.96px 0 #dba93c, 4.86px -1.65px 0 #dba93c, 4.96px -1.33px 0 #dba93c, 5.03px -1.00px 0 #dba93c, 5.09px -0.67px 0 #dba93c, 5.12px -0.34px 0 #dba93c; }
-#brandSub .wm-white { color:#fff;
-  text-shadow: 2.85px 0.00px 0 #fff, 2.84px 0.19px 0 #fff, 2.83px 0.37px 0 #fff, 2.80px 0.56px 0 #fff, 2.75px 0.74px 0 #fff, 2.70px 0.92px 0 #fff, 2.63px 1.09px 0 #fff, 2.56px 1.26px 0 #fff, 2.47px 1.42px 0 #fff, 2.37px 1.58px 0 #fff, 2.26px 1.73px 0 #fff, 2.14px 1.88px 0 #fff, 2.02px 2.02px 0 #fff, 1.88px 2.14px 0 #fff, 1.73px 2.26px 0 #fff, 1.58px 2.37px 0 #fff, 1.43px 2.47px 0 #fff, 1.26px 2.56px 0 #fff, 1.09px 2.63px 0 #fff, 0.92px 2.70px 0 #fff, 0.74px 2.75px 0 #fff, 0.56px 2.80px 0 #fff, 0.37px 2.83px 0 #fff, 0.19px 2.84px 0 #fff, 0.00px 2.85px 0 #fff, -0.19px 2.84px 0 #fff, -0.37px 2.83px 0 #fff, -0.56px 2.80px 0 #fff, -0.74px 2.75px 0 #fff, -0.92px 2.70px 0 #fff, -1.09px 2.63px 0 #fff, -1.26px 2.56px 0 #fff, -1.42px 2.47px 0 #fff, -1.58px 2.37px 0 #fff, -1.73px 2.26px 0 #fff, -1.88px 2.14px 0 #fff, -2.02px 2.02px 0 #fff, -2.14px 1.88px 0 #fff, -2.26px 1.73px 0 #fff, -2.37px 1.58px 0 #fff, -2.47px 1.42px 0 #fff, -2.56px 1.26px 0 #fff, -2.63px 1.09px 0 #fff, -2.70px 0.92px 0 #fff, -2.75px 0.74px 0 #fff, -2.80px 0.56px 0 #fff, -2.83px 0.37px 0 #fff, -2.84px 0.19px 0 #fff, -2.85px 0.00px 0 #fff, -2.84px -0.19px 0 #fff, -2.83px -0.37px 0 #fff, -2.80px -0.56px 0 #fff, -2.75px -0.74px 0 #fff, -2.70px -0.92px 0 #fff, -2.63px -1.09px 0 #fff, -2.56px -1.26px 0 #fff, -2.47px -1.43px 0 #fff, -2.37px -1.58px 0 #fff, -2.26px -1.73px 0 #fff, -2.14px -1.88px 0 #fff, -2.02px -2.02px 0 #fff, -1.88px -2.14px 0 #fff, -1.73px -2.26px 0 #fff, -1.58px -2.37px 0 #fff, -1.43px -2.47px 0 #fff, -1.26px -2.56px 0 #fff, -1.09px -2.63px 0 #fff, -0.92px -2.70px 0 #fff, -0.74px -2.75px 0 #fff, -0.56px -2.80px 0 #fff, -0.37px -2.83px 0 #fff, -0.19px -2.84px 0 #fff, -0.00px -2.85px 0 #fff, 0.19px -2.84px 0 #fff, 0.37px -2.83px 0 #fff, 0.56px -2.80px 0 #fff, 0.74px -2.75px 0 #fff, 0.92px -2.70px 0 #fff, 1.09px -2.63px 0 #fff, 1.26px -2.56px 0 #fff, 1.43px -2.47px 0 #fff, 1.58px -2.37px 0 #fff, 1.73px -2.26px 0 #fff, 1.88px -2.14px 0 #fff, 2.02px -2.02px 0 #fff, 2.14px -1.88px 0 #fff, 2.26px -1.73px 0 #fff, 2.37px -1.58px 0 #fff, 2.47px -1.43px 0 #fff, 2.56px -1.26px 0 #fff, 2.63px -1.09px 0 #fff, 2.70px -0.92px 0 #fff, 2.75px -0.74px 0 #fff, 2.80px -0.56px 0 #fff, 2.83px -0.37px 0 #fff, 2.84px -0.19px 0 #fff; }
-#brandSub .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
-  -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
-#brandSub .wm-stripe { position:absolute; left:-4%; right:-4%; height:2px; border-radius:2px; }
-#brandSub .wm-stripe.s-black { background:#04060d; bottom:-9px; filter:blur(.25px); }
-#brandSub .wm-stripe.s-gold { background:#dba93c; bottom:-6px; }
-#brandSub .wm-stripe.s-white { background:#fff; bottom:-4px; }
-#brandSub .wm-stripe.s-red { background:#d6183a; bottom:-2px; }
+#brandSub { margin-top:0; font-size:clamp(18.6px,5.58vw,28.52px); letter-spacing:.04em; font-weight:500;
+  text-transform:uppercase; color:var(--gold-hi); text-shadow:0 0 14px rgba(240,192,64,.3); }
 /* 30.08.2026: было мельче/тусклее (нарочно, 13.08.2026) — владелец попросил укрупнить до половины COSMOGRAM и сделать золотой (макет, вариант Е).
   02.09.2026: «половина» была вдвое КОРОЧЕ COSMOGRAM по ширине текста — владелец попросил
   сравнять ширину строки. Первая правка (клемп ×1.252, замерено один раз на одной ширине
@@ -3004,12 +2980,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          а не как заставка на полторы секунды: верх главного освободился от чисел, и туда просится
          не пустота, а обещание игры. Страж 110. -->
     <div id="brandName"><span class="wm-base">Cosmogram</span><span class="wm-shadow">Cosmogram</span><span class="wm-gold">Cosmogram</span><span class="wm-white">Cosmogram</span><span class="wm-red">Cosmogram</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
-    <!-- 15.09.2026 (владелец: «красный текст и золотой контур, как COSMOGRAM» — сделай так «Одно
-         небо для всех»): тот же 4-слойный приём, что у #brandName выше (тень/золото/белый/красный),
-         пропорционально меньше (0.57 — реальное отношение clamp-размеров brandSub/brandName).
-         Текст льётся в 5 копий сразу в applyLang() (js/ui.js) — setText() одним textContent сюда
-         не годится, сломал бы слои. -->
-    <div id="brandSub"><span class="wm-base">Одно небо для всех</span><span class="wm-shadow">Одно небо для всех</span><span class="wm-gold">Одно небо для всех</span><span class="wm-white">Одно небо для всех</span><span class="wm-red">Одно небо для всех</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
+    <div id="brandSub">Одно небо для всех</div>
   </div>
   <!-- 13.08.2026 «Главный экран — дверь, а не витрина». Здесь стояли пилюля «Рекорд: N»
        и кошелёк, а внизу экрана — строка из четырёх мини-пилюль с рекордами по видам

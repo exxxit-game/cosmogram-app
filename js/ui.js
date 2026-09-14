@@ -3901,10 +3901,7 @@ function applyLang(){
   setText('restartBtn',L.restart);
   setText('pauseMenuBtn',L.menu);
   setText('hangarTitle',L.hangar);
-  // 15.09.2026: #brandSub стал 4-слойным вордмарком (см. index.html, комментарий у #brandSub) —
-  // setText() одним textContent на обёртку сломал бы слои. Льём перевод сразу в 5 копий-спанов,
-  // тем же приёмом, что мог бы понадобиться и #brandName, будь он переводимым (он нет — своё имя).
-  document.querySelectorAll('#brandSub span:not(.wm-stripe)').forEach(function(s){ s.textContent = L.brandSub; });
+  setText('brandSub',L.brandSub);          // 13.08.2026: обещание игры — на языке игрока
   setText('angarWalletLbl',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
   setText('retryBtn',L.retry);
