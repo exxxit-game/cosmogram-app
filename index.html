@@ -318,8 +318,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #settingsScreen { padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); }
 #settingsBackBtn { top:calc(10px + var(--sat-menu) + var(--menu-buf)); }
 /* 15.09.2026: #modesScreen/#modesBack удалены вместе с экраном «Турниры» — их смысл переехал
-   на карусель режимов главного экрана (см. .heroCarouselWrap), «Топ соревнований» (#modesBtn)
-   ведёт прямо в #modesTopScreen, минуя список режимов. */
+   на карусель режимов главного экрана (см. .heroCarouselWrap). #modesBtn/#modesTopScreen тоже
+   убраны следом — вход в Турниры теперь через Достижения (achBtn) или бейдж-рекорд на карточке. */
 /* 09.09.2026 (владелец, живое устройство, скрин): «Статус эстафет» — заголовок вплотную под
    часами/иконками статус-бара, «Назад» при этом на месте (он через .menuBack, у которого
    свой безопасный отступ). Тот же «принцип 7 отчёта» — оба экрана без «Назад» в общем правиле
@@ -472,10 +472,14 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    .forgeSeg/.relayMineBtn ниже по файлу не удалены, переиспользованы как есть, только новые
    правила ниже подгоняют их под карточку вместо плоской строки списка). */
 .heroCarouselWrap{width:min(92%,380px);pointer-events:auto}
-.heroCarousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
-  padding:0 26px 2px;margin:0 -26px;-ms-overflow-style:none;scrollbar-width:none}
+/* 15.09.2026 (владелец, живой скрин): просвет соседней карточки давал торчащий текст/бейдж
+   при любой ширине просвета — убран совсем. Карточка теперь на всю ширину обёртки, ноль
+   просвета; переключение — свайпом (scroll-snap) ИЛИ само, раз в 7 секунд (см. js/ui.js
+   heroCarouselAutoAdvance) — владелец: «просто сами по очереди показываются перед глазами». */
+.heroCarousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:0;-ms-overflow-style:none;scrollbar-width:none}
 .heroCarousel::-webkit-scrollbar{display:none}
-.heroCard{position:relative;flex:0 0 calc(100% - 52px);scroll-snap-align:center;border-radius:var(--r-card);
+.heroCard{position:relative;flex:0 0 100%;scroll-snap-align:center;border-radius:var(--r-card);
   overflow:hidden;padding:12px 13px 10px;height:112px;display:flex;flex-direction:column;
   justify-content:flex-end;align-items:flex-start;border:1px solid var(--line);isolation:isolate;
   background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
@@ -497,8 +501,32 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    лишняя (она же цветная карточка). #modesScreen-scoped версии этого текста удалены вместе с
    экраном, эти правила остаются (используются в других местах не были — их не было), просто
    переопределяются здесь под новый контекст. */
-.heroCard .speedrunFlyBtn,.heroCard .caravanFlyBtn,.heroCard .relayFlyBtn{all:unset;cursor:pointer;
+.heroCard .speedrunFlyBtn,.heroCard .caravanFlyBtn,.heroCard .relayFlyBtn,.heroCard .cardFlyBtn{all:unset;cursor:pointer;
   display:flex;flex-direction:column;align-items:flex-start;width:100%;box-sizing:border-box}
+/* 15.09.2026 «Бейдж-рекорд + подсказка play»: бейдж — вверху-слева (пробовали по центру,
+   владелец вернул влево), подсказка ▶ — в правом столбце под heroIcon (слева/по центру
+   накладывалась на 2-строчное описание, проверено зумом на живом экране). Оба — реальные
+   элементы, не текст в псевдоэлементе, бейдж — свой <button> (тап уводит в Достижения→Турниры,
+   отдельно от тапа по остальной карточке). */
+.heroCard .recordBadge{all:unset;position:absolute;top:9px;left:9px;display:flex;align-items:center;
+  gap:3px;padding:3px 7px;border-radius:20px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.24);font-size:10px;font-weight:700;color:var(--gold-hi);
+  cursor:pointer;z-index:2;box-sizing:border-box}
+.heroCard .recordBadge span{font-variant-numeric:tabular-nums}
+.heroCard .recordBadge.hidden{display:none}
+/* 15.09.2026: и true-center (top:50%), и верх-по-центру (top:40px;left:50%) реально накладывались
+   на 2-строчное описание — проверено зумом на живом экране, не только по rect. .modeDesc держит
+   max-width:82% — правые ~18% карточки СВОБОДНЫ от текста на любой карточке (там же и heroIcon
+   сверху) — единственное гарантированно пустое место, туда и ставим, колонной под иконкой. */
+.heroCard .playHint{position:absolute;top:41px;right:9px;
+  width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:.9;z-index:1}
+/* 15.09.2026 (владелец): вместо родового ▶ — твой же самолётик (текущий скин), «будто с
+   карточки в игру попадаешь». angarShip(ctx,skin,scale,false) — та же самая функция, что уже
+   рисует маленький борт на плитках Коллекции (js/ui.js:2094) — canvas 52×52 физических px
+   (2× ради чёткости), 26×26 на экране, заполняется в js/ui.js heroPlayIconsFill(). */
+.heroCard .playHintCv{width:26px;height:26px}
 /* 15.09.2026 (страж 194): у Эстафеты .relayFlyBtn на всю ширину карточки геометрически лез
    под «Статус» (абсолютная пилюля в правом нижнем углу) — тач-зоны пересекались, хотя визуально
    текст туда не заходит (та же узкая .c-relay .ds ниже). Сузил тач-зону кнопки полёта до той же
@@ -513,6 +541,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .heroDots{display:flex;justify-content:center;gap:6px;padding:8px 0 2px;pointer-events:none}
 .heroDot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
 .heroDot.on{background:var(--gold-hi);width:16px;border-radius:3px;transition:width .2s}
+/* 15.09.2026 «Траектория рекорда фоном» (владелец, макет trayektoriya-rekorda-na-fone-kartochki):
+   тонкая линия пути ТВОЕГО рекордного забега этой дисциплины — статичная, рисуется один раз при
+   заполнении карточки (heroTrailsFill, js/ui.js), не анимация, нулевая постоянная нагрузка на
+   рендер. Пусто, пока рекорда нет — линии рисовать нечем, карточка остаётся просто градиентом. */
+.heroCard .trail{position:absolute;inset:0;z-index:-1;opacity:.5;pointer-events:none}
 .hc-classic::before{background:linear-gradient(155deg,#1c2a5e 0%,#0a1030 75%)}
 .hc-daily::before{background:linear-gradient(155deg,#5a4614 0%,#241a05 78%)}
 .hc-speedrun::before{background:linear-gradient(155deg,#7a2410 0%,#2a0b04 78%)}
@@ -1066,6 +1099,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .topN.m1 .crownIc { color:var(--gold-hi); filter:drop-shadow(0 0 3px rgba(240,192,64,.7)); }
 .topN.m2 .crownIc { color:#cfd6e4; filter:drop-shadow(0 0 3px rgba(200,210,225,.6)); }
 .topN.m3 .crownIc { color:#d99a5b; filter:drop-shadow(0 0 3px rgba(200,140,80,.6)); }
+/* 15.09.2026 «Score Attack, один список»: иконка способа управления на строке слитого топа —
+   единственное, что различает touch/гироскоп/клавиатуру теперь (владелец: «просто иконка»). */
+.topCtlIc { width:15px; height:15px; flex:none; color:var(--muted); opacity:.75; }
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
@@ -2975,41 +3011,61 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          tiltPulse) не тронуты, переставлена только позиция в разметке. -->
     <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
     <!-- 15.09.2026: #startBtn («Начать полёт») заменён каруселью из 7 режимов, см. CSS-комментарий
-         у .heroCarouselWrap. Каждая простая карточка (Классика/Небо месяца/Без касаний/Биатлон) —
-         сама кнопка полёта, как раньше был #startBtn. Speedrun/Caravan/Эстафета — карточка-обёртка
-         (не кнопка), кнопка полёта — честный <button> внутри (тот же каркас, что жил на удалённом
-         экране «Турниры»), плюс своя маленькая строка снизу (переключатель варианта/тира или
-         «Статус») — владелец явно попросил оставить их, просто компактнее под карточку. -->
+         у .heroCarouselWrap. Все 7 карточек — обёртка div + честный <button> полёта внутри (тот
+         же каркас, что жил на удалённом экране «Турниры»); Speedrun/Caravan несут ещё свою строку
+         снизу (переключатель варианта/тира), Эстафета — «Статус». У 6 карточек (все кроме
+         Эстафеты — своей соревновательной категории у неё нет, только «Статус») — бейдж-рекорд в
+         углу, тап по нему открывает Достижения→Турниры на нужной дисциплине; тап по остальной
+         части карточки (▶-подсказка по центру) — полёт. -->
     <div class="heroCarouselWrap">
       <div class="heroCarousel" id="heroCarousel">
-        <button type="button" class="heroCard hc-classic" id="startBtn">
+        <div class="heroCard hc-classic">
+          <svg class="trail" id="trailClassic" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M12 2 L15 16 L12 14 L9 16 Z" fill="#dfe8ff" opacity=".9"/><circle cx="12" cy="19" r="1.6" fill="#dfe8ff" opacity=".7"/></svg>
-          <span class="modeName">Классика</span><span class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</span>
-        </button>
-        <button type="button" class="heroCard hc-daily" id="modeDaily">
+          <button class="recordBadge hidden" id="recBadgeClassic" data-cat="touch">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
+          <button type="button" class="cardFlyBtn" id="startBtn"><span class="modeName">Score Attack</span><span class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</span></button>
+        </div>
+        <div class="heroCard hc-daily">
+          <svg class="trail" id="trailDaily" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M12 3 L14.5 9.5 L21 10 L16 14.5 L17.5 21 L12 17.5 L6.5 21 L8 14.5 L3 10 L9.5 9.5 Z" fill="#f0c040"/></svg>
-          <span class="modeName">Небо месяца</span><span class="modeDesc">Одно небо на всех игроков — весь месяц, поставь рекорд</span>
-        </button>
+          <button class="recordBadge hidden" id="recBadgeDaily" data-cat="daily">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
+          <button type="button" class="cardFlyBtn" id="modeDaily"><span class="modeName">Небо месяца</span><span class="modeDesc">Одно небо на всех игроков — весь месяц, поставь рекорд</span></button>
+        </div>
         <div class="heroCard hc-speedrun">
+          <svg class="trail" id="trailSpeedrun" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M4 12h10m0 0l-3-3m3 3l-3 3" stroke="#ffb27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="12" r="2" fill="#ffb27a"/></svg>
+          <button class="recordBadge hidden" id="recBadgeSpeedrun" data-cat="speedrun">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="speedrunFlyBtn" id="modeSpeedrunFly"><span class="modeName">Speedrun</span><span class="modeDesc">10 000 очков на время — чистый хронометраж</span></button>
           <div class="forgeSeg" id="speedrunVariantSeg"></div>
         </div>
         <div class="heroCard hc-caravan">
+          <svg class="trail" id="trailCaravan" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9" stroke="#ffd76b" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <button class="recordBadge hidden" id="recBadgeCaravan" data-cat="caravan">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="caravanFlyBtn" id="modeCaravanFly"><span class="modeName">Caravan</span><span class="modeDesc"></span></button>
           <div class="forgeSeg" id="caravanTierSeg"></div>
         </div>
-        <button type="button" class="heroCard hc-slalom" id="modeSlalom">
+        <div class="heroCard hc-slalom">
+          <svg class="trail" id="trailSlalom" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><rect x="17" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><path d="M9 12h6" stroke="#6be0ff" stroke-width="1.6" stroke-dasharray="2 2"/></svg>
-          <span class="modeName">Без касаний</span><span class="modeDesc">Ворота на время — одно касание срывает заезд</span>
-        </button>
-        <button type="button" class="heroCard hc-biathlon" id="modeBiathlon">
+          <button class="recordBadge hidden" id="recBadgeSlalom" data-cat="slalom">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
+          <button type="button" class="cardFlyBtn" id="modeSlalom"><span class="modeName">Без касаний</span><span class="modeDesc">Ворота на время — одно касание срывает заезд</span></button>
+        </div>
+        <div class="heroCard hc-biathlon">
+          <svg class="trail" id="trailBiathlon" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="4.5" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="1.3" fill="#7cf0af"/></svg>
-          <span class="modeName">Биатлон</span><span class="modeDesc">Скорость + 2 рубежа «собери всё», штраф — время</span>
-        </button>
+          <button class="recordBadge hidden" id="recBadgeBiathlon" data-cat="biathlon">🏆 <span></span></button>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
+          <button type="button" class="cardFlyBtn" id="modeBiathlon"><span class="modeName">Биатлон</span><span class="modeDesc">Скорость + 2 рубежа «собери всё», штраф — время</span></button>
+        </div>
         <div class="heroCard hc-relay">
           <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><circle cx="17" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><path d="M10 12h4" stroke="#e08cff" stroke-width="1.6"/></svg>
+          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="relayFlyBtn" id="modeRelay"><span class="modeName">Эстафета</span><span class="modeDesc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</span></button>
           <button class="relayMineBtn" id="relayMineBtn"><svg class="ic" style="width:10px;height:10px;color:var(--gold-hi)"><use href="#i-info"></use></svg><span id="relayMineBtnLbl">Статус</span></button>
         </div>
@@ -3017,7 +3073,6 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="heroDots" id="heroDots"></div>
     </div>
     <div class="stack">
-      <button class="btn sec" id="modesBtn">Топ соревнований</button>
       <!-- 05.09.2026 (владелец): Конструктор — не дисциплина, ему не место внутри «Соревнований»;
            переехал на главный экран отдельной кнопкой, рядом по важности со стартом забега. -->
       <button class="btn sec" id="konstruktorBtn">Конструктор</button>
@@ -3029,7 +3084,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            убраны по решению владельца — игра больше не только в Telegram, приглашение друзей
            будет решено отдельно другим способом, а канал не приносил пользы. На их месте —
            прямая связь с разработчиком, которой раньше вообще не было на главном экране. -->
-      <button class="btn ghost" id="feedbackBtn">Написать разработчику</button>
+      <button class="btn ghost" id="feedbackBtn">Поддержка</button>
       <button class="btn ghost" id="settingsBtn">Настройки</button>
       <button class="btn ghost hidden" id="homeBtn">На экран «Домой»</button>
     </div>
@@ -3237,8 +3292,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <!-- 15.09.2026: #modesScreen («Турниры», список из 7 кнопок запуска) удалён целиком — карусель
      режимов на главном экране (.heroCarouselWrap) заменяет его; #modeDaily/#modeSpeedrunFly/
      #modeCaravanFly/#modeSlalom/#modeBiathlon/#modeRelay/#relayMineBtn переехали внутрь карточек
-     карусели с теми же id (js их не потерял). «Топ соревнований» (#modesBtn) ведёт прямо в
-     #modesTopScreen ниже, минуя этот список. -->
+     карусели с теми же id (js их не потерял). -->
 
 <!-- КОНСТРУКТОР ТРАССЫ (v1.68.0 «Своя трасса»): собери забег — код едет другу прямо в ссылке, сервер не нужен -->
 <!-- КУЗНИЦА — v1.85.0 «Сначала небо»: сцена — живое небо, галерея, одна ручка «Жар»;
@@ -3606,9 +3660,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div class="screenTitle" id="achTitle">Достижения</div>
   <div id="achTabs">
     <button class="achTab sel" id="tabMine">Мои</button>
-    <button class="achTab" id="tabTop">Топ</button>
+    <button class="achTab" id="tabTop">Турниры</button>
   </div>
-  <!-- 27.08.2026: заголовок/вкладки Мои-Топ выше — вне ленты. Внутри .scrBody — то, что
+  <!-- 27.08.2026: заголовок/вкладки Мои-Турниры выше — вне ленты. Внутри .scrBody — то, что
      реально длинное и прокручивается (список достижений или таблица лидеров). -->
   <div class="scrBody">
     <div id="achMineWrap">
@@ -3625,17 +3679,21 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div id="achList"></div>
     </div>
     <div id="achTopWrap" class="hidden">
+      <!-- 15.09.2026: экран «Топ соревнований» (modesTopScreen) удалён целиком — его 5 дисциплин
+           переехали сюда, шестой плиткой стал Score Attack (бывшая «Классика», бывшие 3 отдельные
+           плитки touch/гироскоп/клавиатура). Владелец, исходная идея: «просто иконка рядом с
+           рекордом» — один список, не три отдельных и не кнопки-переключатели. renderTopScoreAttack()
+           в ui.js запрашивает все три категории (touch/gyro/keys) параллельно и сливает их в один
+           отсортированный список, каждая строка несёт свою иконку способа управления (.topCtlIc).
+           Старая «Дистанция» (пробег, общий для ВСЕХ режимов, не своя дисциплина — js/ui.js,
+           S.dist) сюда не переехала — она личная цифра, живёт в «Мои» (achStats). -->
       <div id="topCats">
-        <!-- 04.09.2026 (владелец, живое устройство): 7 вкладок без подписей в один
-             прокручиваемый ряд — непонятно, что означает каждая иконка, обрезается по краям.
-             Подпись — <span class="topCatLbl"> под иконкой, текст берёт fillLang() ниже из
-             уже существующих ключей (modeTouch/modeGyro/... — те же, что у выбора управления
-             и режимов, не завожу новых переводов). Раскладка — .topCat теперь flex-column,
-             #topCats — flex-wrap, сама решает, сколько строк нужно при своей ширине экрана. -->
         <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg><span class="topCatLbl"></span></button>
-        <button class="topCat" data-cat="gyro"><svg class="ic"><use href="#i-phone"></use></svg><span class="topCatLbl"></span></button>
-        <button class="topCat" data-cat="keys"><svg class="ic"><use href="#i-keys"></use></svg><span class="topCatLbl"></span></button>
-        <button class="topCat" data-cat="dist"><svg class="ic"><use href="#i-ruler"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="daily"><svg class="ic"><use href="#i-trophy"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="speedrun"><svg class="ic"><use href="#i-star4"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="caravan"><svg class="ic"><use href="#i-target"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="slalom"><svg class="ic"><use href="#i-nearmiss"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="biathlon"><svg class="ic"><use href="#i-timer"></use></svg><span class="topCatLbl"></span></button>
       </div>
       <div id="topMe"></div>
       <div id="topList"></div>
@@ -3652,33 +3710,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div>
 </div>
 
-<!-- ТОП СОРЕВНОВАНИЙ (06.09.2026): раньше 6 соревновательных категорий жили вперемешку с
-     4 личными (способ игры/дистанция) в одном ряду вкладок «Достижения → Топ» — 10 плиток,
-     4 строки на телефоне. Разведено по шву «моя личная статистика» / «результат дисциплины»:
-     этот экран — только 6 дисциплин, свой вход прямо с «Соревнований» (modesTopBtn), тот же
-     renderTop()-механизм, что и у личного топа (renderTopFor в ui.js), просто свои id/своя
-     категория по умолчанию. -->
-<div id="modesTopScreen" class="overlay hidden">
-  <button class="menuBack" id="modesTopBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="modesTopTitle">Топ соревнований</div>
-  <div class="scrBody">
-    <div id="compTopCats">
-      <button class="topCat sel" data-cat="daily"><svg class="ic"><use href="#i-trophy"></use></svg><span class="topCatLbl"></span></button>
-      <button class="topCat" data-cat="speedrun"><svg class="ic"><use href="#i-star4"></use></svg><span class="topCatLbl"></span></button>
-      <button class="topCat" data-cat="caravan"><svg class="ic"><use href="#i-target"></use></svg><span class="topCatLbl"></span></button>
-      <button class="topCat" data-cat="slalom"><svg class="ic"><use href="#i-nearmiss"></use></svg><span class="topCatLbl"></span></button>
-      <button class="topCat" data-cat="biathlon"><svg class="ic"><use href="#i-timer"></use></svg><span class="topCatLbl"></span></button>
-    </div>
-    <div id="compTopMe"></div>
-    <div id="compTopList"></div>
-    <div id="compTopWouldBe" class="hidden"></div>
-    <div id="compTopJoin" class="hidden">
-      <div id="compTopJoinTitle"></div>
-      <div id="compTopJoinSub"></div>
-    </div>
-    <div id="compDcLogin" class="hidden"></div>
-  </div>
-</div>
+<!-- 15.09.2026: экран «Топ соревнований» (modesTopScreen, #compTop*) удалён целиком — его 5
+     дисциплин переехали в Достижения→Турниры (см. #achTopWrap выше, тот же renderTop()/#topCats,
+     что и у личного топа, никакого второго набора id больше не нужно). -->
 
 <!-- МОИ ЭСТАФЕТЫ (07.09.2026): единственный способ узнать судьбу своего этапа после сдачи —
      раньше не было НИ push, НИ экрана (см. комментарий у relayMineBtn выше). Список цепочек,

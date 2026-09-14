@@ -1897,9 +1897,24 @@ function ghostPackDaily(){ // v1.100.1 «Трибуна чемпиона»: ле
   const fl=fieldL(), fw=fieldW();
   return ghostPack(rec.map(r=>[clamp(Math.round(((r[0]/91*W-fl)/fw)*91),0,91), r[1], r[2]]));
 }
-function ghostSave(){ // вызывается из gameOver при новом рекорде (только обычный режим)
+/* 15.09.2026 «Своя лента на каждую дисциплину»: раньше был ОДИН общий слот 'ghostRun' — рекорд
+   в любом режиме перезаписывал ленту любого другого (владелец: «сделай всем одну [дисциплине —
+   свою]», карточки карусели теперь рисуют траекторию рекорда фоном). Бакет — тот же принцип,
+   что уже у бейджа рекорда (heroRecordFor, js/ui.js): три способа управления Score Attack и
+   все тиры Caravan делят одну ленту каждый (как и один бейдж на всех троих/каждый). */
+function ghostCatBucket(cat){
+  if(cat==='gyro'||cat==='keys'||cat==='touch') return 'touch';
+  if(cat && cat.indexOf('caravan')===0) return 'caravan';
+  return cat||'touch';
+}
+function ghostRunKey(){ // тот же бакет, но по ТЕКУЩЕМУ забегу (ghostLoad зовётся до его конца, cat ещё не посчитан)
+  if(runMode==='classic') return 'ghostRun_touch';
+  if(runMode==='caravan') return 'ghostRun_caravan';
+  return 'ghostRun_'+(runMode||'touch');
+}
+function ghostSave(cat){ // вызывается из gameOver при новом рекорде — cat: та же категория, что уже у Store.set(modeKey,...) рядом
   if (!ghostActive() || rec.length<20) return; // короткий забег — призрака не будет
-  Store.set('ghostRun', {track: ghostPack(rec), seed: S.seed}); // v1.280.0: сид едет вместе с треком — иначе будущей гонке нечего восстанавливать
+  Store.set('ghostRun_'+ghostCatBucket(cat), {track: ghostPack(rec), seed: S.seed}); // v1.280.0: сид едет вместе с треком — иначе будущей гонке нечего восстанавливать
 }
 function ghostLoad(){ // вызывается из startGame
   ghost=null; ghostIdx=0; ghostOn=false; ghostFade=0; ghostA=0;
@@ -1923,7 +1938,7 @@ function ghostLoad(){ // вызывается из startGame
     return;
   }
   if (!ghostActive()) return;
-  const gr=Store.get('ghostRun', null); // v1.280.0: раньше — просто строка; теперь {track,seed} — оба формата читаются
+  const gr=Store.get(ghostRunKey(), null); // 15.09.2026: свой бакет на дисциплину (ghostSave выше); v1.280.0: раньше — просто строка; теперь {track,seed} — оба формата читаются
   const grTrack=(gr && typeof gr==='object') ? gr.track : (typeof gr==='string' ? gr : '');
   const grSeed=(gr && typeof gr==='object') ? gr.seed : null;
   const g=ghostParse(grTrack);

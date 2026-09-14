@@ -47,7 +47,7 @@ const I18N = {
     // режимов на главном экране заменяет его), кнопка на главном стала «Топ соревнований»
     // (topCompTitle, уже существовал). modeClassicD — новое: у Классики раньше не было подписи
     // вовсе (просто кнопка «Начать полёт»), карточке карусели нужна короткая, как у остальных 6.
-    modeClassic:'Классика', modeClassicD:'Лети, пока хватит жизней — свободный полёт без правил',
+    modeClassic:'Score Attack', modeClassicD:'Лети, пока хватит жизней — свободный полёт без правил', // 15.09.2026 (владелец): «Классика»→жанровое имя, тот же принцип, что уже у Speedrun/Caravan (имя дисциплины не переводится)
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
     // 11.09.2026 «Speedrun RSG»: второй вариант рядом с постоянной трассой (SSG) — свежий сид
     // каждый забег, тот же каркас, что уже у Caravan (forgeSeg-переключатель под кнопкой полёта).
@@ -196,7 +196,7 @@ const I18N = {
     gyroStatTg:'Датчик: Telegram · жив', gyroStatWeb:'Датчик: веб-канал · жив', gyroStatNone:'Датчик молчит — играй пальцем',
     stars:'Звёзды', maxCombo:'Макс. комбо', share:'Поделиться', bestByControl:'Личные рекорды по управлению',
     home:'На экран «Домой»',
-    feedbackBtn:'Написать разработчику', feedbackTitle:'Поддержка', // 14.09.2026: короткий заголовок экрана, кнопка на главном не тронута — тот же приём, что modesTitle/relayMineTitle
+    feedbackBtn:'Поддержка', feedbackTitle:'Поддержка', // 15.09.2026 (владелец): кнопка на главном тоже стала «Поддержка» — было «Написать разработчику», теперь то же слово, что и заголовок экрана
     feedbackHint:'Идея, вопрос или ошибка. Читаю каждое сообщение. С уважением, EXXXIT.', // 08.09.2026, владелец: «создатель игры» → подпись студии, как на карточке ниже на этом же экране
     feedbackPlaceholder:'Опишите, что случилось или добавьте автодиагностику и скриншот.', feedbackSend:'Отправить', // 08.09.2026, владелец: подсказка теперь явно называет обе кнопки ниже — не обязательно писать текст, если приложить диагностику/снимок; 13.09.2026, владелец: точка в конце фразы
     feedbackAttach:'Добавить автодиагностику', feedbackAttached:'Данные игры добавлены в сообщение',
@@ -270,7 +270,7 @@ const I18N = {
     duelWin:(n,b)=>'Вызов побит! Планка '+fmtN(b)+' м от '+escapeHtml(n)+' — твоя.',
     duelLose:(n,b)=>'Не побито: у '+escapeHtml(n)+' — '+fmtN(b)+' м. Реванш?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' м на Волне '+w+' в Cosmogram. Сможешь лучше? ⚔️',
-    mineTab:'Мои', topTab:'Топ', topMe:'Твоё место: ', topLoading:'Загрузка…', topCompTitle:'Топ соревнований',
+    mineTab:'Мои', topTab:'Турниры', topMe:'Твоё место: ', topLoading:'Загрузка…', // 15.09.2026: «Топ»→«Турниры» — вкладка теперь несёт все 6 дисциплин, не только личный способ управления; topCompTitle удалён (был текстом отдельного экрана/кнопки «Топ соревнований», обоих больше нет)
     topEmpty:'Пока пусто — будь первым!', topTgOnly:'Таблица пока не отвечает — попробуй позже',
     /* 13.08.2026 «Витрина, а не клуб». Гость видит таблицу целиком; приглашение стоит ПОД ней
        и говорит о возможности, а не об условии. Прежний topTgOnly («войди через Telegram —
@@ -312,7 +312,7 @@ const I18N = {
     recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     topVerified:'Result confirmed by the run', unitM:'m', dist:'Distance', recordDist:'Distance record',
     // 15.09.2026: modes/modesBack/modesTitle removed — the Tournaments screen is gone (mode carousel on the home screen replaces it)
-    modeClassic:'Classic', modeClassicD:'Fly as long as your lives last — free flight, no rules',
+    modeClassic:'Score Attack', modeClassicD:'Fly as long as your lives last — free flight, no rules',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
     modeSpeedrunRSGD:'10,000 points against the clock — a new track every run',
     speedrunSSG:'Fixed', speedrunRSG:'Random',
@@ -377,7 +377,7 @@ const I18N = {
     tiltAllow:'Allow gyro control?', tiltOn:'Gyro enabled', setGyroRow:'Gyro', sens:'Sensitivity',
     gyroStatTg:'Sensor: Telegram · live', gyroStatWeb:'Sensor: web channel · live', gyroStatNone:'Sensor silent — use your finger',
     stars:'Stars', maxCombo:'Max combo', share:'Share', bestByControl:'Personal records by control',
-    feedbackBtn:'Contact developer', feedbackTitle:'Support',
+    feedbackBtn:'Support', feedbackTitle:'Support',
     feedbackHint:'An idea, a question, or a bug. I read every message. — The game’s creator',
     feedbackPlaceholder:'Describe what happened', feedbackSend:'Send',
     feedbackAttach:'Add auto-diagnostics', feedbackAttached:'Game data added to your message',
@@ -441,7 +441,7 @@ const I18N = {
     duelWin:(n,b)=>'Challenge beaten! The '+fmtN(b)+' m bar from '+escapeHtml(n)+' is yours.',
     duelLose:(n,b)=>'Not beaten: '+escapeHtml(n)+' holds '+fmtN(b)+' m. Rematch?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m on Wave '+w+' in Cosmogram. Beat that! ⚔️',
-    mineTab:'Mine', topTab:'Top', topMe:'Your rank: ', topLoading:'Loading…', topCompTitle:'Competitive Top',
+    mineTab:'Mine', topTab:'Tournaments', topMe:'Your rank: ', topLoading:'Loading…',
     topEmpty:'Empty so far — be the first!', topTgOnly:'The board is not answering — try later',
     topWouldBe:(s,r,t)=>'Your '+s+' would be #'+r+' of '+t,
     topJoinTitle:'Want to be on the board?',
@@ -478,7 +478,7 @@ const I18N = {
     lampRed:'Sensor en silencio — control solo con el dedo',
     hangar:'COLECCIÓN', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia',
-    modeClassic:'Clásico', modeClassicD:'Vuela mientras tengas vidas — vuelo libre, sin reglas',
+    modeClassic:'Score Attack', modeClassicD:'Vuela mientras tengas vidas — vuelo libre, sin reglas',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     modeSpeedrunRSGD:'10.000 puntos contra el reloj — una pista nueva en cada carrera',
     speedrunSSG:'Fija', speedrunRSG:'Aleatoria',
@@ -539,7 +539,7 @@ const I18N = {
     gyroStatTg:'Sensor: Telegram · activo', gyroStatWeb:'Sensor: canal web · activo',
     gyroStatNone:'Sensor en silencio — juega con el dedo',
     stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', home:'Añadir a inicio', bestByControl:'Récords personales por control',
-    feedbackBtn:'Escribir al desarrollador', feedbackTitle:'Soporte',
+    feedbackBtn:'Soporte', feedbackTitle:'Soporte',
     feedbackHint:'Una idea, una pregunta o un error. Leo cada mensaje. Atentamente, el creador del juego.',
     feedbackPlaceholder:'Describe qué pasó', feedbackSend:'Enviar',
     feedbackAttach:'Añadir autodiagnóstico', feedbackAttached:'Datos del juego añadidos al mensaje',
@@ -617,7 +617,7 @@ const I18N = {
     duelWin:(n,b)=>'¡Reto superado! La marca de '+fmtN(b)+' m de '+escapeHtml(n)+' es tuya.',
     duelLose:(n,b)=>'No superado: '+escapeHtml(n)+' tiene '+fmtN(b)+' m. ¿Revancha?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m en la Oleada '+w+' en Cosmogram. ¿Puedes hacerlo mejor? ⚔️',
-    mineTab:'Mías', topTab:'Top', topMe:'Tu puesto: ', topLoading:'Cargando…', topCompTitle:'Top de competiciones',
+    mineTab:'Mías', topTab:'Torneos', topMe:'Tu puesto: ', topLoading:'Cargando…',
     topEmpty:'Vacío por ahora — ¡sé el primero!',
     topTgOnly:'La tabla no responde — inténtalo más tarde',
     topWouldBe:(s,r,t)=>'Tus '+s+' serían el puesto '+r+' de '+t,
@@ -659,7 +659,7 @@ const I18N = {
     lampRed:'Sensor em silêncio — controle só com o dedo',
     hangar:'COLEÇÃO', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância',
-    modeClassic:'Clássico', modeClassicD:'Voe enquanto tiver vidas — voo livre, sem regras',
+    modeClassic:'Score Attack', modeClassicD:'Voe enquanto tiver vidas — voo livre, sem regras',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     modeSpeedrunRSGD:'10.000 pontos contra o relógio — uma pista nova a cada corrida',
     speedrunSSG:'Fixa', speedrunRSG:'Aleatória',
@@ -720,7 +720,7 @@ const I18N = {
     gyroStatTg:'Sensor: Telegram · ativo', gyroStatWeb:'Sensor: canal web · ativo',
     gyroStatNone:'Sensor em silêncio — jogue com o dedo',
     stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', home:'Adicionar à tela inicial', bestByControl:'Recordes pessoais por controle',
-    feedbackBtn:'Falar com o desenvolvedor', feedbackTitle:'Suporte',
+    feedbackBtn:'Suporte', feedbackTitle:'Suporte',
     feedbackHint:'Uma ideia, uma pergunta ou um erro. Leio cada mensagem. Atenciosamente, o criador do jogo.',
     feedbackPlaceholder:'Descreva o que aconteceu', feedbackSend:'Enviar',
     feedbackAttach:'Adicionar autodiagnóstico', feedbackAttached:'Dados do jogo adicionados à mensagem',
@@ -798,7 +798,7 @@ const I18N = {
     duelWin:(n,b)=>'Desafio superado! A marca de '+fmtN(b)+' m de '+escapeHtml(n)+' é sua.',
     duelLose:(n,b)=>'Não superado: '+escapeHtml(n)+' tem '+fmtN(b)+' m. Revanche?',
     duelShareText:(d,w)=>myCallsign()+': '+fmtN(d)+' m na Onda '+w+' no Cosmogram. Consegue fazer melhor? ⚔️',
-    mineTab:'Minhas', topTab:'Top', topMe:'Sua posição: ', topLoading:'Carregando…', topCompTitle:'Top das competições',
+    mineTab:'Minhas', topTab:'Torneios', topMe:'Sua posição: ', topLoading:'Carregando…',
     topEmpty:'Vazio por enquanto — seja o primeiro!',
     topTgOnly:'A tabela não responde — tente mais tarde',
     topWouldBe:(s,r,t)=>'Seus '+s+' seriam o '+r+'º de '+t,
@@ -838,7 +838,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Meilleur',
     recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
     topVerified:'Résultat confirmé par la partie', unitM:'m', dist:'Distance', recordDist:'Record de distance',
-    modeClassic:'Classique', modeClassicD:'Vole tant que tu as des vies — vol libre, sans règles',
+    modeClassic:'Score Attack', modeClassicD:'Vole tant que tu as des vies — vol libre, sans règles',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     modeSpeedrunRSGD:'10 000 points contre la montre — une piste nouvelle à chaque course',
     speedrunSSG:'Fixe', speedrunRSG:'Aléatoire',
@@ -902,7 +902,7 @@ const I18N = {
     tiltAllow:'Autoriser le gyroscope ?', tiltOn:'Gyroscope activé', setGyroRow:'Gyroscope', sens:'Sensibilité',
     gyroStatTg:'Capteur : Telegram · actif', gyroStatWeb:'Capteur : canal web · actif', gyroStatNone:'Capteur silencieux — utilise ton doigt',
     stars:'Étoiles', maxCombo:'Combo max', share:'Partager', bestByControl:'Records personnels par contrôle',
-    feedbackBtn:'Écrire au développeur', feedbackTitle:'Support',
+    feedbackBtn:'Support', feedbackTitle:'Support',
     feedbackHint:'Une idée, une question ou un bug. Je lis chaque message. Bien à toi, le créateur du jeu.',
     feedbackPlaceholder:'Décris ce qui s\'est passé', feedbackSend:'Envoyer',
     feedbackAttach:'Ajouter l\'auto-diagnostic', feedbackAttached:'Données du jeu ajoutées au message',
@@ -966,7 +966,7 @@ const I18N = {
     duelWin:(n,b)=>'Défi battu ! La barre de '+fmtN(b)+' m de '+escapeHtml(n)+' est à toi.',
     duelLose:(n,b)=>'Pas battu : '+escapeHtml(n)+' tient '+fmtN(b)+' m. Revanche ?',
     duelShareText:(d,w)=>myCallsign()+' : '+fmtN(d)+' m Vague '+w+' dans Cosmogram. Fais mieux ! ⚔️',
-    mineTab:'Moi', topTab:'Classement', topMe:'Ton rang : ', topLoading:'Chargement…', topCompTitle:'Top des compétitions',
+    mineTab:'Moi', topTab:'Tournois', topMe:'Ton rang : ', topLoading:'Chargement…',
     topEmpty:'Vide pour l\u2019instant — sois le premier !', topTgOnly:'Le classement ne répond pas — réessaie plus tard',
     topWouldBe:(s,r,t)=>'Tes '+s+' seraient '+r+'e sur '+t,
     topJoinTitle:'Envie d\u2019être au classement ?',

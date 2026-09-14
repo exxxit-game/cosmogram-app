@@ -74,7 +74,6 @@ function backAction(){
   else if(screenName==='settings') closeSettings();
   else if(screenName==='diag') setScreen('settings'); // v1.66.3: сервисный центр — назад в настройки
   else if(screenName==='forge') setScreen('menu'); // 08.09.2026 (владелец, живой баг): было setScreen('modes') с v1.68.0, когда Конструктор открывался только изнутри Соревнований; вход переехал на главное меню 05.09.2026 (см. js/forge.js:1011, та же правка для кнопки forgeBack), а эту нативную/аппаратную ветку тогда забыли — тот же класс бага, что уже трижды чинили в этой же функции сегодня (modes/modesTop/relayMine)
-  else if(screenName==='modesTop') setScreen('menu'); // 15.09.2026: экран «Турниры» (modes) удалён — Топ соревнований теперь висит прямо на главном, «Назад» с него тоже прямо домой
   else if(screenName==='relayMine') setScreen('menu'); // 15.09.2026: было setScreen('modes') — экран-посредник удалён, «Статус» эстафеты теперь открывается с карточки на главном
   else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
   else if(screenName==='over') toMenu();
@@ -145,7 +144,6 @@ function setScreen(name){
   toggleCls('settingsScreen','hidden', name!=='settings');
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
-  toggleCls('modesTopScreen','hidden', name!=='modesTop'); // 06.09.2026: Топ соревнований — свой экран, не вкладка внутри Достижений
   toggleCls('relayMineScreen','hidden', name!=='relayMine'); // 07.09.2026: «Мои эстафеты» — единственный способ узнать судьбу этапа после сдачи
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
@@ -179,20 +177,8 @@ function setScreen(name){
   else if(calLampT){ clearInterval(calLampT); calLampT=null; }
   if(name==='settings') accFill(); // ленивый монтаж виджета входа: сторонний скрипт не летит при загрузке игры (v1.51.0)
   if(typeof duelBanner==='function') duelBanner(); // дуэль: плашка в меню, планка в HUD — по текущему экрану
-  /* 07.09.2026, владелец (скрин): «ТОП СОРЕВНОВАНИЙ» — единственный ДВУхсловный заголовок
-     экрана, переносится на 2 строки на узком экране и накрывает круглую кнопку «Назад»
-     (та стоит одной и той же абсолютной высотой, не знает о переносе). Тот же приём, что
-     syncScoreHudGap (core.js) — меряем настоящую высоту после реального рендера кадром
-     позже, не гадаем числом заранее. Только этот экран: у остальных заголовок однословный
-     и до кнопки не достаёт даже с переносом (короче/у'же по глифам). */
-  if(name==='modesTop'){
-    requestAnimationFrame(function(){
-      const t=$('modesTopTitle'), b=$('modesTopBackBtn'); if(!t||!b) return;
-      t.style.marginTop='';
-      const need=Math.round(b.getBoundingClientRect().bottom+6-t.getBoundingClientRect().top);
-      t.style.marginTop = need>0 ? need+'px' : '';
-    });
-  }
+  // 15.09.2026: экран «Топ соревнований» (modesTop, двухсловный заголовок, упирался в кнопку
+  // «Назад» — прежний фикс жил здесь) удалён целиком, вместе с ним и этот особый случай.
   const stid=SCREEN_TITLE_ID[name];
   if(stid) requestAnimationFrame(function(){ const t=$(stid); shrinkScreenTitle(t); centerTitleOnHeader(t); });
 }
@@ -213,7 +199,7 @@ function setScreen(name){
    Kembali/Back — самые широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). */
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
   feedback:'feedbackTitle',hangar:'hangarTitle', // 15.09.2026: 'modes' убран — экран «Турниры» удалён
-  ach:'achTitle',modesTop:'modesTopTitle',relayMine:'relayMineTitle',card:'cardTitle'};
+  ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle'};
   // 'forge' сюда не входит — #forgeScreen держит свой отдельный, небольшой положительный
   // --menu-buf (index.html): «Конструктор» не влезает между кнопками ни сжатием (владелец:
   // «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано — сидит
@@ -339,14 +325,85 @@ function heroCarouselFill(){
   const dl = usedN>=DAILY_ATTEMPTS;
   const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
   put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
-  toggleCls('modeDaily','locked',dl);
+  const dailyCard=$('modeDaily').closest('.heroCard'); if(dailyCard) dailyCard.classList.toggle('locked',dl); // 15.09.2026: .locked гасит ВСЮ карточку (.heroCard), а id теперь на вложенной кнопке — .closest() достаёт правильный элемент
   speedrunCardFill(); // 11.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Постоянная/Случайная
   caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель тира
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
   put('modeRelay',L.modeRelay,L.modeRelayD); // 06.09.2026
   heroDotsInit();
+  heroRecordBadgesFill();
+  heroPlayIconsFill();
+  heroTrailsFill();
 }
+/* 15.09.2026 «Бейдж-рекорд на карточке»: тот же источник чисел, что уже копится по ходу игры
+   (Store-ключи, которыми же топ считает «моё место» — myBestFor выше). Score Attack показывает
+   лучший из трёх способов управления (владелец: «просто иконка рядом с рекордом» — здесь ещё
+   даже без иконки, число одно, способ виден только в самом топе построчно). Пусто — бейдж скрыт:
+   нечем хвастаться, нечего показывать. */
+function heroRecordFor(cat){
+  if(cat==='touch') return { val:Math.max(saneNumber(Store.get('bestTouch',0),0),saneNumber(Store.get('bestGyro',0),0),saneNumber(Store.get('bestKeys',0),0)), isTime:false };
+  if(cat==='daily'){ const tk=trackDayKey(), db=Store.get('dailyBest',null); return { val:(db&&db.d===tk)?saneNumber(db.s,0):0, isTime:false }; }
+  if(cat==='speedrun') return { val:saneNumber(Store.get((typeof speedrunRSGGet==='function'&&speedrunRSGGet())?'srBestRSG':'srBest',0),0), isTime:true };
+  if(cat==='caravan') return { val:saneNumber(Store.get('bestCaravan',0),0), isTime:false };
+  if(cat==='slalom') return { val:saneNumber(Store.get('slalomBest',0),0), isTime:true };
+  if(cat==='biathlon') return { val:saneNumber(Store.get('biathlonBest',0),0), isTime:true };
+  return { val:0, isTime:false };
+}
+function heroRecordBadgesFill(){
+  [['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSpeedrun','speedrun'],
+   ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(function(pair){
+    const el=$(pair[0]); if(!el) return;
+    const r=heroRecordFor(pair[1]);
+    const span=el.querySelector('span');
+    if(r.val>0){ if(span) span.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); }
+    else el.classList.add('hidden');
+  });
+}
+/* 15.09.2026 (владелец): вместо родового ▶ — твой собственный самолётик (текущий скин), «будто
+   с карточки в игру попадаешь». angarShip() — та же функция, что уже рисует маленький борт на
+   плитках Коллекции (js/ui.js:2094-2099, тот же canvas-приём: setTransform+translate+scale),
+   ей всё равно, кто её зовёт — просто рисует в переданный 2D-контекст. */
+function heroPlayIconsFill(){
+  const sk=(typeof SKINS_BY_ID!=='undefined' && SKINS_BY_ID.get(S.skin)) || (typeof SKINS!=='undefined'?SKINS[0]:null);
+  if(!sk) return;
+  document.querySelectorAll('.heroCard .playHintCv').forEach(function(cv){
+    const ctx=cv.getContext('2d'); if(!ctx) return;
+    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.setTransform(2,0,0,2,0,0); ctx.translate(13,14);
+    angarShip(ctx, sk, .42, false);
+  });
+}
+/* 15.09.2026 «Траектория рекорда фоном» (владелец, макет trayektoriya-rekorda-na-fone-kartochki,
+   «отлично, мне нравится, есть личное»): та же лента, что несёт «смотреть»/«лететь рядом» в
+   Турнирах (ghostPack/ghostParse, js/game.js) — но не проигрывается, а рисуется один раз статичной
+   линией. Бакет ключа — тот же, что теперь пишет ghostSave() (js/game.js): один на все три
+   способа управления Score Attack, один на все тиры Caravan. Пусто — просто рекорда ещё нет,
+   линии рисовать нечем, карточка остаётся градиентом (как раньше). */
+const HERO_TRAIL_COLOR={touch:'#dfe8ff',daily:'#f0c040',speedrun:'#ffb27a',caravan:'#ffd76b',slalom:'#6be0ff',biathlon:'#7cf0af'};
+const HERO_TRAIL_EL={touch:'trailClassic',daily:'trailDaily',speedrun:'trailSpeedrun',caravan:'trailCaravan',slalom:'trailSlalom',biathlon:'trailBiathlon'};
+function heroTrailsFill(){
+  Object.keys(HERO_TRAIL_EL).forEach(function(cat){
+    const svg=$(HERO_TRAIL_EL[cat]); if(!svg) return;
+    const gr=Store.get('ghostRun_'+cat, null);
+    const track=(gr && typeof gr==='object')?gr.track:'';
+    const g=(typeof ghostParse==='function' && track)?ghostParse(track):null;
+    if(!g || !g.xs || g.xs.length<2){ svg.innerHTML=''; return; }
+    const n=g.xs.length, STEP=Math.max(1,Math.floor(n/26)); // прореживаем до ~26 точек — узор, не полная лента
+    let d='';
+    for(let i=0;i<n;i+=STEP){ d += (d?' L':'M')+(g.xs[i]*320).toFixed(1)+','+(g.ys[i]*112).toFixed(1); }
+    svg.innerHTML='<path d="'+d+'" fill="none" stroke="'+(HERO_TRAIL_COLOR[cat]||'#fff')+'" stroke-width="1.4" stroke-linecap="round"/>';
+  });
+}
+function openAchTop(cat){ // 15.09.2026: тап по бейджу-рекорду на карточке — сразу в Достижения→Турниры на нужной дисциплине
+  sfx.click(); haptic('light');
+  topCat=cat;
+  setScreen('ach'); achTabSel(false);
+  document.querySelectorAll('#topCats .topCat').forEach(x=>x.classList.toggle('sel',x.dataset.cat===cat));
+}
+document.querySelectorAll('.recordBadge').forEach(function(b){
+  b.addEventListener('click', function(e){ e.stopPropagation(); openAchTop(b.dataset.cat); });
+});
 function heroDotsInit(){ // точки-индикатор — создаются один раз, дальше только heroCarouselDotsSync() переключает .on
   const car=$('heroCarousel'), dots=$('heroDots'); if(!car||!dots||dots.children.length) return;
   for(let i=0;i<car.children.length;i++){ const d=document.createElement('div'); d.className='heroDot'+(i===0?' on':''); dots.appendChild(d); }
@@ -631,7 +688,7 @@ function gameOver(){
     ghostPid>0 && ghostCat && cat===ghostCat && ghostBest>0 && sc>ghostBest); // призрачная месть: призрак из топа, та же категория, счёт выше его планки
   if (isRecord){ Store.set(modeKey,sc); haptic('success'); if (typeof confetti==='function') confetti(); // вау-момент
     setTimeout(()=>{ if (typeof hapticMorse==='function') hapticMorse(myCallsign()); },950); // виброэфир: позывной «передан в эфир» (v1.54.0)
-    if (typeof ghostSave==='function') ghostSave(); } // призрак: траектория рекордного забега
+    if (typeof ghostSave==='function') ghostSave(cat); } // призрак: траектория рекордного забега — 15.09.2026: своя лента на дисциплину, cat уже посчитан выше
   if (isRecord && prevCat>0) Stats.recBeats=(Stats.recBeats||0)+1; // побит СУЩЕСТВУЮЩИЙ рекорд категории (первый зачёт — не в счёт)
   if (sc>S.best){ S.best=sc; Store.set('best',sc); } // общий максимум — для HUD и меню
   const distM=Math.floor(S.dist); // чистый пробег: без бонусов, единый для всех режимов
@@ -930,10 +987,14 @@ function ghostUpload(category, track, skin, best, seed){
   // runPassFill() (#runHead/#runPass) — здесь остаются только рекорды по управлению, подписанные,
   // не вперемешку с числами текущего забега (владелец: старая раскладка «сложная и непонятная»).
   const bestPill=(icn,v)=>'<span class="miniPill">'+ic(icn)+'<b>'+v+'</b></span>';
+  // 15.09.2026 (владелец): «если у человека нет гироскопа зачем ему такая кнопка» — та же честная
+  // проверка, что уже отвечает за сам оффер гироскопа (gyro.js), не факт API (HAS_GYRO один
+  // всегда true даже на ноутбуке без датчика).
+  const hasGyro=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO;
   setHTML('stats',
     '<div class="bestLbl rise" style="animation-delay:120ms">'+L.bestByControl+'</div>'+
     '<div class="bestPills rise" style="animation-delay:200ms">'+
-      bestPill('phone',saneNumber(Store.get('bestGyro',0),0))+
+      (hasGyro?bestPill('phone',saneNumber(Store.get('bestGyro',0),0)):'')+
       bestPill('hand',saneNumber(Store.get('bestTouch',0),0))+
       bestPill('keys',saneNumber(Store.get('bestKeys',0),0))+
       bestPill('ruler',saneNumber(Store.get('bestDist',0),0)+' '+(L.unitM||'м'))+
@@ -1083,6 +1144,9 @@ function refreshMenu(){
   gridBalance($('menuRow')); // v1.45.0: «Продолжить полёт» убран — перезапуск сам возвращает в небо (bootFly), в сессии есть пауза // «Единая палуба»: сетка меню без одиноких половинок
   if (typeof duelBanner==='function') duelBanner(); // дуэль: плашка вызова в меню
   if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // 28.08.2026: «Первое воспоминание» — карточка появляется, если запись есть
+  if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
+  if (typeof heroPlayIconsFill==='function') heroPlayIconsFill(); // 15.09.2026: скин мог смениться в Коллекции — самолётик на карточках догоняет его тут же
+  if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -2678,9 +2742,8 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
     runMode='theater'; startGame();
   }).catch(()=>{ toast(L.tribuneNone,'rgba(191,232,255,.45)'); }); // 22.08.2026: сбой сети — та же честная тишина, что и «мастер ещё не показал полёт»
 });
-// 15.09.2026: экран «Турниры» (список режимов) удалён — «Топ соревнований» ведёт сразу на
-// лидерборды, тот же переход, что раньше делал #modesTopBtn изнутри «Турниров» (см. ниже).
-wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('modesTop'); renderTopComp(); });
+// 15.09.2026: #modesBtn («Топ соревнований») убран с главного экрана совсем — вход в Турниры
+// теперь через Достижения (achBtn) или через бейдж-рекорд прямо на карточке карусели.
 wireOn('modeDaily', 'click', flyDaily);
 wireOn('modeSlalom', 'click', flySlalom);
 wireOn('modeBiathlon', 'click', flyBiathlon);
@@ -2710,11 +2773,26 @@ wireOn('modeRelay', 'click', flyRelay);
    7 элементов в одном контейнере, полный пересчёт на каждый scroll-кадр дешевле новой сущности. */
 function heroCarouselDotsSync(){
   const car=$('heroCarousel'), dots=$('heroDots'); if(!car||!dots||!car.children.length) return;
-  const w=car.children[0].getBoundingClientRect().width + 14; // + gap, см. CSS .heroCard/.heroCarousel
+  const w=car.children[0].getBoundingClientRect().width; // 15.09.2026: просвета/gap больше нет — карточка на всю ширину
+  if(!w) return;
   const idx=Math.max(0, Math.min(dots.children.length-1, Math.round(car.scrollLeft/w)));
   for(let i=0;i<dots.children.length;i++) dots.children[i].classList.toggle('on', i===idx);
 }
 wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync); });
+/* 15.09.2026 «Сами по очереди»: владелец — «не хочу чтобы другой режим торчал, они просто
+   могут сами по очереди показываться перед глазами игрока каждые 7 секунд». Раз в 7с — на
+   следующую карточку (по кругу), скроллом, тем же scroll-snap, что и у ручного свайпа —
+   heroCarouselDotsSync() подхватывает смену сама, отдельно её не дёргаем. Не крутим, если
+   экран сейчас не «меню» (не видно) — бессмысленный скролл невидимого контейнера. */
+setInterval(function(){
+  if (screenName!=='menu') return;
+  const car=$('heroCarousel'); if(!car || !car.children.length) return;
+  const w=car.children[0].getBoundingClientRect().width; if(!w) return;
+  const n=car.children.length;
+  const cur=Math.round(car.scrollLeft/w);
+  const next=(cur+1)%n;
+  car.scrollTo({ left: next*w, behavior:'smooth' });
+}, 7000);
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
@@ -3228,9 +3306,10 @@ function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }
 function closeAch(){ toMenu(); }
 wireOn('achBtn', 'click', openAch);
 wireOn('achBackBtn', 'click', closeAch); // 28.08.2026: вернулась, см. коммент у hangarBackBtn
-/* Вкладка «🌍 Топ»: честная таблица (модуль sync.js) */
+/* Вкладка «Турниры»: честная таблица (модуль sync.js). 15.09.2026: экран «Топ соревнований»
+   (modesTopScreen, свой набор compTop-элементов, topCatComp, renderTopComp) удалён целиком —
+   его 5 дисциплин переехали в этот же #topCats/topCat/renderTop(), второй набор не нужен. */
 let topCat='touch';
-let topCatComp='daily'; // 06.09.2026: «Топ соревнований» — своя категория по умолчанию, свой экран
 function achTabSel(mine){
   toggleCls('tabMine','sel',mine); toggleCls('tabTop','sel',!mine);
   toggleCls('achMineWrap','hidden',!mine); toggleCls('achTopWrap','hidden',mine);
@@ -3238,21 +3317,11 @@ function achTabSel(mine){
 }
 wireOn('tabMine', 'click',()=>{ achTabSel(true); sfx.click(); });
 wireOn('tabTop', 'click',()=>{ achTabSel(false); sfx.click(); });
-// 06.09.2026: два независимых набора вкладок (личный #topCats, соревновательный #compTopCats) —
-// область поиска сужена до своего контейнера, иначе клик в одном экране снял бы .sel в другом.
 document.querySelectorAll('#topCats .topCat').forEach(b=>b.addEventListener('click',()=>{
   topCat=b.dataset.cat;
   document.querySelectorAll('#topCats .topCat').forEach(x=>x.classList.toggle('sel',x===b));
   renderTop(); sfx.click();
 }));
-document.querySelectorAll('#compTopCats .topCat').forEach(b=>b.addEventListener('click',()=>{
-  topCatComp=b.dataset.cat;
-  document.querySelectorAll('#compTopCats .topCat').forEach(x=>x.classList.toggle('sel',x===b));
-  renderTopComp(); sfx.click();
-}));
-// 15.09.2026: #modesTopBtn (жил внутри удалённого экрана «Турниры») убран — вход теперь один,
-// #modesBtn на главном (см. wireOn выше). «Назад» с «Топ соревнований» — тоже сразу домой.
-wireOn('modesTopBackBtn', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 /* 07.09.2026 «Куда делся первый игрок»: список цепочек, где я сыграл хоть один этап — с
    текущим статусом (ждёт этап N / завершена) и общим счётом. Своя строка (.relayMineRow),
    не .topIt — там ровно один факт в строке (место+имя+счёт), здесь два разных (кто играл +
@@ -3463,8 +3532,71 @@ function renderTopFor(screen, getCat, ids){
       (!r.me&&r.pid?'<button class="topWatch" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
   }).catch(()=>{ if(screenName===screen && getCat()===askCat) list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; }); // 22.08.2026: сбой сети — честное сообщение вместо зависшего «Загрузка…»
 }
-function renderTop(){ renderTopFor('ach', ()=>topCat, {list:'topList',me:'topMe',wouldBe:'topWouldBe',join:'topJoin',dcLogin:'dcLogin'}); }
-function renderTopComp(){ renderTopFor('modesTop', ()=>topCatComp, {list:'compTopList',me:'compTopMe',wouldBe:'compTopWouldBe',join:'compTopJoin',dcLogin:'compDcLogin'}); }
+function renderTop(){
+  if (topCat==='touch'){ renderTopScoreAttack(); return; } // 15.09.2026: плитка «Score Attack» — слитый список, не обычная категория
+  renderTopFor('ach', ()=>topCat, {list:'topList',me:'topMe',wouldBe:'topWouldBe',join:'topJoin',dcLogin:'dcLogin'});
+}
+/* 15.09.2026 «Score Attack, один список»: владелец — «какие есть привилегии между гироскоп,
+   клавиатура и палец? просто иконка» — сервер по-прежнему хранит три честных, раздельных
+   категории (touch/gyro/keys, cosmogram-top/index.ts CATS), но показываем их ОДНИМ списком:
+   три параллельных запроса, слияние и сортировка по счёту на клиенте, у каждой строки —
+   иконка способа управления (не смешиваем на сервере, только на экране). */
+let scoreAttackGen=0;
+const CTL_ICON={touch:'i-hand',gyro:'i-phone',keys:'i-keys'};
+function renderTopScoreAttack(){
+  const list=$('topList'), me=$('topMe'), wb=$('topWouldBe'), jn=$('topJoin'), dl=$('dcLogin');
+  const gost=(typeof syncAvailable!=='function')||!syncAvailable();
+  me.textContent=''; list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
+  if(wb) wb.classList.add('hidden'); if(jn) jn.classList.add('hidden');
+  if(typeof syncTop!=='function'){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+  if(gost){ if(dl){ dl.classList.remove('hidden'); if(!syncInitData()) dcMount(dl); } }
+  else { if(dl){ dl.classList.add('hidden'); dl.innerHTML=''; } }
+  const myGen=++scoreAttackGen;
+  Promise.all(['touch','gyro','keys'].map(c=>syncTop(c).then(d=>({c,d})).catch(()=>({c,d:null})))).then(results=>{
+    if(screenName!=='ach' || topCat!=='touch' || myGen!==scoreAttackGen) return; // ушёл с вкладки/экрана, пока грузилось
+    const ok=results.filter(r=>r.d&&r.d.ok);
+    if(!ok.length){
+      const offline=typeof navigator!=='undefined' && navigator.onLine===false;
+      list.innerHTML='<div class="topMsg">'+(offline?(L.syncOffline||L.topTgOnly):L.topTgOnly)+'</div>';
+      return;
+    }
+    let merged=[];
+    ok.forEach(r=>{ (r.d.top||[]).forEach(row=>merged.push(Object.assign({},row,{_ctl:r.c}))); });
+    merged.sort((a,b)=>Number(b.best)-Number(a.best));
+    merged=merged.slice(0,15);
+    // «Моё место»: лучший из трёх личных рекордов — та же логика «выше тебя», что у renderTopFor,
+    // просто относительно слитого списка, а не одной категории.
+    const myVals={touch:myBestFor('touch'),gyro:myBestFor('gyro'),keys:myBestFor('keys')};
+    const myBestCtl=Object.keys(myVals).reduce((a,b)=>myVals[a]>=myVals[b]?a:b);
+    const moy=myVals[myBestCtl];
+    const meRow=ok.map(r=>r.d.me).find(x=>x && Number(x.best)===moy);
+    if(!gost && meRow) me.textContent=L.topMe+'#'+meRow.rank+' · '+fmtN(meRow.best);
+    if(gost){
+      if(wb){
+        if(moy>0 && merged.length){
+          const vyshe=merged.filter(r=>Number(r.best)>moy).length;
+          wb.textContent=L.topWouldBe(fmtN(moy), vyshe+1, merged.length);
+          wb.classList.remove('hidden');
+        } else wb.classList.add('hidden');
+      }
+      if(jn){
+        if(jn.children[0]) jn.children[0].textContent=L.topJoinTitle;
+        if(jn.children[1]) jn.children[1].textContent=L.topJoinSub;
+        jn.classList.remove('hidden');
+      }
+    }
+    if(!merged.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
+    const CTL_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys};
+    list.innerHTML=merged.map((r,i)=>'<div class="topIt'+(r.me?' me':'')+'" style="animation-delay:'+(Math.min(i,10)*60)+'ms"><span class="topN'+(i<3?' m'+(i+1):'')+'">'+(i+1)+
+      (i<3?'<svg class="crownIc" viewBox="0 0 24 16"><use href="#i-crown"></use></svg>':'')+'</span>'+
+      '<svg class="topCtlIc ic" title="'+escapeHtml(CTL_LBL[r._ctl]||'')+'"><use href="#'+CTL_ICON[r._ctl]+'"></use></svg>'+
+      '<span class="topNm">'+escapeHtml(r.name)+(r.provider&&r.provider!=='tg'?' <b class="pvTag">'+escapeHtml(r.provider)+'</b>':'')+'</span>'+
+      '<span class="topSc">'+fmtN(r.best)+'</span>'+
+      (r.verified?'<span class="topVf" title="'+escapeHtml(L.topVerified||'')+'">'+ic('checkbadge')+'</span>':'')+
+      (!r.me&&r.pid?'<button class="topGh" data-cat="'+r._ctl+'" data-gh="'+(Math.floor(Number(r.pid))||0)+'" data-best="'+Math.floor(Number(r.best)||0)+'" title="'+L.ghostGo+'">'+ic('ghost')+'</button>':'')+
+      (!r.me&&r.pid?'<button class="topWatch" data-cat="'+r._ctl+'" data-wt="'+(Math.floor(Number(r.pid))||0)+'" title="'+L.topWatch+'">'+ic('play')+'</button>':'')+'</div>').join('');
+  });
+}
 /* ---------- Призрак из топа: скачать чужой трек и лететь рядом ----------
    Учимся тактике и манёврам рекордсмена + живая витрина скинов (его самолётик виден в полёте). */
 /* 10.09.2026 (владелец: «нужно чтобы в соревнованиях тоже были кнопки просмотра и призрак»):
@@ -3517,7 +3649,7 @@ function wireTopGhostButtons(listId, getCat, screen){
     const b=e.target.closest('.topWatch'); if(!b) return;
     const pid=Math.floor(Number(b.dataset.wt));
     if(!pid || b._busy) return;
-    const cat0=getCat();
+    const cat0=b.dataset.cat||getCat(); // 15.09.2026: Score Attack — слитый список из 3 категорий, у каждой строки своя настоящая (b.dataset.cat), getCat() тут всегда 'touch'
     const fixedKey=FIXED_COURSE_KEY[cat0];
     if (fixedKey){ // Слалом/Биатлон/Спидран: лента уже в памяти, без сети — см. FIXED_COURSE_KEY выше
       sfx.click(); haptic('light');
@@ -3552,7 +3684,7 @@ function wireTopGhostButtons(listId, getCat, screen){
     const b=e.target.closest('.topGh'); if(!b) return;
     const pid=Math.floor(Number(b.dataset.gh));
     if(!pid) return;
-    const cat0=getCat(); // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку
+    const cat0=b.dataset.cat||getCat(); // v1.282.20: категорию тоже замораживаем — игрок мог переключить вкладку; 15.09.2026: Score Attack — своя настоящая категория на строке (b.dataset.cat), не общая getCat()
     const fixedKey=FIXED_COURSE_KEY[cat0];
     if (fixedKey){ // Слалом/Биатлон/Спидран: лента уже в памяти, без сети — см. FIXED_COURSE_KEY выше
       sfx.click(); haptic('light');
@@ -3584,7 +3716,6 @@ function wireTopGhostButtons(listId, getCat, screen){
   });
 }
 wireTopGhostButtons('topList', ()=>topCat, 'ach');
-wireTopGhostButtons('compTopList', ()=>topCatComp, 'modesTop');
 
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */
 function morseHapLabel(){ rowSw('setMorseHapBtn', typeof morseHapOn==='function'&&morseHapOn()); setWellFill(); }
@@ -3648,7 +3779,7 @@ function applyLang(){
   /* 13.08.2026: тексты «тесно» зависят от ориентации — их раздаёт tooNarrowText(),
      иначе смена языка возвращала бы совет «поверните экран» лежащему набок телефону. */
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
-  setText('modesBtn',L.topCompTitle); heroCarouselFill(); // 15.09.2026: «Турниры»→«Топ соревнований», экран-список удалён, дисциплины теперь в карусели
+  heroCarouselFill(); // 15.09.2026: #modesBtn убран с главного совсем — 7 карточек карусели несут весь язык
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof workshopFillLabels==='function') workshopFillLabels(); // 05.09.2026 «Мастерская» — свой язык, тот же приём
   angarFillFilterChips(); // 06.09.2026: чипы Тюнинга — свой язык, тот же приём (no-op, если экран сейчас не открыт — box отсутствует в DOM только у скрытых частей своей же разметки, сама разметка всегда в DOM)
@@ -3701,12 +3832,10 @@ function applyLang(){
      каждая иконка. Переиспользую уже готовые ключи (те же слова, что у выбора управления и
      режимов — modeTouch/modeGyro/modeKeys/dist/modeDaily/modeSpeedrun/modeCaravan),
      новых переводов не завожу. */
-  const TOP_CAT_LBL={touch:L.modeTouch,gyro:L.modeGyro,keys:L.modeKeys,dist:L.dist,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,slalom:L.modeSlalom,biathlon:L.modeBiathlon};
+  const TOP_CAT_LBL={touch:L.modeClassic,daily:L.modeDaily,speedrun:L.modeSpeedrun,caravan:L.modeCaravan,slalom:L.modeSlalom,biathlon:L.modeBiathlon}; // 15.09.2026: touch — теперь плитка «Score Attack» (слитый список touch/gyro/keys), gyro/keys/dist отдельными плитками больше не бывают
   document.querySelectorAll('.topCat').forEach(function(b){
     const lbl=b.querySelector('.topCatLbl'); if(lbl) lbl.textContent=TOP_CAT_LBL[b.dataset.cat]||'';
   });
-  // 06.09.2026 «Топ соревнований»: новый экран + кнопка-вход на «Соревнованиях», тот же текст на обоих
-  setText('modesTopTitle', L.topCompTitle);
   setText('relayMineTitle', L.relayMineTitle);
   setText('relayMineBtnLbl', L.relayMineBtnLbl);
   setText('diagBtn',L.diagBtn);
