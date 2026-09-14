@@ -787,17 +787,20 @@ function gameOver(){
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored){ // v1.282.20: часы восстановленного забега начинались бы с нуля — такой рекорд нечестен
     const srKey = S.speedrunRSG ? 'srBestRSG' : 'srBest'; // 11.09.2026 «Speedrun RSG»: свой личный рекорд, не мешается с постоянным SSG
     const prevSr=saneNumber(Store.get(srKey,0),0);
-    if (!prevSr || S.time<prevSr){ Store.set(srKey,S.time); srNewBest=true; }
+    if (!prevSr || S.time<prevSr){ Store.set(srKey,S.time); srNewBest=true;
+      if (typeof ghostSave==='function') ghostSave('speedrun'); } // 15.09.2026: своя ветка победы (S.srWin) — ghostSave выше в общем isRecord её не видел, след не сохранялся ни на одной победе
   }
   let slalomNewBest=false; // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — рекорд считается только на настоящей победе
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored){
     const prevSl=saneNumber(Store.get('slalomBest',0),0);
-    if (!prevSl || S.time<prevSl){ Store.set('slalomBest',S.time); slalomNewBest=true; }
+    if (!prevSl || S.time<prevSl){ Store.set('slalomBest',S.time); slalomNewBest=true;
+      if (typeof ghostSave==='function') ghostSave('slalom'); } // 15.09.2026: та же дыра, что у Спидрана — своя ветка победы, общий ghostSave(cat) выше её не касался
   }
   let biathlonNewBest=false; // 06.09.2026 «Биатлон»: тот же приём — S.time уже несёт штрафы на этот момент
   if (S.mode==='biathlon' && S.biathlonWin && !S.wasRestored){
     const prevBi=saneNumber(Store.get('biathlonBest',0),0);
-    if (!prevBi || S.time<prevBi){ Store.set('biathlonBest',S.time); biathlonNewBest=true; }
+    if (!prevBi || S.time<prevBi){ Store.set('biathlonBest',S.time); biathlonNewBest=true;
+      if (typeof ghostSave==='function') ghostSave('biathlon'); } // 15.09.2026: та же дыра — своя ветка победы
   }
   S.wallet += S.starsCollected;
   Store.set('wallet', S.wallet);
