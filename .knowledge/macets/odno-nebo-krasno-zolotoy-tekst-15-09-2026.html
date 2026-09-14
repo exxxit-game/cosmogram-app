@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: «Одно небо для всех» — красно-золотой текст</title>
+<style>
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #1a2246 0%, #080b16 60%);
+    color:#f4f6fb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:40px 16px;
+    display:flex;flex-direction:column;align-items:center;gap:10px}
+  h1{font-size:18px;text-align:center;max-width:480px}
+  .note{color:#7d8aa8;font-size:13px;text-align:center;max-width:480px;margin-bottom:18px}
+  .stage{width:min(92%,420px);background:rgba(10,14,28,.5);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:36px 20px 40px;display:flex;flex-direction:column;align-items:center;gap:20px}
+
+  /* ---- реальный #brandName — не трогали ---- */
+  #brandName { position:relative; display:inline-block; margin-top:6px; margin-bottom:22px;
+    font-family:'Russo One',sans-serif; font-size:44px; line-height:1;
+    text-transform:uppercase; letter-spacing:.01em; transform:rotate(-6deg) skewX(-4deg); }
+  #brandName span { white-space:nowrap; }
+  #brandName .wm-base { visibility:hidden; }
+  #brandName .wm-shadow,#brandName .wm-gold,#brandName .wm-white,#brandName .wm-red { position:absolute; top:0; left:0; }
+  #brandName .wm-shadow { color:#04060d; transform:translate(4px,6px); filter:blur(.4px); }
+  #brandName .wm-gold { color:#dba93c; text-shadow: 9px 0 0 #dba93c, 6.36px 6.36px 0 #dba93c, 0 9px 0 #dba93c, -6.36px 6.36px 0 #dba93c, -9px 0 0 #dba93c, -6.36px -6.36px 0 #dba93c, 0 -9px 0 #dba93c, 6.36px -6.36px 0 #dba93c, 7.79px 4.5px 0 #dba93c, 4.5px 7.79px 0 #dba93c, -4.5px 7.79px 0 #dba93c, -7.79px 4.5px 0 #dba93c, -7.79px -4.5px 0 #dba93c, -4.5px -7.79px 0 #dba93c, 4.5px -7.79px 0 #dba93c, 7.79px -4.5px 0 #dba93c; }
+  #brandName .wm-white { color:#fff; text-shadow: 5px 0 0 #fff, 3.54px 3.54px 0 #fff, 0 5px 0 #fff, -3.54px 3.54px 0 #fff, -5px 0 0 #fff, -3.54px -3.54px 0 #fff, 0 -5px 0 #fff, 3.54px -3.54px 0 #fff; }
+  #brandName .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
+  #brandName .wm-stripe { position:absolute; left:-4%; right:-4%; height:3px; border-radius:2px; }
+  #brandName .wm-stripe.s-black { background:#04060d; bottom:-13.5px; filter:blur(.3px); }
+  #brandName .wm-stripe.s-gold { background:#dba93c; bottom:-9px; }
+  #brandName .wm-stripe.s-white { background:#fff; bottom:-6px; }
+  #brandName .wm-stripe.s-red { background:#d6183a; bottom:-3px; }
+
+  /* ---- новое: красно-золотой градиент на тексте, без второго слоя/полосок — просто красивее одного плоского цвета ---- */
+  .sub{ font-family:'Russo One',sans-serif; font-size:22px; letter-spacing:.03em;
+    text-transform:uppercase; }
+  #v1{ background:linear-gradient(90deg,#e0334f 0%,#dba93c 55%,#f0c040 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 18px rgba(220,80,70,.35); filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  #v2{ background:linear-gradient(180deg,#f0c040 0%,#dba93c 45%,#d6183a 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 16px rgba(240,192,64,.3); filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  #v3{ color:#f0c040; -webkit-text-stroke:.6px #d6183a;
+    text-shadow:0 0 14px rgba(240,192,64,.35), 0 0 10px rgba(214,24,58,.25); }
+
+  .lbl{color:#7d8aa8;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;text-align:center}
+</style>
+</head>
+<body>
+<h1>«Одно небо для всех» — красно-золотой текст</h1>
+<div class="note">Владелец: «полная копия COSMOGRAM не то — красно-золотой текст». Три варианта градиента/окантовки красный+золото, без второго слоя букв и без полосок — проще логотипа, но в его же паре цветов.</div>
+
+<div class="stage">
+  <div id="brandName"><span class="wm-base">Cosmogram</span><span class="wm-shadow">Cosmogram</span><span class="wm-gold">Cosmogram</span><span class="wm-white">Cosmogram</span><span class="wm-red">Cosmogram</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
+
+  <div>
+    <div class="lbl">1 — горизонтальный градиент (красный → золото)</div>
+    <div class="sub" id="v1">Одно небо для всех</div>
+  </div>
+  <div>
+    <div class="lbl">2 — вертикальный градиент (золото → красный)</div>
+    <div class="sub" id="v2">Одно небо для всех</div>
+  </div>
+  <div>
+    <div class="lbl">3 — золото с красной окантовкой</div>
+    <div class="sub" id="v3">Одно небо для всех</div>
+  </div>
+</div>
+</body>
+</html>

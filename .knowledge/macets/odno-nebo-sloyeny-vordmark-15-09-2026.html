@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: «Одно небо для всех» тем же слоёным приёмом, что COSMOGRAM</title>
+<style>
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #1a2246 0%, #080b16 60%);
+    color:#f4f6fb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;padding:40px 16px;
+    display:flex;flex-direction:column;align-items:center;gap:10px}
+  h1{font-size:18px;text-align:center;max-width:480px}
+  .note{color:#7d8aa8;font-size:13px;text-align:center;max-width:480px;margin-bottom:18px}
+  .stage{width:min(92%,420px);background:rgba(10,14,28,.5);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:36px 20px 46px;display:flex;flex-direction:column;align-items:center}
+
+  /* ---- реальный #brandName — не трогали, взяли как есть ---- */
+  #brandName { position:relative; display:inline-block; margin-top:6px; margin-bottom:34px;
+    font-family:'Russo One',sans-serif; font-size:44px; line-height:1;
+    text-transform:uppercase; letter-spacing:.01em; transform:rotate(-6deg) skewX(-4deg); }
+  #brandName span { white-space:nowrap; }
+  #brandName .wm-base { visibility:hidden; }
+  #brandName .wm-shadow,#brandName .wm-gold,#brandName .wm-white,#brandName .wm-red { position:absolute; top:0; left:0; }
+  #brandName .wm-shadow { color:#04060d; transform:translate(4px,6px); filter:blur(.4px); }
+  #brandName .wm-gold { color:#dba93c; text-shadow: 9px 0 0 #dba93c, 6.36px 6.36px 0 #dba93c, 0 9px 0 #dba93c, -6.36px 6.36px 0 #dba93c, -9px 0 0 #dba93c, -6.36px -6.36px 0 #dba93c, 0 -9px 0 #dba93c, 6.36px -6.36px 0 #dba93c, 7.79px 4.5px 0 #dba93c, 4.5px 7.79px 0 #dba93c, -4.5px 7.79px 0 #dba93c, -7.79px 4.5px 0 #dba93c, -7.79px -4.5px 0 #dba93c, -4.5px -7.79px 0 #dba93c, 4.5px -7.79px 0 #dba93c, 7.79px -4.5px 0 #dba93c; }
+  #brandName .wm-white { color:#fff; text-shadow: 5px 0 0 #fff, 3.54px 3.54px 0 #fff, 0 5px 0 #fff, -3.54px 3.54px 0 #fff, -5px 0 0 #fff, -3.54px -3.54px 0 #fff, 0 -5px 0 #fff, 3.54px -3.54px 0 #fff; }
+  #brandName .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
+  #brandName .wm-stripe { position:absolute; left:-4%; right:-4%; height:3px; border-radius:2px; }
+  #brandName .wm-stripe.s-black { background:#04060d; bottom:-13.5px; filter:blur(.3px); }
+  #brandName .wm-stripe.s-gold { background:#dba93c; bottom:-9px; }
+  #brandName .wm-stripe.s-white { background:#fff; bottom:-6px; }
+  #brandName .wm-stripe.s-red { background:#d6183a; bottom:-3px; }
+
+  /* ---- новое: #brandSub тем же приёмом, размер и радиусы колец пропорционально меньше
+     (коэффициент 0.57 — реальное отношение clamp-размеров brandSub/brandName в игре, не на глаз) ---- */
+  #brandSub2 { position:relative; display:inline-block; margin-top:0;
+    font-family:'Russo One',sans-serif; font-size:25.6px; line-height:1;
+    text-transform:uppercase; letter-spacing:.02em; transform:rotate(-6deg) skewX(-4deg); }
+  #brandSub2 span { white-space:nowrap; }
+  #brandSub2 .wm-base { visibility:hidden; }
+  #brandSub2 .wm-shadow,#brandSub2 .wm-gold,#brandSub2 .wm-white,#brandSub2 .wm-red { position:absolute; top:0; left:0; }
+  #brandSub2 .wm-shadow { color:#04060d; transform:translate(2.3px,3.4px); filter:blur(.25px); }
+  #brandSub2 .wm-gold { color:#dba93c; text-shadow: 5.13px 0 0 #dba93c, 3.63px 3.63px 0 #dba93c, 0 5.13px 0 #dba93c, -3.63px 3.63px 0 #dba93c, -5.13px 0 0 #dba93c, -3.63px -3.63px 0 #dba93c, 0 -5.13px 0 #dba93c, 3.63px -3.63px 0 #dba93c, 4.44px 2.56px 0 #dba93c, 2.56px 4.44px 0 #dba93c, -2.56px 4.44px 0 #dba93c, -4.44px 2.56px 0 #dba93c, -4.44px -2.56px 0 #dba93c, -2.56px -4.44px 0 #dba93c, 2.56px -4.44px 0 #dba93c, 4.44px -2.56px 0 #dba93c; }
+  #brandSub2 .wm-white { color:#fff; text-shadow: 2.85px 0 0 #fff, 2.02px 2.02px 0 #fff, 0 2.85px 0 #fff, -2.02px 2.02px 0 #fff, -2.85px 0 0 #fff, -2.02px -2.02px 0 #fff, 0 -2.85px 0 #fff, 2.02px -2.02px 0 #fff; }
+  #brandSub2 .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
+  #brandSub2 .wm-stripe { position:absolute; left:-4%; right:-4%; height:2px; border-radius:2px; }
+  #brandSub2 .wm-stripe.s-black { background:#04060d; bottom:-7.7px; filter:blur(.25px); }
+  #brandSub2 .wm-stripe.s-gold { background:#dba93c; bottom:-5.1px; }
+  #brandSub2 .wm-stripe.s-white { background:#fff; bottom:-3.4px; }
+  #brandSub2 .wm-stripe.s-red { background:#d6183a; bottom:-1.7px; }
+
+  .oldRow{margin-top:26px;text-align:center}
+  .oldLabel{color:#7d8aa8;font-size:11px;letter-spacing:.08em;margin-bottom:8px;text-transform:uppercase}
+  #brandSubOld{margin-top:0;font-size:21px;letter-spacing:.04em;font-weight:500;
+    text-transform:uppercase;color:#f0c040;text-shadow:0 0 14px rgba(240,192,64,.3)}
+</style>
+</head>
+<body>
+<h1>«Одно небо для всех» тем же слоёным приёмом, что COSMOGRAM</h1>
+<div class="note">Владелец: «мне понравилось, как ты сделал здесь COSMOGRAM — сделай так же «Одно небо для всех»». Тот же 4-слойный приём (тень/золото/белый/красный + 4 полоски), кольца и полоски пропорционально меньше — коэффициент взят из реального отношения размеров в игре (28.52/50 = 0.57), не подобран на глаз.</div>
+
+<div class="stage">
+  <div id="brandName"><span class="wm-base">Cosmogram</span><span class="wm-shadow">Cosmogram</span><span class="wm-gold">Cosmogram</span><span class="wm-white">Cosmogram</span><span class="wm-red">Cosmogram</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
+
+  <div id="brandSub2"><span class="wm-base">Одно небо для всех</span><span class="wm-shadow">Одно небо для всех</span><span class="wm-gold">Одно небо для всех</span><span class="wm-white">Одно небо для всех</span><span class="wm-red">Одно небо для всех</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
+</div>
+
+<div class="oldRow">
+  <div class="oldLabel">было (для сравнения)</div>
+  <div id="brandSubOld">Одно небо для всех</div>
+</div>
+</body>
+</html>

@@ -179,8 +179,31 @@ function setScreen(name){
   if(typeof duelBanner==='function') duelBanner(); // дуэль: плашка в меню, планка в HUD — по текущему экрану
   // 15.09.2026: экран «Топ соревнований» (modesTop, двухсловный заголовок, упирался в кнопку
   // «Назад» — прежний фикс жил здесь) удалён целиком, вместе с ним и этот особый случай.
+  /* 15.09.2026 (владелец, живой Oppo, «криво»/«выше кнопок»): настоящая причина сдвига заголовка —
+     не формула центра и не шрифт, а гонка со входной CSS-анимацией экрана. #startScreen/#pauseScreen/
+     #settingsScreen/#gameOverScreen/#hangarScreen/#achScreen открываются через @keyframes scrIn
+     (translateY(12px)→none, 300мс, index.html) — а центрирование раньше запускалось через
+     requestAnimationFrame сразу после setScreen(), то есть на первом кадре этой анимации, пока сам
+     экран ещё едет вверх на 12px: формула считала верно, но от ВРЕМЕННО смещённой опорной точки.
+     Первая попытка чинить (второй, поправочный расчёт на 'animationend') сама стала новой бедой —
+     владелец, живьём: «дёргается и бесит», «название чуть выше, потом в своё место» — два разных
+     margin подряд, между ними самый настоящий видимый прыжок. Правильный приём — не считать дважды,
+     а на миг СНЯТЬ саму CSS-анимацию (scr.style.animation='none'), замерить устоявшуюся геометрию
+     (тот же getBoundingClientRect, но без transform:translateY(12px) поверх него), посчитать margin
+     ОДИН раз верно и тут же вернуть анимацию обратно — заголовок с самого начала уже на своём месте,
+     едет вместе со всем экраном единым блоком, прыжка нет вообще. Работает и на экранах без scrIn
+     (диагностика/поддержка/карточка/эстафета/Конструктор) — там animation изначально 'none', снимать
+     нечего, код просто измеряет как раньше. */
   const stid=SCREEN_TITLE_ID[name];
-  if(stid) requestAnimationFrame(function(){ const t=$(stid); shrinkScreenTitle(t); centerTitleOnHeader(t); });
+  if(stid){
+    const t=$(stid);
+    const scr=$(name+'Screen');
+    const prevAnim = scr ? scr.style.animation : null;
+    if(scr) scr.style.animation='none'; // на миг — только чтобы замерить устоявшуюся геометрию
+    shrinkScreenTitle(t);
+    centerTitleOnHeader(t);
+    if(scr) scr.style.animation = prevAnim || ''; // возвращаем — экран (и уже верно стоящий заголовок) анимируется как обычно
+  }
 }
 /* 14.09.2026 (владелец, живые телефоны): задача — заголовок помещается МЕЖДУ кнопками родной
    шапки Telegram («Назад»/крестик слева, chevron+три точки справа), в одной с ними строке И
@@ -199,14 +222,63 @@ function setScreen(name){
    Kembali/Back — самые широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). */
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
   feedback:'feedbackTitle',hangar:'hangarTitle', // 15.09.2026: 'modes' убран — экран «Турниры» удалён
-  ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle'};
-  // 'forge' сюда не входит — #forgeScreen держит свой отдельный, небольшой положительный
-  // --menu-buf (index.html): «Конструктор» не влезает между кнопками ни сжатием (владелец:
-  // «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано — сидит
-  // под шапкой целиком, не в одной с ней строке, центрирование тут не нужно
+  ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle',forge:'forgeTitle'};
+  /* 15.09.2026 (владелец: «и конструктор чтобы он поместился между кнопок по размеру текста, в
+     один ряд с ними поставь»): 'forge' раньше сюда не входил — старый одиночный shrinkScreenTitle()
+     сажал «КОНСТРУКТОР» на пол 24px и он всё равно не влезал в 28%-зону (владелец: «стало тупо»),
+     поэтому экран держал свой отдельный текст-под-шапкой без центрирования. Теперь, когда пятёрка
+     меню-заголовков делит один общий кегль (см. UNIFORM_TITLE_IDS ниже), проверено живьём:
+     «Конструктор» (173px) и «Достижения» (171px, уже входит в общий набор и уже подтверждена
+     живьём хорошо смотрится) на полу 24px превышают номинальную 158px зону практически одинаково —
+     это тот же, уже принятый класс, не новая проблема. #forgeScreen получает тот же общий
+     padding-top через `.overlay:has(.menuBack)` (index.html), что и остальные — geometрия
+     совпадает без отдельной формулы. */
+/* 15.09.2026 (владелец, живой Oppo, «одного размера с другим текстом, как было ранее» → «сделай
+   текст одного размера во всех меню»): у каждого заголовка независимый shrinkScreenTitle() — при
+   разной длине слова на одном узком экране получались РАЗНЫЕ итоговые кегли (проверено живьём:
+   «Настройки»/«КОЛЛЕКЦИЯ» садились на 25px, «Достижения»/«Статус» оставались крупнее). Кегль
+   теперь один общий на ВСЕ статичные меню-заголовки (заранее известный текст, не зависящий от
+   данных игрока) — минимум, требуемый самым широким словом набора («Достижения» — самое длинное,
+   тянет всех на пол 24px), измеренный на офскрин-пробнике тем же самым алгоритмом (ниже), а не
+   подобранный на глаз. «Отладка»/«Поддержка» присоединились 15.09.2026, когда оба слова стали
+   короче исходных «Диагностика»/«Написать разработчику» и перестали требовать переноса.
+   «Конструктор» присоединился следом (см. комментарий у SCREEN_TITLE_ID выше) — тот же общий
+   кегль, тот же класс небольшого превышения 28%-зоны, что уже принят у «Достижения». Только
+   карточка (cardTitle, текст произвольной длины — имя явления/скина игрока) намеренно снаружи —
+   утащила бы общий кегль вниз без всякой пользы. */
+const UNIFORM_TITLE_IDS={pauseTitle:1,settingsTitle:1,hangarTitle:1,achTitle:1,relayMineTitle:1,diagTitle:1,feedbackTitle:1,forgeTitle:1};
+let _uniformTitleSize=null, _uniformTitleSizeW=0;
+function resetUniformTitleSize(){ _uniformTitleSize=null; } // applyLang() зовёт при смене языка — тексты набора другие
+function uniformMenuTitleSize(){
+  const w=window.innerWidth;
+  if(_uniformTitleSize!=null && _uniformTitleSizeW===w) return _uniformTitleSize;
+  let probe=document.getElementById('__titleSizeProbe');
+  if(!probe){
+    probe=document.createElement('div');
+    probe.id='__titleSizeProbe'; probe.className='screenTitle';
+    probe.style.cssText='position:fixed;left:-9999px;top:0;visibility:hidden;';
+    document.body.appendChild(probe);
+  }
+  const texts=[L.pause,L.settingsTitle,L.hangar,L.achTitle,L.relayMineTitle,L.diagBtn,L.feedbackTitle,L.forgeTitle];
+  let min=Infinity;
+  texts.forEach(function(txt){
+    if(!txt) return;
+    probe.textContent=txt;
+    shrinkScreenTitle(probe); // тот же алгоритм ниже, на пробнике не в UNIFORM_TITLE_IDS — считает независимо
+    const size=parseFloat(getComputedStyle(probe).fontSize);
+    if(size<min) min=size;
+  });
+  _uniformTitleSize=(min===Infinity?null:min);
+  _uniformTitleSizeW=w;
+  return _uniformTitleSize;
+}
 function shrinkScreenTitle(el){
   if(!el) return;
   el.style.fontSize=''; el.style.whiteSpace='nowrap';
+  if(UNIFORM_TITLE_IDS[el.id]){
+    const uni=uniformMenuTitleSize();
+    if(uni!=null){ el.style.fontSize=uni+'px'; return; }
+  }
   const SAFE=0.28, floor=24;
   const avail=window.innerWidth*(1-SAFE*2);
   let size=parseFloat(getComputedStyle(el).fontSize), guard=0;
@@ -221,9 +293,25 @@ function centerTitleOnHeader(el){
   const c=t.contentSafeAreaInset, s=t.safeAreaInset;
   const H=+((c&&c.top)||0); if(!H) return; // платформа не подтвердила высоту шапки — не гадаем, оставляем CSS как есть
   const notch=+((s&&s.top)||0);
-  const titleH=el.getBoundingClientRect().height;
+  /* 15.09.2026 (владелец, живой Oppo CPH2565, маркер-тест): getBoundingClientRect() ЭЛЕМЕНТА несёт
+     полную строчную коробку шрифта (line-height), а не сами буквы — у ЗАГЛАВНОГО текста (без
+     спускаемых элементов вроде «y»/«p»/«у»/«р») это оставляет неиспользуемый запас снизу под
+     несуществующие «хвосты», геометрический центр коробки уезжает НИЖЕ видимых букв. Маркер,
+     поставленный ровно на formula-центр, прошёл через середину родной «Назад» верно — но сами
+     буквы заголовка сидели заметно выше маркера. Правильная мера — Range на текстовый узел:
+     настоящие границы отрисованного текста, не строчная коробка шрифта. */
+  let rect=el.getBoundingClientRect();
+  try{
+    const tn=el.firstChild;
+    if(tn && tn.nodeType===3){
+      const rg=document.createRange(); rg.selectNodeContents(tn);
+      const gr=rg.getBoundingClientRect();
+      if(gr.height>0) rect=gr;
+    }
+  }catch(e){}
+  const titleH=rect.height;
   const desiredTop=notch+H/2-titleH/2; // центр заголовка = центр высоты родной шапки
-  const delta=desiredTop-el.getBoundingClientRect().top;
+  const delta=desiredTop-rect.top;
   const curMargin=parseFloat(getComputedStyle(el).marginTop)||0;
   el.style.marginTop=(curMargin+delta)+'px';
 }
@@ -3768,6 +3856,7 @@ wireOn('feedbackText', 'input', feedbackUpdateCount);
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
+  resetUniformTitleSize(); // 15.09.2026: смена языка — тексты меню-заголовков другие, старый общий кегль не годится
   // v1.34.0 «Единая палуба»: иконки перед текстом убраны из всех окон — кнопки говорят текстом
   /* 13.08.2026: подписи pillGyro/pillTouch/pillDist/pillBullet больше некому раздавать —
      строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
@@ -3809,7 +3898,10 @@ function applyLang(){
   setText('restartBtn',L.restart);
   setText('pauseMenuBtn',L.menu);
   setText('hangarTitle',L.hangar);
-  setText('brandSub',L.brandSub);          // 13.08.2026: обещание игры — на языке игрока
+  // 15.09.2026: #brandSub стал 4-слойным вордмарком (см. index.html, комментарий у #brandSub) —
+  // setText() одним textContent на обёртку сломал бы слои. Льём перевод сразу в 5 копий-спанов,
+  // тем же приёмом, что мог бы понадобиться и #brandName, будь он переводимым (он нет — своё имя).
+  document.querySelectorAll('#brandSub span:not(.wm-stripe)').forEach(function(s){ s.textContent = L.brandSub; });
   setText('angarWalletLbl',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
   setText('retryBtn',L.retry);
@@ -4006,8 +4098,7 @@ Store.init(()=>{
      «Гость виден», отличать его надо здесь, а слать — в свою базу, не наружу. */
   if (S.running){ /* v1.100.4: взлёт случился однажды — поздний ответ облака (сторож Store.init) не перезапускает небо посреди полёта */ }
   else if (mapPending){ setScreen('forge'); forgeOpen(); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } // ссылка с трассой — сразу в конструктор; v1.282.14: сначала экран, потом наполнение (см. страж forgeSkyKick)
-  else if (duelPending) setScreen('menu'); // v1.6.0: вызов — единственное исключение с меню при загрузке
-  else bootFly(); // v1.6.0 «Сразу в полёт»: нажал «Открыть» — и уже летишь
+  else { refreshMenu(); setScreen('menu'); music.start('menu'); } // 15.09.2026 (владелец): «сразу в полёт» (v1.6.0) убрано совсем — раньше открытие приложения ВСЕГДА минуло меню, карусель режимов было физически не увидеть без паузы/итогов; duelPending раньше был «единственным исключением с меню» — теперь меню не исключение, а правило, ветка не нужна отдельно
   if (typeof syncFlush==='function') syncFlush(); // доотправка очереди с прошлых сессий
 });
 applyLang();

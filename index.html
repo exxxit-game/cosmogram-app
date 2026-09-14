@@ -290,12 +290,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    вверху заходит» — тот же класс беды, что уже решён у Ангара строкой выше (та же +24px).
    Не подтверждено собственным замером (не могу воспроизвести чужую шапку Telegram у себя) —
    применяю уже проверенный на этой же беде приём, ждёт подтверждения на реальном устройстве. */
-#forgeScreen { --menu-buf:8px; padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); } /* 14.09.2026: боевой --menu-buf ушёл в отрицательные (заголовок делит строку с родной шапкой Telegram, владелец подтвердил на «Турниры») — но «Конструктор» (11 букв) не помещается туда ни сжатием шрифта (владелец, живьём: «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано. Экран держит свой небольшой положительный запас вместо этого — сидит под шапкой, не в одной с ней строке.
-   14.09.2026, поправка: было +24px — рассчитано под СТАРУЮ (заниженную max()) --sat-menu. После
-   правки формулы на сумму (см. --sat-menu выше) --sat-menu сама стала больше и точнее, и те же
-   +24px поверх нового числа увели заголовок заметно ниже, чем раньше (владелец, живьём: «ты его
-   ещё ниже опустил»). Перепроверено живьём на реальном устройстве (Samsung A03) — +8px даёт тот
-   же чистый результат под шапкой, что был исходно, без лишнего пустого места. */
+#forgeScreen { padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); } /* 15.09.2026: местный --menu-buf:8px (хвост правок 02-14.09.2026, когда «Конструктор» держал свой отдельный запас ПОД шапкой вместо строки С ней) снят — заголовок теперь в общем наборе UNIFORM_TITLE_IDS (js/ui.js), JS-центрирование само считает нужный margin-top живьём и не зависит от стартового padding-top; общий --menu-buf:12px (index.html выше), как у остальных. */
 #forgeBack { top:calc(10px + var(--sat-menu) + var(--menu-buf)); }
 /* 02.09.2026 (владелец, живое устройство): «в сервисном центре кнопка назад тоже на
    слово наезжает» — тот же класс беды, что у Ангара/Конструктора выше (та же +24px).
@@ -1285,8 +1280,33 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #brandName .wm-stripe.s-gold { background:#dba93c; bottom:-9px; margin-left:-.21px; }
 #brandName .wm-stripe.s-white { background:#fff; bottom:-6px; margin-left:-.11px; }
 #brandName .wm-stripe.s-red { background:#d6183a; bottom:-3px; }
-#brandSub { margin-top:0; font-size:clamp(18.6px,5.58vw,28.52px); letter-spacing:.04em; font-weight:500;
-  text-transform:uppercase; color:var(--gold-hi); text-shadow:0 0 14px rgba(240,192,64,.3); } /* 30.08.2026: было мельче/тусклее (нарочно, 13.08.2026) — владелец попросил укрупнить до половины COSMOGRAM и сделать золотой (макет, вариант Е).
+/* 15.09.2026 (владелец: «красный текст и золотой контур, как COSMOGRAM» — сделай так «Одно небо
+   для всех»): тот же 4-слойный приём, что у #brandName (тень/золото/белый/красный) — золото и
+   белый слои дают эффект контура/объёма из-под красной заливки, ровно как владелец описал и
+   показал на реальном скриншоте игры. Кольца text-shadow — те же 96 точек по кругу, что у
+   #brandName (см. комментарий 04.09.2026 выше, «обводка через тени» без игольчатых митров),
+   просчитаны тем же скриптом с радиусом ×0.57 (28.52/50 — реальное отношение размеров двух
+   надписей). Без rotate/skewX — владелец просил цвет и контур, не наклон, тут текст остаётся
+   прямым. */
+#brandSub { position:relative; display:inline-block; margin-top:14px;
+  font-family:'Russo One',var(--font-disp); font-size:clamp(18.6px,5.58vw,28.52px); line-height:1.3;
+  letter-spacing:.02em; text-transform:uppercase; transform:rotate(-6deg) skewX(-4deg); }
+#brandSub span { white-space:nowrap; }
+#brandSub .wm-base { visibility:hidden; }
+#brandSub .wm-shadow,#brandSub .wm-gold,#brandSub .wm-white,#brandSub .wm-red { position:absolute; top:0; left:0; }
+#brandSub .wm-shadow { color:#04060d; transform:translate(2.3px,3.4px); filter:blur(.25px); }
+#brandSub .wm-gold { color:#dba93c;
+  text-shadow: 5.13px 0.00px 0 #dba93c, 5.12px 0.34px 0 #dba93c, 5.09px 0.67px 0 #dba93c, 5.03px 1.00px 0 #dba93c, 4.96px 1.33px 0 #dba93c, 4.86px 1.65px 0 #dba93c, 4.74px 1.96px 0 #dba93c, 4.60px 2.27px 0 #dba93c, 4.44px 2.56px 0 #dba93c, 4.27px 2.85px 0 #dba93c, 4.07px 3.12px 0 #dba93c, 3.86px 3.38px 0 #dba93c, 3.63px 3.63px 0 #dba93c, 3.38px 3.86px 0 #dba93c, 3.12px 4.07px 0 #dba93c, 2.85px 4.27px 0 #dba93c, 2.57px 4.44px 0 #dba93c, 2.27px 4.60px 0 #dba93c, 1.96px 4.74px 0 #dba93c, 1.65px 4.86px 0 #dba93c, 1.33px 4.96px 0 #dba93c, 1.00px 5.03px 0 #dba93c, 0.67px 5.09px 0 #dba93c, 0.34px 5.12px 0 #dba93c, 0.00px 5.13px 0 #dba93c, -0.34px 5.12px 0 #dba93c, -0.67px 5.09px 0 #dba93c, -1.00px 5.03px 0 #dba93c, -1.33px 4.96px 0 #dba93c, -1.65px 4.86px 0 #dba93c, -1.96px 4.74px 0 #dba93c, -2.27px 4.60px 0 #dba93c, -2.56px 4.44px 0 #dba93c, -2.85px 4.27px 0 #dba93c, -3.12px 4.07px 0 #dba93c, -3.38px 3.86px 0 #dba93c, -3.63px 3.63px 0 #dba93c, -3.86px 3.38px 0 #dba93c, -4.07px 3.12px 0 #dba93c, -4.27px 2.85px 0 #dba93c, -4.44px 2.56px 0 #dba93c, -4.60px 2.27px 0 #dba93c, -4.74px 1.96px 0 #dba93c, -4.86px 1.65px 0 #dba93c, -4.96px 1.33px 0 #dba93c, -5.03px 1.00px 0 #dba93c, -5.09px 0.67px 0 #dba93c, -5.12px 0.34px 0 #dba93c, -5.13px 0.00px 0 #dba93c, -5.12px -0.34px 0 #dba93c, -5.09px -0.67px 0 #dba93c, -5.03px -1.00px 0 #dba93c, -4.96px -1.33px 0 #dba93c, -4.86px -1.65px 0 #dba93c, -4.74px -1.96px 0 #dba93c, -4.60px -2.27px 0 #dba93c, -4.44px -2.57px 0 #dba93c, -4.27px -2.85px 0 #dba93c, -4.07px -3.12px 0 #dba93c, -3.86px -3.38px 0 #dba93c, -3.63px -3.63px 0 #dba93c, -3.38px -3.86px 0 #dba93c, -3.12px -4.07px 0 #dba93c, -2.85px -4.27px 0 #dba93c, -2.57px -4.44px 0 #dba93c, -2.27px -4.60px 0 #dba93c, -1.96px -4.74px 0 #dba93c, -1.65px -4.86px 0 #dba93c, -1.33px -4.96px 0 #dba93c, -1.00px -5.03px 0 #dba93c, -0.67px -5.09px 0 #dba93c, -0.34px -5.12px 0 #dba93c, -0.00px -5.13px 0 #dba93c, 0.34px -5.12px 0 #dba93c, 0.67px -5.09px 0 #dba93c, 1.00px -5.03px 0 #dba93c, 1.33px -4.96px 0 #dba93c, 1.65px -4.86px 0 #dba93c, 1.96px -4.74px 0 #dba93c, 2.27px -4.60px 0 #dba93c, 2.57px -4.44px 0 #dba93c, 2.85px -4.27px 0 #dba93c, 3.12px -4.07px 0 #dba93c, 3.38px -3.86px 0 #dba93c, 3.63px -3.63px 0 #dba93c, 3.86px -3.38px 0 #dba93c, 4.07px -3.12px 0 #dba93c, 4.27px -2.85px 0 #dba93c, 4.44px -2.57px 0 #dba93c, 4.60px -2.27px 0 #dba93c, 4.74px -1.96px 0 #dba93c, 4.86px -1.65px 0 #dba93c, 4.96px -1.33px 0 #dba93c, 5.03px -1.00px 0 #dba93c, 5.09px -0.67px 0 #dba93c, 5.12px -0.34px 0 #dba93c; }
+#brandSub .wm-white { color:#fff;
+  text-shadow: 2.85px 0.00px 0 #fff, 2.84px 0.19px 0 #fff, 2.83px 0.37px 0 #fff, 2.80px 0.56px 0 #fff, 2.75px 0.74px 0 #fff, 2.70px 0.92px 0 #fff, 2.63px 1.09px 0 #fff, 2.56px 1.26px 0 #fff, 2.47px 1.42px 0 #fff, 2.37px 1.58px 0 #fff, 2.26px 1.73px 0 #fff, 2.14px 1.88px 0 #fff, 2.02px 2.02px 0 #fff, 1.88px 2.14px 0 #fff, 1.73px 2.26px 0 #fff, 1.58px 2.37px 0 #fff, 1.43px 2.47px 0 #fff, 1.26px 2.56px 0 #fff, 1.09px 2.63px 0 #fff, 0.92px 2.70px 0 #fff, 0.74px 2.75px 0 #fff, 0.56px 2.80px 0 #fff, 0.37px 2.83px 0 #fff, 0.19px 2.84px 0 #fff, 0.00px 2.85px 0 #fff, -0.19px 2.84px 0 #fff, -0.37px 2.83px 0 #fff, -0.56px 2.80px 0 #fff, -0.74px 2.75px 0 #fff, -0.92px 2.70px 0 #fff, -1.09px 2.63px 0 #fff, -1.26px 2.56px 0 #fff, -1.42px 2.47px 0 #fff, -1.58px 2.37px 0 #fff, -1.73px 2.26px 0 #fff, -1.88px 2.14px 0 #fff, -2.02px 2.02px 0 #fff, -2.14px 1.88px 0 #fff, -2.26px 1.73px 0 #fff, -2.37px 1.58px 0 #fff, -2.47px 1.42px 0 #fff, -2.56px 1.26px 0 #fff, -2.63px 1.09px 0 #fff, -2.70px 0.92px 0 #fff, -2.75px 0.74px 0 #fff, -2.80px 0.56px 0 #fff, -2.83px 0.37px 0 #fff, -2.84px 0.19px 0 #fff, -2.85px 0.00px 0 #fff, -2.84px -0.19px 0 #fff, -2.83px -0.37px 0 #fff, -2.80px -0.56px 0 #fff, -2.75px -0.74px 0 #fff, -2.70px -0.92px 0 #fff, -2.63px -1.09px 0 #fff, -2.56px -1.26px 0 #fff, -2.47px -1.43px 0 #fff, -2.37px -1.58px 0 #fff, -2.26px -1.73px 0 #fff, -2.14px -1.88px 0 #fff, -2.02px -2.02px 0 #fff, -1.88px -2.14px 0 #fff, -1.73px -2.26px 0 #fff, -1.58px -2.37px 0 #fff, -1.43px -2.47px 0 #fff, -1.26px -2.56px 0 #fff, -1.09px -2.63px 0 #fff, -0.92px -2.70px 0 #fff, -0.74px -2.75px 0 #fff, -0.56px -2.80px 0 #fff, -0.37px -2.83px 0 #fff, -0.19px -2.84px 0 #fff, -0.00px -2.85px 0 #fff, 0.19px -2.84px 0 #fff, 0.37px -2.83px 0 #fff, 0.56px -2.80px 0 #fff, 0.74px -2.75px 0 #fff, 0.92px -2.70px 0 #fff, 1.09px -2.63px 0 #fff, 1.26px -2.56px 0 #fff, 1.43px -2.47px 0 #fff, 1.58px -2.37px 0 #fff, 1.73px -2.26px 0 #fff, 1.88px -2.14px 0 #fff, 2.02px -2.02px 0 #fff, 2.14px -1.88px 0 #fff, 2.26px -1.73px 0 #fff, 2.37px -1.58px 0 #fff, 2.47px -1.43px 0 #fff, 2.56px -1.26px 0 #fff, 2.63px -1.09px 0 #fff, 2.70px -0.92px 0 #fff, 2.75px -0.74px 0 #fff, 2.80px -0.56px 0 #fff, 2.83px -0.37px 0 #fff, 2.84px -0.19px 0 #fff; }
+#brandSub .wm-red { background:linear-gradient(180deg,#d6183a 0%,#9c0f28 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-stroke:1px #d6183a; }
+#brandSub .wm-stripe { position:absolute; left:-4%; right:-4%; height:2px; border-radius:2px; }
+#brandSub .wm-stripe.s-black { background:#04060d; bottom:-9px; filter:blur(.25px); }
+#brandSub .wm-stripe.s-gold { background:#dba93c; bottom:-6px; }
+#brandSub .wm-stripe.s-white { background:#fff; bottom:-4px; }
+#brandSub .wm-stripe.s-red { background:#d6183a; bottom:-2px; }
+/* 30.08.2026: было мельче/тусклее (нарочно, 13.08.2026) — владелец попросил укрупнить до половины COSMOGRAM и сделать золотой (макет, вариант Е).
   02.09.2026: «половина» была вдвое КОРОЧЕ COSMOGRAM по ширине текста — владелец попросил
   сравнять ширину строки. Первая правка (клемп ×1.252, замерено один раз на одной ширине
   экрана) держала совпадение только там, где мерили — коэффициент округлился по-разному в
@@ -2883,9 +2903,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.284"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.284"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.284"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.285"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.285"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.285"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -2984,19 +3004,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          а не как заставка на полторы секунды: верх главного освободился от чисел, и туда просится
          не пустота, а обещание игры. Страж 110. -->
     <div id="brandName"><span class="wm-base">Cosmogram</span><span class="wm-shadow">Cosmogram</span><span class="wm-gold">Cosmogram</span><span class="wm-white">Cosmogram</span><span class="wm-red">Cosmogram</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
-    <div id="brandSub">Одно небо для всех</div>
-  </div>
-  <!-- 28.08.2026 «Первое воспоминание»: карточка появляется только если запись первого
-       полёта реально есть (js/cinema.js, cinemaLoadFirst) — по умолчанию скрыта. Превью —
-       настоящий первый кадр записанного полёта (обычный <video>, без постера-заглушки),
-       не нарисованная иконка — владелец: «там будет уже сам полёт отображаться». -->
-  <div id="firstFlightCard" class="hidden" role="button" tabindex="0">
-    <video id="firstFlightThumb" muted playsinline preload="metadata"></video>
-    <div class="ffcInfo">
-      <div class="ffcTitle" id="ffcTitle">Ваш первый полёт</div>
-      <div class="ffcSub" id="ffcSub">Сохранено навсегда</div>
-    </div>
-    <button id="firstFlightDel" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
+    <!-- 15.09.2026 (владелец: «красный текст и золотой контур, как COSMOGRAM» — сделай так «Одно
+         небо для всех»): тот же 4-слойный приём, что у #brandName выше (тень/золото/белый/красный),
+         пропорционально меньше (0.57 — реальное отношение clamp-размеров brandSub/brandName).
+         Текст льётся в 5 копий сразу в applyLang() (js/ui.js) — setText() одним textContent сюда
+         не годится, сломал бы слои. -->
+    <div id="brandSub"><span class="wm-base">Одно небо для всех</span><span class="wm-shadow">Одно небо для всех</span><span class="wm-gold">Одно небо для всех</span><span class="wm-white">Одно небо для всех</span><span class="wm-red">Одно небо для всех</span><span class="wm-stripe s-black"></span><span class="wm-stripe s-gold"></span><span class="wm-stripe s-white"></span><span class="wm-stripe s-red"></span></div>
   </div>
   <!-- 13.08.2026 «Главный экран — дверь, а не витрина». Здесь стояли пилюля «Рекорд: N»
        и кошелёк, а внизу экрана — строка из четырёх мини-пилюль с рекордами по видам
@@ -3088,6 +3101,21 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <button class="btn ghost" id="settingsBtn">Настройки</button>
       <button class="btn ghost hidden" id="homeBtn">На экран «Домой»</button>
     </div>
+  </div>
+  <!-- 28.08.2026 «Первое воспоминание»: карточка появляется только если запись первого
+       полёта реально есть (js/cinema.js, cinemaLoadFirst) — по умолчанию скрыта. Превью —
+       настоящий первый кадр записанного полёта (обычный <video>, без постера-заглушки),
+       не нарисованная иконка — владелец: «там будет уже сам полёт отображаться».
+       15.09.2026 (владелец, макет glavny-ekran-poryadok-video-karusel-15-09-2026.html):
+       карточка переехала СЮДА, под карусель+кнопки — раньше сидела сразу под шапкой,
+       между «Одно небо для всех» и каруселью, отвлекала от неё. -->
+  <div id="firstFlightCard" class="hidden" role="button" tabindex="0">
+    <video id="firstFlightThumb" muted playsinline preload="metadata"></video>
+    <div class="ffcInfo">
+      <div class="ffcTitle" id="ffcTitle">Ваш первый полёт</div>
+      <div class="ffcSub" id="ffcSub">Сохранено навсегда</div>
+    </div>
+    <button id="firstFlightDel" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
   </div>
   <div id="duelBanner" class="hidden"></div>
   <div class="scrFoot">
@@ -3183,7 +3211,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          Макет: macet-02-09-nastroyki-ryad-vyravnen.html. -->
     <div class="setRow" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
     <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
-    <div class="setRow go" id="diagBtn" role="button" tabindex="0">Сервисный центр</div>
+    <div class="setRow go" id="diagBtn" role="button" tabindex="0">Отладка</div>
   </div>
 </div>
 
@@ -3194,7 +3222,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        длинного списка (та же болезнь, что была у «Своё небо», см. разбор у .scrBody выше).
        Переведён на общую схему: круглая кнопка сверху, шапка не скроллится, тело — в .scrBody. -->
   <button class="menuBack" id="diagBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="diagTitle">Сервисный центр</div>
+  <div class="screenTitle" id="diagTitle">Отладка</div>
   <div class="scrBody">
     <!-- 13.08.2026 «Ответ, а не отчёт». Здесь шли подряд до четырнадцати строк в порядке
          написания кода: «штурвал не подключён — это нормально» выше, чем размер мира, а
@@ -3827,26 +3855,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.284" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.284"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.284"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.284"></script>
-<script defer src="js/game.js?v=1.478.284" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.284"></script>
-<script defer src="js/sync.js?v=1.478.284"></script>
-<script defer src="js/render.js?v=1.478.284"></script>
-<script defer src="js/planetarium.js?v=1.478.284"></script>
-<script defer src="js/goldstar.js?v=1.478.284"></script>
-<script defer src="js/finish.js?v=1.478.284"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.284"></script>
-<script defer src="js/gyro.js?v=1.478.284"></script>
-<script defer src="js/forge.js?v=1.478.284"></script>
-<script defer src="js/partitura.js?v=1.478.284"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.284"></script>
-<script defer src="js/card.js?v=1.478.284"></script>
-<script defer src="js/star.js?v=1.478.284"></script>
-<script defer src="js/cinema.js?v=1.478.284"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.284"></script>
+<script defer src="js/core.js?v=1.478.285" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.285"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.285"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.285"></script>
+<script defer src="js/game.js?v=1.478.285" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.285"></script>
+<script defer src="js/sync.js?v=1.478.285"></script>
+<script defer src="js/render.js?v=1.478.285"></script>
+<script defer src="js/planetarium.js?v=1.478.285"></script>
+<script defer src="js/goldstar.js?v=1.478.285"></script>
+<script defer src="js/finish.js?v=1.478.285"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.285"></script>
+<script defer src="js/gyro.js?v=1.478.285"></script>
+<script defer src="js/forge.js?v=1.478.285"></script>
+<script defer src="js/partitura.js?v=1.478.285"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.285"></script>
+<script defer src="js/card.js?v=1.478.285"></script>
+<script defer src="js/star.js?v=1.478.285"></script>
+<script defer src="js/cinema.js?v=1.478.285"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.285"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

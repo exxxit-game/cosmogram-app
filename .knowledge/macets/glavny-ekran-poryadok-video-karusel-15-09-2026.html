@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: порядок блоков на главном экране</title>
+<style>
+  :root{
+    --bg:#080b16; --ink:#f4f6fb; --muted:#7d8aa8; --gold:#f0c040;
+    --line:rgba(255,255,255,.08); --card-bg:rgba(18,26,44,.7); --r-card:16px; --r-btn:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c1120;color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    padding:32px 16px;display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+  h1{width:100%;text-align:center;font-size:20px;color:var(--ink);margin:0 0 4px}
+  .note{width:100%;text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px}
+  .col{width:360px}
+  .colLabel{font-size:13px;font-weight:700;letter-spacing:.04em;text-align:center;padding:8px 0;border-radius:10px 10px 0 0}
+  .colLabel.old{background:rgba(255,120,120,.15);color:#ffb3b3}
+  .colLabel.new{background:rgba(130,255,170,.15);color:#9affc0}
+  .phone{
+    background:radial-gradient(ellipse at 50% -10%, #1a2246 0%, var(--bg) 60%);
+    border:1px solid var(--line); border-top:none; border-radius:0 0 22px 22px;
+    padding:18px 14px 22px; display:flex; flex-direction:column; align-items:center; gap:14px;
+    min-height:640px;
+  }
+  .brand{text-align:center;margin-top:6px}
+  .brand .word{font-size:30px;font-weight:800;letter-spacing:.02em;
+    background:linear-gradient(180deg,#fff 0%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 2px 14px rgba(240,192,64,.25)}
+  .brand .sub{color:var(--gold);font-size:13px;letter-spacing:.14em;margin-top:4px;font-weight:600}
+  .ffCard{width:100%;display:flex;align-items:center;gap:12px;background:var(--card-bg);
+    border:1px solid var(--line);border-radius:var(--r-card);padding:10px}
+  .ffThumb{flex:none;width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,#2a3660,#141b32)}
+  .ffInfo{flex:1;min-width:0}
+  .ffTitle{font-size:14px;font-weight:700}
+  .ffSub{font-size:12px;color:var(--muted);margin-top:2px}
+  .ffDel{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,150,160,.35);color:#ffb3b3;
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+  .hero{width:100%;background:linear-gradient(160deg,#3a1740,#171226);border:1px solid var(--line);
+    border-radius:var(--r-card);padding:16px;position:relative;min-height:150px}
+  .hero .icB{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.35);
+    display:flex;align-items:center;justify-content:center;font-size:13px}
+  .hero .name{font-size:19px;font-weight:800;letter-spacing:.01em}
+  .hero .desc{font-size:12.5px;color:var(--muted);margin-top:6px;max-width:76%}
+  .hero .status{position:absolute;right:14px;bottom:14px;background:rgba(0,0,0,.4);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px;font-size:11.5px;color:var(--gold);display:flex;gap:5px;align-items:center}
+  .dots{display:flex;gap:5px;justify-content:center}
+  .dots span{width:5px;height:5px;border-radius:50%;background:var(--line)}
+  .dots span.on{background:var(--gold);width:16px;border-radius:3px}
+  .stackBtn{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:var(--r-btn);
+    padding:13px;text-align:center;font-size:13.5px;font-weight:700;letter-spacing:.03em}
+  .grid2{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid2 .gbtn{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r-btn);
+    padding:13px 8px;text-align:center;font-size:12.5px;font-weight:700;letter-spacing:.03em}
+  .arrowNote{width:100%;text-align:center;font-size:12px;color:var(--muted);padding:2px 0}
+  .highlight{outline:2px dashed var(--gold);outline-offset:3px;border-radius:var(--r-card)}
+</style>
+</head>
+<body>
+<h1>Главный экран — порядок «видео первого полёта» и карусели с кнопками</h1>
+<div class="note">Содержимое карточек и кнопок — реальные слова из живой игры (js/i18n.js, index.html). Меняется только ПОРЯДОК блоков, не их вид.</div>
+
+<div class="col">
+  <div class="colLabel old">СЕЙЧАС</div>
+  <div class="phone">
+    <div class="brand"><div class="word">COSMOGRAM</div><div class="sub">ОДНО НЕБО ДЛЯ ВСЕХ</div></div>
+
+    <div class="ffCard highlight">
+      <div class="ffThumb"></div>
+      <div class="ffInfo"><div class="ffTitle">Ваш первый полёт</div><div class="ffSub">Сохранено навсегда</div></div>
+      <div class="ffDel">🗑</div>
+    </div>
+
+    <div class="hero">
+      <div class="icB">⚭</div>
+      <div class="name">ЭСТАФЕТА</div>
+      <div class="desc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</div>
+      <div class="status">ⓘ Статус</div>
+    </div>
+    <div class="dots"><span></span><span></span><span></span><span></span><span></span><span class="on"></span><span></span></div>
+
+    <div class="stackBtn">Конструктор</div>
+    <div class="grid2">
+      <div class="gbtn">Коллекция</div><div class="gbtn">Достижения</div>
+      <div class="gbtn">Поддержка</div><div class="gbtn">Настройки</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="colLabel new">СТАНЕТ</div>
+  <div class="phone">
+    <div class="brand"><div class="word">COSMOGRAM</div><div class="sub">ОДНО НЕБО ДЛЯ ВСЕХ</div></div>
+
+    <div class="hero">
+      <div class="icB">⚭</div>
+      <div class="name">ЭСТАФЕТА</div>
+      <div class="desc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</div>
+      <div class="status">ⓘ Статус</div>
+    </div>
+    <div class="dots"><span></span><span></span><span></span><span></span><span></span><span class="on"></span><span></span></div>
+
+    <div class="stackBtn">Конструктор</div>
+    <div class="grid2">
+      <div class="gbtn">Коллекция</div><div class="gbtn">Достижения</div>
+      <div class="gbtn">Поддержка</div><div class="gbtn">Настройки</div>
+    </div>
+
+    <div class="ffCard highlight">
+      <div class="ffThumb"></div>
+      <div class="ffInfo"><div class="ffTitle">Ваш первый полёт</div><div class="ffSub">Сохранено навсегда</div></div>
+      <div class="ffDel">🗑</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrowNote">Пунктиром — карточка видео «Ваш первый полёт»: была сразу под шапкой (мешала карусели), переезжает под кнопки. Карусель + Конструктор + сетка кнопок — теперь сразу под «Одно небо для всех».</div>
+</body>
+</html>
