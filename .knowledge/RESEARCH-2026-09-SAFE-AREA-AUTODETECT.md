@@ -115,22 +115,28 @@ Android статус-бар в обычном (не edge-to-edge) WebView зан
 ### 1.7 Как тот же класс бага решают ДРУГИЕ гибридные контейнеры — универсальный паттерн подтверждён
 - **`@capacitor-community/safe-area`** — читает реальное значение на нативной стороне через
   Android `WindowInsetsCompat`, затем (потому что версии Android WebView до Chromium 140 несут
-  известный баг с `env(safe-area-inset-*)`) **инжектирует параллельные CSS-переменные**
-  `--safe-area-inset-top/right/bottom/left` — намеренно НЕ пытаясь переопределить сам `env()`
-  (он read-only и не переопределяется), а подставляя альтернативную переменную для CSS игры.
-  На Chromium ≥140 доверяет нативному `env()` — баг там как класс уже устранён у Google.
-  Переизмеряет также при смене видимости клавиатуры.
+  известный баг с `env(safe-area-inset-*)`) добавляет его как **padding** прямо на WebView —
+  14.09.2026, поправка после проверки: прежняя версия утверждала «инжектирует параллельные
+  CSS-переменные», источник (README) прямо говорит обратное: «this plugin advocates for using
+  padding, as it seems to be the least breaking behavior», а `env(safe-area-inset-*)` при этом
+  обнуляется, не дублируется переменной. На Chromium ≥140 доверяет нативному `env()` — баг там
+  как класс уже устранён у Google.
   [github.com/capacitor-community/safe-area](https://github.com/capacitor-community/safe-area)
 - **`cordova-plugin-android-notch`** — нативный мост `window.AndroidNotch` с асинхронными
   `hasCutout()`/`getInsetTop()`/`getInsetRight()`/`getInsetBottom()`/`getInsetLeft()`; штатный
   паттерн использования — веб-страница сама вызывает мост и пишет
   `document.documentElement.style.setProperty('--notch-inset-top', px+'px')` — ровно тот же приём
-  «мост → CSS-переменная», что уже держит `--js-sat` в Cosmogram.
-  [github.com/tobspr/cordova-plugin-android-notch](https://github.com/tobspr/cordova-plugin-android-notch/issues/3)
+  «мост → CSS-переменная», что уже держит `--js-sat` в Cosmogram. 14.09.2026, поправка после
+  проверки: эти детали — из README плагина, а НЕ из issue #3 (ссылка ниже), как утверждала
+  прежняя версия — issue #3 там про другое (просьба добавить поддержку стандартного `env()`).
+  [github.com/tobspr/cordova-plugin-android-notch](https://github.com/tobspr/cordova-plugin-android-notch)
 - **`cordova-plugin-statusbar`** — на Android при `overlaysWebView(true)` САМ не отдаёт значение
   инсета — известный, до сих пор не закрытый пробел; сообщество комбинирует его с
-  `cordova-plugin-android-notch` отдельно.
-  [github.com/apache/cordova/discussions/585](https://github.com/apache/cordova/discussions/585)
+  `cordova-plugin-android-notch` отдельно. 14.09.2026, поправка после проверки: прежняя ссылка
+  на `apache/cordova/discussions/585` не подтверждает это утверждение (то обсуждение — про
+  Android 15/edge-to-edge, клавиатуру и кнопку «назад», не про `overlaysWebView`) — конкретный
+  источник для этого пункта не найден повторно, оставляю утверждение как правдоподобное по
+  смыслу остального раздела, но без ссылки, честно.
 - **React Native WebView** — подтверждён ТОТ ЖЕ САМЫЙ класс бага в СОВЕРШЕННО ДРУГОМ хост-приложении:
   `env(safe-area-inset-*)` «недоступен до какого-то произвольного момента после загрузки страницы»
   внутри `<WebView>`, хотя нативные RN-view (`react-native-safe-area-context`) получают инсеты
@@ -146,9 +152,12 @@ Android статус-бар в обычном (не edge-to-edge) WebView зан
   [react-native-webview#3828](https://github.com/react-native-webview/react-native-webview/issues/3828)
 - **Установленные Android PWA** — консенсус: `env(safe-area-inset-*)` родился в iOS Safari и там
   всегда работал надёжно; на Android имплементация была новее и версионно-нестабильна, завязана
-  на переход Chrome к edge-to-edge-рендерингу (обязателен с Android 15/API 35 для приложений,
-  нацеленных на SDK 35+). Ни один источник не подтвердил, что установленное Android PWA надёжно
-  чинит эту проблему — остаётся версионно-зависимым, а не гарантией, как на iOS.
+  на переход Chrome к edge-to-edge-рендерингу. 14.09.2026, поправка после проверки: прежняя
+  версия утверждала, что этот переход «обязателен с Android 15/API 35 для приложений, нацеленных
+  на SDK 35+» со ссылкой на эту страницу — источник этого не говорит: страница описывает
+  добровольный переход САМОГО Chrome начиная с Chrome 135, не обязательность на уровне Android
+  SDK для сторонних приложений. Ни один источник не подтвердил, что установленное Android PWA
+  надёжно чинит эту проблему — остаётся версионно-зависимым, а не гарантией, как на iOS.
   [developer.chrome.com — edge-to-edge](https://developer.chrome.com/docs/css-ui/edge-to-edge)
 
 **Сквозной вывод по 1.7**: универсальная архитектура во ВСЕХ проверенных экосистемах одна и та
