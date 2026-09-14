@@ -66,6 +66,8 @@ AI-WORKFLOW → INDEX → KNOWN-BUGS + ERROR-CATALOG → STYLE-GUIDE → PERFORM
 | TELEGRAM-GOTCHAS.md | CloudStorage, safe area, haptics, origin hardening | ДОМ платформы TG |
 | DEVICE-MATRIX.md | Парк устройств, урок «Apple GPU», память WKWebView | ДОМ устройств |
 | LICENSE-POLICY.md | GPL/CC/OFL + товарные знаки | ДОМ лицензий |
+| RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md | Честный ноль vs мёртвый ноль у env()/contentSafeAreaInset на Android-WebView Telegram: @telegram-apps/sdk — не новый источник; 3-й канал — мостовые CSS-переменные Telegram, Cosmogram их не перечитывает в JS; visualViewport — подтверждённо НЕ подходит (статус-бар вне обоих вьюпортов); Capacitor/Cordova/RN WebView — тот же класс бага везде, паттерн «нативный инсет→CSS-переменная»; шипнутые фиксы gregoryKot/schema-telegram-botnest (событие как флаг доверия) и Maximusvin/void-saga-tma (сумма, не max, двух разных перекрытий) | синтез+архитектура готовы, core.js не тронут |
+| RESEARCH-2026-09-DEVICE-ADAPTATION.md | Как платформы определяют производительность устройства: WeChat `wx.getDeviceBenchmarkInfo`/`benchmarkLevel` разобран предельно подробно (официальные пороги тиров Android ≥30/23-29/≤22 vs iOS ≥36/30-35/≤29, датированные ревизии 2022→2026, iPhone-модель→скор с Juejin, полный набор API `wx.getPerformance`/`onMemoryWarning`/iOS High-Performance Mode); Alipay/Baidu — идентичная спецификация benchmarkLevel (отраслевой консенсус); Douyin/Quick Apps — честные пробелы (API есть, детали не подтверждены/не нашлись); синтез на Telegram (только LOW/AVERAGE/HIGH) — принципы переносимы, API нет | исследование готово, план правки не предложен |
 
 ---
 
@@ -76,6 +78,7 @@ AI-WORKFLOW → INDEX → KNOWN-BUGS + ERROR-CATALOG → STYLE-GUIDE → PERFORM
 | MARKET-ANALYSIS.md | Сценарии MAU, монетизация благодарностью, горизонты | ДОМ рынка |
 | RESEARCH-2026-09-MULTILINGUAL.md | Многоязычный поиск 07.09: async-вызовы, sendGift/emoji-статус, Canvas2D Layers API, манифест-как-PR | ничей, свежий |
 | RESEARCH-2026-09-SCALE-RISKS.md | Риски на пути к 1М+ игроков: ИИ-разработка без команды (CVE-2025-48757), юридика, как ломались соло-разработчики | ничей, свежий |
+| RESEARCH-2026-09-DB-SCALE.md | Как вести БД на пути к 1М+: Supavisor/лимиты/read replicas (Supabase-докс), top-N/materialized views/UNLOGGED/partition/autovacuum (Postgres), Discord/Notion/Games24x7/Cygames-Wonder Planet-Square Enix постмортемы, PostgREST не использует Supavisor (Edge Functions уже защищены от connection storm), check_rate_limit уже race-free; живая сверка схемы — scores_top_idx уже правильной формы, rate_limits/used_nonces не UNLOGGED (будущий риск), 4 FK без индекса | ничей, свежий |
 | RESEARCH-2026-09-LAUNCH-AND-STARS.md | План запуска (тонко, не разом) + экономика Stars: крипта запрещена ToS, Fragment/веб дешевле для игрока | ничей, свежий |
 | RESEARCH-2026-09-SKIN-PRICING.md | Цена скинов ощущается как статус — реально, никто не решил; «цена=труд» отклонена (автор — ИИ), пересборка «цена=сложность предмета» в процессе | открыто, принцип обсуждается |
 | RESEARCH-2026-09-SEASONAL-CADENCE.md | Как держать интерес к сезону без FOMO — Helldivers 2 (Warbond'ы никогда не истекают) подтверждает уже принятый M1; 3 направления (растянутая раздача/превью/голосование) не выбраны | открыто, 3 варианта на выбор |
