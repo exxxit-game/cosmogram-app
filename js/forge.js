@@ -1326,6 +1326,10 @@ wireOnLocal('workshopList','click',function(e){
       // раньше при неудаче лайк просто ничего не делал, без единой подсказки — с точки
       // зрения игрока «сломано», хотя причина честная (нет соединения). Один явный тост.
       if(!res || !res.ok){ toast(L.syncOffline||'Нет соединения — попробуй позже','rgba(255,159,176,.5)'); return; }
+      // 14.09.2026 (аудит «борьба с читерами»): сервер молча не засчитывает лайк автору
+      // собственного кода (own_track:true, hearted всегда false) — без этой ветки тап
+      // выглядел бы «просто не сработал», а с общим сообщением выше — ложно как «нет сети».
+      if(res.own_track){ toast(L.workshopVoteOwnTrack||'Нельзя лайкать свою же трассу','rgba(255,159,176,.5)'); return; }
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
       Store.set('workshopMyVotes',mine);
