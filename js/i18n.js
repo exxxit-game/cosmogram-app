@@ -43,7 +43,7 @@ const I18N = {
     hangar:'КОЛЛЕКЦИЯ', best:'Рекорд', // 08.09.2026: было «Тюнинг» — владелец: слово утратило смысл, там больше не «допилить», а собранная коллекция настоящих формул/культур; до этого было «Ангар» (30.08.2026, звучало как место для работы руками)
     recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     topVerified:'Результат подтверждён забегом', unitM:'м', dist:'Дистанция', recordDist:'Рекорд дистанции',
-    modes:'Соревнования', modesBack:'Назад', // 05.09.2026 (владелец): экран сузился до одних дисциплин — Конструктор переехал на главный отдельной кнопкой; EN/ES/PT/FR ниже ещё говорят старое «Flight modes», не тронуты
+    modes:'Турниры', modesBack:'Назад', // 05.09.2026 (владелец): экран сузился до одних дисциплин — Конструктор переехал на главный отдельной кнопкой. 14.09.2026: кнопка на главном тоже «Турниры» (было «Соревнования») — владелец явно попросил, тот же текст, что и заголовок экрана
     /* 14.09.2026 (владелец, живой телефон): заголовок ЭКРАНА раньше брал L.modes напрямую (та
        же «Соревнования», что и кнопка) — на --menu-buf:-15px заголовок делит строку с родной
        шапкой Telegram и «Соревнования» (12 букв) туда не влезает даже с авто-уменьшением
@@ -201,7 +201,7 @@ const I18N = {
     gyroStatTg:'Датчик: Telegram · жив', gyroStatWeb:'Датчик: веб-канал · жив', gyroStatNone:'Датчик молчит — играй пальцем',
     stars:'Звёзды', maxCombo:'Макс. комбо', share:'Поделиться', bestByControl:'Личные рекорды по управлению',
     home:'На экран «Домой»',
-    feedbackBtn:'Написать разработчику', feedbackTitle:'Написать разработчику', // 14.09.2026: владелец попробовал «Поддержка», вернул обратно — заголовок вмещается длинным переносом на 2 строки (см. shrinkScreenTitle), короткое слово не нужно
+    feedbackBtn:'Написать разработчику', feedbackTitle:'Поддержка', // 14.09.2026: короткий заголовок экрана, кнопка на главном не тронута — тот же приём, что modesTitle/relayMineTitle
     feedbackHint:'Идея, вопрос или ошибка. Читаю каждое сообщение. С уважением, EXXXIT.', // 08.09.2026, владелец: «создатель игры» → подпись студии, как на карточке ниже на этом же экране
     feedbackPlaceholder:'Опишите, что случилось или добавьте автодиагностику и скриншот.', feedbackSend:'Отправить', // 08.09.2026, владелец: подсказка теперь явно называет обе кнопки ниже — не обязательно писать текст, если приложить диагностику/снимок; 13.09.2026, владелец: точка в конце фразы
     feedbackAttach:'Добавить автодиагностику', feedbackAttached:'Данные игры добавлены в сообщение',
@@ -316,7 +316,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Best',
     recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     topVerified:'Result confirmed by the run', unitM:'m', dist:'Distance', recordDist:'Distance record',
-    modes:'Flight modes', modesBack:'Back', modesTitle:'Tournaments', // 14.09.2026: short screen-title only, see RU comment above modesTitle
+    modes:'Tournaments', modesBack:'Back', modesTitle:'Tournaments', // 14.09.2026: was stale "Flight modes" for years, owner asked button to match screen title
     modeClassic:'Classic',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
     modeSpeedrunRSGD:'10,000 points against the clock — a new track every run',
@@ -382,7 +382,7 @@ const I18N = {
     tiltAllow:'Allow gyro control?', tiltOn:'Gyro enabled', setGyroRow:'Gyro', sens:'Sensitivity',
     gyroStatTg:'Sensor: Telegram · live', gyroStatWeb:'Sensor: web channel · live', gyroStatNone:'Sensor silent — use your finger',
     stars:'Stars', maxCombo:'Max combo', share:'Share', bestByControl:'Personal records by control',
-    feedbackBtn:'Contact developer', feedbackTitle:'Contact developer',
+    feedbackBtn:'Contact developer', feedbackTitle:'Support',
     feedbackHint:'An idea, a question, or a bug. I read every message. — The game’s creator',
     feedbackPlaceholder:'Describe what happened', feedbackSend:'Send',
     feedbackAttach:'Add auto-diagnostics', feedbackAttached:'Game data added to your message',
@@ -483,7 +483,7 @@ const I18N = {
     lampRed:'Sensor en silencio — control solo con el dedo',
     hangar:'COLECCIÓN', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia',
-    modes:'Modos de vuelo', modesBack:'Atrás', modeClassic:'Clásico', modesTitle:'Torneos',
+    modes:'Torneos', modesBack:'Atrás', modeClassic:'Clásico', modesTitle:'Torneos',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     modeSpeedrunRSGD:'10.000 puntos contra el reloj — una pista nueva en cada carrera',
     speedrunSSG:'Fija', speedrunRSG:'Aleatoria',
@@ -544,7 +544,7 @@ const I18N = {
     gyroStatTg:'Sensor: Telegram · activo', gyroStatWeb:'Sensor: canal web · activo',
     gyroStatNone:'Sensor en silencio — juega con el dedo',
     stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', home:'Añadir a inicio', bestByControl:'Récords personales por control',
-    feedbackBtn:'Escribir al desarrollador', feedbackTitle:'Escribir al desarrollador',
+    feedbackBtn:'Escribir al desarrollador', feedbackTitle:'Soporte',
     feedbackHint:'Una idea, una pregunta o un error. Leo cada mensaje. Atentamente, el creador del juego.',
     feedbackPlaceholder:'Describe qué pasó', feedbackSend:'Enviar',
     feedbackAttach:'Añadir autodiagnóstico', feedbackAttached:'Datos del juego añadidos al mensaje',
@@ -664,7 +664,7 @@ const I18N = {
     lampRed:'Sensor em silêncio — controle só com o dedo',
     hangar:'COLEÇÃO', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância',
-    modes:'Modos de voo', modesBack:'Voltar', modeClassic:'Clássico', modesTitle:'Torneios',
+    modes:'Torneios', modesBack:'Voltar', modeClassic:'Clássico', modesTitle:'Torneios',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     modeSpeedrunRSGD:'10.000 pontos contra o relógio — uma pista nova a cada corrida',
     speedrunSSG:'Fixa', speedrunRSG:'Aleatória',
@@ -725,7 +725,7 @@ const I18N = {
     gyroStatTg:'Sensor: Telegram · ativo', gyroStatWeb:'Sensor: canal web · ativo',
     gyroStatNone:'Sensor em silêncio — jogue com o dedo',
     stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', home:'Adicionar à tela inicial', bestByControl:'Recordes pessoais por controle',
-    feedbackBtn:'Falar com o desenvolvedor', feedbackTitle:'Falar com o desenvolvedor',
+    feedbackBtn:'Falar com o desenvolvedor', feedbackTitle:'Suporte',
     feedbackHint:'Uma ideia, uma pergunta ou um erro. Leio cada mensagem. Atenciosamente, o criador do jogo.',
     feedbackPlaceholder:'Descreva o que aconteceu', feedbackSend:'Enviar',
     feedbackAttach:'Adicionar autodiagnóstico', feedbackAttached:'Dados do jogo adicionados à mensagem',
@@ -843,7 +843,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Meilleur',
     recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
     topVerified:'Résultat confirmé par la partie', unitM:'m', dist:'Distance', recordDist:'Record de distance',
-    modes:'Modes de vol', modesBack:'Retour', modesTitle:'Tournois',
+    modes:'Tournois', modesBack:'Retour', modesTitle:'Tournois',
     modeClassic:'Classique',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     modeSpeedrunRSGD:'10 000 points contre la montre — une piste nouvelle à chaque course',
@@ -908,7 +908,7 @@ const I18N = {
     tiltAllow:'Autoriser le gyroscope ?', tiltOn:'Gyroscope activé', setGyroRow:'Gyroscope', sens:'Sensibilité',
     gyroStatTg:'Capteur : Telegram · actif', gyroStatWeb:'Capteur : canal web · actif', gyroStatNone:'Capteur silencieux — utilise ton doigt',
     stars:'Étoiles', maxCombo:'Combo max', share:'Partager', bestByControl:'Records personnels par contrôle',
-    feedbackBtn:'Écrire au développeur', feedbackTitle:'Écrire au développeur',
+    feedbackBtn:'Écrire au développeur', feedbackTitle:'Support',
     feedbackHint:'Une idée, une question ou un bug. Je lis chaque message. Bien à toi, le créateur du jeu.',
     feedbackPlaceholder:'Décris ce qui s\'est passé', feedbackSend:'Envoyer',
     feedbackAttach:'Ajouter l\'auto-diagnostic', feedbackAttached:'Données du jeu ajoutées au message',

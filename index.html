@@ -2949,7 +2949,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
     <div class="stack">
       <button class="btn pri hero" id="startBtn">Начать полёт</button>
-      <button class="btn sec" id="modesBtn">Соревнования</button>
+      <button class="btn sec" id="modesBtn">Турниры</button>
       <!-- 05.09.2026 (владелец): Конструктор — не дисциплина, ему не место внутри «Соревнований»;
            переехал на главный экран отдельной кнопкой, рядом по важности со стартом забега. -->
       <button class="btn sec" id="konstruktorBtn">Конструктор</button>
@@ -3118,27 +3118,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
              убрана тоже — то же самое уже сказано строкой «Датчик молчит» наверху, а для
              реального отчёта подробности и так уходят в diagReport(). -->
         <div id="diagListRare" style="padding:6px 8px 10px"></div>
-        <!-- 13.09.2026 ВРЕМЕННО (пункт 3, «везде кажется лишним») — живой ползунок --menu-buf,
-             владелец двигает на своём устройстве и видит эффект сразу на всех экранах меню
-             (Назад в этот же экран покажет актуальный отступ). Убрать целиком вместе с
-             --menu-buf-переменной, как только названо итоговое число.
-             13.09.2026, правка направления: было min=0 — упёршись в ноль, владелец не мог
-             двигаться дальше в сторону УМЕНЬШЕНИЯ запаса (стянуть шапку выше), а только в
-             сторону увеличения (0..400) — ровно противоположно тому, что он просил («я дошёл
-             до нуля, мне нужно больше, чтобы я смог ещё выше поднять»). min=-400 — то же самое
-             число, что уже одобрено для max, зеркально в минус: --menu-buf уходит в отрицательные
-             px, calc(10px + var(--sat-menu) + var(--menu-buf)) стягивается ниже прежнего пола. -->
-        <div id="diagBufRow" style="padding:6px 8px 10px;border-top:1px solid rgba(255,255,255,.1)">
-          <div style="font-size:12px;opacity:.75;margin-bottom:4px">ВРЕМЕННО: запас над шапкой меню — <span id="diagBufVal">24</span>px</div>
-          <input type="range" id="diagBufSlider" min="-60" max="60" value="24" style="width:100%">
-        </div>
-        <!-- 14.09.2026 ВРЕМЕННО (владелец: «может мы тогда плохо проверяли») — переизмерение
-             тем же satProbe()/contentSafeAreaInset, что уже используется в tgInsetsSync
-             (core.js) для --js-sat-real. Прежний вывод (30.08.2026, «мёртвый ноль» на этом
-             устройстве) старше двух недель — Android WebView обновляется независимо от
-             самой игры. Живое число прямо здесь, без консоли. Убрать вместе с diagBufRow,
-             когда --menu-buf уйдёт. -->
-        <div id="diagSatRow" style="padding:6px 8px 10px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;opacity:.75"></div>
+        <!-- 13-14.09.2026: тут стояли временные диагностические — живой ползунок --menu-buf
+             (#diagBufSlider) и переизмерение safe-area (#diagSatRow), оба явно помечены
+             «убрать, когда названо итоговое число». Формула найдена и внедрена
+             (centerTitleOnHeader, js/ui.js — считает центр заголовка живьём из
+             contentSafeAreaInset на каждом устройстве, не через ручной подбор), оба убраны
+             целиком по своему же обещанию. -->
       </div>
     </div>
   </div>
@@ -3150,7 +3135,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      одна дверь вместо двух похожих. Пока только текст, без картинки (первый заход). -->
 <div id="feedbackScreen" class="overlay hidden">
   <button class="menuBack" id="feedbackBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="feedbackTitle">Написать разработчику</div>
+  <div class="screenTitle" id="feedbackTitle">Поддержка</div>
   <div class="scrBody"><div class="setPanel">
     <div class="hint" id="feedbackHint" style="position:static;padding:10px 16px 4px"></div>
     <textarea id="feedbackText" rows="6" maxlength="28000"

@@ -2855,38 +2855,6 @@ function diagRows(){
   // уже объясняется правильно в Настройках, где этот режим реально открывают.
   return R;
 }
-/* 13.09.2026 ВРЕМЕННО (пункт 3, «везде кажется лишним») — живой ползунок --menu-buf
-   (index.html #diagBufSlider), владелец двигает на своём устройстве и видит эффект сразу
-   на всех экранах меню без сборки нового билда на каждое число. Убрать целиком (вместе с
-   разметкой в index.html и переменной --menu-buf) как только названо итоговое число —
-   тогда оно вписывается напрямую в calc(), эта прослойка больше не нужна. */
-wireOn('diagBufSlider','input',function(){
-  const v=this.value;
-  document.documentElement.style.setProperty('--menu-buf', v+'px');
-  const lbl=$('diagBufVal'); if(lbl) lbl.textContent=v;
-});
-/* 14.09.2026 ВРЕМЕННО, см. комментарий у #diagSatRow в index.html — живое переизмерение
-   env(safe-area-inset-top) (satProbe(), core.js) и contentSafeAreaInset.top (Telegram SDK),
-   тем же путём, что tgInsetsSync() уже использует для --js-sat-real, просто выведено на
-   экран текстом вместо использования только внутри CSS-переменной.
-   14.09.2026, второй заход (RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md, находка void-saga-tma):
-   --tg-safe-area-inset-top (вырез устройства) и --tg-content-safe-area-inset-top (поверх —
-   собственные элементы-управления Telegram в полноэкранном режиме) сейчас берутся через max(), а в
-   чужом живом коде оказалось, что их нужно СКЛАДЫВАТЬ — это два разных перекрытия, не два
-   измерения одного и того же. Гипотеза, не факт (правило «измерять, не гадать») — здесь
-   только показ обоих чисел рядом, --sat-menu (max, боевой) не тронут. */
-function diagSatRefresh(){
-  const el=$('diagSatRow'); if(!el) return;
-  const envPx = (typeof satProbe==='function') ? satProbe() : null;
-  let tgPx = null, fs = null;
-  try{ const t=(typeof tgApp==='function')?tgApp():null; const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c) tgPx=+c.top||0; if(t) fs=!!t.isFullscreen; }catch(e){}
-  const cs = getComputedStyle(document.documentElement);
-  const cur = cs.getPropertyValue('--sat-menu').trim();
-  const rawSafe = parseFloat(cs.getPropertyValue('--tg-safe-area-inset-top')) || 0;
-  const rawContent = parseFloat(cs.getPropertyValue('--tg-content-safe-area-inset-top')) || 0;
-  const sumHypo = rawSafe + rawContent;
-  el.textContent = 'env: '+(envPx==null?'?':envPx.toFixed(1))+'px · SDK: '+(tgPx==null?'нет моста':tgPx+'px')+' (fullscreen: '+(fs==null?'?':(fs?'да':'нет'))+') · --sat-menu (max, боевой): '+(cur||'?')+' · гипотеза (safe+content): '+rawSafe.toFixed(1)+'+'+rawContent.toFixed(1)+'='+sumHypo.toFixed(1)+'px';
-}
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
@@ -2915,7 +2883,6 @@ function diagBuild(){
   for (const r of bedy.concat(glav)) list.appendChild(diagRowNode(r));
   const rare=$('diagListRare');
   if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
-  if (typeof diagSatRefresh==='function') diagSatRefresh(); // 14.09.2026 ВРЕМЕННО, см. index.html #diagSatRow
 }
 wireOn('diagMoreBtn', 'click', ()=>{ // тот же спойлер, что «Ещё» в настройках
   const b=$('diagMoreBox'); b.classList.toggle('hidden');
