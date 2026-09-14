@@ -162,14 +162,27 @@ canvas{display:block}
      в ней есть назначенные 96 мер). --sat-menu — настоящее перекрытие: чёлка, островок,
      шапка клиента. Меню держатся за неё и не платят за красоту HUD. Восемь мер снизу —
      чтобы заголовок не лип к самой кромке даже там, где перекрытия нет вовсе. */
-  --sat-menu:max(8px, env(safe-area-inset-top), var(--tg-safe-area-inset-top,0px), var(--tg-content-safe-area-inset-top,0px), var(--js-sat-real,0px));
+  /* 14.09.2026 (владелец, живые телефоны — RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md §2.5):
+     --tg-safe-area-inset-top (вырез/статус-бар устройства) и --tg-content-safe-area-inset-top
+     (собственная шапка/кнопки Telegram) — ДВА РАЗНЫХ перекрытия, не два измерения одного и
+     того же. Раньше брались через max() вместе с остальными источниками — на трёх реальных
+     устройствах владельца шапка Telegram (46px) оказалась ОДИНАКОВОЙ везде и всегда больше
+     выреза (24/32.5/35.7px на разных телефонах), поэтому max() каждый раз просто отбрасывал
+     вырез и выдавал одно и то же 46px на всех — реальная разница между устройствами терялась.
+     Измерено (contentSafeAreaInset живьём, три телефона): Samsung A03 24+46=70px, Oppo CPH2631
+     32.5+46=78.5px, Oppo CPH2565 35.7+46=81.7px — трижды перечитано, стабильно. Эти два инсета
+     теперь СКЛАДЫВАЮТСЯ между собой, а сумма участвует в общем max() наравне с остальными
+     независимыми источниками (пол 8px, env(), --js-sat-real) — на устройстве без выреза
+     (--tg-safe-area-inset-top=0) сумма математически равна старому max() (0+X=X), регрессии
+     нет; в не-fullscreen оба инсета живьём дают 0 у обеих формул одинаково (проверено). */
+  --sat-menu:max(8px, env(safe-area-inset-top), (var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px)), var(--js-sat-real,0px));
   /* 13.09.2026 ВРЕМЕННО (владелец, пункт 3: «везде кажется лишним») — вынесен фиксированный
      запас поверх честного --sat-menu в отдельную переменную, была разбросана как буквальные
      "24px" по ~20 местам. Временный ползунок в Сервисном центре меняет её живьём на
      устройстве владельца, не гадая числом из чата — как только он назовёт итоговое, эта
      переменная либо останется под тем числом, либо вернётся к 24px, ползунок и вся эта
      временность уйдут. */
-  --menu-buf:24px;
+  --menu-buf:-15px;
   --sab:max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom,0px), var(--tg-content-safe-area-inset-bottom,0px), var(--js-sab,0px));
   /* 27.08.2026 «Жизни за родными кнопками»: владелец — на его устройстве (Android, Telegram
      не в fullscreen НИКОГДА, подтверждено) жизни в правом углу HUD прячутся под родными
@@ -272,7 +285,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    вверху заходит» — тот же класс беды, что уже решён у Ангара строкой выше (та же +24px).
    Не подтверждено собственным замером (не могу воспроизвести чужую шапку Telegram у себя) —
    применяю уже проверенный на этой же беде приём, ждёт подтверждения на реальном устройстве. */
-#forgeScreen { padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); }
+#forgeScreen { --menu-buf:24px; padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); } /* 14.09.2026: боевой --menu-buf ушёл в -15px (заголовок делит строку с родной шапкой Telegram, владелец подтвердил «отлично» на «Турниры»/-15) — но «Конструктор» (11 букв) не помещается туда ни сжатием шрифта (владелец, живьём: «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано. Экран держит старый безопасный отступ до этого момента отдельно от остальных. */
 #forgeBack { top:calc(10px + var(--sat-menu) + var(--menu-buf)); }
 /* 02.09.2026 (владелец, живое устройство): «в сервисном центре кнопка назад тоже на
    слово наезжает» — тот же класс беды, что у Ангара/Конструктора выше (та же +24px).
@@ -2797,9 +2810,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.281"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.281"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.281"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.282"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.282"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.282"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3772,26 +3785,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.281" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.281"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.281"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.281"></script>
-<script defer src="js/game.js?v=1.478.281" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.281"></script>
-<script defer src="js/sync.js?v=1.478.281"></script>
-<script defer src="js/render.js?v=1.478.281"></script>
-<script defer src="js/planetarium.js?v=1.478.281"></script>
-<script defer src="js/goldstar.js?v=1.478.281"></script>
-<script defer src="js/finish.js?v=1.478.281"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.281"></script>
-<script defer src="js/gyro.js?v=1.478.281"></script>
-<script defer src="js/forge.js?v=1.478.281"></script>
-<script defer src="js/partitura.js?v=1.478.281"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.281"></script>
-<script defer src="js/card.js?v=1.478.281"></script>
-<script defer src="js/star.js?v=1.478.281"></script>
-<script defer src="js/cinema.js?v=1.478.281"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.281"></script>
+<script defer src="js/core.js?v=1.478.282" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.282"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.282"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.282"></script>
+<script defer src="js/game.js?v=1.478.282" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.282"></script>
+<script defer src="js/sync.js?v=1.478.282"></script>
+<script defer src="js/render.js?v=1.478.282"></script>
+<script defer src="js/planetarium.js?v=1.478.282"></script>
+<script defer src="js/goldstar.js?v=1.478.282"></script>
+<script defer src="js/finish.js?v=1.478.282"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.282"></script>
+<script defer src="js/gyro.js?v=1.478.282"></script>
+<script defer src="js/forge.js?v=1.478.282"></script>
+<script defer src="js/partitura.js?v=1.478.282"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.282"></script>
+<script defer src="js/card.js?v=1.478.282"></script>
+<script defer src="js/star.js?v=1.478.282"></script>
+<script defer src="js/cinema.js?v=1.478.282"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.282"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

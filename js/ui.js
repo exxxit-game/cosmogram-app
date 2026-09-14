@@ -195,6 +195,33 @@ function setScreen(name){
       t.style.marginTop = need>0 ? need+'px' : '';
     });
   }
+  const stid=SCREEN_TITLE_ID[name];
+  if(stid) requestAnimationFrame(function(){ shrinkScreenTitle($(stid)); });
+}
+/* 14.09.2026 (владелец, живые телефоны): задача — заголовок помещается МЕЖДУ кнопками родной
+   шапки Telegram («Назад»/крестик слева, chevron+три точки справа), в одной с ними строке, а
+   не под ней — боевой --menu-buf на -15px (index.html). Родная шапка — отдельный слой поверх
+   WebView, игра не измеряет её реальную ширину (см. RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md).
+   28% ширины экрана с каждой стороны — не догадка, а измерено по 7 живым скриншотам владельца
+   в разных языках Telegram (Назад/Tillbaka/Indietro/Tilbake/بازگشت/Kembali/Back — самые
+   широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). Сначала пробуем ужать шрифт
+   до 24px на одной строке; если и это не влезает (длинные заголовки вроде «Написать
+   разработчику») — снимаем nowrap и даём перенестись на 2 строки, тем же старым механизмом от
+   30.08.2026 (.screenTitle max-width). */
+const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
+  feedback:'feedbackTitle',modes:'modesTitle',hangar:'hangarTitle',
+  ach:'achTitle',modesTop:'modesTopTitle',relayMine:'relayMineTitle',card:'cardTitle'};
+  // 'forge' сюда не входит — #forgeScreen держит свой старый --menu-buf:24px (index.html),
+  // «Конструктор» не влезает между кнопками ни сжатием (владелец: «стало тупо»), ни переносом
+  // без нового короткого слова, которое ещё не выбрано
+function shrinkScreenTitle(el){
+  if(!el) return;
+  el.style.fontSize=''; el.style.whiteSpace='nowrap';
+  const SAFE=0.28, floor=24;
+  const avail=window.innerWidth*(1-SAFE*2);
+  let size=parseFloat(getComputedStyle(el).fontSize), guard=0;
+  while(el.scrollWidth>avail && size>floor && guard<40){ size--; el.style.fontSize=size+'px'; guard++; }
+  if(el.scrollWidth>avail) el.style.whiteSpace=''; // не влезло даже на полу — перенос на 2 строки вместо нечитаемого шрифта
 }
 
 /* ---------- Потоки ---------- */
@@ -278,7 +305,7 @@ function speedrunCardFill(){
   seg.children[1].textContent=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
 }
 function modesFill(){ // подписи + отметка выбранного режима
-  setText('modesTitle',L.modes);
+  setText('modesTitle',L.modesTitle); // 14.09.2026: короткий заголовок экрана, отдельно от L.modes (кнопка на главном не переименована)
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
   const tk=trackDayKey(), ak=attemptDayKey(); // 05.09.2026: tk — какое небо (месяц), ak — счётчик попыток (день), больше не одно и то же
   /* v1.282.20: печать дня ставится в СПИСОК отыгранных дней, а не в одну запись.

@@ -44,6 +44,13 @@ const I18N = {
     recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     topVerified:'Результат подтверждён забегом', unitM:'м', dist:'Дистанция', recordDist:'Рекорд дистанции',
     modes:'Соревнования', modesBack:'Назад', // 05.09.2026 (владелец): экран сузился до одних дисциплин — Конструктор переехал на главный отдельной кнопкой; EN/ES/PT/FR ниже ещё говорят старое «Flight modes», не тронуты
+    /* 14.09.2026 (владелец, живой телефон): заголовок ЭКРАНА раньше брал L.modes напрямую (та
+       же «Соревнования», что и кнопка) — на --menu-buf:-15px заголовок делит строку с родной
+       шапкой Telegram и «Соревнования» (12 букв) туда не влезает даже с авто-уменьшением
+       шрифта (см. shrinkScreenTitle, js/ui.js). Кнопка на главном экране остаётся
+       «Соревнования» — её ширина не поджата этим ограничением, переименована только строка
+       для тесного заголовка. */
+    modesTitle:'Турниры',
 
     modeClassic:'Классика',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
@@ -65,7 +72,7 @@ const I18N = {
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой; 10.09.2026: было 300м, владелец — «мало, конец сразу»
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войдите, чтобы лететь в эстафете',
-    relayMineTitle:'Статус эстафет', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом
+    relayMineTitle:'Статус', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом. 14.09.2026: заголовок сокращён с «Статус эстафет» до «Статус» — на --menu-buf:-15px «Статус эстафет» (14 симв.) не влезал по ширине даже переносом (см. modesTitle выше, тот же класс правки); слово и так уже само по себе используется как подпись кнопки на строку выше — контекст «эстафет» не теряется.
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
@@ -309,7 +316,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Best',
     recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     topVerified:'Result confirmed by the run', unitM:'m', dist:'Distance', recordDist:'Distance record',
-    modes:'Flight modes', modesBack:'Back',
+    modes:'Flight modes', modesBack:'Back', modesTitle:'Tournaments', // 14.09.2026: short screen-title only, see RU comment above modesTitle
     modeClassic:'Classic',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
     modeSpeedrunRSGD:'10,000 points against the clock — a new track every run',
@@ -328,7 +335,7 @@ const I18N = {
     modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 1000m, fly yours — hand off to the next pilot',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in to fly in the relay',
-    relayMineTitle:'Relay status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
+    relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
     relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
     relayFailStart:'Could not start the relay — try again',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
@@ -476,7 +483,7 @@ const I18N = {
     lampRed:'Sensor en silencio — control solo con el dedo',
     hangar:'COLECCIÓN', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia',
-    modes:'Modos de vuelo', modesBack:'Atrás', modeClassic:'Clásico',
+    modes:'Modos de vuelo', modesBack:'Atrás', modeClassic:'Clásico', modesTitle:'Torneos',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     modeSpeedrunRSGD:'10.000 puntos contra el reloj — una pista nueva en cada carrera',
     speedrunSSG:'Fija', speedrunRSG:'Aleatoria',
@@ -494,7 +501,7 @@ const I18N = {
     modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 1000m, vuela el tuyo — pásaselo al siguiente',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión para volar en los relevos',
-    relayMineTitle:'Estado de relevos', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
+    relayMineTitle:'Estado', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
     relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
@@ -657,7 +664,7 @@ const I18N = {
     lampRed:'Sensor em silêncio — controle só com o dedo',
     hangar:'COLEÇÃO', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância',
-    modes:'Modos de voo', modesBack:'Voltar', modeClassic:'Clássico',
+    modes:'Modos de voo', modesBack:'Voltar', modeClassic:'Clássico', modesTitle:'Torneios',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     modeSpeedrunRSGD:'10.000 pontos contra o relógio — uma pista nova a cada corrida',
     speedrunSSG:'Fixa', speedrunRSG:'Aleatória',
@@ -675,7 +682,7 @@ const I18N = {
     modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 1000m, voe o seu — passe para o próximo',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre para voar no revezamento',
-    relayMineTitle:'Status dos revezamentos', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
+    relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
     relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
@@ -836,7 +843,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Meilleur',
     recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
     topVerified:'Résultat confirmé par la partie', unitM:'m', dist:'Distance', recordDist:'Record de distance',
-    modes:'Modes de vol', modesBack:'Retour',
+    modes:'Modes de vol', modesBack:'Retour', modesTitle:'Tournois',
     modeClassic:'Classique',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     modeSpeedrunRSGD:'10 000 points contre la montre — une piste nouvelle à chaque course',
@@ -854,7 +861,7 @@ const I18N = {
     modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 1000m, vole la tienne — passe le relais',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi pour voler dans le relais',
-    relayMineTitle:'État des relais', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
+    relayMineTitle:'État', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
     relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
