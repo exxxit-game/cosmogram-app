@@ -2816,6 +2816,18 @@ wireOn('diagBufSlider','input',function(){
   document.documentElement.style.setProperty('--menu-buf', v+'px');
   const lbl=$('diagBufVal'); if(lbl) lbl.textContent=v;
 });
+/* 14.09.2026 ВРЕМЕННО, см. комментарий у #diagSatRow в index.html — живое переизмерение
+   env(safe-area-inset-top) (satProbe(), core.js) и contentSafeAreaInset.top (Telegram SDK),
+   тем же путём, что tgInsetsSync() уже использует для --js-sat-real, просто выведено на
+   экран текстом вместо использования только внутри CSS-переменной. */
+function diagSatRefresh(){
+  const el=$('diagSatRow'); if(!el) return;
+  const envPx = (typeof satProbe==='function') ? satProbe() : null;
+  let tgPx = null;
+  try{ const t=(typeof tgApp==='function')?tgApp():null; const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c) tgPx=+c.top||0; }catch(e){}
+  const cur = getComputedStyle(document.documentElement).getPropertyValue('--sat-menu').trim();
+  el.textContent = 'env(safe-area-inset-top): '+(envPx==null?'?':envPx.toFixed(1))+'px · Telegram SDK: '+(tgPx==null?'нет моста':tgPx+'px')+' · сейчас --sat-menu: '+(cur||'?');
+}
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
@@ -2844,6 +2856,7 @@ function diagBuild(){
   for (const r of bedy.concat(glav)) list.appendChild(diagRowNode(r));
   const rare=$('diagListRare');
   if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
+  if (typeof diagSatRefresh==='function') diagSatRefresh(); // 14.09.2026 ВРЕМЕННО, см. index.html #diagSatRow
 }
 wireOn('diagMoreBtn', 'click', ()=>{ // тот же спойлер, что «Ещё» в настройках
   const b=$('diagMoreBox'); b.classList.toggle('hidden');
