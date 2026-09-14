@@ -3202,9 +3202,16 @@ function renderRelayMine(){
   list.innerHTML='<div class="topMsg">'+L.topLoading+'</div>';
   if (!syncAvailable()){ list.innerHTML='<div class="topMsg">'+L.relaySignInFirst+'</div>'; return; }
   if (typeof syncRelayMyChains!=='function'){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+  /* 14.09.2026 (владелец, живой скрин: «Статус эстафет» тоже «таблица пока не отвечает»,
+     баг 9/11 из очереди 13.09) — тот же класс, что уже различён текстом в renderTopFor()
+     (баг 2, v1.478.271): офлайн и реальный сбой сервера показывали одно и то же сообщение.
+     Этот экран рисуется отдельной функцией (своя строка на цепочку, не .topIt), поэтому
+     прошлая правка её не задела — тот же приём здесь же, тем же способом (navigator.onLine),
+     без новых строк — L.syncOffline/L.topTgOnly уже существуют. */
+  const relayOfflineMsg = ()=> (typeof navigator!=='undefined' && navigator.onLine===false) ? (L.syncOffline||L.topTgOnly) : L.topTgOnly;
   syncRelayMyChains().then(function(d){
     if (screenName!=='relayMine') return; // ушёл с экрана, пока грузилось
-    if (!d || !d.ok){ list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; return; }
+    if (!d || !d.ok){ list.innerHTML='<div class="topMsg">'+relayOfflineMsg()+'</div>'; return; }
     if (!d.chains || !d.chains.length){ list.innerHTML='<div class="topMsg">'+L.relayMineEmpty+'</div>'; return; }
     list.innerHTML=d.chains.map(function(c){
       const names=(c.legs||[]).map(function(l){ return escapeHtml(l.name||'?'); }).join(' → ');
@@ -3214,7 +3221,7 @@ function renderRelayMine(){
         +'<div class="relayMineMeta"><span class="relayMineSc">'+fmtN(c.score)+'</span><span class="relayMineStatus">'+statusTxt+'</span></div>'
         +'</div>';
     }).join('');
-  }).catch(function(){ if(screenName==='relayMine') list.innerHTML='<div class="topMsg">'+L.topTgOnly+'</div>'; });
+  }).catch(function(){ if(screenName==='relayMine') list.innerHTML='<div class="topMsg">'+relayOfflineMsg()+'</div>'; });
 }
 wireOn('relayMineBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('relayMine'); renderRelayMine(); });
 wireOn('relayMineBackBtn', 'click', ()=>{ sfx.click(); setScreen('modes'); });
