@@ -261,7 +261,19 @@ Android-способы получить CPU/RAM (через `/proc/cpuinfo` и �
 **Официальная спецификация.** [core.telegram.org/bots/webapps#additional-data-in-user-agent](https://core.telegram.org/bots/webapps#additional-data-in-user-agent):
 на Android к User-Agent дописывается `Telegram-Android/{app_version} ({manufacturer} {model}; Android {android_version}; SDK {sdk_version}; {performance_class})`, `performance_class` — `LOW`/`AVERAGE`/`HIGH`. Только на Android — на iOS/Desktop/Web поле отсутствует вообще (прямая цитата доки: «When the Mini App is running on Android»). Появилось в Bot API **8.0**, 17.11.2024 ([changelog](https://core.telegram.org/bots/api-changelog), [блог](https://telegram.org/blog/fullscreen-miniapps-and-more)) — с тех пор (проверено постранично по 24.08.2026, Bot API 10.3) ничего нового про производительность/железо не добавлялось.
 
-**Откуда берётся значение — реальный алгоритм.** Telegram не публикует формулу официально, но Android-клиент открытый: [`SharedConfig.java`, `measureDevicePerformanceClass()`](https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java) — `LOW`, если Android<21, ИЛИ ядер≤2, ИЛИ RAM<2ГБ, ИЛИ (ядер≤4 И maxCpuFreq≤1250МГц), плюс отдельный чёрный список слабых SoC (Exynos 850, MSM8953 и др., Android 12+); `HIGH` — если ядер≥8 И memoryClass>160 И maxCpuFreq>2055МГц; иначе `AVERAGE`. Значение считается один раз и кэшируется — не живой замер на каждый запуск. Есть программный `overrideDevicePerformanceClass` (хранится в SharedPreferences) — конкретный пункт UI, где это выставляется, в открытых источниках не нашёлся.
+**Откуда берётся значение — реальный алгоритм.** Telegram не публикует формулу официально, но
+Android-клиент открытый: [`SharedConfig.java`, `measureDevicePerformanceClass()`](https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/SharedConfig.java).
+14.09.2026, поправка после состязательной проверки — прошлая версия этого абзаца упрощала
+условие `LOW` до одного «RAM<2ГБ», хотя в реальном коде это ОТДЕЛЬНОЕ условие среди семи,
+плюс `memoryClass` (лимит кучи приложения от Android, не физическая RAM устройства) — другая
+величина, спутанная в кратком пересказе. Полное условие `LOW` (любое из):
+Android<21; ИЛИ ядер≤2; ИЛИ `memoryClass`≤100; ИЛИ (ядер≤4 И maxCpuFreq≤1250МГц); ИЛИ
+(ядер≤4 И maxCpuFreq≤1600МГц И `memoryClass`≤128 И Android≤21); ИЛИ (ядер≤4 И maxCpuFreq≤1300МГц
+И `memoryClass`≤128 И Android≤24); ИЛИ физическая RAM<2ГБ — плюс отдельный чёрный список слабых
+SoC (Exynos 850, MSM8953 и др., Android 12+). `HIGH` — если ядер≥8 И memoryClass>160 И
+maxCpuFreq>2055МГц; иначе `AVERAGE`. Значение считается один раз и кэшируется — не живой замер
+на каждый запуск. Есть программный `overrideDevicePerformanceClass` (хранится в SharedPreferences)
+— конкретный пункт UI, где это выставляется, в открытых источниках не нашёлся.
 
 **Насколько доверять.** Целевой поиск (EN/RU) по issue-трекерам `DrKLO/Telegram` и `Telegram-Mini-Apps/*` не дал ни одного открытого репорта «флагман определился как LOW» именно для Mini Apps. Официальный community-SDK [`@telegram-apps/sdk`](https://github.com/Telegram-Mini-Apps/telegram-apps/pull/734) (`retrieveAndroidDeviceData()`) реализует свой парсер той же строки — типизирует `performanceClass` как `'LOW'|'AVERAGE'|'HIGH'|string`, сознательно не гарантируя только три значения.
 
