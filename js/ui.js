@@ -813,6 +813,9 @@ function ghostUpload(category, track, skin, best, seed){
   if (S.mode==='daily' && sc>0 && !S.wasRestored && rec.length>=20 && // v1.282.20: восстановленный прыжок дня в зал не идёт
     typeof syncDailySubmit==='function' && typeof ghostPackDaily==='function')
     syncDailySubmit({ day:S.dailyDay||trackDayKey(), score:sc, skin:S.skin, star:!!S.goldStar,
+      time_sec:Math.round(S.time), // 14.09.2026 (аудит «борьба с читерами», находка 1.2): тот же
+      // приём, что уже есть у Спидрана/Слалома/Биатлона строками ниже — раньше «Трасса дня»
+      // была единственной дисциплиной без времени в паспорте, сервер не мог проверить правдоподобие
       track: ghostPackDaily() });
   // 03.09.2026 «Спидран получает свою таблицу»: тот же приём, что у Трассы дня — только
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
