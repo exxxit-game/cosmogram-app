@@ -109,16 +109,24 @@ function ptSpreadOffsets(pins){
 function ptPinName(p){ return p.type==='pause'?'передышку':p.type==='marker'?'заметку':(PT_KIND_LABEL[FORGE_KINDS[p.kind]]||'').toLowerCase(); }
 
 let ptToastTimer=null;
+/* 14.09.2026 (владелец, живой скрин с кружком — «эта кнопка теперь лишняя»): у Тюнинга
+   (angarUnwear, js/ui.js) «Снять» уже само по себе кнопка прямо на плитке — вернуть предмет
+   так же просто, тапнуть ту же плитку («Надеть»), кнопка «вернуть» в тосте там дублирует
+   то, что и так под рукой. В Конструкторе (список точек «Убрал · Вернуть») отмены точки на
+   самой ленте нет — там «вернуть» остаётся единственным путём, кнопка нужна по-прежнему.
+   undoFn необязателен: без него кнопка «вернуть» скрыта, с ним — работает как раньше. */
 function ptShowToast(text,undoFn){
   let t=document.querySelector('.ptToast');
   if(!t){ t=document.createElement('div'); t.className='ptToast';
     t.innerHTML='<span class="ptToastTxt"></span><span class="undo">вернуть</span>';
     (document.getElementById('uiScaleRoot')||document.body).appendChild(t); } // 09.09.2026 «Размер текста»: внутрь масштабируемой обёртки, не мимо неё
   t.querySelector('.ptToastTxt').textContent=text;
+  const undoEl=t.querySelector('.undo');
+  undoEl.classList.toggle('hidden', !undoFn);
+  undoEl.onclick=undoFn?(()=>{ undoFn(); t.classList.remove('show'); clearTimeout(ptToastTimer); }):null;
   t.classList.add('show');
   clearTimeout(ptToastTimer);
   ptToastTimer=setTimeout(()=>t.classList.remove('show'),3000);
-  t.querySelector('.undo').onclick=()=>{ undoFn(); t.classList.remove('show'); clearTimeout(ptToastTimer); };
 }
 
 function ptRender(justPoppedIdx){

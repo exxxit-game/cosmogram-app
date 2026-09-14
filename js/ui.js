@@ -2240,8 +2240,9 @@ function angarApplyPremiumFlash(item){
    переключает выбор категории на id0 («ничего») напрямую, без отдельной плитки «Нет» в
    сетке. Только для decal/flash/trail — у color нельзя остаться без скина (angarUnwear
    для 'color' не вызывается вообще, кнопка там не рисуется, см. angarItemFill выше).
-   Тост+«вернуть» — тот же приём, что уже одобрен в Конструкторе (ptShowToast,
-   js/partitura.js, список точек «Убрал · Вернуть»), не новый узор. */
+   14.09.2026, владелец, живой скрин с кружком — «эта кнопка теперь лишняя»: кнопка
+   «вернуть» в тосте убрана — «Снять» и так уже кнопка прямо на плитке, вернуть предмет
+   так же просто тапом «Надеть» по ней же, отдельная отмена в тосте дублировала это. */
 function angarUnwear(){
   if(angarCat==='color') return;
   const cfg = ANGAR_CATS[angarCat];
@@ -2252,12 +2253,7 @@ function angarUnwear(){
   const refill=()=>{ angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); }); angarBuyFill(); angarPvWake(); };
   S[cfg.selKey]=0; Store.set(cfg.selKey,0); sfx.click(); haptic('light');
   refill();
-  if(typeof ptShowToast==='function'){
-    ptShowToast('Снял «'+item.name+'»', ()=>{
-      S[cfg.selKey]=item.id; Store.set(cfg.selKey,item.id); sfx.click(); haptic('light');
-      refill();
-    });
-  }
+  if(typeof ptShowToast==='function') ptShowToast('Снял «'+item.name+'»');
 }
 /* 04.09.2026 «Эксклюзивные скины за Stars»: настоящие деньги, не игровая валюта — отдельный
    путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
