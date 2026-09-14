@@ -1,0 +1,158 @@
+<title>Макет: электрический угорь — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Электрический угорь — 5 тем (честный шорт-лист файла)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/ELECTRIC-EEL-BIOELECTRICITY.md. На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// 1. Биологическая батарея — тысячи электроцитов сложены ПОСЛЕДОВАТЕЛЬНО, напряжения складываются
+function drawBatteryStack(ctx,now){
+  const n=9, cellH=2.6, totalH=n*cellH, y0=-totalH/2+2;
+  const p=(now%1800)/1800;
+  const litUpTo=Math.floor(p*(n+2));
+  for(let i=0;i<n;i++){
+    const y=y0+i*cellH;
+    const lit = i<=litUpTo-2;
+    ctx.fillStyle= lit? 'hsla(48,90%,'+(55+((litUpTo-2-i)===0?25:0))+'%,.9)' : 'hsla(48,40%,30%,.35)';
+    ctx.fillRect(-6,y,12,cellH-0.5);
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.25; ctx.strokeRect(-6,y,12,cellH-0.5);
+  }
+  if(litUpTo>=n+1){
+    const flash=1-((p*(n+2))-(n+1));
+    ctx.fillStyle='hsla(50,100%,85%,'+Math.max(0,flash*0.6)+')';
+    ctx.beginPath(); ctx.arc(0,y0-2,6,0,6.283); ctx.fill();
+  }
+}
+// 2. Волта/Гальвани — столб чередующихся дисков (искусственный "электрический орган")
+function drawVoltaPile(ctx,now){
+  const p=(now%2400)/2400;
+  const n=7, dH=1.8, y0=-2;
+  for(let i=0;i<n;i++){
+    const y=y0+i*dH;
+    const shine=0.5+0.5*Math.sin(now/260+i*1.3);
+    ctx.fillStyle= i%2===0? 'hsla(35,75%,'+(50+shine*15)+'%,.9)' : 'hsla(210,15%,'+(70+shine*10)+'%,.85)';
+    ctx.beginPath(); ctx.ellipse(0,y,6,1.1,0,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=0.2; ctx.stroke();
+  }
+  const sy=y0+p*(n-1)*dH;
+  ctx.fillStyle='hsla(50,100%,80%,.85)';
+  ctx.beginPath(); ctx.arc(0,sy,0.9,0,6.283); ctx.fill();
+}
+// 3. Три органа — главный (сильный удар), Хантера (сильный), Сакса (слабая локация) — разная анатомия, разный ритм
+function drawThreeOrgans(ctx,now){
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-9,10); ctx.quadraticCurveTo(0,-14,9,10); ctx.stroke();
+  const zones=[ {y0:-10,y1:-1,strong:true},{y0:-1,y1:6,strong:true},{y0:6,y1:10,strong:false} ];
+  zones.forEach((z,i)=>{
+    const period = z.strong? 900:2600;
+    const ph=(now%period)/period;
+    const pulse = z.strong? (ph<0.15?1:0.15) : (0.4+0.3*Math.sin(ph*6.283));
+    const midY=(z.y0+z.y1)/2;
+    ctx.fillStyle = z.strong? 'hsla(50,95%,65%,'+(0.3+0.5*pulse)+')' : 'hsla(190,70%,65%,'+(0.3+0.3*pulse)+')';
+    ctx.beginPath(); ctx.ellipse(0,midY,7.5,(z.y1-z.y0)/2,0,0,6.283); ctx.fill();
+  });
+}
+// 4. Прыгающий угорь — направленный разряд, растущий по интенсивности по мере приближения к цели
+function drawLeapingStrike(ctx,now){
+  const p=(now%2200)/2200;
+  const travel=Math.min(1,p*1.4);
+  const bodyY=10-travel*18;
+  ctx.strokeStyle='hsla(150,50%,55%,.8)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(-1,10); ctx.lineTo(-1+travel*1,bodyY); ctx.stroke();
+  if(p<0.85){
+    const intensity=0.2+travel*0.8;
+    const boltN=3;
+    for(let i=0;i<boltN;i++){
+      const jitter=(Math.sin(now/40+i*7)*1.4)*intensity;
+      ctx.strokeStyle='hsla(50,100%,'+(70+i*8)+'%,'+(intensity*0.7)+')';
+      ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.moveTo(-1,bodyY);
+      ctx.lineTo(-1+jitter,bodyY-4-i*2);
+      ctx.lineTo(2+jitter*0.6,bodyY-8-i*2.4);
+      ctx.stroke();
+    }
+  } else {
+    ctx.fillStyle='hsla(50,100%,85%,.5)';
+    ctx.beginPath(); ctx.arc(-1,bodyY-6,5,0,6.283); ctx.fill();
+  }
+}
+// 5. Спектр слабое↔сильное — мормирида (частые слабые импульсы) против угря (редкие мощные)
+function drawSpectrum(ctx,now){
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-9,2); ctx.lineTo(9,2); ctx.stroke();
+  const weakPh=(now%400)/400;
+  const wx=-7;
+  ctx.fillStyle='hsla(190,70%,65%,'+(0.35+0.35*Math.sin(weakPh*6.283*4))+')';
+  ctx.beginPath(); ctx.arc(wx,2,1.6,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(190,70%,65%,.25)'; ctx.beginPath(); ctx.arc(wx,2,3.2,0,6.283); ctx.stroke();
+  const strongPeriod=2000;
+  const sp=(now%strongPeriod)/strongPeriod;
+  const sx=7;
+  const strike = sp<0.06;
+  ctx.fillStyle= strike? 'hsla(50,100%,80%,.95)':'hsla(50,60%,45%,.4)';
+  ctx.beginPath(); ctx.arc(sx,2,strike?3:1.8,0,6.283); ctx.fill();
+  if(strike){ ctx.strokeStyle='hsla(50,100%,85%,.6)'; ctx.lineWidth=0.5; ctx.beginPath(); ctx.arc(sx,2,5.5,0,6.283); ctx.stroke(); }
+}
+
+mountCards([
+  {id:'e1', name:'Биологическая батарея', body:'#161408', drawFn:drawBatteryStack, zoom:6.5, fact:'~5000-6000 электроцитов последовательно — 0,15В каждый складываются в ~600В'},
+  {id:'e2', name:'Волта, Гальвани и угорь', body:'#141018', drawFn:drawVoltaPile, zoom:6.5, fact:'1800 год: Вольта строит «искусственный электрический орган» — первую батарею'},
+  {id:'e3', name:'Три органа, не один', body:'#0e1420', drawFn:drawThreeOrgans, zoom:6.5, fact:'Главный + орган Хантера (удар), орган Сакса (слабая локация) — разная анатомия'},
+  {id:'e4', name:'Прыгающий угорь', body:'#0e1a12', drawFn:drawLeapingStrike, zoom:6.5, fact:'Разряд растёт по мере того, как угорь поднимается по проводнику к цели'},
+  {id:'e5', name:'Спектр слабое↔сильное', body:'#101822', drawFn:drawSpectrum, zoom:6.5, fact:'Мормириды — только локация, угорь — до 860В (E. voltai, 2019)'},
+]);
+</script>

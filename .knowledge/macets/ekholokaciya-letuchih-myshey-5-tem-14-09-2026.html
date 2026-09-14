@@ -1,0 +1,158 @@
+<title>Макет: эхолокация летучих мышей — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Эхолокация летучих мышей — 5 тем (честный шорт-лист файла)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/BAT-ECHOLOCATION.md. На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// 1. FM-чирп вниз по частоте — FM1 55→22кГц, FM2 110→50кГц одновременно, единый нисходящий импульс
+function drawChirpSweep(ctx,now){
+  const period=1200;
+  const p=(now%period)/period;
+  function sweepY(t){ return -9+t*15; }
+  ctx.strokeStyle='hsla(200,80%,65%,.85)'; ctx.lineWidth=0.8;
+  ctx.beginPath();
+  for(let t=0;t<=1;t+=0.04){ const x=Math.sin(t*10)*(1-t)*2.5; const y=sweepY(t); if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.strokeStyle='hsla(200,60%,50%,.4)'; ctx.lineWidth=0.5;
+  ctx.beginPath();
+  for(let t=0;t<=1;t+=0.04){ const x=Math.sin(t*10)*(1-t)*1.3+3; const y=sweepY(t); if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); }
+  ctx.stroke();
+  const py=sweepY(p);
+  const px=Math.sin(p*10)*(1-p)*2.5;
+  ctx.fillStyle='hsla(200,90%,85%,.9)';
+  ctx.beginPath(); ctx.arc(px,py,1,0,6.283); ctx.fill();
+}
+// 2. Компенсация Доплера — активная подстройка, эхо всегда удерживается в узком опорном окне
+function drawDopplerLock(ctx,now){
+  ctx.strokeStyle='hsla(45,70%,60%,.35)'; ctx.lineWidth=2.2;
+  ctx.beginPath(); ctx.moveTo(-8,0); ctx.lineTo(8,0); ctx.stroke();
+  const p=(now%1000)/1000;
+  const drift=Math.sin(now/650)*5;
+  const corrected=drift*0.15;
+  ctx.fillStyle='hsla(30,80%,55%,.5)';
+  ctx.beginPath(); ctx.arc(drift,-4,0.8,0,6.283); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(drift,-4); ctx.lineTo(corrected,0); ctx.stroke();
+  ctx.fillStyle='hsla(160,80%,65%,.95)';
+  ctx.beginPath(); ctx.arc(corrected,0,1.1,0,6.283); ctx.fill();
+}
+// 3. Стапедиальная мышца — закрыть перед криком, открыть сразу после, синхронно с каждым импульсом
+function drawStapediusMute(ctx,now){
+  const period=900;
+  const p=(now%period)/period;
+  let open;
+  if(p<0.08) open=1-(p/0.08);
+  else if(p<0.14) open=0;
+  else if(p<0.22) open=(p-0.14)/0.08;
+  else open=1;
+  ctx.strokeStyle='hsla(0,0%,80%,.3)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.ellipse(0,2,7,9,0,0,6.283); ctx.stroke();
+  ctx.fillStyle='hsla(190,70%,'+(40+open*30)+'%,'+(0.3+open*0.5)+')';
+  ctx.beginPath(); ctx.ellipse(0,2,5*open+0.4,6*open+0.4,0,0,6.283); ctx.fill();
+  if(p<0.1){
+    ctx.strokeStyle='hsla(0,80%,60%,'+(1-p*8)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,-6,1+p*20,0,6.283); ctx.stroke();
+  }
+}
+// 4. Сонар-джемминг мотылька — контр-щелчки сбивают нисходящий чирп бата
+function drawMothJam(ctx,now){
+  const period=1600;
+  const p=(now%period)/period;
+  ctx.strokeStyle='hsla(200,75%,65%,.8)'; ctx.lineWidth=0.7;
+  ctx.beginPath();
+  for(let t=0;t<=Math.min(p,0.6)/0.6;t+=0.05){ const y=-9+t*13; ctx.lineTo(t*-3,y); if(t===0)ctx.moveTo(0,-9); }
+  ctx.stroke();
+  if(p>0.35 && p<0.65){
+    const jt=(p-0.35)/0.3;
+    for(let i=0;i<5;i++){
+      const jx=(Math.random()-0.5)*10, jy=(Math.random()-0.5)*6+2;
+      ctx.fillStyle='hsla(0,90%,'+(55+jt*20)+'%,'+(0.5*(1-jt))+')';
+      ctx.beginPath(); ctx.arc(jx,jy,0.5,0,6.283); ctx.fill();
+    }
+  }
+}
+// 5. Эхо рисует силуэт — щелчок, расходящийся импульс, отражение возвращается контуром объекта
+function drawEchoSilhouette(ctx,now){
+  const period=2000;
+  const p=(now%period)/period;
+  if(p<0.4){
+    const r=p/0.4*11;
+    ctx.strokeStyle='hsla(160,70%,60%,'+(1-p/0.4)*0.7+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,2,r,0,6.283); ctx.stroke();
+  } else if(p<0.75){
+    const t=(p-0.4)/0.35;
+    ctx.strokeStyle='hsla(45,80%,65%,'+t*0.9+')'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.stroke();
+    ctx.fillStyle='hsla(45,80%,65%,'+t*0.25+')';
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.fill();
+  } else {
+    ctx.strokeStyle='hsla(45,80%,65%,.9)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.stroke();
+  }
+  ctx.fillStyle='hsla(200,90%,85%,.8)';
+  ctx.beginPath(); ctx.arc(0,-8,0.9,0,6.283); ctx.fill();
+}
+
+mountCards([
+  {id:'b1', name:'Нисходящий FM-чирп', body:'#0e1622', drawFn:drawChirpSweep, zoom:6.5, fact:'FM1 55→22кГц, FM2 110→50кГц одновременно — один импульс, максимум дальности'},
+  {id:'b2', name:'Компенсация Доплера', body:'#161206', drawFn:drawDopplerLock, zoom:6.5, fact:'Подковонос удерживает эхо в окне ~200Гц, подстраивая крик в реальном времени (1968)'},
+  {id:'b3', name:'Мышца среднего уха', body:'#0e1420', drawFn:drawStapediusMute, zoom:6.5, fact:'Закрывается за миг до крика, открывается через ~3мс — не оглохнуть от своего же голоса'},
+  {id:'b4', name:'Сонар-джемминг мотылька', body:'#160e14', drawFn:drawMothJam, zoom:6.5, fact:'Bertholdia trigona сбивает сонар бата собственными щелчками (Corcoran, 2009)'},
+  {id:'b5', name:'Эхо рисует силуэт', body:'#0c1620', drawFn:drawEchoSilhouette, zoom:6.5, fact:'«Слеп как летучая мышь» — миф; зрение есть, эхолокация — вдобавок к нему'},
+]);
+</script>

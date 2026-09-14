@@ -1,0 +1,168 @@
+<title>Макет: бесшумный полёт совы — 5 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Бесшумный полёт совы — 5 тем (честный шорт-лист файла)</h1>
+<p class="sub">Каждая карточка — реальный факт из .knowledge/OWL-SILENT-FLIGHT.md. На корпусе, живая анимация.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// 1. Триада гребень→бахрома→бархат — воздух проходит 3 зоны, становясь всё тише
+function drawFeatherTriad(ctx,now){
+  const period=2400;
+  const p=(now%period)/period;
+  const y=-8+p*15;
+  const zone = y<-3?0 : (y<4?1:2);
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(-9,-3); ctx.lineTo(9,-3); ctx.moveTo(-9,4); ctx.lineTo(9,4); ctx.stroke();
+  for(let i=0;i<4;i++){
+    const jag = zone===0? (Math.sin(now/60+i*3)*1.4) : zone===1? (Math.sin(now/140+i*2)*0.5) : (Math.sin(now/260+i)*0.15);
+    const x=-6+i*4+jag;
+    ctx.fillStyle= zone===0?'hsla(0,70%,60%,.7)':zone===1?'hsla(45,70%,60%,.7)':'hsla(190,70%,65%,.7)';
+    ctx.beginPath(); ctx.arc(x,y,0.7,0,6.283); ctx.fill();
+  }
+}
+// 2. Бархат вкл/выкл — блокировка бархата лаком: +14.7дБ/+17.1дБ роста шума (Clark, 2020)
+function drawVelvetToggle(ctx,now){
+  const period=2000;
+  const p=(now%period)/period;
+  const blocked = p>0.5;
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(-8,3); ctx.lineTo(8,3); ctx.stroke();
+  if(!blocked){
+    for(let i=0;i<3;i++){
+      const r=((now/500+i*0.6)%1.2)*6;
+      ctx.strokeStyle='hsla(190,70%,65%,'+(1-r/6)*0.5+')'; ctx.lineWidth=0.4;
+      ctx.beginPath(); ctx.arc(0,3,r,0,6.283); ctx.stroke();
+    }
+  } else {
+    for(let i=0;i<6;i++){
+      const a=(now/70+i*1.1)%6.283;
+      const r=2+((now/60+i*3)%5);
+      ctx.strokeStyle='hsla(0,80%,60%,'+(1-r/7)*0.7+')'; ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*0.7,3+Math.sin(a)*r*0.7); ctx.lineTo(Math.cos(a)*r,3+Math.sin(a)*r); ctx.stroke();
+    }
+  }
+}
+// 3. Спектральный провал шума ровно там, где слышит жертва (6-8.5кГц)
+function drawSpectralNotch(ctx,now){
+  const n=10;
+  ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(-8,7); ctx.lineTo(8,7); ctx.stroke();
+  for(let i=0;i<n;i++){
+    const x=-8+i*1.7+0.6;
+    const inPreyBand = i>=6 && i<=8;
+    const base = inPreyBand? 1.2 : 5+2*Math.sin(now/300+i);
+    const h= Math.max(0.5,base*(0.7+0.3*Math.sin(now/200+i*0.7)));
+    ctx.fillStyle= inPreyBand? 'hsla(150,70%,55%,.85)':'hsla(0,70%,55%,.6)';
+    ctx.fillRect(x,7-h,1.1,h);
+  }
+}
+// 4. Компромисс — намокшее перо теряет и водоотталкивание, и тишину
+function drawWetTradeoff(ctx,now){
+  const period=2600;
+  const p=(now%period)/period;
+  ctx.strokeStyle='hsla(45,40%,60%,.5)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-8,4); ctx.lineTo(8,4); ctx.stroke();
+  if(p<0.5){
+    const t=p/0.5;
+    const y=-10+t*13;
+    ctx.fillStyle='hsla(200,80%,70%,.8)';
+    ctx.beginPath(); ctx.arc(0,y,0.8,0,6.283); ctx.fill();
+    if(t>0.9){
+      ctx.strokeStyle='hsla(200,70%,60%,.5)'; ctx.lineWidth=0.3;
+      ctx.beginPath(); ctx.arc(2,4,1.5,0,6.283); ctx.stroke();
+    }
+  } else {
+    const t=(p-0.5)/0.5;
+    const spread=1+t*4;
+    ctx.fillStyle='hsla(200,60%,55%,'+(0.5-t*0.3)+')';
+    ctx.beginPath(); ctx.ellipse(0,4+t*2,spread,spread*0.4,0,0,6.283); ctx.fill();
+    ctx.strokeStyle='hsla(0,60%,55%,'+(t*0.5)+')'; ctx.lineWidth=0.4;
+    for(let i=0;i<4;i++){
+      const a=i/4*6.283;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a)*spread,4+t*2+Math.sin(a)*spread*0.4); ctx.lineTo(Math.cos(a)*(spread+1),4+t*2+Math.sin(a)*(spread+1)*0.4); ctx.stroke();
+    }
+  }
+}
+// 5. DinoTail — зубчатая кромка турбины, вдохновлённая бахромой совы, снижает шум >10%
+function drawDinoTail(ctx,now){
+  const p=(now%3000)/3000;
+  const rot=p*6.283;
+  ctx.save(); ctx.rotate(rot);
+  for(let b=0;b<3;b++){
+    ctx.save(); ctx.rotate(b/3*6.283);
+    ctx.strokeStyle='hsla(200,20%,70%,.8)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-8); ctx.stroke();
+    ctx.beginPath();
+    for(let i=0;i<4;i++){ const yy=-2.5-i*1.3; ctx.moveTo(0.25,yy); ctx.lineTo(0.7,yy-0.65); ctx.lineTo(0.25,yy-1.3); }
+    ctx.strokeStyle='hsla(200,20%,60%,.6)'; ctx.lineWidth=0.4; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.fillStyle='hsla(0,0%,80%,.9)'; ctx.beginPath(); ctx.arc(0,0,0.8,0,6.283); ctx.fill();
+  const ringP=(now%1800)/1800;
+  ctx.strokeStyle='hsla(190,60%,65%,'+(1-ringP)*0.35+')'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.arc(0,0,ringP*9,0,6.283); ctx.stroke();
+}
+
+mountCards([
+  {id:'o1', name:'Гребень→бахрома→бархат', body:'#14120e', drawFn:drawFeatherTriad, zoom:6.5, fact:'Три разных механизма пера (Graham, 1934): дробят, сглаживают и гасят шум по очереди'},
+  {id:'o2', name:'Бархат вкл/выкл', body:'#0e1420', drawFn:drawVelvetToggle, zoom:6.5, fact:'Блокировка бархата лаком: +14,7дБ и +17,1дБ шума на живых сипухах (Clark, 2020)'},
+  {id:'o3', name:'Провал в слухе жертвы', body:'#0e1810', drawFn:drawSpectralNotch, zoom:6.5, fact:'Шум крыла целится ниже 1,6-2кГц — ровно мимо слуха грызуна (6-8,5кГц)'},
+  {id:'o4', name:'Цена тишины', body:'#161006', drawFn:drawWetTradeoff, zoom:6.5, fact:'Намокшее перо теряет и водоотталкивание, и бесшумность одновременно'},
+  {id:'o5', name:'DinoTail турбины', body:'#0e1622', drawFn:drawDinoTail, zoom:6.5, fact:'Siemens Gamesa: зубчатая кромка совы на лопастях — шум ниже на >10% без потери мощности'},
+]);
+</script>
