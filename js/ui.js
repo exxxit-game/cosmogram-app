@@ -196,24 +196,30 @@ function setScreen(name){
     });
   }
   const stid=SCREEN_TITLE_ID[name];
-  if(stid) requestAnimationFrame(function(){ shrinkScreenTitle($(stid)); });
+  if(stid) requestAnimationFrame(function(){ const t=$(stid); shrinkScreenTitle(t); centerTitleOnHeader(t); });
 }
 /* 14.09.2026 (владелец, живые телефоны): задача — заголовок помещается МЕЖДУ кнопками родной
-   шапки Telegram («Назад»/крестик слева, chevron+три точки справа), в одной с ними строке, а
-   не под ней — боевой --menu-buf на -15px (index.html). Родная шапка — отдельный слой поверх
-   WebView, игра не измеряет её реальную ширину (см. RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md).
-   28% ширины экрана с каждой стороны — не догадка, а измерено по 7 живым скриншотам владельца
-   в разных языках Telegram (Назад/Tillbaka/Indietro/Tilbake/بازگشت/Kembali/Back — самые
-   широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). Сначала пробуем ужать шрифт
-   до 24px на одной строке; если и это не влезает (длинные заголовки вроде «Написать
-   разработчику») — снимаем nowrap и даём перенестись на 2 строки, тем же старым механизмом от
-   30.08.2026 (.screenTitle max-width). */
+   шапки Telegram («Назад»/крестик слева, chevron+три точки справа), в одной с ними строке И
+   по центру их высоты, а не просто где-то в той же строке. Родная шапка — отдельный слой поверх
+   WebView, игра не измеряет её напрямую (см. RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md), но её
+   ВЫСОТУ игра уже знает живьём — это и есть contentSafeAreaInset.top (46px на всех трёх
+   проверенных телефонах владельца, число самого Telegram, не догадка). Раньше здесь стоял
+   фиксированный --menu-buf, подобранный на глаз на одном устройстве — владелец справедливо
+   указал, что это противоречит всей задаче автонастройки (после того, как формула --sat-menu
+   уже однажды была так же на глаз откалибрована и сломалась при пересчёте). Вместо этого центр
+   заголовка теперь СЧИТАЕТСЯ на каждом реальном устройстве из двух живых чисел: высоты шапки
+   Telegram (notch+contentSafeAreaInset/2) и собственной высоты заголовка (getBoundingClientRect
+   после подгонки шрифта) — никакого числа руками, ни здесь, ни на другом телефоне.
+   28% ширины экрана с каждой стороны (авто-сжатие ниже) — тоже не догадка, измерено по 7 живым
+   скриншотам владельца в разных языках Telegram (Назад/Tillbaka/Indietro/Tilbake/بازگشت/
+   Kembali/Back — самые широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). */
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
   feedback:'feedbackTitle',modes:'modesTitle',hangar:'hangarTitle',
   ach:'achTitle',modesTop:'modesTopTitle',relayMine:'relayMineTitle',card:'cardTitle'};
-  // 'forge' сюда не входит — #forgeScreen держит свой старый --menu-buf:24px (index.html),
-  // «Конструктор» не влезает между кнопками ни сжатием (владелец: «стало тупо»), ни переносом
-  // без нового короткого слова, которое ещё не выбрано
+  // 'forge' сюда не входит — #forgeScreen держит свой отдельный, небольшой положительный
+  // --menu-buf (index.html): «Конструктор» не влезает между кнопками ни сжатием (владелец:
+  // «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано — сидит
+  // под шапкой целиком, не в одной с ней строке, центрирование тут не нужно
 function shrinkScreenTitle(el){
   if(!el) return;
   el.style.fontSize=''; el.style.whiteSpace='nowrap';
@@ -222,6 +228,20 @@ function shrinkScreenTitle(el){
   let size=parseFloat(getComputedStyle(el).fontSize), guard=0;
   while(el.scrollWidth>avail && size>floor && guard<40){ size--; el.style.fontSize=size+'px'; guard++; }
   if(el.scrollWidth>avail) el.style.whiteSpace=''; // не влезло даже на полу — перенос на 2 строки вместо нечитаемого шрифта
+}
+function centerTitleOnHeader(el){
+  if(!el) return;
+  el.style.marginTop=''; // сброс перед новым замером — на резюме/смене языка высота могла измениться
+  const t=(typeof tgApp==='function')?tgApp():null;
+  if(!t || !t.isFullscreen) return; // не fullscreen — родной шапки в этом виде нет, центрировать не от чего
+  const c=t.contentSafeAreaInset, s=t.safeAreaInset;
+  const H=+((c&&c.top)||0); if(!H) return; // платформа не подтвердила высоту шапки — не гадаем, оставляем CSS как есть
+  const notch=+((s&&s.top)||0);
+  const titleH=el.getBoundingClientRect().height;
+  const desiredTop=notch+H/2-titleH/2; // центр заголовка = центр высоты родной шапки
+  const delta=desiredTop-el.getBoundingClientRect().top;
+  const curMargin=parseFloat(getComputedStyle(el).marginTop)||0;
+  el.style.marginTop=(curMargin+delta)+'px';
 }
 
 /* ---------- Потоки ---------- */

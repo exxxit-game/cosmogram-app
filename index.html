@@ -182,7 +182,12 @@ canvas{display:block}
      устройстве владельца, не гадая числом из чата — как только он назовёт итоговое, эта
      переменная либо останется под тем числом, либо вернётся к 24px, ползунок и вся эта
      временность уйдут. */
-  --menu-buf:-15px;
+  --menu-buf:12px;
+  /* 14.09.2026: это число больше НЕ калибровка под конкретный телефон — реальное позиционирование
+     заголовка (между кнопок родной шапки, по центру её высоты) теперь считает centerTitleOnHeader()
+     в js/ui.js живьём на каждом устройстве (contentSafeAreaInset.top/safeAreaInset.top + реальная
+     высота заголовка), не число здесь. Это только запасной, безопасный отступ НИЖЕ шапки — на
+     случай, если моста Telegram нет вообще (isFullscreen=false, обычный браузер, старый клиент). */
   --sab:max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom,0px), var(--tg-content-safe-area-inset-bottom,0px), var(--js-sab,0px));
   /* 27.08.2026 «Жизни за родными кнопками»: владелец — на его устройстве (Android, Telegram
      не в fullscreen НИКОГДА, подтверждено) жизни в правом углу HUD прячутся под родными
@@ -285,7 +290,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    вверху заходит» — тот же класс беды, что уже решён у Ангара строкой выше (та же +24px).
    Не подтверждено собственным замером (не могу воспроизвести чужую шапку Telegram у себя) —
    применяю уже проверенный на этой же беде приём, ждёт подтверждения на реальном устройстве. */
-#forgeScreen { --menu-buf:8px; padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); } /* 14.09.2026: боевой --menu-buf ушёл в -15px (заголовок делит строку с родной шапкой Telegram, владелец подтвердил «отлично» на «Турниры»/-15) — но «Конструктор» (11 букв) не помещается туда ни сжатием шрифта (владелец, живьём: «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано. Экран держит свой небольшой положительный запас вместо этого — сидит под шапкой, не в одной с ней строке.
+#forgeScreen { --menu-buf:8px; padding-top:calc(10px + var(--sat-menu) + var(--menu-buf)); } /* 14.09.2026: боевой --menu-buf ушёл в отрицательные (заголовок делит строку с родной шапкой Telegram, владелец подтвердил на «Турниры») — но «Конструктор» (11 букв) не помещается туда ни сжатием шрифта (владелец, живьём: «стало тупо»), ни переносом без нового короткого слова, которое ещё не выбрано. Экран держит свой небольшой положительный запас вместо этого — сидит под шапкой, не в одной с ней строке.
    14.09.2026, поправка: было +24px — рассчитано под СТАРУЮ (заниженную max()) --sat-menu. После
    правки формулы на сумму (см. --sat-menu выше) --sat-menu сама стала больше и точнее, и те же
    +24px поверх нового числа увели заголовок заметно ниже, чем раньше (владелец, живьём: «ты его
@@ -3180,7 +3185,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      переехал на главный экран отдельной кнопкой (он не дисциплина, см. modeIt ниже). -->
 <div id="modesScreen" class="overlay hidden">
   <button class="menuBack" id="modesBack" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="modesTitle">Соревнования</div>
+  <div class="screenTitle" id="modesTitle">Турниры</div>
   <div class="setPanel">
     <button class="btn ghost modeIt" id="modeDaily"><span class="modeName">Небо дня</span><span class="modeDesc">Одно небо на всех игроков</span></button>
     <!-- 07.09.2026, владелец: 1CC удалён из игры — «бесконечная возможность крутить небо дня
@@ -3683,7 +3688,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      таблицу лидеров, здесь два разных факта на карточку: кто играл + текущий счёт/статус). -->
 <div id="relayMineScreen" class="overlay hidden">
   <button class="menuBack" id="relayMineBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
-  <div class="screenTitle" id="relayMineTitle">Мои эстафеты</div>
+  <div class="screenTitle" id="relayMineTitle">Статус</div>
   <div class="scrBody">
     <div id="relayMineList"></div>
   </div>
