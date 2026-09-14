@@ -2822,14 +2822,24 @@ wireOn('diagBufSlider','input',function(){
 /* 14.09.2026 ВРЕМЕННО, см. комментарий у #diagSatRow в index.html — живое переизмерение
    env(safe-area-inset-top) (satProbe(), core.js) и contentSafeAreaInset.top (Telegram SDK),
    тем же путём, что tgInsetsSync() уже использует для --js-sat-real, просто выведено на
-   экран текстом вместо использования только внутри CSS-переменной. */
+   экран текстом вместо использования только внутри CSS-переменной.
+   14.09.2026, второй заход (RESEARCH-2026-09-SAFE-AREA-AUTODETECT.md, находка void-saga-tma):
+   --tg-safe-area-inset-top (вырез устройства) и --tg-content-safe-area-inset-top (поверх —
+   собственные элементы-управления Telegram в полноэкранном режиме) сейчас берутся через max(), а в
+   чужом живом коде оказалось, что их нужно СКЛАДЫВАТЬ — это два разных перекрытия, не два
+   измерения одного и того же. Гипотеза, не факт (правило «измерять, не гадать») — здесь
+   только показ обоих чисел рядом, --sat-menu (max, боевой) не тронут. */
 function diagSatRefresh(){
   const el=$('diagSatRow'); if(!el) return;
   const envPx = (typeof satProbe==='function') ? satProbe() : null;
-  let tgPx = null;
-  try{ const t=(typeof tgApp==='function')?tgApp():null; const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c) tgPx=+c.top||0; }catch(e){}
-  const cur = getComputedStyle(document.documentElement).getPropertyValue('--sat-menu').trim();
-  el.textContent = 'env(safe-area-inset-top): '+(envPx==null?'?':envPx.toFixed(1))+'px · Telegram SDK: '+(tgPx==null?'нет моста':tgPx+'px')+' · сейчас --sat-menu: '+(cur||'?');
+  let tgPx = null, fs = null;
+  try{ const t=(typeof tgApp==='function')?tgApp():null; const c=t&&(t.contentSafeAreaInset||t.safeAreaInset); if(c) tgPx=+c.top||0; if(t) fs=!!t.isFullscreen; }catch(e){}
+  const cs = getComputedStyle(document.documentElement);
+  const cur = cs.getPropertyValue('--sat-menu').trim();
+  const rawSafe = parseFloat(cs.getPropertyValue('--tg-safe-area-inset-top')) || 0;
+  const rawContent = parseFloat(cs.getPropertyValue('--tg-content-safe-area-inset-top')) || 0;
+  const sumHypo = rawSafe + rawContent;
+  el.textContent = 'env: '+(envPx==null?'?':envPx.toFixed(1))+'px · SDK: '+(tgPx==null?'нет моста':tgPx+'px')+' (fullscreen: '+(fs==null?'?':(fs?'да':'нет'))+') · --sat-menu (max, боевой): '+(cur||'?')+' · гипотеза (safe+content): '+rawSafe.toFixed(1)+'+'+rawContent.toFixed(1)+'='+sumHypo.toFixed(1)+'px';
 }
 let diagLastT=0;
 function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые галочки — только на экране сервисного центра
