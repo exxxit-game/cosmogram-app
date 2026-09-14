@@ -401,6 +401,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   наезжали на COSMOGRAM. Тот же +24px, что уже спас #livesCanvas и #angarWallet/#hangarBackBtn —
   тот же класс перекрытия сверху, --sat-menu на его устройстве отдаёт только пол в 8px. */
 .scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
+/* 15.09.2026 (владелец: «подставь карточку... под текст Одно небо для всех», затем «отступ до ~5px»):
+   #startScreen — флекс с justify-content:space-between, лишнее место между .scrTop и .scrMid
+   распределялось само собой (было 41.7px, замерено живьём). Тянем .scrMid вверх отрицательным
+   margin-top до ~5px итогового зазора. */
+.scrMid { margin-top:-37px; }
 .scrFoot { display:flex; justify-content:center; width:100%;
   padding-bottom:calc(18px + var(--sab)); }
 
@@ -475,7 +480,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   padding:0;-ms-overflow-style:none;scrollbar-width:none}
 .heroCarousel::-webkit-scrollbar{display:none}
 .heroCard{position:relative;flex:0 0 100%;scroll-snap-align:center;border-radius:var(--r-card);
-  overflow:hidden;padding:12px 13px 10px;height:149px;display:flex;flex-direction:column; /* 15.09.2026 (владелец, макет karusel-karta-vyshe-na-tret-15-09-2026.html): было 112px, +⅓ («на 1/3») — контент прижат к низу (justify-content:flex-end), карточка растёт вверх */
+  overflow:hidden;padding:12px 13px 10px;height:130px;display:flex;flex-direction:column; /* 15.09.2026 (владелец): было 112px, сначала +⅓ до 149px («на 1/3»), затем владелец попросил половину от этого прироста — 112+(37/2)=130.5≈130px. Контент прижат к низу (justify-content:flex-end), карточка растёт вверх */
   justify-content:flex-end;align-items:flex-start;border:1px solid var(--line);isolation:isolate;
   background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
   -webkit-appearance:none;appearance:none;box-sizing:border-box}
