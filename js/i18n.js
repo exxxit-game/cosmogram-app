@@ -43,16 +43,11 @@ const I18N = {
     hangar:'КОЛЛЕКЦИЯ', best:'Рекорд', // 08.09.2026: было «Тюнинг» — владелец: слово утратило смысл, там больше не «допилить», а собранная коллекция настоящих формул/культур; до этого было «Ангар» (30.08.2026, звучало как место для работы руками)
     recordGyro:'Рекорд гироскопа', recordTouch:'Рекорд касания', recordKeys:'Рекорд клавиатуры',
     topVerified:'Результат подтверждён забегом', unitM:'м', dist:'Дистанция', recordDist:'Рекорд дистанции',
-    modes:'Турниры', modesBack:'Назад', // 05.09.2026 (владелец): экран сузился до одних дисциплин — Конструктор переехал на главный отдельной кнопкой. 14.09.2026: кнопка на главном тоже «Турниры» (было «Соревнования») — владелец явно попросил, тот же текст, что и заголовок экрана
-    /* 14.09.2026 (владелец, живой телефон): заголовок ЭКРАНА раньше брал L.modes напрямую (та
-       же «Соревнования», что и кнопка) — на --menu-buf:-15px заголовок делит строку с родной
-       шапкой Telegram и «Соревнования» (12 букв) туда не влезает даже с авто-уменьшением
-       шрифта (см. shrinkScreenTitle, js/ui.js). Кнопка на главном экране остаётся
-       «Соревнования» — её ширина не поджата этим ограничением, переименована только строка
-       для тесного заголовка. */
-    modesTitle:'Турниры',
-
-    modeClassic:'Классика',
+    // 15.09.2026: modes/modesBack/modesTitle удалены — экран «Турниры» убран целиком (карусель
+    // режимов на главном экране заменяет его), кнопка на главном стала «Топ соревнований»
+    // (topCompTitle, уже существовал). modeClassicD — новое: у Классики раньше не было подписи
+    // вовсе (просто кнопка «Начать полёт»), карточке карусели нужна короткая, как у остальных 6.
+    modeClassic:'Классика', modeClassicD:'Лети, пока хватит жизней — свободный полёт без правил',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 очков на время — чистый хронометраж', // 30.08.2026: было «Спидран» — та же логика, что у Bullet Time: имя дисциплины не переводится
     // 11.09.2026 «Speedrun RSG»: второй вариант рядом с постоянной трассой (SSG) — свежий сид
     // каждый забег, тот же каркас, что уже у Caravan (forgeSeg-переключатель под кнопкой полёта).
@@ -316,8 +311,8 @@ const I18N = {
     hangar:'COLLECTION', best:'Best',
     recordGyro:'Gyro record', recordTouch:'Touch record', recordKeys:'Keyboard record',
     topVerified:'Result confirmed by the run', unitM:'m', dist:'Distance', recordDist:'Distance record',
-    modes:'Tournaments', modesBack:'Back', modesTitle:'Tournaments', // 14.09.2026: was stale "Flight modes" for years, owner asked button to match screen title
-    modeClassic:'Classic',
+    // 15.09.2026: modes/modesBack/modesTitle removed — the Tournaments screen is gone (mode carousel on the home screen replaces it)
+    modeClassic:'Classic', modeClassicD:'Fly as long as your lives last — free flight, no rules',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10,000 points against the clock',
     modeSpeedrunRSGD:'10,000 points against the clock — a new track every run',
     speedrunSSG:'Fixed', speedrunRSG:'Random',
@@ -483,7 +478,7 @@ const I18N = {
     lampRed:'Sensor en silencio — control solo con el dedo',
     hangar:'COLECCIÓN', best:'Récord', recordGyro:'Récord de giroscopio', recordTouch:'Récord de toque', recordKeys:'Récord de teclado',
     topVerified:'Resultado confirmado por la partida', unitM:'m', dist:'Distancia', recordDist:'Récord de distancia',
-    modes:'Torneos', modesBack:'Atrás', modeClassic:'Clásico', modesTitle:'Torneos',
+    modeClassic:'Clásico', modeClassicD:'Vuela mientras tengas vidas — vuelo libre, sin reglas',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 puntos contra el reloj — cronometraje puro',
     modeSpeedrunRSGD:'10.000 puntos contra el reloj — una pista nueva en cada carrera',
     speedrunSSG:'Fija', speedrunRSG:'Aleatoria',
@@ -664,7 +659,7 @@ const I18N = {
     lampRed:'Sensor em silêncio — controle só com o dedo',
     hangar:'COLEÇÃO', best:'Recorde', recordGyro:'Recorde de giroscópio', recordTouch:'Recorde de toque', recordKeys:'Recorde de teclado',
     topVerified:'Resultado confirmado pela partida', unitM:'m', dist:'Distância', recordDist:'Recorde de distância',
-    modes:'Torneios', modesBack:'Voltar', modeClassic:'Clássico', modesTitle:'Torneios',
+    modeClassic:'Clássico', modeClassicD:'Voe enquanto tiver vidas — voo livre, sem regras',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10.000 pontos contra o relógio — cronometragem pura',
     modeSpeedrunRSGD:'10.000 pontos contra o relógio — uma pista nova a cada corrida',
     speedrunSSG:'Fixa', speedrunRSG:'Aleatória',
@@ -843,8 +838,7 @@ const I18N = {
     hangar:'COLLECTION', best:'Meilleur',
     recordGyro:'Record gyroscope', recordTouch:'Record tactile', recordKeys:'Record clavier',
     topVerified:'Résultat confirmé par la partie', unitM:'m', dist:'Distance', recordDist:'Record de distance',
-    modes:'Tournois', modesBack:'Retour', modesTitle:'Tournois',
-    modeClassic:'Classique',
+    modeClassic:'Classique', modeClassicD:'Vole tant que tu as des vies — vol libre, sans règles',
     modeSpeedrun:'Speedrun', modeSpeedrunD:'10 000 points contre la montre',
     modeSpeedrunRSGD:'10 000 points contre la montre — une piste nouvelle à chaque course',
     speedrunSSG:'Fixe', speedrunRSG:'Aléatoire',

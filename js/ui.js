@@ -73,10 +73,9 @@ function backAction(){
   else if(screenName==='ach') closeAch();
   else if(screenName==='settings') closeSettings();
   else if(screenName==='diag') setScreen('settings'); // v1.66.3: сервисный центр — назад в настройки
-  else if(screenName==='modes') setScreen('menu'); // v1.108.1: та же дверь, что у modesBack — раньше нативная/аппаратная «Назад» тут молчала, хотя кнопка была видна
   else if(screenName==='forge') setScreen('menu'); // 08.09.2026 (владелец, живой баг): было setScreen('modes') с v1.68.0, когда Конструктор открывался только изнутри Соревнований; вход переехал на главное меню 05.09.2026 (см. js/forge.js:1011, та же правка для кнопки forgeBack), а эту нативную/аппаратную ветку тогда забыли — тот же класс бага, что уже трижды чинили в этой же функции сегодня (modes/modesTop/relayMine)
-  else if(screenName==='modesTop') setScreen('modes'); // 08.09.2026: экран добавлен 06.09, эту ветку тогда забыли — нативная/аппаратная «Назад» тут молчала
-  else if(screenName==='relayMine') setScreen('modes'); // 08.09.2026: экран добавлен 07.09, та же забытая ветка
+  else if(screenName==='modesTop') setScreen('menu'); // 15.09.2026: экран «Турниры» (modes) удалён — Топ соревнований теперь висит прямо на главном, «Назад» с него тоже прямо домой
+  else if(screenName==='relayMine') setScreen('menu'); // 15.09.2026: было setScreen('modes') — экран-посредник удалён, «Статус» эстафеты теперь открывается с карточки на главном
   else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
   else if(screenName==='over') toMenu();
   else if(screenName==='feedback') closeFeedback(); // 02.09.2026: владелец, живое устройство — нативная «Назад» на этом экране молчала, ветки не было вовсе
@@ -146,7 +145,6 @@ function setScreen(name){
   toggleCls('settingsScreen','hidden', name!=='settings');
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
-  toggleCls('modesScreen','hidden', name!=='modes');
   toggleCls('modesTopScreen','hidden', name!=='modesTop'); // 06.09.2026: Топ соревнований — свой экран, не вкладка внутри Достижений
   toggleCls('relayMineScreen','hidden', name!=='relayMine'); // 07.09.2026: «Мои эстафеты» — единственный способ узнать судьбу этапа после сдачи
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
@@ -214,7 +212,7 @@ function setScreen(name){
    скриншотам владельца в разных языках Telegram (Назад/Tillbaka/Indietro/Tilbake/بازگشت/
    Kembali/Back — самые широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). */
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
-  feedback:'feedbackTitle',modes:'modesTitle',hangar:'hangarTitle',
+  feedback:'feedbackTitle',hangar:'hangarTitle', // 15.09.2026: 'modes' убран — экран «Турниры» удалён
   ach:'achTitle',modesTop:'modesTopTitle',relayMine:'relayMineTitle',card:'cardTitle'};
   // 'forge' сюда не входит — #forgeScreen держит свой отдельный, небольшой положительный
   // --menu-buf (index.html): «Конструктор» не влезает между кнопками ни сжатием (владелец:
@@ -271,7 +269,7 @@ window.addEventListener('pointerdown', function tgImmKick(){ // полный э�
    явно попросил, чтобы это осталось ОДНОЙ кнопкой режима с быстрым переключателем внутри, не
    вторым пунктом в списке и не отдельным экраном подтверждения (тап по карточке = сразу полёт,
    как у всех остальных дисциплин). Тир хранится отдельно от caravanCardFill() (которая просто
-   перерисовывает карточку) — put() в modesFill() ниже перезаписывает innerHTML #modeCaravan
+   перерисовывает карточку) — put() в heroCarouselFill() ниже перезаписывает innerHTML #modeCaravan
    целиком при каждом заходе на экран/смене языка, поэтому сегменты нужно пересобирать тем же
    вызовом, а не один раз при загрузке. */
 // 07.09.2026: три тайминга (10с/60с/180с) — 60 остаётся дефолтом и единственной серверной
@@ -324,9 +322,13 @@ function speedrunCardFill(){
   seg.children[0].textContent=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
   seg.children[1].textContent=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
 }
-function modesFill(){ // подписи + отметка выбранного режима
-  setText('modesTitle',L.modesTitle); // 14.09.2026: короткий заголовок экрана, отдельно от L.modes (кнопка на главном не переименована)
+/* 15.09.2026: заменяет modesFill() — экран «Турниры» удалён, те же 7 подписей теперь льются
+   в карточки карусели на главном (id карточек не поменялись, put()/speedrunCardFill()/
+   caravanCardFill() работают без изменений). «Выбранная дисциплина» (.sel, лёд «Единой палубы»)
+   убрана — в карусели её роль играют точки-индикатор под ней, не рамка на карточке. */
+function heroCarouselFill(){
   const put=(id,n,d)=>{ $(id).innerHTML='<span class="modeName">'+n+'</span><span class="modeDesc">'+d+'</span>'; };
+  put('startBtn',L.modeClassic,L.modeClassicD);
   const tk=trackDayKey(), ak=attemptDayKey(); // 05.09.2026: tk — какое небо (месяц), ak — счётчик попыток (день), больше не одно и то же
   /* v1.282.20: печать дня ставится в СПИСОК отыгранных дней, а не в одну запись.
      Одна запись снималась за двадцать секунд: перевёл часы телефона на завтра — запись
@@ -338,19 +340,16 @@ function modesFill(){ // подписи + отметка выбранного р
   const dbBest=Store.get('dailyBest',null), dbSc=(dbBest&&dbBest.d===tk)?dbBest.s:0;
   put('modeDaily',L.modeDaily, dl?L.dailyLocked(dbSc):L.modeDailyD+' · '+tk.slice(5,7)+'.'+tk.slice(0,4)+' · '+(usedN>0?L.dailyLeft(DAILY_ATTEMPTS-usedN):L.dailyOnce)); // 03.09.2026 «Небо месяца»: было tk.slice(8)+'.'+tk.slice(5,7) (день.месяц) — день теперь всегда «01», показывал бы «01.MM» всегда; месяц.год честнее
   toggleCls('modeDaily','locked',dl);
-  // 07.09.2026: 1CC убран из игры (владелец: «бесконечная возможность крутить небо дня в 1
-  // жизнь, бред» — 2 попытки в день на общий месячный сид убивали саму идею «одного шанса»,
-  // ради которой аркадный 1CC вообще существует).
   speedrunCardFill(); // 11.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Постоянная/Случайная
-  caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель Пуля/Блиц
+  caravanCardFill(); // 07.09.2026: своя перерисовка вместо put() — несёт ещё переключатель тира
   put('modeSlalom',L.modeSlalom,L.modeSlalomD); // 06.09.2026
   put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026
   put('modeRelay',L.modeRelay,L.modeRelayD); // 06.09.2026
-  // 05.09.2026 (владелец): Конструктор — не дисциплина, кнопка #modeForge убрана из этого
-  // экрана целиком (переехала на главный, id="konstruktorBtn") — блок, что держал её
-  // подпись «небо гостя по имени», больше не на что указывать, снят вместе с ней.
-  const sel={daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan',slalom:'modeSlalom',biathlon:'modeBiathlon',relay:'modeRelay'};
-  for (const k in sel) $(sel[k]).classList.toggle('sel', k===runMode);
+  heroDotsInit();
+}
+function heroDotsInit(){ // точки-индикатор — создаются один раз, дальше только heroCarouselDotsSync() переключает .on
+  const car=$('heroCarousel'), dots=$('heroDots'); if(!car||!dots||dots.children.length) return;
+  for(let i=0;i<car.children.length;i++){ const d=document.createElement('div'); d.className='heroDot'+(i===0?' on':''); dots.appendChild(d); }
 }
 function runPassFill(){ // 30.08.2026 «Единый паспорт забега»: режим+управление одной тихой строкой сверху
   // (было продублировано пилюлей и значком в двух разных местах), все 8 чисел забега — одним
@@ -1012,7 +1011,7 @@ function toMenu(){
       if (sc>0 && sc>((prevDl&&prevDl.d===dd)?prevDl.s:0)) Store.set('dailyBest',{d:dd,s:sc});
       runMode='classic'; // счётчик попыток уже увеличен на взлёте — здесь только режим и лучший счёт
       /* v1.282.13: и автосейв дня сгорает вместе с попыткой. Дверь в меню запирается
-         счётчиком n>=5 (modesFill), но bootFly() эту дверь обходил: при следующем
+         счётчиком n>=5 (heroCarouselFill), но bootFly() эту дверь обходил: при следующем
          запуске он читал уцелевший savedRun и возвращал игрока в тот же прыжок с
          сохранённым прогрессом, а финиш переписывал dailyBest — попытка не сгорала
          по-настоящему. Стирание savedRun здесь — та же защита, что и раньше. */
@@ -2622,8 +2621,38 @@ if (tg && tg.onEvent){
   }catch(e){}
 }
 
+/* 14.09.2026 «Карусель режимов»: запуск каждого режима вынесен в свою именованную функцию —
+   и старые кнопки экрана «Турниры», и новые карточки карусели на главном зовут ОДНУ и ту же
+   логику, не две копии. До этой правки код запуска жил прямо внутри wireOn(...)-колбэков —
+   карусели звать было бы нечего без дублирования. */
+function flyClassic(){ runStart(); } // v1.42.0: просто в выбранной дисциплине — runMode уже 'classic' с главного экрана
+function flyDaily(){
+  const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2);
+  if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; }
+  setRunMode('daily'); sfx.click(); haptic('light'); runStart();
+}
+function flySlalom(){ setRunMode('slalom'); sfx.click(); haptic('light'); runStart(); }
+function flyBiathlon(){ setRunMode('biathlon'); sfx.click(); haptic('light'); runStart(); }
+function flySpeedrun(){ setRunMode('speedrun'); sfx.click(); haptic('light'); runStart(); }
+function flyCaravan(){ setRunMode('caravan'); sfx.click(); haptic('light'); runStart(); }
+function flyRelay(){
+  // 09.09.2026 (владелец): тост «войди через Telegram» был тупиком — сказал и никуда не ведёт,
+  // а вход давно не только через Telegram (Discord/Google туда же, см. syncAuth). Теперь тап
+  // без входа сразу открывает Настройки — туда же, где уже стоят настоящие кнопки входа.
+  if (!syncAvailable()){ toast(L.relaySignInFirst,'rgba(191,232,255,.45)'); haptic('light'); openSettings('modes'); return; }
+  sfx.click(); haptic('light');
+  if (typeof syncRelayGetOpen!=='function' || typeof syncRelayStart!=='function') return;
+  syncRelayGetOpen().then(r=>{
+    if (r && r.ok && r.chain) return r.chain;
+    return syncRelayStart({skin:S.skin}).then(r2=>(r2&&r2.ok&&r2.chain)?r2.chain:null);
+  }).then(chain=>{
+    if (!relayEnterFromChain(chain)){ toast(L.relayFailStart,'rgba(255,150,150,.5)'); return; }
+    setRunMode('relay'); runStart();
+  }).catch(()=>{ toast(L.relayFailStart,'rgba(255,150,150,.5)'); });
+}
+
 /* ---------- Привязка кнопок ---------- */
-wireOn('startBtn', 'click', runStart); // в выбранной дисциплине (v1.42.0)
+wireOn('startBtn', 'click', flyClassic); // в выбранной дисциплине (v1.42.0)
 wireOn('retryBtn', 'click', retryRun);
 wireOn('watchBtn', 'click', ()=>{ // v1.94.0 «Театр призраков» Т1: смотрим свой прыжок дня на том самом небе
   if (!theaterTrack || screenName!=='over'){ haptic('light'); return; } // билет снят на финише забега дня — без него дверь не открывается
@@ -2649,26 +2678,18 @@ wireOn('tribuneBtn', 'click', ()=>{ // v1.100.1 «Трибуна чемпион�
     runMode='theater'; startGame();
   }).catch(()=>{ toast(L.tribuneNone,'rgba(191,232,255,.45)'); }); // 22.08.2026: сбой сети — та же честная тишина, что и «мастер ещё не показал полёт»
 });
-wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); modesFill(); setScreen('modes'); });
-wireOn('modesBack', 'click', ()=>{ sfx.click(); setScreen('menu'); });
-[['modeDaily','daily'],['modeSlalom','slalom'],['modeBiathlon','biathlon']].forEach(function(pair){
-  wireOn(pair[0], 'click', ()=>{
-    if (pair[1]==='daily'){ const ak2=attemptDayKey(), dr=Store.get('dailyRun',null), usedN2=(dr&&dr.d===ak2)?(dr.n||0):dailyDoneGet(ak2); if (usedN2>=DAILY_ATTEMPTS){ haptic('light'); return; } } // 05.09.2026: счётчик — по реальному дню, не по месяцу-сиду; 07.09.2026: 1CC убран; 07.09.2026: 100% удалён
-    setRunMode(pair[1]); sfx.click(); haptic('light'); runStart(); }); // тап = сразу полёт (v1.43.0)
-});
-// 11.09.2026 «Speedrun RSG»: тот же честный каркас, что уже у Caravan/Эстафеты — #modeSpeedrunFly
-// настоящий <button>, вышел из общего массива выше (карточка теперь не один клик, а кнопка+переключатель).
-wireOn('modeSpeedrunFly','click',()=>{ setRunMode('speedrun'); sfx.click(); haptic('light'); runStart(); });
-/* 07.09.2026 «Пуля/Блиц»: Caravan вышел из общего массива выше — у карточки теперь два честных
-   отдельных элемента (#modeCaravanFly — настоящая кнопка полёта, #caravanTierSeg — переключатель
-   тайминга под ней, свои клики на forgeSegBtn в caravanCardFill()). Ни closest(), ни keydown-хаки
-   больше не нужны — #modeCaravanFly настоящий <button>, обычный wireOn как у всех остальных. */
-wireOn('modeCaravanFly','click',()=>{ setRunMode('caravan'); sfx.click(); haptic('light'); runStart(); });
-/* 06.09.2026 «Эстафета»: единственная кнопка режима с асинхронной логикой перед стартом —
-   не влезает в общий массив выше (тому просто меняет runMode и тут же летит). Здесь сначала
-   нужно спросить сервер: есть открытая цепочка, ждущая следующий этап (не от меня последнего),
-   или начать свою. relay_get_open/relay_start уже несут семя, счёт/жизни для наследования и
-   (если есть) ленту предыдущего этапа — её раскладываем в relayPrevGhost для просмотра. */
+// 15.09.2026: экран «Турниры» (список режимов) удалён — «Топ соревнований» ведёт сразу на
+// лидерборды, тот же переход, что раньше делал #modesTopBtn изнутри «Турниров» (см. ниже).
+wireOn('modesBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('modesTop'); renderTopComp(); });
+wireOn('modeDaily', 'click', flyDaily);
+wireOn('modeSlalom', 'click', flySlalom);
+wireOn('modeBiathlon', 'click', flyBiathlon);
+wireOn('modeSpeedrunFly', 'click', flySpeedrun);
+wireOn('modeCaravanFly', 'click', flyCaravan);
+/* 06.09.2026 «Эстафета»: единственный режим с асинхронной логикой перед стартом (спросить
+   сервер: есть открытая цепочка, ждущая следующий этап, или начать свою) — сама логика теперь
+   в flyRelay() выше, relayEnterFromChain() раскладывает ответ сервера в S для обеих карточек
+   (старой в «Турнирах» и новой в карусели). */
 function relayEnterFromChain(chain){
   if (!chain) return false;
   S.relayChainId=chain.id; S.relayLeg=chain.leg;
@@ -2680,21 +2701,20 @@ function relayEnterFromChain(chain){
   else { relayPrevGhost=null; relayPrevName=''; relayPrevSkin=-1; S.relayWatching=false; }
   return true;
 }
-wireOn('modeRelay', 'click', ()=>{
-  // 09.09.2026 (владелец): тост «войди через Telegram» был тупиком — сказал и никуда не ведёт,
-  // а вход давно не только через Telegram (Discord/Google туда же, см. syncAuth). Теперь тап
-  // без входа сразу открывает Настройки — туда же, где уже стоят настоящие кнопки входа.
-  if (!syncAvailable()){ toast(L.relaySignInFirst,'rgba(191,232,255,.45)'); haptic('light'); openSettings('modes'); return; }
-  sfx.click(); haptic('light');
-  if (typeof syncRelayGetOpen!=='function' || typeof syncRelayStart!=='function') return;
-  syncRelayGetOpen().then(r=>{
-    if (r && r.ok && r.chain) return r.chain;
-    return syncRelayStart({skin:S.skin}).then(r2=>(r2&&r2.ok&&r2.chain)?r2.chain:null);
-  }).then(chain=>{
-    if (!relayEnterFromChain(chain)){ toast(L.relayFailStart,'rgba(255,150,150,.5)'); return; }
-    setRunMode('relay'); runStart();
-  }).catch(()=>{ toast(L.relayFailStart,'rgba(255,150,150,.5)'); });
-});
+wireOn('modeRelay', 'click', flyRelay);
+/* 15.09.2026: карточки карусели переиспользуют ТЕ ЖЕ id, что были у кнопок удалённого экрана
+   «Турниры» (modeDaily/modeSlalom/modeBiathlon/modeSpeedrunFly/modeCaravanFly/modeRelay,
+   startBtn — Классика) — wireOn на них уже стоит выше, второй раз не нужен. */
+/* Точки-индикатор под каруселью — какая карточка сейчас видна. Считаем по scrollLeft/ширине
+   карточки (все карточки одного размера — страж 219), не по IntersectionObserver: тут всего
+   7 элементов в одном контейнере, полный пересчёт на каждый scroll-кадр дешевле новой сущности. */
+function heroCarouselDotsSync(){
+  const car=$('heroCarousel'), dots=$('heroDots'); if(!car||!dots||!car.children.length) return;
+  const w=car.children[0].getBoundingClientRect().width + 14; // + gap, см. CSS .heroCard/.heroCarousel
+  const idx=Math.max(0, Math.min(dots.children.length-1, Math.round(car.scrollLeft/w)));
+  for(let i=0;i<dots.children.length;i++) dots.children[i].classList.toggle('on', i===idx);
+}
+wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync); });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
@@ -3230,8 +3250,9 @@ document.querySelectorAll('#compTopCats .topCat').forEach(b=>b.addEventListener(
   document.querySelectorAll('#compTopCats .topCat').forEach(x=>x.classList.toggle('sel',x===b));
   renderTopComp(); sfx.click();
 }));
-wireOn('modesTopBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('modesTop'); renderTopComp(); });
-wireOn('modesTopBackBtn', 'click', ()=>{ sfx.click(); setScreen('modes'); });
+// 15.09.2026: #modesTopBtn (жил внутри удалённого экрана «Турниры») убран — вход теперь один,
+// #modesBtn на главном (см. wireOn выше). «Назад» с «Топ соревнований» — тоже сразу домой.
+wireOn('modesTopBackBtn', 'click', ()=>{ sfx.click(); setScreen('menu'); });
 /* 07.09.2026 «Куда делся первый игрок»: список цепочек, где я сыграл хоть один этап — с
    текущим статусом (ждёт этап N / завершена) и общим счётом. Своя строка (.relayMineRow),
    не .topIt — там ровно один факт в строке (место+имя+счёт), здесь два разных (кто играл +
@@ -3621,11 +3642,13 @@ function applyLang(){
      строка рекордов с главного экрана убрана. Сами ключи в словаре core.js оставлены:
      core.js — ядро, и вычищать из него пять языков ради четырёх мёртвых строк дороже,
      чем оставить. Записано в долги. */
-  setText('startBtn',L.start);
+  /* 15.09.2026: #startBtn («Начать полёт») стал карточкой карусели «Классика» — своя подпись
+     (L.modeClassic/L.modeClassicD) льётся вместе с остальными шестью внутри heroCarouselFill()
+     ниже, не отдельным setText('startBtn',L.start) как раньше. */
   /* 13.08.2026: тексты «тесно» зависят от ориентации — их раздаёт tooNarrowText(),
      иначе смена языка возвращала бы совет «поверните экран» лежащему набок телефону. */
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
-  setText('modesBtn',L.modes); modesFill(); // дисциплины (v1.42.0; v1.70.0: Пакт удалён)
+  setText('modesBtn',L.topCompTitle); heroCarouselFill(); // 15.09.2026: «Турниры»→«Топ соревнований», экран-список удалён, дисциплины теперь в карусели
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
   if (typeof workshopFillLabels==='function') workshopFillLabels(); // 05.09.2026 «Мастерская» — свой язык, тот же приём
   angarFillFilterChips(); // 06.09.2026: чипы Тюнинга — свой язык, тот же приём (no-op, если экран сейчас не открыт — box отсутствует в DOM только у скрытых частей своей же разметки, сама разметка всегда в DOM)
@@ -3684,7 +3707,6 @@ function applyLang(){
   });
   // 06.09.2026 «Топ соревнований»: новый экран + кнопка-вход на «Соревнованиях», тот же текст на обоих
   setText('modesTopTitle', L.topCompTitle);
-  setText('modesTopBtnLbl', L.topCompTitle);
   setText('relayMineTitle', L.relayMineTitle);
   setText('relayMineBtnLbl', L.relayMineBtnLbl);
   setText('diagBtn',L.diagBtn);

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Макет: главный экран, карусель из 7 режимов вместо «Начать полёт»</title>
+<style>
+  @font-face { font-family:'Exo 2'; font-style:normal; font-weight:100 900; font-display:swap;
+    src:url('https://exxxit-game.github.io/cosmogram-app/fonts/exo2-cyrillic.woff2') format('woff2');
+    unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family:'Exo 2'; font-style:normal; font-weight:100 900; font-display:swap;
+    src:url('https://exxxit-game.github.io/cosmogram-app/fonts/exo2-latin.woff2') format('woff2');
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+  :root{
+    --bg0:#070b18; --ink:#f4f6fb; --gold:#c9a45c; --gold-hi:#f0c040;
+    --font:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  html,body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font)}
+  .wrap{max-width:900px;margin:0 auto;padding:20px}
+  h1{font-size:19px;margin:0 0 6px}
+  p.sub{color:#9eb2e0;font-size:13px;margin:0 0 22px;line-height:1.5}
+  .phone{width:380px;border-radius:26px;overflow:hidden;border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 20px 50px rgba(0,0,0,.5);background:radial-gradient(ellipse at 50% -10%,#141b3a 0%,#070b18 60%)}
+  .phoneHead{padding:18px 18px 6px;text-align:center}
+  .logo{font-family:var(--font);font-weight:900;font-size:26px;letter-spacing:.04em;color:#e8415a;
+    text-shadow:0 2px 0 #c9a45c,0 0 18px rgba(233,65,90,.4)}
+  .tag{font-size:11px;letter-spacing:.14em;color:var(--gold-hi);opacity:.85;margin-top:2px}
+
+  /* --- карусель --- */
+  .carouselWrap{padding:16px 0 6px}
+  .carousel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 30px 4px;
+    -ms-overflow-style:none;scrollbar-width:none}
+  .carousel::-webkit-scrollbar{display:none}
+  .card{position:relative;flex:0 0 calc(100% - 60px);scroll-snap-align:center;border-radius:16px;
+    overflow:hidden;padding:12px 13px 10px;height:112px;display:flex;flex-direction:column;
+    justify-content:flex-end;border:1px solid rgba(255,255,255,.12);isolation:isolate}
+  .card::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.92}
+  .card .ic{position:absolute;top:9px;right:9px;width:26px;height:26px;opacity:.92}
+  .card .nm{font-weight:700;font-size:15.5px;letter-spacing:.03em;text-transform:uppercase;
+    text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .card .ds{font-size:11px;opacity:.8;line-height:1.3;margin-top:3px;max-width:82%}
+  .card:active{transform:scale(.98)}
+
+  /* --- 15.09.2026: Турниры удалены, их подфункции (переключатель варианта у Speedrun/
+     Caravan, статус у Эстафеты) переезжают прямо на карточку, компактно — владелец явно
+     попросил не убирать их и не прятать за долгий тап («это дебилизм»), просто сжать под
+     карточку. Место описания под названием отдано переключателю — двум строкам тесно. */
+  .seg{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+  .segBtn{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;
+    background:rgba(22,38,56,.55);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.72)}
+  .segBtn.on{background:rgba(255,255,255,.94);color:#1a1508;border-color:transparent}
+  .statusLink{position:absolute;right:11px;bottom:10px;display:flex;align-items:center;gap:4px;
+    font-size:10px;font-weight:600;letter-spacing:.02em;color:#f0dcff;opacity:.92;
+    padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+  .statusLink svg{width:10px;height:10px}
+  .c-relay .ds{max-width:58%}
+
+  .dots{display:flex;justify-content:center;gap:6px;padding:10px 0 4px}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
+  .dot.on{background:var(--gold-hi);width:16px;border-radius:3px;transition:width .2s}
+
+  .c-classic::before{background:linear-gradient(155deg,#1c2a5e 0%,#0a1030 75%)}
+  .c-daily::before{background:linear-gradient(155deg,#5a4614 0%,#241a05 78%)}
+  .c-speedrun::before{background:linear-gradient(155deg,#7a2410 0%,#2a0b04 78%)}
+  .c-caravan::before{background:linear-gradient(155deg,#7a5a08 0%,#2a1e04 78%)}
+  .c-slalom::before{background:linear-gradient(155deg,#0c5a68 0%,#031e24 78%)}
+  .c-biathlon::before{background:linear-gradient(155deg,#0d5a34 0%,#03200f 78%)}
+  .c-relay::before{background:linear-gradient(155deg,#5a1266 0%,#1e0524 78%)}
+
+  .belowRow{display:flex;gap:10px;padding:14px 16px 18px}
+  .miniBtn{flex:1;text-align:center;padding:12px 6px;border-radius:12px;background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:600;letter-spacing:.03em}
+
+  .legend{margin-top:26px;font-size:12px;color:#8fa0d0;line-height:1.7;max-width:640px}
+  .legend b{color:var(--ink)}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .sw{display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d4f0}
+  .sw i{width:14px;height:14px;border-radius:4px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Главный экран: карусель из 7 режимов вместо «Начать полёт»</h1>
+  <p class="sub">Поправка по вашим словам: одна карточка за раз, все одного размера, свайп вбок — следующий режим. Не растягивает главный экран, занимает место одной карточки. Точки снизу — какой по счёту режим виден. Свайпните карточку рукой (или мышью), чтобы увидеть переключение.</p>
+
+  <div class="phone">
+    <div class="phoneHead">
+      <div class="logo">COSMOGRAM</div>
+      <div class="tag">ОДНО НЕБО ДЛЯ ВСЕХ</div>
+    </div>
+    <div class="carouselWrap">
+      <div class="carousel" id="car">
+        <div class="card c-classic">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 2 L15 16 L12 14 L9 16 Z" fill="#dfe8ff" opacity=".9"/><circle cx="12" cy="19" r="1.6" fill="#dfe8ff" opacity=".7"/></svg>
+          <div class="nm">Классика</div>
+          <div class="ds">Лети, пока хватит жизней — свободный полёт без правил</div><!-- 15.09.2026: у Классики НЕТ живого описания в i18n.js (раньше была просто кнопка «Начать полёт», без подписи) — эта строка МОЯ, не взята из игры, помечаю честно, не выдаю за проверенную -->
+        </div>
+        <div class="card c-daily">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 3 L14.5 9.5 L21 10 L16 14.5 L17.5 21 L12 17.5 L6.5 21 L8 14.5 L3 10 L9.5 9.5 Z" fill="#f0c040"/></svg>
+          <div class="nm">Небо месяца</div>
+          <div class="ds">Одно небо на всех игроков — весь месяц, поставь рекорд</div>
+        </div>
+        <div class="card c-speedrun">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M4 12h10m0 0l-3-3m3 3l-3 3" stroke="#ffb27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="12" r="2" fill="#ffb27a"/></svg>
+          <div class="nm">Speedrun</div>
+          <div class="ds">10 000 очков на время — чистый хронометраж</div>
+          <div class="seg" onclick="event.stopPropagation()"><button class="segBtn on">Постоянная</button><button class="segBtn">Случайная</button></div>
+        </div>
+        <div class="card c-caravan">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9" stroke="#ffd76b" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div class="nm">Caravan</div>
+          <div class="ds">60 секунд на очки — время решает, не жизни</div>
+          <div class="seg" onclick="event.stopPropagation()"><button class="segBtn">15 секунд</button><button class="segBtn on">60 секунд</button><button class="segBtn">180 секунд</button></div>
+        </div>
+        <div class="card c-slalom">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><rect x="17" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><path d="M9 12h6" stroke="#6be0ff" stroke-width="1.6" stroke-dasharray="2 2"/></svg>
+          <div class="nm">Без касаний</div>
+          <div class="ds">Ворота на время — одно касание срывает заезд</div>
+        </div>
+        <div class="card c-biathlon">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="4.5" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="1.3" fill="#7cf0af"/></svg>
+          <div class="nm">Биатлон</div>
+          <div class="ds">Скорость + 2 рубежа «собери всё», штраф — время</div>
+        </div>
+        <div class="card c-relay">
+          <svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><circle cx="17" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><path d="M10 12h4" stroke="#e08cff" stroke-width="1.6"/></svg>
+          <div class="nm">Эстафета</div>
+          <div class="ds">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</div>
+          <div class="statusLink" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 2" stroke="#f0dcff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#f0dcff" stroke-width="1.6"/></svg>Статус</div>
+        </div>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <!-- 15.09.2026: та же кнопка, что раньше открывала «Турниры» (#modesBtn) — переименована,
+         ведёт теперь СРАЗУ в «Топ соревнований» (владелец: «пока временная кнопка на месте
+         старой»), список режимов ей больше не нужен, он и так виден каруселью выше. -->
+    <button class="btn sec" style="margin:2px 16px 0;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;color:var(--ink)">🏆 Топ соревнований</button>
+    <div class="belowRow">
+      <div class="miniBtn">КОЛЛЕКЦИЯ</div>
+      <div class="miniBtn">КОНСТРУКТОР</div>
+      <div class="miniBtn">ДОСТИЖЕНИЯ</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <b>Что изменилось против прошлого черновика:</b> было 7 карточек в сетке разных размеров на весь экран (вы сказали — не годится). Теперь одна карусель, все карточки одного размера (112px высотой — 15.09.2026 сжато со 150px, владелец: «зачем столько пустого места», проверено на самой тяжёлой карточке Caravan с 3 сегментами и Эстафете с длинным описанием — не наезжает), видна одна за раз, остальные — свайпом. Место на экране — как у одной прежней кнопки «Начать полёт» + чуть выше на точки-индикатор. Классика — первая в очереди (самый частый выбор).
+    <div class="swatches">
+      <div class="sw"><i style="background:#1c2a5e"></i>Классика</div>
+      <div class="sw"><i style="background:#5a4614"></i>Небо месяца</div>
+      <div class="sw"><i style="background:#7a2410"></i>Speedrun</div>
+      <div class="sw"><i style="background:#7a5a08"></i>Caravan</div>
+      <div class="sw"><i style="background:#0c5a68"></i>Без касаний</div>
+      <div class="sw"><i style="background:#0d5a34"></i>Биатлон</div>
+      <div class="sw"><i style="background:#5a1266"></i>Эстафета</div>
+    </div>
+    <p style="margin-top:14px"><b>15.09.2026 (владелец):</b> экран «Турниры» — совсем убран, список из 7 кнопок больше не нужен, карусель его заменяет целиком. То, что раньше жило только внутри «Турниров», переехало компактно на свою карточку: у Speedrun и Caravan вместо длинного описания — маленький переключатель варианта (тап по нему не запускает полёт, тап по остальной карточке — запускает). У Эстафеты — компактная ссылка «Статус» в углу карточки (то же самое: свой тап, экран «Мои эстафеты» без изменений). Кнопка «Турниры» на главном — переименована в «Топ соревнований», ведёт сразу на экран лидербордов (тот же, что был), без промежуточного списка режимов.</p>
+  </div>
+</div>
+<script>
+const car = document.getElementById('car');
+const dotsEl = document.getElementById('dots');
+const n = car.children.length;
+for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='dot'+(i===0?' on':''); dotsEl.appendChild(d); }
+function updateDots(){
+  const idx = Math.round(car.scrollLeft / car.children[0].getBoundingClientRect().width);
+  [...dotsEl.children].forEach((d,i)=>d.classList.toggle('on', i===idx));
+}
+car.addEventListener('scroll', ()=>{ requestAnimationFrame(updateDots); });
+</script>
+</body>
+</html>
