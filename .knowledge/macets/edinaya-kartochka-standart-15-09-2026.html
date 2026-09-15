@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Единая карточка — стандарт</title>
+<style>
+:root{
+  --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+  --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+  --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+  --danger:#e0533d; --ok:#8fff9f;
+  --r-btn:14px; --r-card:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg-0);color:var(--ink);font-family:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-weight:500;letter-spacing:.03em;padding:24px 16px 60px;background-image:radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.4), transparent),radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.3), transparent),radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.35), transparent),radial-gradient(1px 1px at 85% 20%, rgba(255,255,255,.3), transparent),radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,.25), transparent);}
+h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--gold-hi);text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:var(--muted);font-size:13px;max-width:640px;margin:0 auto 36px;line-height:1.5;
+  text-transform:none;letter-spacing:.01em}
+.section{max-width:900px;margin:0 auto 48px}
+.secHead{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.secHead .n{color:var(--gold-hi);font-weight:700;font-size:13px}
+.secHead h2{font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
+.secHead .status{margin-left:auto;font-size:10.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px;
+  letter-spacing:.04em;font-weight:700}
+.status.change{background:rgba(255,159,176,.15);color:#ff9fb0;border:1px solid rgba(255,159,176,.4)}
+.status.keep{background:rgba(143,255,159,.12);color:var(--ok);border:1px solid rgba(143,255,159,.35)}
+.note{font-size:12px;color:var(--muted);text-transform:none;letter-spacing:.01em;line-height:1.55;margin-bottom:18px;max-width:640px}
+.note b{color:var(--cream)}
+.pair{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.col{flex:1 1 260px;max-width:280px}
+.colLbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;
+  display:flex;align-items:center;gap:6px}
+.colLbl.after{color:var(--gold-hi)}
+.arrow{flex:0 0 auto;align-self:center;color:var(--muted);font-size:20px;padding-top:30px}
+
+/* ---- карточка: текущая мастерская ---- */
+.wRow{position:relative;display:flex;flex-direction:column;padding:10px 11px;border:1px solid var(--line);
+  border-radius:16px;background:rgba(22,38,56,.45)}
+.wBanner{position:relative;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden;
+  margin:-11px -11px 8px -11px;width:calc(100% + 22px);background:linear-gradient(160deg,#7a2340,#2a1230 70%)}
+.wBanner.b2{background:linear-gradient(160deg,#123a52,#0c1b2e 70%)}
+.wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+.wTopRow{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.wName{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wCornerRow{display:flex;gap:6px}
+.wCorner{width:26px;height:26px;border-radius:50%;background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);
+  color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.wCorner svg{width:14px;height:14px;fill:currentColor}
+.wCornerStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wCornerStack .wCorner{width:22px;height:22px}
+.wCornerStack .wCorner svg{width:12px;height:12px}
+.wBannerText{position:absolute;left:10px;right:10px;bottom:7px}
+.wStickerRow{display:flex;gap:5px}
+.wSticker{width:22px;height:22px;border-radius:7px;background:rgba(6,10,20,.55);display:flex;align-items:center;justify-content:center}
+.wSticker svg{width:13px;height:13px}
+.wActionRow{display:flex;gap:10px}
+.wActionRow button{flex:1;padding:8px 14px;font-size:13px;text-align:center;font-weight:600;letter-spacing:.04em;
+  border-radius:14px;cursor:pointer;background:transparent;border:1px solid var(--line-gold);color:var(--cream);
+  text-transform:uppercase;font-family:inherit}
+
+/* ---- новый ряд действий: две иконки вместо двух больших кнопок ---- */
+.wActionIcons{display:flex;justify-content:flex-end;gap:8px;margin-top:2px}
+.iconBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;flex:none}
+.iconBtn.fly{background:rgba(240,192,64,.14);border-color:rgba(240,192,64,.55)}
+.iconBtn svg{width:17px;height:17px}
+.iconBtn.edit svg{width:15px;height:15px}
+.iconLbl{font-size:8.5px;text-align:center;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.iconBtnWrap{display:flex;flex-direction:column;align-items:center}
+
+/* ---- hero/режим карточка (для сверки — почти без изменений) ---- */
+.heroCard{position:relative;border-radius:16px;overflow:hidden;padding:12px 13px 10px;height:130px;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;border:1px solid var(--line);
+  background:linear-gradient(160deg,#233a6b,#0e1b33 75%);width:100%}
+.heroCard .modeName{font-weight:700;font-size:15.5px;letter-spacing:.03em;text-transform:uppercase;color:#fff;
+  text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.heroCard .modeDesc{font-size:11px;opacity:.85;line-height:1.3;margin-top:3px;max-width:82%;color:var(--ink);
+  text-transform:none}
+.heroCard .recordBadge{position:absolute;top:9px;left:9px;display:flex;align-items:center;gap:3px;padding:3px 7px;
+  border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);font-size:10px;
+  font-weight:700;color:var(--gold-hi)}
+.heroCard .playHintCv{position:absolute;top:41px;right:9px;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;
+  justify-content:center}
+.heroCard .playHintCv svg{width:14px;height:14px}
+
+/* ---- Создать: живой превью ---- */
+.forgePreviewWrap{position:relative}
+.forgePreview{width:100%;height:75px;border-radius:14px;border:1px solid rgba(140,170,255,.18);
+  background:linear-gradient(160deg,#1a2a52,#0c1830 75%);position:relative}
+.pvBtn{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;background:rgba(6,10,20,.5);
+  border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.pvBtn svg{width:16px;height:16px;color:#fff}
+.pvBtn.r{left:auto;right:10px}
+
+.forgePreview2{position:relative;border-radius:16px 16px 12px 12px;height:100px;overflow:hidden;
+  background:linear-gradient(160deg,#1a2a52,#0c1830 75%);border:1px solid var(--line)}
+.fp2name{position:absolute;top:8px;left:10px;font-size:12px;color:var(--muted);text-transform:none}
+.fp2stickers{position:absolute;left:10px;bottom:7px;display:flex;gap:5px}
+
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:8px}
+.legendItem{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--cream);text-transform:none}
+.legendItem .iconBtn{width:28px;height:28px}
+.legendItem .iconBtn svg{width:14px;height:14px}
+
+.finalNote{max-width:900px;margin:48px auto 0;padding:16px 18px;border:1px solid var(--line-gold);border-radius:16px;
+  background:rgba(22,38,56,.4)}
+.finalNote h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-hi);margin-bottom:8px}
+.finalNote p{font-size:12px;color:var(--muted);line-height:1.6;text-transform:none;letter-spacing:.01em;margin-bottom:6px}
+.finalNote b{color:var(--cream)}
+</style>
+</head>
+<body>
+
+<h1>Единая карточка — один стандарт на три места</h1>
+<p class="sub">Сейчас у карточки Мастерской (Играть), у карточки режима на главном экране и у превью в
+Конструкторе (Создать) — три разных размера и вида. Этот макет берёт за основу карточку Мастерской
+(она уже нравится) и показывает, как её ужать (убрать большие кнопки) и как привести к ней остальные два места.</p>
+
+<div class="section">
+  <div class="secHead"><span class="n">1</span><h2>Карточка Мастерской (Играть)</h2>
+  <span class="status change">Меняются только кнопки</span></div>
+  <p class="note">Сама карточка — картинка неба, имя, значки препятствий снизу, (i)/цвет/лайк по углам —
+  остаётся <b>как есть</b>, она и есть образец. Меняется только нижний ряд: было две больших кнопки на всю
+  ширину («Полёт» / «Изменить»), станут два маленьких кружка-значка справа — тот же язык, что уже
+  у (i)/Закрепить/Скрыть на этой же карточке. «Полёт» — твой же самолётик (та же картинка, что уже рисуется
+  на карточках режимов), «Изменить» — карандаш.</p>
+  <div class="pair">
+    <div class="col">
+      <div class="colLbl">Сейчас</div>
+      <div class="wRow">
+        <div class="wBanner">
+          <div class="wScrim"></div>
+          <div class="wTopRow"><div class="wName">Пульсар</div>
+            <div class="wCornerRow"><div class="wCorner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div></div>
+          </div>
+          <div class="wCornerStack">
+            <div class="wCorner" style="background:transparent;border-color:rgba(219,169,60,.5)"><svg viewBox="0 0 24 24" fill="none" stroke="#dba93c" stroke-width="1.6"><path d="M12 2l2.6 7.9H23l-6.7 4.9 2.6 7.9-6.9-5-6.9 5 2.6-7.9L1 9.9h8.4z"/></svg></div>
+            <div class="wCorner" style="background:rgba(255,159,176,.15);border-color:rgba(255,159,176,.5);color:#ff9fb0"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"/></svg></div>
+          </div>
+          <div class="wBannerText"><div class="wStickerRow">
+            <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
+            <div class="wSticker" style="color:#4f7fe6"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></div>
+          </div></div>
+        </div>
+        <div class="wActionRow"><button>Полёт</button><button>Изменить</button></div>
+      </div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <div class="colLbl after">Станет</div>
+      <div class="wRow">
+        <div class="wBanner b2">
+          <div class="wScrim"></div>
+          <div class="wTopRow"><div class="wName">Пульсар</div>
+            <div class="wCornerRow"><div class="wCorner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div></div>
+          </div>
+          <div class="wCornerStack">
+            <div class="wCorner" style="background:transparent;border-color:rgba(219,169,60,.5)"><svg viewBox="0 0 24 24" fill="none" stroke="#dba93c" stroke-width="1.6"><path d="M12 2l2.6 7.9H23l-6.7 4.9 2.6 7.9-6.9-5-6.9 5 2.6-7.9L1 9.9h8.4z"/></svg></div>
+            <div class="wCorner" style="background:rgba(255,159,176,.15);border-color:rgba(255,159,176,.5);color:#ff9fb0"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"/></svg></div>
+          </div>
+          <div class="wBannerText"><div class="wStickerRow">
+            <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
+            <div class="wSticker" style="color:#22b8dd"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="9" width="16" height="6" rx="2"/></svg></div>
+          </div></div>
+        </div>
+        <div class="wActionIcons">
+          <div class="iconBtnWrap"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div><div class="iconLbl">Изменить</div></div>
+          <div class="iconBtnWrap"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div><div class="iconLbl">Полёт</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="secHead"><span class="n">2</span><h2>Карточка режима (главный экран)</h2>
+  <span class="status keep">Уже совпадает — сверка</span></div>
+  <p class="note">Рекорд/скругление/высота 130px, имя+описание, самолётик как кнопка полёта уже сделаны почти
+  в этом же языке (тот же самолётик-иконка, что предлагается для Мастерской выше). Оставляю как есть,
+  показываю только для сравнения — три карточки на одном экране должны читаться одной семьёй.</p>
+  <div class="col" style="max-width:280px">
+    <div class="heroCard">
+      <div class="recordBadge">🏆 10 195</div>
+      <div class="playHintCv"><svg viewBox="0 0 24 24" fill="#fff"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="secHead"><span class="n">3</span><h2>Превью в Конструкторе (Создать)</h2>
+  <span class="status change">Приводится к тому же виду</span></div>
+  <p class="note">Сейчас превью в «Создать» — плоский прямоугольник 75px с радиусом 14px (не тот же радиус,
+  что у карточки, 16px) и без имени/стикеров. Станет тем же скруглением/высотой ~100px, что у карточки
+  Мастерской, и, по мере расстановки препятствий, снизу появляются те же сами значки-стикеры — то, что
+  ты собираешь, уже выглядит как будущая карточка в Мастерской, не отдельная сущность.</p>
+  <div class="pair">
+    <div class="col">
+      <div class="colLbl">Сейчас</div>
+      <div class="forgePreviewWrap">
+        <div class="forgePreview">
+          <div class="pvBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><use href="#i-shuffle"/><path d="M4 7h4l3 3-3 3H4M16 7h4M16 17h4M13 17l3-3-3-3"/></svg></div>
+          <div class="pvBtn r"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-4 5 5 0 0 1 9 4c-2 4.5-9 9-9 9z"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <div class="colLbl after">Станет</div>
+      <div class="forgePreview2">
+        <div class="pvBtn" style="top:8px;left:8px"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 7h4l3 3-3 3H4M16 7h4M16 17h4M13 17l3-3-3-3"/></svg></div>
+        <div class="pvBtn r" style="top:8px;right:8px;left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-4 5 5 0 0 1 9 4c-2 4.5-9 9-9 9z"/></svg></div>
+        <div class="fp2name">Имя пока не задано</div>
+        <div class="fp2stickers">
+          <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
+          <div class="wSticker" style="color:#4f7fe6"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></div>
+          <div class="wSticker" style="color:#ff5f6d"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="finalNote">
+  <h3>Единый язык кнопок-значков (для сверки)</h3>
+  <div class="legend">
+    <div class="legendItem"><div class="iconBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>Подробнее (уже есть)</div>
+    <div class="legendItem"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div>Изменить (новое)</div>
+    <div class="legendItem"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div>Полёт (новое, тот же смысл, что самолётик режима)</div>
+  </div>
+  <h3 style="margin-top:16px">Что не решено этим макетом — вопросы владельцу</h3>
+  <p><b>1.</b> «Полёт»/«Изменить» — сделать значками одного размера (34px, как на макете), или как у остальных
+  мелких значков карточки (26px)? На макете взял покрупнее — это единственные два действия, что реально
+  запускают что-то (не просто открывают панель), могут заслуживать чуть больше веса.</p>
+  <p><b>2.</b> Подпись под значком («Полёт»/«Изменить» мелким текстом) — оставить, как на макете, или значки
+  без подписи, раз игрок уже видел их смысл на этом же экране? Один из старых уроков этого же проекта
+  (страж 194, «Сюрприз» без подписи) — голая иконка без знакомого контекста путает; здесь контекст уже
+  есть (те же слова были текстом на кнопках), поэтому не обязательно, но перестраховка недорога.</p>
+  <p><b>3.</b> Стикеры в превью «Создать» — показывать сразу по мере добавления препятствия, или только когда
+  игрок дошёл до шага «Сохранить»? Технически проще сразу (та же функция, что уже красит ленту).</p>
+</div>
+
+</body>
+</html>
