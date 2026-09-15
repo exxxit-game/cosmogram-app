@@ -1,0 +1,164 @@
+<title>Макет: 5 новых скинов — волна 2</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+.src{font-size:9px;color:#5a6488;margin-top:3px}
+</style>
+<h1>5 новых скинов — волна 2 («Науки для тюнинга»)</h1>
+<p class="sub">Продолжение предыдущего захода (хроматическая поляризация/Ляпунов/Little Red Dot/облака/диатомеи — тот макет ещё ждёт «да»). Ничего из этого тоже ещё не в игре.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact,src})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    const sr=document.createElement('div'); sr.className='src'; sr.textContent=src;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft); card.appendChild(sr);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// 1. Бабочка Хофштадтера — фрактальный энергетический спектр, самоподобие на разных p/q
+function drawHofstadter(ctx,now){
+  const t=now/6000;
+  function branch(x,y,w,depth,side){
+    if(depth>5||w<0.22) return;
+    ctx.strokeStyle=`hsla(${200+depth*22},75%,${50+depth*6}%,.7)`; ctx.lineWidth=Math.max(0.14,w*0.2);
+    ctx.beginPath(); ctx.moveTo(x-w,y); ctx.lineTo(x+w,y); ctx.stroke();
+    const drift=Math.sin(t*3+depth+side)*0.12;
+    branch(x-w*0.5+drift, y-1.15, w*0.46, depth+1, side);
+    branch(x+w*0.5+drift, y+1.15, w*0.46, depth+1, side);
+  }
+  branch(-3.2,-9,3.6,0,0);
+  branch(3.2,-9,3.6,0,1);
+  branch(0,10,7.6,0,2);
+}
+// 2. Замощение пятиугольниками — Тип 15 (Манн/Маклауд/фон Дерау, 2015)
+function drawPentagonTiling(ctx,now){
+  const shimmer=now/2500;
+  const pts5=(cx,cy,r,rot)=>{ const p=[]; for(let i=0;i<5;i++){ const a=rot+i/5*6.283-1.5708; p.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); } return p; };
+  const cells=[[-4,-3,0],[4,-3,0.6],[-4,3,1.2],[4,3,1.8],[0,0,0.3]];
+  cells.forEach(([cx,cy,rot],i)=>{
+    const p=pts5(cx,cy,2.6,rot+Math.sin(shimmer+i)*0.05);
+    ctx.beginPath(); p.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath();
+    ctx.fillStyle=`hsla(${40+i*35},60%,${45+((now/900+i*80)%20)}%,.5)`;
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.25; ctx.stroke();
+  });
+}
+// 3. Стринг-арт / построение Кремоны — прямые нити образуют кардиоиду
+function drawStringArt(ctx,now){
+  const N=24, mult=2, rot=now/5000;
+  ctx.strokeStyle='hsla(280,70%,72%,.5)'; ctx.lineWidth=0.16;
+  for(let i=0;i<N;i++){
+    const a1=rot+i/N*6.283, a2=rot+(i*mult%N)/N*6.283;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a1)*8,Math.sin(a1)*8*0.85);
+    ctx.lineTo(Math.cos(a2)*8,Math.sin(a2)*8*0.85);
+    ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.ellipse(0,0,8,8*0.85,0,0,6.283); ctx.stroke();
+}
+// 4. Додекаэдрическое пространство Пуанкаре — грани, склеенные с поворотом 36°
+function drawDodecaSpace(ctx,now){
+  const spin=now/5000;
+  ctx.save(); ctx.rotate(spin*0.4);
+  for(let ring=0;ring<2;ring++){
+    const r=4+ring*3.4, n=5;
+    for(let i=0;i<n;i++){
+      const a=i/n*6.283+ring*0.6283; // 36 deg offset per ring
+      const x1=Math.cos(a)*r, y1=Math.sin(a)*r*0.9;
+      const a2=(i+1)/n*6.283+ring*0.6283;
+      const x2=Math.cos(a2)*r, y2=Math.sin(a2)*r*0.9;
+      ctx.strokeStyle=`hsla(${260+ring*40},70%,70%,${0.75-ring*0.25})`; ctx.lineWidth=0.35;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  const pulse=0.5+0.5*Math.sin(now/700);
+  ctx.fillStyle=`rgba(200,180,255,${0.3+pulse*0.3})`;
+  ctx.beginPath(); ctx.arc(0,0,0.9,0,6.283); ctx.fill();
+}
+// 5. Ход лучей через линзу Ибн Сахля — сходящиеся/расходящиеся лучи через мениск
+function drawLensRays(ctx,now){
+  ctx.strokeStyle='rgba(200,220,255,.6)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.ellipse(0,0,1.6,7,0,0,6.283); ctx.stroke();
+  const t=(now%2600)/2600;
+  for(let i=-3;i<=3;i++){
+    const y0=i*2.1;
+    const focusX=8, focusY=0;
+    const midX=1.2*Math.cos(y0/8);
+    const p=t;
+    const x = -9+(midX+9)*Math.min(p*2,1);
+    const yy = y0*(1-Math.min(p*2,1)) + (p>0.5?(y0+(focusY-y0)*((p-0.5)*2)):y0);
+    const seg = p<0.5? [-9,y0,midX,y0] : [midX,y0,focusX,focusY+(y0*0.02)];
+    ctx.strokeStyle=`hsla(${45+i*10},85%,65%,.85)`; ctx.lineWidth=0.28;
+    ctx.beginPath(); ctx.moveTo(seg[0],seg[1]); ctx.lineTo(seg[2],seg[3]); ctx.stroke();
+  }
+  ctx.fillStyle='rgba(255,240,200,.9)';
+  ctx.beginPath(); ctx.arc(8,0,0.5,0,6.283); ctx.fill();
+}
+
+mountCards([
+  {id:'w2a', name:'Бабочка Хофштадтера', body:'#0e1622', drawFn:drawHofstadter, zoom:6.5,
+   fact:'Предсказана 1976, впервые измерена только в 2013 — 37 лет между гипотезой и наблюдением',
+   src:'HOFSTADTER-BUTTERFLY.md'},
+  {id:'w2b', name:'Замощение пятиугольниками', body:'#181008', drawFn:drawPentagonTiling, zoom:6.5,
+   fact:'Тип 15 нашли компьютерным перебором лишь в 2015 — Манн/Маклауд/фон Дерау',
+   src:'PENTAGON-TILING-HISTORY.md'},
+  {id:'w2c', name:'Стринг-арт (Мэри Буль)', body:'#140f1a', drawFn:drawStringArt, zoom:6.5,
+   fact:'Прямые нити рисуют кардиоиду — ту же кривую, что тело множества Мандельброта',
+   src:'STRING-ART-CURVE-STITCHING.md'},
+  {id:'w2d', name:'Пространство Пуанкаре', body:'#100c1c', drawFn:drawDodecaSpace, zoom:6.5,
+   fact:'Додекаэдр со склеенными гранями (поворот 36°) — гипотеза о конечной форме Вселенной',
+   src:'DODECAHEDRAL-UNIVERSE.md'},
+  {id:'w2e', name:'Линза Ибн Сахля', body:'#0c1420', drawFn:drawLensRays, zoom:6.5,
+   fact:'Реально вывел закон преломления в 984 году — за 600 лет до Снелла',
+   src:'LENS-RAY-DIAGRAMS.md'},
+]);
+</script>
