@@ -86,8 +86,13 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
    не столбик под инфо; порядок слева направо звезда→лайк→инфо. Имя переехало вниз, прямо
    над рядом значков препятствий (было отдельно вверху). Полёт/Изменить — столбик в правом
    нижнем углу, Полёт в самом углу, Изменить над ним (было в ряд). ---- */
-.wTopRowNew{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;gap:6px}
-.wTopRowNew .wName{flex:1;min-width:0}
+/* 15.09.2026 (владелец: «верни инфо в свой угол, не просил сдвигать») — инфо всегда жило
+   в правом верхнем углу карточки (см. .wTopRow выше); первая правка этого ряда по ошибке
+   выровняла все три значка по ЛЕВОМУ краю (не было .wName, что раньше давало flex:1 и
+   толкало значки вправо) — justify-content:flex-end возвращает угол на место, звезда/лайк
+   просто встают слева от инфо в том же углу, не отдельно. */
+.wTopRowNew{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;
+  justify-content:flex-end;gap:6px}
 .wTopRowNew .wCorner{width:26px;height:26px}
 .wTopRowNew .wCorner svg{width:14px;height:14px}
 .wNameStickerCol{position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
