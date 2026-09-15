@@ -2741,27 +2741,59 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div class="bootStar" style="left:70.8%;top:74.8%;animation-delay:2.76s"></div>
   <div class="bootStar" style="left:86.2%;top:74.9%;animation-delay:2.09s"></div>
   <div class="bootStar" style="left:58.7%;top:47.4%;animation-delay:2.92s"></div>
-  <div style="width:44px;height:44px;position:relative">
-    <div style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(240,192,64,.22)"></div>
-    <div style="position:absolute;inset:0;animation:bootOrbit 2.4s linear infinite">
-      <div style="position:absolute;top:-2px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;
-        background:#f0c040;box-shadow:0 0 8px 2px rgba(240,192,64,.6)"></div>
-    </div>
+  <div style="position:relative;width:260px;height:260px">
+    <canvas id="bootSpiral" width="260" height="260" style="position:absolute;inset:0"></canvas>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-size:13px;letter-spacing:.03em;color:#9fb0c8;text-align:center">Загружается…</div>
   </div>
-  <div style="font-size:14px;letter-spacing:.03em;color:#9fb0c8;">Небо загружается…</div>
 </div>
-<!-- 10.09.2026 (владелец, живой макет: «сделать красивее» → «идеально, да»): был голый серый
-     спиннер (bootSpin) — заменён на тихое мерцание звёзд + золотую точку по орбите, тот же
-     принцип «пока грузится небо» (чистый HTML/CSS выше, без JS), звёзды — фиксированные
-     координаты (детерминированный псевдослучайный разброс, не Math.random() — до первого
-     скрипта его бы и не было). border-radius/цвета — те же токены, что и у остального интерфейса
-     (--gold-hi #f0c040), просто не через CSS-переменную здесь (:root ещё не гарантированно
-     распарсен до этого инлайн-блока, тот же принцип «переживёт даже полный отказ сети»). -->
+<!-- 15.09.2026 (владелец, 5 референсов спиральных узоров + макет zagruzka-spiral-fogelya-15-09-2026.html,
+     «ВАРИАНТ A · золото/синь игры и слово загружается по середине»): орбита с золотой точкой
+     (10.09.2026 ниже) заменена на спираль Фогеля/филлотаксис (Vogel, 1979: r=c√n, угол=n×137.5° —
+     формула и проверка в .knowledge/GENERATIVE-GEOMETRY.md) — точки растут числом и вращаются,
+     цвет — прямая интерполяция RGB между синим (#6ea8ff, центр) и золотом (#f0c040, край), не через
+     круг оттенков (тот сметает через зелёный — первая попытка макета была неверной, владелец не
+     это утвердил). Подпись — по центру самой спирали, не под ней (владелец уточнил отдельно).
+     bootStar (мерцающие фоновые звёзды, добавлены 10.09.2026) остаются как есть — спираль крупнее
+     их и стоит поверх, разные слои одной сцены, конфликта нет.
+     ПРИНЦИП НЕ МЕНЯЕТСЯ: этот <script> — inline, часть того же уже загруженного документа, не
+     внешний js/*.js файл за сетевым запросом — переживёт полный отказ сети точно так же, как чистый
+     HTML/CSS до него (см. комментарий у #bootLoad выше). Цикл кадров сам проверяет, жив ли ещё
+     canvas в DOM (getElementById), и останавливается — иначе after __bl.remove() ниже (в конце
+     страницы, когда игра готова) requestAnimationFrame крутился бы вхолостую вечно. -->
 <style>
-@keyframes bootOrbit{to{transform:rotate(360deg)}}
 @keyframes bootTwinkle{0%,100%{opacity:.15}50%{opacity:.9}}
 .bootStar{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:bootTwinkle 3s ease-in-out infinite}
 </style>
+<script>
+(function(){
+  var cv=document.getElementById('bootSpiral'); if(!cv||!cv.getContext) return;
+  var ctx=cv.getContext('2d');
+  var GA=137.50776405*Math.PI/180, N=220, C=11.5;
+  var pts=[];
+  for(var n=0;n<N;n++){ var r=C*Math.sqrt(n), th=n*GA; pts.push({x:r*Math.cos(th),y:r*Math.sin(th),t:n/(N-1)}); }
+  var cx=cv.width/2, cy=cv.height/2, t0=null;
+  function lerp(a,b,t){ return Math.round(a+(b-a)*t); }
+  function frame(now){
+    if(!document.body.contains(cv)) return; // #bootLoad снят целиком, когда игра готова — цикл сам себя гасит
+    if(t0===null) t0=now;
+    var el=(now-t0)/1000;
+    var shown=Math.min(N, Math.floor(el*110));
+    var rot=el*0.15;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var cos=Math.cos(rot), sin=Math.sin(rot);
+    for(var i=0;i<shown;i++){
+      var p=pts[i];
+      var x=cx+p.x*cos-p.y*sin, y=cy+p.x*sin+p.y*cos;
+      var rr=lerp(110,240,p.t), gg=lerp(168,192,p.t), bb=lerp(255,64,p.t);
+      ctx.beginPath(); ctx.arc(x,y,2+p.t*4.5,0,Math.PI*2);
+      ctx.fillStyle='rgb('+rr+','+gg+','+bb+')'; ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
 <!-- SVG-спрайт интерфейсных иконок (stroke 1.8, наследуют цвет текста) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-plane" viewBox="0 0 24 24"><path d="M3 11.2 21 3l-6.8 18-2.8-7.4z"></path><path d="M11.4 13.6 21 3"></path></symbol>
@@ -2902,9 +2934,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.289"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.289"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.289"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.290"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.290"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.290"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3969,26 +4001,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.289" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.289"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.289"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.289"></script>
-<script defer src="js/game.js?v=1.478.289" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.289"></script>
-<script defer src="js/sync.js?v=1.478.289"></script>
-<script defer src="js/render.js?v=1.478.289"></script>
-<script defer src="js/planetarium.js?v=1.478.289"></script>
-<script defer src="js/goldstar.js?v=1.478.289"></script>
-<script defer src="js/finish.js?v=1.478.289"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.289"></script>
-<script defer src="js/gyro.js?v=1.478.289"></script>
-<script defer src="js/forge.js?v=1.478.289"></script>
-<script defer src="js/partitura.js?v=1.478.289"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.289"></script>
-<script defer src="js/card.js?v=1.478.289"></script>
-<script defer src="js/star.js?v=1.478.289"></script>
-<script defer src="js/cinema.js?v=1.478.289"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.289"></script>
+<script defer src="js/core.js?v=1.478.290" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.290"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.290"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.290"></script>
+<script defer src="js/game.js?v=1.478.290" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.290"></script>
+<script defer src="js/sync.js?v=1.478.290"></script>
+<script defer src="js/render.js?v=1.478.290"></script>
+<script defer src="js/planetarium.js?v=1.478.290"></script>
+<script defer src="js/goldstar.js?v=1.478.290"></script>
+<script defer src="js/finish.js?v=1.478.290"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.290"></script>
+<script defer src="js/gyro.js?v=1.478.290"></script>
+<script defer src="js/forge.js?v=1.478.290"></script>
+<script defer src="js/partitura.js?v=1.478.290"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.290"></script>
+<script defer src="js/card.js?v=1.478.290"></script>
+<script defer src="js/star.js?v=1.478.290"></script>
+<script defer src="js/cinema.js?v=1.478.290"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.290"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

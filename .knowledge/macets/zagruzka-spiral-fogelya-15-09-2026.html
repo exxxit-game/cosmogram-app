@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: экран загрузки — спираль Фогеля</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c1120;color:#f4f6fb;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    padding:32px 16px;display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+  h1{width:100%;text-align:center;font-size:20px;margin:0 0 4px}
+  .note{width:100%;text-align:center;color:#7d8aa8;font-size:13px;margin-bottom:8px;max-width:900px;margin-left:auto;margin-right:auto}
+  .col{width:300px}
+  .colLabel{font-size:13px;font-weight:700;letter-spacing:.04em;text-align:center;padding:8px 0;border-radius:10px 10px 0 0}
+  .colLabel.old{background:rgba(255,120,120,.15);color:#ffb3b3}
+  .colLabel.a{background:rgba(240,192,64,.15);color:#f0c040}
+  .colLabel.b{background:rgba(255,140,90,.15);color:#ff9a6e}
+  .phone{background:#070b18;border:1px solid rgba(255,255,255,.08);border-top:none;border-radius:0 0 22px 22px;
+    height:480px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .bootStar{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:tw 3s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:.15}50%{opacity:.9}}
+  .lbl{font-size:13px;letter-spacing:.03em;color:#9fb0c8}
+  canvas{display:block}
+</style>
+</head>
+<body>
+<h1>Экран загрузки — спираль Фогеля (радиус=c√n, угол=n×137.5°)</h1>
+<div class="note">Владелец: текущая загрузка не отражает, насколько красивой стала игра. Референсы — 5 картинок спиральных узоров точек. Ниже: то же место (#bootLoad, index.html), два варианта палитры, оба с ростом (точки появляются по одной) + медленным вращением готового узора. Технически — тот же принцип, что уже есть у #bootLoad (не зависит от загрузки внешних js/*.js файлов), только вместо CSS теперь маленький inline-canvas.</div>
+
+<div class="col">
+  <div class="colLabel old">СЕЙЧАС</div>
+  <div class="phone" id="cur">
+    <div style="width:44px;height:44px;position:relative">
+      <div style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(240,192,64,.22)"></div>
+      <div style="position:absolute;inset:0;animation:orb 2.4s linear infinite">
+        <div style="position:absolute;top:-2px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#f0c040;box-shadow:0 0 8px 2px rgba(240,192,64,.6)"></div>
+      </div>
+    </div>
+    <div class="lbl">Небо загружается…</div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="colLabel a">ВАРИАНТ A · золото/синь игры</div>
+  <div class="phone"><canvas id="cvA" width="300" height="420"></canvas></div>
+</div>
+
+<div class="col">
+  <div class="colLabel b">ВАРИАНТ B · тёплый градиент (ближе к референсам)</div>
+  <div class="phone"><canvas id="cvB" width="300" height="420"></canvas></div>
+</div>
+
+<style>@keyframes orb{to{transform:rotate(360deg)}}</style>
+<script>
+const GA = 137.50776405 * Math.PI/180;
+function spiral(N,C){ const p=[]; for(let n=0;n<N;n++){ const r=C*Math.sqrt(n), th=n*GA; p.push({n,r,x:r*Math.cos(th),y:r*Math.sin(th),t:n/(N-1)}); } return p; }
+
+function run(id, N, C, colorFn, label){
+  const cv=document.getElementById(id), ctx=cv.getContext('2d');
+  const pts=spiral(N,C);
+  const cx=cv.width/2, cy=cv.height/2-24;
+  let shown=0, rot=0, t0=performance.now();
+  function frame(now){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#070b18'; ctx.fillRect(0,0,cv.width,cv.height);
+    const elapsed=(now-t0)/1000;
+    shown = Math.min(N, Math.floor(elapsed*140)); // рост: ~140 точек/сек
+    rot = elapsed*0.15; // медленное вращение готового узора
+    for(let i=0;i<shown;i++){
+      const p=pts[i];
+      const cos=Math.cos(rot), sin=Math.sin(rot);
+      const x = cx + p.x*cos - p.y*sin;
+      const y = cy + p.x*sin + p.y*cos;
+      const [col,size] = colorFn(p.t);
+      ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2);
+      ctx.fillStyle=col; ctx.fill();
+    }
+    ctx.fillStyle='#9fb0c8'; ctx.font='13px -apple-system,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(label, cx, cv.height-24);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function lerpRGB(c1,c2,t){
+  const r=Math.round(c1[0]+(c2[0]-c1[0])*t), g=Math.round(c1[1]+(c2[1]-c1[1])*t), b=Math.round(c1[2]+(c2[2]-c1[2])*t);
+  return `rgb(${r},${g},${b})`;
+}
+run('cvA', 260, 12.5, t=>{
+  // прямая интерполяция RGB (не через круг оттенков — сметает через зелёный, если идти hue-свипом
+  // от синего к золоту напрямую) — синий #6ea8ff (центр) -> золото #f0c040 (край), игровые тона
+  const col = lerpRGB([110,168,255],[240,192,64], t);
+  return [col, 2+t*5.5];
+}, 'Небо загружается…');
+
+run('cvB', 260, 12.5, t=>{
+  const hue = 25 + t*15; // тёплый оранжево-золотой диапазон целиком
+  const light = 45+t*25;
+  return [`hsl(${hue},85%,${light}%)`, 2+t*5.5];
+}, 'Небо загружается…');
+</script>
+</body>
+</html>
