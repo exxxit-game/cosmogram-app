@@ -82,6 +82,19 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
 .wCornerStackTop .wCorner svg{width:12px;height:12px}
 .wStickerRowBottom{position:absolute;left:10px;bottom:10px;display:flex;gap:5px;z-index:5}
 
+/* ---- 15.09.2026, третий заход (владелец, живой скрин): звезда/лайк/инфо — один ряд,
+   не столбик под инфо; порядок слева направо звезда→лайк→инфо. Имя переехало вниз, прямо
+   над рядом значков препятствий (было отдельно вверху). Полёт/Изменить — столбик в правом
+   нижнем углу, Полёт в самом углу, Изменить над ним (было в ряд). ---- */
+.wTopRowNew{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;gap:6px}
+.wTopRowNew .wName{flex:1;min-width:0}
+.wTopRowNew .wCorner{width:26px;height:26px}
+.wTopRowNew .wCorner svg{width:14px;height:14px}
+.wNameStickerCol{position:absolute;left:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+.wNameStickerCol .wName{font-size:13px}
+.wStickerRowInline{display:flex;gap:5px}
+.wActionStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5}
+
 /* ---- hero/режим карточка (для сверки — почти без изменений) ---- */
 .heroCard{position:relative;border-radius:16px;overflow:hidden;padding:12px 13px 10px;height:130px;
   display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;border:1px solid var(--line);
@@ -166,25 +179,27 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
       <div class="wRow wRowFull">
         <div class="wBanner wBannerFull b2">
           <div class="wScrim"></div>
-          <div class="wTopRow"><div class="wName">Пульсар</div>
-            <div class="wCornerRow"><div class="wCorner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div></div>
-          </div>
-          <!-- звезда «отмечено мной» — ЗАЛИТАЯ (active), чтобы было видно, как выглядит настоящая
-               метка владельца, не только пустой контур; сердце — своё обычное состояние рядом -->
-          <div class="wCornerStackTop">
+          <!-- звезда → лайк → инфо, один ряд, слева направо; звезда ЗАЛИТАЯ (active) —
+               видно, как выглядит настоящая метка владельца, не пустой контур -->
+          <div class="wTopRowNew">
             <div class="wCorner" style="background:#dba93c;border-color:#dba93c"><svg viewBox="0 0 24 24" fill="#2c1f08"><path d="M12 2l2.6 7.9H23l-6.7 4.9 2.6 7.9-6.9-5-6.9 5 2.6-7.9L1 9.9h8.4z"/></svg></div>
             <div class="wCorner" style="background:rgba(255,159,176,.15);border-color:rgba(255,159,176,.5);color:#ff9fb0"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"/></svg></div>
+            <div class="wCorner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div>
           </div>
-          <div class="wStickerRowBottom">
-            <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
-            <div class="wSticker" style="color:#22b8dd"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="9" width="16" height="6" rx="2"/></svg></div>
+          <!-- имя — прямо над рядом значков препятствий, оба в левом нижнем углу -->
+          <div class="wNameStickerCol">
+            <div class="wName">Пульсар</div>
+            <div class="wStickerRowInline">
+              <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
+              <div class="wSticker" style="color:#22b8dd"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="9" width="16" height="6" rx="2"/></svg></div>
+            </div>
           </div>
-          <!-- порядок значков — Полёт первым (слева), как в исходном ряду кнопок (было
-               «Полёт»/«Изменить» слева направо) — владелец поправил, я в первом заходе
-               случайно поменял местами -->
-          <div class="wActionIconsOverlay">
-            <div class="iconBtnWrap"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div><div class="iconLbl">Полёт</div></div>
-            <div class="iconBtnWrap"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div><div class="iconLbl">Изменить</div></div>
+          <!-- Изменить над Полётом — Полёт в самом углу. 15.09.2026 (владелец): без подписи
+               под значком — только иконка, title остаётся для подсказки при долгом нажатии/
+               скринридера, тот же приём, что уже у чипов «Сюрприз»/«Лайки» в этом же экране. -->
+          <div class="wActionStack">
+            <div class="iconBtn edit" title="Изменить"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div>
+            <div class="iconBtn fly" title="Полёт"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div>
           </div>
         </div>
       </div>
