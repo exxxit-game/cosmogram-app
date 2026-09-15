@@ -524,9 +524,17 @@ function forgeFill(){ // подписи + состояние виджетов п
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
-    ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],['forgeLenLbl',L.forgeLen],
+    ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
-    ['forgeSkyLbl',L.forgeSky],['forgeFogLbl',L.forgeFog],
+    ['forgeFogLbl',L.forgeFog],
+    // 15.09.2026 (аудит шага «Цвет»): 6 подписей были захардкожены прямо в index.html, только
+    // на русском — не переводились ни разу. forgeSkyLbl/forgeLenLbl — убраны из списка тут же,
+    // ни один из этих id не существует в текущей разметке (мёртвые записи с ~11.09.2026).
+    ['ptColorLbl',L.ptColorLbl],['ptColor2Lbl',L.ptColor2Lbl],['ptDensLbl',L.ptDensLbl],
+    ['ptMoodLbl',L.ptMoodLbl],['ptMoodHint',L.ptMoodHint],['forgeFavLbl',L.forgeFavLbl],
+    // 15.09.2026 (аудит шага «Сохранить»): те же 3 заголовка группы — тоже были только на
+    // русском, id у них раньше не было вовсе (index.html), добавлены вместе с этим фиксом.
+    ['forgeHardSpoilerGrpT',L.forgeHardSpoilerGrpT],['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn]];
   // 12.09.2026: forgeResetBtn убрана из этого цикла — теперь круглый значок-корзина
   // (index.html, .ptCornerBtn), не текст; textContent затирал бы иконку. aria-label
@@ -538,6 +546,8 @@ function forgeFill(){ // подписи + состояние виджетов п
     // 02.09.2026: «Поделиться небом» вернулась в Конструктор — mapShare() существовала
     // с v1.87.0, но не была вызвана ни одной кнопкой (см. wireOnLocal ниже)
   for(const pair of LBL){ const el=$(pair[0]); if(el) el.textContent=pair[1]; }
+  const densEl=$('ptDensLbl'); if(densEl) densEl.title=L.ptDensTitle; // подсказка (title) — отдельно, LBL выше трогает только textContent
+  if(typeof forgeHarmonyFillLabels==='function') forgeHarmonyFillLabels(); // 15.09.2026 (аудит #2): кнопка/заголовок/7 схем/примечание «Гармонии цвета»
   // 30.08.2026: три заголовка групп стали .setGrp (аккордеон) — текст живёт в дочернем .setGrpT,
   // а не прямо в узле (тот же приём, что grpT() в ui.js для Настроек) — el.textContent затёр бы span
   // 05.09.2026: #modeForge убран из «Соревнований» вместе с самой кнопкой (Конструктор
@@ -660,8 +670,14 @@ function forgeStepExit(){
   if(tabs) tabs.classList.remove('hidden');
 }
 const FORGE_STEP_ORDER=['arrange','sky','hard'];
-const FORGE_STEP_TITLE={arrange:'Карта',sky:'Цвет',hard:'Сохранить'};
-const FORGE_STEP_CONFIRM_LBL={arrange:'Подтвердить карту',sky:'Подтвердить цвет'};
+// 15.09.2026 (тот же аудит, что нашёл 6 подписей шага «Цвет» и 3 заголовка «Сохранить» — эти
+// два объекта были ровно тем же классом бага, просто не строкой в index.html, а константой
+// здесь): были захардкожены на русском при объявлении модуля, один раз навсегда, ЯЗЫК ПОСЛЕ
+// СМЕНЫ НЕ ОБНОВЛЯЛСЯ ВООБЩЕ — заголовки шагов и кнопка «Подтвердить...» оставались русскими
+// даже когда весь остальной экран уже переключился. Функции вместо константных объектов —
+// читают L.* каждый раз заново, в момент вызова, а не один раз при загрузке файла.
+function FORGE_STEP_TITLE(){ return {arrange:L.forgeStepMap, sky:L.forgeStepColor, hard:L.forgeStepSave}; }
+function FORGE_STEP_CONFIRM_LBL(){ return {arrange:L.forgeConfirmMap, sky:L.forgeConfirmColor}; }
 let forgeSub='arrange';
 function forgeSubTabSet(s){
   const leftArrange=(forgeSub==='arrange'&&s!=='arrange');
@@ -685,7 +701,7 @@ function forgeSubTabSet(s){
       const rb=$('forgeResetBtn'); if(rb){ rb.classList.remove('confirming'); rb.innerHTML=FORGE_RESET_ICON; }
     }
   }
-  const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE[forgeSub];
+  const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE()[forgeSub];
   const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
   document.querySelectorAll('.forgeStepDot').forEach(function(d){
     const di=FORGE_STEP_ORDER.indexOf(d.dataset.sub);
@@ -693,7 +709,7 @@ function forgeSubTabSet(s){
     d.classList.toggle('done', di<idx); // только пройденные назад — прыжок вперёд без подтверждения не даём
   });
   const cw=$('forgeStepConfirmWrap'); if(cw) cw.classList.toggle('hidden', forgeSub==='hard'); // на «Сохранить» уже есть настоящие Полёт/Поделиться
-  const cl=$('forgeStepConfirmLbl'); if(cl && FORGE_STEP_CONFIRM_LBL[forgeSub]) cl.textContent=FORGE_STEP_CONFIRM_LBL[forgeSub];
+  const cl=$('forgeStepConfirmLbl'); const confirmLbl=FORGE_STEP_CONFIRM_LBL()[forgeSub]; if(cl && confirmLbl) cl.textContent=confirmLbl;
 }
 wireOnLocal('forgeStepBack','click',function(){
   sfx.click(); haptic('light');
@@ -936,15 +952,31 @@ wireOnLocal('forgeSaveFavBtn','click',function(){ forgeFavSave(forgeCfg, '', $('
    определении (Триадная/Сплит/Тетрада/Квадрат) — честное упрощение до ОДНОГО партнёра (у неба
    всего 2 цветовых слота, не больше), formula комментарий у каждой схемы ниже называет упрощение
    прямо, не выдаёт его за полную схему. */
+/* 15.09.2026 (аудит #2): t/note раньше были литералами на русском, читались один раз при
+   создании кнопок (forgeHarmonyInit ниже — IIFE, выполняется единожды при загрузке файла) и
+   никогда не обновлялись при смене языка. Теперь массив хранит только структурные данные
+   (k/off) и КЛЮЧИ словаря (tKey/noteKey) — сам текст читается из L каждый раз в момент показа
+   (forgeHarmonyFillLabels/forgeHarmonySync), тот же приём, что у FORGE_STEP_TITLE(). */
 const FORGE_HARMONY=[
-  {k:'comp',  t:'Комплементарная',       off:180, note:'Противоположные цвета круга — самый контрастный, «энергичный» вариант. Полная и точная схема — в ней тоже ровно 2 цвета.'},
-  {k:'analog',t:'Аналоговая',            off:30,  note:'Соседний сектор круга — самая безопасная, спокойная пара. Полная и точная схема — тоже 2 цвета.'},
-  {k:'triad', t:'Триадная',              off:120, note:'120° по кругу — контрастно, но сбалансированно. Полная схема — 3 цвета через 120°, у неба 2 слота — берём одного партнёра.'},
-  {k:'split', t:'Сплит-комплементарная', off:150, note:'Рядом с противоположным — высокий контраст с меньшим напряжением, чем чистая комплементарная пара. Полная схема — 3 цвета, берём ближайшего соседа.'},
-  {k:'tetrad',t:'Тетрада',               off:60,  note:'Одна из сторон прямоугольника гармонии — самая «шумная» из семи схем. Полная схема — 4 цвета, у неба 2 слота — берём одну сторону.'},
-  {k:'square',t:'Квадрат',               off:90,  note:'Ровно четверть круга — тоже 4 цвета в полной схеме, но уравновешеннее тетрады. Берём одну четверть.'},
-  {k:'mono',  t:'Монохромная',           off:0,   note:'Один тон — самая спокойная схема, второй цвет неба совпадает с первым. Полная и точная схема — разница только по светлоте/насыщенности, у нас через «Настроение».'},
+  {k:'comp',  tKey:'forgeHarmComp',  off:180, noteKey:'forgeHarmCompNote'},
+  {k:'analog',tKey:'forgeHarmAnalog',off:30,  noteKey:'forgeHarmAnalogNote'},
+  {k:'triad', tKey:'forgeHarmTriad', off:120, noteKey:'forgeHarmTriadNote'},
+  {k:'split', tKey:'forgeHarmSplit', off:150, noteKey:'forgeHarmSplitNote'},
+  {k:'tetrad',tKey:'forgeHarmTetrad',off:60,  noteKey:'forgeHarmTetradNote'},
+  {k:'square',tKey:'forgeHarmSquare',off:90,  noteKey:'forgeHarmSquareNote'},
+  {k:'mono',  tKey:'forgeHarmMono',  off:0,   noteKey:'forgeHarmMonoNote'},
 ];
+function forgeHarmonyFillLabels(){ // подписи кнопки/заголовка/схем/примечания — свой язык, вызывается из forgeFill()
+  const btnLbl=$('forgeHarmonyBtnLbl'); if(btnLbl) btnLbl.textContent=L.forgeHarmonyBtnLbl;
+  const title=$('forgeHarmonyTitle'); if(title) title.textContent=L.forgeHarmonyTitle;
+  const row=$('forgeHarmonySchemes');
+  if(row) for(const btn of row.children){
+    const sc=FORGE_HARMONY.find(function(s){ return s.k===btn.dataset.k; });
+    if(sc) btn.textContent=L[sc.tKey];
+  }
+  const note=$('forgeHarmonyNote'); const cur=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; });
+  if(note && cur) note.textContent=L[cur.noteKey];
+}
 let forgeHarmonyScheme='comp';
 function forgeHarmonyAngle(){ return ((forgeCfg.h1%360)+360)%360; }
 function forgeHarmonyTargetH2(){
@@ -966,7 +998,7 @@ function forgeHarmonySync(){
   if(prev){ const psl=forgePreviewMoodSL(forgeCfg.mood);
     prev.style.background='linear-gradient(180deg, hsl('+h1+','+psl.S0+'%,'+psl.L0+'%), hsl('+h2+','+psl.S1+'%,'+psl.L1+'%))'; }
   const note=$('forgeHarmonyNote'); const sc=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; });
-  if(note && sc) note.textContent=sc.note;
+  if(note && sc) note.textContent=L[sc.noteKey];
   const row=$('forgeHarmonySchemes');
   if(row) for(let i=0;i<row.children.length;i++) row.children[i].classList.toggle('sel', row.children[i].dataset.k===forgeHarmonyScheme);
 }
@@ -993,10 +1025,11 @@ function forgeHarmonyClose(){ const m=$('forgeHarmonyModal'); if(m) m.classList.
 (function forgeHarmonyInit(){
   const row=$('forgeHarmonySchemes'); if(!row) return;
   FORGE_HARMONY.forEach(function(sc){
-    const b=document.createElement('button'); b.type='button'; b.className='forgeChip'; b.textContent=sc.t; b.dataset.k=sc.k;
+    const b=document.createElement('button'); b.type='button'; b.className='forgeChip'; b.textContent=L[sc.tKey]; b.dataset.k=sc.k;
     b.addEventListener('click', function(){ forgeHarmonyScheme=sc.k; forgeHarmonyApply(); forgeHarmonySync(); sfx.click(); haptic('light'); });
     row.appendChild(b);
   });
+  forgeHarmonyFillLabels(); // 15.09.2026: первая расстановка тоже идёт через L, не через мёртвый sc.t
   wireOnLocal('forgeHarmonyBtn','click',forgeHarmonyOpen);
   wireOnLocal('forgeHarmonyClose','click',forgeHarmonyClose);
   const wheel=$('forgeHarmonyWheel');
@@ -1204,6 +1237,12 @@ function workshopRenderList(){
       // что без .wName в ряду значки съезжали к ЛЕВОМУ краю, поправлено). Один размер (.wCorner
       // 26px) на все значки карточки без исключений — владелец явно попросил не разные числа.
       '<div class="wTopRow">'+
+      // 15.09.2026, владелец (референс-скрин «Разминка», «такой вариант правильный, нужно
+      // чтобы такой был у всех»): звезда/лайк/инфо — ОДИН ряд, в этом порядке. Более ранняя
+      // правка этого же дня (Изменить в этот ряд, звезда — под инфо в .wInfoStack) не подошла —
+      // владелец явно указал на референс-скрин, где ряд именно такой, разметка возвращена к
+      // нему. Строку про «см. её комментарий» ниже (про getBBox()) не трогать — размер значков
+      // остаётся посчитанным, меняется только положение.
       '<button class="wCorner wPickStar hidden" data-act="pickstar" title="'+(L.workshopPickTitle||'Отмечено автором игры')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg></button>'+
       '<button class="wCorner wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></button>'+
       // 12.09.2026 «Что до полёта, что за (i)» (владелец, живой тест руками — «протестируй
@@ -1239,12 +1278,12 @@ function workshopRenderList(){
       '<button class="wCorner wCornerDanger" data-act="report" title=""><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>'+
       '</div>'+
       '</div>'+
-      // 15.09.2026: Полёт/Изменить переехали на саму карточку (были отдельным рядом больших
-      // кнопок под ней) — правый нижний угол, столбиком, Полёт в самом углу (.wPlay, залит
-      // золотом — единственное действие, что реально запускает полёт), Изменить над ним. Без
-      // подписи под значком (владелец) — тот же .wCorner 26px, что у остального ряда наверху.
+      // 15.09.2026: Полёт/Изменить — правый нижний угол карточки, столбиком, Изменить над
+      // Полётом (.wPlay, залит золотом — единственное действие, что реально запускает полёт).
+      // Прежняя правка этого же дня уводила Изменить в .wTopRow — не подошла (см. комментарий
+      // у .wTopRow выше, референс-скрин «Разминка»), возвращено сюда же, откуда взято.
       '<div class="wActionStack">'+
-      '<button class="wCorner" data-act="edit" title=""><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"></path></svg></button>'+
+      '<button class="wCorner" data-act="edit" title="'+(L.workshopEdit||'Изменить')+'"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"></path></svg></button>'+
       '<button class="wCorner wPlay" data-act="play" title=""><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l18-8-6 8 6 8-18-8z"></path></svg></button>'+
       '</div>'+
       '</div></div>'; }).join('');

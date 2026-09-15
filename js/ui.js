@@ -3933,7 +3933,129 @@ wireOn('chSignBtn', 'click', function(){
     haptic('success');
   });
 });
-wireOn('gratitudeBtn', 'click', ()=>{ setScreen('gratitude'); sfx.click(); });
+/* 15.09.2026 «Небо благодарности»: заглушка «Скоро» заменена на реальный экран (макет
+   macet-15-09-nebo-blagodarnosti.html, одобрено «делай»). Бэкенд (gratitude_stars,
+   cosmogram-sync: gratitude_sky/gratitude_star/gratitude_create_invoice/gratitude_report)
+   уже жил на сервере до этой правки — здесь только клиент. Позиция звезды НЕ хранится на
+   сервере — детерминированный ГПСЧ по id даёт те же координаты при каждом заходе (владелец:
+   «звезда = фиксированная позиция, не тасуется при перезаходе»), тот же приём экономит поле в БД. */
+let grStars=[], grAmt=50, grBubbleStarId=null, grRaf=0;
+function grSeeded(id){ // mulberry32 — детерминированный ГПСЧ, та же звезда всегда там же
+  let a=(id*2654435761)>>>0;
+  return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+}
+function grStarPos(id){
+  const rnd=grSeeded(id);
+  return { x:20+rnd()*360, y:20+rnd()*190, r:0.7+rnd()*1.6, ph:rnd()*6.28, sp:0.6+rnd()*1.2 };
+}
+function grResizeCanvas(){
+  const cv=$('grSky'); if(!cv) return;
+  const rect=cv.getBoundingClientRect(); if(!rect.width||!rect.height) return;
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  cv.width=Math.round(rect.width*dpr); cv.height=Math.round(rect.height*dpr);
+}
+function grDraw(t){
+  const scr=$('gratitudeScreen'), cv=$('grSky');
+  if(!scr || scr.classList.contains('hidden') || !cv){ grRaf=0; return; }
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height;
+  if(!w||!h){ grRaf=requestAnimationFrame(grDraw); return; }
+  ctx.clearRect(0,0,w,h);
+  for(const s of grStars){
+    const tw=0.5+0.5*Math.sin(t*0.0009*s.sp+s.ph);
+    ctx.globalAlpha=tw; ctx.fillStyle='#dfe8ff';
+    ctx.beginPath(); ctx.arc(s.x/380*w, s.y/230*h, s.r*(w/380), 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  grRaf=requestAnimationFrame(grDraw);
+}
+function grFillNameRow(){
+  const row=$('grNameRow'); if(!row) return;
+  const anonRow=$('grAnonRow'), anon = anonRow && anonRow.classList.contains('on');
+  row.textContent='';
+  if(anon){ row.textContent=L.grNameHidden; return; }
+  const lbl=document.createElement('span'); lbl.textContent=L.grNameShownLbl;
+  const b=document.createElement('b'); b.textContent=(typeof syncAuthName==='function' && syncAuthName()) || L.grNameFallback;
+  row.appendChild(lbl); row.appendChild(b);
+}
+function gratitudeSkyFill(){
+  grResizeCanvas();
+  const signedIn = typeof syncAvailable==='function' && syncAvailable();
+  const form=$('grForm'), sendBtn=$('grSendBtn'), signIn=$('grSignIn');
+  if(form) form.classList.toggle('hidden', !signedIn);
+  if(sendBtn) sendBtn.classList.toggle('hidden', !signedIn);
+  if(signIn){ signIn.classList.toggle('hidden', signedIn); if(!signedIn) signIn.textContent=L.gratitudeSignInFirst; }
+  if(signedIn) grFillNameRow();
+  if(typeof syncGratitudeSky!=='function') return;
+  syncGratitudeSky().then(function(r){
+    grStars = (r && r.ok && Array.isArray(r.stars)) ? r.stars.map(function(row){ return Object.assign({id:row.id}, grStarPos(row.id)); }) : [];
+    const cnt=$('grStarCount'), hint=$('grHint'), empty=$('grEmpty');
+    if(grStars.length>0){
+      if(cnt){ cnt.textContent='★ '+grStars.length; cnt.classList.remove('hidden'); }
+      if(hint) hint.classList.remove('hidden');
+      if(empty) empty.classList.add('hidden');
+    } else {
+      if(cnt) cnt.classList.add('hidden');
+      if(hint) hint.classList.add('hidden');
+      if(empty){ empty.textContent=L.gratitudeEmptySky; empty.classList.remove('hidden'); }
+    }
+    if(!grRaf) grRaf=requestAnimationFrame(grDraw);
+  });
+}
+function grBubbleHide(){ const b=$('grBubble'); if(b) b.classList.remove('show'); grBubbleStarId=null; }
+wireOn('grSky','click',function(ev){
+  const cv=$('grSky'); if(!cv) return;
+  const rect=cv.getBoundingClientRect();
+  const px=(ev.clientX-rect.left)/rect.width*380, py=(ev.clientY-rect.top)/rect.height*230;
+  let hit=null, best=16;
+  for(const s of grStars){ const d=Math.hypot(s.x-px, s.y-py); if(d<best){ best=d; hit=s; } }
+  if(!hit){ grBubbleHide(); return; }
+  grBubbleStarId=hit.id;
+  const bubble=$('grBubble');
+  if(bubble){ bubble.style.left=(hit.x/380*100)+'%'; bubble.style.top=(hit.y/230*100)+'%'; bubble.classList.add('show'); }
+  const nameEl=$('grBubbleName'), cEl=$('grBubbleComment'), repBtn=$('grBubbleReport');
+  if(nameEl) nameEl.textContent=''; if(cEl) cEl.textContent='';
+  if(repBtn) repBtn.classList.remove('sent');
+  sfx.click(); haptic('light');
+  syncGratitudeStar(hit.id).then(function(r){
+    if(grBubbleStarId!==hit.id) return; // игрок уже тапнул другую звезду, пока грузилось
+    if(!r || !r.ok){ grBubbleHide(); return; }
+    if(nameEl) nameEl.textContent = r.name || L.grAnonLabel;
+    if(cEl) cEl.textContent = r.comment || '';
+  });
+});
+wireOn('grBubbleReport','click',function(ev){
+  ev.stopPropagation();
+  if(!grBubbleStarId) return;
+  const btn=$('grBubbleReport'); if(btn && btn.classList.contains('sent')) return;
+  syncGratitudeReport(grBubbleStarId).then(function(r){
+    if(r && r.ok){ if(btn) btn.classList.add('sent'); toast(L.grReported,'rgba(240,192,64,.5)'); haptic('light'); }
+  });
+});
+wireOn('grAmtUp','click',function(){ grAmt=Math.min(100000, grAmt+10); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
+wireOn('grAmtDown','click',function(){ grAmt=Math.max(1, grAmt-10); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
+wireOn('grAnonRow','click',function(){ const row=$('grAnonRow'); if(row) row.classList.toggle('on'); grFillNameRow(); sfx.click(); haptic('light'); });
+let _grSendBusy=false;
+wireOn('grSendBtn','click',function(){
+  if(_grSendBusy) return;
+  const tw = typeof tgApp==='function' ? tgApp() : null;
+  if(!tw || !tw.openInvoice){ toast(L.premiumTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; }
+  _grSendBusy=true;
+  const commentEl=$('grCommentInput');
+  const comment = commentEl ? String(commentEl.value||'').slice(0,300) : '';
+  const anonRow=$('grAnonRow'), anon = anonRow && anonRow.classList.contains('on');
+  syncGratitudeCreateInvoice(grAmt, comment, anon).then(function(res){
+    _grSendBusy=false;
+    if(!res || !res.ok || !res.link){ toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    tw.openInvoice(res.link, function(status){
+      if(status!=='paid') return;
+      if(commentEl) commentEl.value='';
+      toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
+      gratitudeSkyFill();
+    });
+  });
+});
+window.addEventListener('resize', function(){ const scr=$('gratitudeScreen'); if(scr && !scr.classList.contains('hidden')) grResizeCanvas(); });
+wireOn('gratitudeBtn', 'click', ()=>{ setScreen('gratitude'); gratitudeSkyFill(); sfx.click(); });
 wireOn('gratitudeBackBtn', 'click', toMenu);
 wireOn('feedbackText', 'input', feedbackUpdateCount);
 
@@ -3953,6 +4075,14 @@ function applyLang(){
   if (typeof tooNarrowText==='function') tooNarrowText(window.innerWidth > window.innerHeight);
   heroCarouselFill(); // 15.09.2026: #modesBtn убран с главного совсем — 7 карточек карусели несут весь язык
   if (typeof forgeFill==='function') forgeFill(); // конструктор трассы — свой язык (v1.68.0)
+  // 15.09.2026: заголовок шага и текст кнопки-подтверждения не входят в forgeFill() (у них
+  // отдельные функции FORGE_STEP_TITLE()/FORGE_STEP_CONFIRM_LBL(), вызываемые из forgeSubTabSet).
+  // Полный forgeSubTabSet(forgeSub) здесь нельзя — он же закрывает лист точек, снимает «взведённый»
+  // стикер и сбрасывает ptSelIdx, что стирает середину правки игрока при простой смене языка.
+  if (typeof FORGE_STEP_TITLE==='function' && typeof forgeSub!=='undefined'){
+    const _fst=$('forgeStepTitle'); if(_fst) _fst.textContent=FORGE_STEP_TITLE()[forgeSub];
+    const _fcl=$('forgeStepConfirmLbl'); const _fcLbl=FORGE_STEP_CONFIRM_LBL()[forgeSub]; if(_fcl && _fcLbl) _fcl.textContent=_fcLbl;
+  }
   if (typeof workshopFillLabels==='function') workshopFillLabels(); // 05.09.2026 «Мастерская» — свой язык, тот же приём
   angarFillFilterChips(); // 06.09.2026: чипы Тюнинга — свой язык, тот же приём (no-op, если экран сейчас не открыт — box отсутствует в DOM только у скрытых частей своей же разметки, сама разметка всегда в DOM)
   if (typeof ptFill==='function') ptFill(); // 01.09.2026: Партитура — своя лента, тот же вызов смены языка
@@ -3967,6 +4097,15 @@ function applyLang(){
   setText('gratitudeTitle',L.gratitudeTitle);
   setText('gratitudeSoonTitle',L.gratitudeSoonTitle);
   setText('gratitudeSoonDesc',L.gratitudeSoonDesc);
+  setText('grLead',L.grLead); setText('grPrivacyNote',L.grPrivacyNote); setText('grCardT',L.grCardT);
+  setText('grCommentLbl',L.grCommentLbl); setText('grAmountLbl',L.grAmountLbl); setText('grAnonLbl',L.grAnonLbl);
+  setText('grSendLbl',L.grSendLbl);
+  if (typeof grFillNameRow==='function') grFillNameRow(); // 15.09.2026: «Покажется как:»/«Имя скрыто» — свой язык
+  // 15.09.2026: signIn/empty заполняются один раз в gratitudeSkyFill() (реальный запрос к серверу) —
+  // полный повторный вызов здесь на каждую смену языка был бы лишним сетевым запросом; текст
+  // обновляем на месте, только если сейчас реально виден (тот же приём, что у FORGE_STEP_TITLE).
+  const _grSignIn=$('grSignIn'); if(_grSignIn && !_grSignIn.classList.contains('hidden')) _grSignIn.textContent=L.gratitudeSignInFirst;
+  const _grEmpty=$('grEmpty'); if(_grEmpty && !_grEmpty.classList.contains('hidden')) _grEmpty.textContent=L.gratitudeEmptySky;
   // 15.09.2026: сам текст Хартии (#equalityScreen .charterBody) НЕ переводится язык-переключателем —
   // канонический документ существует только на русском (.knowledge/CHARTER.md), машинный перевод
   // юридически-ценностного текста рискует исказить смысл; заголовок экрана и кнопка меню — переведены.

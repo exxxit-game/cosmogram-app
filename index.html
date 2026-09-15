@@ -1315,6 +1315,71 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .soonWrap .soonIcon { font-size:38px; }
 .soonWrap .soonTitle { font-family:var(--font-disp); font-size:16px; color:var(--ink); font-weight:600; }
 .soonWrap .soonDesc { color:var(--muted); font-size:13px; max-width:280px; line-height:1.5; }
+/* 15.09.2026 «Небо благодарности»: реальный экран вместо заглушки «Скоро». Бэкенд
+   (gratitude_stars, cosmogram-sync: gratitude_sky/gratitude_star/gratitude_create_invoice/
+   gratitude_report) уже жил на сервере до этой правки — здесь только клиент. Стиль — тот же
+   стеклянный/золотой язык, что и у .chSign/.wVote/.forgeCard, ничего не изобретено заново. */
+.grLead{font-size:13px;color:var(--muted);line-height:1.5;padding:0 4px;margin-bottom:14px}
+.grSkyWrap{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);height:230px;margin-bottom:10px}
+.grSkyWrap canvas{display:block;width:100%;height:100%}
+.grHint{position:absolute;left:12px;bottom:10px;font-size:10.5px;color:var(--muted);
+  background:rgba(4,7,16,.55);padding:4px 9px;border-radius:999px;pointer-events:none}
+.grStarCount{position:absolute;right:12px;top:10px;font-size:11px;color:var(--gold-hi);font-weight:700;
+  background:rgba(4,7,16,.55);padding:4px 10px;border-radius:999px}
+.grEmpty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:0 30px;font-size:12px;color:var(--muted);line-height:1.5}
+.grBubble{position:absolute;max-width:78%;background:rgba(10,14,28,.96);border:1px solid var(--line-gold);
+  border-radius:12px;padding:9px 12px;font-size:11.5px;line-height:1.4;box-shadow:0 8px 20px rgba(0,0,0,.4);
+  transform:translate(-50%,-112%);pointer-events:none;opacity:0;transition:opacity .15s ease;
+  display:flex;align-items:flex-start;gap:8px;z-index:2}
+.grBubble.show{opacity:1;pointer-events:auto}
+.grBubble b{color:var(--gold-hi);display:block;margin-bottom:2px;font-size:12px}
+.grBubble span{color:#c6d0ec;word-break:break-word}
+.grBubbleTxt{flex:1;min-width:0}
+.grBubbleReport{flex:none;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.06);
+  border:1px solid var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.grBubbleReport.sent{color:var(--gold-hi);border-color:var(--line-gold)}
+.grBubbleReport svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2}
+.grPrivacy{display:flex;gap:8px;align-items:flex-start;font-size:10.5px;color:var(--muted);
+  line-height:1.4;margin:10px 0 20px;padding:0 2px}
+.grPrivacy svg{width:13px;height:13px;flex:none;margin-top:1px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.grCard{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:var(--r-card);
+  padding:18px 16px;margin-bottom:14px}
+.grCardT{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+  font-weight:700;margin:0 0 12px}
+.grNameRow{font-size:12px;color:#c6d0ec;margin-bottom:14px}
+.grNameRow b{color:var(--ink)}
+.grField{margin-bottom:12px}
+.grField:last-child{margin-bottom:0}
+.grFieldLbl{font-size:11px;color:var(--muted);margin-bottom:5px;display:block}
+.grInput{width:100%;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;color:var(--ink);font-family:var(--font-ui);font-size:13px}
+.grInput::placeholder{color:#5c6888}
+.grAmountRow{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);
+  border-radius:10px;padding:6px 8px}
+.grAmtBtn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--line);
+  color:var(--ink);font-size:18px;display:flex;align-items:center;justify-content:center;flex:none}
+.grAmtBtn:active{transform:scale(.94)}
+.grAmtVal{flex:1;text-align:center;font-size:19px;font-weight:700;color:var(--gold-hi);
+  display:flex;align-items:center;justify-content:center;gap:6px;font-variant-numeric:tabular-nums}
+.grAmtVal svg{width:16px;height:16px}
+.grAmtHint{font-size:10px;color:var(--muted);text-align:center;margin-top:6px}
+.grAnonRow{display:flex;align-items:center;gap:9px;margin-top:14px;cursor:pointer}
+.grAnonBox{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--line-gold);flex:none;
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03)}
+.grAnonBox svg{width:12px;height:12px;fill:none;stroke:var(--gold-hi);stroke-width:3;opacity:0}
+.grAnonRow.on .grAnonBox{background:rgba(240,192,64,.16);border-color:var(--gold-hi)}
+.grAnonRow.on .grAnonBox svg{opacity:1}
+.grAnonLbl{font-size:12px;color:#c6d0ec}
+.grSendBtn{width:100%;box-sizing:border-box;padding:13px;border-radius:999px;border:none;
+  background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#241a05;
+  font-family:var(--font-ui);font-weight:800;font-size:14px;letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.grSendBtn:disabled{opacity:.5}
+.grSendBtn svg{width:16px;height:16px}
+.grSignIn{font-size:12px;color:var(--muted);text-align:center;padding:16px 10px;
+  border:1px dashed var(--line);border-radius:var(--r-card)}
 /* 07.09.2026, владелец (общий проход по всей игре — тот же баг, что чинили в Конструкторе/
    Мастерской): .setGrp/.setPanel по умолчанию без горизонтального margin — там, где элемент
    прямой ребёнок .scrBody (align-items:center), это незаметно, тот сам центрирует. #achCtlGrp
@@ -2156,18 +2221,29 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .wVote{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;flex:none}
 .wVote .ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
-.wVote.voted{background:rgba(255,159,176,.22);border-color:rgba(255,159,176,.7);color:#ff9fb0;
+.wVote.voted{background:rgba(20,8,14,.62);border-color:rgba(255,159,176,.7);color:#ff9fb0; /* 15.09.2026 (аудит контраста): была светло-розовая заливка rgba(255,159,176,.22) — на ярких/солнечных карточках (высокое «Настроение» в Цвет-шаге) розовая иконка на розовой подложке проседала до 1.3:1 (WCAG требует ≥3:1). Тёмная розово-тонированная подложка — тот же приём, что уже держит .wVote в покое (rgba(6,10,20,.55)), просто тонирован в розовый, а не в синий: контраст на всём диапазоне «Настроения» теперь 5.1-9.7:1, розовый цвет и свечение никуда не делись. */
   box-shadow:0 0 14px rgba(255,120,150,.5)}
 .wVote.voted .ic{fill:currentColor;stroke:none}
 /* 13.09.2026: z-index:5 — выше .wInfoOverlay (z-index:4). Без этого открытая панель
    физически перекрывала кнопку (i), второй тап по ней не долетал, закрыть было нельзя
    (владелец поймал вживую: тап открыл, повторный тап в ту же точку не закрыл). */
+/* 15.09.2026, владелец: короткая правка этим же днём уводила Изменить в этот ряд, а звезду —
+   вниз под (i) (.wInfoStack) — не подошло, владелец прислал референс-скрин «Разминка» («такой
+   вариант правильный, нужно чтобы такой был у всех») — там звезда/лайк/инфо все в одном ряду,
+   Изменить внизу у Полёта. Разметка (forge.js) и align-items:center (все children снова
+   одинаковой высоты 26px, .wInfoStack не нужен) возвращены к этому виду. */
 .wTopRow{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;
   justify-content:flex-end;gap:6px}
 .wCorner{width:26px;height:26px;border-radius:50%;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .wCorner .ic{width:14px;height:14px;fill:currentColor}
+/* 15.09.2026: (i)/Полёт — та же поправка видимого размера, что у звезды чуть ниже (см. её
+   комментарий про замер getBBox() всех пяти значков карточки). Лайк (.wVote) и «Пожаловаться»/
+   «Скопировать палитру» (fav/report) не тронуты — их видимый размер уже был близко к цели. */
+[data-act="info"] .ic{width:11px;height:11px}
+[data-act="play"] .ic{width:13px;height:13px}
+[data-act="edit"] .ic{width:15px;height:15px}
 .wCornerDanger{color:#e0533d;border-color:rgba(224,83,61,.55)}
 .wCorner:disabled{opacity:.4;cursor:default}
 /* 12.09.2026: раньше .wPickStar был ВСЕГДА залит золотом безусловно — это было верно, пока
@@ -2176,15 +2252,25 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    реальных состояния: пусто/помечено, не одно. Контур по умолчанию, заливка — только
    .active (тот же приём, что .wPin.active/.wHide.active рядом). */
 .wPickStar{background:transparent;border-color:rgba(219,169,60,.5)}
-.wPickStar .ic{fill:none;stroke:#dba93c;stroke-width:1.6}
+/* 15.09.2026, владелец (живой скрин): «звезда больше размера, чем остальные», затем уточнил
+   правило шире — «у всех круглых иконок на этой карточке должен быть один размер на этой видимой
+   части». Измерено вживую (getBBox() пяти значков этой карточки + поправка на stroke-width у
+   обводных форм, не на глаз): видимая часть у всех разная — (i) 11.67px (самая крупная), Полёт
+   10.5px, звезда 10.15px, лайк 9.33px, Изменить 8.75px (самая мелкая) — размах 33%, не только
+   звезда. Каждому значку — свой размер .ic (геометрия path/circle не трогалась, только масштаб
+   бокса), чтобы видимая часть сошлась к одному значению у всех пяти (~9.2-9.8px). */
+.wPickStar .ic{width:13px;height:13px;fill:none;stroke:#dba93c;stroke-width:1.6}
 .wPickStar.active{background:#dba93c;border-color:#dba93c}
 .wPickStar.active .ic{fill:#2c1f08;stroke:none}
-/* 15.09.2026: Полёт/Изменить — тот же .wCorner 26px, что у остального ряда наверху (владелец:
-   «одного размера сделай»), столбиком в правом нижнем углу карточки, Полёт в самом углу,
-   Изменить над ним. Без подписи под значком (владелец) — только иконка, title остаётся для
-   подсказки при долгом нажатии/скринридера. wPlay залит золотом (--gold-hi) — единственное
-   действие ряда, что реально запускает полёт, не просто открывает панель/переключает лайк. */
-/* 15.09.2026: тот же z-index-баг, что у .wNameStack чуть выше — Полёт/Изменить тоже должны
+/* 15.09.2026: Полёт/Изменить — тот же .wCorner 26px, что у ряда наверху (владелец: «одного
+   размера сделай»), столбиком в правом нижнем углу карточки, Изменить над Полётом (.wPlay,
+   залит золотом — единственное действие, что реально запускает полёт, не просто открывает
+   панель/переключает лайк). Короткая правка этим же днём уводила Изменить наверх в .wTopRow —
+   не подошло владельцу (референс-скрин «Разминка»), возвращено сюда же. title у значков этого
+   ряда/Изменить — сперва по ошибке ушёл в "" при переезде на «Единую карточку», хотя комментарий
+   тут же обещал его оставить; поймано и возвращено (title=L.workshopEdit и т.п., не голая строка)
+   — подсказка при долгом нажатии/скринридер снова работает. */
+/* 15.09.2026: тот же z-index-баг, что у .wNameStack чуть выше — Полёт тоже должен
    прятаться под открытой .wInfoOverlay, не торчать поверх неё. */
 .wActionStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;gap:6px}
 .wPlay{background:rgba(240,192,64,.16);border-color:rgba(240,192,64,.6);color:var(--gold-hi)}
@@ -3076,9 +3162,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.304"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.304"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.304"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.306"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.306"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.306"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3600,17 +3686,52 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div></div>
 </div>
 
-<!-- «Благодарность» — заглушка «Скоро»: реальный Stars-донат (Supabase-таблица, Edge Function,
-     Bot API webhook pre_checkout/successful_payment, суммы пресетов) владелец явно отложил
-     отдельной задачей (15.09.2026, "сначала кнопки + заглушка"), не додумано здесь. -->
+<!-- 15.09.2026 «Небо благодарности»: заглушка «Скоро» заменена на реальный экран. Бэкенд
+     (gratitude_stars/gratitude_reports, cosmogram-sync) уже жил на сервере до этой правки —
+     макет macet-15-09-nebo-blagodarnosti.html, одобрено. -->
 <div id="gratitudeScreen" class="overlay hidden">
   <button class="menuBack" id="gratitudeBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="gratitudeTitle">Благодарность</div>
-  <div class="scrBody"><div class="soonWrap">
-    <div class="soonIcon">✨</div>
-    <div class="soonTitle" id="gratitudeSoonTitle">Скоро</div>
-    <div class="soonDesc" id="gratitudeSoonDesc">Здесь появится «Небо благодарности» — каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</div>
-  </div></div>
+  <div class="scrBody">
+    <p class="grLead" id="grLead">Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</p>
+    <div class="grSkyWrap">
+      <canvas id="grSky"></canvas>
+      <div class="grStarCount hidden" id="grStarCount"></div>
+      <div class="grHint hidden" id="grHint">коснись звезды</div>
+      <div class="grEmpty hidden" id="grEmpty"></div>
+      <div class="grBubble" id="grBubble">
+        <div class="grBubbleTxt"><b id="grBubbleName"></b><span id="grBubbleComment"></span></div>
+        <button class="grBubbleReport" id="grBubbleReport" type="button" aria-label="Пожаловаться"><svg viewBox="0 0 24 24"><path d="M5 21V4h13l-3 5 3 5H5"/></svg></button>
+      </div>
+    </div>
+    <div class="grPrivacy">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span id="grPrivacyNote">Сумму твоей благодарности видит только владелец игры. Имя и комментарий увидят все, если не включишь «анонимно».</span>
+    </div>
+
+    <div class="grCard" id="grForm">
+      <p class="grCardT" id="grCardT">Твоя звезда</p>
+      <div class="grNameRow" id="grNameRow"></div>
+      <div class="grField">
+        <span class="grFieldLbl" id="grCommentLbl">Комментарий (необязательно)</span>
+        <input class="grInput" id="grCommentInput" maxlength="300" placeholder="">
+      </div>
+      <div class="grField">
+        <span class="grFieldLbl" id="grAmountLbl">Сколько Stars — сам решаешь</span>
+        <div class="grAmountRow">
+          <button class="grAmtBtn" id="grAmtDown" type="button">–</button>
+          <div class="grAmtVal"><svg viewBox="0 0 24 24" fill="#f0c040" stroke="none"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg><span id="grAmtNum">50</span></div>
+          <button class="grAmtBtn" id="grAmtUp" type="button">+</button>
+        </div>
+      </div>
+      <div class="grAnonRow on" id="grAnonRow">
+        <div class="grAnonBox"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
+        <span class="grAnonLbl" id="grAnonLbl">Анонимно — имя не покажется другим</span>
+      </div>
+    </div>
+    <button class="grSendBtn" id="grSendBtn" type="button"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg><span id="grSendLbl">Отправить через Stars</span></button>
+    <div class="grSignIn hidden" id="grSignIn"></div>
+  </div>
 </div>
 
 <!-- 15.09.2026: #modesScreen («Турниры», список из 7 кнопок запуска) удалён целиком — карусель
@@ -3828,7 +3949,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <!-- 11.09.2026 (владелец, макет tuman-garmoniya-nastroenie-11-09-2026.html, одобрено):
            переехала сюда с места между Цвет неба/Второй цвет — стояла особняком «промо»-блоком
            посреди ползунков, теперь последний элемент панели, под Туман. -->
-      <button class="labBtn" id="forgeHarmonyBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>Подобрать гармонию</button>
+      <button class="labBtn" id="forgeHarmonyBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg><span id="forgeHarmonyBtnLbl">Подобрать гармонию</span></button>
     </div>
     <!-- 11.09.2026 «Лаборатория цвета» (макет laboratoriya-tsveta-11-09-2026.html, одобрено):
          круг — 12 секторов (круг Иттена), белая точка — текущий «Цвет неба» (двигается пальцем
@@ -3836,7 +3957,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          реальные именованные схемы из .knowledge/COLOR-THEORY.md, логика в forge.js. -->
     <div id="forgeHarmonyModal">
       <div id="forgeHarmonyCard">
-        <div class="hHead"><span class="hTitle">Гармония цвета</span><button id="forgeHarmonyClose" type="button" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"></path></svg></button></div>
+        <div class="hHead"><span class="hTitle" id="forgeHarmonyTitle">Гармония цвета</span><button id="forgeHarmonyClose" type="button" aria-label="Закрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"></path></svg></button></div>
         <div id="forgeHarmonyWheelWrap">
           <div id="forgeHarmonyWheel">
             <div class="hMarker hMarkerA" id="forgeHarmonyMarkA"></div>
@@ -3869,9 +3990,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            .setGrp.spoiler, что уже используется в Настройках/Расстановке («Список точек»),
            открыт/закрыт через forgeHardSpoilerGrp в forge.js. Экран «Сохранить» без него
            был длинным на весь экран, свёрнутый — помещается целиком. -->
-      <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT">Точечная настройка</span></div>
+      <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT" id="forgeHardSpoilerGrpT">Точечная настройка</span></div>
       <div id="forgeHardSpoilerPanel" class="hidden">
-        <div class="forgeGroupHead">Темп неба</div>
+        <div class="forgeGroupHead" id="forgeTempoLbl">Темп неба</div>
         <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
         <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
         <!-- 06.09.2026 «Солнечный ветер»: сила боковых порывов, 0 = выкл (умолчание). Тот же ряд,
@@ -3879,7 +4000,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
              macet-stopkadr-bokovik.html, одобрено. -->
         <div class="forgeRow"><span class="forgeLbl" id="forgeWindLbl">Солнечный ветер</span><input type="range" id="forgeWind" min="0" max="100" step="5" value="0"><b class="forgeVal" id="forgeWindV">0</b></div>
         <div class="hint" id="forgeWindHint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
-        <div class="forgeGroupHead">Старт</div>
+        <div class="forgeGroupHead" id="forgeStartLbl">Старт</div>
         <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
         <div class="forgeSeg" id="forgeLivesSeg"></div>
         <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
@@ -4160,26 +4281,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.304" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.304"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.304"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.304"></script>
-<script defer src="js/game.js?v=1.478.304" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.304"></script>
-<script defer src="js/sync.js?v=1.478.304"></script>
-<script defer src="js/render.js?v=1.478.304"></script>
-<script defer src="js/planetarium.js?v=1.478.304"></script>
-<script defer src="js/goldstar.js?v=1.478.304"></script>
-<script defer src="js/finish.js?v=1.478.304"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.304"></script>
-<script defer src="js/gyro.js?v=1.478.304"></script>
-<script defer src="js/forge.js?v=1.478.304"></script>
-<script defer src="js/partitura.js?v=1.478.304"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.304"></script>
-<script defer src="js/card.js?v=1.478.304"></script>
-<script defer src="js/star.js?v=1.478.304"></script>
-<script defer src="js/cinema.js?v=1.478.304"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.304"></script>
+<script defer src="js/core.js?v=1.478.306" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.306"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.306"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.306"></script>
+<script defer src="js/game.js?v=1.478.306" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.306"></script>
+<script defer src="js/sync.js?v=1.478.306"></script>
+<script defer src="js/render.js?v=1.478.306"></script>
+<script defer src="js/planetarium.js?v=1.478.306"></script>
+<script defer src="js/goldstar.js?v=1.478.306"></script>
+<script defer src="js/finish.js?v=1.478.306"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.306"></script>
+<script defer src="js/gyro.js?v=1.478.306"></script>
+<script defer src="js/forge.js?v=1.478.306"></script>
+<script defer src="js/partitura.js?v=1.478.306"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.306"></script>
+<script defer src="js/card.js?v=1.478.306"></script>
+<script defer src="js/star.js?v=1.478.306"></script>
+<script defer src="js/cinema.js?v=1.478.306"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.306"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

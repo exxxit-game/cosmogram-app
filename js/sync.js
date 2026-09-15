@@ -391,6 +391,36 @@ function syncPremiumOwned(){
     return r.json().catch(()=>null);
   }).catch(()=>null);
 }
+/* 15.09.2026 «Небо благодарности»: бэкенд (gratitude_stars, cosmogram-sync) уже жил на сервере
+   до этой правки — здесь только клиентские обёртки, тот же приём, что у syncBuySkinInvoice/
+   syncPremiumOwned выше. gratitude_sky/gratitude_star не требуют identity на сервере (смотрят
+   и гости), но syncAuth() шлём всегда — не мешает, унифицирует вызов. */
+function syncGratitudeSky(){
+  return syncPost(Object.assign({action:'gratitude_sky'}, syncAuth()||{})).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+function syncGratitudeStar(starId){
+  return syncPost(Object.assign({action:'gratitude_star', starId:starId}, syncAuth()||{})).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+function syncGratitudeCreateInvoice(amount, comment, isAnonymous){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncPost(Object.assign({action:'gratitude_create_invoice', amount:amount, comment:comment, isAnonymous:isAnonymous}, syncAuth())).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
+function syncGratitudeReport(starId){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return syncPost(Object.assign({action:'gratitude_report', starId:starId}, syncAuth())).then(r=>{
+    if(!r.ok) return null;
+    return r.json().catch(()=>null);
+  }).catch(()=>null);
+}
 
 /* ---------- Призрак из топа: загрузка/скачивание треков ----------
    Сервер не даст загрузить трек сильнее верифицированного рекорда — подделка бессмысленна. */
