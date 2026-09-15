@@ -514,11 +514,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   cursor:pointer;z-index:2;box-sizing:border-box}
 .heroCard .recordBadge span{font-variant-numeric:tabular-nums}
 .heroCard .recordBadge.hidden{display:none}
-/* 15.09.2026: и true-center (top:50%), и верх-по-центру (top:40px;left:50%) реально накладывались
-   на 2-строчное описание — проверено зумом на живом экране, не только по rect. .modeDesc держит
-   max-width:82% — правые ~18% карточки СВОБОДНЫ от текста на любой карточке (там же и heroIcon
-   сверху) — единственное гарантированно пустое место, туда и ставим, колонной под иконкой. */
-.heroCard .playHint{position:absolute;top:41px;right:9px;
+/* 15.09.2026, второй заход «Единая карточка» (владелец, живой скрин с обводкой): самолётик
+   переезжает в правый нижний угол — тот же угол, что теперь «Полёт» на карточке Мастерской и
+   в превью «Создать» (index.html/js/forge.js), одна семья, один и тот же угол на всех трёх
+   местах. Было top:41px (под рекорд-бейджем, решение того же дня чуть раньше) — правка поверх
+   неё же. */
+.heroCard .playHint{position:absolute;bottom:9px;right:9px;
   width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;
   pointer-events:none;opacity:.9;z-index:1}
@@ -537,7 +538,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    мельче порога 24×24. Увеличена вертикальным padding, не шрифтом — ширина карточки узкая,
    крупнее буквы снова упрутся в перенос строк (уже была эта проблема с Caravan×3 тирами). */
 .heroCard .forgeSegBtn{padding:6px 8px;font-size:10px;border-radius:8px;min-height:24px;box-sizing:border-box}
-.heroCard .relayMineBtn{position:absolute;right:11px;bottom:8px;margin:0;padding:6px 8px;font-size:10px;min-height:24px;box-sizing:border-box}
+/* 15.09.2026: было bottom:8px — тот же угол, куда только что переехал самолётик (.playHint
+   выше), реально столкнулись бы на карточке Эстафеты. Самолётик занял истинный угол, «Статус»
+   поднят на его старое место (bottom:41px, было у самолётика ДО сегодняшней правки) — тот же
+   принцип, что у остального решения: один общий угол на «полетели», остальное — выше него. */
+.heroCard .relayMineBtn{position:absolute;right:9px;bottom:41px;margin:0;padding:6px 8px;font-size:10px;min-height:24px;box-sizing:border-box}
 .heroDots{display:flex;justify-content:center;gap:6px;padding:8px 0 2px;pointer-events:none}
 .heroDot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
 .heroDot.on{background:var(--gold-hi);width:16px;border-radius:3px;transition:width .2s}
@@ -1839,7 +1844,15 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   Но #forgeSubTabs (Расстановка/Небо/Сложность) тем же классом лежит на уровень глубже, .scrBody
   до него не достаёт — 0px слева/23px справа, замерено вживую. Явный margin:auto работает
   одинаково в обоих случаях, не только там, где повезло с глубиной вложенности. */
-#forgeTabPlay,#forgeTabCreate{width:100%} /* 09.09.2026, владелец (живой скрин с телефона):
+/* 15.09.2026 (владелец, живой скрин: «карточка на весь экран, нужен отступ»): раньше карточка
+   Мастерской (.wRow) касалась экрана лишь визуально скруглением угла — сама картинка неба
+   внутри неё (.wBanner) вылезала за пределы padding вплоть до той же нулевой границы через
+   отрицательный margin. Небо теперь занимает карточку целиком (сегодняшняя правка «Единая
+   карточка»), и без бокового отступа у самого контейнера картинка неба буквально прижата
+   к краю экрана — то же самое, что уже даёт .forgeStepPanel (padding:0 16px) шагам «Создать»,
+   только Играть эту вкладку жила без него, потому что раньше отступ карточки маскировал беду. */
+#forgeTabPlay{width:100%;padding:0 16px}
+#forgeTabCreate{width:100%} /* 09.09.2026, владелец (живой скрин с телефона):
   «Сохранить» обрезалось, панель «Карта» не на весь экран — настоящая причина глубже прежнего
   фикса ниже (#forgeSubTabs со скроллом): .scrBody{display:flex;align-items:center} не растягивает
   детей на всю ширину при center, а сжимает их к содержимому. #forgeTabPlay/#forgeTabCreate —
@@ -1860,8 +1873,17 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgePreset:active{transform:scale(.95)}
 /* ---- v1.85.0 «Сначала небо»: живое превью, ручка «Жар», спойлер; v1.86.0 — вторая сборка сцены ---- */
 #forgePreviewWrap{position:relative;margin-bottom:2px}
-#forgePreview{width:100%;height:75px;border-radius:14px;border:1px solid rgba(140,170,255,.18);
-  display:block;background:#0b1626} /* живое мини-небо конструктора; 10.09.2026 (владелец): вдвое ниже, тот же повод, что у .track — не интерактивно, чисто место на экране */
+/* 15.09.2026 «Единая карточка» (владелец): было 75px/радиус 14px — теперь та же единая
+   высота 130px и то же скругление var(--r-card,16px), что у карточки Мастерской и карточки
+   режима. Три места на трёх разных экранах читаются одной семьёй, не тремя случайными
+   размерами (владелец: «размер сильно большой» — было 168px в первом заходе, ужато до 130). */
+#forgePreview{width:100%;height:130px;border-radius:var(--r-card);border:1px solid rgba(140,170,255,.18);
+  display:block;background:#0b1626}
+/* имя по центру — свободная зона между верхним рядом кнопок (Перемешать/Сохранить, top:10px,
+   34px) и рядом стикеров внизу; плейсхолдер «Дайте имя», пока forgeName пуст (forgeSkyPaint). */
+#forgePreviewName{position:absolute;top:50%;left:10px;right:10px;transform:translateY(-50%);
+  font-size:13px;color:var(--muted);text-align:center;pointer-events:none;z-index:2}
+#forgePreviewStickers{position:absolute;left:10px;bottom:10px;z-index:2}
 /* 10.09.2026, владелец (макет forge-color-preview-fav-10-09-2026.html, одобрено): «Перемешать»
    и «Сохранить в избранное» — прямо на окне предпросмотра, тот же стеклянный язык, что уже
    одобрен у #angarPvZoomClose/#angarPvZoomShare (та же сессия, «явление крупно»). */
@@ -1939,121 +1961,83 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    редкие действия (Пожаловаться/Закрепить/Скрыть) — за кнопкой «⋯», не видны, пока не
    нужны. «Играть» переименован в «В полёт» и больше не занимает всю ширину — стоит парой
    с «Изменить», тем же стилем (.btn.ghost), «пусть с двух сторон красиво будет». */
-.wRow{position:relative;display:flex;flex-direction:column;padding:10px 11px;border:1px solid var(--line);
-  border-radius:var(--r-card);background:rgba(22,38,56,.45)} /* position:relative — 12.09.2026, нужна как
-  точка отсчёта для .wPickStar, см. ниже у .wCornerStack */
-/* 11.09.2026 «Меньше места» (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html,
-   одобрено — каждое число ниже измерено вживую двоичным поиском/getBoundingClientRect на
-   настоящем DOM, включая худший случай (8 значков препятствий + самое длинное имя из
-   возможных), не подобрано на глаз, см. [[feedback_izmeryat_ne_gadat_geometriya]]):
-   146px → 100px — настоящий минимум, при котором верхний ряд (имя+флаги) и нижний блок
-   (запуски/автор/значки) ещё не накладываются, с 2px запаса. Картинка ещё и «вылезает» за
-   отступ самой карточки (11px слева/справа, тот же, что у .wRow) — владелец: «окно над
-   кнопками не на всю ширину экрана», банер и кнопки и так были одной ширины МЕЖДУ СОБОЙ
-   (измерено), просто отступ карточки давил на всё сразу; теперь давит только на текст/кнопки,
-   картинка стоит вплотную к истинному краю карточки. Верхние углы скругления — те же 16px,
-   что у самой карточки (var(--r-card)), раз теперь банер сидит на её же границе. */
-.wBanner{position:relative;height:100px;border-radius:16px 16px 12px 12px;overflow:hidden;
-  margin:-11px -11px 8px -11px;width:calc(100% + 22px)} /* 11.09.2026, владелец (живой скрин,
-  красный кружок, объяснял больше часа): «подними окно с небом чуть выше, закрой пустую
-  область» — .wRow даёт padding:10px 11px для своего текста, .wBanner уже вылезал за боковые
-  отступы (margin:0 -11px), но не за верхний — над картинкой висела пустая полоса высотой
-  ~11px (padding+граница), видно на каждой карточке разом. margin-top:-11px сажает картинку
-  на самый верх карточки, вплотную к её собственной рамке — верхний радиус 16px (var(--r-card))
-  оставлен как был: теперь банер буквально лежит в этом верхнем углу самой карточки, поэтому
-  радиус должен буквально совпадать с её собственным, а не быть отдельным приближением.
-  Страж: guardWorkshopBannerFlushToRowTop (tests/guard.mjs, №172). */
+/* 15.09.2026 «Единая карточка» (владелец, макет edinaya-kartochka-standart-15-09-2026.html,
+   одобрено после нескольких заходов): небо теперь занимает карточку целиком — раньше .wRow
+   давал padding под текст/кнопки НИЖЕ картинки (отдельная тёмная полоса), теперь padding:0,
+   вся карточка — картинка неба, имя/стикеры/значки-действия лежат прямо на ней (тот же
+   приём, что раньше был только у (i)/звезды/сердца). Высота 130px — та же, что у карточки
+   режима (.heroCard) и у превью «Создать» (#forgePreview) — единый размер на все три места,
+   владелец прямо попросил не разные числа. overflow:hidden держит скругление угла на banner. */
+.wRow{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);
+  border-radius:var(--r-card);background:rgba(22,38,56,.45);overflow:hidden}
+.wBanner{position:relative;height:130px;border-radius:inherit}
 .wBanner canvas{width:100%;height:100%;display:block}
 .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
   background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
-.wBannerText{position:absolute;left:10px;right:10px;bottom:7px;pointer-events:none}
-/* 12.09.2026: «Сыграно»/«Создал» (.wPlaysHint/.wAuthorHint) убраны из этого места целиком —
-   переехали одной строкой в .wInfoOverlay (владелец: ни то ни другое не помогает решить
-   «лететь или нет», см. .knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md). Теперь тут только
-   значки препятствий (.wStickerRow) — настоящий набор Партитуры (js/partitura.js
-   PT_ICON_SVG/PT_KIND_COLOR), не текстовые таблетки. */
-/* 11.09.2026: было — отдельная строка внизу картинки (margin-top:5px). Теперь живёт внутри
-   .wTopRow, в один ряд с «Пожаловаться»/«Закрепить»/«Скрыть» — flex:1 забирает всё свободное
-   место строки, min-width:0 даёт обрезке-многоточию отработать (без него flex-элемент не
-   сжимается меньше содержимого, и text-overflow:ellipsis не срабатывает). */
+/* 15.09.2026 «Единая карточка», продолжение — звезда/лайк/инфо теперь ОДИН ряд наверху
+   (было: инфо+пожаловаться в .wTopRow, звезда+лайк отдельным столбиком в .wCornerStack —
+   владелец явно объединил в один ряд, звезда→лайк→инфо слева направо, инфо на своём
+   привычном месте в правом углу). Имя переехало вниз, прямо над значками препятствий —
+   оба в левом нижнем углу, одной колонкой (.wNameStack). Полёт/Изменить — тоже переехали
+   на карточку (были отдельным рядом больших кнопок под ней), правый нижний угол, столбиком,
+   тем же кружком .wCorner 26px, что и остальные значки карточки — владелец явно попросил
+   ОДИН размер на все значки карточки, не два разных (было 26px наверху / 34px у Полёт-
+   Изменить в одном из заходов макета). */
+/* 15.09.2026: правая граница колонки была не задана (только left:10px) — flex-контейнер
+   без width сжимался к содержимому, .wName обрезался почти вслепую (max-width:calc(100%-10px)
+   от НЕОПРЕДЕЛЁННОЙ ширины — циклическая зависимость), «Пульсар» рендерился как «Пуль…».
+   Проверено вживую (реальный запуск через http-сервер, не file://). right:44px оставляет
+   место под .wActionStack (26px значок + 8px отступ от края), имя больше не заезжает под
+   Полёт/Изменить при длинных названиях. */
+/* 15.09.2026 (владелец, живой скрин: «иконки на имя заходят» — у «Сафари с искателями»):
+   z-index:5 здесь был ошибкой — тот же уровень, что у .wTopRow (нужен ЕМУ, чтобы (i) не тонула
+   под своей открытой панелью, страж 181). У .wNameStack он был не нужен и держал имя+стикеры
+   НАД .wInfoOverlay (z-index:4) даже когда панель открыта — overlay должен закрывать картинку
+   целиком, включая имя/стикеры под собой, не проступать сквозь них. Без z-index (auto) элемент
+   встаёт на уровень 0 относительно .wInfoOverlay — панель снова честно перекрывает низ карточки. */
+.wNameStack{position:absolute;left:10px;right:44px;bottom:10px;display:flex;flex-direction:column;gap:6px}
 .wName{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;flex:1;min-width:0;margin:0}
-.wStickerRow{display:flex;gap:5px;margin-top:6px}
+  text-overflow:ellipsis;margin:0}
+.wStickerRow{display:flex;gap:5px}
 .wSticker{width:22px;height:22px;border-radius:7px;background:rgba(6,10,20,.55);
   display:flex;align-items:center;justify-content:center;flex:none}
 .wSticker svg{width:14px;height:14px}
 .wStickerMore{color:var(--muted)!important;font-size:10px;font-weight:700}
-/* 11.09.2026: было — крупная плашка в левом верхнем углу (padding 6px 11px, 13px). Теперь
-   живёт в .wCornerStack (правый нижний угол, столбиком) — сжата, чтобы столбик из двух
-   кружков не был выше, чем нужно (измерено: с этим размером зазор до значков препятствий
-   при 8 штуках — 114px, с большим запасом). */
-.wVote{display:flex;align-items:center;gap:3px;
-  padding:4px 8px;border-radius:999px;background:rgba(6,10,20,.55);
-  border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;font-size:11px;font-weight:700}
+.wVote{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;flex:none}
 .wVote .ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
 .wVote.voted{background:rgba(255,159,176,.22);border-color:rgba(255,159,176,.7);color:#ff9fb0;
   box-shadow:0 0 14px rgba(255,120,150,.5)}
 .wVote.voted .ic{fill:currentColor;stroke:none}
-/* 08.09.2026 (владелец, живой макет, много заходов): «Пожаловаться» — владелец явно
-   отменил прятать её за «⋯» («без спойлеров») — открытый значок в углу, тем же кружком-
-   бейджем, что «⋯» само. .wCornerRow держит один или два таких кружка рядом (гость видит
-   только жалобу; модератор — «⋯» под Закрепить/Скрыть; на СВОЁМ небе жалобы нет вообще —
-   см. myId/author_id в forge.js).
-   11.09.2026: было — сам absolute-позиционированный (top:8px;right:8px). Теперь живёт
-   внутри .wTopRow (та сама absolute), здесь только flex:none, чтобы не сжимался рядом с
-   именем. */
-.wCornerRow{display:flex;gap:6px;flex:none}
-/* 11.09.2026: новый общий верхний ряд — имя (растёт) слева, значки-кружки (Пожаловаться/
-   Закрепить/Скрыть) справа. Раньше имя стояло отдельной строкой внизу картинки — теперь
-   освобождает эту строку целиком, а тут делит место со значками, которые и так уже
-   резервировали верхнюю полосу картинки под себя. */
 /* 13.09.2026: z-index:5 — выше .wInfoOverlay (z-index:4). Без этого открытая панель
    физически перекрывала кнопку (i), второй тап по ней не долетал, закрыть было нельзя
    (владелец поймал вживую: тап открыл, повторный тап в ту же точку не закрыл). */
 .wTopRow{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;
-  justify-content:space-between;gap:6px}
+  justify-content:flex-end;gap:6px}
 .wCorner{width:26px;height:26px;border-radius:50%;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .wCorner .ic{width:14px;height:14px;fill:currentColor}
-/* 13.09.2026: восстановлено вместе с иконкой «Пожаловаться» внутри (i) — точная строка,
-   что стояла на .wCorner-версии этой же кнопки до 12.09.2026 (git 02a1cb9), удалена тогда
-   вместе с переездом на текстовую кнопку. */
 .wCornerDanger{color:#e0533d;border-color:rgba(224,83,61,.55)}
 .wCorner:disabled{opacity:.4;cursor:default}
-/* 11.09.2026 (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html, одобрено):
-   было — «цвет»(fav)+«лайк»(vote) один ряд слева сверху (.wLeftRow, тот же приём, что у
-   .wCornerRow справа). Владелец, третий заход: «имя в один ряд с пожаловаться, цвет+лайк —
-   в правый нижний угол». Первая проба (обычный ряд в углу) реально накладывалась на значки
-   препятствий при 8 штуках — поймано вживую, не на глаз. Столбик (не ряд) + свой кружок
-   .wCornerStack .wCorner помельче (22px вместо 26px) убирает это без остатка. Порядок —
-   цвет сверху, лайк снизу (владелец, финальная правка). */
-.wCornerStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;
-  align-items:center;gap:4px}
-.wCornerStack .wCorner{width:22px;height:22px}
-/* 12.09.2026, владелец, три захода подряд, каждый раз живой замер после его слова —
-   не собственная догадка между ними:
-   1) звезда рядом с сердцем внутри .wCornerStack поверх уже занятого — налезла на
-      «Пожаловаться» (17.6px наложения, внутри банера 84 из 84px уже заняты);
-   2) отдельным узлом .wRow с отрицательным top — держалась на честном зазоре, но у ПЕРВОЙ
-      карточки списка (без соседа над собой) вылезала на 23px выше самого списка карточек —
-      владелец поймал по живому скрину, не выдумка;
-   3) рядом с (i) внутри .wCornerRow — сузило бы место для названия при длинном имени,
-      владелец категорически запретил именно этот вариант.
-   Настоящее решение: обычный .wCornerStack .wCorner на месте «В избранное» (та кнопка
-   переехала в overlay, оставив место) — рядовой участник flex-столбика, без
-   position:absolute и без отрицательных отступов, поэтому не может вылезти за границы
-   карточки ни при каком порядке карточек в списке. */
-/* 12.09.2026 (второй заход): раньше .wPickStar был ВСЕГДА залит золотом безусловно — это
-   было верно, пока значок появлялся только у уже помеченных треков (видимость решал .hidden).
-   Теперь владельцу звезда видна и на непомеченных треках (чтобы было чем нажать) — нужны два
-   реальных состояния: пусто/помечено, не одно. Контур по умолчанию, заливка — только .active
-   (тот же приём, что .wPin.active/.wHide.active рядом). */
-.wCornerStack .wPickStar{background:transparent;border-color:rgba(219,169,60,.5)}
-.wCornerStack .wPickStar .ic{fill:none;stroke:#dba93c;stroke-width:1.6}
-.wCornerStack .wPickStar.active{background:#dba93c;border-color:#dba93c}
-.wCornerStack .wPickStar.active .ic{fill:#2c1f08;stroke:none}
-.wCornerStack .wCorner .ic{width:12px;height:12px}
+/* 12.09.2026: раньше .wPickStar был ВСЕГДА залит золотом безусловно — это было верно, пока
+   значок появлялся только у уже помеченных треков (видимость решал .hidden). Теперь
+   владельцу звезда видна и на непомеченных треках (чтобы было чем нажать) — нужны два
+   реальных состояния: пусто/помечено, не одно. Контур по умолчанию, заливка — только
+   .active (тот же приём, что .wPin.active/.wHide.active рядом). */
+.wPickStar{background:transparent;border-color:rgba(219,169,60,.5)}
+.wPickStar .ic{fill:none;stroke:#dba93c;stroke-width:1.6}
+.wPickStar.active{background:#dba93c;border-color:#dba93c}
+.wPickStar.active .ic{fill:#2c1f08;stroke:none}
+/* 15.09.2026: Полёт/Изменить — тот же .wCorner 26px, что у остального ряда наверху (владелец:
+   «одного размера сделай»), столбиком в правом нижнем углу карточки, Полёт в самом углу,
+   Изменить над ним. Без подписи под значком (владелец) — только иконка, title остаётся для
+   подсказки при долгом нажатии/скринридера. wPlay залит золотом (--gold-hi) — единственное
+   действие ряда, что реально запускает полёт, не просто открывает панель/переключает лайк. */
+/* 15.09.2026: тот же z-index-баг, что у .wNameStack чуть выше — Полёт/Изменить тоже должны
+   прятаться под открытой .wInfoOverlay, не торчать поверх неё. */
+.wActionStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;gap:6px}
+.wPlay{background:rgba(240,192,64,.16);border-color:rgba(240,192,64,.6);color:var(--gold-hi)}
 /* 12.09.2026, владелец категорически: панель «Подробнее» не должна раздвигать карточку —
    экономия места была целью всего захода (карточка сжималась 220px→162px→151px несколькими
    заходами раньше). overlay лежит НАД самой картинкой (position:absolute;inset:0 внутри
@@ -2062,7 +2046,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    что закрыто, ни одним пикселем не отличается. */
 .wInfoOverlay{position:absolute;inset:0;z-index:4;display:none;flex-direction:column;
   justify-content:center;gap:8px;padding:10px;border-radius:inherit;
-  background:linear-gradient(180deg, rgba(6,10,20,.5) 0%, rgba(6,10,20,.85) 55%, rgba(6,10,20,.93) 100%)}
+  background:linear-gradient(180deg, rgba(6,10,20,.94) 0%, rgba(6,10,20,1) 30%, rgba(6,10,20,1) 100%)}
 .wInfoOverlay.open{display:flex}
 .wInfoOverlay .wInfoLine{color:#eaf2ff;font-size:12px;text-align:center;font-weight:600;
   text-shadow:0 1px 3px rgba(0,0,0,.6)}
@@ -2175,7 +2159,16 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeStepDot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:.2s}
 .forgeStepDot.done{background:var(--gold);box-shadow:0 0 8px rgba(201,164,92,.7);cursor:pointer}
 .forgeStepDot.cur{background:var(--gold-hi);width:20px;border-radius:4px;box-shadow:0 0 10px rgba(240,192,64,.6)}
-.forgeStepPanel{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 16px}
+/* 15.09.2026 (владелец, живой скрин с телефона: «окошко выходит за экран», разобрано в чате —
+   шаг «Карта» тянулся flex:1 до самой кнопки «Подтвердить», хотя настоящего содержимого
+   (лента+ползунок+палитра препятствий) там на треть экрана — между ними висела пустая тёмная
+   пустота во весь остаток высоты). flex:0 1 auto — панель больше НЕ растягивается искусственно
+   заполнять весь остаток экрана, когда содержимого меньше; если содержимого БОЛЬШЕ доступной
+   высоты (шаг «Цвет» на узком экране) — shrink:1+overflow-y:auto по-прежнему даёт прокрутку,
+   flex-grow тут был не единственной защитой от переполнения, только лишним растяжением при
+   недогрузе. Кнопка теперь стоит сразу после настоящего содержимого, не в конце искусственной
+   пустоты. */
+.forgeStepPanel{flex:0 1 auto;min-height:0;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 16px}
 #ptPanel,#forgeSkyPanel,#forgePanelHard{max-width:560px} /* тот же потолок, что у .forgeTabs/#ptGrp (min(94%,560px)) — панель шага теперь сама отвечает за узкий/широкий экран, не только .scrBody вокруг неё */
 #forgeStepConfirmWrap{flex:none;display:flex;justify-content:center;padding:12px 16px calc(14px + var(--sab))}
 #forgeStepConfirmBtn{font-family:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;
@@ -2938,9 +2931,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.295"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.295"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.295"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.296"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.296"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.296"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3637,8 +3630,17 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            «Перемешать» (id не менял — та же ptRandomSky() в partitura.js, просто переехала
            визуально) и новая «Сохранить в избранное» — обе поверх превью, тем же стеклянным
            языком, что уже одобрен у #angarPvZoomClose/#angarPvZoomShare в «явлении крупно». -->
+      <!-- 15.09.2026 «Единая карточка» (владелец, макет edinaya-kartochka-standart-15-09-2026.html,
+           одобрено): превью «Создать» приведено к тому же виду, что карточка Мастерской —
+           имя по центру (плейсхолдер «Дайте имя», пока не задано), значки-стикеры уже
+           расставленных препятствий внизу слева, тем же приёмом, что уже (i)/звезда/сердце
+           на карточке Мастерской. Оба узла заполняет forgeSkyPaint() в forge.js — читает
+           #forgeName.value и текущий forgeCfg.e (та же битовая маска состава, что уже красит
+           ленту), не отдельная логика. -->
       <div id="forgePreviewWrap">
         <canvas id="forgePreview"></canvas>
+        <div id="forgePreviewName"></div>
+        <div id="forgePreviewStickers" class="wStickerRow"></div>
         <button class="pvBtn" id="ptRandomSkyBtn" type="button" aria-label="Перемешать"><svg class="ic" aria-hidden="true"><use href="#i-shuffle"></use></svg></button>
         <!-- значок — тот же #i-color-fan, что уже значит «в избранное» у карточек Мастерской
              (index.html/forge.js, 09.09.2026), не новый рисунок под то же самое действие. -->
@@ -4009,26 +4011,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.295" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.295"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.295"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.295"></script>
-<script defer src="js/game.js?v=1.478.295" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.295"></script>
-<script defer src="js/sync.js?v=1.478.295"></script>
-<script defer src="js/render.js?v=1.478.295"></script>
-<script defer src="js/planetarium.js?v=1.478.295"></script>
-<script defer src="js/goldstar.js?v=1.478.295"></script>
-<script defer src="js/finish.js?v=1.478.295"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.295"></script>
-<script defer src="js/gyro.js?v=1.478.295"></script>
-<script defer src="js/forge.js?v=1.478.295"></script>
-<script defer src="js/partitura.js?v=1.478.295"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.295"></script>
-<script defer src="js/card.js?v=1.478.295"></script>
-<script defer src="js/star.js?v=1.478.295"></script>
-<script defer src="js/cinema.js?v=1.478.295"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.295"></script>
+<script defer src="js/core.js?v=1.478.296" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.296"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.296"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.296"></script>
+<script defer src="js/game.js?v=1.478.296" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.296"></script>
+<script defer src="js/sync.js?v=1.478.296"></script>
+<script defer src="js/render.js?v=1.478.296"></script>
+<script defer src="js/planetarium.js?v=1.478.296"></script>
+<script defer src="js/goldstar.js?v=1.478.296"></script>
+<script defer src="js/finish.js?v=1.478.296"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.296"></script>
+<script defer src="js/gyro.js?v=1.478.296"></script>
+<script defer src="js/forge.js?v=1.478.296"></script>
+<script defer src="js/partitura.js?v=1.478.296"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.296"></script>
+<script defer src="js/card.js?v=1.478.296"></script>
+<script defer src="js/star.js?v=1.478.296"></script>
+<script defer src="js/cinema.js?v=1.478.296"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.296"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

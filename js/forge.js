@@ -364,7 +364,7 @@ function forgePreviewMoodSL(mood){
     S1:clamp(65+dm*15,20,95), L1:clamp(10+dm*20,3,60),
   };
 }
-let _fSkyT=0, _fSkyRun=false;
+let _fSkyT=0, _fSkyRun=false, _fPvSig=''; // _fPvSig: 15.09.2026, сигнатура имя+состав превью «Создать» — не переписывать DOM каждый кадр без надобности
 function forgeSkyPaint(dt){ // живое мини-небо конструктора: выбранные небо/туман/состав/жар летают в превью
   const cv=$('forgePreview'); if(!cv||!cv.getContext) return;
   /* 10.09.2026 (владелец, живой скрин): «картинка сплюснутая» — canvas без явных width/height
@@ -407,8 +407,29 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
     x.beginPath(); x.arc(sx,sy,rnd()*1.4+.4,0,6.283); x.fill();
   }
   x.globalAlpha=1;
-  const kinds=FORGE_KINDS.filter(function(k,i){ return cfg.e>>i&1; });
-  if(!kinds.length) kinds.push('rock'); // пустой состав — не повод для мёртвого неба
+  const realKinds=FORGE_KINDS.filter(function(k,i){ return cfg.e>>i&1; });
+  /* 15.09.2026 «Единая карточка» (владелец): #forgePreviewName/#forgePreviewStickers — тот же
+     вид, что уже на карточке Мастерской (js/forge.js workshopRenderList выше). Имя читается
+     из #forgeName напрямую (тот же элемент, что «Сложность» использует при сохранении, живёт
+     на другом шаге «Создать», но остаётся в DOM всегда — .hidden только на ЭКРАНЕ, не в дереве)
+     — плейсхолдер «Дайте имя», пока пусто. Стикеры — РЕАЛЬНый realKinds (не тот kinds ниже с
+     запасным 'rock' для анимации, который исказил бы состав), тот же PT_ICON_SVG/PT_KIND_COLOR,
+     что у карточки Мастерской. Сигнатура — не переписывать DOM на каждый кадр без надобности. */
+  const pvNameEl=$('forgePreviewName'), pvStkEl=$('forgePreviewStickers');
+  if(pvNameEl && pvStkEl){
+    const nameInput=$('forgeName');
+    const curName=nameInput?nameInput.value.trim():'';
+    const sig=curName+'|'+realKinds.join(',');
+    if(sig!==_fPvSig){
+      _fPvSig=sig;
+      pvNameEl.textContent=curName||(L.forgePreviewNamePh||'Дайте имя');
+      pvStkEl.innerHTML=(typeof PT_ICON_SVG!=='undefined') ? realKinds.map(function(k){
+        return '<span class="wSticker" style="color:'+PT_KIND_COLOR[k]+'" title="'+(PT_KIND_LABEL[k]||k)+'">'+PT_ICON_SVG[k]+'</span>';
+      }).join('') : '';
+    }
+  }
+  const kinds=realKinds.slice();
+  if(!kinds.length) kinds.push('rock'); // пустой состав — не повод для мёртвого неба (только для анимации превью, не для стикеров выше)
   for(let i=0;i<9;i++){ // дальняя стая: мелкие тусклые тени — глубина и параллакс (v1.86.0)
     const fx=(i*311+41)%W, fy=(_fSkyT*(5+cfg.s*.12)+i*83)%(H+40)-20;
     x.globalAlpha=.3; x.fillStyle='rgba(120,150,220,.5)';
@@ -1168,23 +1189,23 @@ function workshopRenderList(){
     // рендерим или не рендерим кнопки закрепить/скрыть по его ответу.
     const isOwner = !!(res && res.isOwner);
     const myId = (typeof syncMyId==='function') ? syncMyId() : null; // 08.09.2026: «это моё небо» — отдельно от «я модератор»
-    // 08.09.2026 «Превью — главное» (владелец, живой макет, несколько заходов): превью
-    // неба — широкий баннер сверху, имя/сыграно лежат поверх затемнением снизу. Лайк —
-    // крупный значок в левом углу баннера, светится при лайке. Редкие действия
-    // (Пожаловаться/Закрепить/Скрыть) — за «⋯» в правом углу, не видны, пока не нужны.
-    // Играть переименован в «В полёт», без иконки, стоит парой с «Изменить» тем же стилем.
-    // 11.09.2026 «Меньше места» (владелец, макет masterskaya-kartochka-kompaktnee-11-09-2026.html,
-    // одобрено, четыре захода — всё сверено вживую в браузере, не на глаз, см. [[feedback_izmeryat_ne_gadat_geometriya]]):
-    // название переехало наверх, в один ряд с «Пожаловаться»/«Закрепить»/«Скрыть» (.wTopRow) —
-    // раньше стояло отдельной строкой внизу. Цвет+лайк — переехали из левого верхнего угла в
-    // правый нижний, столбиком, поменьше (.wCornerStack) — в ряд рядом со значками препятствий
-    // реально накладывались при 8 штуках, столбик+меньше размер это снял. Банер 146px→100px —
-    // настоящий минимум, найден двоичным поиском по живому DOM, не подобран на глаз.
+    // 15.09.2026 «Единая карточка» (владелец, макет edinaya-kartochka-standart-15-09-2026.html) —
+    // небо занимает всю карточку (130px, тот же размер, что у карточки режима/превью «Создать»);
+    // звезда/лайк/инфо/[Закрепить/Скрыть] — один ряд наверху; имя — над значками препятствий
+    // внизу слева; Полёт/Изменить — столбиком в правом нижнем углу. Подробности — у самой
+    // разметки ниже и в CSS index.html (.wRow/.wBanner/.wTopRow/.wNameStack/.wActionStack).
     listEl.innerHTML=tracks.map(function(t){
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
-      '<div class="wTopRow"><div class="wName"></div>'+
-      '<div class="wCornerRow">'+
+      // 15.09.2026 «Единая карточка» (владелец, макет edinaya-kartochka-standart-15-09-2026.html,
+      // несколько живых заходов): звезда/лайк/инфо — один ряд наверху, порядок слева направо
+      // звезда→лайк→инфо→(Закрепить/Скрыть у владельца), инфо/Закрепить/Скрыть остаются в своём
+      // привычном правом углу (justify-content:flex-end в index.html — владелец поймал живьём,
+      // что без .wName в ряду значки съезжали к ЛЕВОМУ краю, поправлено). Один размер (.wCorner
+      // 26px) на все значки карточки без исключений — владелец явно попросил не разные числа.
+      '<div class="wTopRow">'+
+      '<button class="wCorner wPickStar hidden" data-act="pickstar" title="'+(L.workshopPickTitle||'Отмечено автором игры')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg></button>'+
+      '<button class="wCorner wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></button>'+
       // 12.09.2026 «Что до полёта, что за (i)» (владелец, живой тест руками — «протестируй
       // как играет ребёнок и взрослый», потом отдельный разбор макета): Автор/Запуски не
       // помогают решить «лететь или нет» — убраны из видимой по умолчанию картинки.
@@ -1192,53 +1213,47 @@ function workshopRenderList(){
       // свою ошибку («на имя можно пожаловаться, не запуская игру») — осталась на карточке,
       // но переехала за этот же значок вместе с остальным второстепенным. Один значок (i)
       // вместо треугольника — открывает overlay ПОВЕРХ картинки неба (.wInfoOverlay ниже),
-      // не раздвигая карточку — владелец категорически запретил раздвигающуюся панель,
-      // экономия места была главной целью всего захода, измерено: 151.4px что открыто,
-      // что закрыто, ни одним пикселем не отличается.
+      // не раздвигая карточку — владелец категорически запретил раздвигающуюся панель.
       '<button class="wCorner" data-act="info" title="Подробнее"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><rect x="10.7" y="10.2" width="2.6" height="7.4" rx="1.3" fill="#0b1626"></rect><circle cx="12" cy="6.8" r="1.6" fill="#0b1626"></circle></svg></button>'+
       // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
       // без лишнего клика» — Закрепить/Скрыть тоже открытые значки в углу, залитые как
       // жалоба, «⋯»/скрывающий wModRow убраны совсем.
       (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
       '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
-      '</div></div>'+
-      // 12.09.2026, владелец (поймал дважды подряд, живыми замерами): звезда «Выбор автора»
-      // сперва легла на «Пожаловаться» (внутри банера почти нет свободного места — 84 из
-      // 84px уже заняты), потом — рядом с названием в .wCornerRow (сузило бы длинные имена,
-      // владелец категорически запретил именно это). Настоящее решение — столбиком под (i),
-      // там же, где раньше стояла «В избранное» (уехала в overlay ниже) — обычный участник
-      // .wCornerStack, никакого position:absolute/отрицательных отступов, потому и не может
-      // вылезти за границы карточки ни при каких обстоятельствах.
-      '<div class="wCornerStack">'+
-      '<button class="wCorner wPickStar hidden" data-act="pickstar" title="'+(L.workshopPickTitle||'Отмечено автором игры')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg></button>'+
-      '<button class="wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg><span data-role="hearts"></span></button>'+
       '</div>'+
+      // 15.09.2026: имя переехало вниз, прямо над значками препятствий — оба в левом нижнем
+      // углу, одной колонкой (.wNameStack), тем же приёмом, что уже был у стикеров.
+      '<div class="wNameStack"><div class="wName"></div><div class="wStickerRow" data-role="stickers"></div></div>'+
       // 12.09.2026: overlay поверх самой картинки (position:absolute;inset:0 в index.html) —
-      // не элемент в потоке, поэтому карточка не растёт, когда он открыт. Автор+Запуски —
-      // одной строкой (было по отдельности, владелец: «экономия»), «Скопировать палитру» —
+      // не элемент в потоке, поэтому карточка не растёт, когда он открыт. «Скопировать палитру» —
       // тот же forgeFavSave, что раньше был значком-веером (data-act="fav" не переименован,
       // сервер/клик-хендлер не тронуты, только положение и текст вместо иконки).
+      // 15.09.2026 (владелец, живой скрин): Автор/Запуски снова разъехались на две строки —
+      // 12.09.2026 их объединяли ради экономии места, сегодня решение обратное. Порядок сверху
+      // вниз: автор, запуски, значки действий (fav/report) — тем же .wInfoActions, что и был.
       '<div class="wInfoOverlay">'+
-      '<div class="wInfoLine" data-role="info-line"></div>'+
-      // 13.09.2026, владелец: «было иконками и занимало меньше места, иконками нравится
-      // больше» — вернул значком-веером/треугольником, ровно те SVG, что стояли ДО вчерашнего
-      // переезда в (i) (см. git 02a1cb9): data-act="fav" был «В избранное» (#i-color-fan),
-      // data-act="report" был .wCornerDanger (треугольник). Внутри самой панели (i) остаются —
-      // владелец не просил убирать объединение, только вернуть вид кнопок.
+      '<div class="wInfoLine" data-role="info-author"></div>'+
+      '<div class="wInfoLine" data-role="info-plays"></div>'+
       '<div class="wInfoActions">'+
       '<button class="wCorner" data-act="fav" title=""><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
       '<button class="wCorner wCornerDanger" data-act="report" title=""><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>'+
       '</div>'+
       '</div>'+
-      '<div class="wBannerText"><div class="wStickerRow" data-role="stickers"></div></div></div>'+
-      '<div class="wActionRow"><button class="btn ghost" data-act="play"></button><button class="btn ghost" data-act="edit"></button></div>'+
-      '</div>'; }).join('');
+      // 15.09.2026: Полёт/Изменить переехали на саму карточку (были отдельным рядом больших
+      // кнопок под ней) — правый нижний угол, столбиком, Полёт в самом углу (.wPlay, залит
+      // золотом — единственное действие, что реально запускает полёт), Изменить над ним. Без
+      // подписи под значком (владелец) — тот же .wCorner 26px, что у остального ряда наверху.
+      '<div class="wActionStack">'+
+      '<button class="wCorner" data-act="edit" title=""><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"></path></svg></button>'+
+      '<button class="wCorner wPlay" data-act="play" title=""><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l18-8-6 8 6 8-18-8z"></path></svg></button>'+
+      '</div>'+
+      '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
       const row=listEl.children[i]; row.dataset.code=t.code;
       const status=t.status||'normal'; row.dataset.status=status;
       // 12.09.2026: значок теперь всегда существует в шаблоне (.wPickStar.hidden) — просто
-      // снимаем класс, а не создаём/удаляем узел; тот же .wCorner, что и «Пожаловаться»/
-      // «В избранное» — обычный участник .wCornerStack, не position:absolute.
+      // снимаем класс, а не создаём/удаляем узел; тот же .wCorner, что у всех остальных
+      // значков ряда (15.09.2026: .wTopRow, не отдельный столбик).
       // 12.09.2026 (второй заход, владелец): честный флаг с сервера (forge_workshop.featured
       // через moderate) вместо статического WORKSHOP_FEATURED_CODES — раньше пометить трек
       // мог только я правкой кода, теперь сам владелец тапом. Игрокам звезда видна только у
@@ -1249,15 +1264,16 @@ function workshopRenderList(){
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
-      // 12.09.2026: Автор+Запуски — одной строкой внутри (i)-панели вместо двух отдельных
-      // всегда видимых строк под картинкой (владелец: ни то ни другое не помогает решить
-      // «лететь или нет», см. .knowledge/RESEARCH... вместе с остальным второстепенным).
-      const infoLine=row.querySelector('[data-role="info-line"]');
-      // 13.09.2026: было голое имя автора без слова «Автор» — непонятно, что это подпись
-      // создателя неба, а не название чего-то ещё (владелец). Готовый ключ L.workshopAuthor
-      // уже существовал (08.09.2026, для более ранней раскладки карточки) — просто не был
-      // переиспользован здесь при переезде строки в панель (i) 12.09.2026.
-      if(infoLine) infoLine.textContent=(L.workshopAuthor?L.workshopAuthor(t.author_name||''):'Автор: '+(t.author_name||''))+' · '+(L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0));
+      // 08.09.2026/12.09.2026: значки препятствий — всегда видимая часть карточки (не помогают
+      // решить «лететь или нет» сами по себе, но и не текст — см. .knowledge/RESEARCH...),
+      // Автор/Запуски — внутри панели (i), второстепенные. 13.09.2026: у автора есть подпись
+      // «Автор:» (L.workshopAuthor) — без неё голое имя читалось непонятно, как что-то ещё.
+      // 15.09.2026 (владелец, живой скрин: «иконки на имя заходят» + прямая просьба): автор и
+      // запуски снова две отдельные строки (были объединены 12.09.2026 ради места, реверс).
+      const infoAuthor=row.querySelector('[data-role="info-author"]');
+      const infoPlays=row.querySelector('[data-role="info-plays"]');
+      if(infoAuthor) infoAuthor.textContent=L.workshopAuthor?L.workshopAuthor(t.author_name||''):'Автор: '+(t.author_name||'');
+      if(infoPlays) infoPlays.textContent=L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0);
       // 08.09.2026 (владелец, живой макет): значки препятствий — настоящий набор Партитуры
       // (js/partitura.js PT_ICON_SVG/PT_KIND_COLOR/PT_KIND_LABEL), не текстовые таблетки —
       // тот же язык, что уже есть в Расстановке, просто переиспользован здесь. Измерено
@@ -1269,13 +1285,15 @@ function workshopRenderList(){
         }).join('');
       }
       const voted = mine.indexOf(t.code)>=0;
-      row.querySelector('[data-role="hearts"]').textContent=String(t.hearts||0);
-      row.querySelector('.wVote').classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
-      row.querySelector('[data-act="play"]').textContent=L.workshopPlay||'В полёт';
-      row.querySelector('[data-act="edit"]').textContent=L.workshopEdit||'Изменить';
-      // 13.09.2026: обратно значки, не текст (владелец: «иконками нравится больше», см.
-      // комментарий у разметки .wInfoActions выше) — .title вместо .textContent, ровно как
-      // было до переезда в (i)-панель (git 02a1cb9, до 12.09.2026).
+      // 15.09.2026: значок лайка сжат до простого кружка (.wCorner) без видимого счётчика рядом
+      // (владелец: «без подписи» для всего нового ряда значков) — число лайков не потеряно,
+      // осталось в title (подсказка при долгом нажатии/скринридере), тем же приёмом, что уже
+      // у Пожаловаться/Скопировать палитру ниже.
+      const voteBtn=row.querySelector('.wVote');
+      voteBtn.title=(L.workshopHearts?L.workshopHearts(t.hearts||0):(t.hearts||0)+' лайков');
+      voteBtn.classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
+      row.querySelector('[data-act="play"]').title=L.workshopPlay||'Полёт';
+      row.querySelector('[data-act="edit"]').title=L.workshopEdit||'Изменить';
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться';
       const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.title=L.workshopFav||'Скопировать палитру';
       row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
@@ -1326,15 +1344,17 @@ wireOnLocal('workshopList','click',function(e){
       // раньше при неудаче лайк просто ничего не делал, без единой подсказки — с точки
       // зрения игрока «сломано», хотя причина честная (нет соединения). Один явный тост.
       if(!res || !res.ok){ toast(L.syncOffline||'Нет соединения — попробуй позже','rgba(255,159,176,.5)'); return; }
-      // 14.09.2026 (аудит «борьба с читерами»): сервер молча не засчитывает лайк автору
-      // собственного кода (own_track:true, hearted всегда false) — без этой ветки тап
-      // выглядел бы «просто не сработал», а с общим сообщением выше — ложно как «нет сети».
-      if(res.own_track){ toast(L.workshopVoteOwnTrack||'Нельзя лайкать свою же трассу','rgba(255,159,176,.5)'); return; }
+      // 15.09.2026 (владелец, прямое решение — реверс находки 3.1 от 14.09.2026): лайк
+      // самому себе теперь разрешён, сервер (cosmogram-workshop) больше не возвращает
+      // own_track для vote — ветка-тост под неё снята вместе с сервером, не только здесь.
       const mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
       Store.set('workshopMyVotes',mine);
       act.classList.toggle('voted', res.hearted); // заливка сердца — CSS
-      const heartsEl=row.querySelector('[data-role="hearts"]'); if(heartsEl) heartsEl.textContent=String(res.hearts||0);
+      // 15.09.2026: видимого счётчика рядом со значком больше нет (единая карточка, значок
+      // без подписи) — число лайков живёт в title значка, тот же приём, что у остальных
+      // подсказок карточки (см. workshopRenderList выше).
+      act.title=(L.workshopHearts?L.workshopHearts(res.hearts||0):(res.hearts||0)+' лайков');
     });
     haptic('light');
   }
