@@ -4044,9 +4044,16 @@ wireOn('grSendBtn','click',function(){
   const comment = commentEl ? String(commentEl.value||'').slice(0,300) : '';
   const anonRow=$('grAnonRow'), anon = anonRow && anonRow.classList.contains('on');
   syncGratitudeCreateInvoice(grAmt, comment, anon).then(function(res){
-    _grSendBusy=false;
-    if(!res || !res.ok || !res.link){ toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    if(!res || !res.ok || !res.link){ _grSendBusy=false; toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    // 15.09.2026: _grSendBusy снимается тут, не сразу после создания инвойса — иначе игрок
+    // успевал натыкать «Отправить» ещё несколько раз, пока лист оплаты Stars ещё открыт,
+    // и каждый тап заводил в gratitude_stars СВОЮ повисшую запись с telegram_charge_id=NULL
+    // (звезда там заводится сразу, до оплаты — иначе негде хранить комментарий между созданием
+    // инвойса и вебхуком, см. комментарий у gratitude_create_invoice на сервере). openInvoice
+    // по контракту Telegram Web App SDK всегда зовёт колбэк, когда лист закрыт — неважно как
+    // (оплата/отмена/провал), запасного таймаута не нужно.
     tw.openInvoice(res.link, function(status){
+      _grSendBusy=false;
       if(status!=='paid') return;
       if(commentEl) commentEl.value='';
       toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
