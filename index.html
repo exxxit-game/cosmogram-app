@@ -395,17 +395,25 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   box-shadow:0 -6px 18px rgba(6,10,24,.55); }
 
 /* Зоны экрана: шапка / контент / подвал — ничего не падает друг на друга */
-#startScreen { justify-content:space-between;
+#startScreen { justify-content:flex-start;
   padding-top:var(--menu-top-pad); }   /* 13.08.2026: см. «Подушка не для меню» выше;
   30.08.2026 (владелец, макет, живое фото Telegram): было --sat-menu без запаса — «Закрыть»/⌄/⋮
   наезжали на COSMOGRAM. Тот же +24px, что уже спас #livesCanvas и #angarWallet/#hangarBackBtn —
   тот же класс перекрытия сверху, --sat-menu на его устройстве отдаёт только пол в 8px. */
 .scrTop, .scrMid { display:flex; flex-direction:column; align-items:center; width:100%; }
-/* 15.09.2026 (владелец: «подставь карточку... под текст Одно небо для всех», затем «отступ до ~5px»):
-   #startScreen — флекс с justify-content:space-between, лишнее место между .scrTop и .scrMid
-   распределялось само собой (было 41.7px, замерено живьём). Тянем .scrMid вверх отрицательным
-   margin-top до ~5px итогового зазора. */
-.scrMid { margin-top:-37px; }
+/* 15.09.2026, второй заход (владелец, живой скрин с обводкой: «подними меня вверх, под одно
+   небо для всех»): было justify-content:space-between + margin-top:-37px на .scrMid — фиксированное
+   число, подобранное под ОДИН конкретный замер (41.7px зазора на одном устройстве), 30.08 версия.
+   На другой высоте экрана (измерено живьём в этой же сессии: 812px → 180px зазора вместо ~5px)
+   space-between растягивает зазор пропорционально росту viewport, потому что .scrFoot — ПУСТОЙ
+   div (см. разметку ниже, когда-то нёс контент, сейчас нет), а space-between всё равно распределяет
+   вокруг него всё лишнее место. Заменено на justify-content:flex-start — .scrTop/.scrMid теперь
+   сидят вместе по своей естественной высоте на ЛЮБОМ экране, .scrFoot просто идёт следом (его
+   padding-bottom всё ещё даёт отступ под safe-area внизу). Магическое число убрано целиком.
+   Живой замер после правки: 0px зазора (карточка впритык к тексту) — владелец уточнил «чуть
+   ниже очень близко», не впритык. #startScreen .scrMid — небольшой явный отступ 12px, не общее
+   правило .scrMid (тот же класс делит #tooNarrow, трогать его не нужно). */
+#startScreen .scrMid { margin-top:12px; }
 .scrFoot { display:flex; justify-content:center; width:100%;
   padding-bottom:calc(18px + var(--sab)); }
 
@@ -481,13 +489,30 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .heroCarousel::-webkit-scrollbar{display:none}
 .heroCard{position:relative;flex:0 0 100%;scroll-snap-align:center;border-radius:var(--r-card);
   overflow:hidden;padding:12px 13px 10px;height:130px;display:flex;flex-direction:column; /* 15.09.2026 (владелец): было 112px, сначала +⅓ до 149px («на 1/3»), затем владелец попросил половину от этого прироста — 112+(37/2)=130.5≈130px. Контент прижат к низу (justify-content:flex-end), карточка растёт вверх */
-  justify-content:flex-end;align-items:flex-start;border:1px solid var(--line);isolation:isolate;
+  justify-content:flex-end;align-items:flex-start;border:1px solid rgba(255,255,255,.22);isolation:isolate;
   background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;
-  -webkit-appearance:none;appearance:none;box-sizing:border-box}
+  -webkit-appearance:none;appearance:none;box-sizing:border-box;
+  box-shadow:0 8px 20px rgba(0,0,0,.35);
+  -webkit-mask-image:-webkit-radial-gradient(white,black)} /* 15.09.2026, третий заход: живой телефон
+  поймал чёрные квадратные углы — задокументированный баг WebKit/Safari, box-shadow+overflow:hidden+
+  border-radius на одном элементе не композитится корректно. Первая реакция (убрать тень) была
+  неправильной — владелец прямо поправил: «я просил исправить», не убрать. Правка: -webkit-mask-image
+  с тем же радиальным градиентом (белый→чёрный) — известный обходной путь именно этого бага, forces
+  Safari на маску вместо родного (бажного) clip. Не проверено живьём на самом устройстве (нет
+  доступа к живому Safari отсюда) — просил владельца перепроверить после этой правки.
+  15.09.2026, восьмой заход (владелец: «полностью всю карточку, каждый её элемент на максимум
+  красоты») — рамка самой карточки была var(--line) (rgba(255,255,255,.08), почти невидимая),
+  теперь rgba(255,255,255,.22) — тот же стеклянный язык, что у .playHint/.forgeSegBtn/
+  .relayMineBtn/.recordBadge (тот уже был близко изначально). Последний недостающий элемент карточки
+  — теперь весь набор поверхностей (рамка карточки, бейдж-рекорд, кружок полёта+кольцо, пилюли
+  форга, «Статус») использует один и тот же rgba(255,255,255,.10-.24) стеклянный набор чисел. */
+.heroCard::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,0) 42%)} /* лёгкий блик
+  стекла сверху-слева — ::before уже занят фоновым тонированием (z-index:-1 выше), это второй,
+  независимый слой поверх содержимого карточки */
 .heroCard:active{transform:scale(.98)}
 .heroCard.locked{opacity:.6}
 .heroCard::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.92}
-.heroCard .heroIcon{position:absolute;top:9px;right:9px;width:26px;height:26px;opacity:.92;pointer-events:none}
 .heroCard .modeName{font-weight:700;font-size:15.5px;letter-spacing:.03em;text-transform:uppercase;
   text-shadow:0 1px 6px rgba(0,0,0,.5);display:block}
 /* 15.09.2026: на узких телефонах (374px и уже — реальная ширина, не гипотетическая, целевая
@@ -496,6 +521,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    полный текст остаётся в i18n.js, обрезается только показ на узкой карточке. */
 .heroCard .modeDesc{font-size:11px;opacity:.85;line-height:1.3;margin-top:3px;max-width:82%;
   color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* 15.09.2026, финальный заход (владелец: «я понял, в два ряда, до кнопки самолёта») — назад к
+     исходным 2 строкам/11px/82% (было до всех сегодняшних правок этого блока). Требование
+     «полёт на текст не заходил» решается на стороне .trail (clip-path ниже), не сужением текста. */
+  /* 15.09.2026, пятый заход (владелец: «текст сделай компактнее, в 3 ряда», для всех карточек) —
+     было 2 строки/11px/line-height 1.3. Первая попытка (10px/line-height:1.22) дала на живом
+     телефоне владельца белый прямоугольник-артефакт поверх текста Score Attack — единственная
+     правка, задевшая эту карточку между подтверждённым «да» и жалобой, значит дело в ней. Дробный
+     line-height 1.22 — подозреваемый (нестандартное число, могло дать под-пиксельное округление
+     в -webkit-line-clamp на его WebKit); вернул line-height на уже проверенные 1.3, кегль и
+     3 строки остаются. Не проверено живьём на самом устройстве — просил владельца перепроверить. */
 /* 07.09.2026/11.09.2026: .speedrunFlyBtn/.caravanFlyBtn/.relayFlyBtn изначально центрировали
    текст и несли нижнюю разделительную линию под плоский список — в карточке текст слева, линия
    лишняя (она же цветная карточка). #modesScreen-scoped версии этого текста удалены вместе с
@@ -519,38 +554,112 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    в превью «Создать» (index.html/js/forge.js), одна семья, один и тот же угол на всех трёх
    местах. Было top:41px (под рекорд-бейджем, решение того же дня чуть раньше) — правка поверх
    неё же. */
-.heroCard .playHint{position:absolute;bottom:9px;right:9px;
+.heroCard .playHint{position:absolute;bottom:9px;right:15px;
   width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.10);
   border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;
   pointer-events:none;opacity:.9;z-index:1}
+/* 15.09.2026, второй фикс (владелец: «я просил исправить», не убрать) — вернул кольцо (мотив
+   «планета с кольцом», #pauseBtn/.menuBack, V1) и добавил реальный запас: right:9px→15px. Круг
+   был впритык к краю, кольцо (47px) шире круга (26px) — по геометрии выходило на ~0.27px в
+   худшем направлении, а на живом WebKit-клипе (тот же баг, что у box-shadow — см. .heroCard
+   выше, теперь с -webkit-mask-image) это стало видимым выступом. +6px отступа даёт кольцу
+   (половина ширины 23.5px) больше 8px запаса от границы карточки — с существенным зазором,
+   не впритык, устойчиво даже если клип где-то ещё останется ненадёжным. */
 /* 15.09.2026 (владелец): вместо родового ▶ — твой же самолётик (текущий скин), «будто с
    карточки в игру попадаешь». angarShip(ctx,skin,scale,false) — та же самая функция, что уже
    рисует маленький борт на плитках Коллекции (js/ui.js:2094) — canvas 52×52 физических px
    (2× ради чёткости), 26×26 на экране, заполняется в js/ui.js heroPlayIconsFill(). */
 .heroCard .playHintCv{width:26px;height:26px}
+.heroCard .playHint::before{content:'';position:absolute;top:50%;left:50%;
+  width:47px;height:17px;margin:0;border:1.5px solid rgba(200,225,255,.55);border-radius:50%;
+  transform:translate(-50%,-50%) rotate(-20deg);pointer-events:none}
 /* 15.09.2026 (страж 194): у Эстафеты .relayFlyBtn на всю ширину карточки геометрически лез
    под «Статус» (абсолютная пилюля в правом нижнем углу) — тач-зоны пересекались, хотя визуально
    текст туда не заходит (та же узкая .c-relay .ds ниже). Сузил тач-зону кнопки полёта до той же
-   ширины, что и у текста — у Speedrun/Caravan конфликта нет (там нет пилюли в углу), не трогаю. */
-.heroCard.hc-relay .relayFlyBtn{width:auto;max-width:60%}
-.heroCard .forgeSeg{justify-content:flex-start;gap:5px;margin-top:5px;width:auto}
+   ширины, что и у текста. 15.09.2026, седьмой заход: тот же приём распространён на Спидран/
+   Караван — их .forgeSeg (ниже) теперь тоже абсолютная колонка в правом углу, та же логика,
+   тот же фикс. */
+.heroCard.hc-relay .relayFlyBtn,.heroCard.hc-speedrun .speedrunFlyBtn,
+.heroCard.hc-caravan .caravanFlyBtn{width:auto;max-width:60%}
+.heroCard .forgeSeg{position:absolute;right:15px;bottom:9px;flex-direction:column;
+  align-items:center;justify-content:flex-start;gap:4px;width:auto;flex-wrap:nowrap;margin-top:0}
+  /* 15.09.2026 (владелец: «время убрать, кнопки идеально друг под друга, найти общий центр») —
+     подпись-заголовок «Время» над колонкой снята тем же днём, что добавлена; align-items:
+     flex-end→center — «15»/«60»/«180» разной ширины (width:max-content, разный текст), у каждой
+     свой ::before-круг тоже разного размера — center строит их вокруг ОДНОЙ общей вертикальной
+     оси, а не по общему правому краю (что при разной ширине выглядело неровно). */
+  /* 15.09.2026, седьмой заход (владелец: «криво смотрится, кнопка сама должна начинать игру,
+  иконка там не нужна») — у Спидрана/Каравана .playHint (самолётик) убран целиком из разметки
+  (heroPlayIconsFill() в js/ui.js обходит .heroCard .playHintCv живым querySelectorAll, ничего не
+  падает без части карточек) — сама карточка уже кликабельна целиком (.speedrunFlyBtn/
+  .caravanFlyBtn), отдельная иконка полёта была лишней. .forgeSeg опустился на bottom:9px —
+  туда же, где раньше сидела иконка. max-width:60% на самой кнопке (выше) — тач-зона кнопки
+  полёта не должна лезть под колонку кнопок форга, независимо от иконки. */
 /* 15.09.2026 (страж 194, WCAG 2.2 AA): первая компактная версия была 20px высотой — тач-зона
    мельче порога 24×24. Увеличена вертикальным padding, не шрифтом — ширина карточки узкая,
    крупнее буквы снова упрутся в перенос строк (уже была эта проблема с Caravan×3 тирами). */
-.heroCard .forgeSegBtn{padding:6px 8px;font-size:10px;border-radius:8px;min-height:24px;box-sizing:border-box}
-/* 15.09.2026: было bottom:8px — тот же угол, куда только что переехал самолётик (.playHint
-   выше), реально столкнулись бы на карточке Эстафеты. Самолётик занял истинный угол, «Статус»
-   поднят на его старое место (bottom:41px, было у самолётика ДО сегодняшней правки) — тот же
-   принцип, что у остального решения: один общий угол на «полетели», остальное — выше него. */
-.heroCard .relayMineBtn{position:absolute;right:9px;bottom:41px;margin:0;padding:6px 8px;font-size:10px;min-height:24px;box-sizing:border-box}
+.heroCard .forgeSegBtn{position:relative;padding:6px 10px;font-size:10px;border-radius:999px;min-height:24px;box-sizing:border-box;
+  width:max-content;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#dfe8ff}
+/* 15.09.2026 (страж 195 поймал: текст «15»/«60»/«180» обрезался — scrollWidth>clientWidth даже
+   у двух цифр) — .forgeSeg абсолютно спозиционирован (right:15px, без left), width:auto на таком
+   элементе внутри flex-column вычислялся у́же контента (30.95px вместо нужных ~45px). width:
+   max-content — кнопка всегда по своему содержимому, тот же баг больше не может повториться
+   независимо от контекста снаружи. */
+/* 15.09.2026 (владелец: «пусть идут в рост от 15 до 180», затем живьём поймал: «за экран
+   заходит» на 180 — и отдельно страж 194 поймал ещё одну беду: transform:scale() на самой
+   .forgeSegBtn уменьшал не только вид, но и настоящую тач-зону — 15 садился на 26×21px,
+   мельче порога 24×24 (WCAG 2.2 AA). Кнопка (её padding/min-height — реальная зона тапа)
+   больше НЕ масштабируется вообще, всегда честные ≥24×24px у всех трёх тиров. Растёт/уменьшается
+   только декоративное кольцо (::before ниже, отдельные width/height на карточку, не transform
+   на кнопке) — то же «остальные чуть меньше», но без риска ни задеть тач-зону, ни вылезти
+   за карточку. */
+/* 15.09.2026 (владелец: «добавь им тоже орбиту») — тот же мотив «планета с кольцом» (V1,
+   AI-DECISION-REGISTRY), что уже у .playHint. Каравана кнопки остаются текстовыми пилюлями
+   (15С/60С/180С) — кольцо у них шире (64×20). У Спидрана кнопки стали иконками (SSG/RSG —
+   target/shuffle, «в спидран будут иконки») и сжались до ~34×26px, ближе к масштабу круга
+   26px — там кольцо у же, те же 47×17, что у .playHint. */
+.heroCard .forgeSegBtn::before{content:'';position:absolute;top:50%;left:50%;
+  width:64px;height:20px;margin:0;border:1.5px solid rgba(200,225,255,.55);border-radius:50%;
+  transform:translate(-50%,-50%) rotate(-20deg);pointer-events:none}
+.heroCard.hc-speedrun .forgeSegBtn::before{width:47px;height:17px}
+.heroCard.hc-caravan .forgeSegBtn[data-tier="15"]::before{width:52px;height:16px}
+.heroCard.hc-caravan .forgeSegBtn[data-tier="60"]::before{width:58px;height:18px}
+/* «180» держит базовые 64×20 (самый большой, но не больше исходного — «за экран» риска нет) */
+/* 15.09.2026 (владелец: «кнопки некрасивые по сравнению с иконкой... максимум красоты за минимум
+   для игры») — тот же самый стеклянный язык, что у .playHint (bg rgba(255,255,255,.10), border
+   rgba(255,255,255,.22)), только числа СКОПИРОВАНЫ, не выдуманы — одна семья на карточке. Форма —
+   полная пилюля (border-radius:999px) вместо квадратных 8px, тот же приём, что у .wCorner/.wVote
+   (полностью круглые формы) в остальной игре. Ничего, кроме background/border/radius — ни тени,
+   ни маски, ни псевдоэлементов: три подряд живых бага сегодня (тень, кольцо, line-clamp) были
+   именно от более сложных приёмов, здесь сознательно только самое дешёвое и проверенное. */
+.heroCard .forgeSegBtn.sel{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#dfe8ff}
+/* 15.09.2026 (владелец: «нейтральные друг к другу») — .sel специально совпадает с обычным видом
+   (см. правило выше про снятие различия выбран/не выбран), теперь оба в новом стеклянном стиле. */
+/* 15.09.2026, третий заход в тот же день (владелец, живой скрин с обводкой): иконки режимов
+   (.heroIcon, top:9px;right:9px) убраны у всех 7 карточек — «уродские», новые будут нарисованы
+   отдельной задачей. Освободившийся верхний правый угол занимает «Статус» — было bottom:41px
+   (над самолётиком, решение чуть раньше тем же днём), теперь встаёт туда же, где раньше сидела
+   heroIcon, тем же способом, что и раньше: один общий угол на функцию, не наугад. */
+.heroCard .relayMineBtn{position:absolute;top:9px;right:9px;margin:0;padding:6px 8px;font-size:10px;min-height:24px;box-sizing:border-box;
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#dfe8ff}
+/* 15.09.2026 (владелец: «у статус тоже улучшил? каждый её элемент, на максимум красоты») — было
+   тёмное rgba(22,38,56,.5)/var(--line) (базовый .relayMineBtn, index.html выше, для др. контекстов
+   не трогаем) — здесь тот же стеклянный язык, что теперь у .playHint/.forgeSegBtn, одна семья на
+   всю карточку. .recordBadge (🏆) уже был близко к этим же числам изначально — не трогаю. */
 .heroDots{display:flex;justify-content:center;gap:6px;padding:8px 0 2px;pointer-events:none}
 .heroDot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
 .heroDot.on{background:var(--gold-hi);width:16px;border-radius:3px;transition:width .2s}
 /* 15.09.2026 «Траектория рекорда фоном» (владелец, макет trayektoriya-rekorda-na-fone-kartochki):
    тонкая линия пути ТВОЕГО рекордного забега этой дисциплины — статичная, рисуется один раз при
    заполнении карточки (heroTrailsFill, js/ui.js), не анимация, нулевая постоянная нагрузка на
-   рендер. Пусто, пока рекорда нет — линии рисовать нечем, карточка остаётся просто градиентом. */
-.heroCard .trail{position:absolute;inset:0;z-index:-1;opacity:.5;pointer-events:none}
+   рендер. Пусто, пока рекорда нет — линии рисовать нечем, карточка остаётся просто градиентом.
+   15.09.2026, финальный заход (владелец: «чтобы полёт на текст не заходил») — сам способ рисовки
+   (сырые g.xs/g.ys, js/ui.js) не тронут, только область показа обрезана clip-path'ом: нижний
+   левый угол, где имя+описание (2 строки/11px, ~31.6px + отступы от низа карточки ≈ низ 35%
+   высоты), вырезан из зоны видимости линии — виден только верх на всю ширину + правая полоса
+   (85-100%), тот же угол, где бейдж-рекорд/кружок-полёта. */
+.heroCard .trail{position:absolute;inset:0;z-index:-1;opacity:.5;pointer-events:none;
+  clip-path:polygon(0% 0%,100% 0%,100% 100%,85% 100%,85% 65%,0% 65%)}
 .hc-classic::before{background:linear-gradient(155deg,#1c2a5e 0%,#0a1030 75%)}
 .hc-daily::before{background:linear-gradient(155deg,#5a4614 0%,#241a05 78%)}
 .hc-speedrun::before{background:linear-gradient(155deg,#7a2410 0%,#2a0b04 78%)}
@@ -559,11 +668,13 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .hc-biathlon::before{background:linear-gradient(155deg,#0d5a34 0%,#03200f 78%)}
 .hc-relay::before{background:linear-gradient(155deg,#5a1266 0%,#1e0524 78%)}
 
-/* iOS-кнопка разрешения наклона — мягко привлекает внимание (разовая настройка) */
-#tiltBtn { border-color:rgba(127,216,255,.5); color:#bfeaff;
-  animation:tiltPulse 2.2s ease-in-out infinite; }
-@keyframes tiltPulse { 0%,100% { background:rgba(10,18,36,.55); }
-  50% { background:rgba(28,48,86,.78); } }
+/* iOS-строка разрешения наклона — мягко привлекает внимание (разовая настройка). 15.09.2026:
+   была .btn.ghost (своя рамка+фон), переехала в Настройки как обычный .setRow — border-color
+   у неё больше не читается (.setRow рамки не рисует), пульс переехал с фона кнопки на фон
+   строки, полупрозрачный в покое, чтобы не рисовать постоянный прямоугольник поверх ряда. */
+#tiltBtn { color:#bfeaff; animation:tiltPulse 2.2s ease-in-out infinite; }
+@keyframes tiltPulse { 0%,100% { background:rgba(28,48,86,0); }
+  50% { background:rgba(28,48,86,.55); } }
 
 /* v1.99.2 «Бережное небо»: системный флаг «уменьшить движение» сам гасит DOM-пульсы и въезды */
 @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
@@ -2715,77 +2826,72 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <!-- v1.108.1 «Пока грузится небо»: чистый HTML/CSS, без единой зависимости от JS — рисуется до
      первого скрипта, значит переживёт даже полный отказ сети. Прячется инлайн-скриптом после
      последнего <script> внизу страницы (js/ui.js) — к этому моменту все теги успели отработать. -->
-<div id="bootLoad" style="position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;background:#070b18;color:#f4f6fb;
-  font-family:system-ui,sans-serif;overflow:hidden;">
-  <div class="bootStar" style="left:87.4%;top:84.8%;animation-delay:0.21s"></div>
-  <div class="bootStar" style="left:39.8%;top:83.5%;animation-delay:0.42s"></div>
-  <div class="bootStar" style="left:37.4%;top:47.0%;animation-delay:1.87s"></div>
-  <div class="bootStar" style="left:24.2%;top:12.8%;animation-delay:2.81s"></div>
-  <div class="bootStar" style="left:40.0%;top:18.4%;animation-delay:1.49s"></div>
-  <div class="bootStar" style="left:28.9%;top:11.3%;animation-delay:2.17s"></div>
-  <div class="bootStar" style="left:31.0%;top:29.0%;animation-delay:0.09s"></div>
-  <div class="bootStar" style="left:86.1%;top:19.0%;animation-delay:2.50s"></div>
-  <div class="bootStar" style="left:42.4%;top:18.7%;animation-delay:1.66s"></div>
-  <div class="bootStar" style="left:35.8%;top:65.8%;animation-delay:1.81s"></div>
-  <div class="bootStar" style="left:10.3%;top:17.6%;animation-delay:1.20s"></div>
-  <div class="bootStar" style="left:5.9%;top:91.8%;animation-delay:1.09s"></div>
-  <div class="bootStar" style="left:62.6%;top:55.7%;animation-delay:2.72s"></div>
-  <div class="bootStar" style="left:28.4%;top:36.9%;animation-delay:1.34s"></div>
-  <div class="bootStar" style="left:39.3%;top:73.0%;animation-delay:1.20s"></div>
-  <div class="bootStar" style="left:39.4%;top:21.3%;animation-delay:0.56s"></div>
-  <div class="bootStar" style="left:68.5%;top:9.4%;animation-delay:0.66s"></div>
-  <div class="bootStar" style="left:70.8%;top:74.8%;animation-delay:2.76s"></div>
-  <div class="bootStar" style="left:86.2%;top:74.9%;animation-delay:2.09s"></div>
-  <div class="bootStar" style="left:58.7%;top:47.4%;animation-delay:2.92s"></div>
-  <div style="position:relative;width:260px;height:260px">
-    <canvas id="bootSpiral" width="260" height="260" style="position:absolute;inset:0"></canvas>
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-      font-size:13px;letter-spacing:.03em;color:#9fb0c8;text-align:center">Загружается…</div>
-  </div>
+<div id="bootLoad" style="position:fixed;inset:0;z-index:999;display:flex;align-items:center;
+  justify-content:center;background:#070b18;color:#f4f6fb;font-family:system-ui,sans-serif;
+  overflow:hidden;">
+  <canvas id="bootSpiral" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <div style="position:relative;font-size:15px;letter-spacing:.04em;color:#cfe0ff;
+    text-shadow:0 0 12px rgba(110,168,255,.6);text-align:center">Загружается…</div>
 </div>
 <!-- 15.09.2026 (владелец, 5 референсов спиральных узоров + макет zagruzka-spiral-fogelya-15-09-2026.html,
      «ВАРИАНТ A · золото/синь игры и слово загружается по середине»): орбита с золотой точкой
-     (10.09.2026 ниже) заменена на спираль Фогеля/филлотаксис (Vogel, 1979: r=c√n, угол=n×137.5° —
-     формула и проверка в .knowledge/GENERATIVE-GEOMETRY.md) — точки растут числом и вращаются,
-     цвет — прямая интерполяция RGB между синим (#6ea8ff, центр) и золотом (#f0c040, край), не через
-     круг оттенков (тот сметает через зелёный — первая попытка макета была неверной, владелец не
-     это утвердил). Подпись — по центру самой спирали, не под ней (владелец уточнил отдельно).
-     bootStar (мерцающие фоновые звёзды, добавлены 10.09.2026) остаются как есть — спираль крупнее
-     их и стоит поверх, разные слои одной сцены, конфликта нет.
+     заменена на спираль Фогеля/филлотаксис (Vogel, 1979: r=c√n, угол=n×137.5° — формула и проверка
+     в .knowledge/GENERATIVE-GEOMETRY.md) — точки растут числом и вращаются, цвет — прямая
+     интерполяция RGB между синим (#6ea8ff, центр) и золотом (#f0c040, край), не через круг оттенков
+     (тот сметает через зелёный — первая попытка макета была неверной). Подпись — по центру самой
+     спирали, не под ней.
+     ВТОРОЙ РАУНД в тот же день (владелец, живой макет zagruzka-preview.html): раньше спираль стояла
+     в маленьком 260×260 боксе, упиралась в квадратные границы канваса и делила экран с отдельными
+     мерцающими bootStar-точками — теперь canvas растянут на весь экран (layout() ниже пересчитывает
+     N/C под реальный window.innerWidth/innerHeight при каждом ресайзе), bootStar убраны совсем —
+     спираль сама покрывает весь экран, второй слой точек только мешал бы. Точки крупнее и со
+     свечением (shadowBlur), лёгкая пульсация всей сцены — «выразительнее» по прямой просьбе.
      ПРИНЦИП НЕ МЕНЯЕТСЯ: этот <script> — inline, часть того же уже загруженного документа, не
      внешний js/*.js файл за сетевым запросом — переживёт полный отказ сети точно так же, как чистый
      HTML/CSS до него (см. комментарий у #bootLoad выше). Цикл кадров сам проверяет, жив ли ещё
      canvas в DOM (getElementById), и останавливается — иначе after __bl.remove() ниже (в конце
      страницы, когда игра готова) requestAnimationFrame крутился бы вхолостую вечно. -->
-<style>
-@keyframes bootTwinkle{0%,100%{opacity:.15}50%{opacity:.9}}
-.bootStar{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:bootTwinkle 3s ease-in-out infinite}
-</style>
 <script>
 (function(){
   var cv=document.getElementById('bootSpiral'); if(!cv||!cv.getContext) return;
   var ctx=cv.getContext('2d');
-  var GA=137.50776405*Math.PI/180, N=220, C=11.5;
-  var pts=[];
-  for(var n=0;n<N;n++){ var r=C*Math.sqrt(n), th=n*GA; pts.push({x:r*Math.cos(th),y:r*Math.sin(th),t:n/(N-1)}); }
-  var cx=cv.width/2, cy=cv.height/2, t0=null;
+  var GA=137.50776405*Math.PI/180;
+  var dpr=Math.min(2, window.devicePixelRatio||1);
+  var cx,cy,N,C,pts,t0=null;
+  function layout(){
+    if(!document.body.contains(cv)){ window.removeEventListener('resize', layout); return; }
+    cv.width=window.innerWidth*dpr; cv.height=window.innerHeight*dpr;
+    cx=cv.width/2; cy=cv.height/2;
+    var maxR=Math.sqrt(cx*cx+cy*cy); // до дальнего угла экрана — спираль реально покрывает весь экран
+    var refArea=260*260, refN=220; // плотность утверждённого первого макета (260×260, N=220)
+    N=Math.round(refN*(cv.width*cv.height)/refArea/(dpr*dpr));
+    N=Math.max(260, Math.min(900, N));
+    C=maxR/Math.sqrt(N-1);
+    pts=[];
+    for(var n=0;n<N;n++){ var r=C*Math.sqrt(n), th=n*GA; pts.push({x:r*Math.cos(th),y:r*Math.sin(th),t:n/(N-1)}); }
+  }
+  layout();
+  window.addEventListener('resize', layout);
   function lerp(a,b,t){ return Math.round(a+(b-a)*t); }
   function frame(now){
     if(!document.body.contains(cv)) return; // #bootLoad снят целиком, когда игра готова — цикл сам себя гасит
     if(t0===null) t0=now;
     var el=(now-t0)/1000;
-    var shown=Math.min(N, Math.floor(el*110));
+    var shown=Math.min(N, Math.floor(el*(N/2.0))); // полный узор раскрывается за ~2с, при любом N
     var rot=el*0.15;
+    var pulse=1+0.03*Math.sin(el*1.4);
     ctx.clearRect(0,0,cv.width,cv.height);
-    var cos=Math.cos(rot), sin=Math.sin(rot);
+    var cos=Math.cos(rot)*pulse, sin=Math.sin(rot)*pulse;
     for(var i=0;i<shown;i++){
       var p=pts[i];
       var x=cx+p.x*cos-p.y*sin, y=cy+p.x*sin+p.y*cos;
       var rr=lerp(110,240,p.t), gg=lerp(168,192,p.t), bb=lerp(255,64,p.t);
-      ctx.beginPath(); ctx.arc(x,y,2+p.t*4.5,0,Math.PI*2);
-      ctx.fillStyle='rgb('+rr+','+gg+','+bb+')'; ctx.fill();
+      var rad=(2+p.t*7)*dpr, col='rgb('+rr+','+gg+','+bb+')';
+      ctx.shadowColor=col; ctx.shadowBlur=rad*1.8;
+      ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2);
+      ctx.fillStyle=col; ctx.fill();
     }
+    ctx.shadowBlur=0;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -2931,9 +3037,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.296"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.296"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.296"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.302"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.302"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.302"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3040,12 +3146,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        игрока живут там, где им место, — рекорды на итогах забега и в Достижениях,
        кошелёк в Ангаре, там же, где его тратят. Страж 110 сторожит невозврат. -->
   <div class="scrMid">
-    <!-- 10.09.2026 (владелец, живой скрин: «не в тему смотрится» между Конструктором и
-         Коллекцией — «если она такая важная, пусть появляется над кнопкой начать полёт»):
-         была строкой ПОСЛЕ .stack, между главными кнопками режима и сеткой Коллекция/
-         Достижения — терялась не на своём месте. id/скрытость/пульсация (#tiltBtn,
-         tiltPulse) не тронуты, переставлена только позиция в разметке. -->
-    <button class="btn ghost hidden" id="tiltBtn">Разрешить управление наклоном?</button>
+    <!-- 15.09.2026 (владелец, живой скрин: «не должно появляться на главном экране»): #tiltBtn
+         переехал в Настройки→«Игра и экран», сразу под «Гироскоп» (setGyroBtn) — прежнее место
+         на главном экране (10.09.2026 решение, кнопка над каруселью режимов) отменено. id/
+         скрытость/условие показа (NEEDS_TILT_PERMISSION && !TG_ORIENT) не тронуты — только
+         разметка и класс: был <button class="btn ghost">, теперь .setRow, как соседние строки
+         той же панели. -->
     <!-- 15.09.2026: #startBtn («Начать полёт») заменён каруселью из 7 режимов, см. CSS-комментарий
          у .heroCarouselWrap. Все 7 карточек — обёртка div + честный <button> полёта внутри (тот
          же каркас, что жил на удалённом экране «Турниры»); Speedrun/Caravan несут ещё свою строку
@@ -3057,50 +3163,41 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="heroCarousel" id="heroCarousel">
         <div class="heroCard hc-classic">
           <svg class="trail" id="trailClassic" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M12 2 L15 16 L12 14 L9 16 Z" fill="#dfe8ff" opacity=".9"/><circle cx="12" cy="19" r="1.6" fill="#dfe8ff" opacity=".7"/></svg>
           <button class="recordBadge hidden" id="recBadgeClassic" data-cat="touch">🏆 <span></span></button>
           <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="cardFlyBtn" id="startBtn"><span class="modeName">Score Attack</span><span class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</span></button>
         </div>
         <div class="heroCard hc-daily">
           <svg class="trail" id="trailDaily" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M12 3 L14.5 9.5 L21 10 L16 14.5 L17.5 21 L12 17.5 L6.5 21 L8 14.5 L3 10 L9.5 9.5 Z" fill="#f0c040"/></svg>
           <button class="recordBadge hidden" id="recBadgeDaily" data-cat="daily">🏆 <span></span></button>
           <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="cardFlyBtn" id="modeDaily"><span class="modeName">Небо месяца</span><span class="modeDesc">Одно небо на всех игроков — весь месяц, поставь рекорд</span></button>
         </div>
         <div class="heroCard hc-speedrun">
           <svg class="trail" id="trailSpeedrun" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M4 12h10m0 0l-3-3m3 3l-3 3" stroke="#ffb27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19" cy="12" r="2" fill="#ffb27a"/></svg>
           <button class="recordBadge hidden" id="recBadgeSpeedrun" data-cat="speedrun">🏆 <span></span></button>
-          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="speedrunFlyBtn" id="modeSpeedrunFly"><span class="modeName">Speedrun</span><span class="modeDesc">10 000 очков на время — чистый хронометраж</span></button>
           <div class="forgeSeg" id="speedrunVariantSeg"></div>
         </div>
         <div class="heroCard hc-caravan">
           <svg class="trail" id="trailCaravan" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9" stroke="#ffd76b" stroke-width="1.6" stroke-linecap="round"/></svg>
           <button class="recordBadge hidden" id="recBadgeCaravan" data-cat="caravan">🏆 <span></span></button>
-          <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="caravanFlyBtn" id="modeCaravanFly"><span class="modeName">Caravan</span><span class="modeDesc"></span></button>
           <div class="forgeSeg" id="caravanTierSeg"></div>
         </div>
         <div class="heroCard hc-slalom">
           <svg class="trail" id="trailSlalom" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><rect x="17" y="6" width="4" height="12" rx="1" fill="#6be0ff"/><path d="M9 12h6" stroke="#6be0ff" stroke-width="1.6" stroke-dasharray="2 2"/></svg>
           <button class="recordBadge hidden" id="recBadgeSlalom" data-cat="slalom">🏆 <span></span></button>
           <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="cardFlyBtn" id="modeSlalom"><span class="modeName">Без касаний</span><span class="modeDesc">Ворота на время — одно касание срывает заезд</span></button>
         </div>
         <div class="heroCard hc-biathlon">
           <svg class="trail" id="trailBiathlon" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="4.5" stroke="#7cf0af" stroke-width="1.4"/><circle cx="12" cy="12" r="1.3" fill="#7cf0af"/></svg>
           <button class="recordBadge hidden" id="recBadgeBiathlon" data-cat="biathlon">🏆 <span></span></button>
           <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="cardFlyBtn" id="modeBiathlon"><span class="modeName">Биатлон</span><span class="modeDesc">Скорость + 2 рубежа «собери всё», штраф — время</span></button>
         </div>
         <div class="heroCard hc-relay">
-          <svg class="heroIcon" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><circle cx="17" cy="12" r="3" stroke="#e08cff" stroke-width="1.6"/><path d="M10 12h4" stroke="#e08cff" stroke-width="1.6"/></svg>
           <div class="playHint"><canvas class="playHintCv" width="52" height="52"></canvas></div>
           <button type="button" class="relayFlyBtn" id="modeRelay"><span class="modeName">Эстафета</span><span class="modeDesc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</span></button>
           <button class="relayMineBtn" id="relayMineBtn"><svg class="ic" style="width:10px;height:10px;color:var(--gold-hi)"><use href="#i-info"></use></svg><span id="relayMineBtnLbl">Статус</span></button>
@@ -3182,6 +3279,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          намеренно — обе строки про один и тот же руль, и погашенная чувствительность под
          выключенным тумблером объясняет себя сама, без единого слова подписи. -->
     <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <!-- 15.09.2026: переехала сюда с главного экрана (см. комментарий у .scrMid выше) — тот же
+         .setRow, что у соседей, hidden по умолчанию, показывается кодом в ui.js (NEEDS_TILT_PERMISSION
+         && !TG_ORIENT), не CSS. Текст — тот же вопрос, что был на кнопке, не Key/Value пара. -->
+    <div class="setRow hidden" id="tiltBtn" role="button" tabindex="0">Разрешить управление наклоном?</div>
     <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
     <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
     <!-- 09.09.2026 «Переназначение клавиш» (владелец, для игроков с ограниченной подвижностью руки):
@@ -4011,26 +4112,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.296" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.296"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.296"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.296"></script>
-<script defer src="js/game.js?v=1.478.296" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.296"></script>
-<script defer src="js/sync.js?v=1.478.296"></script>
-<script defer src="js/render.js?v=1.478.296"></script>
-<script defer src="js/planetarium.js?v=1.478.296"></script>
-<script defer src="js/goldstar.js?v=1.478.296"></script>
-<script defer src="js/finish.js?v=1.478.296"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.296"></script>
-<script defer src="js/gyro.js?v=1.478.296"></script>
-<script defer src="js/forge.js?v=1.478.296"></script>
-<script defer src="js/partitura.js?v=1.478.296"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.296"></script>
-<script defer src="js/card.js?v=1.478.296"></script>
-<script defer src="js/star.js?v=1.478.296"></script>
-<script defer src="js/cinema.js?v=1.478.296"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.296"></script>
+<script defer src="js/core.js?v=1.478.302" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.302"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.302"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.302"></script>
+<script defer src="js/game.js?v=1.478.302" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.302"></script>
+<script defer src="js/sync.js?v=1.478.302"></script>
+<script defer src="js/render.js?v=1.478.302"></script>
+<script defer src="js/planetarium.js?v=1.478.302"></script>
+<script defer src="js/goldstar.js?v=1.478.302"></script>
+<script defer src="js/finish.js?v=1.478.302"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.302"></script>
+<script defer src="js/gyro.js?v=1.478.302"></script>
+<script defer src="js/forge.js?v=1.478.302"></script>
+<script defer src="js/partitura.js?v=1.478.302"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.302"></script>
+<script defer src="js/card.js?v=1.478.302"></script>
+<script defer src="js/star.js?v=1.478.302"></script>
+<script defer src="js/cinema.js?v=1.478.302"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.302"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

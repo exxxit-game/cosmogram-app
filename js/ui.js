@@ -78,6 +78,8 @@ function backAction(){
   else if(screenName==='card') setScreen('over'); // v1.73.0: карточка — назад к итогам забега
   else if(screenName==='over') toMenu();
   else if(screenName==='feedback') closeFeedback(); // 02.09.2026: владелец, живое устройство — нативная «Назад» на этом экране молчала, ветки не было вовсе
+  else if(screenName==='equality') toMenu(); // 15.09.2026: тот же пропуск, что у feedback выше — «Равноправие»/«Благодарность» появились в setScreen(), сюда добавить забыли
+  else if(screenName==='gratitude') toMenu();
 }
 if (tg && tg.BackButton && tgv('6.1')){
   try{ tg.BackButton.onClick(backAction); }catch(e){}
@@ -368,6 +370,10 @@ function caravanCardFill(){
   const cur=caravanTierGet();
   const desc=flyBtn.querySelector('.modeDesc'); if(desc) desc.textContent=caravanTierDesc(cur);
   if(!seg.children.length){
+    // 15.09.2026 (владелец: «время убрать») — «Время» стояло сверху колонки один заход, снято
+    // тем же днём; «с» на пилюлях («15»/«60»/«180») остаётся снятой (i18n.js), страж 195 живёт
+    // не от неё, а от кольца-орбиты (см. .forgeSegBtn::before ниже) — текст сам по себе никогда
+    // не обрезался.
     CARAVAN_TIERS.forEach(function(v){
       const b=document.createElement('button');
       b.type='button'; b.className='forgeSegBtn'; b.dataset.tier=v;
@@ -375,7 +381,8 @@ function caravanCardFill(){
       seg.appendChild(b);
     });
   }
-  CARAVAN_TIERS.forEach(function(v,i){ seg.children[i].textContent=caravanTierLabel(v); seg.children[i].classList.toggle('sel',cur===v); });
+  const btns=seg.querySelectorAll('.forgeSegBtn');
+  CARAVAN_TIERS.forEach(function(v,i){ btns[i].textContent=caravanTierLabel(v); btns[i].classList.toggle('sel',cur===v); });
 }
 /* 11.09.2026 «Speedrun RSG»: тот же каркас/приём, что у Caravan выше — постоянная трасса
    (SSG, было и остаётся единственным вариантом до сих пор) плюс новая, случайная (RSG).
@@ -396,8 +403,14 @@ function speedrunCardFill(){
       seg.appendChild(b);
     });
   }
-  seg.children[0].textContent=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
-  seg.children[1].textContent=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
+  // 15.09.2026 (владелец: «в спидран будут иконки» — SSG=цель/фикс, RSG=shuffle/случайное):
+  // готовые иконки спрайта (#i-target уже стоит на вкладке Caravan в Топе, #i-shuffle — на
+  // «Перемешать» в Кузнице), не нарисованы заново. title несёт подпись — SSG/RSG остаются
+  // доступны на подсказке/скринридеру, просто не печатаются буквами на самой пилюле.
+  seg.children[0].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-target"></use></svg>';
+  seg.children[0].title=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
+  seg.children[1].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
+  seg.children[1].title=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
 }
 /* 15.09.2026: заменяет modesFill() — экран «Турниры» удалён, те же 7 подписей теперь льются
    в карточки карусели на главном (id карточек не поменялись, put()/speedrunCardFill()/
@@ -435,7 +448,15 @@ function heroCarouselFill(){
 function heroRecordFor(cat){
   if(cat==='touch') return { val:Math.max(saneNumber(Store.get('bestTouch',0),0),saneNumber(Store.get('bestGyro',0),0),saneNumber(Store.get('bestKeys',0),0)), isTime:false };
   if(cat==='daily'){ const tk=trackDayKey(), db=Store.get('dailyBest',null); return { val:(db&&db.d===tk)?saneNumber(db.s,0):0, isTime:false }; }
-  if(cat==='speedrun') return { val:saneNumber(Store.get((typeof speedrunRSGGet==='function'&&speedrunRSGGet())?'srBestRSG':'srBest',0),0), isTime:true };
+  if(cat==='speedrun'){ // 15.09.2026 (владелец: «два рекорда? исправь на один, тот что больше... или лучше»):
+    // раньше показывал ТОЛЬКО рекорд текущего переключателя (ПОСТОЯННАЯ/СЛУЧАЙНАЯ) — при смене
+    // варианта бейдж «прыгал» на другое число, выглядело как два разных рекорда. Теперь один
+    // лучший из двух: время (isTime) — чем меньше, тем лучше, 0 значит «рекорда ещё нет», из
+    // сравнения исключается, если у второго варианта уже есть время.
+    const a=saneNumber(Store.get('srBest',0),0), b=saneNumber(Store.get('srBestRSG',0),0);
+    const best=(a>0&&b>0)?Math.min(a,b):(a>0?a:b);
+    return { val:best, isTime:true };
+  }
   if(cat==='caravan') return { val:saneNumber(Store.get('bestCaravan',0),0), isTime:false };
   if(cat==='slalom') return { val:saneNumber(Store.get('slalomBest',0),0), isTime:true };
   if(cat==='biathlon') return { val:saneNumber(Store.get('biathlonBest',0),0), isTime:true };
@@ -2879,8 +2900,14 @@ wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync)
    могут сами по очереди показываться перед глазами игрока каждые 7 секунд». Раз в 7с — на
    следующую карточку (по кругу), скроллом, тем же scroll-snap, что и у ручного свайпа —
    heroCarouselDotsSync() подхватывает смену сама, отдельно её не дёргаем. Не крутим, если
-   экран сейчас не «меню» (не видно) — бессмысленный скролл невидимого контейнера. */
-setInterval(function(){
+   экран сейчас не «меню» (не видно) — бессмысленный скролл невидимого контейнера.
+   15.09.2026, второй заход (исследование в .knowledge/RESEARCH-2026-09-MENU-REDESIGN-
+   RU-ACCESSIBILITY.md поймало это не как гипотезу — проверено на живом коде): автопрокрутка
+   без паузы/стоп-контрола буквально совпадает с формулировкой WCAG 2.2.2. Не убираем автопро-
+   крутку совсем (владелец её хотел) — глушим НАСОВСЕМ, как только игрок САМ тронул карусель
+   (pointerdown — настоящий жест пальцем/мышью, не путать с событием 'scroll', которое летит и
+   от нашего же programmatic scrollTo() ниже). Дальше карусель стоит там, где её оставили. */
+let heroCarouselAutoT=setInterval(function(){
   if (screenName!=='menu') return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
@@ -2889,6 +2916,7 @@ setInterval(function(){
   const next=(cur+1)%n;
   car.scrollTo({ left: next*w, behavior:'smooth' });
 }, 7000);
+wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
