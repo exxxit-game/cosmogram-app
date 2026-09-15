@@ -1196,6 +1196,12 @@ function workshopRenderList(){
   const requestedSort=workshopSortMode; // 05.09.2026: защита от гонки — быстрый тап по двум чипам подряд не должен дать ответу первого перезаписать второй
   workshopList(requestedSort).then(function(res){
     if(requestedSort!==workshopSortMode) return; // пока летал запрос, игрок уже переключил сортировку — этот ответ больше не актуален
+    // 15.09.2026 (аудит #7): workshopList() возвращает null и при обрыве сети, и при провале
+    // ответа сервера — раньше это тихо схлопывалось в tracks=[] и показывало ТУ ЖЕ фразу «пока
+    // пусто», что и честная пустая категория. Игрок с реальным обрывом сети видел «поделись
+    // своим небом, и оно появится здесь» — совет, который ничего не чинит, потому что причина
+    // была не в отсутствии треков. offline — именно `res===null` (сеть/сервер), не пустой массив.
+    const offline = !res;
     let tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
     const mine=workshopMyVotes();
     if(likedOnly) tracks=tracks.filter(function(t){ return mine.indexOf(t.code)>=0; }); // «Твои» — сужаем уже полученный топ по лайкам, без отдельного запроса на сервер
@@ -1203,7 +1209,9 @@ function workshopRenderList(){
       listEl.innerHTML='';
       if(emptyEl){
         emptyEl.classList.remove('hidden');
-        if(likedOnly){
+        if(offline){
+          emptyEl.textContent=L.syncOffline||'Нет соединения — попробуй позже';
+        } else if(likedOnly){
           // 12.09.2026, владелец, живой тест руками: пустое «Избранное» было тупиком — фраза
           // без действия, непонятно, что делать дальше. Настоящая кнопка вместо тупика.
           emptyEl.innerHTML=(L.workshopEmptyFav||'пока пусто — сохрани понравившееся небо, и оно появится здесь')+
