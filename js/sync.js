@@ -715,6 +715,28 @@ function workshopModerateFeatured(code, featured){ // 12.09.2026: «Выбор �
   });
 }
 
+/* 15.09.2026 «Равноправие»: подпись под Хартией (cosmogram-charter) — тот же приём, что у
+   Мастерской выше (отдельная комната сервера, свой syncFetch-обёртка). status — публично,
+   гостю можно увидеть общий счётчик; sign требует личность (как workshopVote). */
+const CHARTER_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-charter';
+function charterPost(payload){
+  return syncFetch(CHARTER_URL,payload).catch(()=>null);
+}
+function charterStatus(){
+  const body = syncAvailable() ? Object.assign({action:'status'}, syncAuth()) : {action:'status'};
+  return charterPost(body).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+function charterSign(){
+  if(!syncAvailable()) return Promise.resolve(null);
+  return charterPost(Object.assign({action:'sign'}, syncAuth())).then(r=>{
+    if(!r || !r.ok) return null;
+    return r.json().catch(()=>null);
+  });
+}
+
 /* 05.09.2026 «Удалить мои данные»: отдельная комната cosmogram-privacy, тот же приём, что
    у Мастерской — своё identity-подтверждение, необратимое действие держим подальше от
    большого cosmogram-sync. Требует настоящую личность — без входа стирать нечего и некому. */

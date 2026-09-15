@@ -3900,8 +3900,39 @@ wireOn('feedbackBackBtn', 'click', closeFeedback);
 wireOn('feedbackSendBtn', 'click', feedbackSend);
 // 15.09.2026 «Равноправие»/«Благодарность»: оба — простые статичные экраны, открываются
 // только из меню, тот же минимальный приём, что у setScreen+toMenu пары hangar/ach выше.
-wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); });
+wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); charterSignFill(); });
 wireOn('equalityBackBtn', 'click', toMenu);
+/* 15.09.2026 «Равноправие»: подпись под Хартией — общий счётчик (cosmogram-charter, js/sync.js).
+   charterSignFill() — при каждом открытии экрана, спрашивает status заново (число могло
+   вырасти у других игроков, и свежая правда важнее лишнего запроса раз за открытие экрана). */
+let _chSignBusy=false;
+function charterSignFill(){
+  const lead=$('chSignLead'), btn=$('chSignBtn'), lbl=$('chSignBtnLbl'), count=$('chSignCount');
+  if(!lead||!btn||!lbl||!count) return;
+  lead.textContent=L.chSignLead; lbl.textContent=L.chSignBtnLbl; count.textContent='';
+  charterStatus().then(function(r){
+    if(!r || !r.ok){ count.textContent=L.chSignOffline; return; }
+    count.textContent=L.chSignCount(r.count);
+    if(r.signed){ lead.textContent=L.chSignLeadDone; btn.classList.add('sel'); lbl.textContent=L.chSignBtnDone; }
+    else { btn.classList.remove('sel'); }
+  });
+}
+wireOn('chSignBtn', 'click', function(){
+  const btn=$('chSignBtn');
+  if(!btn || btn.classList.contains('sel') || _chSignBusy) return; // уже подписано — необратимо, второй раз не шлём
+  if(!syncAvailable()){ toast(L.chSignOffline,'rgba(255,159,176,.5)'); return; }
+  _chSignBusy=true; haptic('light'); sfx.click();
+  charterSign().then(function(r){
+    _chSignBusy=false;
+    if(!r || !r.ok){ toast(L.chSignOffline,'rgba(255,159,176,.5)'); return; }
+    const lead=$('chSignLead'), lbl=$('chSignBtnLbl'), count=$('chSignCount');
+    if(lead) lead.textContent=L.chSignLeadDone;
+    if(lbl) lbl.textContent=L.chSignBtnDone;
+    if(count) count.textContent=L.chSignCount(r.count);
+    btn.classList.add('sel');
+    haptic('success');
+  });
+});
 wireOn('gratitudeBtn', 'click', ()=>{ setScreen('gratitude'); sfx.click(); });
 wireOn('gratitudeBackBtn', 'click', toMenu);
 wireOn('feedbackText', 'input', feedbackUpdateCount);

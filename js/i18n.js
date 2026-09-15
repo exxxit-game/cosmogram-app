@@ -199,6 +199,8 @@ const I18N = {
     home:'На экран «Домой»',
     feedbackBtn:'Поддержка', feedbackTitle:'Поддержка', // 15.09.2026 (владелец): кнопка на главном тоже стала «Поддержка» — было «Написать разработчику», теперь то же слово, что и заголовок экрана
     equalityBtn:'Равноправие', equalityTitle:'Равноправие', gratitudeBtn:'Благодарность', gratitudeTitle:'Благодарность',
+    chSignLead:'Если ты согласен с этими словами — поставь свою подпись под Хартией', chSignLeadDone:'Спасибо. Твоя подпись — часть Хартии, как и подписи остальных',
+    chSignBtnLbl:'Подписать', chSignBtnDone:'Подписано', chSignCount:(n)=>n+' пилотов подписали Хартию', chSignOffline:'Нет соединения — попробуй позже', // 15.09.2026 «Равноправие»: подпись под Хартией
     gratitudeSoonTitle:'Скоро', gratitudeSoonDesc:'Здесь появится «Небо благодарности» — каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.',
     feedbackHint:'Идея, вопрос или ошибка. Читаю каждое сообщение. С уважением, EXXXIT.', // 08.09.2026, владелец: «создатель игры» → подпись студии, как на карточке ниже на этом же экране
     feedbackPlaceholder:'Опишите, что случилось или добавьте автодиагностику и скриншот.', feedbackSend:'Отправить', // 08.09.2026, владелец: подсказка теперь явно называет обе кнопки ниже — не обязательно писать текст, если приложить диагностику/снимок; 13.09.2026, владелец: точка в конце фразы
@@ -382,6 +384,8 @@ const I18N = {
     stars:'Stars', maxCombo:'Max combo', share:'Share', bestByControl:'Personal records by control',
     feedbackBtn:'Support', feedbackTitle:'Support',
     equalityBtn:'Equality', equalityTitle:'Equality', gratitudeBtn:'Gratitude', gratitudeTitle:'Gratitude',
+    chSignLead:'If you agree with these words, add your signature to the Charter', chSignLeadDone:'Thank you. Your signature is now part of the Charter, alongside everyone else\'s',
+    chSignBtnLbl:'Sign', chSignBtnDone:'Signed', chSignCount:(n)=>n+' pilots have signed the Charter', chSignOffline:'No connection — try again later',
     gratitudeSoonTitle:'Coming soon', gratitudeSoonDesc:'The "Sky of gratitude" is coming — every thank-you in Stars lights its own star in the sky shared by every player.',
     feedbackHint:'An idea, a question, or a bug. I read every message. — The game’s creator',
     feedbackPlaceholder:'Describe what happened', feedbackSend:'Send',
@@ -546,6 +550,8 @@ const I18N = {
     stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', home:'Añadir a inicio', bestByControl:'Récords personales por control',
     feedbackBtn:'Soporte', feedbackTitle:'Soporte',
     equalityBtn:'Igualdad', equalityTitle:'Igualdad', gratitudeBtn:'Gratitud', gratitudeTitle:'Gratitud',
+    chSignLead:'Si estás de acuerdo con estas palabras, firma la Carta', chSignLeadDone:'Gracias. Tu firma ya es parte de la Carta, junto a las demás',
+    chSignBtnLbl:'Firmar', chSignBtnDone:'Firmado', chSignCount:(n)=>n+' pilotos han firmado la Carta', chSignOffline:'Sin conexión — inténtalo más tarde',
     gratitudeSoonTitle:'Próximamente', gratitudeSoonDesc:'Aquí aparecerá el «Cielo de la gratitud» — cada gracias en Stars enciende su propia estrella en el cielo compartido por todos los jugadores.',
     feedbackHint:'Una idea, una pregunta o un error. Leo cada mensaje. Atentamente, el creador del juego.',
     feedbackPlaceholder:'Describe qué pasó', feedbackSend:'Enviar',
@@ -729,6 +735,8 @@ const I18N = {
     stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', home:'Adicionar à tela inicial', bestByControl:'Recordes pessoais por controle',
     feedbackBtn:'Suporte', feedbackTitle:'Suporte',
     equalityBtn:'Igualdade', equalityTitle:'Igualdade', gratitudeBtn:'Gratidão', gratitudeTitle:'Gratidão',
+    chSignLead:'Se concordas com estas palavras, assina a Carta', chSignLeadDone:'Obrigado. A tua assinatura já faz parte da Carta, junto com as outras',
+    chSignBtnLbl:'Assinar', chSignBtnDone:'Assinado', chSignCount:(n)=>n+' pilotos assinaram a Carta', chSignOffline:'Sem ligação — tenta mais tarde',
     gratitudeSoonTitle:'Em breve', gratitudeSoonDesc:'Aqui vai aparecer o «Céu da gratidão» — cada obrigado em Stars acende sua própria estrela no céu compartilhado por todos os jogadores.',
     feedbackHint:'Uma ideia, uma pergunta ou um erro. Leio cada mensagem. Atenciosamente, o criador do jogo.',
     feedbackPlaceholder:'Descreva o que aconteceu', feedbackSend:'Enviar',
@@ -913,6 +921,8 @@ const I18N = {
     stars:'Étoiles', maxCombo:'Combo max', share:'Partager', bestByControl:'Records personnels par contrôle',
     feedbackBtn:'Support', feedbackTitle:'Support',
     equalityBtn:'Égalité', equalityTitle:'Égalité', gratitudeBtn:'Gratitude', gratitudeTitle:'Gratitude',
+    chSignLead:'Si tu es d\'accord avec ces mots, signe la Charte', chSignLeadDone:'Merci. Ta signature fait désormais partie de la Charte, aux côtés des autres',
+    chSignBtnLbl:'Signer', chSignBtnDone:'Signé', chSignCount:(n)=>n+' pilotes ont signé la Charte', chSignOffline:'Pas de connexion — réessaie plus tard',
     gratitudeSoonTitle:'Bientôt', gratitudeSoonDesc:'Le « Ciel de la gratitude » arrive bientôt — chaque merci en Stars allume sa propre étoile dans le ciel partagé par tous les joueurs.',
     feedbackHint:'Une idée, une question ou un bug. Je lis chaque message. Bien à toi, le créateur du jeu.',
     feedbackPlaceholder:'Décris ce qui s\'est passé', feedbackSend:'Envoyer',
