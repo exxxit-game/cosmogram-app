@@ -144,6 +144,8 @@ function setScreen(name){
   toggleCls('settingsScreen','hidden', name!=='settings');
   toggleCls('diagScreen','hidden', name!=='diag'); // v1.66.3: сервисный центр — свой экран
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
+  toggleCls('equalityScreen','hidden', name!=='equality'); // 15.09.2026: «Равноправие» — текст Хартии
+  toggleCls('gratitudeScreen','hidden', name!=='gratitude'); // 15.09.2026: «Благодарность» — заглушка «Скоро»
   toggleCls('relayMineScreen','hidden', name!=='relayMine'); // 07.09.2026: «Мои эстафеты» — единственный способ узнать судьбу этапа после сдачи
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
@@ -222,7 +224,8 @@ function setScreen(name){
    Kembali/Back — самые широкие пилюли «Tillbaka»/«Indietro» укладывались в этот запас). */
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
   feedback:'feedbackTitle',hangar:'hangarTitle', // 15.09.2026: 'modes' убран — экран «Турниры» удалён
-  ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle',forge:'forgeTitle'};
+  ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle',forge:'forgeTitle',
+  equality:'equalityTitle',gratitude:'gratitudeTitle'}; // 15.09.2026: см. UNIFORM_TITLE_IDS ниже — оба НЕ в общем наборе, каждый считает свой минимум сам
   /* 15.09.2026 (владелец: «и конструктор чтобы он поместился между кнопок по размеру текста, в
      один ряд с ними поставь»): 'forge' раньше сюда не входил — старый одиночный shrinkScreenTitle()
      сажал «КОНСТРУКТОР» на пол 24px и он всё равно не влезал в 28%-зону (владелец: «стало тупо»),
@@ -3857,6 +3860,12 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
 wireOn('feedbackBtn', 'click', ()=>openFeedback('menu'));
 wireOn('feedbackBackBtn', 'click', closeFeedback);
 wireOn('feedbackSendBtn', 'click', feedbackSend);
+// 15.09.2026 «Равноправие»/«Благодарность»: оба — простые статичные экраны, открываются
+// только из меню, тот же минимальный приём, что у setScreen+toMenu пары hangar/ach выше.
+wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); });
+wireOn('equalityBackBtn', 'click', toMenu);
+wireOn('gratitudeBtn', 'click', ()=>{ setScreen('gratitude'); sfx.click(); });
+wireOn('gratitudeBackBtn', 'click', toMenu);
 wireOn('feedbackText', 'input', feedbackUpdateCount);
 
 /* ---------- Локализация DOM ---------- */
@@ -3883,6 +3892,15 @@ function applyLang(){
   setText('finalScoreLabel',L.finalScoreLabel);
   setText('hangarBtn',L.hangar);
   setText('feedbackBtn',L.feedbackBtn);
+  setText('equalityBtn',L.equalityBtn);
+  setText('equalityTitle',L.equalityTitle);
+  setText('gratitudeBtn',L.gratitudeBtn);
+  setText('gratitudeTitle',L.gratitudeTitle);
+  setText('gratitudeSoonTitle',L.gratitudeSoonTitle);
+  setText('gratitudeSoonDesc',L.gratitudeSoonDesc);
+  // 15.09.2026: сам текст Хартии (#equalityScreen .charterBody) НЕ переводится язык-переключателем —
+  // канонический документ существует только на русском (.knowledge/CHARTER.md), машинный перевод
+  // юридически-ценностного текста рискует исказить смысл; заголовок экрана и кнопка меню — переведены.
   setText('duelBtn',L.duelBtn);
   setText('settingsBtn',L.settings);
   setText('homeBtn',L.home);
