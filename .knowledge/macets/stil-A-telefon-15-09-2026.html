@@ -1,0 +1,57 @@
+<title>Макет: стиль A на телефоне</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{ --text:#e8ecf7; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;background:#0b1626;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow-x:hidden}
+.scr{min-height:100vh;padding:28px 18px 24px;display:flex;flex-direction:column;position:relative;
+  background:radial-gradient(ellipse at 50% -10%, #17264a 0%, #0b1626 55%, #060c18 100%);}
+.vortex{position:absolute;inset:0;opacity:.55;pointer-events:none}
+.brand{text-align:center;margin-bottom:18px}
+.brandTitle{font-size:30px;font-weight:800;letter-spacing:.02em;
+  background:linear-gradient(180deg,#f0c040,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 24px rgba(240,192,64,.35)}
+.brandSub{font-size:13px;margin-top:4px;color:#fce1b6}
+.heroWrap{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;margin:18px 0}
+.heroCard{width:100%;border-radius:20px;padding:22px;position:relative;overflow:hidden;min-height:170px;display:flex;flex-direction:column;justify-content:flex-end;
+  background:linear-gradient(160deg,rgba(30,48,92,.85),rgba(8,14,34,.9));border:1px solid rgba(201,164,92,.45);box-shadow:0 0 34px rgba(201,164,92,.14) inset}
+.heroIcon{position:absolute;top:16px;right:16px;width:64px;height:64px}
+.modeName{font-size:19px;font-weight:800;color:#fff}
+.modeDesc{font-size:13px;line-height:1.4;margin-top:5px;color:#b9c3e0}
+.dots{display:flex;gap:7px;justify-content:center}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25)}
+.dot.on{background:#f0c040}
+.konBtn{width:100%;border-radius:16px;padding:15px;text-align:center;font-size:15px;font-weight:700;margin-bottom:12px;
+  background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ghostBtn{border-radius:14px;padding:14px 8px;text-align:center;font-size:13px;font-weight:600;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e8ecf7}
+.tag{position:fixed;top:8px;left:12px;font-size:10px;color:rgba(255,255,255,.35);z-index:5}
+</style>
+<div class="tag">МАКЕТ — вариант A, design-only</div>
+<div class="scr">
+  <svg class="vortex" viewBox="0 0 280 600" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="rgba(201,164,92,.35)" fill="none" stroke-width="1">
+      <ellipse cx="140" cy="55" rx="30" ry="10"/><ellipse cx="140" cy="55" rx="60" ry="20"/>
+      <ellipse cx="140" cy="55" rx="95" ry="34"/><ellipse cx="140" cy="55" rx="135" ry="50"/>
+      <ellipse cx="140" cy="55" rx="180" ry="70"/>
+    </g>
+  </svg>
+  <div class="brand">
+    <div class="brandTitle">Cosmogram</div>
+    <div class="brandSub">Одно небо для всех</div>
+  </div>
+  <div class="heroWrap">
+    <div class="heroCard">
+      <svg class="heroIcon" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" stroke="#f0c040" stroke-width="1" opacity=".6"/><circle cx="27" cy="27" r="4" fill="#f0c040"/></svg>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+    <div class="dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>
+  <div class="konBtn">Конструктор</div>
+  <div class="grid2">
+    <div class="ghostBtn">ТЮНИНГ</div><div class="ghostBtn">Достижения</div>
+    <div class="ghostBtn">Равноправие</div><div class="ghostBtn">Благодарность</div>
+    <div class="ghostBtn">Поддержка</div><div class="ghostBtn">Настройки</div>
+  </div>
+</div>
