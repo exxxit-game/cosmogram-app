@@ -59,7 +59,7 @@ const I18N = {
     dailyOnce:'2 попытки', dailyLeft:(n)=>(n===1?'осталась ':'осталось ')+n, dailyLocked:(s)=>'На сегодня попытки кончились · твой полёт: '+s+' · новые попытки завтра, небо то же весь месяц',
     modeCaravan:'Caravan', modeCaravanD:'60 секунд на очки — время решает, не жизни', caravanNewBest:'Новый рекорд Caravan', // 05.09.2026: имя дисциплины (Cave, аркады) не переводится, как Speedrun
     modeCaravanD15:'15 секунд на очки — время решает, не жизни', modeCaravanD180:'180 секунд на очки — время решает, не жизни',
-    caravanBullet:'15 секунд', caravanBlitz:'60 секунд', caravan180:'180 секунд', // 07.09.2026: были шахматные термины «Пуля»/«Блиц» — владелец вживую: слово «Пуля» не нравится, при таком запасе места проще прямо число секунд, всем понятно без словаря; третий тайминг (180с) добавлен следом же — рекорд общий текст (caravanNewBest) не различает тир
+    caravanBullet:'15 с', caravanBlitz:'60 с', caravan180:'180 с', // 07.09.2026: были шахматные термины «Пуля»/«Блиц» — владелец вживую: слово «Пуля» не нравится, при таком запасе места проще прямо число секунд, всем понятно без словаря; третий тайминг (180с) добавлен следом же — рекорд общий текст (caravanNewBest) не различает тир; 15.09.2026 (владелец, скрин с макетом): «секунд» три раза подряд — лишнее, сократил до «с»
     noMiss:'Без единого удара', pacifist:'Только уклонение', // 05.09.2026: бейджи поверх обычных забегов, не режимы
     modeSlalom:'Без касаний', modeSlalomD:'Ворота на время — одно касание срывает заезд', slalomFinish:'Финиш!', slalomNewBest:'Новый рекорд «Без касаний»', slalomDQ:'Срыв — задел ворота', // 06.09.2026; 08.09.2026: «Слалом» — чужой вид спорта (склон, лыжи); «Створ» — навигационный термин, малопонятный без объяснения; «Без касаний» (владелец) — прямо называет правило, оно и так уже было в описании ниже
     modeBiathlon:'Биатлон', modeBiathlonD:'Скорость + 2 рубежа «собери всё», штраф — время', biathlonFinish:'Финиш!', biathlonNewBest:'Новый рекорд Биатлона',
@@ -324,7 +324,7 @@ const I18N = {
     dailyOnce:'2 attempts', dailyLeft:(n)=>n+' left', dailyLocked:(s)=>'Out of attempts for today · your flight: '+s+' · new attempts tomorrow, same sky all month',
     modeCaravan:'Caravan', modeCaravanD:'60 seconds for points — the clock decides, not your lives', caravanNewBest:'New Caravan record',
     modeCaravanD15:'15 seconds for points — the clock decides, not your lives', modeCaravanD180:'180 seconds for points — the clock decides, not your lives',
-    caravanBullet:'15 seconds', caravanBlitz:'60 seconds', caravan180:'180 seconds',
+    caravanBullet:'15s', caravanBlitz:'60s', caravan180:'180s',
     noMiss:'Not a single hit', pacifist:'Evasion only',
     modeSlalom:'Slalom', modeSlalomD:'Gates against the clock — one touch ends the run', slalomFinish:'Finish!', slalomNewBest:'New Slalom record', slalomDQ:'Disqualified — hit a gate',
     modeBiathlon:'Biathlon', modeBiathlonD:'Speed + 2 "collect everything" ranges, penalty is time', biathlonFinish:'Finish!', biathlonNewBest:'New Biathlon record',
@@ -492,7 +492,7 @@ const I18N = {
     dailyLocked:(s)=>'Sin intentos por hoy · tu vuelo: '+s+' · nuevos intentos mañana, mismo cielo todo el mes',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para puntos — decide el reloj, no las vidas', caravanNewBest:'Nuevo récord de Caravan',
     modeCaravanD15:'15 segundos para puntos — decide el reloj, no las vidas', modeCaravanD180:'180 segundos para puntos — decide el reloj, no las vidas',
-    caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
+    caravanBullet:'15 s', caravanBlitz:'60 s', caravan180:'180 s',
     noMiss:'Ni un solo golpe', pacifist:'Solo esquivar',
     modeSlalom:'Eslalon', modeSlalomD:'Puertas contrarreloj — un toque anula la carrera', slalomFinish:'¡Meta!', slalomNewBest:'Nuevo récord de Eslalon', slalomDQ:'Descalificado — tocó una puerta',
     modeBiathlon:'Biatlón', modeBiathlonD:'Velocidad + 2 tramos "recoge todo", la penalización es tiempo', biathlonFinish:'¡Meta!', biathlonNewBest:'Nuevo récord de Biatlón',
@@ -675,7 +675,7 @@ const I18N = {
     dailyLocked:(s)=>'Sem tentativas por hoje · seu voo: '+s+' · novas tentativas amanhã, mesmo céu o mês todo',
     modeCaravan:'Caravan', modeCaravanD:'60 segundos para pontos — o relógio decide, não as vidas', caravanNewBest:'Novo recorde de Caravan',
     modeCaravanD15:'15 segundos para pontos — o relógio decide, não as vidas', modeCaravanD180:'180 segundos para pontos — o relógio decide, não as vidas',
-    caravanBullet:'15 segundos', caravanBlitz:'60 segundos', caravan180:'180 segundos',
+    caravanBullet:'15 s', caravanBlitz:'60 s', caravan180:'180 s',
     noMiss:'Nem um golpe sequer', pacifist:'Só desviar',
     modeSlalom:'Slalom', modeSlalomD:'Portões contra o tempo — um toque anula a corrida', slalomFinish:'Chegada!', slalomNewBest:'Novo recorde de Slalom', slalomDQ:'Desclassificado — tocou um portão',
     modeBiathlon:'Biatlo', modeBiathlonD:'Velocidade + 2 trechos "pegue tudo", a penalidade é tempo', biathlonFinish:'Chegada!', biathlonNewBest:'Novo recorde de Biatlo',
@@ -855,7 +855,7 @@ const I18N = {
     dailyOnce:'2 tentatives', dailyLeft:(n)=>n+(n===1?' restant':' restants'), dailyLocked:(s)=>'Plus de tentatives aujourd’hui · ton vol : '+s+' · nouvelles tentatives demain, même ciel tout le mois',
     modeCaravan:'Caravan', modeCaravanD:'60 secondes pour marquer des points — l’horloge décide, pas tes vies', caravanNewBest:'Nouveau record Caravan',
     modeCaravanD15:'15 secondes pour marquer des points — l’horloge décide, pas tes vies', modeCaravanD180:'180 secondes pour marquer des points — l’horloge décide, pas tes vies',
-    caravanBullet:'15 secondes', caravanBlitz:'60 secondes', caravan180:'180 secondes',
+    caravanBullet:'15 s', caravanBlitz:'60 s', caravan180:'180 s',
     noMiss:'Pas un seul coup', pacifist:'Esquive uniquement',
     modeSlalom:'Slalom', modeSlalomD:'Portes contre la montre — un contact annule la course', slalomFinish:'Arrivée !', slalomNewBest:'Nouveau record de Slalom', slalomDQ:'Disqualifié — porte touchée',
     modeBiathlon:'Biathlon', modeBiathlonD:'Vitesse + 2 zones « tout ramasser », la pénalité est du temps', biathlonFinish:'Arrivée !', biathlonNewBest:'Nouveau record de Biathlon',
