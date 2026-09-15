@@ -116,7 +116,11 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
 .heroCard .recordBadge{position:absolute;top:9px;left:9px;display:flex;align-items:center;gap:3px;padding:3px 7px;
   border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24);font-size:10px;
   font-weight:700;color:var(--gold-hi)}
-.heroCard .playHintCv{position:absolute;top:41px;right:9px;width:26px;height:26px;border-radius:50%;
+/* 15.09.2026, пятый заход (владелец, живой скрин с обводкой): самолётик — в правый нижний
+   угол, тем же местом, что теперь «Полёт» на карточке Мастерской (раздел 1) — одна семья,
+   один и тот же угол для «запусти полёт» на всех трёх карточках. Было top:41px (под
+   рекорд-бейджем) — реальное текущее место в игре, здесь уже правка поверх него. */
+.heroCard .playHintCv{position:absolute;bottom:9px;right:9px;width:26px;height:26px;border-radius:50%;
   background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;
   justify-content:center}
 .heroCard .playHintCv svg{width:14px;height:14px}
@@ -132,7 +136,12 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
 
 .forgePreview2{position:relative;border-radius:16px;height:130px;overflow:hidden;
   background:linear-gradient(160deg,#1a2a52,#0c1830 75%);border:1px solid var(--line)} /* 15.09.2026: та же единая высота 130px, что у карточки режима и Мастерской — раньше здесь было 100px, третий, отдельный размер */
-.fp2name{position:absolute;top:8px;left:10px;font-size:12px;color:var(--muted);text-transform:none}
+/* 15.09.2026, пятый заход (владелец: «имя по середине, а не на иконку») — раньше имя
+   сидело в верхнем левом углу вплотную к значку «Перемешать», визуально налезало на него.
+   По центру карточки, во всю ширину — свободная зона между верхним рядом значков и
+   стикерами внизу, где точно ничего больше нет. */
+.fp2name{position:absolute;top:50%;left:10px;right:10px;transform:translateY(-50%);
+  font-size:13px;color:var(--muted);text-transform:none;text-align:center}
 .fp2stickers{position:absolute;left:10px;bottom:7px;display:flex;gap:5px}
 
 .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:8px}
@@ -219,10 +228,11 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
 
 <div class="section">
   <div class="secHead"><span class="n">2</span><h2>Карточка режима (главный экран)</h2>
-  <span class="status keep">Уже совпадает — сверка</span></div>
-  <p class="note">Рекорд/скругление/высота 130px, имя+описание, самолётик как кнопка полёта уже сделаны почти
-  в этом же языке (тот же самолётик-иконка, что предлагается для Мастерской выше). Оставляю как есть,
-  показываю только для сравнения — три карточки на одном экране должны читаться одной семьёй.</p>
+  <span class="status change">Самолётик переезжает в угол</span></div>
+  <p class="note">Рекорд/скругление/высота 130px, имя+описание — как есть. Единственная правка (владелец,
+  15.09.2026): самолётик-кнопка полёта переезжает из-под бейджа рекорда в правый нижний угол — тот же
+  угол, что теперь «Полёт» на карточке Мастерской выше. Одна семья — один и тот же угол для «лети» на
+  всех трёх карточках.</p>
   <div class="col" style="max-width:280px">
     <div class="heroCard">
       <div class="recordBadge">🏆 10 195</div>
