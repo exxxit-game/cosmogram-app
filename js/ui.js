@@ -3134,6 +3134,16 @@ function diagReport(){
   Ln.push('canvas: '+(typeof canvasContextLost!=='undefined'&&canvasContextLost?'context-lost':'ready')+' dpr-cap '+dprCap);
   Ln.push('motion: '+(RM?'reduce':'full')+' ink '+(P3?'display-p3':'srgb'));
   Ln.push('lang: '+LANG);
+  /* 15.09.2026 (владелец, живой отчёт): сданный этап Эстафеты не дошёл до сервера
+     («Мои эстафеты» пусто), а живых данных для разбора не было — очередь relayQ
+     (js/sync.js syncRelayEnqueue/syncRelayFlush) нигде не видна снаружи. Одна строка:
+     если очередь пуста — запись даже не встала в очередь (гейт в gameOver() отсёк её,
+     скорее всего S.relayChainId/rec.length); если непуста — встала, но ни разу не
+     смогла улететь (сеть/сервер), тогда чинить нужно flush, не гейт. */
+  try{
+    const rq=Store.get('relayQ',[]);
+    Ln.push('relayQ: '+(Array.isArray(rq)?rq.length:'?')+(Array.isArray(rq)&&rq.length?' ['+rq.map(x=>x&&(x.chain_id+':'+x.leg)).join(', ')+']':''));
+  }catch(e){ Ln.push('relayQ: err'); }
   return Ln.join('\n');
 }
 wireOn('diagVibroBtn', 'click', ()=>{ // v1.60.0: длинный сильный сигнал + честный диагноз канала
