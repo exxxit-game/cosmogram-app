@@ -62,15 +62,25 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
   border-radius:14px;cursor:pointer;background:transparent;border:1px solid var(--line-gold);color:var(--cream);
   text-transform:uppercase;font-family:inherit}
 
-/* ---- новый ряд действий: две иконки вместо двух больших кнопок ---- */
-.wActionIcons{display:flex;justify-content:flex-end;gap:8px;margin-top:2px}
+/* ---- 15.09.2026, второй заход (владелец, разметил скриншот): небо теперь занимает ВСЮ
+   карточку — никакой отдельной тёмной полосы снизу под текстом/кнопками. Все элементы
+   (имя, значки, стикеры, кнопки-иконки) лежат прямо на картинке неба, тем же приёмом,
+   что уже (i)/звезда/сердце. Карточка = одна картинка целиком, ничего больше. ---- */
+.wRowFull{padding:0;overflow:hidden}
+.wBannerFull{height:168px;border-radius:16px;margin:0;width:100%}
 .iconBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;flex:none}
-.iconBtn.fly{background:rgba(240,192,64,.14);border-color:rgba(240,192,64,.55)}
+.iconBtn.fly{background:rgba(240,192,64,.16);border-color:rgba(240,192,64,.6)}
 .iconBtn svg{width:17px;height:17px}
 .iconBtn.edit svg{width:15px;height:15px}
-.iconLbl{font-size:8.5px;text-align:center;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.iconLbl{font-size:8.5px;text-align:center;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;
+  text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .iconBtnWrap{display:flex;flex-direction:column;align-items:center}
+.wActionIconsOverlay{position:absolute;bottom:8px;right:8px;display:flex;gap:8px;z-index:5}
+.wCornerStackTop{position:absolute;top:40px;right:8px;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:5}
+.wCornerStackTop .wCorner{width:22px;height:22px}
+.wCornerStackTop .wCorner svg{width:12px;height:12px}
+.wStickerRowBottom{position:absolute;left:10px;bottom:10px;display:flex;gap:5px;z-index:5}
 
 /* ---- hero/режим карточка (для сверки — почти без изменений) ---- */
 .heroCard{position:relative;border-radius:16px;overflow:hidden;padding:12px 13px 10px;height:130px;
@@ -153,24 +163,29 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
     <div class="arrow">→</div>
     <div class="col">
       <div class="colLbl after">Станет</div>
-      <div class="wRow">
-        <div class="wBanner b2">
+      <div class="wRow wRowFull">
+        <div class="wBanner wBannerFull b2">
           <div class="wScrim"></div>
           <div class="wTopRow"><div class="wName">Пульсар</div>
             <div class="wCornerRow"><div class="wCorner"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></div></div>
           </div>
-          <div class="wCornerStack">
-            <div class="wCorner" style="background:transparent;border-color:rgba(219,169,60,.5)"><svg viewBox="0 0 24 24" fill="none" stroke="#dba93c" stroke-width="1.6"><path d="M12 2l2.6 7.9H23l-6.7 4.9 2.6 7.9-6.9-5-6.9 5 2.6-7.9L1 9.9h8.4z"/></svg></div>
+          <!-- звезда «отмечено мной» — ЗАЛИТАЯ (active), чтобы было видно, как выглядит настоящая
+               метка владельца, не только пустой контур; сердце — своё обычное состояние рядом -->
+          <div class="wCornerStackTop">
+            <div class="wCorner" style="background:#dba93c;border-color:#dba93c"><svg viewBox="0 0 24 24" fill="#2c1f08"><path d="M12 2l2.6 7.9H23l-6.7 4.9 2.6 7.9-6.9-5-6.9 5 2.6-7.9L1 9.9h8.4z"/></svg></div>
             <div class="wCorner" style="background:rgba(255,159,176,.15);border-color:rgba(255,159,176,.5);color:#ff9fb0"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"/></svg></div>
           </div>
-          <div class="wBannerText"><div class="wStickerRow">
+          <div class="wStickerRowBottom">
             <div class="wSticker" style="color:#d99a4e"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7"/></svg></div>
             <div class="wSticker" style="color:#22b8dd"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="9" width="16" height="6" rx="2"/></svg></div>
-          </div></div>
-        </div>
-        <div class="wActionIcons">
-          <div class="iconBtnWrap"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div><div class="iconLbl">Изменить</div></div>
-          <div class="iconBtnWrap"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div><div class="iconLbl">Полёт</div></div>
+          </div>
+          <!-- порядок значков — Полёт первым (слева), как в исходном ряду кнопок (было
+               «Полёт»/«Изменить» слева направо) — владелец поправил, я в первом заходе
+               случайно поменял местами -->
+          <div class="wActionIconsOverlay">
+            <div class="iconBtnWrap"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div><div class="iconLbl">Полёт</div></div>
+            <div class="iconBtnWrap"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div><div class="iconLbl">Изменить</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -234,16 +249,16 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
     <div class="legendItem"><div class="iconBtn edit"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/></svg></div>Изменить (новое)</div>
     <div class="legendItem"><div class="iconBtn fly"><svg viewBox="0 0 24 24" fill="#f0c040"><path d="M3 12l18-8-6 8 6 8-18-8z"/></svg></div>Полёт (новое, тот же смысл, что самолётик режима)</div>
   </div>
-  <h3 style="margin-top:16px">Что не решено этим макетом — вопросы владельцу</h3>
-  <p><b>1.</b> «Полёт»/«Изменить» — сделать значками одного размера (34px, как на макете), или как у остальных
-  мелких значков карточки (26px)? На макете взял покрупнее — это единственные два действия, что реально
-  запускают что-то (не просто открывают панель), могут заслуживать чуть больше веса.</p>
-  <p><b>2.</b> Подпись под значком («Полёт»/«Изменить» мелким текстом) — оставить, как на макете, или значки
-  без подписи, раз игрок уже видел их смысл на этом же экране? Один из старых уроков этого же проекта
-  (страж 194, «Сюрприз» без подписи) — голая иконка без знакомого контекста путает; здесь контекст уже
-  есть (те же слова были текстом на кнопках), поэтому не обязательно, но перестраховка недорога.</p>
-  <p><b>3.</b> Стикеры в превью «Создать» — показывать сразу по мере добавления препятствия, или только когда
-  игрок дошёл до шага «Сохранить»? Технически проще сразу (та же функция, что уже красит ленту).</p>
+  <h3 style="margin-top:16px">Правки от 15.09.2026 (владелец, по разметке скриншота)</h3>
+  <p><b>1.</b> Порядок значков — Полёт слева, Изменить справа (в первой версии макета было наоборот
+  случайно). Исправлено.</p>
+  <p><b>2.</b> Звезда «отмечено мной» — показана в залитом (активном) состоянии, чтобы было видно,
+  как она выглядит по-настоящему, не только пустой контур.</p>
+  <p><b>3.</b> Небо теперь занимает карточку целиком — тёмная полоса под картинкой, что отделяла её
+  от кнопок, убрана. Имя, стикеры, значки-действия лежат прямо на картинке неба, тем же приёмом,
+  что уже (i)/звезда/сердце.</p>
+  <p style="margin-top:10px;color:var(--ok)">Владелец подтвердил: остальное в макете одобрено —
+  переходим к реализации в реальном коде.</p>
 </div>
 
 </body>
