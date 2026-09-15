@@ -66,8 +66,13 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
    карточку — никакой отдельной тёмной полосы снизу под текстом/кнопками. Все элементы
    (имя, значки, стикеры, кнопки-иконки) лежат прямо на картинке неба, тем же приёмом,
    что уже (i)/звезда/сердце. Карточка = одна картинка целиком, ничего больше. ---- */
+/* 15.09.2026, четвёртый заход (владелец: «размер сильно большой, у всех должен быть один
+   идеально удобный размер») — единая высота 130px для ВСЕХ трёх карточек (карточка
+   режима/главный экран, Мастерская/Играть, превью Создать) — то самое число, что уже
+   было у карточки режима (раздел 2 ниже, там и осталось «как есть») и уже принято живым
+   вниманием владельца как удобное; было 168px только у этой карточки — лишнее, ужато. */
 .wRowFull{padding:0;overflow:hidden}
-.wBannerFull{height:168px;border-radius:16px;margin:0;width:100%}
+.wBannerFull{height:130px;border-radius:16px;margin:0;width:100%}
 .iconBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;flex:none}
 .iconBtn.fly{background:rgba(240,192,64,.16);border-color:rgba(240,192,64,.6)}
@@ -125,8 +130,8 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
 .pvBtn svg{width:16px;height:16px;color:#fff}
 .pvBtn.r{left:auto;right:10px}
 
-.forgePreview2{position:relative;border-radius:16px 16px 12px 12px;height:100px;overflow:hidden;
-  background:linear-gradient(160deg,#1a2a52,#0c1830 75%);border:1px solid var(--line)}
+.forgePreview2{position:relative;border-radius:16px;height:130px;overflow:hidden;
+  background:linear-gradient(160deg,#1a2a52,#0c1830 75%);border:1px solid var(--line)} /* 15.09.2026: та же единая высота 130px, что у карточки режима и Мастерской — раньше здесь было 100px, третий, отдельный размер */
 .fp2name{position:absolute;top:8px;left:10px;font-size:12px;color:var(--muted);text-transform:none}
 .fp2stickers{position:absolute;left:10px;bottom:7px;display:flex;gap:5px}
 
@@ -232,7 +237,8 @@ h1{font-family:'Exo 2';font-weight:700;font-size:22px;text-transform:uppercase;l
   <div class="secHead"><span class="n">3</span><h2>Превью в Конструкторе (Создать)</h2>
   <span class="status change">Приводится к тому же виду</span></div>
   <p class="note">Сейчас превью в «Создать» — плоский прямоугольник 75px с радиусом 14px (не тот же радиус,
-  что у карточки, 16px) и без имени/стикеров. Станет тем же скруглением/высотой ~100px, что у карточки
+  что у карточки, 16px) и без имени/стикеров. Станет той же единой высотой 130px, что у карточки режима
+  и у Мастерской, тем же скруглением
   Мастерской, и, по мере расстановки препятствий, снизу появляются те же сами значки-стикеры — то, что
   ты собираешь, уже выглядит как будущая карточка в Мастерской, не отдельная сущность.</p>
   <div class="pair">
