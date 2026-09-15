@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: кнопки «Равноправие» / «Благодарность»</title>
+<style>
+  :root{
+    --bg:#080b16; --ink:#f4f6fb; --muted:#7d8aa8; --gold:#f0c040; --gold2:#c9a45c;
+    --line:rgba(255,255,255,.08); --card-bg:rgba(18,26,44,.7); --r-card:16px; --r-btn:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c1120;color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;
+    padding:32px 16px;display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+  h1{width:100%;text-align:center;font-size:20px;color:var(--ink);margin:0 0 4px}
+  .note{width:100%;text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px;max-width:900px;margin-left:auto;margin-right:auto}
+  .col{width:360px}
+  .colLabel{font-size:13px;font-weight:700;letter-spacing:.04em;text-align:center;padding:8px 0;border-radius:10px 10px 0 0}
+  .colLabel.old{background:rgba(255,120,120,.15);color:#ffb3b3}
+  .colLabel.new{background:rgba(130,255,170,.15);color:#9affc0}
+  .colLabel.screen{background:rgba(200,170,255,.15);color:#d6c2ff}
+  .phone{
+    background:radial-gradient(ellipse at 50% -10%, #1a2246 0%, var(--bg) 60%);
+    border:1px solid var(--line); border-top:none; border-radius:0 0 22px 22px;
+    padding:18px 14px 22px; display:flex; flex-direction:column; align-items:center; gap:10px;
+    min-height:560px;
+  }
+  .stackBtn{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:var(--r-btn);
+    padding:13px;text-align:center;font-size:13.5px;font-weight:700;letter-spacing:.03em}
+  .grid2{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid2 .gbtn{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r-btn);
+    padding:13px 8px;text-align:center;font-size:12.5px;font-weight:700;letter-spacing:.03em}
+  .gbtn.newRow{outline:2px dashed var(--gold);outline-offset:2px;color:var(--gold)}
+  .head{display:flex;align-items:center;gap:10px;width:100%;padding:4px 0 10px}
+  .back{font-size:13px;color:var(--muted)}
+  .title{font-size:17px;font-weight:800;letter-spacing:.03em;text-align:center;flex:1}
+  .charterBody{width:100%;overflow-y:auto;font-size:12.5px;line-height:1.55;color:#dbe3f5}
+  .charterBody .sub{color:var(--gold2);font-size:11px;letter-spacing:.12em;text-align:center;margin-bottom:10px}
+  .charterBody h2{font-size:13.5px;color:var(--gold);margin:14px 0 6px;letter-spacing:.02em}
+  .charterBody p{margin:0 0 8px}
+  .charterBody .art b{color:#f4f6fb}
+  .charterBody .more{color:var(--muted);text-align:center;margin-top:10px;font-style:italic}
+  .soonWrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+  .soonIcon{font-size:40px}
+  .soonTitle{font-size:16px;font-weight:800}
+  .soonDesc{font-size:12.5px;color:var(--muted);max-width:240px}
+</style>
+</head>
+<body>
+<h1>Главный экран — новая строка «Равноправие» / «Благодарность»</h1>
+<div class="note">Текст Хартии — дословно из .knowledge/CHARTER.md (Преамбула + Глава I «Равноправие»). «Благодарность» ведёт на временную заглушку — полноценный Stars-донат (Supabase-таблица + Edge Function + Bot API webhook) отдельная задача, суммы пресетов ещё не согласованы.</div>
+
+<div class="col">
+  <div class="colLabel old">СЕЙЧАС</div>
+  <div class="phone">
+    <div class="stackBtn">Конструктор</div>
+    <div class="grid2">
+      <div class="gbtn">Коллекция</div><div class="gbtn">Достижения</div>
+      <div class="gbtn">Поддержка</div><div class="gbtn">Настройки</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="colLabel new">СТАНЕТ</div>
+  <div class="phone">
+    <div class="stackBtn">Конструктор</div>
+    <div class="grid2">
+      <div class="gbtn">Коллекция</div><div class="gbtn">Достижения</div>
+      <div class="gbtn newRow">Равноправие</div><div class="gbtn newRow">Благодарность</div>
+      <div class="gbtn">Поддержка</div><div class="gbtn">Настройки</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="colLabel screen">ЭКРАН «РАВНОПРАВИЕ»</div>
+  <div class="phone">
+    <div class="head"><span class="back">← Назад</span><span class="title">РАВНОПРАВИЕ</span><span style="width:40px"></span></div>
+    <div class="charterBody">
+      <div class="sub">ХАРТИЯ НЕБА · COSMOGRAM v2.0 · «ОДНО НЕБО ДЛЯ ВСЕХ»</div>
+      <p>Мы сделали Космограмму, потому что устали. Устали от игр, где реклама важнее игры. Где кошелёк решает быстрее, чем руки...</p>
+      <p>Эта Хартия — не маркетинг. Это конституция неба. Она защищает пилотов от нас самих.</p>
+      <h2>Глава I. Равноправие</h2>
+      <p class="art"><b>Статья 1.</b> Здесь нет рекламы. Ни баннеров, ни «посмотри ролик — получи жизнь». Ты пришёл летать — летай.</p>
+      <p class="art"><b>Статья 2.</b> Здесь нельзя купить победу. Ни скорость, ни щит, ни место в таблице.</p>
+      <p class="art"><b>Статья 4.</b> Здесь все равны. Бедный и богатый, чёрный и белый, женщина и мужчина, взрослый и ребёнок. Игра спрашивает одно: как ты летишь.</p>
+      <div class="more">…вся Хартия (6 глав, 25 статей) — прокруткой ниже</div>
+    </div>
+  </div>
+</div>
+
+<div class="col">
+  <div class="colLabel screen">ЭКРАН «БЛАГОДАРНОСТЬ» (заглушка)</div>
+  <div class="phone">
+    <div class="head"><span class="back">← Назад</span><span class="title">БЛАГОДАРНОСТЬ</span><span style="width:40px"></span></div>
+    <div class="soonWrap">
+      <div class="soonIcon">✨</div>
+      <div class="soonTitle">Скоро</div>
+      <div class="soonDesc">Здесь появится «Небо благодарности» — каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrowNote" style="width:100%;text-align:center;font-size:12px;color:var(--muted);padding:8px 0">Новая строка вставляется МЕЖДУ Коллекция/Достижения и Поддержка/Настройки (не в конец) — как в последнем уточнении владельца.</div>
+</body>
+</html>

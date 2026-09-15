@@ -2452,9 +2452,11 @@ function angarUnwear(){
   const grid=$('angarGrid'); if(!grid) return;
   const els=grid.querySelectorAll('.angarIt');
   const refill=()=>{ angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); }); angarBuyFill(); angarPvWake(); };
+  // 15.09.2026 (владелец, живой скрин с кружком): тост «Снял «…»» убран целиком — плитка
+  // сама переключается между «Снять»/«Надеть», отдельное уведомление дублирует это же
+  // состояние. Симметрично с «Надеть» — там тоста никогда не было.
   S[cfg.selKey]=0; Store.set(cfg.selKey,0); sfx.click(); haptic('light');
   refill();
-  if(typeof ptShowToast==='function') ptShowToast('Снял «'+item.name+'»');
 }
 /* 04.09.2026 «Эксклюзивные скины за Stars»: настоящие деньги, не игровая валюта — отдельный
    путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
