@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Точечная настройка — не всё сразу</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:21px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:920px;margin:0 auto 40px}
+  h2{color:var(--gold);font-size:15px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:10px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:22px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone{width:290px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);border-radius:22px;padding:16px 14px}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)} .phoneLbl.now{color:var(--ok)}
+  .dump{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}
+  .dumpHead{font-size:11px;font-weight:800;color:var(--ink);letter-spacing:.03em;padding-bottom:8px;border-bottom:1px solid var(--line-gold);margin-bottom:8px}
+  .grpH{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);margin:10px 0 5px}
+  .miniRow{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted);margin-bottom:5px}
+  .miniLbl{width:52px;flex-shrink:0}
+  .miniBar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.15)}
+  .miniChips{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px}
+  .mchip{font-size:8px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted)}
+  .subAcc{border:1px solid var(--stone-border);border-radius:10px;margin-bottom:6px;overflow:hidden}
+  .subAccHead{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--stone-fill);font-size:10px;font-weight:700;color:var(--ink)}
+  .subAccHead .cnt{font-size:8px;color:var(--muted);font-weight:500}
+  .subAccBody{padding:9px 11px;border-top:1px solid var(--line)}
+  .closedNote{font-size:8px;color:var(--muted);padding:9px 11px;font-style:italic}
+  footer{max-width:920px;margin:36px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>«Точечная настройка» — три темы одним взмахом, не один взмах на всё сразу</h1>
+<p class="sub">17.09.2026 · по прямому разговору — «сваливается, никакого другого места не нашлось»</p>
+<div class="note">Макет. Ничего не перенесено в игру.</div>
+
+<section>
+<h2>Что реально внутри одного спойлера — посчитано по разметке, не на глаз</h2>
+<div class="diag">
+  <div class="diagItem"><b>16</b><div>интерактивных элементов разом за одним тапом «Точечная настройка»: 3 слайдера
+  (Плотность/Скорость/Солнечный ветер) + 2 сегмента (Жизни/Стартовая жара) + 2 отдельных чипа («Ровный жар»,
+  «Высокая ставка») + сегмент Бонусов + 8 чипов Преград. Заголовок снаружи не говорит НИЧЕГО о том, что там
+  вообще три разные темы (темп неба, старт забега, состав препятствий) — только слово «настройка».</div></div>
+  <div class="diagItem"><b>—</b><div>Группы-заголовки (Темп неба/Старт/Преграды) внутри УЖЕ есть в разметке — это
+  не хаос без структуры, структура была, просто она не работает как навигация: все три раздела видны
+  одновременно, нельзя посмотреть только «Преграды», не проскроллив мимо всех слайдеров темпа и сегментов
+  старта. Тот же класс проблемы, что разбирали в исследовании про Home Assistant — один флаг «продвинутое»
+  на разнородные настройки путает, даже когда заголовки-разделители расставлены верно.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Было ↔ стало</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — открыл один раз, увидел всё 16 сразу</div>
+    <div class="dump">
+      <div class="dumpHead">ТОЧЕЧНАЯ НАСТРОЙКА ▴</div>
+      <div class="grpH">Темп неба</div>
+      <div class="miniRow"><span class="miniLbl">Плотность</span><span class="miniBar"></span></div>
+      <div class="miniRow"><span class="miniLbl">Скорость</span><span class="miniBar"></span></div>
+      <div class="miniRow"><span class="miniLbl">Ветер</span><span class="miniBar"></span></div>
+      <div class="grpH">Старт</div>
+      <div class="miniChips"><span class="mchip">1</span><span class="mchip">2</span><span class="mchip">3</span></div>
+      <div class="miniChips"><span class="mchip">1</span><span class="mchip">2</span><span class="mchip">3</span><span class="mchip">4</span><span class="mchip">5</span><span class="mchip">6</span></div>
+      <div class="miniChips"><span class="mchip">Ровный жар</span></div>
+      <div class="miniChips"><span class="mchip">Выкл</span><span class="mchip">Редко</span><span class="mchip">Норма</span><span class="mchip">Часто</span></div>
+      <div class="miniChips"><span class="mchip">Высокая ставка</span></div>
+      <div class="grpH">Преграды</div>
+      <div class="miniChips"><span class="mchip">Астероид</span><span class="mchip">Обломок</span><span class="mchip">Дрейфер</span><span class="mchip">Мина</span><span class="mchip">Спутник</span><span class="mchip">Комета</span><span class="mchip">Ловец</span><span class="mchip">Ворота</span></div>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало — три собственных подраздела</div>
+    <div class="dump">
+      <div class="dumpHead">ТОЧЕЧНАЯ НАСТРОЙКА ▴</div>
+      <div class="subAcc">
+        <div class="subAccHead">ТЕМП НЕБА <span class="cnt">3 ручки ▾</span></div>
+        <div class="subAccBody">
+          <div class="miniRow"><span class="miniLbl">Плотность</span><span class="miniBar"></span></div>
+          <div class="miniRow"><span class="miniLbl">Скорость</span><span class="miniBar"></span></div>
+          <div class="miniRow"><span class="miniLbl">Ветер</span><span class="miniBar"></span></div>
+        </div>
+      </div>
+      <div class="subAcc">
+        <div class="subAccHead">СТАРТ <span class="cnt">▸</span></div>
+        <div class="closedNote">закрыто — жизни, жара, бонусы</div>
+      </div>
+      <div class="subAcc">
+        <div class="subAccHead">ПРЕГРАДЫ <span class="cnt">8 видов ▸</span></div>
+        <div class="closedNote">закрыто — какие препятствия участвуют</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:680px;margin:14px auto 0;text-align:center">
+  Тот же visual-язык, что уже у самой «Точечной настройки» (<code>.setGrp.spoiler</code>) — просто вложенный на
+  один уровень внутрь себя же, тремя копиями. Открыт может быть 0, 1, 2 или все 3 подраздела одновременно —
+  не аккордеон-радио («открыл один — закрылся другой»), просто три независимых переключателя, кто-то захочет
+  сравнить Темп и Старт сразу, запрещать это не за чем.
+</p>
+</section>
+
+<section>
+<h2 style="border-color:var(--line)">«Подобрать гармонию» — <b style="color:var(--ok)">не</b> трогаю структуру</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Внутри всего 9 элементов (колесо + 7 кнопок схем + строка-подсказка) —
+  не 16, дробить дальше некуда и незачем. Раскрывается на месте, с живым небом рядом (уже одобрено и
+  внедрено раньше) — структурно эта часть в порядке. Если «отстранённость» всё ещё чувствуется после
+  правки Точечной настройки — подскажи, что конкретно не так, когда увидишь на телефоне, добью отдельно.</div></div>
+</div>
+</section>
+
+<footer>Источники: разметка index.html (grep, не по памяти) + RESEARCH-2026-09-CREATOR-CONTROLS.md (Home Assistant
+anti-pattern — группировать по смыслу, не одним общим флагом).</footer>
+</body>
+</html>

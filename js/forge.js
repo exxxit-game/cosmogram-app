@@ -757,6 +757,20 @@ wireOnLocal('forgeHardSpoilerGrp','click',function(){
   this.classList.toggle('open');
   const p=$('forgeHardSpoilerPanel'); if(p) p.classList.toggle('hidden');
 });
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-tochechnaya-nastroyka-vlozhennye-spoylery-
+   17-09-2026.html): три вложенных спойлера внутри «Точечной настройки» (Темп неба/Старт/
+   Преграды) — не аккордеон-радио, каждый переключается независимо, тот же приём, что у
+   forgeHardSpoilerGrp самого выше, просто три отдельных экземпляра. */
+function forgeWireSubSpoiler(grpId, panelId){
+  wireOnLocal(grpId,'click',function(){
+    sfx.click(); haptic('light');
+    this.classList.toggle('open');
+    const p=$(panelId); if(p) p.classList.toggle('hidden');
+  });
+}
+forgeWireSubSpoiler('forgeTempoGrp','forgeTempoPanel');
+forgeWireSubSpoiler('forgeStartGrp','forgeStartPanel');
+forgeWireSubSpoiler('forgeObstGrp','forgeObstPanel');
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){

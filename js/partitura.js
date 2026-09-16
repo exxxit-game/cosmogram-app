@@ -13,17 +13,36 @@
    ============================================================ */
 
 const PT_KIND_LABEL={rock:'Астероид',debris:'Обломок',drift:'Дрейфер',mine:'Мина',sat:'Спутник',comet:'Комета',seeker:'Ловец',gate:'Ворота'}; // сверено с js/i18n.js: fkRock..fkGate
-const PT_KIND_COLOR={rock:'#d99a4e',debris:'#6fa3e0',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffe14a',gate:'#22b8dd'}; // seeker сверен с render.js (08.09.2026: ярко-жёлтый вместо янтарного)
+/* 17.09.2026 (владелец, живой разговор): у Астероида/Кометы почти один и тот же оранжевый
+   (реально измерено: rock hue≈33°, comet hue≈25° — 8° разницы) и у Передышки/Обломка не только
+   один синий, но ещё и похожие иконки (две полосы, просто повёрнутые) — то же синее семейство у
+   Обломка/Спутника тоже. Тот же приём, что уже применён к mine/seeker 08.09.2026 (развести по
+   кругу, не подбирать на глаз): rock — нейтральный камень (не спорит по тону ни с чем), debris —
+   зелёный (было синим, конфликтовало с Передышкой и Спутником). comet/mine/seeker/gate/drift не
+   трогаю — они и так не путаются ни с кем. Пары «Передышка»/«Заметка» (index.html, не тут — их
+   цвет отдельный, роль не «преграда») сдвинуты тем же заходом. */
+const PT_KIND_COLOR={rock:'#9c8a72',debris:'#4ecf7a',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffe14a',gate:'#22b8dd'}; // seeker сверен с render.js (08.09.2026: ярко-жёлтый вместо янтарного)
 const PT_ICON_SVG={
   pause:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="6.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/><rect x="13.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/></svg>',
   marker:'<svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 21l1.2-5.6L15.6 3.9a1.6 1.6 0 0 1 2.3 0l2.2 2.2a1.6 1.6 0 0 1 0 2.3L8.6 19.8 3 21z" fill="currentColor"/></svg>',
   rock:'<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="12,2.5 18,6.5 20.5,13 16,20 8,19.5 3.5,13.5 5.5,6" fill="currentColor"/></svg>',
-  debris:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3" y="8" width="18" height="8" rx="2" fill="currentColor"/><rect x="3" y="11.2" width="18" height="1.6" fill="rgba(0,0,0,.3)"/></svg>',
+  // 17.09.2026 (владелец, живой разговор + реальный скрин полёта): было два неверных захода на
+  // глаз (сперва «камни-осколки», потом «плита с трещиной»), пока владелец не прислал живой скрин
+  // самого полёта — там обломок реально виден: светлый/серебристый вытянутый КАПСУЛОВИДНЫЙ
+  // предмет (полностью скруглённые торцы), не плита. Сверено с кодом отдельно: это ровно
+  // bakeDebrisSprite() skin=3 «бак» (rr(x,-hw,-hh,o.w,o.h,hh) — радиус скругления = половина
+  // высоты = полное скругление торцов, буквально капсула). Две поперечные риски — тот же приём,
+  // что у скина «бак» в render.js (внутренние линии-перегородки). */
+  debris:'<svg viewBox="0 0 24 24" width="22" height="22"><g transform="rotate(-18 12 12)"><rect x="3" y="9" width="18" height="6" rx="3" fill="currentColor"/><line x1="9" y1="9" x2="9" y2="15" stroke="rgba(20,28,52,.35)" stroke-width="1"/><line x1="15" y1="9" x2="15" y2="15" stroke="rgba(20,28,52,.35)" stroke-width="1"/></g></svg>',
   drift:'<svg viewBox="0 0 24 24" width="22" height="22"><polygon points="2,12 7,5.5 17,5 22,12 16,19 6,18.5" fill="currentColor"/></svg>',
   mine:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="12" x2="22" y2="12"/><line x1="16.2" y1="16.2" x2="19.1" y2="19.1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="7.8" y1="16.2" x2="4.9" y2="19.1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="7.8" y1="7.8" x2="4.9" y2="4.9"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="16.2" y1="7.8" x2="19.1" y2="4.9"/></g></svg>',
   sat:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="10" y="9.5" width="4" height="5" rx="1" fill="currentColor"/><rect x="1.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><rect x="16.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><line x1="7.5" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="12" x2="16.5" y2="12" stroke="currentColor" stroke-width="1.6"/></svg>',
   comet:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="16" cy="8" r="3.4" fill="currentColor"/><path d="M14 10.2C10 12 5.5 15 2 21c5.5-2.6 9.5-5.3 12.6-9.4z" fill="currentColor" opacity=".55"/></svg>',
-  seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="2.1"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>',
+  // 17.09.2026 (владелец: «проверь каждую по факту»): было 3 концентрических кольца-мишень —
+  // в полёте (render.js, ветка mine/seeker) ловец физически та же колючая сфера, что мина, просто
+  // квадратные «глаза» вместо круглых, тупые шипы-штрихи вместо острых треугольных, плюс тонкое
+  // внешнее кольцо-прицел (o.r+11). Иконка теперь повторяет ЭТУ форму, не отдельную мишень.
+  seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="12" cy="12" r="6.3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6"><line x1="12" y1="2.7" x2="12" y2="5.3"/><line x1="12" y1="18.7" x2="12" y2="21.3"/><line x1="2.7" y1="12" x2="5.3" y2="12"/><line x1="18.7" y1="12" x2="21.3" y2="12"/><line x1="5.6" y1="5.6" x2="7.4" y2="7.4"/><line x1="16.6" y1="16.6" x2="18.4" y2="18.4"/><line x1="18.4" y1="5.6" x2="16.6" y2="7.4"/><line x1="7.4" y1="16.6" x2="5.6" y2="18.4"/></g><rect x="9" y="10.3" width="2.4" height="2.4" fill="#2a2230"/><rect x="12.6" y="10.3" width="2.4" height="2.4" fill="#2a2230"/></svg>',
   gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
 };
 const PT_MAX=150; // 09.09.2026 (владелец): было 50, поднято по прямой просьбе
