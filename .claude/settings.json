@@ -38,7 +38,9 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/version-guard.sh" }
+          { "type": "command", "command": ".claude/hooks/version-guard.sh" },
+          { "type": "command", "command": ".claude/hooks/no-double-background.sh" },
+          { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" }
         ]
       },
       {

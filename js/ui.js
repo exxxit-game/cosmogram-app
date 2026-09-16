@@ -286,8 +286,23 @@ function shrinkScreenTitle(el){
   }
   const SAFE=0.28, floor=24;
   const avail=window.innerWidth*(1-SAFE*2);
-  let size=parseFloat(getComputedStyle(el).fontSize), guard=0;
-  while(el.scrollWidth>avail && size>floor && guard<40){ size--; el.style.fontSize=size+'px'; guard++; }
+  /* 16.09.2026 (живой Performance-трейс, соседняя сессия — ForcedReflow): было до 40 пар
+     read(scrollWidth)→write(fontSize) подряд, size-- на каждом шаге. scrollWidth монотонно
+     убывает с уменьшением шрифта — тот же самый итоговый размер (наибольший, что влезает)
+     находится бинарным поиском по числу шагов уменьшения k∈[1,maxK], без изменения самой
+     логики (тот же floor, тот же guard-предел maxK=min(40, size0-floor), тот же финальный
+     whitespace-перенос, если не влезло даже на floor). Страж 224. */
+  const size0=parseFloat(getComputedStyle(el).fontSize);
+  const maxK=Math.min(40, Math.floor(size0-floor));
+  if(maxK>0 && el.scrollWidth>avail){
+    let lo=1, hi=maxK, best=maxK;
+    while(lo<=hi){
+      const mid=(lo+hi)>>1;
+      el.style.fontSize=(size0-mid)+'px';
+      if(el.scrollWidth<=avail){ best=mid; hi=mid-1; } else { lo=mid+1; }
+    }
+    el.style.fontSize=(size0-best)+'px';
+  }
   if(el.scrollWidth>avail) el.style.whiteSpace=''; // не влезло даже на полу — перенос на 2 строки вместо нечитаемого шрифта
 }
 function centerTitleOnHeader(el){
