@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор: пустота внизу шагов + «Сохранить» без итога</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+    --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+    --stone-border-gold:rgba(255,226,150,.7);
+    --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .cite{color:var(--muted);font-size:11.5px;display:block;margin-top:3px}
+  .measured{color:var(--bad);font-family:monospace;font-size:11.5px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:280px;height:560px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:24px;padding:18px 14px;flex-shrink:0;position:relative;overflow:hidden}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .stepTitle{text-align:center;color:var(--gold-hi);font-weight:700;font-size:13px;letter-spacing:.05em;margin-bottom:6px}
+  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:16px}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
+  .dot.on{background:var(--gold-hi);width:14px;border-radius:3px}
+  .void{position:absolute;left:0;right:0;bottom:0;background:repeating-linear-gradient(-45deg,rgba(224,83,61,.12),rgba(224,83,61,.12) 6px,transparent 6px,transparent 12px);
+    display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--bad);font-weight:700;letter-spacing:.03em;text-align:center;padding:6px}
+  .pillNew{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;font-size:11px;font-weight:700;
+    border-radius:999px;background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink)}
+  .ctaNew{display:block;flex:1;text-align:center;padding:13px;border-radius:999px;font-weight:800;font-size:13px;
+    background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);color:#1c1200}
+  .shareNew{display:block;flex:1;text-align:center;padding:13px;border-radius:999px;font-weight:700;font-size:12px;
+    background:rgba(14,18,32,.62);border:1px solid rgba(201,164,92,.3);color:var(--cream)}
+  .btnpair{display:flex;gap:8px;margin-top:10px}
+  input[type=text]{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--stone-border);border-radius:10px;
+    padding:10px 12px;color:var(--ink);font-size:12px;text-align:center}
+  .cardM{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .recapSwatch{height:64px;border-radius:10px;margin-bottom:10px;position:relative;overflow:hidden}
+  .recapStats{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .recapStats b{color:var(--cream);font-size:13px;display:block}
+  .recapLbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:8px;margin-bottom:2px}
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Конструктор: пустота внизу шага + «Сохранить» без единого взгляда на то, что построил</h1>
+<p class="sub">17.09.2026 · комплексный аудит по просьбе владельца («разобрать всё подробно, улучшить каждый пункт») —
+живые измерения getBoundingClientRect на реальных данных трассы (7 точек, 1500м), не на глаз</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду направление по каждому блоку. Заодно тем же заходом
+уже почищена (без макета — объективная нестыковка, не вкусовщина) рассинхронность левого края 4 ползунков
+шага «Цвет»: у «Цвет неба»/«Второго цвета» перед лентой стоит квадрат-образец (22px), у «Густоты»/«Настроения» его
+не было — ленты стартовали в разных x. Добавлен невидимый плейсхолдер того же размера, страж 242.</div>
+
+<section>
+<h2>Диагноз — измерено в реальном DOM, все 3 шага «Создать»</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div>Причина одна на все 3 шага: <code>.forgeStepPanel{flex:0 1 auto}</code> — карточка шага
+  занимает ровно столько высоты, сколько нужно её содержимому, и НЕ растягивается. Соседний
+  <code>#forgeTabCreate</code> — <code>flex-direction:column</code> без <code>justify-content</code>, поэтому всё, что
+  короче экрана, просто прилипает к началу колонки, а остаток — мёртвая чернота внизу.<span class="cite">index.html:2666, 2648</span></div></div>
+  <div class="diagItem"><b>2</b><div>На экране 375×812 (обычный телефон): «Карта» — контент+кнопка занимают <span class="measured">643 из 812px (79%)</span>,
+  пустота терпимая. «Цвет» — примерно та же доля. «Сохранить» — карточка+кнопки едва <span class="measured">~230px (28%)</span>,
+  остальные <b style="color:var(--bad)">72% экрана — голая чернота</b>. Чем короче шаг, тем хуже.</div></div>
+  <div class="diagItem"><b>3</b><div>Пробовал на живой странице (не в макете) 3 быстрых варианта CSS без единой строки в реальном
+  файле: <code>justify-content:space-between</code> на всю колонку — прижимает карточку «Сохранить» вплотную к самому
+  низу экрана, без отступа, выглядит ещё более случайно. Простое <code>justify-content:center</code> — вешает шапку
+  «СОХРАНИТЬ» отдельно вверху, а карточку одну в середине пустого поля — не связаны визуально. Ни один вариант
+  не тянет сам по себе — вопрос не в одной строке CSS, а в том, что <b style="color:var(--ok)">на «Сохранить» реально
+  нечего показать, кроме поля имени</b>. Раздутие/центрирование пустоты не делает её содержательной.</div></div>
+  <div class="diagItem"><b>4</b><div>При этом ровно то, что нужно показать в конце — уже всё посчитано и лежит в
+  <code>forgeCfg</code> (<code>forgeCfg.L</code> — длина, <code>forgeCfg.sc.length</code> — число точек, <code>h1/h2</code> —
+  цвет неба) — просто никогда не попадает на шаг «Сохранить». Игрок называет своё небо, ни разу не увидев его
+  целиком с этого шага — на «Цвет» превью было, на «Карта» — трасса, на «Сохранить» — только пустая рамка для текста.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Блок 1 — «Сохранить»: карточка-итог вместо пустого поля имени</h2>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:-4px auto 16px;text-align:center">
+  Не «центрировать пустоту», а дать шагу собственное содержание — маленькое живое небо + то, что
+  игрок только что построил, одним взглядом, перед тем как дать ему имя. Тот же принцип, что уже
+  работает на «Цвет» (живое превью вместо статичной полоски) — просто применить и здесь, а не
+  оставлять «Сохранить» единственным шагом без какой-либо картинки вообще.
+</p>
+<div class="row">
+  <div class="phone">
+    <div class="phoneLbl was">Было — 72% экрана ничем не занято</div>
+    <div class="stepTitle">СОХРАНИТЬ</div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+    <input type=text placeholder="Дайте имя" style="margin-bottom:12px">
+    <div class="btnpair"><div class="ctaNew">ПОЛЁТ</div><div class="shareNew">ПОДЕЛИТЬСЯ</div></div>
+    <div class="void" style="top:230px">ПУСТО — ДО САМОГО НИЗА ЭКРАНА</div>
+  </div>
+  <div class="phone" style="border-color:var(--ok);height:auto">
+    <div class="phoneLbl now">Стало — итог, потом имя</div>
+    <div class="stepTitle">СОХРАНИТЬ</div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+    <div class="cardM">
+      <div class="recapSwatch" style="background:linear-gradient(160deg,hsl(0,55%,42%),hsl(40,60%,48%))">
+        <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:.5">
+          <circle cx="20" cy="15" r="1" fill="#fff"/><circle cx="60" cy="30" r="1.2" fill="#fff"/>
+          <circle cx="110" cy="12" r="1" fill="#fff"/><circle cx="180" cy="40" r="1.4" fill="#fff"/>
+          <circle cx="230" cy="18" r="1" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="recapStats">
+        <div>ДЛИНА<b>1500м</b></div>
+        <div>ТОЧЕК<b>7</b></div>
+        <div>ТУМАН<b>нет</b></div>
+      </div>
+    </div>
+    <input type=text placeholder="Дайте имя" style="margin-bottom:12px">
+    <div class="btnpair"><div class="ctaNew">ПОЛЁТ</div><div class="shareNew">ПОДЕЛИТЬСЯ</div></div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  Свотч — та же формула цвета, что уже красит превью на «Цвет» (<code>forgePreviewMoodSL()</code>), только
+  статичный кадр, не живая анимация — шаг «Сохранить» не должен заново гонять requestAnimationFrame ради
+  одной секунды на экране. Числа — уже посчитаны, просто читаются из <code>forgeCfg</code> при входе на шаг.
+</p>
+</section>
+
+<section>
+<h2 style="border-color:var(--line)">Что <b style="color:var(--ok)">не</b> трогаю здесь — по отдельным причинам</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Пустота внизу «Карта»/«Цвет» — та же причина (<code>flex:0 1 auto</code>), но там
+  контент занимает ~79% экрана уже сейчас, а высота экрана у игроков сильно разная (у кого-то 812px,
+  у кого-то 926px+) — на самых высоких телефонах пустота вырастет и там. Отдельно стоит проверить на
+  реальном большом телефоне, не гадать здесь по одному значению viewport.</div></div>
+  <div class="diagItem"><b>—</b><div>«Точки на карте физически используют ~60% ширины ленты» (сам измерил: у 7 точек,
+  равномерно раскиданных по всей длине, пины рендерятся в среднем 29%-87% ширины полосы, не 0-100%) — это
+  не ошибка, а прямое следствие безопасных отступов под угловые кнопки (<code>ptAtToPctSafe</code>, L=84/R=52px),
+  и отступы по факту откалиброваны верно (проверил getBoundingClientRect кнопок — зазор ровно ~20px с
+  каждой стороны, не с запасом «на глаз»). Есть более крупная альтернатива — вынести угловые кнопки за
+  пределы самой ленты (над/под), но это архитектурная правка, не косметика; отдельным заходом, если решишь,
+  что оно того стоит.</div></div>
+  <div class="diagItem"><b>—</b><div>Иконка «Избранное» на превью Цвета (<code>#i-color-fan</code>, веер карт) — рабочая,
+  с aria-label, но сама по себе не читается с одного взгляда как «сохранить в избранное» (в отличие от
+  сердечка, которым это же действие подписано в Мастерской). Пустой ряд «ИЗБРАННОЕ» (7 пунктирных кружков)
+  тоже без подсказки, что с ним делать. Мелкие находки, не критичные — фиксирую, чтобы не потерялись,
+  беру в следующий заход, не раздуваю этот макет ими.</div></div>
+</div>
+</section>
+
+<footer>Источники: живой код (index.html/js/forge.js/js/partitura.js, грепом и getBoundingClientRect в браузере,
+не по памяти) + RESEARCH-2026-09-CREATOR-FLOW-SYNTHESIS.md (живое превью с первого шага, не только в конце) +
+RESEARCH-2026-09-SINGLE-STEP-FLOW.md (goal-gradient/IKEA-эффект — эффект от завершения требует реально увидеть
+завершённое, не только текстовое поле).<br>
+Не в макете: правка «Карта»/«Цвет» под высокие экраны (нужны реальные цифры нескольких устройств, не гадание) и
+архитектурный вынос угловых кнопок с ленты.</footer>
+</body>
+</html>

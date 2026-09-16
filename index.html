@@ -2328,6 +2328,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .pvBtn .ic{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;filter:drop-shadow(0 0 6px rgba(160,210,255,.65))}
 .pvBtnR{left:auto;right:10px} /* «Сохранить» — справа, «Перемешать» — слева */
 .pvBtnR .ic{fill:none;stroke:none} /* #i-color-fan несёт свои три цвета сам, currentColor ему не нужен (см. комментарий у symbol) */
+/* 17.09.2026: #forgeSaveFavBtn больше не носит #i-color-fan (см. правку у самой кнопки) — сердце
+   красится inline style="color", но общее .pvBtnR .ic{fill:none} выше всё равно перебило бы его
+   (тот же баг, что уже ловили сегодня у чипа «Избранное» в Мастерской — CSS-класс всегда сильнее
+   presentation-атрибута SVG), поэтому нужна отдельная, более специфичная строка. */
+#forgeSaveFavBtn .ic{fill:currentColor;stroke:none}
 /* 11.09.2026 (владелец, макет tsvet-neba-odna-stroka-11-09-2026.html, одобрено): Избранное
    больше не отдельная карточка под вкладкой «Цвет» — переехало ВНУТРЬ #forgeSkyPanel, сразу
    под «Настроение», перед «Туман» (владелец: «избранное поднять и поставить под настроение
@@ -2343,7 +2348,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    снова одна строка (тот же .forgeRow, что у Тумана), но кружков теперь 7, не 10 (FORGE_FAV_MAX,
    forge.js) — 92px подписи + 7×22px кружков + зазоры короче прежних 350px, влезает. Свои
    padding:2px 16px сняты — строка больше не отдельный блок вне .forgeRow, его отступы теперь не нужны. */
-#forgeFavRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* 17.09.2026 (владелец, живой разговор, FORGE_FAV_MAX 7→20): подпись снова над рядом (не сбоку,
+   как 11.09-16.09.2026) — при 20 кружках она в одну строку с ними уже не влезает физически,
+   тот же вывод, что уже был 10.09.2026 при 10 кружках по 26px. Теперь по центру, не слева. */
+.forgeFavHead{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px}
+#forgeFavRow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 .favSwatch{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);cursor:pointer;pointer-events:auto}
 /* 11.09.2026 (владелец: «сделать чтобы можно было удалить», спросил через AskUserQuestion, выбрал
    «долгое нажатие»): 550мс (forge.js, forgeFavAttachPress) — держишь кружок, он красится тревожным
@@ -2723,6 +2732,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .ptInfBtn.sel{border-color:rgba(201,164,92,.45);color:var(--gold-hi);background:rgba(201,164,92,.14)}
 #ptLenSlider:disabled{opacity:.35}
 .fonSwatch{flex:none;width:22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+/* 17.09.2026 (владелец, «Делай»): та же роль и тот же размер, что .fonSwatch у «Цвет неба»/
+   «Второго цвета» — только тут показывать нечего (Густота/Настроение не оттенок), поэтому
+   вместо образца цвета — тихий значок того же места и веса, все 4 строки читаются одним рядом. */
+.fonIcon{flex:none;width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.fonIcon .ic{width:15px;height:15px}
 /* 10.09.2026: .ptRandomBtn (старая полноширинная текстовая кнопка «Перемешать») удалена —
    тот же #ptRandomSkyBtn переехал значком на окно предпросмотра (.pvBtn), см. форму выше. */
 /* 12.09.2026: .track::after («стикеры снизу — перетащи сюда») убран — при 0 точек текст
@@ -2733,6 +2747,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   justify-content:center;font-size:18px;cursor:grab;border:1.5px solid rgba(255,255,255,.22);transform:translateX(-50%);
   transition:box-shadow .15s,opacity .15s,width .15s,height .15s;user-select:none;background:#162638}
 .pin:active{cursor:grabbing}
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-karta-nebo-komfort-17-09-2026.html, Yamanaka
+   MobileHCI 2019 — на узкой ленте важна НЕВИДИМАЯ ширина захвата, не нарисованная): у мелких
+   точек (20px при 35+ точках, ptPinSizeFor) палец промахивался мимо тонкого края чаще, чем мимо
+   центра. Зона тапа растёт до 44px (Apple HIG минимум) там, где сама точка меньше — сама точка
+   на вид не меняется, только невидимая область вокруг нее, приклеенная к .pin (события на
+   псевдоэлементе доходят до pointerdown на самом .pin, как обычный bubbling). Для точек уже
+   ≥44px — min(...) обнуляет разницу, зона тапа не меньше видимой точки никогда. */
+.pin::before{content:'';position:absolute;inset:calc((min(var(--pinSz,48px),44px) - 44px)/2);border-radius:50%}
 @keyframes ptPopIn{0%{transform:translateX(-50%) scale(.3)}60%{transform:translateX(-50%) scale(1.25)}100%{transform:translateX(-50%) scale(1)}}
 .pin.pop{animation:ptPopIn .32s cubic-bezier(.3,1.4,.5,1)}
 .pin.sel{border-color:rgba(201,164,92,.45);box-shadow:0 0 14px rgba(201,164,92,.35)}
@@ -2903,6 +2925,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   box-shadow:0 0 16px rgba(240,192,64,.14)} /* 16.09.2026 «Небесный прибор» */
 .forgePanel .btn.ghost:not(.spoiler){background:rgba(10,14,26,.5);border-color:rgba(201,164,92,.18);color:#9fb4d8;font-weight:500}
 .forgePanel .btn.ghost.small:not(.spoiler){padding:10px 18px}
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-pustota-i-sohranit-17-09-2026.html): карточка-
+   итог на «Сохранить» — статичное небо + Длина/Точек/Туман перед полем имени. */
+.forgeSaveRecap{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.forgeSaveRecapSwatch{height:64px;border-radius:10px;margin-bottom:10px}
+.forgeSaveRecapStats{display:flex;justify-content:space-between}
+.forgeSaveRecapStats div{flex:1;text-align:center;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.forgeSaveRecapStats b{display:block;color:var(--cream);font-size:14px;font-weight:700;margin-bottom:2px;letter-spacing:0;text-transform:none}
 /* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html): «Полёт» на шаге
    «Сохранить» — то же золотое CTA-капсюль, что #forgeStepConfirmBtn на шагах «Карта»/«Цвет», не
    общий притушенный .forgePanel .btn.pri — это финальное действие, а не рядовая кнопка панели.
@@ -3417,6 +3446,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      кнопки .angarFav (index.html CSS), не двумя разными symbol — одна и та же геометрия. -->
 <symbol id="i-star5-outline" viewBox="0 0 24 24"><path d="M12 3.5 14.4 9.3 20.7 9.8 15.9 13.9 17.4 20.1 12 16.7 6.6 20.1 8.1 13.9 3.3 9.8 9.6 9.3z"></path></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></symbol>
+<!-- 17.09.2026 (владелец, «Делай», макет konstruktor-karta-nebo-komfort-17-09-2026.html): у
+     «Густоты»/«Настроения» на шаге «Цвет» слева от ползунка не было ничего (простой плейсхолдер
+     ради выравнивания с «Цвет неба»/«Второй цвет», где там образец цвета) — тут не оттенок, так
+     что настоящего цвета для образца нет, но две строки из четырёх «без лица» рядом с двумя «с
+     лицом» читались неровно. Новые значки — не переиспользование чужого смысла: i-star4 нарочно
+     обойдён (занят игровой валютой, см. комментарий у него выше). -->
+<symbol id="i-density-dots" viewBox="0 0 24 24"><circle cx="7" cy="15" r="2.3" fill="currentColor" stroke="none"></circle><circle cx="14" cy="8" r="2.6" fill="currentColor" stroke="none"></circle><circle cx="18" cy="16" r="1.8" fill="currentColor" stroke="none"></circle></symbol>
+<symbol id="i-mood-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"></path></symbol>
 <!-- 10.09.2026 «Поделиться явлением»: обычный универсальный значок «поделиться» (стрелка
      из коробки вверх) — не бренд, не нужен проверяемый источник, тот же язык .ic-иконок
      (fill:none, stroke:currentColor, round), что и у остальных значков этого файла. -->
@@ -3515,9 +3552,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.342"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.342"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.342"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.343"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.343"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.343"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4322,7 +4359,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <div id="forgePreviewStickers" class="wStickerRow"></div>
         <button class="pvBtn" id="ptRandomSkyBtn" type="button" aria-label="Перемешать"><svg class="ic" aria-hidden="true"><use href="#i-shuffle"></use></svg></button>
         <!-- значок — тот же #i-color-fan, что уже значит «в избранное» у карточек Мастерской
-             (index.html/forge.js, 09.09.2026), не новый рисунок под то же самое действие. -->
+             (index.html/forge.js, 09.09.2026), не новый рисунок под то же самое действие.
+             17.09.2026 (владелец, прямо поправил): НЕ менять на сердце — «избранное» (сохранить
+             свою палитру себе) и «лайк» (оценка чужого неба) разные по смыслу действия, даже
+             если макет это предлагал — веер остаётся, откачено. -->
         <button class="pvBtn pvBtnR" id="forgeSaveFavBtn" type="button" aria-label="Сохранить в избранное"><svg class="ic" aria-hidden="true"><use href="#i-color-fan"></use></svg></button>
       </div>
       <!-- 01.09.2026 «Свой фон»: свободный цвет неба — h1/h2/густота, формат уже поддерживает
@@ -4339,26 +4379,38 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            <input type=number>, синхронизация в ptWireValInput()/ptSyncColorUI() (js/partitura.js). -->
       <div class="forgeRow"><span class="forgeLbl" id="ptColorLbl">Цвет неба</span><span class="fonSwatch" id="ptSw1"></span><input type="range" id="ptHue1" min="0" max="359" step="1" value="232"><input type="number" inputmode="numeric" class="forgeValInput" id="ptHue1V" min="0" max="359" value="232"></div>
       <div class="forgeRow"><span class="forgeLbl" id="ptColor2Lbl">Второй цвет</span><span class="fonSwatch" id="ptSw2"></span><input type="range" id="ptHue2" min="0" max="359" step="1" value="200"><input type="number" inputmode="numeric" class="forgeValInput" id="ptHue2V" min="0" max="359" value="200"></div>
-      <div class="forgeRow"><span class="forgeLbl" id="ptDensLbl" title="Густота звёзд и туманностей">Густота</span><input type="range" id="ptDens" min="10" max="100" step="5" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="ptDensV" min="10" max="100" value="50"></div>
+      <div class="forgeRow"><span class="forgeLbl" id="ptDensLbl" title="Густота звёзд и туманностей">Густота</span><span class="fonIcon"><svg class="ic" viewBox="0 0 24 24"><use href="#i-density-dots"></use></svg></span><input type="range" id="ptDens" min="10" max="100" step="5" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="ptDensV" min="10" max="100" value="50"></div>
       <!-- 01.09.2026 «Настроение неба»: одна ручка вместо S/L по отдельности — двигает
            насыщенность и яркость всех трёх точек неба вместе, оттенок не трогает
            (moodSL() в render.js, числа сверены verify-mood.js). -->
-      <div class="forgeRow"><span class="forgeLbl" id="ptMoodLbl">Настроение</span><input type="range" id="ptMood" min="0" max="100" step="1" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="ptMoodV" min="0" max="100" value="50"></div>
+      <div class="forgeRow"><span class="forgeLbl" id="ptMoodLbl">Настроение</span><span class="fonIcon"><svg class="ic" viewBox="0 0 24 24"><use href="#i-mood-half"></use></svg></span><input type="range" id="ptMood" min="0" max="100" step="1" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="ptMoodV" min="0" max="100" value="50"></div>
       <!-- 11.09.2026 (владелец, макет tuman-garmoniya-nastroenie-11-09-2026.html, одобрено):
            текст стоял наоборот — по формуле moodSL() (render.js) значение 100 (вправо) даёт
            БОЛЬШЕ насыщенности/яркости, 0 (влево) — МЕНЬШЕ; слова не новые, только переставлены
-           местами так, чтобы левая половина подписи совпадала с левым концом ползунка. -->
-      <div class="hint" id="ptMoodHint" style="padding-left:102px">Бледнее и темнее ↔ ярче и солнечнее</div>
-      <!-- 11.09.2026 (владелец: «избранное поднять и поставить под настроение неба»): переехало
-           сюда из отдельной карточки #forgeFavPanel ниже вкладки — та же подпись/ряд кружков,
-           тот же forgeFavRowSync() в forge.js, только другое место в разметке.
-           11.09.2026, тем же днём (владелец, макет izbrannoe-v-stroku-11-09-2026.html, одобрено):
-           подпись была отдельным .forgeLblBlk (серая, своя строка) — теперь .forgeLbl, тот же
-           золотой цвет и одна строка с кружками, что у Цвет неба/Второй цвет/Густота/Настроение/
-           Туман в этой же вкладке; кружков теперь 7, не 10 (FORGE_FAV_MAX, forge.js) — влезает
-           в строку вместе с подписью. -->
-      <div class="forgeRow" style="margin-top:10px"><span class="forgeLbl" id="forgeFavLbl">Избранное</span><div id="forgeFavRow"></div></div>
+           местами так, чтобы левая половина подписи совпадала с левым концом ползунка.
+           17.09.2026 (владелец, живой разговор): постоянная строка «занимает лишнее место» —
+           тот же приём разового показа, что у кошелька/«Избранного» ниже (forgeMoodHintMaybeShow,
+           js/forge.js), не постоянный текст. -->
+      <div class="hint hidden" id="ptMoodHint" style="padding-left:102px">Бледнее и темнее ↔ ярче и солнечнее</div>
+      <!-- 17.09.2026 (владелец, живой разговор): «Туман» поднят выше — теперь Настроение, потом
+           Туман, потом Избранное (было — Избранное между ними). -->
       <div class="forgeRow" style="margin-top:10px"><span class="forgeLbl" id="forgeFogLbl">Туман</span><div class="forgeSeg" id="forgeFogSeg"></div></div>
+      <!-- 11.09.2026 (владелец: «избранное поднять и поставить под настроение неба») →
+           17.09.2026 (владелец, живой разговор, число мест посчитано по реальной ширине панели
+           getBoundingClientRect — 313.6px, кружок 22px+зазор 8px даёт 10 в ряд, 2 ряда = 20,
+           чётное, с запасом ~22px на случай экрана уже теста): было 7 кружков в одну строку с
+           подписью сбоку — при росте до FORGE_FAV_MAX=20 (forge.js) подпись в ту же строку уже
+           не влезает, поэтому снова, как когда-то в 10.09.2026, подпись переезжает НАД рядом,
+           теперь по центру (историю обеих прежних раскладок см. index.html CSS у #forgeFavRow). -->
+      <div class="forgeFavBlock" style="margin-top:10px">
+        <div class="forgeFavHead"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;flex:none" aria-hidden="true"><use href="#i-color-fan"></use></svg><span class="forgeLbl" id="forgeFavLbl">Избранное</span></div>
+        <div id="forgeFavRow"></div>
+      </div>
+      <!-- 17.09.2026 (владелец, «Делай», макет konstruktor-karta-nebo-komfort-17-09-2026.html): пустой
+           ряд «Избранное» молчал, что с ним делать — разовая подсказка, тот же приём, что у кошелька
+           Коллекции (angarWalletTipMaybeShow) — один раз, не постоянный текст. Показывается только
+           пока список пуст (forgeFavRowSync, js/forge.js). -->
+      <div class="hint hidden" id="forgeFavHint" style="margin-top:2px"></div>
       <!-- 11.09.2026 (владелец, макет tuman-garmoniya-nastroenie-11-09-2026.html, одобрено):
            переехала сюда с места между Цвет неба/Второй цвет — стояла особняком «промо»-блоком
            посреди ползунков, теперь последний элемент панели, под Туман. -->
@@ -4386,6 +4438,21 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     </div>
     <div id="forgeSubHard" class="hidden forgeStepPanel">
     <div class="setPanel forgePanel" id="forgePanelHard">
+      <!-- 17.09.2026 (владелец, «Делай», макет konstruktor-pustota-i-sohranit-17-09-2026.html):
+           «Сохранить» был единственным шагом без единой картинки — игрок называл своё небо, ни
+           разу не увидев его целиком с ЭТОГО шага (превью было на «Цвет», трасса — на «Карта»).
+           Карточка-итог: то же небо статичным кадром (forgePreviewMoodSL — та же формула, что
+           красит живое превью, просто один раз, без requestAnimationFrame ради пары секунд на
+           экране) + числа, которые уже посчитаны в forgeCfg, просто не читались тут раньше.
+           Заполняется forgeRenderSaveRecap() (js/forge.js) при входе на этот шаг. -->
+      <div class="forgeSaveRecap" id="forgeSaveRecap">
+        <div class="forgeSaveRecapSwatch" id="forgeSaveRecapSwatch"></div>
+        <div class="forgeSaveRecapStats">
+          <div><b id="forgeSaveRecapLen"></b><span id="forgeSaveRecapLenLbl">Длина</span></div>
+          <div><b id="forgeSaveRecapPts"></b><span id="forgeSaveRecapPtsLbl">Точек</span></div>
+          <div><b id="forgeSaveRecapFog"></b><span id="forgeSaveRecapFogLbl">Туман</span></div>
+        </div>
+      </div>
       <!-- 31.08.2026: maxlength — мягкая узда по символам (защита от вставки простыни текста);
            настоящая граница — байтовый бюджет в sanitizeTrackName (core.js), где кириллица
            и латиница честно платят каждая свою цену за байт -->
@@ -4716,26 +4783,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.342" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.342"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.342"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.342"></script>
-<script defer src="js/game.js?v=1.478.342" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.342"></script>
-<script defer src="js/sync.js?v=1.478.342"></script>
-<script defer src="js/render.js?v=1.478.342"></script>
-<script defer src="js/planetarium.js?v=1.478.342"></script>
-<script defer src="js/goldstar.js?v=1.478.342"></script>
-<script defer src="js/finish.js?v=1.478.342"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.342"></script>
-<script defer src="js/gyro.js?v=1.478.342"></script>
-<script defer src="js/forge.js?v=1.478.342"></script>
-<script defer src="js/partitura.js?v=1.478.342"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.342"></script>
-<script defer src="js/card.js?v=1.478.342"></script>
-<script defer src="js/star.js?v=1.478.342"></script>
-<script defer src="js/cinema.js?v=1.478.342"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.342"></script>
+<script defer src="js/core.js?v=1.478.343" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.343"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.343"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.343"></script>
+<script defer src="js/game.js?v=1.478.343" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.343"></script>
+<script defer src="js/sync.js?v=1.478.343"></script>
+<script defer src="js/render.js?v=1.478.343"></script>
+<script defer src="js/planetarium.js?v=1.478.343"></script>
+<script defer src="js/goldstar.js?v=1.478.343"></script>
+<script defer src="js/finish.js?v=1.478.343"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.343"></script>
+<script defer src="js/gyro.js?v=1.478.343"></script>
+<script defer src="js/forge.js?v=1.478.343"></script>
+<script defer src="js/partitura.js?v=1.478.343"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.343"></script>
+<script defer src="js/card.js?v=1.478.343"></script>
+<script defer src="js/star.js?v=1.478.343"></script>
+<script defer src="js/cinema.js?v=1.478.343"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.343"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

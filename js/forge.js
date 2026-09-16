@@ -540,11 +540,12 @@ function forgeFill(){ // подписи + состояние виджетов п
     // на русском — не переводились ни разу. forgeSkyLbl/forgeLenLbl — убраны из списка тут же,
     // ни один из этих id не существует в текущей разметке (мёртвые записи с ~11.09.2026).
     ['ptColorLbl',L.ptColorLbl],['ptColor2Lbl',L.ptColor2Lbl],['ptDensLbl',L.ptDensLbl],
-    ['ptMoodLbl',L.ptMoodLbl],['ptMoodHint',L.ptMoodHint],['forgeFavLbl',L.forgeFavLbl],
+    ['ptMoodLbl',L.ptMoodLbl],['ptMoodHint',L.ptMoodHint],['forgeFavLbl',L.forgeFavLbl],['forgeFavHint',L.forgeFavHint],
     // 15.09.2026 (аудит шага «Сохранить»): те же 3 заголовка группы — тоже были только на
     // русском, id у них раньше не было вовсе (index.html), добавлены вместе с этим фиксом.
     ['forgeHardSpoilerGrpT',L.forgeHardSpoilerGrpT],['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
-    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn]];
+    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
+    ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog]];
   // 12.09.2026: forgeResetBtn убрана из этого цикла — теперь круглый значок-корзина
   // (index.html, .ptCornerBtn), не текст; textContent затирал бы иконку. aria-label
   // остаётся на кнопке в HTML напрямую, L.forgeResetBtn по-прежнему используется как
@@ -688,6 +689,18 @@ const FORGE_STEP_ORDER=['arrange','sky','hard'];
 function FORGE_STEP_TITLE(){ return {arrange:L.forgeStepMap, sky:L.forgeStepColor, hard:L.forgeStepSave}; }
 function FORGE_STEP_CONFIRM_LBL(){ return {arrange:L.forgeConfirmMap, sky:L.forgeConfirmColor}; }
 let forgeSub='arrange';
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-pustota-i-sohranit-17-09-2026.html): карточка-
+   итог на «Сохранить» — статичный кадр той же формулой, что красит живое превью на «Цвет»
+   (forgePreviewMoodSL), плюс числа, уже посчитанные в forgeCfg. Один раз при входе на шаг —
+   не requestAnimationFrame, там нечего анимировать ради пары секунд на экране. */
+function forgeRenderSaveRecap(){
+  const sw=$('forgeSaveRecapSwatch'); if(!sw||typeof forgeCfg==='undefined') return;
+  const psl=forgePreviewMoodSL(forgeCfg.mood);
+  sw.style.background='linear-gradient(160deg, hsl('+forgeCfg.h1+','+psl.S0+'%,'+psl.L0+'%), hsl('+forgeCfg.h2+','+psl.S1+'%,'+psl.L1+'%))';
+  const lenEl=$('forgeSaveRecapLen'); if(lenEl) lenEl.textContent=forgeCfg.l>0?(forgeCfg.l+(L.unitM||'м')):'∞';
+  const ptsEl=$('forgeSaveRecapPts'); if(ptsEl) ptsEl.textContent=(forgeCfg.sc||[]).length;
+  const fogEl=$('forgeSaveRecapFog'); if(fogEl) fogEl.textContent=[L.fog0,L.fog1,L.fog2][forgeCfg.fog||0]||'—';
+}
 function forgeSubTabSet(s){
   const leftArrange=(forgeSub==='arrange'&&s!=='arrange');
   forgeSub=(s==='sky')?'sky':(s==='hard')?'hard':'arrange';
@@ -695,6 +708,8 @@ function forgeSubTabSet(s){
   if(arrangeEl) arrangeEl.classList.toggle('hidden', forgeSub!=='arrange');
   if(skyEl) skyEl.classList.toggle('hidden', forgeSub!=='sky');
   if(hardEl) hardEl.classList.toggle('hidden', forgeSub!=='hard');
+  if(forgeSub==='hard') forgeRenderSaveRecap();
+  if(forgeSub==='sky' && typeof forgeMoodHintMaybeShow==='function') forgeMoodHintMaybeShow();
   // 12.09.2026: уход с «Карты» закрывает её лист точек, если он остался открытым — раньше
   // это висело на кнопках-пилюлях forgeSubSkyBtn/forgeSubHardBtn (js/partitura.js), теперь
   // единственная точка перехода между шагами — здесь. Заодно снимает «взведённый» стикер,
@@ -873,8 +888,13 @@ function forgeMiniSwatchPaint(cv, cfg){
    просмотра/выбора ячейки ещё не построен, это отдельная задача.
    11.09.2026 (владелец, макет izbrannoe-v-stroku-11-09-2026.html, одобрено): было 10 — подпись
    и кружки переезжают в одну строку (см. index.html), 7 умещается вместе с подписью, 10 нет.
-   Число одно — и предел сохранения, и число кружков в строке, не два разных места. */
-const FORGE_FAV_MAX=7;
+   Число одно — и предел сохранения, и число кружков в строке, не два разных места.
+   17.09.2026 (владелец, живой разговор: «семи может быть маловато», фиксированное число проще
+   открытого добавления — измерено getBoundingClientRect реальной панели (313.6px), кружок 22px
+   + зазор 8px даёт 10 в ряд, 2 ряда = 20 (чётное, как просил, чтобы не мешало подписи). Подпись
+   при этом переехала НАД рядом (index.html, .forgeFavHead) — 20 в одну строку с подписью уже
+   физически не влезает, тот же вывод, что уже был при 10 в 10.09.2026. */
+const FORGE_FAV_MAX=20;
 function forgeFavSave(cfg, name, btn){
   const list=Store.get('skyFavorites')||[];
   if(list.length>=FORGE_FAV_MAX){ toast(L.workshopFavFull||'Избранное заполнено ('+FORGE_FAV_MAX+' из '+FORGE_FAV_MAX+')','rgba(255,159,176,.5)'); return; }
@@ -930,9 +950,29 @@ function forgeFavDelete(idx){
   if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, function(ok){ if(ok) go(); }); }
   else if(typeof confirm==='function'){ if(confirm(msg)) go(); }
 }
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-karta-nebo-komfort-17-09-2026.html): пустой
+   ряд «Избранное» без подсказки молчал, что с ним делать — тот же приём разового объяснения,
+   что уже у кошелька Коллекции (angarWalletTipMaybeShow, js/ui.js): Store-флаг, показывается
+   ровно один раз за игрока и только пока список реально пуст. */
+/* 17.09.2026 (владелец, живой разговор): «Бледнее и темнее ↔ ярче и солнечнее» под «Настроение»
+   стояла постоянной строкой — «занимает лишнее место». Тот же разовый приём, что у кошелька и
+   «Избранного» рядом — один раз за игрока, дальше никогда. */
+function forgeMoodHintMaybeShow(){
+  const hint=$('ptMoodHint'); if(!hint) return;
+  if(Store.get('forgeMoodHintSeen',0)) return;
+  Store.set('forgeMoodHintSeen',1);
+  hint.classList.remove('hidden');
+}
+function forgeFavHintMaybeShow(isEmpty){
+  const hint=$('forgeFavHint'); if(!hint) return;
+  if(!isEmpty || Store.get('forgeFavHintSeen',0)){ hint.classList.add('hidden'); return; }
+  Store.set('forgeFavHintSeen',1);
+  hint.classList.remove('hidden');
+}
 function forgeFavRowSync(){
   const row=$('forgeFavRow'); if(!row) return;
   const list=Store.get('skyFavorites')||[];
+  forgeFavHintMaybeShow(list.length===0);
   row.innerHTML='';
   for(let i=0;i<FORGE_FAV_MAX;i++){
     const fav=list[i];
@@ -1134,9 +1174,14 @@ function forgeResetAll(){
   forgeCfg=forgeSanitize({});
   forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
   toast(L.forgeReset||'Сброшено','rgba(160,210,255,.5)'); haptic('light');
-  if(typeof ptSetUndo==='function') ptSetUndo(function(){
-    forgeCfg=before; forgeSyncWidgets(); Store.set('forgeLast',forgeCfg); ptClearUndo();
-  });
+  // 17.09.2026 «Дальше — история»: «Сбросить всё» — граница. Отменённые точечные правки ДО
+  // сброса ссылались бы на объекты старого forgeCfg (этот — новый, forgeSanitize({}) выше) и
+  // после отмены сброса тихо стали бы no-op — чистим стек перед тем, как класть сюда единственно
+  // осмысленный шаг назад (вернуть весь снимок), не складываем его поверх устаревших записей.
+  if(typeof ptSetUndo==='function'){
+    if(typeof ptClearUndo==='function') ptClearUndo();
+    ptSetUndo(function(){ forgeCfg=before; forgeSyncWidgets(); Store.set('forgeLast',forgeCfg); });
+  }
 }
 
 /* ---------- 05.09.2026 «Мастерская»: экран-витрина — подписи, сортировка, список ---------- */

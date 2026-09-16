@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор: Карта + Небо — комфорт, не только геометрия</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+    --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+    --stone-border-gold:rgba(255,226,150,.7);
+    --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:280px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:24px;padding:18px 14px;flex-shrink:0;position:relative;overflow:hidden}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .cap{color:var(--muted);font-size:12px;max-width:640px;margin:-4px auto 16px;text-align:center}
+  .track-m{position:relative;height:56px;border-radius:14px;background:linear-gradient(180deg,#234,#012);margin-bottom:6px}
+  .track-m::before{content:'';position:absolute;left:0;right:0;top:50%;height:5px;border-radius:4px;transform:translateY(-50%);
+    background:rgba(255,255,255,.4)}
+  .pin-m{position:absolute;top:19px;width:18px;height:18px;border-radius:50%;background:#a06ad8;border:1.5px solid rgba(255,255,255,.4);
+    transform:translateX(-50%);z-index:2}
+  .hitzone{position:absolute;top:8px;border-radius:50%;background:rgba(160,106,216,.18);border:1px dashed rgba(160,106,216,.55);
+    transform:translateX(-50%)}
+  .corner{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;z-index:3}
+  .iconNew{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink);font-size:10px}
+  .histRow{display:flex;gap:5px;margin-top:8px}
+  .histDot{flex:1;height:26px;border-radius:8px;background:var(--stone-fill);border:1px solid var(--stone-border);
+    display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)}
+  .histDot.cur{border-color:var(--gold-hi);color:var(--cream);box-shadow:0 0 8px rgba(240,192,64,.3)}
+  .forgeRow-m{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:10px;color:var(--muted)}
+  .lbl-m{width:70px;flex-shrink:0}
+  .sw-m{width:20px;height:20px;border-radius:6px;flex-shrink:0}
+  .sw-m.empty{background:transparent;border:1px dashed rgba(255,255,255,.15)}
+  .ic-m{width:20px;height:20px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.05);font-size:10px}
+  .bar-m{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.15);position:relative}
+  .bar-m::after{content:'';position:absolute;left:0;top:-6px;width:14px;height:14px;border-radius:50%;background:#8ab4ff}
+  .valn-m{width:22px;text-align:right;color:var(--cream)}
+  .favRow-m{display:flex;gap:6px;margin-top:4px}
+  .favDot{width:22px;height:22px;border-radius:50%;border:1px dashed rgba(255,255,255,.2)}
+  .heart-m{width:20px;height:20px}
+  .hintBubble{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(240,192,64,.08);
+    border:1px solid rgba(240,192,64,.3);font-size:9.5px;color:var(--cream)}
+  .newBadge{display:inline-block;font-size:8px;font-weight:800;letter-spacing:.05em;color:#1c1200;background:var(--gold-hi);
+    border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:middle}
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Конструктор — Карта и Небо: комфорт, не только геометрия</h1>
+<p class="sub">17.09.2026 · по прямому заданию — только макет, ни строки в реальный файл</p>
+<div class="note">Макет. Ничего не перенесено в игру — жду «да» по каждому блоку отдельно, можно частично.</div>
+
+<section>
+<h2>Карта — блок 1: зона попадания пальцем шире, чем сам кружок</h2>
+<p class="cap">Точка нарисована 18-36px, но живой палец промахивается мимо тонкого края чаще, чем мимо
+центра — принцип из MobileHCI (Yamanaka 2019): на узкой ленте важна НЕВИДИМАЯ ширина захвата, не
+нарисованная. Область тапа расширяется вокруг точки, сама точка на вид не меняется.</p>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — зона тапа = нарисованный кружок</div>
+    <div class="track-m">
+      <div class="corner"><div class="iconNew">7</div><div class="iconNew">🗑</div></div>
+      <div class="pin-m" style="left:35%"></div>
+      <div class="pin-m" style="left:52%"></div>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало — зона тапа шире кружка (не видна, только для касания)</div>
+    <div class="track-m">
+      <div class="corner"><div class="iconNew">7</div><div class="iconNew">🗑</div></div>
+      <div class="hitzone" style="left:35%;width:38px;height:38px"></div>
+      <div class="hitzone" style="left:52%;width:38px;height:38px"></div>
+      <div class="pin-m" style="left:35%"></div>
+      <div class="pin-m" style="left:52%"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Карта — блок 2: отмена на несколько шагов назад, не один</h2>
+<p class="cap">Сейчас — 1 шаг «Отменить» или полный «Сбросить всё». Между ними ничего: переставил 3 точки
+не туда — либо смирись, либо сбрось всю карту. Прощающий интерфейс (условие детской исследовательской
+смелости по цитируемым источникам) — это несколько шагов назад, не один.</p>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — один шаг отмены</div>
+    <div class="corner" style="position:static;margin-bottom:8px"><div class="iconNew">7</div><div class="iconNew">↩</div><div class="iconNew">🗑</div></div>
+    <div style="font-size:10px;color:var(--muted)">после 3 действий подряд — доступен только откат последнего</div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало — короткая история (до 5 шагов)</div>
+    <div class="corner" style="position:static;margin-bottom:8px"><div class="iconNew">7</div><div class="iconNew">↩<span class="newBadge">×N</span></div><div class="iconNew">🗑</div></div>
+    <div class="histRow">
+      <div class="histDot">−4</div><div class="histDot">−3</div><div class="histDot">−2</div><div class="histDot cur">−1</div><div class="histDot">сейчас</div>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:6px">долгое нажатие на ↩ — список последних действий, тап по любому — откат до него</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Небо — блок 3: у всех 4 ползунков одинаковый вес строки</h2>
+<p class="cap">Сегодня выровнял левый край (страж 242) — но «Цвет неба»/«Второй цвет» несут образец
+цвета, а «Густота»/«Настроение» — пустое место того же размера (плейсхолдер ради выравнивания, не
+контента). У «Густоты»/«Настроения» цвета нет по смыслу (это не оттенок) — но можно занять то же
+место содержательной иконкой, тогда все 4 строки читаются как один ряд равных по важности ручек,
+а не «две настоящие + две урезанные».</p>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — 2 из 4 строк с пустым местом слева</div>
+    <div class="forgeRow-m"><span class="lbl-m">ЦВЕТ НЕБА</span><div class="sw-m" style="background:#c0392b"></div><div class="bar-m"></div><span class="valn-m">0</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">ВТОРОЙ ЦВЕТ</span><div class="sw-m" style="background:#d4a017"></div><div class="bar-m"></div><span class="valn-m">40</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">ГУСТОТА</span><div class="sw-m empty"></div><div class="bar-m"></div><span class="valn-m">50</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">НАСТРОЕНИЕ</span><div class="sw-m empty"></div><div class="bar-m"></div><span class="valn-m">50</span></div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало — все 4 строки с содержанием слева</div>
+    <div class="forgeRow-m"><span class="lbl-m">ЦВЕТ НЕБА</span><div class="sw-m" style="background:#c0392b"></div><div class="bar-m"></div><span class="valn-m">0</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">ВТОРОЙ ЦВЕТ</span><div class="sw-m" style="background:#d4a017"></div><div class="bar-m"></div><span class="valn-m">40</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">ГУСТОТА</span><div class="ic-m">✦</div><div class="bar-m"></div><span class="valn-m">50</span></div>
+    <div class="forgeRow-m"><span class="lbl-m">НАСТРОЕНИЕ</span><div class="ic-m">☾</div><div class="bar-m"></div><span class="valn-m">50</span></div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Небо — блок 4: «Избранное» говорит на языке сердца, не веера карт</h2>
+<p class="cap">То же самое действие («сохранить в избранное») в Мастерской подписано залитым сердцем,
+здесь — иконкой веера карт (<code>#i-color-fan</code>). Один смысл — два разных символа в одной игре.
+Меняю кнопку на то же сердце; пустой ряд свотчей получает разовую подсказку вместо молчания — тот
+же приём, что уже одобрен для кошелька («текст лишний, будет постоянно место занимать» — значит один
+раз, не навсегда).</p>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div>
+    <div style="height:70px;border-radius:12px;background:linear-gradient(160deg,#123,#012);margin-bottom:10px;position:relative">
+      <div class="iconNew" style="position:absolute;top:6px;right:6px">🎴</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px">ИЗБРАННОЕ</div>
+    <div class="favRow-m"><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div></div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div>
+    <div style="height:70px;border-radius:12px;background:linear-gradient(160deg,#123,#012);margin-bottom:10px;position:relative">
+      <div class="iconNew" style="position:absolute;top:6px;right:6px;color:#ff9fb0">♥</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px">ИЗБРАННОЕ</div>
+    <div class="favRow-m"><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div><div class="favDot"></div></div>
+    <div class="hintBubble">Нажми ♥ на превью — сохранишь это небо сюда, до 7 штук<span class="newBadge">ОДИН РАЗ</span></div>
+  </div>
+</div>
+</section>
+
+<footer>Источники: живой код (index.html/js/forge.js/js/partitura.js) + живые измерения сегодняшней сессии +
+RESEARCH-2026-09-KONSTRUKTOR-UX-CHILD-ADULT.md + RESEARCH-2026-09-CREATOR-CONTROLS.md (Yamanaka MobileHCI 2019,
+прощающий интерфейс).<br>Не в макете: формула «подсказать жар по препятствиям» — отдельная числовая задача,
+не визуальная; архитектурный вынос угловых кнопок с ленты Карты.</footer>
+</body>
+</html>

@@ -154,31 +154,32 @@ function ptShowToast(text,undoFn){
   t.querySelector('.ptToastTxt').textContent=text;
   const undoEl=t.querySelector('.undo');
   undoEl.classList.toggle('hidden', !undoFn);
-  undoEl.onclick=undoFn?(()=>{ undoFn(); t.classList.remove('show'); clearTimeout(ptToastTimer); }):null;
+  undoEl.onclick=undoFn?(()=>{ undoFn(); const si=ptUndoStack.indexOf(undoFn); if(si>=0) ptUndoStack.splice(si,1); ptSyncUndoBtn(); t.classList.remove('show'); clearTimeout(ptToastTimer); }):null;
   t.classList.add('show');
   clearTimeout(ptToastTimer);
   ptToastTimer=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Дальше», диагноз §7):
-   один шаг назад, не полная история — ptLastUndo хранит ровно одну функцию-откат последнего
-   значимого действия (добавил/убрал/подвинул точку, «Сбросить всё»), новое действие тихо
-   перезаписывает старое (та же логика «один уровень», что уже верна для тоста — .ptToast один
-   на экран, вторая жалоба «Поставил»/«Убрал» подряд заменяет undo у первой, не складывает).
-   Дополняет ptShowToast (тот гаснет через 3с и не покрывает драг/сброс), не заменяет — оба пути
-   зовут один и тот же revert и оба гасят кнопку через ptClearUndo(), так что нельзя отменить
-   одно и то же действие дважды (тап по тосту гасит и кнопку, тап по кнопке — тост никак не
-   трогает, но ptLastUndo уже null, второй нечаянный тап по тосту после кнопки просто не найдёт
-   точку/не навредит, т.к. revert идемпотентен относительно своих же данных). */
-let ptLastUndo=null;
-function ptSetUndo(revertFn){ ptLastUndo=revertFn; ptSyncUndoBtn(); }
-function ptClearUndo(){ ptLastUndo=null; ptSyncUndoBtn(); }
-function ptSyncUndoBtn(){ const b=$('ptUndoBtn'); if(b) b.disabled=!ptLastUndo; }
+/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Дальше», диагноз §7)
+   → 17.09.2026 (владелец, «Делай», макет konstruktor-karta-nebo-komfort-17-09-2026.html):
+   был один шаг назад — между «отменить последнее» и «Сбросить всё» (ядерная кнопка) не было
+   ничего: переставил 3 точки не туда — либо смирись, либо сноси всю карту. Теперь короткая
+   история, до PT_UNDO_MAX шагов подряд (LIFO-стек), не один слот. ptSetUndo кладёт revert НА
+   стек (не перезаписывает), ptDoUndo снимает последний и зовёт его. Тост (.ptToast, гаснет
+   через 3с, не покрывает драг/сброс) по-прежнему отдельный быстрый путь — он всегда про самое
+   свежее действие (у тоста один элемент на экран, ptShowToast сам перезаписывает предыдущий),
+   поэтому его revert всегда совпадает с вершиной стека; тап по тосту снимает СВОЮ запись со
+   стека явно (см. ptShowToast), не просто гасит один общий слот, как раньше. */
+let ptUndoStack=[]; const PT_UNDO_MAX=5;
+function ptSetUndo(revertFn){ ptUndoStack.push(revertFn); if(ptUndoStack.length>PT_UNDO_MAX) ptUndoStack.shift(); ptSyncUndoBtn(); }
+function ptClearUndo(){ ptUndoStack.length=0; ptSyncUndoBtn(); }
+function ptSyncUndoBtn(){ const b=$('ptUndoBtn'); if(b) b.disabled=!ptUndoStack.length; }
 function ptDoUndo(){
-  if(!ptLastUndo) return;
-  const fn=ptLastUndo;
+  if(!ptUndoStack.length) return;
+  const fn=ptUndoStack.pop();
   sfx.click(); haptic('light');
-  fn(); // сам revert зовёт ptClearUndo() — единая точка гашения что для тоста, что для кнопки
+  fn();
+  ptSyncUndoBtn();
 }
 
 function ptRender(justPoppedIdx){
@@ -330,7 +331,7 @@ function ptRemovePin(i){
   const pins=ptPins(); const p=pins[i]; if(!p) return;
   pins.splice(i,1); ptSelIdx=-1;
   sfx.click(); haptic('light');
-  const revert=()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); ptClearUndo(); };
+  const revert=()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); };
   ptShowToast('Убрал '+ptPinName(p),revert);
   ptSetUndo(revert);
   ptRender();
@@ -368,7 +369,10 @@ function ptStartPinDrag(ev,i){
     const pins=ptPins(), p=pins[i];
     if(p && startAt!==null && p.at!==startAt){
       const prevAt=startAt;
-      ptSetUndo(()=>{ const pp=ptPins(); if(pp[i]) pp[i].at=prevAt; ptRender(); ptClearUndo(); });
+      // 17.09.2026 «Дальше — история»: по индексу i (не объекту) был ловим только пока отмена
+      // была одна на слот — со стеком в несколько шагов другое действие между драгом и его
+      // отменой могло бы сдвинуть индексы массива; ищем ту же точку по ссылке startP, не по i.
+      ptSetUndo(()=>{ const pp=ptPins(); const idx=pp.indexOf(startP); if(idx>=0) pp[idx].at=prevAt; ptRender(); });
     }
     ptRender();
   };
@@ -437,7 +441,7 @@ function ptWireTray(){
         const pins=ptPins(); pins.push(p); ptSelIdx=pins.length-1;
         sfx.click(); haptic('medium');
         ptRender(ptSelIdx);
-        const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); ptClearUndo(); };
+        const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
         ptShowToast('Поставил '+ptPinName(p),revert);
         ptSetUndo(revert);
       } else if(!moved){
@@ -459,7 +463,7 @@ function ptWireTray(){
       document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed')); ptArmedType=null;
       sfx.click(); haptic('medium');
       ptRender(ptSelIdx);
-      const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); ptClearUndo(); };
+      const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
       ptShowToast('Поставил '+ptPinName(p),revert);
       ptSetUndo(revert);
     } else if(ptSelIdx>=0){
