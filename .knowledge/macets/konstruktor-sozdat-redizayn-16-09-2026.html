@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор → Создать — редизайн</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+    --stone-border-sel:rgba(201,164,92,.55);
+    --stone-shadow-sel:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 0 7px rgba(240,192,64,.4);
+    --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+    --stone-border-gold:rgba(255,226,150,.7);
+    --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 40px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .cite{color:var(--muted);font-size:11.5px;display:block;margin-top:3px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:280px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:24px;padding:18px 14px;flex-shrink:0}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .stepTitle{text-align:center;color:var(--gold-hi);font-weight:700;font-size:13px;letter-spacing:.05em;margin-bottom:10px}
+  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25)}
+  .dot.on{background:var(--gold-hi);width:14px;border-radius:3px}
+
+  /* ===== БЫЛО — три разных семейства пилюль/иконок, как в реальном коде ===== */
+  .pillOld1{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;font-size:11px;font-weight:600;
+    border-radius:10px;background:rgba(22,38,56,.55);border:1px solid var(--line);color:var(--cream)}
+  .pillOld1.sel{background:rgba(20,16,8,.75);border-color:var(--gold);color:var(--gold-hi)}
+  .pillOld2{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;font-size:11px;font-weight:600;
+    border-radius:999px;background:rgba(14,18,32,.62);border:1px solid var(--line);color:var(--cream)}
+  .iconOld1{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg, rgba(120,170,255,.35), rgba(90,140,230,.18));backdrop-filter:blur(8px);
+    border:1px solid rgba(160,210,255,.4);box-shadow:0 0 10px rgba(120,170,255,.3);color:#dfe8ff;font-size:13px}
+  .iconOld2{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,16,32,.65);border:1px solid var(--line);color:var(--muted);font-size:13px}
+  .iconOld3{width:26px;height:26px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    background:#0f1f3d;color:var(--cream);font-size:12px;font-weight:700}
+  .ctaOld1{display:block;width:100%;text-align:center;padding:13px;border-radius:30px;font-weight:800;font-size:13px;
+    background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;margin-top:14px}
+  .ctaOld2{display:block;width:100%;text-align:center;padding:13px;border-radius:14px;font-weight:700;font-size:13px;
+    background:rgba(24,40,72,.7);border:1px solid rgba(190,225,255,.45);color:#f2f7ff;margin-top:14px}
+
+  /* ===== СТАЛО — один stone-язык на все пилюли/иконки/CTA ===== */
+  .pillNew{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;font-size:11px;font-weight:700;
+    border-radius:999px;background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink)}
+  .pillNew.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel)}
+  .iconNew{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink);font-size:13px}
+  .ctaNew{display:block;width:100%;text-align:center;padding:13px;border-radius:999px;font-weight:800;font-size:13px;
+    background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);color:#1c1200;margin-top:14px}
+
+  .grp{margin-bottom:14px}
+  .grpLbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .grid2{display:flex;gap:6px;flex-wrap:wrap}
+  .sliderRow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .sliderRow label{font-size:11px;color:var(--muted);width:76px;flex-shrink:0}
+  .sliderRow input[type=range]{flex:1;accent-color:#8ab4ff}
+  .sliderRow .val{font-size:11px;color:var(--cream);width:30px;text-align:right;flex-shrink:0}
+  .sliderRow .valInput{width:38px;font-size:11px;text-align:center;background:rgba(255,255,255,.06);
+    border:1px solid var(--stone-border);border-radius:6px;color:var(--ink);padding:2px 0;flex-shrink:0}
+  .newBadge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.05em;color:#1c1200;background:var(--gold-hi);
+    border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+  .tray{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+  .stk{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .stkIco{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff}
+  .stkLbl{font-size:8px;color:var(--muted);text-align:center}
+  .corner{display:flex;justify-content:space-between;margin-bottom:8px}
+  .cornerL,.cornerR{display:flex;gap:6px}
+  input[type=text]{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--stone-border);border-radius:10px;
+    padding:10px 12px;color:var(--ink);font-size:12px}
+  .swatchRow{display:flex;gap:6px;margin-top:6px}
+  .swatch{width:20px;height:20px;border-radius:50%;border:1px solid var(--line)}
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>КОНСТРУКТОР → СОЗДАТЬ — единая система вместо трёх материалов</h1>
+<p class="sub">16.09.2026 · диагноз из реального кода (не с глаза) + применение RESEARCH-2026-09-KONSTRUKTOR-UX-CHILD-ADULT.md</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду «да» на направление, потом делаю по одному шагу с проверкой на твоём телефоне, как договорились.</div>
+
+<section>
+<h2>Диагноз — конкретно, по коду, не «на глаз»</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div><b style="color:var(--bad)">4 разных класса</b> кнопки-пилюли на одну и ту же идею «выбираемый чип»: <code>.forgeChip</code>, <code>.forgeSegBtn</code>, <code>.forgeTab</code>, <code>.forgePreset</code> — разные заливки, разные радиусы, одна и та же роль.<span class="cite">index.html:2092-2183</span></div></div>
+  <div class="diagItem"><b>2</b><div><b style="color:var(--bad)">3 разных материала</b> для круглой иконки-кнопки: стеклянная (Перемешать/Избранное), плоская тёмная (Список точек/Сбросить), плоская квадратная (±1/±10).<span class="cite">index.html:2200-2663</span></div></div>
+  <div class="diagItem"><b>3</b><div>Новый единый «камень» — сделан сегодня же для всей игры (карточка, кнопки меню, тиры) — <b style="color:var(--bad)">0 из 9</b> использований внутри Конструктора. Это сейчас самое нестильное место в игре ровно потому, что до него ещё не дошли.<span class="cite">index.html:219-238 vs 524-793</span></div></div>
+  <div class="diagItem"><b>4</b><div>Шаг 3 «Сохранить» использует общую <code>.btn.pri</code> для «Полёт», хотя шаги 1-2 используют свою золотую капсулу для «Подтвердить» — визуальный разрыв ровно на границе шагов.<span class="cite">index.html:2505 vs 496</span></div></div>
+  <div class="diagItem"><b>5</b><div>CSS этой области правился <b style="color:var(--bad)">23 разных дня</b>, 16 подряд без пропуска (01.09-16.09) — каждый раз точечный фикс одного места, не системный проход. Это и есть Франкенштейн буквально в датах правок.</div></div>
+  <div class="diagItem"><b>6</b><div>Слайдеры Цвета (Цвет неба/Второй цвет/Густота/Настроение) — только drag, без точного ввода рядом. Нарушает WCAG 2.5.7 и отдельно отмечено исследованием как проблема именно для детской моторики. Игра уже умеет так делать — тот же приём ±1/±10 уже есть у точки на карте, просто не применён здесь.<span class="cite">RESEARCH §3.3, §4.1</span></div></div>
+  <div class="diagItem"><b>7</b><div>На шаге «Карта» есть только «Сбросить всё» (ядерная кнопка) — ни одного шага отмены отдельного действия. Исследование называет прощающий интерфейс (undo) главным условием, чтобы ребёнок не боялся пробовать.<span class="cite">RESEARCH §1.2, §1.3 п.9</span></div></div>
+</div>
+</section>
+
+<section>
+<h2 style="border-color:var(--line)">Что <b style="color:var(--ok)">не</b> трогаю — осознанный цвет, не пропуск</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Иконки препятствий в лотке (Мина/Спутник/Комета/Ловец/Дрейфер и т.д.) остаются каждая своим цветом — это опознавательный знак типа объекта, не декоративная непоследовательность. Унификация в один камень убила бы узнаваемость (то же самое находка исследования про «предметную иконку», §4.3).</div></div>
+  <div class="diagItem"><b>—</b><div>Круглые кнопки <code>.pvBtn</code> (Перемешать/Избранное на превью Цвета) — уже входят в отдельно одобренную сегодня «синюю» систему round-кнопок (<code>#pauseBtn/.menuBack/pvBtn/zoom</code>), не перевожу в камень.</div></div>
+  <div class="diagItem"><b>—</b><div>Сами цветные кружки (Избранное/свотчи) остаются буквальными цветами — это и есть содержание, не оформление.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Шаг 1 — КАРТА</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div><div class="stepTitle">КАРТА</div>
+    <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="corner"><div class="cornerL"><div class="iconOld2">11</div></div><div class="cornerR"><div class="iconOld2">🗑</div></div></div>
+    <div style="height:34px;background:rgba(10,16,32,.4);border-radius:10px;margin-bottom:10px"></div>
+    <div class="sliderRow"><label>ДЛИНА</label><input type=range value=80 disabled><span class="val">4000M</span></div>
+    <div class="grpLbl">Типы точек (лоток)</div>
+    <div class="tray">
+      <div class="stk"><div class="stkIco" style="background:#6aa0d8">⏸</div><div class="stkLbl">Передышка</div></div>
+      <div class="stk"><div class="stkIco" style="background:#e0b84a">✎</div><div class="stkLbl">Заметка</div></div>
+      <div class="stk"><div class="stkIco" style="background:#5a4a3a">⬡</div><div class="stkLbl">Астероид</div></div>
+      <div class="stk"><div class="stkIco" style="background:#3a4a5a">▬</div><div class="stkLbl">Обломок</div></div>
+      <div class="stk"><div class="stkIco" style="background:#a06ad8">⬡</div><div class="stkLbl">Дрейфер</div></div>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div><div class="stepTitle">КАРТА</div>
+    <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="corner"><div class="cornerL"><div class="iconNew">11</div><div class="iconNew" title="Отменить" style="opacity:.85">↩<span class="newBadge">НОВОЕ</span></div></div><div class="cornerR"><div class="iconNew">🗑</div></div></div>
+    <div style="height:34px;background:rgba(10,16,32,.4);border-radius:10px;margin-bottom:10px"></div>
+    <div class="sliderRow"><label>ДЛИНА</label><input type=range value=80><span class="valInput" contenteditable>4000</span></div>
+    <div class="grpLbl">Типы точек (лоток) — цвет/иконка не тронуты, это опознавание типа</div>
+    <div class="tray">
+      <div class="stk"><div class="stkIco" style="background:#6aa0d8">⏸</div><div class="stkLbl">Передышка</div></div>
+      <div class="stk"><div class="stkIco" style="background:#e0b84a">✎</div><div class="stkLbl">Заметка</div></div>
+      <div class="stk"><div class="stkIco" style="background:#5a4a3a">⬡</div><div class="stkLbl">Астероид</div></div>
+      <div class="stk"><div class="stkIco" style="background:#3a4a5a">▬</div><div class="stkLbl">Обломок</div></div>
+      <div class="stk"><div class="stkIco" style="background:#a06ad8">⬡</div><div class="stkLbl">Дрейфер</div></div>
+    </div>
+    <div class="pillNew" style="width:100%;margin-top:10px;padding:10px;border-radius:14px">ТОЧЕЧНАЯ НАСТРОЙКА ▾<span class="newBadge">ПЕРЕЕХАЛА С «СОХРАНИТЬ»</span></div>
+    <div class="ctaNew">ПОДТВЕРДИТЬ КАРТУ ✓</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Шаг 2 — ЦВЕТ</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div><div class="stepTitle">ЦВЕТ</div>
+    <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+    <div style="height:110px;border-radius:14px;background:linear-gradient(160deg,#123,#012);margin-bottom:12px;position:relative">
+      <div class="iconOld1" style="position:absolute;top:8px;left:8px">⤨</div>
+      <div class="iconOld1" style="position:absolute;top:8px;right:8px">🎨</div>
+    </div>
+    <div class="sliderRow"><label>ЦВЕТ НЕБА</label><input type=range value=50 disabled><span class="val">180</span></div>
+    <div class="sliderRow"><label>ВТОРОЙ ЦВЕТ</label><input type=range value=60 disabled><span class="val">220</span></div>
+    <div class="sliderRow"><label>ГУСТОТА</label><input type=range value=50 disabled><span class="val">50</span></div>
+    <div class="sliderRow"><label>НАСТРОЕНИЕ</label><input type=range value=50 disabled><span class="val">50</span></div>
+    <div class="grpLbl">Туман</div>
+    <div class="grid2"><span class="pillOld1 sel">НЕТ</span><span class="pillOld1">ЛЁГКИЙ</span><span class="pillOld1">ГУСТОЙ</span></div>
+    <div class="ctaOld1">ПОДТВЕРДИТЬ ЦВЕТ ✓</div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div><div class="stepTitle">ЦВЕТ</div>
+    <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+    <div style="height:110px;border-radius:14px;background:linear-gradient(160deg,#123,#012);margin-bottom:12px;position:relative">
+      <div class="iconNew" style="position:absolute;top:8px;left:8px;border-color:rgba(160,210,255,.4);box-shadow:0 0 10px rgba(120,170,255,.3)">⤨</div>
+      <div class="iconNew" style="position:absolute;top:8px;right:8px;border-color:rgba(160,210,255,.4);box-shadow:0 0 10px rgba(120,170,255,.3)">🎨</div>
+    </div>
+    <div class="sliderRow"><label>ЦВЕТ НЕБА</label><input type=range value=50><span class="valInput" contenteditable>180</span></div>
+    <div class="sliderRow"><label>ВТОРОЙ ЦВЕТ</label><input type=range value=60><span class="valInput" contenteditable>220</span></div>
+    <div class="sliderRow"><label>ГУСТОТА</label><input type=range value=50><span class="valInput" contenteditable>50</span></div>
+    <div class="sliderRow"><label>НАСТРОЕНИЕ</label><input type=range value=50><span class="valInput" contenteditable>50</span><span class="newBadge">ВВОД</span></div>
+    <div class="grpLbl">Туман</div>
+    <div class="grid2"><span class="pillNew sel">НЕТ</span><span class="pillNew">ЛЁГКИЙ</span><span class="pillNew">ГУСТОЙ</span></div>
+    <div class="ctaNew">ПОДТВЕРДИТЬ ЦВЕТ ✓</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Шаг 3 — СОХРАНИТЬ</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div><div class="stepTitle">СОХРАНИТЬ</div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+    <input type=text placeholder="ИМЯ ДЛЯ НЕБА" style="margin-bottom:12px">
+    <div class="grid2" style="margin-bottom:12px">
+      <span class="pillOld2" style="flex:1;background:rgba(24,40,72,.7);border-color:rgba(190,225,255,.45)">ПОЛЁТ</span>
+      <span class="pillOld2" style="flex:1">ПОДЕЛИТЬСЯ</span>
+    </div>
+    <span class="pillOld2" style="width:100%">ТОЧЕЧНАЯ НАСТРОЙКА ▾</span>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div><div class="stepTitle">СОХРАНИТЬ</div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+    <input type=text placeholder="Дайте имя" style="margin-bottom:12px;text-align:center">
+    <div class="ctaNew" style="margin-top:0">ПОЛЁТ</div>
+    <div class="pillNew" style="width:100%;margin-top:8px;padding:10px">ПОДЕЛИТЬСЯ</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Точечная настройка убрана — переехала на «Карту»<span class="newBadge">2 КНОПКИ, НЕ 3</span></div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Играть ↔ Создать — один материал круглых значков-кнопок</h2>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:-4px auto 16px;text-align:center">Твоё уточнение: сейчас <code>.wCorner</code> (карточки Мастерской, вкладка Играть) и <code>.ptCornerBtn</code>/<code>.nudge</code> (шаг Карта, Создать) — плоские тёмные кружки, но чуть разных оттенков. Один и тот же камень везде.</p>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div><div class="stepTitle">ИГРАТЬ — карточка неба</div>
+    <div style="height:70px;border-radius:12px;background:linear-gradient(160deg,#3a2350,#170c28);margin-bottom:10px;position:relative">
+      <div class="iconOld2" style="position:absolute;top:6px;left:6px;font-size:11px">ⓘ</div>
+      <div class="iconOld2" style="position:absolute;top:6px;right:6px;font-size:11px">♡</div>
+      <div class="iconOld2" style="position:absolute;bottom:6px;right:6px;font-size:11px">▶</div>
+    </div>
+    <div class="grpLbl">Шаг «Карта» — те же по роли, другой оттенок</div>
+    <div class="corner"><div class="cornerL"><div class="iconOld2">11</div></div><div class="cornerR"><div class="iconOld2">🗑</div></div></div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div><div class="stepTitle">ИГРАТЬ — карточка неба</div>
+    <div style="height:70px;border-radius:12px;background:linear-gradient(160deg,#3a2350,#170c28);margin-bottom:10px;position:relative">
+      <div class="iconNew" style="position:absolute;top:6px;left:6px;font-size:11px">ⓘ</div>
+      <div class="iconNew" style="position:absolute;top:6px;right:6px;font-size:11px">♡</div>
+      <div class="iconNew" style="position:absolute;bottom:6px;right:6px;font-size:11px">▶</div>
+    </div>
+    <div class="grpLbl">Шаг «Карта» — теперь буквально тот же камень</div>
+    <div class="corner"><div class="cornerL"><div class="iconNew">11</div></div><div class="cornerR"><div class="iconNew">🗑</div></div></div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Гармония — превью не закрывая окно</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div>
+    <div class="stepTitle" style="margin-bottom:10px">Подобрать гармонию</div>
+    <div style="background:rgba(10,16,32,.6);border-radius:12px;padding:12px">
+      <div class="grpLbl">Схемы</div>
+      <div class="grid2" style="margin-bottom:10px">
+        <span class="pillOld1 sel">Компл.</span><span class="pillOld1">Аналог.</span><span class="pillOld1">Триада</span>
+      </div>
+      <div style="font-size:10px;color:var(--bad);text-align:center;padding:8px 0">Чтобы увидеть результат — закрой окно и посмотри на превью выше</div>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)"><div class="phoneLbl now">Стало</div>
+    <div class="stepTitle" style="margin-bottom:10px">Подобрать гармонию</div>
+    <div style="background:rgba(10,16,32,.6);border-radius:12px;padding:12px">
+      <div style="height:56px;border-radius:10px;background:linear-gradient(160deg,#234,#012);margin-bottom:10px;
+        display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">живой свотч неба<span class="newBadge">ОБНОВЛЯЕТСЯ СРАЗУ</span></div>
+      <div class="grpLbl">Схемы</div>
+      <div class="grid2">
+        <span class="pillNew sel">Компл.</span><span class="pillNew">Аналог.</span><span class="pillNew">Триада</span>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer>Источники: живой код (index.html, js/forge.js, js/partitura.js — грепом, не по памяти) + RESEARCH-2026-09-KONSTRUKTOR-UX-CHILD-ADULT.md (15.09.2026) + правки сегодняшнего дня (--stone-* токены).<br>
+Не в макете: перестройка forge.js/partitura.js (код-архитектура, не визуал — отдельный заход) и «Небо друга» (ждёт своего сайта, уже решено раньше).</footer>
+</body>
+</html>

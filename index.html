@@ -2089,9 +2089,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeVal{flex:none;width:26px;text-align:right;font-size:13px;color:#bcd2ff}
 .forgeRow input[type=range]{flex:1;accent-color:#8ab4ff;height:22px}
 .forgeChips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%}
-.forgeChip{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html: «4 разных класса
+   на одну и ту же идею выбираемого чипа» — .forgeChip/.forgeSegBtn/.forgeTab/.forgePreset
+   переведены на общие --stone-* токены (см. :root) — та же материя, что уже у остального
+   Конструктора и главного меню. Форма/паддинг/радиус каждого класса НЕ тронуты — это осознанная
+   разница ролей (вкладка крупнее чипа), а материал теперь буквально один и тот же код. */
+.forgeChip{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--muted);border-radius:10px;
   padding:6px 11px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
-.forgeChip.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.6);color:#f0c040}
+.forgeChip.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:#f0c040}
 /* 08.09.2026 (владелец: «Закреплённые»/«Случайные» слишком длинное слово) — вкладка-значок
    без текста, тот же .forgeChip, только квадратная и по центру иконки. */
 .forgeChip.iconOnly{width:34px;display:flex;align-items:center;justify-content:center;padding:6px}
@@ -2103,9 +2108,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    вернулось поведение .forgeChips по умолчанию — перенос строк, если 5 чипов не влезли). */
 .forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
 .forgeSeg.locked{opacity:.4;pointer-events:none} /* 02.09.2026: «Высокая ставка» держит Жизни/Бонусы — тап по ним больше не выглядит рабочим, раз реального эффекта нет */
-.forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
+/* 16.09.2026: тот же перевод на --stone-*, что у .forgeChip выше — единый материал ряда чипов Конструктора. */
+.forgeSegBtn{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--muted);border-radius:10px;
   padding:7px 12px;font-size:12.5px;cursor:pointer;pointer-events:auto;transition:all .15s}
-.forgeSegBtn.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.6);color:#f0c040}
+.forgeSegBtn.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:#f0c040}
 /* 30.08.2026: .forgeGrpLbl (плоские заголовки групп) удалён — три группы «Тонкой настройки»
    стали аккордеоном (.setGrp.spoiler, тот же класс что в Настройках), правило больше нигде не используется */
 /* 11.09.2026 «Лаборатория цвета» (владелец, макет laboratoriya-tsveta-11-09-2026.html, одобрено):
@@ -2119,7 +2125,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    другую кнопку игры. Теперь тот же сплошной тёмный язык, что у .forgeChip/.forgeSegBtn по
    всей игре — золото осталось только у иконки, как метка «это про цвет». */
 .labBtn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;padding:9px 12px;
-  border-radius:10px;border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--ink);
+  border-radius:10px;border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--ink);
   font-size:11.5px;letter-spacing:.04em;width:100%;cursor:pointer;pointer-events:auto;transition:all .15s}
 .labBtn:active{background:rgba(240,192,64,.12);border-color:rgba(240,192,64,.5)}
 .labBtn .ic{width:14px;height:14px;stroke:var(--gold-hi);fill:none;stroke-width:2}
@@ -2172,13 +2178,17 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 /* #forgeSubTabs (Карта/Цвет/Сохранить как вкладки-пилюли) удалён 12.09.2026 вместе со своими
    правилами скролла/маски-затухания выше — «Создать» стало тремя полноэкранными шагами
    (заголовок+точки прогресса, .forgeStepDot), длинной строки подписей больше нет физически. */
-.forgeTab{border:1px solid rgba(201,164,92,.3);background:rgba(14,18,32,.62);color:var(--muted);
+/* 16.09.2026: --stone-* вместо своего золотистого-полупрозрачного языка — та же материя, что у остальных
+   вкладок/чипов Конструктора (см. .forgeChip выше), а не третий похожий, но не идентичный вариант. */
+.forgeTab{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--muted);
   border-radius:12px;padding:9px 22px;font-size:13.5px;font-weight:700;cursor:pointer;pointer-events:auto;
   flex:none;white-space:nowrap} /* flex:none — тот же приём, что .angarTab: не сжимать текст, дать строке прокручиваться */
-.forgeTab.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.55);color:#f0c040}
+.forgeTab.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:#f0c040}
 .forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:min(94%,560px);margin-top:2px} /* v1.86.0: тихие плитки-программы; 01.09.2026: было width:100% — держалось узким только пока родителем был .setPanel (сам width:min(92%,380px)); после переноса в раскладке родитель — широкий .scrBody, плитки расползлись во весь экран. Ограничение теперь своё, не одолженное у родителя.
    02.09.2026: 380→560 — владелец захотел весь экран Конструктора одной ширины, не только Расстановку. */
-.forgePreset{border:1px solid rgba(201,164,92,.3);background:rgba(14,18,32,.62);color:#bcd2ff;border-radius:999px;
+/* 16.09.2026: тот же --stone-* материал, что у .forgeTab/.forgeChip — цвет текста (#bcd2ff) не тронут,
+   это не «выбрано/не выбрано», а метка «это программа раскладки», как у .pvBtn. */
+.forgePreset{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:#bcd2ff;border-radius:999px;
   padding:6px 12px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
 .forgePreset:active{transform:scale(.95)}
 /* ---- v1.85.0 «Сначала небо»: живое превью, ручка «Жар», спойлер; v1.86.0 — вторая сборка сцены ---- */
@@ -2329,8 +2339,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    одинаковой высоты 26px, .wInfoStack не нужен) возвращены к этому виду. */
 .wTopRow{position:absolute;top:8px;left:8px;right:8px;z-index:5;display:flex;align-items:center;
   justify-content:flex-end;gap:6px}
+/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, раздел «Играть↔Создать —
+   один материал круглых значков-кнопок»): --stone-* вместо своего полупрозрачного-белого языка —
+   тот же круглый значок, что теперь и у .ptCornerBtn/.nudge в Конструкторе, единый вид Играть=Создать. */
 .wCorner{width:26px;height:26px;border-radius:50%;
-  background:rgba(6,10,20,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
+  background:var(--stone-fill);box-shadow:var(--stone-shadow);border:1px solid var(--stone-border);color:#fff;
   display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
 .wCorner .ic{width:14px;height:14px;fill:currentColor}
 /* 15.09.2026: (i)/Полёт — та же поправка видимого размера, что у звезды чуть ниже (см. её
@@ -2500,7 +2513,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    недогрузе. Кнопка теперь стоит сразу после настоящего содержимого, не в конце искусственной
    пустоты. */
 .forgeStepPanel{flex:0 1 auto;min-height:0;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:0 16px}
-#ptPanel,#forgeSkyPanel,#forgePanelHard{max-width:560px} /* тот же потолок, что у .forgeTabs/#ptGrp (min(94%,560px)) — панель шага теперь сама отвечает за узкий/широкий экран, не только .scrBody вокруг неё */
+#ptPanel,#forgeSkyPanel,#forgePanelHard,#forgeArrangeFine{max-width:560px} /* тот же потолок, что у .forgeTabs/#ptGrp (min(94%,560px)) — панель шага теперь сама отвечает за узкий/широкий экран, не только .scrBody вокруг неё; 16.09.2026: #forgeArrangeFine (переехавшая «Точечная настройка») добавлена в тот же список, что и её бывший родитель #forgePanelHard */
 #forgeStepConfirmWrap{flex:none;display:flex;justify-content:center;padding:12px 16px calc(14px + var(--sab))}
 #forgeStepConfirmBtn{font-family:inherit;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;
   background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;
@@ -2600,8 +2613,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    того же вечера, «сделай красиво, не просто впихни»): «Точек»/«Сбросить» — круглые значки по
    разным углам самой ленты, ровно тот же визуальный язык, что уже есть у ⓘ/★ на плитках Ангара
    (.angarFact/.angarFav, index.html:1397-1408, см. STYLE-GUIDE.md §5) — не текстовые пилюли. */
+/* 16.09.2026: --stone-* — тот же круглый значок-кнопка, что теперь у .wCorner/.nudge (см. их комментарии). */
 .ptCornerBtn{position:absolute;top:6px;z-index:3;width:20px;height:20px;border-radius:50%;
-  background:rgba(10,16,32,.65);border:1px solid var(--line);color:var(--muted);
+  background:var(--stone-fill);box-shadow:var(--stone-shadow);border:1px solid var(--stone-border);color:var(--muted);
   display:grid;place-items:center;font-family:inherit;font-size:10px;cursor:pointer}
 .ptCornerBtn .ic{width:12px;height:12px}
 .ptCornerLeft{left:6px}
@@ -2657,7 +2671,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .panel.quickEdit .del{color:#e0533d;cursor:pointer;font-size:11px;letter-spacing:.04em;padding:8px;min-height:44px;
   display:flex;align-items:center}
 .atrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.nudge{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:#0f1f3d;
+/* 16.09.2026: --stone-* — тот же материал, что у .wCorner/.ptCornerBtn (форма/радиус свои — это ±1/±10, не круглая иконка). */
+.nudge{width:44px;height:44px;border-radius:14px;border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);
   color:var(--cream);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:border-color .15s}
 .nudge:active{border-color:rgba(201,164,92,.45);background:rgba(201,164,92,.1)}
@@ -2688,6 +2703,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   box-shadow:0 0 16px rgba(240,192,64,.14)} /* 16.09.2026 «Небесный прибор» */
 .forgePanel .btn.ghost:not(.spoiler){background:rgba(10,14,26,.5);border-color:rgba(201,164,92,.18);color:#9fb4d8;font-weight:500}
 .forgePanel .btn.ghost.small:not(.spoiler){padding:10px 18px}
+/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html): «Полёт» на шаге
+   «Сохранить» — то же золотое CTA-капсюль, что #forgeStepConfirmBtn на шагах «Карта»/«Цвет», не
+   общий притушенный .forgePanel .btn.pri — это финальное действие, а не рядовая кнопка панели.
+   Не трогает .btn.pri вообще (общий на всю игру) — только эту одну кнопку по её ID. */
+#forgePlay{background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));
+  border:none;color:#1c1200;border-radius:30px;box-shadow:0 6px 20px rgba(201,164,92,.35);font-weight:700}
 .heatRow{margin-top:10px}
 .heatRow .forgeLbl{width:auto;font-size:14px;color:#bcd2ff} /* «Жар» — хозяин строки, крупнее рядовых ручек */
 .heatRow .forgeVal{font-size:14px}
@@ -2702,9 +2723,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    центрировались раньше только за счёт align-items:center у #forgeFine (были его прямыми
    детьми) — переехали на уровень глубже, в .setPanel-панели групп (не flex по умолчанию).
    Тот же flex+center здесь, плюс паддинг — иначе строки прижаты к рамке новой карточки. */
-#forgePanelHard,#forgePanelEn,#forgePanelMood{display:flex;flex-direction:column;align-items:center;padding:12px 16px 6px;
+#forgePanelHard,#forgePanelEn,#forgePanelMood,#forgeArrangeFine{display:flex;flex-direction:column;align-items:center;padding:12px 16px 6px;
   margin-left:auto;margin-right:auto}
-#forgePanelHard{width:100%} /* 11.09.2026, см. комментарий ниже — только этот id, #forgePanelEn/Mood в живом DOM не существуют */
+#forgePanelHard,#forgeArrangeFine{width:100%} /* 11.09.2026, см. комментарий ниже — #forgePanelEn/Mood в живом DOM не существуют;
+  16.09.2026: #forgeArrangeFine — та же переехавшая «Точечная настройка», получает тот же фикс ширины, что был у её бывшего родителя */
 /* 07.09.2026, владелец (замер вживую — 0px слева, 30px справа
   и у #forgePanelHard, и у #forgeSkyPanel): тот же класс бага, что уже чинили у #ptGrp/#ptPanel/
   #workshopGrp — align-items:center центрирует ДЕТЕЙ панели, но не саму панель относительно её
@@ -3257,9 +3279,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.326"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.326"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.326"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.327"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.327"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.327"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3985,6 +4007,46 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <div id="ptListPanel"></div>
       </div>
     </div>
+    <!-- 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Делай»):
+         «Точечная настройка» переехала сюда с шага «Сохранить» — те же ID/логика (forge.js:
+         forgeHardSpoilerGrp/forgeFill), просто другое место в разметке; была последней на
+         экране, где владелец счёл её бесполезной («в самом конце там достаточно двух кнопок»),
+         теперь рядом с самими точками дистанции, которые она и настраивает. -->
+    <div class="setPanel forgePanel" id="forgeArrangeFine">
+      <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT" id="forgeHardSpoilerGrpT">Точечная настройка</span></div>
+      <div id="forgeHardSpoilerPanel" class="hidden">
+        <div class="forgeGroupHead" id="forgeTempoLbl">Темп неба</div>
+        <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
+        <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
+        <!-- 06.09.2026 «Солнечный ветер»: сила боковых порывов, 0 = выкл (умолчание). Тот же ряд,
+             что у Плотности/Скорости — обычная ручка Конструктора, не отдельный режим. Макет:
+             macet-stopkadr-bokovik.html, одобрено. -->
+        <div class="forgeRow"><span class="forgeLbl" id="forgeWindLbl">Солнечный ветер</span><input type="range" id="forgeWind" min="0" max="100" step="5" value="0"><b class="forgeVal" id="forgeWindV">0</b></div>
+        <div class="hint" id="forgeWindHint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
+        <div class="forgeGroupHead" id="forgeStartLbl">Старт</div>
+        <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
+        <div class="forgeSeg" id="forgeLivesSeg"></div>
+        <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
+        <div class="forgeSeg" id="forgeWaveSeg"></div>
+        <div class="hint" id="forgeWaveHint">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+        <!-- 02.09.2026: владелец вживую — «слово жара вообще ничего не говорит», сам не понял,
+             что значит число 1-6, принял это за баг (два «нажатых» контрола). Метафору решил
+             оставить («красиво»), но её никто и нигде не объяснял — то же лечение, что уже
+             есть у соседей («Ровный жар — без разгона»), только вынесено в свою строку: этот
+             заголовок — .forgeLblBlk (uppercase, компактный), под целое предложение не годится. -->
+        <div class="forgeChips" id="forgeFlatChip"></div>
+        <div class="forgeLblBlk forgeGroupHead" id="forgeBonusLbl">Бонусы</div>
+        <div class="forgeSeg" id="forgeBonusSeg"></div>
+        <!-- 31.08.2026 «Высокая ставка»: форсирует Жизни=1 и Бонусы=Выкл выше (не отдельная
+             механика — комбинация уже существующих полей) + очки ×4 в самом забеге -->
+        <div class="forgeChips" id="forgeHSChip"></div>
+        <!-- 02.09.2026: «Состав» переехал сюда же, вместо своего отдельного спойлера —
+           владелец вживую: «может уехать в Сложность, вместо 2 разных меню под спойлером».
+           Один аккордеон вместо двух. -->
+        <div class="forgeLblBlk forgeGroupHead" id="forgeEnLbl">Преграды</div>
+        <div class="forgeChips" id="forgeChips"></div>
+      </div>
+    </div>
     </div>
     <div id="forgeSubSky" class="hidden forgeStepPanel">
     <div class="setPanel" id="forgeSkyPanel">
@@ -4071,7 +4133,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <!-- 31.08.2026: maxlength — мягкая узда по символам (защита от вставки простыни текста);
            настоящая граница — байтовый бюджет в sanitizeTrackName (core.js), где кириллица
            и латиница честно платят каждая свою цену за байт -->
-      <input class="forgeName" id="forgeName" maxlength="35" placeholder="Имя для неба" autocomplete="off">
+      <input class="forgeName" id="forgeName" maxlength="35" placeholder="Дайте имя" autocomplete="off">
       <!-- 09.09.2026, владелец, живой скрин: «Лететь»/«Поделиться» переехали СЮДА, в «Сложность»,
            под название — 08.09.2026 они стояли во вкладке «Небо» по прямому решению владельца
            («закрепить именно за Небо, не уезжать на Расстановку/Сложность»), сегодня владелец
@@ -4080,47 +4142,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <button class="btn pri" id="forgePlay">Полёт</button>
         <button class="btn ghost" id="forgeShareMapBtn">Поделиться</button>
       </div>
-      <!-- 09.09.2026, владелец, живой скрин с телефона (обвёл красным весь блок ниже): всё
-           от «Темп неба» до «Преграды» уходит под спойлер «Точечная настройка» — тот же
-           .setGrp.spoiler, что уже используется в Настройках/Расстановке («Список точек»),
-           открыт/закрыт через forgeHardSpoilerGrp в forge.js. Экран «Сохранить» без него
-           был длинным на весь экран, свёрнутый — помещается целиком. -->
-      <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT" id="forgeHardSpoilerGrpT">Точечная настройка</span></div>
-      <div id="forgeHardSpoilerPanel" class="hidden">
-        <div class="forgeGroupHead" id="forgeTempoLbl">Темп неба</div>
-        <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
-        <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
-        <!-- 06.09.2026 «Солнечный ветер»: сила боковых порывов, 0 = выкл (умолчание). Тот же ряд,
-             что у Плотности/Скорости — обычная ручка Конструктора, не отдельный режим. Макет:
-             macet-stopkadr-bokovik.html, одобрено. -->
-        <div class="forgeRow"><span class="forgeLbl" id="forgeWindLbl">Солнечный ветер</span><input type="range" id="forgeWind" min="0" max="100" step="5" value="0"><b class="forgeVal" id="forgeWindV">0</b></div>
-        <div class="hint" id="forgeWindHint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
-        <div class="forgeGroupHead" id="forgeStartLbl">Старт</div>
-        <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
-        <div class="forgeSeg" id="forgeLivesSeg"></div>
-        <div class="forgeLblBlk" id="forgeWaveLbl">Стартовая жара</div>
-        <div class="forgeSeg" id="forgeWaveSeg"></div>
-        <div class="hint" id="forgeWaveHint">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
-        <!-- 02.09.2026: владелец вживую — «слово жара вообще ничего не говорит», сам не понял,
-             что значит число 1-6, принял это за баг (два «нажатых» контрола). Метафору решил
-             оставить («красиво»), но её никто и нигде не объяснял — то же лечение, что уже
-             есть у соседей («Ровный жар — без разгона»), только вынесено в свою строку: этот
-             заголовок — .forgeLblBlk (uppercase, компактный), под целое предложение не годится. -->
-        <div class="forgeChips" id="forgeFlatChip"></div>
-        <div class="forgeLblBlk forgeGroupHead" id="forgeBonusLbl">Бонусы</div>
-        <div class="forgeSeg" id="forgeBonusSeg"></div>
-        <!-- 31.08.2026 «Высокая ставка»: форсирует Жизни=1 и Бонусы=Выкл выше (не отдельная
-             механика — комбинация уже существующих полей) + очки ×4 в самом забеге -->
-        <div class="forgeChips" id="forgeHSChip"></div>
-        <!-- 02.09.2026: «Состав» переехал сюда же, вместо своего отдельного спойлера —
-           владелец вживую: «может уехать в Сложность, вместо 2 разных меню под спойлером».
-           Один аккордеон вместо двух. -->
-        <div class="forgeLblBlk forgeGroupHead" id="forgeEnLbl">Преграды</div>
-        <div class="forgeChips" id="forgeChips"></div>
-      </div>
-      <!-- 02.09.2026 «Три яруса»: «Туман» переехал в Расстановку (рядом с настроением неба —
-           тоже атмосфера неба), «Небо друга» переехало в Ярус 1 (тот же вопрос «дай готовое»,
-           что и у сценариев, просто с другого конца). Тонкая настройка сжалась до одной группы. -->
+      <!-- 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Делай»):
+           «Точечная настройка» (Темп неба/Старт/Бонусы/Преграды) переехала на шаг «Карта» —
+           там же, где сами точки дистанции, а не на последнем шаге, где от неё «мало толку».
+           Экран «Сохранить» теперь — только название + Полёт/Поделиться. См. #forgeArrangeFine
+           ниже (forgeSubArrange) — тот же спойлер, те же ID полей, форма/логика не менялись,
+           только место в разметке (forgeFill()/forgeHardSpoilerGrp в forge.js читают элементы
+           по getElementById — DOM-позиция для них не важна). -->
     </div>
     <!-- 08.09.2026, владелец, живой скрин: «Небо друга — код/ссылка» убрано ради чистоты экрана —
          реальный путь для друга остаётся автоматическим (кнопка «Поделиться небом» сама даёт
@@ -4376,26 +4404,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.326" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.326"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.326"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.326"></script>
-<script defer src="js/game.js?v=1.478.326" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.326"></script>
-<script defer src="js/sync.js?v=1.478.326"></script>
-<script defer src="js/render.js?v=1.478.326"></script>
-<script defer src="js/planetarium.js?v=1.478.326"></script>
-<script defer src="js/goldstar.js?v=1.478.326"></script>
-<script defer src="js/finish.js?v=1.478.326"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.326"></script>
-<script defer src="js/gyro.js?v=1.478.326"></script>
-<script defer src="js/forge.js?v=1.478.326"></script>
-<script defer src="js/partitura.js?v=1.478.326"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.326"></script>
-<script defer src="js/card.js?v=1.478.326"></script>
-<script defer src="js/star.js?v=1.478.326"></script>
-<script defer src="js/cinema.js?v=1.478.326"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.326"></script>
+<script defer src="js/core.js?v=1.478.327" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.327"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.327"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.327"></script>
+<script defer src="js/game.js?v=1.478.327" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.327"></script>
+<script defer src="js/sync.js?v=1.478.327"></script>
+<script defer src="js/render.js?v=1.478.327"></script>
+<script defer src="js/planetarium.js?v=1.478.327"></script>
+<script defer src="js/goldstar.js?v=1.478.327"></script>
+<script defer src="js/finish.js?v=1.478.327"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.327"></script>
+<script defer src="js/gyro.js?v=1.478.327"></script>
+<script defer src="js/forge.js?v=1.478.327"></script>
+<script defer src="js/partitura.js?v=1.478.327"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.327"></script>
+<script defer src="js/card.js?v=1.478.327"></script>
+<script defer src="js/star.js?v=1.478.327"></script>
+<script defer src="js/cinema.js?v=1.478.327"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.327"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

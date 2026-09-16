@@ -71,7 +71,7 @@ const I18N = {
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
-    forgeTitle:'Конструктор', forgeNamePh:'Имя для неба', forgeDefName:'Небо пилота',
+    forgeTitle:'Конструктор', forgeNamePh:'Дайте имя', forgeDefName:'Небо пилота',
     forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
     forgePlayBtn:'Полёт', forgeShareMapBtn:'Поделиться', // 08.09.2026: свой ключ для кнопки Конструктора — L.start общий с главной кнопкой меню («Начать полёт»), трогать его сюда нельзя (та же ловушка, что уже была с AUTH_MAX_AGE_SEC). «Небом» убрано у «Поделиться» — короче, стоит парой с «Полёт» внутри вкладки «Небо», не общим блоком под всеми тремя
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
@@ -158,8 +158,7 @@ const I18N = {
     workshopPlay:'Полёт', workshopEdit:'Изменить', // 06.09.2026: «В Кузницу» — Кузница как отдельное место больше не существует; 07.09.2026: было короткое «Открыть» рядом с «Играть» одинаковым весом — путало (два похожих варианта); теперь словом-ссылкой второго яруса, полная фраза не нуждается в соседстве с «Играть», чтобы быть понятной; 08.09.2026: «Открыть в Конструкторе» — само название экрана в названии кнопки, хотя мы уже внутри Конструктора; «Изменить» короче и не повторяется; «Играть»→«В полёт»→«Полёт» (владелец, живой макет) — стоит парой с «Изменить», без иконки
     workshopPlays:(n)=>'Запуски: '+n, // 07.09.2026: было голое «▶ N» — не грамматика по числу (1/2/5), а нейтральная формулировка, не нужно спрягать; 10.09.2026: «Сыграно» → «Запуски», см. комментарий у workshopSort_plays выше
     workshopHearts:(n)=>'Лайков: '+n, // 15.09.2026: значок лайка на карточке сжат до кружка без подписи (владелец, «Единая карточка») — число не пропало, ушло в title (подсказка); тот же приём «Слово: N», что у workshopPlays выше — обходит русское склонение по числу (1 лайк/2 лайка/5 лайков), не нужно спрягать
-    forgePreviewNamePh:'Дайте имя', // 15.09.2026 (владелец, живой скрин с обводкой): плейсхолдер превью «Создать», пока #forgeName пуст — было «Имя пока не задано» в макете, владелец поправил короче
-    workshopAuthor:(n)=>'Автор: '+n, // 08.09.2026: имя автора теперь показано на самой карточке (владелец, живой макет), не только внутри «Мои»; 09.09.2026, владелец: «не создал, а автор» — точнее слово
+   workshopAuthor:(n)=>'Автор: '+n, // 08.09.2026: имя автора теперь показано на самой карточке (владелец, живой макет), не только внутри «Мои»; 09.09.2026, владелец: «не создал, а автор» — точнее слово
     workshopReport:'Пожаловаться', workshopReported:'Мы проверим название этого неба.', // 08.09.2026 (владелец, живой макет): было «Спасибо, посмотрим» — не говорило, кому жалуешься и на что; текст теперь называет ровно что проверяется; 15.09.2026: EN/ES/PT/FR получили перевод (аудит)
     workshopPin:'Закрепить', workshopHide:'Скрыть', // видны только владельцу-модератору; 15.09.2026: EN/ES/PT/FR получили перевод на случай, если модерация когда-то откроется не только владельцу
     workshopPinned:'Закреплено', workshopUnpinned:'Откреплено', workshopHidden:'Скрыто от игроков', workshopUnhidden:'Снова видно всем', // 07.09.2026: тост-подтверждение — смены одного эмодзи было мало, владелец не понимал, сработало ли
@@ -392,7 +391,7 @@ const I18N = {
     workshopReport:'Report', workshopReported:"We'll review this sky's name.",
     workshopPin:'Pin', workshopHide:'Hide',
     workshopPinned:'Pinned', workshopUnpinned:'Unpinned', workshopHidden:'Hidden from players', workshopUnhidden:'Visible to everyone again',
-    forgeTitle:'Builder', forgeNamePh:'Track name', forgeDefName:'Pilot track', forgePreviewNamePh:'Name it', // 15.09.2026 (аудит): было только на русском, английский игрок видел «Дайте имя»
+    forgeTitle:'Builder', forgeNamePh:'Name it', forgeDefName:'Pilot track',
     forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
     forgeShareMapBtn:'Share this sky',
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
@@ -601,7 +600,7 @@ const I18N = {
     workshopReport:'Denunciar', workshopReported:'Revisaremos el nombre de este cielo.',
     workshopPin:'Fijar', workshopHide:'Ocultar',
     workshopPinned:'Fijado', workshopUnpinned:'Desfijado', workshopHidden:'Oculto para los jugadores', workshopUnhidden:'Visible para todos de nuevo',
-    forgeTitle:'Constructor', forgeNamePh:'Nombre de la pista', forgeDefName:'Pista del piloto', forgePreviewNamePh:'Ponle nombre',
+    forgeTitle:'Constructor', forgeNamePh:'Ponle nombre', forgeDefName:'Pista del piloto',
     forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
     forgeShareMapBtn:'Compartir este cielo',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
@@ -825,7 +824,7 @@ const I18N = {
     workshopReport:'Denunciar', workshopReported:'Vamos rever o nome deste céu.',
     workshopPin:'Fixar', workshopHide:'Esconder',
     workshopPinned:'Fixado', workshopUnpinned:'Desafixado', workshopHidden:'Escondido dos jogadores', workshopUnhidden:'Visível para todos de novo',
-    forgeTitle:'Construtor', forgeNamePh:'Nome da pista', forgeDefName:'Pista do piloto', forgePreviewNamePh:'Dá-lhe um nome',
+    forgeTitle:'Construtor', forgeNamePh:'Dá-lhe um nome', forgeDefName:'Pista do piloto',
     forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
     forgeShareMapBtn:'Compartilhar este céu',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
@@ -1046,7 +1045,7 @@ const I18N = {
     workshopReport:'Signaler', workshopReported:'Nous allons vérifier le nom de ce ciel.',
     workshopPin:'Épingler', workshopHide:'Masquer',
     workshopPinned:'Épinglé', workshopUnpinned:'Désépinglé', workshopHidden:'Caché aux joueurs', workshopUnhidden:'De nouveau visible pour tous',
-    forgeTitle:'Constructeur', forgeNamePh:'Nom de la trace', forgeDefName:'Trace du pilote', forgePreviewNamePh:'Donne-lui un nom',
+    forgeTitle:'Constructeur', forgeNamePh:'Donne-lui un nom', forgeDefName:'Trace du pilote',
     forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
     forgeShareMapBtn:'Partager ce ciel',
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',

@@ -411,10 +411,13 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
   /* 15.09.2026 «Единая карточка» (владелец): #forgePreviewName/#forgePreviewStickers — тот же
      вид, что уже на карточке Мастерской (js/forge.js workshopRenderList выше). Имя читается
      из #forgeName напрямую (тот же элемент, что «Сложность» использует при сохранении, живёт
-     на другом шаге «Создать», но остаётся в DOM всегда — .hidden только на ЭКРАНЕ, не в дереве)
-     — плейсхолдер «Дайте имя», пока пусто. Стикеры — РЕАЛЬНый realKinds (не тот kinds ниже с
-     запасным 'rock' для анимации, который исказил бы состав), тот же PT_ICON_SVG/PT_KIND_COLOR,
-     что у карточки Мастерской. Сигнатура — не переписывать DOM на каждый кадр без надобности. */
+     на другом шаге «Создать», но остаётся в DOM всегда — .hidden только на ЭКРАНЕ, не в дереве).
+     Стикеры — РЕАЛЬНый realKinds (не тот kinds ниже с запасным 'rock' для анимации, который
+     исказил бы состав), тот же PT_ICON_SVG/PT_KIND_COLOR, что у карточки Мастерской. Сигнатура —
+     не переписывать DOM на каждый кадр без надобности.
+     16.09.2026 (владелец: «на окне написано "Дайте имя", а дать его здесь нельзя — поле имени
+     живёт на шаге Сохранить») — плейсхолдер-заглушка снята, пусто и есть честный ответ, пока
+     имя не задано на том шаге, где его реально можно ввести. */
   const pvNameEl=$('forgePreviewName'), pvStkEl=$('forgePreviewStickers');
   if(pvNameEl && pvStkEl){
     const nameInput=$('forgeName');
@@ -422,7 +425,7 @@ function forgeSkyPaint(dt){ // живое мини-небо конструкто
     const sig=curName+'|'+realKinds.join(',');
     if(sig!==_fPvSig){
       _fPvSig=sig;
-      pvNameEl.textContent=curName||(L.forgePreviewNamePh||'Дайте имя');
+      pvNameEl.textContent=curName;
       pvStkEl.innerHTML=(typeof PT_ICON_SVG!=='undefined') ? realKinds.map(function(k){
         return '<span class="wSticker" style="color:'+PT_KIND_COLOR[k]+'" title="'+(PT_KIND_LABEL[k]||k)+'">'+PT_ICON_SVG[k]+'</span>';
       }).join('') : '';
