@@ -40,13 +40,22 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/version-guard.sh" },
           { "type": "command", "command": ".claude/hooks/no-double-background.sh" },
-          { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" }
+          { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" },
+          { "type": "command", "command": ".claude/hooks/no-secrets-in-commit.sh" }
         ]
       },
       {
         "matcher": "mcp__.*__deploy_edge_function",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/guard-deploy-content.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" }
         ]
       }
     ]
