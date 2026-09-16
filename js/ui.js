@@ -4144,9 +4144,10 @@ function applyLang(){
   setText('gratitudeTitle',L.gratitudeTitle);
   setText('gratitudeSoonTitle',L.gratitudeSoonTitle);
   setText('gratitudeSoonDesc',L.gratitudeSoonDesc);
-  setText('grLead',L.grLead); setText('grPrivacyNote',L.grPrivacyNote); setText('grCardT',L.grCardT);
+  setText('grLead',L.grLead); setText('grCardT',L.grCardT);
   setText('grCommentLbl',L.grCommentLbl); setText('grAmountLbl',L.grAmountLbl); setText('grAnonLbl',L.grAnonLbl);
   setText('grSendLbl',L.grSendLbl);
+  const grCiEl=$('grCommentInput'); if(grCiEl) grCiEl.placeholder=L.grCommentPh; // 16.09.2026: плейсхолдер-пример, не повтор слова «Комментарий»
   if (typeof grFillNameRow==='function') grFillNameRow(); // 15.09.2026: «Покажется как:»/«Имя скрыто» — свой язык
   // 15.09.2026: signIn/empty заполняются один раз в gratitudeSkyFill() (реальный запрос к серверу) —
   // полный повторный вызов здесь на каждую смену языка был бы лишним сетевым запросом; текст

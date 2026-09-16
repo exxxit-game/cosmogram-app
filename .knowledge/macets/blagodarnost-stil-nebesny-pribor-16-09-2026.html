@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Благодарность — раскладка + материал</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    /* 16.09.2026 «Небесный прибор» — ТЕКУЩИЕ токены из живого index.html (:root). */
+    --stone-fill:rgba(14,18,32,.7);
+    --stone-border:rgba(201,164,92,.35);
+    --stone-border-sel:rgba(201,164,92,.6);
+    --stone-shadow-sel:0 0 0 1px rgba(201,164,92,.5);
+    --stone-fill-gold:linear-gradient(160deg, rgba(40,32,14,.85), rgba(20,16,8,.85));
+    --stone-border-gold:rgba(240,192,64,.6);
+    --stone-shadow-gold:0 0 0 1px rgba(240,192,64,.6);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:20px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:300px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:24px;padding:18px 14px;flex-shrink:0}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .titleM{text-align:center;color:var(--ink);font-weight:700;font-size:14px;letter-spacing:.05em;margin-bottom:8px}
+
+  .leadOld{font-size:10.5px;color:var(--muted);text-align:left;margin-bottom:8px}
+  .leadNew{font-size:10.5px;color:var(--muted);text-align:center;margin-bottom:8px}
+  .skyOld{height:120px;border-radius:14px;background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);
+    border:1px solid var(--line);margin-bottom:8px;position:relative}
+  .skyNew{height:210px;border-radius:14px;background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);
+    border:1px solid var(--line);margin-bottom:8px;position:relative}
+  .privacyOld{display:flex;gap:6px;font-size:9px;color:var(--muted);margin:8px 0 14px;line-height:1.4}
+  .privacyOld svg{width:11px;height:11px;flex:none;margin-top:1px}
+  .strikeNote{position:relative;color:#8a94b0}
+  .strikeNote::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--bad)}
+
+  .cardT{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .cardTOld{text-align:left}
+  .cardTNew{text-align:center}
+  .fieldLblOld{font-size:10px;color:var(--muted);margin-bottom:5px;display:block;text-align:left}
+  .fieldLblNew{font-size:10px;color:var(--muted);margin-bottom:5px;display:block;text-align:center}
+  .cardNew{background:var(--stone-fill);border:1px solid var(--stone-border);border-radius:16px;padding:16px 14px;margin-bottom:10px}
+  .inputNew{width:100%;background:var(--stone-fill);border:1px solid var(--stone-border);border-radius:10px;padding:9px 11px;color:var(--ink);font-size:12px;margin-bottom:10px;text-align:center}
+
+  /* ===== ±кнопки и звезда — было ===== */
+  .amtRowOld{display:flex;align-items:center;gap:8px;background:var(--stone-fill);border:1px solid var(--stone-border);border-radius:10px;padding:5px 7px}
+  .amtBtnOld{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink);font-size:16px;line-height:1}
+  .amtValOld{flex:1;text-align:center;font-weight:700;color:var(--gold-hi);font-size:15px;display:flex;align-items:center;justify-content:center;gap:5px}
+  .starOld{width:14px;height:14px}
+
+  /* ===== ±кнопки и звезда — стало: тот же .nudge-язык (±1/±10 в Конструкторе), полноценные круглые stone-кнопки, звезда крупнее/круглее ===== */
+  .amtRowNew{display:flex;align-items:center;gap:10px;background:var(--stone-fill);border:1px solid var(--stone-border);border-radius:12px;padding:8px 10px}
+  .amtBtnNew{width:38px;height:38px;border-radius:50%;background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);
+    box-shadow:var(--stone-shadow-gold);display:flex;align-items:center;justify-content:center;flex:none;color:var(--gold-hi);font-size:19px;line-height:1;font-weight:300}
+  .amtValNew{flex:1;text-align:center;font-weight:800;color:var(--gold-hi);font-size:17px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .starNew{width:19px;height:19px}
+
+  .anonOld{display:flex;align-items:center;gap:7px;font-size:11px;color:#c6d0ec;justify-content:flex-start}
+  .anonNew{display:flex;align-items:center;gap:7px;font-size:11px;color:#c6d0ec;justify-content:center;margin-top:12px}
+  .boxNew{width:16px;height:16px;border-radius:4px;border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);flex:none}
+  .sendNew{width:100%;text-align:center;padding:12px;border-radius:999px;font-weight:800;font-size:12px;
+    background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);color:var(--gold-hi);margin-top:10px;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .sendNew svg{width:15px;height:15px}
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Благодарность — раскладка + материал</h1>
+<p class="sub">16.09.2026, второй заход того же экрана · по живой жалобе владельца («звёзд ждём много — небо сразу должно быть большим», «плюс/минус выглядят по-дебильному», «центр для всего»)</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду «да».</div>
+
+<section>
+<h2>Что меняю по новому списку</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div>Небо (холст звёзд) — сильно крупнее, ближе к заголовку «Благодарность». Место освобождает удаление заметки приватности (пункт 2) и более собранная карточка формы ниже.</div></div>
+  <div class="diagItem"><b>2</b><div>Заметка «Сумму твоей благодарности видит только владелец…» — убрана целиком, лишняя, место отдаётся небу.</div></div>
+  <div class="diagItem"><b>3</b><div>«Твоя звезда» — <b style="color:var(--ok)">остаётся</b> (владелец подтвердил после объяснения, для чего она).</div></div>
+  <div class="diagItem"><b>4</b><div>Подписи и вводный текст — были левым краем без причины, теперь по центру (вводная фраза, «Твоя звезда», подписи полей, «Анонимно»). Сами поля ввода (комментарий) — тоже центр текста, раз в один язык, коротко.</div></div>
+  <div class="diagItem"><b>5</b><div>±кнопки — были плоским тусклым кружком не в тон остальной игре. Теперь золотая stone-капсула, тот же язык, что у «Отправить через Stars»/CTA-кнопок Конструктора — не отдельная мелкая деталь, а согласованная пара с суммой между ними.</div></div>
+  <div class="diagItem"><b>6</b><div>Звезда-иконка — проверил: у Telegram <b style="color:var(--bad)">нет отдельного официального файла</b> именно для «Stars» (смотрел их платёжную документацию core.telegram.org/bots/payments-stars и общую страницу логотипов telegram.org/tour/screenshots — ни там, ни там отдельного значка валюты не нашлось, у них самих это просто иконка-звезда внутри интерфейса, не брендовый актив). Внутри самого Telegram она рисуется круглее и плотнее нынешней тонкой — сделал новую по этому образцу, не выдаю её за официальную, честно говорю.</div></div>
+  <div class="diagItem"><b>7</b><div>Владелец, живой скрин: поле «Комментарий» в реальном коде сейчас без плейсхолдера вообще (<code>placeholder=""</code>) — в макете я для примера подставил слово «Комментарий…» внутрь поля, а подпись над полем и так уже «Комментарий» — двоилось только в макете, не в игре, но подпись справедливая: плейсхолдер нужен настоящий пример, не повтор слова. Плейсхолдер — «Космическое спасибо» (его же пример). «(необязательно)» из подписи убрано — в игре и так всё по желанию, отдельно объяснять не нужно.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Верх экрана — небо крупнее, без заметки приватности</h2>
+<div class="row">
+  <div class="phone">
+    <div class="phoneLbl was">Было</div>
+    <div class="titleM">БЛАГОДАРНОСТЬ</div>
+    <p class="leadOld">Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</p>
+    <div class="skyOld"></div>
+    <div class="privacyOld strikeNote">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      Сумму твоей благодарности видит только владелец игры. Имя и комментарий увидят все, если не включишь «анонимно».
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)">
+    <div class="phoneLbl now">Стало</div>
+    <div class="titleM">БЛАГОДАРНОСТЬ</div>
+    <p class="leadNew">Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</p>
+    <div class="skyNew"></div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  Заметка про приватность не потеряна безвозвратно — сама мысль важная, но именно тут она только теснила небо.
+  Можно вернуть её компактной подсказкой (ⓘ рядом с «Комментарий», касание — подсказка), если решишь, что без неё непонятно.
+  Пока просто убрал, раз попросил.
+</p>
+</section>
+
+<section>
+<h2>Форма — центр вместо левого края, живые ±кнопки</h2>
+<div class="row">
+  <div class="phone">
+    <div class="phoneLbl was">Было</div>
+    <p class="cardT cardTOld">Твоя звезда</p>
+    <span class="fieldLblOld">Комментарий (необязательно)</span>
+    <div class="inputNew" style="text-align:left;margin-bottom:14px;color:#5c6888">— пусто (плейсхолдера нет в реальном коде)</div>
+    <span class="fieldLblOld">Сколько Stars — сам решаешь</span>
+    <div class="amtRowOld">
+      <div class="amtBtnOld">–</div>
+      <div class="amtValOld"><svg class="starOld" viewBox="0 0 24 24" fill="#f0c040" stroke="none"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>50</div>
+      <div class="amtBtnOld">+</div>
+    </div>
+    <div class="anonOld" style="margin-top:12px">☑ Анонимно</div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)">
+    <div class="phoneLbl now">Стало</div>
+    <p class="cardT cardTNew">Твоя звезда</p>
+    <span class="fieldLblNew">Комментарий</span>
+    <div class="inputNew" style="color:#5c6888">Космическое спасибо</div>
+    <span class="fieldLblNew">Сколько Stars — сам решаешь</span>
+    <div class="amtRowNew">
+      <div class="amtBtnNew">–</div>
+      <div class="amtValNew"><svg class="starNew" viewBox="0 0 24 24" fill="url(#starGrad)" stroke="none"><defs><radialGradient id="starGrad" cx="35%" cy="30%"><stop offset="0%" stop-color="#fff3c4"/><stop offset="55%" stop-color="#f0c040"/><stop offset="100%" stop-color="#c9962e"/></radialGradient></defs><path d="M12 2.5c.5 0 1 .3 1.2.8l2.1 4.8 5.2.5c1.2.1 1.7 1.6.8 2.4l-3.9 3.5 1.2 5.1c.3 1.2-1 2.1-2.1 1.5L12 18.3l-4.5 2.8c-1.1.6-2.4-.3-2.1-1.5l1.2-5.1-3.9-3.5c-.9-.8-.4-2.3.8-2.4l5.2-.5 2.1-4.8c.2-.5.7-.8 1.2-.8z"/></svg>50</div>
+      <div class="amtBtnNew">+</div>
+    </div>
+    <div class="anonNew">☑ Анонимно</div>
+    <div class="sendNew"><svg viewBox="0 0 24 24" fill="url(#starGrad2)" stroke="none"><defs><radialGradient id="starGrad2" cx="35%" cy="30%"><stop offset="0%" stop-color="#fff3c4"/><stop offset="55%" stop-color="#f0c040"/><stop offset="100%" stop-color="#c9962e"/></radialGradient></defs><path d="M12 2.5c.5 0 1 .3 1.2.8l2.1 4.8 5.2.5c1.2.1 1.7 1.6.8 2.4l-3.9 3.5 1.2 5.1c.3 1.2-1 2.1-2.1 1.5L12 18.3l-4.5 2.8c-1.1.6-2.4-.3-2.1-1.5l1.2-5.1-3.9-3.5c-.9-.8-.4-2.3.8-2.4l5.2-.5 2.1-4.8c.2-.5.7-.8 1.2-.8z"/></svg>Отправить через Stars</div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  ±кнопки — золотая капсула (<code>--stone-fill-gold</code>), крупнее (38px, было 28px, легче попасть пальцем).
+  Звезда — тот же контур, что уже в игре, просто рисуется плотнее/круглее (толще лучи, скруглённые внутренние углы)
+  и с лёгким объёмным градиентом вместо плоской заливки — так рисует свои Stars сам Telegram.
+</p>
+</section>
+
+<footer>Источники: живой код (index.html) + Telegram официальная документация (core.telegram.org/bots/payments-stars,
+telegram.org/tour/screenshots — оба проверены на предмет официального значка Stars, не нашлось) + список правок
+владельца текстом в чате 16.09.2026.</footer>
+</body>
+</html>
