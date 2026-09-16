@@ -222,14 +222,20 @@ canvas{display:block}
      одни и те же токены, не отдельные rgba на каждом месте. Нейтральный вариант — тёмный
      минерал; -gold — та же порода, но золотая (для самых важных/акцентных элементов). -sel —
      тот же нейтральный камень + тонкий золотой ободок (состояние «выбрано»/«активно»). */
-  --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
-  --stone-border:rgba(255,255,255,.22);
-  --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
-  --stone-border-sel:rgba(201,164,92,.55);
-  --stone-shadow-sel:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 0 7px rgba(240,192,64,.4);
-  --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
-  --stone-border-gold:rgba(255,226,150,.7);
-  --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
+  /* 16.09.2026 «Небесный прибор» (владелец, живой макет на реальной игре, явное «да»):
+     токены переведены с объёмного «резного камня» (радиальный белый блик 32%/26% + внутренние
+     тени) на плоский латунный прибор — тонкая линия, без белого блика слева-сверху ни у карточек,
+     ни у кнопок, ни у иконок. Владелец прямо попросил убрать этот блик отдельно (второе
+     сообщение). Второе, отклонённое направление «Глубокий вихрь» (цветное свечение туманности)
+     не перенесено — только «Небесный прибор». */
+  --stone-fill:rgba(14,18,32,.7);
+  --stone-border:rgba(201,164,92,.35);
+  --stone-shadow:none;
+  --stone-border-sel:rgba(201,164,92,.6);
+  --stone-shadow-sel:0 0 0 1px rgba(201,164,92,.5);
+  --stone-fill-gold:linear-gradient(160deg, rgba(40,32,14,.85), rgba(20,16,8,.85));
+  --stone-border-gold:rgba(240,192,64,.6);
+  --stone-shadow-gold:0 0 0 1px rgba(240,192,64,.6);
   --danger:#e0533d;          /* сдержанный коралл */
   --ok:#8fff9f;
   --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; /* 04.09.2026: пробовали Jura везде, потом только на заголовках — владелец: «выпадает с общего», убрали совсем. Один шрифт на игру, как и было 28.08.2026 */
@@ -495,8 +501,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    токены --stone-fill-gold/-border-gold/-shadow-gold (см. :root выше) — та же порода камня, что
    у всех остальных элементов игры, тем же кодом, не отдельно подобранными числами здесь. */
 #startScreen .btn.sec {
+  /* 16.09.2026 «Небесный прибор»: --stone-fill-gold теперь тёмный (не яркая золотая заливка) —
+     текст переведён с тёмного (#1c1200, был читаем на светлом золоте) на светлый золотой,
+     иначе не виден на новом тёмном фоне. */
   background:var(--stone-fill-gold);border-color:var(--stone-border-gold);
-  color:#1c1200;font-weight:700;box-shadow:var(--stone-shadow-gold); }
+  color:#f0c040;font-weight:700;box-shadow:var(--stone-shadow-gold); }
 .btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.5); }
 .btn.small { padding:10px 18px; }
 /* 05.09.2026 «Удалить мои данные»: единственная по-настоящему необратимая кнопка в Настройках —
@@ -547,16 +556,18 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    свечение поверх уже существующей тени (0 8px 20px чёрным ниже не убрана, добавлена вторая
    тень через запятую) — mask-image/высота/паддинг (баг-фикс iOS выше) не тронуты. */
 #startScreen .heroCard{ border-color:rgba(201,164,92,.5);
-  box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset,
-    inset 0 1px 1.5px rgba(255,255,255,.2); }
+  /* 16.09.2026 «Небесный прибор»: убран последний белый штрих (inset rgba(255,255,255,.2)) —
+     остаётся только тёмная тень и золотое свечение, без единого белого блика на карточке. */
+  box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset; }
 /* 16.09.2026 (владелец: «верх/низ из разных мест», затем: «найди стиль игры целиком») — карточка
    была плоским цветным пятном (только тонкий блик 8%) рядом с объёмными кнопками-камнями сверху
    и снизу. Тот же язык освещения (один источник, сверху слева), что у --stone-*: не отдельная
    заливка вместо цвета режима (цвет — полезный сигнал дисциплины, не трогаю), а тот же свет НАД
    цветом — сильный блик сверху слева + затемнение книзу, то же «вырезано из одной породы». */
 .heroCard::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 16% -12%, rgba(255,255,255,.28) 0%, transparent 46%),
-    linear-gradient(180deg, transparent 58%, rgba(0,0,0,.3) 100%)}
+  /* 16.09.2026 «Небесный прибор»: белый блик слева-сверху убран по прямой просьбе владельца
+     (второе сообщение отдельно про этот блик) — оставлено только затемнение снизу. */
+  background:linear-gradient(180deg, transparent 58%, rgba(0,0,0,.3) 100%)}
 .heroCard:active{transform:scale(.98)}
 .heroCard.locked{opacity:.6}
 .heroCard::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.92}
@@ -611,9 +622,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 /* 16.09.2026 (владелец, «стиль камня» — единая система токенов выше): кнопка «Старт», самое
    важное действие на карточке — тот же камень, что и везде, но состояние -sel (золотой ободок),
    как у выбранного тира — градация по важности через ОДИН и тот же язык, не отдельный рецепт. */
-.heroCard .playHint::after{content:'';position:absolute;top:14%;left:12%;width:28%;height:32%;
-  border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.5),transparent 70%);
-  filter:blur(.4px);pointer-events:none}
+/* 16.09.2026 «Небесный прибор»: белый блик на круге «play» убран по прямой просьбе владельца
+   («и у иконок в карточке его убрать») — сам круг остаётся, просто без глянцевого пятна. */
 /* 15.09.2026, второй фикс (владелец: «я просил исправить», не убрать) — вернул кольцо (мотив
    «планета с кольцом», #pauseBtn/.menuBack, V1) и добавил реальный запас: right:9px→15px. Круг
    был впритык к краю, кольцо (47px) шире круга (26px) — по геометрии выходило на ~0.27px в
@@ -660,9 +670,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    «в реальной игре, не на макете»): было плоское rgba(255,255,255,.10) — стало объёмный материал
    (radial-gradient + inset bevel), тот же язык, что владелец одобрил на макете. ::after — блик
    (единый источник света сверху слева), тот же приём, что и у .stoneRing в макете. */
-.heroCard .forgeSegBtn::after{content:'';position:absolute;top:14%;left:12%;width:26%;height:34%;
-  border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.45),transparent 70%);
-  filter:blur(.5px);pointer-events:none}
+/* 16.09.2026 «Небесный прибор»: тот же блик убран и здесь — «Небесный прибор» без глянца. */
 /* 15.09.2026 (страж 195 поймал: текст «15»/«60»/«180» обрезался — scrollWidth>clientWidth даже
    у двух цифр) — .forgeSeg абсолютно спозиционирован (right:15px, без left), width:auto на таком
    элементе внутри flex-column вычислялся у́же контента (30.95px вместо нужных ~45px). width:
@@ -3223,9 +3231,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.317"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.317"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.317"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.318"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.318"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.318"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4342,26 +4350,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.317" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.317"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.317"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.317"></script>
-<script defer src="js/game.js?v=1.478.317" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.317"></script>
-<script defer src="js/sync.js?v=1.478.317"></script>
-<script defer src="js/render.js?v=1.478.317"></script>
-<script defer src="js/planetarium.js?v=1.478.317"></script>
-<script defer src="js/goldstar.js?v=1.478.317"></script>
-<script defer src="js/finish.js?v=1.478.317"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.317"></script>
-<script defer src="js/gyro.js?v=1.478.317"></script>
-<script defer src="js/forge.js?v=1.478.317"></script>
-<script defer src="js/partitura.js?v=1.478.317"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.317"></script>
-<script defer src="js/card.js?v=1.478.317"></script>
-<script defer src="js/star.js?v=1.478.317"></script>
-<script defer src="js/cinema.js?v=1.478.317"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.317"></script>
+<script defer src="js/core.js?v=1.478.318" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.318"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.318"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.318"></script>
+<script defer src="js/game.js?v=1.478.318" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.318"></script>
+<script defer src="js/sync.js?v=1.478.318"></script>
+<script defer src="js/render.js?v=1.478.318"></script>
+<script defer src="js/planetarium.js?v=1.478.318"></script>
+<script defer src="js/goldstar.js?v=1.478.318"></script>
+<script defer src="js/finish.js?v=1.478.318"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.318"></script>
+<script defer src="js/gyro.js?v=1.478.318"></script>
+<script defer src="js/forge.js?v=1.478.318"></script>
+<script defer src="js/partitura.js?v=1.478.318"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.318"></script>
+<script defer src="js/card.js?v=1.478.318"></script>
+<script defer src="js/star.js?v=1.478.318"></script>
+<script defer src="js/cinema.js?v=1.478.318"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.318"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
