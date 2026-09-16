@@ -88,18 +88,35 @@ function ptXToAt(track,clientX){
   return Math.round(p*ptLen()/5)*5;
 }
 function ptAtToPct(at){ return (at/ptLen()*100).toFixed(2)+'%'; }
+/* 16.09.2026 (живой скрин с телефона, поймано сразу же после увеличения ленты до 130px):
+   точка у самого начала трассы (at≈0) рисовалась центром ровно в left:0 — при мелких пинах
+   (16px, была лента 60px) это едва задевало угловые кнопки, но при новых крупных (до 52px)
+   пин целиком наезжал на «7»/«Отменить», цифра тонула под ним. ТОЛЬКО для отрисовки самой
+   точки/подписи (не для перетаскивания/тапа — те свою математику берут из ptXToAt, реальных
+   пиксельных координат пальца, эту функцию не трогаем, чтобы не разъехалось «куда тащу» vs
+   «куда встало») — резервируем 92px слева (под «7»+«Отменить», 26px кнопка + запас на пин
+   52px) и 58px справа (под «Сбросить», та же логика). Между ними — обычная пропорция. */
+function ptAtToPctSafe(at){
+  const L=92,R=58; const p=at/ptLen(); // 0..1
+  return 'calc('+L+'px + (100% - '+(L+R)+'px) * '+p.toFixed(4)+')';
+}
 function ptClampAt(v){ return Math.max(0,Math.min(ptLen(),v)); }
 function ptOverRect(x,y,el){ const r=el.getBoundingClientRect(); return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; }
 /* 10.09.2026 (владелец, живой скрин: стикеры вылезают за трассу сверху/снизу, и сами
    крупные для нового окна) — трасса (.track) стала вдвое ниже 09.09→10.09 (120px→60px,
    см. index.html:1866), а размеры стикеров/шаг между рядами остались старые — 3-рядный
    стек, рассчитанный под 120px, физически не помещался в 60px. Тот же множитель ×0.5,
-   что уже применён к высоте трассы, доведён до конца: и сами стикеры, и ROW_H. */
-function ptPinSizeFor(n){ if(n<=10) return 24; if(n<=20) return 20; if(n<=35) return 16; return 13; }
+   что уже применён к высоте трассы, доведён до конца: и сами стикеры, и ROW_H.
+   16.09.2026 (владелец, макет konstruktor-fundament-16-09-2026.html, «Да»): трасса выросла
+   до 130px — того же стандарта, что держит вся игра (heroCard/#angarSky/.wBanner). Тот же
+   принцип, обратный множитель 130/60: размеры стикеров и ROW_H масштабированы, численно
+   проверено (verify-track-130.mjs) — все 4 размера × 3 ряда укладываются в [0,130]
+   с запасом ≥4px, та же гарантия, что была у 60px. */
+function ptPinSizeFor(n){ if(n<=10) return 52; if(n<=20) return 43; if(n<=35) return 35; return 28; }
 function ptSpreadOffsets(pins){
   const sorted=pins.map((p,i)=>({i,at:p.at})).sort((a,b)=>a.at-b.at);
   const offs=new Array(pins.length).fill(0);
-  const THRESH=ptLen()*0.035, ROWS=3, ROW_H=14;
+  const THRESH=ptLen()*0.035, ROWS=3, ROW_H=30;
   let streak=0;
   for(let k=1;k<sorted.length;k++){
     if(sorted[k].at-sorted[k-1].at<THRESH){ streak++; offs[sorted[k].i]=(streak%ROWS)*ROW_H; } else streak=0;
@@ -170,21 +187,24 @@ function ptRenderPins(justPoppedIdx){
      добавляются исключительно вниз. Центруем весь трёхрядный стек: сдвигаем базу на
      (ROWS-1)*ROW_H/2 вверх. 10.09.2026: окно .track стало вдвое ниже (120px→60px) —
      центр («60») и сдвиг стека («28») пересчитаны на тот же множитель ×0.5 (30 и 14),
-     заодно со стикерами/ROW_H выше. Проверено численно для всех 4 размеров стикера
-     (24/20/16/13px) × 3 ряда — везде укладывается в [0,60] с запасом ≥4px. */
-  const pinTop=30-pinSz/2-14;
+     заодно со стикерами/ROW_H выше.
+     16.09.2026: окно выросло до 130px (тот же стандарт, что у heroCard/#angarSky/.wBanner) —
+     центр 30→65, сдвиг стека 14→30 (тот же множитель 130/60, что у стикеров/ROW_H выше).
+     Проверено численно для всех 4 размеров стикера (52/43/35/28px) × 3 ряда — везде
+     укладывается в [0,130] с запасом ≥4px (verify-track-130.mjs). */
+  const pinTop=65-pinSz/2-30;
   const offs=ptSpreadOffsets(pins);
   pins.forEach((p,i)=>{
     const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
     const lbl=document.createElement('div');
-    lbl.className='pin-lbl'+(i===ptSelIdx?' sel':''); lbl.style.left=ptAtToPct(p.at);
+    lbl.className='pin-lbl'+(i===ptSelIdx?' sel':''); lbl.style.left=ptAtToPctSafe(p.at);
     lbl.style.top=(15+offs[i])+'px';
     lbl.textContent=p.at+(L.unitM||'м')+(kindName?' · '+PT_KIND_LABEL[kindName]:'');
     track.appendChild(lbl);
     const el=document.createElement('div');
     el.className='pin '+p.type+(i===ptSelIdx?' sel':'')+(i===justPoppedIdx?' pop':'');
     el.dataset.idx=i; // 12.09.2026: пузырёк точки находит свой якорь по этому индексу (ptRenderPanel)
-    el.style.left=ptAtToPct(p.at);
+    el.style.left=ptAtToPctSafe(p.at);
     el.style.top=(pinTop+offs[i])+'px';
     const sw=document.createElement('div'); sw.className='sw';
     if(p.type==='kind'){ const c=PT_KIND_COLOR[kindName]||'#8fa3c8'; sw.style.background='linear-gradient(180deg, '+c+', '+c+'dd)'; sw.style.boxShadow='0 0 10px '+c+'66, inset 0 0 0 1px rgba(255,255,255,.14)'; }
@@ -496,7 +516,10 @@ function ptWireOnce(){
     if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
   });
   // 16.09.2026 «Дальше» (диагноз §6): точный ввод числом рядом с 4 слайдерами Цвета.
-  ['ptHue1','ptHue2','ptDens','ptMood'].forEach(ptWireValInput);
+  // 16.09.2026, тем же вечером (макет konstruktor-fundament-16-09-2026.html, «Да»): доведено
+  // до конца — те же 3 ползунка «Точечной настройки» (Плотность/Скорость/Солнечный ветер,
+  // js/forge.js, forgeDen/forgeSpd/forgeWind) получают то же поведение, не только «Цвет».
+  ['ptHue1','ptHue2','ptDens','ptMood','forgeDen','forgeSpd','forgeWind'].forEach(ptWireValInput);
 }
 /* 16.09.2026: <input type=number> рядом со слайдером — на change (блюр/Enter, не на каждый
    символ, чтобы не мешать печатать) клампит в диапазон слайдера и отдаёт значение ЕМУ, тем же

@@ -2670,10 +2670,18 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    не проценты. */
 /* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено): .trackBox (рамка-
    коробка) убрана целиком — лента теперь просто тонкая линия на фоне неба экрана, тем же
-   приёмом, что у самого первого макета «3 шага» (тонкая линия .track, не панель). Высота
-   .track (60px) НЕ трогается — она держит место для 3-рядного стека меток при скоплении точек
-   (ptSpreadOffsets, js/partitura.js), просто больше не рисуется как видимая коробка. */
-.track{position:relative;width:100%;height:60px;touch-action:none;border-radius:16px;overflow:hidden} /* border-radius/overflow
+   приёмом, что у самого первого макета «3 шага» (тонкая линия .track, не панель).
+   16.09.2026 (владелец, живой скрин с телефона: «маленькое окошко для стикеров» против
+   «огромное окно для цвета» — макет konstruktor-fundament-16-09-2026.html, «Да»): 60px было
+   специально уменьшено от исходных 120px 10.09.2026, сегодня решение обратное — владелец
+   спросил «если там [у карточки режима/Коллекции/Мастерской] 130px, чего здесь будет другое
+   число?» и это правильный вопрос: 130px — единый стандарт по ВСЕЙ игре (heroCard/#angarSky/
+   .wBanner, все измерены вживую), лента препятствий теперь ему следует, не изобретает своё
+   число. Пересчитано (не на глаз) — ptPinSizeFor/ptSpreadOffsets/pinTop в js/partitura.js
+   масштабированы тем же множителем 130/60, численно проверено (verify-track-130.mjs):
+   4 размера стикера × 3 ряда — все укладываются в [0,130] с запасом ≥4px, тот же принцип,
+   что уже был у прежних 60px. */
+.track{position:relative;width:100%;height:130px;touch-action:none;border-radius:16px;overflow:hidden} /* border-radius/overflow
   добавлены 12.09.2026 — раньше скругление давала .trackBox снаружи (теперь убрана), а лента
   сама красится вживую в цвета неба инлайн-стилем (ptPaintTrackBg, js/partitura.js) и без
   своего скругления рисовалась бы прямоугольником */
@@ -2754,12 +2762,19 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    разным углам самой ленты, ровно тот же визуальный язык, что уже есть у ⓘ/★ на плитках Ангара
    (.angarFact/.angarFav, index.html:1397-1408, см. STYLE-GUIDE.md §5) — не текстовые пилюли. */
 /* 16.09.2026: --stone-* — тот же круглый значок-кнопка, что теперь у .wCorner/.nudge (см. их комментарии). */
-.ptCornerBtn{position:absolute;top:6px;z-index:3;width:20px;height:20px;border-radius:50%;
-  background:var(--stone-fill);box-shadow:var(--stone-shadow);border:1px solid var(--stone-border);color:var(--muted);
-  display:grid;place-items:center;font-family:inherit;font-size:10px;cursor:pointer}
-.ptCornerBtn .ic{width:12px;height:12px}
+/* 16.09.2026 (владелец, макет konstruktor-fundament-16-09-2026.html, «Да»): лента выросла
+   60px→130px (см. .track выше) — кнопки в углах следом крупнее, 20px→26px, легче попасть
+   пальцем, тот же множитель духа, что и у самой ленты. Заодно поймано живьём: крупные точки
+   (до 52px теперь) у самого начала трассы (at≈0) визуально наезжали на «7»/«Отменить» —
+   --stone-fill сам по себе не полностью непрозрачен у края (до 60%), точка просвечивала
+   и «съедала» цифру. Второй слой фона — сплошной, под градиентом — держит кружки читаемыми
+   поверх любой точки, а не только поверх однотонного неба. */
+.ptCornerBtn{position:absolute;top:10px;z-index:3;width:26px;height:26px;border-radius:50%;
+  background:var(--stone-fill),#0b0e18;box-shadow:var(--stone-shadow);border:1px solid var(--stone-border);color:var(--muted);
+  display:grid;place-items:center;font-family:inherit;font-size:11px;cursor:pointer}
+.ptCornerBtn .ic{width:14px;height:14px}
 .ptCornerLeft{left:6px}
-.ptCornerLeft b{color:var(--gold-hi);font-size:10px}
+.ptCornerLeft b{color:var(--gold-hi);font-size:11px}
 /* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Дальше», диагноз §7):
    «Отменить» — третий круглый значок в левом углу, рядом со «Список точек» (32px = 20px кнопки +
    6px исходный left + 6px зазор). Один шаг назад (не полная история) — см. ptLastUndo, js/partitura.js.
@@ -2771,7 +2786,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    почти сливался с фоном, читался как заглушенный обрубок, не как кнопка. 28%→50% — тот же
    язык «тухнет, не исчезает», но значок остаётся различимым на любом цвете неба, не только
    на нейтральном. */
-.ptCornerLeft2{left:32px}
+.ptCornerLeft2{left:38px} /* 16.09.2026: 26px кнопки + 6px исходный left + 6px зазор — тот же расчёт, что был у 20px (32px), пересчитан под новый размер кнопки */
 .ptCornerBtn:disabled{opacity:.5;cursor:default}
 .ptCornerRight{right:6px}
 /* «Сбросить» — второе нажатие подряд подтверждает (RESEARCH-2026-09-CREATOR-CONTROLS.md,
@@ -3460,9 +3475,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.339"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.339"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.339"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.340"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.340"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.340"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4209,12 +4224,16 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="setGrp spoiler" id="forgeHardSpoilerGrp" role="button" tabindex="0"><span class="setGrpT" id="forgeHardSpoilerGrpT">Точечная настройка</span></div>
       <div id="forgeHardSpoilerPanel" class="hidden">
         <div class="forgeGroupHead" id="forgeTempoLbl">Темп неба</div>
-        <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeDenV">50</b></div>
-        <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><b class="forgeVal" id="forgeSpdV">50</b></div>
+        <!-- 16.09.2026 (владелец, макет konstruktor-fundament-16-09-2026.html, «Да»): те же по
+             роли ползунки, что у 4 ползунков Цвета (ptWireValInput) — .forgeVal (<b>) стал
+             .forgeValInput (<input type=number>), то же поведение, доведено до конца везде,
+             где есть такой же ползунок, не только на «Цвете». -->
+        <div class="forgeRow"><span class="forgeLbl" id="forgeDenLbl">Плотность</span><input type="range" id="forgeDen" min="10" max="100" step="5" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="forgeDenV" min="10" max="100" value="50"></div>
+        <div class="forgeRow"><span class="forgeLbl" id="forgeSpdLbl">Скорость</span><input type="range" id="forgeSpd" min="10" max="100" step="5" value="50"><input type="number" inputmode="numeric" class="forgeValInput" id="forgeSpdV" min="10" max="100" value="50"></div>
         <!-- 06.09.2026 «Солнечный ветер»: сила боковых порывов, 0 = выкл (умолчание). Тот же ряд,
              что у Плотности/Скорости — обычная ручка Конструктора, не отдельный режим. Макет:
              macet-stopkadr-bokovik.html, одобрено. -->
-        <div class="forgeRow"><span class="forgeLbl" id="forgeWindLbl">Солнечный ветер</span><input type="range" id="forgeWind" min="0" max="100" step="5" value="0"><b class="forgeVal" id="forgeWindV">0</b></div>
+        <div class="forgeRow"><span class="forgeLbl" id="forgeWindLbl">Солнечный ветер</span><input type="range" id="forgeWind" min="0" max="100" step="5" value="0"><input type="number" inputmode="numeric" class="forgeValInput" id="forgeWindV" min="0" max="100" value="0"></div>
         <div class="hint" id="forgeWindHint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
         <div class="forgeGroupHead" id="forgeStartLbl">Старт</div>
         <div class="forgeLblBlk" id="forgeLivesLbl">Жизни</div>
@@ -4657,26 +4676,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.339" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.339"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.339"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.339"></script>
-<script defer src="js/game.js?v=1.478.339" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.339"></script>
-<script defer src="js/sync.js?v=1.478.339"></script>
-<script defer src="js/render.js?v=1.478.339"></script>
-<script defer src="js/planetarium.js?v=1.478.339"></script>
-<script defer src="js/goldstar.js?v=1.478.339"></script>
-<script defer src="js/finish.js?v=1.478.339"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.339"></script>
-<script defer src="js/gyro.js?v=1.478.339"></script>
-<script defer src="js/forge.js?v=1.478.339"></script>
-<script defer src="js/partitura.js?v=1.478.339"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.339"></script>
-<script defer src="js/card.js?v=1.478.339"></script>
-<script defer src="js/star.js?v=1.478.339"></script>
-<script defer src="js/cinema.js?v=1.478.339"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.339"></script>
+<script defer src="js/core.js?v=1.478.340" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.340"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.340"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.340"></script>
+<script defer src="js/game.js?v=1.478.340" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.340"></script>
+<script defer src="js/sync.js?v=1.478.340"></script>
+<script defer src="js/render.js?v=1.478.340"></script>
+<script defer src="js/planetarium.js?v=1.478.340"></script>
+<script defer src="js/goldstar.js?v=1.478.340"></script>
+<script defer src="js/finish.js?v=1.478.340"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.340"></script>
+<script defer src="js/gyro.js?v=1.478.340"></script>
+<script defer src="js/forge.js?v=1.478.340"></script>
+<script defer src="js/partitura.js?v=1.478.340"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.340"></script>
+<script defer src="js/card.js?v=1.478.340"></script>
+<script defer src="js/star.js?v=1.478.340"></script>
+<script defer src="js/cinema.js?v=1.478.340"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.340"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

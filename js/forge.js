@@ -619,9 +619,9 @@ function forgeSyncWidgets(){ // конфиг → виджеты
      выхода всех виджетов: игрок набирал «Ад Пилота», трогал любой чип — и имя молча
      возвращалось к прежнему. Пишем в поле только когда курсор не в нём. */
   const nmEl=$('forgeName'); if(nmEl && document.activeElement!==nmEl) nmEl.value=forgeCfg.n;
-  const denEl=$('forgeDen'), denVEl=$('forgeDenV'); if(denEl) denEl.value=forgeCfg.d; if(denVEl) denVEl.textContent=forgeCfg.d;
-  const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.textContent=forgeCfg.s;
-  const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.textContent=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»
+  const denEl=$('forgeDen'), denVEl=$('forgeDenV'); if(denEl) denEl.value=forgeCfg.d; if(denVEl) denVEl.value=forgeCfg.d;
+  const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.value=forgeCfg.s;
+  const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.value=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»; 16.09.2026: .forgeValInput — .value, не .textContent (реальный input, не <b>)
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
   const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
     chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
@@ -1583,9 +1583,9 @@ wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); })
    другой виджет, пресет, смена языка) возвращал слайдер на старое значение: правка автора
    молча пропадала, а живое мини-небо на неё вообще не отзывалось. Здесь намеренно НЕ зовём
    forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
-wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.textContent=this.value; forgeSkyKick(); });
-wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.textContent=this.value; forgeSkyKick(); });
-wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.textContent=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика
+wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.value=this.value; forgeSkyKick(); });
+wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.value=this.value; forgeSkyKick(); });
+wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.value=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика; 16.09.2026: .value, не .textContent (реальный input)
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
 wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; });
