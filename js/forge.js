@@ -109,11 +109,17 @@ const FORGE_PRESETS=[ // точки входа: тапнул — и сразу �
    витриной (FORGE_PRESETS_VISIBLE), 6 остальных уже жили в Мастерской как трассы автора
    (seed-migration, см. .knowledge/PRODUCTION-MINES.md-соседний коммит). Теперь все 8 — там же,
    тем же приёмом (fpWarm/fpHell вставлены в forge_workshop, author_name='Cosmogram',
-   status='pinned' — те же 2 живых кода, что forgeEncode() уже даёт для их конфигов). Отдельной
-   сетки-витрины и forgePresetMatch()/подсветки выбранной программы больше нет — играть/
-   загрузить любой из 8 можно тем же путём, что и любую чужую трассу. FORGE_PRESETS сам
+   status='pinned' — были те же 2 живых кода, что forgeEncode() тогда давал для их конфигов).
+   Отдельной сетки-витрины и forgePresetMatch()/подсветки выбранной программы больше нет —
+   играть/загрузить любой из 8 можно тем же путём, что и любую чужую трассу. FORGE_PRESETS сам
    остаётся полным (8) — им по-прежнему пользуется кодирование ссылок и стартовый forgeCfg
-   по умолчанию (FORGE_PRESETS[0].c, «Разминка»). */
+   по умолчанию (FORGE_PRESETS[0].c, «Разминка»).
+   16.09.2026: живой запрос к forge_workshop показал, что это утверждение («те же коды, что
+   forgeEncode() даёт сейчас») больше не верно для «Разминки» — формат бит-пака успел
+   поменяться с 06.09.2026, forgeEncode(FORGE_PRESETS[0].c) сегодня даёт другую строку, чем
+   реально лежит в БД. WARM_CODE ниже — код, подтверждённый прямым SQL-запросом к живой базе
+   в этот день, не пересчитан из FORGE_PRESETS. */
+const WARM_CODE='CG2.Hng8wYFGG3sSAAcAZAABLAgB9AgCvAADhAkETAgFFA8PBdwAAAAoMjIA'; // «Разминка», живой forge_workshop.code, сверено 16.09.2026
 
 function forgeSanitize(c){ // вход недоверенный — код приходит извне; режем всё до рамок
   if(!c||typeof c!=='object') c={};
@@ -1218,6 +1224,22 @@ function workshopRenderList(){
     let tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
     const mine=workshopMyVotes();
     if(likedOnly) tracks=tracks.filter(function(t){ return mine.indexOf(t.code)>=0; }); // «Твои» — сужаем уже полученный топ по лайкам, без отдельного запроса на сервер
+    // 16.09.2026 (владелец: «Разминка сделай первым, в списке она стала самой последней. Люди
+    // должны с неё начинать, пусть хотя бы раз в неё сыграют, и потом она уже может
+    // путешествовать по списку куда угодно»): живой запрос к forge_workshop (Supabase) нашёл
+    // настоящую причину — у 7 из 8 пресетов Cosmogram status='pinned' (сервер честно держит
+    // их первыми, cosmogram-workshop/index.ts), а у «Разминки» status незаметно стал 'normal' —
+    // рядовая старая трасса тонет под новыми в сортировке «Новые». Основной фикс — восстановлен
+    // status='pinned' в БД (та же строка). Здесь — дополнительно: пока ЭТОТ игрок ни разу честно
+    // не долетел её (workshopPlayedCodes(), тот же список, что отпирает голос) — гарантированно
+    // первая в любой сортировке на клиенте, не полагаясь на то, что «pinned» всегда буквально
+    // означает «первая из первых» (внутри pinned-группы порядок — по дате создания, у Разминки
+    // не самая ранняя). WARM_CODE — код из живой БД (не forgeEncode(FORGE_PRESETS[0].c) —
+    // проверено: он с ним УЖЕ разошёлся, формат бит-пака с 06.09.2026 успел поменяться).
+    if(workshopPlayedCodes().indexOf(WARM_CODE)<0){
+      const wi=tracks.findIndex(function(t){ return t.code===WARM_CODE; });
+      if(wi>0) tracks.unshift(tracks.splice(wi,1)[0]);
+    }
     if(!tracks.length){
       listEl.innerHTML='';
       if(emptyEl){
@@ -1251,6 +1273,16 @@ function workshopRenderList(){
     listEl.innerHTML=tracks.map(function(t){
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
+      // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
+      // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
+      // главного экрана» + «подсказка будет только на Разминке, один раз нажали, проверили,
+      // дальше и так понятно, не нужно 500 раз объяснять»): текст-заглушка, наполняется и
+      // показывается ТОЛЬКО у карточки «Разминка» (см. forEach ниже, data-role="playhint"),
+      // у всех остальных карточек остаётся пустым и скрытым — не общий приём на каждую карточку.
+      '<div class="wPlayHint hidden" data-role="playhint"></div>'+
+      // 16.09.2026 (владелец: подсказка про «Изменить» — только на «Разминке», только ПОСЛЕ
+      // того как она уже сыграна, не раньше): текст/видимость — тот же forEach ниже.
+      '<div class="wEditTip hidden" data-role="edittip"></div>'+
       // 15.09.2026 «Единая карточка» (владелец, макет edinaya-kartochka-standart-15-09-2026.html,
       // несколько живых заходов): звезда/лайк/инфо — один ряд наверху, порядок слева направо
       // звезда→лайк→инфо→(Закрепить/Скрыть у владельца), инфо/Закрепить/Скрыть остаются в своём
@@ -1274,7 +1306,14 @@ function workshopRenderList(){
       // но переехала за этот же значок вместе с остальным второстепенным. Один значок (i)
       // вместо треугольника — открывает overlay ПОВЕРХ картинки неба (.wInfoOverlay ниже),
       // не раздвигая карточку — владелец категорически запретил раздвигающуюся панель.
-      '<button class="wCorner" data-act="info" title="Подробнее"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><rect x="10.7" y="10.2" width="2.6" height="7.4" rx="1.3" fill="#0b1626"></rect><circle cx="12" cy="6.8" r="1.6" fill="#0b1626"></circle></svg></button>'+
+      // 16.09.2026 (владелец, живой скрин: «у иконки Инфо очень слабая буква И, почти не
+      // видно, надо чтобы выделялась намного лучше»): стержень/точка «i» были тонкими
+      // (rect 2.6×7.4, точка r1.6) — при сравнении вживую на реальном размере значка (11px)
+      // рядом с сердцем/звездой читались бледнее не из-за размера бокса (getBBox уже сведён
+      // 15.09.2026), а из-за тонкой обводки самой буквы — мало закрашенной площади. Утолщено
+      // (rect 3.6×9, точка r2.1), .ic-размер поднят следом до 13px (index.html), геометрия
+      // круга/цвет не тронуты — просто более жирная буква, ничего не придумано заново.
+      '<button class="wCorner" data-act="info" title="Подробнее"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><rect x="10.2" y="9.4" width="3.6" height="9" rx="1.8" fill="#0b1626"></rect><circle cx="12" cy="6" r="2.1" fill="#0b1626"></circle></svg></button>'+
       // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
       // без лишнего клика» — Закрепить/Скрыть тоже открытые значки в углу, залитые как
       // жалоба, «⋯»/скрывающий wModRow убраны совсем.
@@ -1299,13 +1338,22 @@ function workshopRenderList(){
       '<button class="wCorner wCornerDanger" data-act="report" title=""><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>'+
       '</div>'+
       '</div>'+
-      // 15.09.2026: Полёт/Изменить — правый нижний угол карточки, столбиком, Изменить над
-      // Полётом (.wPlay, залит золотом — единственное действие, что реально запускает полёт).
-      // Прежняя правка этого же дня уводила Изменить в .wTopRow — не подошла (см. комментарий
-      // у .wTopRow выше, референс-скрин «Разминка»), возвращено сюда же, откуда взято.
+      // 15.09.2026: Полёт/Изменить были в правом нижнем углу, столбиком.
+      // 16.09.2026 (владелец, живой скрин + несколько раз повторено: «иконку редактировать
+      // под иконку инфо, сразу же под ней, друг под другом, зачем внизу место занимать» +
+      // отдельно «иконка полёта мне не нравится, нажатие по самому небу и подсказка вместо
+      // неё»): кнопка «Полёт» убрана совсем — тап по .wBanner делает то же самое (см.
+      // делегированный обработчик ниже). .wActionStack остался с одним «Изменить» и
+      // переехал из низа карточки вплотную под .wTopRow (index.html: top вместо bottom) —
+      // никакого отдельного столбика внизу, никакой пустой полосы между ними. */
       '<div class="wActionStack">'+
-      '<button class="wCorner" data-act="edit" title="'+(L.workshopEdit||'Изменить')+'"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"></path></svg></button>'+
-      '<button class="wCorner wPlay" data-act="play" title=""><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l18-8-6 8 6 8-18-8z"></path></svg></button>'+
+      // 16.09.2026: путь до этой иконки — круглый карандаш → «квадратик с карандашом»
+      // (square-pen, Lucide) → на 15px два штриха слипались в пятно (живой скрин с телефона),
+      // увеличили до 20px, обводку сузили → владелец прислал референс «тюнинг» (ползунки),
+      // сначала 3 ползунка, потом «двух хватит» — остановились на настоящей Lucide settings-2
+      // (raw.githubusercontent.com/lucide-icons/lucide/main/icons/settings-2.svg, не
+      // нарисована на глаз), простой геометрии из двух линий и двух кружков, мельче не слипается.
+      '<button class="wCorner" data-act="edit" title="'+(L.workshopEdit||'Изменить')+'"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5"></path><path d="M19 7h-9"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg></button>'+
       '</div>'+
       '</div></div>'; }).join('');
     tracks.forEach(function(t,i){
@@ -1352,8 +1400,29 @@ function workshopRenderList(){
       const voteBtn=row.querySelector('.wVote');
       voteBtn.title=(L.workshopHearts?L.workshopHearts(t.hearts||0):(t.hearts||0)+' лайков');
       voteBtn.classList.toggle('voted', voted); // заливка сердца — CSS (.wVote.voted .ic)
-      row.querySelector('[data-act="play"]').title=L.workshopPlay||'Полёт';
       row.querySelector('[data-act="edit"]').title=L.workshopEdit||'Изменить';
+      // 16.09.2026 (владелец: «подсказка будет только на Разминке... один раз нажали,
+      // проверили, дальше и так понятно, не нужно 500 раз объяснять»): подсказка живёт
+      // только на карточке «Разминка» (тот же WARM_CODE, что уже держит её первой в списке),
+      // и только пока этот код не сыгран честно (workshopPlayedCodes()) — у остальных карточек
+      // .wPlayHint остаётся пустой и скрытой, ничего не читает и не показывает.
+      const hintEl=row.querySelector('[data-role="playhint"]');
+      if(hintEl){
+        const showHint = (typeof WARM_CODE!=='undefined') && t.code===WARM_CODE && workshopPlayedCodes().indexOf(WARM_CODE)<0;
+        hintEl.textContent = showHint ? (L.heroHintTap||'') : '';
+        hintEl.classList.toggle('hidden', !showHint);
+      }
+      // 16.09.2026 (владелец: «после того как сыграл в Разминку и вернулся в меню — подсказка
+      // про Изменить, потому что пока играл в чужое небо», явно уточнил — ТОЛЬКО после игры,
+      // не раньше): тот же принцип, что playhint — одна карточка (Разминка), пока не увидена
+      // (workshopEditHintSeen ставится в click-обработчике ниже при первом тапе «Изменить»).
+      const editTipEl=row.querySelector('[data-role="edittip"]');
+      if(editTipEl){
+        const showEditTip = (typeof WARM_CODE!=='undefined') && t.code===WARM_CODE &&
+          workshopPlayedCodes().indexOf(WARM_CODE)>=0 && !Store.get('workshopEditHintSeen',0);
+        editTipEl.textContent = showEditTip ? (L.workshopEditTip||'') : '';
+        editTipEl.classList.toggle('hidden', !showEditTip);
+      }
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться';
       const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.title=L.workshopFav||'Скопировать палитру';
       row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
@@ -1376,9 +1445,19 @@ function workshopRenderList(){
 wireOnLocal('workshopList','click',function(e){
   const row=e.target.closest('.wRow'); if(!row) return;
   const code=row.dataset.code; if(!code) return;
-  const act=e.target.closest('[data-act]'); if(!act) return;
-  if(act.dataset.act==='play'){ forgeWorkshopPlay(code); return; } // forgePlay()→startGame() сам переключит экран на 'game'
-  if(act.dataset.act==='edit'){ forgeWorkshopEdit(code); forgeTabSet('create'); return; } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
+  const act=e.target.closest('[data-act]');
+  if(!act){
+    // 16.09.2026 (владелец: «иконка полёта мне не нравится... можно просто нажимать на небо
+    // и всё, как у нас уже сделано на карточках главного экрана»): тап по самой картинке —
+    // тот же полёт, что раньше отдельная кнопка. Не должен срабатывать, если открыта панель
+    // (i) поверх картинки (.wInfoOverlay.open) — там уже есть на что нажать своими кнопками.
+    if(!e.target.closest('.wInfoOverlay.open') && e.target.closest('.wBanner')) forgeWorkshopPlay(code);
+    return;
+  }
+  if(act.dataset.act==='edit'){
+    Store.set('workshopEditHintSeen',1); // 16.09.2026: первый тап «Изменить» где угодно — подсказка про него больше не нужна, гасится навсегда
+    forgeWorkshopEdit(code); forgeTabSet('create'); return;
+  } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
   if(act.dataset.act==='info'){
     // 12.09.2026: overlay лежит поверх .wBanner (position:absolute;inset:0, index.html) —
     // тап только переключает класс, ничего не раздвигает; карточка одного размера всегда,

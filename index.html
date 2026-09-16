@@ -2394,10 +2394,32 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    владелец прямо попросил не разные числа. overflow:hidden держит скругление угла на banner. */
 .wRow{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);
   border-radius:var(--r-card);background:rgba(22,38,56,.45);overflow:hidden}
-.wBanner{position:relative;height:130px;border-radius:inherit}
+.wBanner{position:relative;height:130px;border-radius:inherit;cursor:pointer} /* 16.09.2026: тап по всей картинке = полёт, см. js/forge.js */
 .wBanner canvas{width:100%;height:100%;display:block}
 .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
   background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+/* 16.09.2026 (владелец: «нажатие по самому небу и подсказка вместо иконки полёта», «подсказка
+   будет только на Разминке... один раз нажали, проверили, дальше и так понятно»): тот же
+   стеклянный текстовый язык, что у .heroCard .playHint на главном экране — тот же приём
+   «объяснили один раз, дальше доверяем игроку», не своя отдельная идея. Текст и видимость —
+   js/forge.js (только карточка «Разминка», только пока не сыграна честно). */
+.wPlayHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:180px;z-index:2;
+  font-size:11px;line-height:1.3;color:var(--gold-hi);opacity:.75;text-align:center;letter-spacing:.02em;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none}
+.wPlayHint.hidden{display:none}
+/* 16.09.2026 (владелец: «после того как сыграл в Разминку и вернулся в меню — подсказка, что
+   можно ещё и редактировать/создать своё небо, потому что пока играл в чужое» — важно: ТОЛЬКО
+   после игры, не раньше, «редактировать тебе ещё рано»): показывается один раз, только на
+   карточке «Разминка», только когда она уже сыграна (js/forge.js) — гаснет навсегда, как
+   только игрок хоть раз нажал «Изменить» на любой карточке (workshopEditHintSeen). Тот же
+   пузырёк со стрелкой, что уже одобрен у подсказки кошелька в Коллекции. */
+.wEditTip{position:absolute;top:46px;right:40px;z-index:6;max-width:150px;
+  background:rgba(16,22,42,.94);border:1px solid rgba(201,164,92,.4);border-radius:10px;
+  padding:7px 10px;font-size:11px;line-height:1.4;color:#eaf2ff;text-align:right}
+.wEditTip.hidden{display:none}
+.wEditTip::after{content:'';position:absolute;top:8px;right:-6px;width:11px;height:11px;
+  background:rgba(16,22,42,.94);border-top:1px solid rgba(201,164,92,.4);border-right:1px solid rgba(201,164,92,.4);
+  transform:rotate(45deg)}
 /* 15.09.2026 «Единая карточка», продолжение — звезда/лайк/инфо теперь ОДИН ряд наверху
    (было: инфо+пожаловаться в .wTopRow, звезда+лайк отдельным столбиком в .wCornerStack —
    владелец явно объединил в один ряд, звезда→лайк→инфо слева направо, инфо на своём
@@ -2453,9 +2475,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 /* 15.09.2026: (i)/Полёт — та же поправка видимого размера, что у звезды чуть ниже (см. её
    комментарий про замер getBBox() всех пяти значков карточки). Лайк (.wVote) и «Пожаловаться»/
    «Скопировать палитру» (fav/report) не тронуты — их видимый размер уже был близко к цели. */
-[data-act="info"] .ic{width:11px;height:11px}
+[data-act="info"] .ic{width:13px;height:13px} /* 16.09.2026: буква «i» утолщена (js/forge.js) — размер значка подрос вместе с ней, чтобы видимая часть снова сошлась с остальными четырьмя (см. их комментарий 15.09.2026) */
 [data-act="play"] .ic{width:13px;height:13px}
-[data-act="edit"] .ic{width:15px;height:15px}
+[data-act="edit"] .ic{width:20px;height:20px} /* 16.09.2026, владелец (живой скрин с телефона): новая иконка «квадратик с карандашом» на 15px слипалась в нечитаемое пятно — у неё два пересекающихся штриха, не один росчерк, как у старого карандаша, мельче не переживает. 20px + обводка потоньше (js/forge.js) — раздельно видно рамку и сам карандаш. */
 .wCornerDanger{color:#e0533d;border-color:rgba(224,83,61,.55)}
 .wCorner:disabled{opacity:.4;cursor:default}
 /* 12.09.2026: раньше .wPickStar был ВСЕГДА залит золотом безусловно — это было верно, пока
@@ -2470,22 +2492,28 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    обводных форм, не на глаз): видимая часть у всех разная — (i) 11.67px (самая крупная), Полёт
    10.5px, звезда 10.15px, лайк 9.33px, Изменить 8.75px (самая мелкая) — размах 33%, не только
    звезда. Каждому значку — свой размер .ic (геометрия path/circle не трогалась, только масштаб
-   бокса), чтобы видимая часть сошлась к одному значению у всех пяти (~9.2-9.8px). */
-.wPickStar .ic{width:13px;height:13px;fill:none;stroke:#dba93c;stroke-width:1.6}
+   бокса), чтобы видимая часть сошлась к одному значению у всех пяти (~9.2-9.8px).
+   16.09.2026, владелец (живой скрин): «звезда на фоне иконки сердечка какая-то очень
+   маленькая» — тот же класс проблемы, что и утолщённая (i) чуть выше: звезда рисуется ТОЛЬКО
+   обводкой (fill:none), у сердца — сплошная заливка, при похожей высоте закрашенной площади
+   у звезды заметно меньше, взгляд читает её мельче. Увеличена (13px→16px) и обводка потолще
+   (1.6→2.2) — не просто масштаб, ближе к зрительному весу заливки. */
+.wPickStar .ic{width:16px;height:16px;fill:none;stroke:#dba93c;stroke-width:2.2}
 .wPickStar.active{background:#dba93c;border-color:#dba93c}
 .wPickStar.active .ic{fill:#2c1f08;stroke:none}
-/* 15.09.2026: Полёт/Изменить — тот же .wCorner 26px, что у ряда наверху (владелец: «одного
-   размера сделай»), столбиком в правом нижнем углу карточки, Изменить над Полётом (.wPlay,
-   залит золотом — единственное действие, что реально запускает полёт, не просто открывает
-   панель/переключает лайк). Короткая правка этим же днём уводила Изменить наверх в .wTopRow —
-   не подошло владельцу (референс-скрин «Разминка»), возвращено сюда же. title у значков этого
-   ряда/Изменить — сперва по ошибке ушёл в "" при переезде на «Единую карточку», хотя комментарий
-   тут же обещал его оставить; поймано и возвращено (title=L.workshopEdit и т.п., не голая строка)
-   — подсказка при долгом нажатии/скринридер снова работает. */
-/* 15.09.2026: тот же z-index-баг, что у .wNameStack чуть выше — Полёт тоже должен
-   прятаться под открытой .wInfoOverlay, не торчать поверх неё. */
-.wActionStack{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;gap:6px}
-.wPlay{background:rgba(240,192,64,.16);border-color:rgba(240,192,64,.6);color:var(--gold-hi)}
+/* 15.09.2026: Полёт/Изменить были тем же .wCorner 26px, что у ряда наверху, столбиком в
+   правом нижнем углу карточки. title у значков этого ряда/Изменить — сперва по ошибке ушёл
+   в "" при переезде на «Единую карточку», хотя комментарий тут же обещал его оставить;
+   поймано и возвращено (title=L.workshopEdit и т.п., не голая строка) — подсказка при долгом
+   нажатии/скринридер снова работает.
+   16.09.2026 (владелец, несколько раз повторено: «иконку редактировать под иконку инфо,
+   сразу же под ней, друг под другом, зачем внизу место занимать»; отдельно — «иконка полёта
+   мне не нравится, нажатие по небу и подсказка вместо неё»): «Полёт» убран (тап по .wBanner,
+   js/forge.js), остался один «Изменить» — переехал из низа карточки вплотную под .wTopRow
+   (top вместо bottom, тот же правый край). z-index:5 — как у .wTopRow (было неявных 0,
+   пряталось под открытой .wInfoOverlay, z-index:4) — теперь визуально одна группа с верхним
+   рядом, должен вести себя как её часть, не гаснуть, когда открыта панель (i). */
+.wActionStack{position:absolute;top:40px;right:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
 /* 12.09.2026, владелец категорически: панель «Подробнее» не должна раздвигать карточку —
    экономия места была целью всего захода (карточка сжималась 220px→162px→151px несколькими
    заходами раньше). overlay лежит НАД самой картинкой (position:absolute;inset:0 внутри
@@ -3426,9 +3454,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.337"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.337"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.337"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.338"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.338"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.338"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4033,7 +4061,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          остаются, просто раздел «Готовые сценарии» переехал под вкладку «Играть» вместе с
          Мастерской, а не своим отдельным экраном. -->
     <div class="forgeTabs" id="forgeTabs">
-      <button class="forgeTab sel" id="forgeTabPlayBtn" data-tab="play">Играть</button>
+      <button class="forgeTab sel" id="forgeTabPlayBtn" data-tab="play">Летать</button> <!-- 16.09.2026, владелец: «Играть»→«Летать» -->
+
       <button class="forgeTab" id="forgeTabCreateBtn" data-tab="create">Создать</button>
     </div>
     <div id="forgeTabPlay">
@@ -4622,26 +4651,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.337" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.337"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.337"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.337"></script>
-<script defer src="js/game.js?v=1.478.337" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.337"></script>
-<script defer src="js/sync.js?v=1.478.337"></script>
-<script defer src="js/render.js?v=1.478.337"></script>
-<script defer src="js/planetarium.js?v=1.478.337"></script>
-<script defer src="js/goldstar.js?v=1.478.337"></script>
-<script defer src="js/finish.js?v=1.478.337"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.337"></script>
-<script defer src="js/gyro.js?v=1.478.337"></script>
-<script defer src="js/forge.js?v=1.478.337"></script>
-<script defer src="js/partitura.js?v=1.478.337"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.337"></script>
-<script defer src="js/card.js?v=1.478.337"></script>
-<script defer src="js/star.js?v=1.478.337"></script>
-<script defer src="js/cinema.js?v=1.478.337"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.337"></script>
+<script defer src="js/core.js?v=1.478.338" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.338"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.338"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.338"></script>
+<script defer src="js/game.js?v=1.478.338" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.338"></script>
+<script defer src="js/sync.js?v=1.478.338"></script>
+<script defer src="js/render.js?v=1.478.338"></script>
+<script defer src="js/planetarium.js?v=1.478.338"></script>
+<script defer src="js/goldstar.js?v=1.478.338"></script>
+<script defer src="js/finish.js?v=1.478.338"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.338"></script>
+<script defer src="js/gyro.js?v=1.478.338"></script>
+<script defer src="js/forge.js?v=1.478.338"></script>
+<script defer src="js/partitura.js?v=1.478.338"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.338"></script>
+<script defer src="js/card.js?v=1.478.338"></script>
+<script defer src="js/star.js?v=1.478.338"></script>
+<script defer src="js/cinema.js?v=1.478.338"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.338"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
