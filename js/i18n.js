@@ -217,7 +217,14 @@ const I18N = {
     feedbackBtn:'Поддержка', feedbackTitle:'Поддержка', // 15.09.2026 (владелец): кнопка на главном тоже стала «Поддержка» — было «Написать разработчику», теперь то же слово, что и заголовок экрана
     equalityBtn:'Равноправие', equalityTitle:'Равноправие', gratitudeBtn:'Благодарность', gratitudeTitle:'Благодарность',
     chSignLead:'Если ты согласен с этими словами — поставь свою подпись под Хартией', chSignLeadDone:'Спасибо. Твоя подпись — часть Хартии, как и подписи остальных',
-    chSignBtnLbl:'Подписать', chSignBtnDone:'Подписано', chSignCount:(n)=>n+' пилотов подписали Хартию', chSignOffline:'Нет соединения — попробуй позже', // 15.09.2026 «Равноправие»: подпись под Хартией
+    chSignBtnLbl:'Подписать', chSignBtnDone:'Подписано',
+    // 15.09.2026 (владелец, живая проверка: «1 пилотов» — число не склоняется): русское
+    // склонение по последней цифре/двум цифрам — 1/21/31.. «пилот», 2-4/22-24.. «пилота»,
+    // остальное (0,5-20,25-30..) «пилотов». Тот же класс проверки нужен и глаголу (подписал/
+    // подписали).
+    chSignCount:(n)=>{ const m10=n%10, m100=n%100; const one=m10===1&&m100!==11; const few=m10>=2&&m10<=4&&(m100<12||m100>14);
+      return n+' '+(one?'пилот подписал':few?'пилота подписали':'пилотов подписали')+' Хартию'; },
+    chSignOffline:'Нет соединения — попробуй позже', // 15.09.2026 «Равноправие»: подпись под Хартией
     gratitudeSoonTitle:'Скоро', gratitudeSoonDesc:'Здесь появится «Небо благодарности» — каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.',
     // 15.09.2026 «Небо благодарности»: реальный экран вместо заглушки «Скоро» (бэкенд уже жил на сервере)
     grLead:'Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.',
@@ -443,7 +450,9 @@ const I18N = {
     feedbackBtn:'Support', feedbackTitle:'Support',
     equalityBtn:'Equality', equalityTitle:'Equality', gratitudeBtn:'Gratitude', gratitudeTitle:'Gratitude',
     chSignLead:'If you agree with these words, add your signature to the Charter', chSignLeadDone:'Thank you. Your signature is now part of the Charter, alongside everyone else\'s',
-    chSignBtnLbl:'Sign', chSignBtnDone:'Signed', chSignCount:(n)=>n+' pilots have signed the Charter', chSignOffline:'No connection — try again later',
+    chSignBtnLbl:'Sign', chSignBtnDone:'Signed',
+    chSignCount:(n)=>n+(n===1?' pilot has signed the Charter':' pilots have signed the Charter'),
+    chSignOffline:'No connection — try again later',
     gratitudeSoonTitle:'Coming soon', gratitudeSoonDesc:'The "Sky of gratitude" is coming — every thank-you in Stars lights its own star in the sky shared by every player.',
     grLead:'Every thank-you in Stars lights its own star in the shared sky of all players.',
     grPrivacyNote:'Only the game\'s owner sees the amount of your gift. Your name and comment are shown to everyone unless you turn on "anonymous".',
@@ -646,7 +655,9 @@ const I18N = {
     feedbackBtn:'Soporte', feedbackTitle:'Soporte',
     equalityBtn:'Igualdad', equalityTitle:'Igualdad', gratitudeBtn:'Gratitud', gratitudeTitle:'Gratitud',
     chSignLead:'Si estás de acuerdo con estas palabras, firma la Carta', chSignLeadDone:'Gracias. Tu firma ya es parte de la Carta, junto a las demás',
-    chSignBtnLbl:'Firmar', chSignBtnDone:'Firmado', chSignCount:(n)=>n+' pilotos han firmado la Carta', chSignOffline:'Sin conexión — inténtalo más tarde',
+    chSignBtnLbl:'Firmar', chSignBtnDone:'Firmado',
+    chSignCount:(n)=>n+(n===1?' piloto ha firmado la Carta':' pilotos han firmado la Carta'),
+    chSignOffline:'Sin conexión — inténtalo más tarde',
     gratitudeSoonTitle:'Próximamente', gratitudeSoonDesc:'Aquí aparecerá el «Cielo de la gratitud» — cada gracias en Stars enciende su propia estrella en el cielo compartido por todos los jugadores.',
     grLead:'Cada gracias en Stars enciende su propia estrella en el cielo compartido de todos los jugadores.',
     grPrivacyNote:'Solo el dueño del juego ve la cantidad de tu regalo. Tu nombre y comentario los verán todos, a menos que actives "anónimo".',
@@ -868,7 +879,9 @@ const I18N = {
     feedbackBtn:'Suporte', feedbackTitle:'Suporte',
     equalityBtn:'Igualdade', equalityTitle:'Igualdade', gratitudeBtn:'Gratidão', gratitudeTitle:'Gratidão',
     chSignLead:'Se concordas com estas palavras, assina a Carta', chSignLeadDone:'Obrigado. A tua assinatura já faz parte da Carta, junto com as outras',
-    chSignBtnLbl:'Assinar', chSignBtnDone:'Assinado', chSignCount:(n)=>n+' pilotos assinaram a Carta', chSignOffline:'Sem ligação — tenta mais tarde',
+    chSignBtnLbl:'Assinar', chSignBtnDone:'Assinado',
+    chSignCount:(n)=>n+(n===1?' piloto assinou a Carta':' pilotos assinaram a Carta'),
+    chSignOffline:'Sem ligação — tenta mais tarde',
     gratitudeSoonTitle:'Em breve', gratitudeSoonDesc:'Aqui vai aparecer o «Céu da gratidão» — cada obrigado em Stars acende sua própria estrela no céu compartilhado por todos os jogadores.',
     grLead:'Cada obrigado em Stars acende a sua própria estrela no céu partilhado de todos os jogadores.',
     grPrivacyNote:'Só o dono do jogo vê o valor da tua oferta. O teu nome e comentário serão vistos por todos, a menos que atives "anónimo".',
@@ -1091,7 +1104,9 @@ const I18N = {
     feedbackBtn:'Support', feedbackTitle:'Support',
     equalityBtn:'Égalité', equalityTitle:'Égalité', gratitudeBtn:'Gratitude', gratitudeTitle:'Gratitude',
     chSignLead:'Si tu es d\'accord avec ces mots, signe la Charte', chSignLeadDone:'Merci. Ta signature fait désormais partie de la Charte, aux côtés des autres',
-    chSignBtnLbl:'Signer', chSignBtnDone:'Signé', chSignCount:(n)=>n+' pilotes ont signé la Charte', chSignOffline:'Pas de connexion — réessaie plus tard',
+    chSignBtnLbl:'Signer', chSignBtnDone:'Signé',
+    chSignCount:(n)=>n+(n===1?' pilote a signé la Charte':' pilotes ont signé la Charte'),
+    chSignOffline:'Pas de connexion — réessaie plus tard',
     gratitudeSoonTitle:'Bientôt', gratitudeSoonDesc:'Le « Ciel de la gratitude » arrive bientôt — chaque merci en Stars allume sa propre étoile dans le ciel partagé par tous les joueurs.',
     grLead:'Chaque merci en Stars allume sa propre étoile dans le ciel partagé de tous les joueurs.',
     grPrivacyNote:'Seul le propriétaire du jeu voit le montant de ton don. Ton nom et ton commentaire seront vus par tous, sauf si tu actives « anonyme ».',

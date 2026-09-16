@@ -216,6 +216,20 @@ canvas{display:block}
   --muted:#7d8aa8;           /* приглушённый текст */
   --line:rgba(255,255,255,.08);
   --line-gold:rgba(201,164,92,.45);
+  /* 16.09.2026 «Стиль камня» — единая материальная система (владелец: «не кусками — единый
+     стиль, симметрично»). Один источник света сверху-слева на ВСЕХ элементах игры: карточки,
+     кнопки-круги, кнопки-пилюли, кнопки-прямоугольники — одна порода камня в разных формах,
+     одни и те же токены, не отдельные rgba на каждом месте. Нейтральный вариант — тёмный
+     минерал; -gold — та же порода, но золотая (для самых важных/акцентных элементов). -sel —
+     тот же нейтральный камень + тонкий золотой ободок (состояние «выбрано»/«активно»). */
+  --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+  --stone-border:rgba(255,255,255,.22);
+  --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+  --stone-border-sel:rgba(201,164,92,.55);
+  --stone-shadow-sel:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 0 7px rgba(240,192,64,.4);
+  --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+  --stone-border-gold:rgba(255,226,150,.7);
+  --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
   --danger:#e0533d;          /* сдержанный коралл */
   --ok:#8fff9f;
   --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; /* 04.09.2026: пробовали Jura везде, потом только на заголовках — владелец: «выпадает с общего», убрали совсем. Один шрифт на игру, как и было 28.08.2026 */
@@ -352,7 +366,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    весь .overlay, а только .scrBody внутри него; кнопка — обычный элемент колонки
    ПОСЛЕ скролл-зоны, не sticky. Физически не может лечь на список ни при какой
    высоте окна — не нужно новое число под каждый следующий вьюпорт. */
-#hangarScreen, #achScreen, #forgeScreen, #diagScreen, #feedbackScreen { overflow-y:hidden; }
+#hangarScreen, #achScreen, #forgeScreen, #diagScreen, #feedbackScreen, #equalityScreen, #gratitudeScreen { overflow-y:hidden; }
 .scrBody { flex:1 1 auto; min-height:0; width:100%; overflow-y:auto;
   display:flex; flex-direction:column; align-items:center; padding-bottom:calc(16px + var(--sab)); }
 /* 02.09.2026 (аудит «Пространство в меню», пункт 7): было плоские 16px — единственный из
@@ -361,7 +375,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    разработчику». На устройстве с крупной жестовой полосой последняя строка списка могла
    оказаться ближе к краю, чем остальной интерфейс. Тот же приём, что уже применён у
    #gameOverScreen сегодня. */
-#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>*, #diagScreen>*, #feedbackScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
+#settingsScreen>*, #achScreen>*, #hangarScreen>*, #forgeScreen>*, #diagScreen>*, #feedbackScreen>*, #equalityScreen>*, #gratitudeScreen>* { flex-shrink:0; } /* v1.44.0: дети не сплющиваются — окно скроллится */
 .scrBody>* { flex-shrink:0; }
 /* 27.08.2026: без этой строки правило выше (#hangarScreen>*, специфичность по ID) перебивало
    бы flex-shrink:1 из .scrBody (специфичность по классу ниже) — ЖИВОЙ проверкой в браузере
@@ -369,10 +383,10 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    #hangarScreen (overflow-y:hidden) молча обрезал лишнее — часть сетки становилась
    недостижимой, а не прокручиваемой. Страж 130 такое не ловит (видит только геометрию
    видимого, не обрезанное). Явный селектор той же ID-специфичности возвращает сжатие. */
-#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody, #diagScreen>.scrBody, #feedbackScreen>.scrBody { flex-shrink:1; }
+#hangarScreen>.scrBody, #achScreen>.scrBody, #forgeScreen>.scrBody, #diagScreen>.scrBody, #feedbackScreen>.scrBody, #equalityScreen>.scrBody, #gratitudeScreen>.scrBody { flex-shrink:1; }
 /* v1.60.0 «Порядок»: скроллящиеся экраны сами принимают жест — без веры в цепочку через pointer-events:none;
    группы настроек — маленькие подписи над карточками */
-#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen, #diagScreen, #feedbackScreen, #modesTopScreen { pointer-events:auto; }
+#settingsScreen, #achScreen, #hangarScreen, #gameOverScreen, #forgeScreen, #diagScreen, #feedbackScreen, #modesTopScreen, #equalityScreen, #gratitudeScreen { pointer-events:auto; } /* 15.09.2026, владелец, живой телефон («ничего не реагирует на тап»): «Равноправие»/«Благодарность» появились в разметке сегодня, но в этот список — единственное место, что реально снимает pointer-events:none с базового .overlay — добавить забыли. Экран рисовался идеально (pointer-events на рендер не влияет), но НИ ОДИН элемент внутри не мог получить тап — тот же класс бага, что уже ловили на #webJoinWidget (см. комментарий ниже). */
 /* 23.08.2026: виджет входа Telegram (#webJoinWidget) — вставленный извне <iframe>, у него
    нет класса .btn, только .tgWidget (тот не трогает pointer-events). Обычные кнопки
    экрана итогов работали через свой .btn, а виджет наследовал pointer-events:none от
@@ -474,9 +488,15 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   color:#cddcf7; font-weight:500; box-shadow:0 0 12px rgba(120,170,255,.10); }
 /* 15.09.2026 «Стиль А»: «Конструктор» на главном — золотая заливка, самая заметная кнопка
    экрана (как в одобренном макете). Scoped только #startScreen — «Заново» (тоже .btn.sec,
-   экран итогов) этот макет не показывал и не трогает. */
-#startScreen .btn.sec { background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));
-  border-color:rgba(240,192,64,.6); color:#1c1200; font-weight:700; box-shadow:0 0 16px rgba(240,192,64,.25); }
+   экран итогов) этот макет не показывал и не трогает.
+   16.09.2026 (владелец, скрин с обводкой: «верх — свой стиль, низ будто из другого места», затем
+   резко: «не кусками — единый стиль») — плоская линейная заливка была единственным плоским
+   пятном между объёмной карточкой сверху и объёмным камнем меню снизу. Переведена на ОБЩИЕ
+   токены --stone-fill-gold/-border-gold/-shadow-gold (см. :root выше) — та же порода камня, что
+   у всех остальных элементов игры, тем же кодом, не отдельно подобранными числами здесь. */
+#startScreen .btn.sec {
+  background:var(--stone-fill-gold);border-color:var(--stone-border-gold);
+  color:#1c1200;font-weight:700;box-shadow:var(--stone-shadow-gold); }
 .btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.5); }
 .btn.small { padding:10px 18px; }
 /* 05.09.2026 «Удалить мои данные»: единственная по-настоящему необратимая кнопка в Настройках —
@@ -527,11 +547,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    свечение поверх уже существующей тени (0 8px 20px чёрным ниже не убрана, добавлена вторая
    тень через запятую) — mask-image/высота/паддинг (баг-фикс iOS выше) не тронуты. */
 #startScreen .heroCard{ border-color:rgba(201,164,92,.5);
-  box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset; }
+  box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset,
+    inset 0 1px 1.5px rgba(255,255,255,.2); }
+/* 16.09.2026 (владелец: «верх/низ из разных мест», затем: «найди стиль игры целиком») — карточка
+   была плоским цветным пятном (только тонкий блик 8%) рядом с объёмными кнопками-камнями сверху
+   и снизу. Тот же язык освещения (один источник, сверху слева), что у --stone-*: не отдельная
+   заливка вместо цвета режима (цвет — полезный сигнал дисциплины, не трогаю), а тот же свет НАД
+   цветом — сильный блик сверху слева + затемнение книзу, то же «вырезано из одной породы». */
 .heroCard::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,0) 42%)} /* лёгкий блик
-  стекла сверху-слева — ::before уже занят фоновым тонированием (z-index:-1 выше), это второй,
-  независимый слой поверх содержимого карточки */
+  background:radial-gradient(ellipse at 16% -12%, rgba(255,255,255,.28) 0%, transparent 46%),
+    linear-gradient(180deg, transparent 58%, rgba(0,0,0,.3) 100%)}
 .heroCard:active{transform:scale(.98)}
 .heroCard.locked{opacity:.6}
 .heroCard::before{content:'';position:absolute;inset:0;z-index:-1;opacity:.92}
@@ -566,9 +591,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    элементы, не текст в псевдоэлементе, бейдж — свой <button> (тап уводит в Достижения→Турниры,
    отдельно от тапа по остальной карточке). */
 .heroCard .recordBadge{all:unset;position:absolute;top:9px;left:9px;display:flex;align-items:center;
-  gap:3px;padding:3px 7px;border-radius:20px;background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.24);font-size:10px;font-weight:700;color:var(--gold-hi);
+  gap:3px;padding:3px 7px;border-radius:20px;background:var(--stone-fill);
+  border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);font-size:10px;font-weight:700;color:var(--gold-hi);
   cursor:pointer;z-index:2;box-sizing:border-box}
+/* 16.09.2026 (владелец: «найди стиль целиком, каждую кнопочку») — тот же камень, что у всей
+   карточки, был последним элементом на старом стекле rgba(255,255,255,.12/.24). */
 .heroCard .recordBadge span{font-variant-numeric:tabular-nums}
 .heroCard .recordBadge.hidden{display:none}
 /* 15.09.2026, второй заход «Единая карточка» (владелец, живой скрин с обводкой): самолётик
@@ -577,9 +604,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    местах. Было top:41px (под рекорд-бейджем, решение того же дня чуть раньше) — правка поверх
    неё же. */
 .heroCard .playHint{position:absolute;bottom:9px;right:15px;
-  width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;
+  background:var(--stone-fill);border:1px solid var(--stone-border-sel);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--stone-shadow-sel);
   pointer-events:none;opacity:.9;z-index:1}
+/* 16.09.2026 (владелец, «стиль камня» — единая система токенов выше): кнопка «Старт», самое
+   важное действие на карточке — тот же камень, что и везде, но состояние -sel (золотой ободок),
+   как у выбранного тира — градация по важности через ОДИН и тот же язык, не отдельный рецепт. */
+.heroCard .playHint::after{content:'';position:absolute;top:14%;left:12%;width:28%;height:32%;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.5),transparent 70%);
+  filter:blur(.4px);pointer-events:none}
 /* 15.09.2026, второй фикс (владелец: «я просил исправить», не убрать) — вернул кольцо (мотив
    «планета с кольцом», #pauseBtn/.menuBack, V1) и добавил реальный запас: right:9px→15px. Круг
    был впритык к краю, кольцо (47px) шире круга (26px) — по геометрии выходило на ~0.27px в
@@ -592,9 +626,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    рисует маленький борт на плитках Коллекции (js/ui.js:2094) — canvas 52×52 физических px
    (2× ради чёткости), 26×26 на экране, заполняется в js/ui.js heroPlayIconsFill(). */
 .heroCard .playHintCv{width:26px;height:26px}
-.heroCard .playHint::before{content:'';position:absolute;top:50%;left:50%;
-  width:47px;height:17px;margin:0;border:1.5px solid rgba(200,225,255,.55);border-radius:50%;
-  transform:translate(-50%,-50%) rotate(-20deg);pointer-events:none}
+/* 16.09.2026 (владелец: «орбиты у кнопок убери, мне они там не нравятся») — кольцо-орбита
+   (мотив «планета с кольцом», V1) снято с .playHint; сам круг остаётся в новом камне (см. выше). */
 /* 15.09.2026 (страж 194): у Эстафеты .relayFlyBtn на всю ширину карточки геометрически лез
    под «Статус» (абсолютная пилюля в правом нижнем углу) — тач-зоны пересекались, хотя визуально
    текст туда не заходит (та же узкая .c-relay .ds ниже). Сузил тач-зону кнопки полёта до той же
@@ -620,8 +653,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 /* 15.09.2026 (страж 194, WCAG 2.2 AA): первая компактная версия была 20px высотой — тач-зона
    мельче порога 24×24. Увеличена вертикальным padding, не шрифтом — ширина карточки узкая,
    крупнее буквы снова упрутся в перенос строк (уже была эта проблема с Caravan×3 тирами). */
-.heroCard .forgeSegBtn{position:relative;padding:6px 10px;font-size:10px;border-radius:999px;min-height:24px;box-sizing:border-box;
-  width:max-content;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);color:#dfe8ff}
+.heroCard .forgeSegBtn{position:relative;padding:6px 10px;font-size:10px;font-weight:700;border-radius:999px;min-height:24px;box-sizing:border-box;
+  width:max-content;color:#dfe8ff;
+  background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow)}
+/* 16.09.2026 (владелец, «стиль камня/кольца» — макет macet-15-09-stil-krugi-kamen.html, одобрено
+   «в реальной игре, не на макете»): было плоское rgba(255,255,255,.10) — стало объёмный материал
+   (radial-gradient + inset bevel), тот же язык, что владелец одобрил на макете. ::after — блик
+   (единый источник света сверху слева), тот же приём, что и у .stoneRing в макете. */
+.heroCard .forgeSegBtn::after{content:'';position:absolute;top:14%;left:12%;width:26%;height:34%;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.45),transparent 70%);
+  filter:blur(.5px);pointer-events:none}
 /* 15.09.2026 (страж 195 поймал: текст «15»/«60»/«180» обрезался — scrollWidth>clientWidth даже
    у двух цифр) — .forgeSeg абсолютно спозиционирован (right:15px, без left), width:auto на таком
    элементе внутри flex-column вычислялся у́же контента (30.95px вместо нужных ~45px). width:
@@ -640,13 +681,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    (15С/60С/180С) — кольцо у них шире (64×20). У Спидрана кнопки стали иконками (SSG/RSG —
    target/shuffle, «в спидран будут иконки») и сжались до ~34×26px, ближе к масштабу круга
    26px — там кольцо у же, те же 47×17, что у .playHint. */
-.heroCard .forgeSegBtn::before{content:'';position:absolute;top:50%;left:50%;
-  width:64px;height:20px;margin:0;border:1.5px solid rgba(200,225,255,.55);border-radius:50%;
-  transform:translate(-50%,-50%) rotate(-20deg);pointer-events:none}
-.heroCard.hc-speedrun .forgeSegBtn::before{width:47px;height:17px}
-.heroCard.hc-caravan .forgeSegBtn[data-tier="15"]::before{width:52px;height:16px}
-.heroCard.hc-caravan .forgeSegBtn[data-tier="60"]::before{width:58px;height:18px}
-/* «180» держит базовые 64×20 (самый большой, но не больше исходного — «за экран» риска нет) */
+/* 16.09.2026 (владелец: «орбиты у кнопок убери, мне они там не нравятся») — кольцо-орбита,
+   добавленное 15.09 (комментарий выше), снято; тиры остаются в новом камне без орбиты. */
 /* 15.09.2026 (владелец: «кнопки некрасивые по сравнению с иконкой... максимум красоты за минимум
    для игры») — тот же самый стеклянный язык, что у .playHint (bg rgba(255,255,255,.10), border
    rgba(255,255,255,.22)), только числа СКОПИРОВАНЫ, не выдуманы — одна семья на карточке. Форма —
@@ -654,7 +690,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    (полностью круглые формы) в остальной игре. Ничего, кроме background/border/radius — ни тени,
    ни маски, ни псевдоэлементов: три подряд живых бага сегодня (тень, кольцо, line-clamp) были
    именно от более сложных приёмов, здесь сознательно только самое дешёвое и проверенное. */
-.heroCard .forgeSegBtn.sel{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#dfe8ff}
+.heroCard .forgeSegBtn.sel{background:var(--stone-fill);border-color:var(--stone-border-sel);
+  color:#dfe8ff;box-shadow:var(--stone-shadow-sel)}
+/* 16.09.2026: .sel остаётся тем же камнем (см. правило выше про «нейтральные друг к другу»
+   19.09/15.09) — только тонкое золотое свечение по контуру, ровно та же пара токенов
+   (--stone-border-sel/--stone-shadow-sel), что у .playHint — один и тот же язык «важности». */
 /* 15.09.2026 (владелец: «нейтральные друг к другу») — .sel специально совпадает с обычным видом
    (см. правило выше про снятие различия выбран/не выбран), теперь оба в новом стеклянном стиле. */
 /* 15.09.2026, третий заход в тот же день (владелец, живой скрин с обводкой): иконки режимов
@@ -663,7 +703,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    (над самолётиком, решение чуть раньше тем же днём), теперь встаёт туда же, где раньше сидела
    heroIcon, тем же способом, что и раньше: один общий угол на функцию, не наугад. */
 .heroCard .relayMineBtn{position:absolute;top:9px;right:9px;margin:0;padding:6px 8px;font-size:10px;min-height:24px;box-sizing:border-box;
-  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#dfe8ff}
+  background:var(--stone-fill);border-color:var(--stone-border);box-shadow:var(--stone-shadow);color:#dfe8ff}
+/* 16.09.2026 (владелец: «найди стиль целиком, каждую кнопочку») — тот же камень, что у всей
+   карточки; было старое стекло rgba(255,255,255,.10/.22), последний элемент на нём. */
 /* 15.09.2026 (владелец: «у статус тоже улучшил? каждый её элемент, на максимум красоты») — было
    тёмное rgba(22,38,56,.5)/var(--line) (базовый .relayMineBtn, index.html выше, для др. контекстов
    не трогаем) — здесь тот же стеклянный язык, что теперь у .playHint/.forgeSegBtn, одна семья на
@@ -709,6 +751,17 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    вживую: 171px/166px на 375px-экране). minmax(0,1fr) снимает нижний предел — оба места
    макета проверены: колонки стали ровно 168.59px обе. Макет: macet-02-09-menyu-grid-ravenstvo.html */
 #menuRow { margin-top:2px; } /* 30.08.2026: было 6px (margin кнопки над сеткой) — сама сетка держит внутренний шаг 8px; измерено живьём, теперь тоже 8px */
+/* 16.09.2026 (владелец, скрин с обводкой — «просто прямоугольники, некрасиво»; макет
+   macet-15-09-stil-krugi-kamen.html, одобрено «в реальной игре»): тот же камень-материал, что у
+   круглых кнопок карточек — только скруглённый прямоугольник вместо круга. #menuRow — ID-селектор,
+   сильнее .btn.ghost (2 класса), поэтому безопасно применяется ТОЛЬКО к этому ряду на главном
+   экране, не трогает .btn.ghost на остальных 6 меню-экранах (см. комментарий у .btn.ghost выше).
+   Орбита НЕ добавлена — владелец отдельно: «орбиты у кнопок убери, мне они там не нравятся». */
+#menuRow .btn{position:relative;overflow:hidden;
+  background:var(--stone-fill);border-color:var(--stone-border);box-shadow:var(--stone-shadow)}
+#menuRow .btn::after{content:'';position:absolute;top:-18%;left:8%;width:34%;height:50%;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.32),transparent 70%);
+  filter:blur(1px);pointer-events:none}
 .grid2 .btn { width:100%; margin:0; }
 .grid2 .btn.span2 { grid-column:1 / -1; }
 
@@ -760,6 +813,14 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
      max-width держит безопасную зону по 48px с обеих сторон — коротким заголовкам ничего
      не стоит (они и так уже), длинные раньше переносятся, а не подъезжают к кнопке. */
   max-width:calc(100% - 96px); margin-left:auto; margin-right:auto; }
+/* 15.09.2026, владелец, живой телефон («Благодарность» наезжает на «Назад», «Равноправие» —
+   тот же класс): оба — самые длинные заголовки экранов («БЛАГОДАРНОСТЬ»/«РАВНОПРАВИЕ» длиннее
+   «Достижения») и единственные два НЕ в UNIFORM_TITLE_IDS (js/ui.js) — каждый считает свой кегль
+   независимо, без общего минимума остальных восьми, поэтому садится на бОльший шрифт и шире
+   подходит к границе безопасной зоны, чем уже проверенные вживую заголовки. Более тесная
+   max-width — только этим двум, не трогает остальные восемь (правка не подтверждена на
+   реальном устройстве — ждёт живой проверки). */
+#equalityTitle, #gratitudeTitle { max-width:calc(100% - 140px); }
 .miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
 #feedbackCount { color:rgba(158,178,224,.6); }
 /* 30.08.2026: цвет раньше жил в inline style на самом элементе — тот побеждает любой
@@ -3162,9 +3223,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.308"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.308"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.308"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.317"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.317"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.317"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4281,26 +4342,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.308" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.308"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.308"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.308"></script>
-<script defer src="js/game.js?v=1.478.308" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.308"></script>
-<script defer src="js/sync.js?v=1.478.308"></script>
-<script defer src="js/render.js?v=1.478.308"></script>
-<script defer src="js/planetarium.js?v=1.478.308"></script>
-<script defer src="js/goldstar.js?v=1.478.308"></script>
-<script defer src="js/finish.js?v=1.478.308"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.308"></script>
-<script defer src="js/gyro.js?v=1.478.308"></script>
-<script defer src="js/forge.js?v=1.478.308"></script>
-<script defer src="js/partitura.js?v=1.478.308"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.308"></script>
-<script defer src="js/card.js?v=1.478.308"></script>
-<script defer src="js/star.js?v=1.478.308"></script>
-<script defer src="js/cinema.js?v=1.478.308"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.308"></script>
+<script defer src="js/core.js?v=1.478.317" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.317"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.317"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.317"></script>
+<script defer src="js/game.js?v=1.478.317" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.317"></script>
+<script defer src="js/sync.js?v=1.478.317"></script>
+<script defer src="js/render.js?v=1.478.317"></script>
+<script defer src="js/planetarium.js?v=1.478.317"></script>
+<script defer src="js/goldstar.js?v=1.478.317"></script>
+<script defer src="js/finish.js?v=1.478.317"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.317"></script>
+<script defer src="js/gyro.js?v=1.478.317"></script>
+<script defer src="js/forge.js?v=1.478.317"></script>
+<script defer src="js/partitura.js?v=1.478.317"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.317"></script>
+<script defer src="js/card.js?v=1.478.317"></script>
+<script defer src="js/star.js?v=1.478.317"></script>
+<script defer src="js/cinema.js?v=1.478.317"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.317"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
