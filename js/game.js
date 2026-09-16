@@ -2614,9 +2614,20 @@ function updateStarsHud(){ elPillStarsN.textContent = S.starsCollected;
   const c=$('starJewel'); if (c && !c._drawn){ c._drawn=1; drawStarJewel(c); } }
 function drawStarJewel(c){ // v1.95.1 «Звезда-ювелирка»: счётчик звёзд — той же кистью, что жизни (v1.82.0 был плоским значком)
   const x=c.getContext('2d'); if(!x) return;
-  x.setTransform(2,0,0,2,0,0); // canvas 32×32 → css 16×16: чётко на retina, как жизни
-  x.clearRect(0,0,16,16);
-  x.scale(16/24,16/24); // рисуем в привычной 24-сетке фирменной искры (i-star4)
+  // 16.09.2026 (владелец, живой скрин кошелька в Ангаре, DPR2: «значок звёзд размытый»):
+  // было зашито «canvas 32×32 → css 16×16» — верно только пока эту же кисть показывают
+  // ровно на 16px. #angarWalletIc в разное время показывался и на 20px, и теперь на 15px —
+  // холст оставался 32×32, на DPR2 его приходилось растягивать на 30-40 физических
+  // пикселей и он мылил. Меряем реальный css-размер канваса и подгоняем разрешение под
+  // него и под настоящий devicePixelRatio, а не под зашитое число — резко при любом
+  // размере пилюли/HUD, не только при 16px.
+  const dpr = window.devicePixelRatio||1;
+  const cssPx = c.clientWidth || parseFloat(getComputedStyle(c).width) || 16;
+  const bw = Math.max(1, Math.round(cssPx*dpr));
+  if (c.width!==bw || c.height!==bw){ c.width=bw; c.height=bw; }
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,cssPx,cssPx);
+  x.scale(cssPx/24,cssPx/24); // рисуем в привычной 24-сетке фирменной искры (i-star4)
   const grad=x.createLinearGradient(0,0,0,24);
   grad.addColorStop(0,'#fff3c4'); grad.addColorStop(.55,'#ffd76a'); grad.addColorStop(1,'#e8a94b'); // золото сверху вниз — как слиток
   x.shadowColor='rgba(255,200,80,.85)'; x.shadowBlur=4; // свечение — фамильное, как у живых жизней

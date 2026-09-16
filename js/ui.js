@@ -3487,8 +3487,18 @@ wireOn('overDetailsBtn', 'click', ()=>{ // спойлер «Подробност
   const hid = om ? !om.classList.contains('hidden') : true; // новое состояние после переключения — считаем сами, не полагаемся на return classList.toggle()
   toggleCls('overMore','hidden', hid);
   toggleCls('overDetailsBtn','open',!hid); sfx.click(); haptic('light'); });
+/* 16.09.2026 (владелец, макет koshelek-makett-final-16-09-2026.html, «одобрен»): постоянный
+   текст в пилюле кошелька убран («будет постоянно место занимать») — вместо него подсказка
+   #angarWalletTip показывается ровно один раз, при самом первом входе в Коллекцию у игрока,
+   дальше никогда (Store-флаг, тот же приём, что welcomeDay/streakDay в core.js). */
+function angarWalletTipMaybeShow(){
+  if (Store.get('angarWalletTipSeen',0)) return;
+  Store.set('angarWalletTipSeen',1);
+  toggleCls('angarWalletTip','hidden',false);
+}
 wireOn('hangarBtn', 'click', ()=>{
   renderHangar(); setScreen('hangar'); sfx.click();
+  angarWalletTipMaybeShow();
   // 04.09.2026: подтягиваем владение премиум-скинами с сервера при каждом входе в Ангар —
   // тихо, в фоне, не блокирует открытие экрана; если что-то новое куплено (или куплено
   // с другого устройства) — плитки перерисуются сами, когда ответ придёт.
@@ -3501,7 +3511,7 @@ wireOn('hangarBtn', 'click', ()=>{
 });
 /* 05.09.2026 «Метка нового»: выходя из Тюнинга — считаем, что игрок пролистал каталог,
    точки «новое» гаснут до следующей реально новой партии (сравнение версий, не разовый флаг). */
-function hangarLeave(){ Store.set('angarSeenVersion', GAME_VERSION); toMenu(); }
+function hangarLeave(){ Store.set('angarSeenVersion', GAME_VERSION); toggleCls('angarWalletTip','hidden',true); toMenu(); }
 wireOn('hangarBackBtn', 'click', hangarLeave); // 28.08.2026: вернулась — экран был без единой видимой кнопки назад вне Telegram
 /* ---------- Достижения + онбординг (модуль ach.js) ---------- */
 function openAch(){ renderAch(); setScreen('ach'); sfx.click(); }
@@ -4232,7 +4242,7 @@ function applyLang(){
   setText('pauseMenuBtn',L.menu);
   setText('hangarTitle',L.hangar);
   setText('brandSub',L.brandSub);          // 13.08.2026: обещание игры — на языке игрока
-  setText('angarWalletLbl',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки
+  setText('angarWalletTip',L.walletYours); // 13.08.2026: подпись кошелька под кнопкой покупки; 16.09.2026 — переехала из постоянной скрытой подписи в тексте всплывающей подсказки-одноразки (angarWalletTipMaybeShow)
   if(typeof angarBuyFill==='function' && angarBuilt) angarBuyFill();
   setText('retryBtn',L.retry);
   setText('watchBtn',L.watchFlight);

@@ -1723,7 +1723,14 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    при H=130 — 17..120, глубоко внутри бокса; следовая дымка чуть тоньше запаса, но угасает
    градиентом задолго до края, не обрезается на глаз). js/ui.js: H в angarPvDraw держим
    в паре с этим числом — иначе канвас растянется/сплющится вместе с CSS-боксом. */
-#angarSky { width:min(92%,380px); height:130px; margin:2px 0 12px; position:relative; overflow:hidden;
+#angarSky { width:min(92%,380px); height:130px; margin:2px 0 12px; position:relative; overflow:visible; }
+/* 16.09.2026 (владелец, живой скрин с обводкой — кошелёк «не доходит до угла»): рамка/фон/
+   скругление корабля переехали в свою обёртку .angarSkyClip, а сам #angarSky стал просто
+   позиционирующим контейнером с overflow:visible — иначе некуда было деться подсказке
+   #angarWalletTip (ей нужно высовываться НАД пилюлей кошелька, которая теперь сидит
+   вплотную в углу). Размер и центровка #angarSky не менялись (тот же 380×130 — js/ui.js
+   держит H=130 в паре с этим числом), поэтому ничего в отрисовке корабля не сдвинулось. */
+.angarSkyClip { position:absolute; inset:0; overflow:hidden;
   border:1px solid var(--line); border-radius:var(--r-card);
   background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
   box-shadow:inset 0 0 40px rgba(80,130,220,.10); }
@@ -2006,21 +2013,33 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    koshelek-v-karte-13-09-2026.html, «да») — не «куда-то на небо» расплывчато, как в первой
    версии 28.08. #angarSky (index.html выше) — position:relative и overflow:hidden, пилюля
    позиционируется от него самого, никакого --sat-menu/--menu-buf тут больше не нужно —
-   витрина уже находится ниже шапки, там нет Telegram, от которого прятаться. */
-#angarWallet { position:absolute; bottom:8px; right:8px; height:32px; z-index:2;
-  display:flex; align-items:center; gap:4px; padding:0 8px;
-  background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
-  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-  border:1.5px solid rgba(255,215,106,.5); border-radius:999px;
-  box-shadow:0 0 14px rgba(255,215,106,.25), inset 0 0 10px rgba(255,215,106,.1); }
-#angarWalletLbl { display:none; }
-#angarWallet b { font-family:var(--font-disp); color:#eaf2ff; font-weight:600; font-size:13px;
-  letter-spacing:.04em; text-transform:none; }
-#angarWalletIc { width:20px; height:20px; } /* 09.09.2026, владелец (прислал зум своего скрина
-  с двумя нулями-примером): вокруг маленькой иконки (14px в пилюле высотой 32px) слишком много
-  тёмного пустого места. Иконка сама рисуется полно (~77% своего квадрата, drawStarJewel в
-  game.js) — проблема не в отрисовке, а в размере квадрата. Увеличена до 20px, боковой отступ
-  пилюли сужен с 10px до 8px. Показано было/стало живыми скриншотами (Playwright), одобрено. */
+   витрина уже находится ниже шапки, там нет Telegram, от которого прятаться.
+   16.09.2026 (владелец, живой скрин с обводкой: «не доходит до края», золотое свечение
+   «выделяется сильнее всего», значок звезды «размытый», просил слово-подсказку): макет
+   koshelek-makett-final-16-09-2026.html, «одобрен» — пилюля теперь вплотную в углу витрины
+   (0/0, было 8px/8px), меньше (26px вместо 32px), в приглушённом стеклянном языке .angarTab
+   (ВСЕ/НОВОЕ/КУПЛЕНО) вместо отдельного золотого свечения — часть общего меню, а не деталь
+   сама по себе. Постоянного текста в пилюле больше нет (владелец: «текст лишний, будет
+   занимать место») — вместо него #angarWalletTip: всплывающая подсказка «Ваши звёзды»
+   один раз при самом первом входе в Коллекцию (js/ui.js), больше никогда не показывается. */
+#angarWallet { position:absolute; bottom:0; right:0; height:26px; z-index:2;
+  display:flex; align-items:center; gap:5px; padding:0 9px;
+  background:rgba(14,18,32,.72);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  border:1px solid rgba(201,164,92,.35); border-radius:12px 0 12px 0; }
+#angarWallet b { font-family:var(--font-disp); color:#f0c040; font-weight:600; font-size:12.5px;
+  letter-spacing:.03em; text-transform:none; }
+#angarWalletIc { width:15px; height:15px; } /* 16.09.2026: пилюля стала компактнее (26px) —
+  значок пропорционально уменьшен вместе с ней (был 20px). Резкость на DPR2 теперь не зависит
+  от этого числа — drawStarJewel (game.js) сам меряет реальный css-размер и devicePixelRatio,
+  не зашитое «16px» (была причина размытия, владелец поймал живьём). */
+#angarWalletTip { position:absolute; bottom:34px; right:0; z-index:3; max-width:170px;
+  background:rgba(16,22,42,.94); border:1px solid rgba(201,164,92,.4); border-radius:10px;
+  padding:7px 10px; font-size:11.5px; line-height:1.4; color:#eaf2ff; text-align:center; }
+#angarWalletTip.hidden { display:none; }
+#angarWalletTip::after { content:''; position:absolute; bottom:-6px; right:16px; width:11px; height:11px;
+  background:rgba(16,22,42,.94); border-right:1px solid rgba(201,164,92,.4); border-bottom:1px solid rgba(201,164,92,.4);
+  transform:rotate(45deg); }
 
 /* 24.08.2026: блок «Ангар: карточки-строки с жёсткими колонками» убран целиком —
    .shipItem/.shipPv/#shipList не присваивались ни в одном JS-файле (проверено:
@@ -3407,9 +3426,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.336"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.336"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.336"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.337"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.337"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.337"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4330,10 +4349,16 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <!-- 13.09.2026: кошелёк переехал ещё раз — из шапки экрана (там он упирался в родные ⌄/⋮
        Telegram) внутрь самой витрины корабля, в нижний правый угол (владелец, макет
        koshelek-v-karte-13-09-2026.html, живой скрин с обводкой места, «да»). Шапка теперь
-       свободна — там только «Назад». Подпись #angarWalletLbl осталась в DOM для i18n/
-       скринридера, но скрыта — пилюля показывает только значок и число. -->
-  <div id="angarSky"><canvas id="angarPv"></canvas><div id="angarPvName"></div>
-    <div id="angarWallet"><canvas id="angarWalletIc" class="starJewelSm" width="32" height="32" aria-hidden="true"></canvas><span id="angarWalletLbl">Ваши звёзды</span> <b id="angarWalletN">0</b></div>
+       свободна — там только «Назад».
+       16.09.2026: .angarSkyClip — новая обёртка, держит фон/рамку/скругление/обрезку корабля,
+       которые раньше были прямо на #angarSky (он сам теперь overflow:visible — см. index.html
+       CSS выше, нужно было место для #angarWalletTip). Бывший #angarWalletLbl (постоянный,
+       скрытый) стал #angarWalletTip — не текст внутри пилюли, а всплывающая подсказка над ней,
+       один раз при первом входе (angarWalletTipMaybeShow() в js/ui.js), «Ваши звёзды» из i18n. -->
+  <div id="angarSky">
+    <div class="angarSkyClip"><canvas id="angarPv"></canvas><div id="angarPvName"></div></div>
+    <div id="angarWalletTip" class="hidden"></div>
+    <div id="angarWallet"><canvas id="angarWalletIc" class="starJewelSm" width="32" height="32" aria-hidden="true"></canvas><b id="angarWalletN">0</b></div>
   </div>
   <!-- 28.08.2026: отдельная строка-кнопка под небом снята (владелец: «занимает лишнее
        место», «франкенштейн» — не своя, отдельная деталь, а действие теперь живёт прямо
@@ -4597,26 +4622,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.336" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.336"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.336"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.336"></script>
-<script defer src="js/game.js?v=1.478.336" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.336"></script>
-<script defer src="js/sync.js?v=1.478.336"></script>
-<script defer src="js/render.js?v=1.478.336"></script>
-<script defer src="js/planetarium.js?v=1.478.336"></script>
-<script defer src="js/goldstar.js?v=1.478.336"></script>
-<script defer src="js/finish.js?v=1.478.336"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.336"></script>
-<script defer src="js/gyro.js?v=1.478.336"></script>
-<script defer src="js/forge.js?v=1.478.336"></script>
-<script defer src="js/partitura.js?v=1.478.336"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.336"></script>
-<script defer src="js/card.js?v=1.478.336"></script>
-<script defer src="js/star.js?v=1.478.336"></script>
-<script defer src="js/cinema.js?v=1.478.336"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.336"></script>
+<script defer src="js/core.js?v=1.478.337" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.337"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.337"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.337"></script>
+<script defer src="js/game.js?v=1.478.337" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.337"></script>
+<script defer src="js/sync.js?v=1.478.337"></script>
+<script defer src="js/render.js?v=1.478.337"></script>
+<script defer src="js/planetarium.js?v=1.478.337"></script>
+<script defer src="js/goldstar.js?v=1.478.337"></script>
+<script defer src="js/finish.js?v=1.478.337"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.337"></script>
+<script defer src="js/gyro.js?v=1.478.337"></script>
+<script defer src="js/forge.js?v=1.478.337"></script>
+<script defer src="js/partitura.js?v=1.478.337"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.337"></script>
+<script defer src="js/card.js?v=1.478.337"></script>
+<script defer src="js/star.js?v=1.478.337"></script>
+<script defer src="js/cinema.js?v=1.478.337"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.337"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
