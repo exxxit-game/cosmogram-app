@@ -409,7 +409,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   position:relative; cursor:pointer; transition:background .2s; } /* v1.92.0: ровный ритм — одинаковый шаг между всеми группами */
 .setGrpSub { display:block; margin-top:3px; font-size:11px; font-weight:600; letter-spacing:.04em;
   text-transform:none; color:rgba(158,178,224,.55); } /* v1.92.0: закрытая группа шёпотом отвечает, как себя чувствует (закон Nintendo) */
-.setGrp:active { background:rgba(120,170,255,.10); }
+.setGrp:active { background:rgba(240,192,64,.10); } /* 16.09.2026 «Небесный прибор»: было синим tap-состояние на уже переведённой на латунь карточке */
 .setGrp::after { content:'▾'; position:absolute; right:16px; top:50%; transform:translateY(-50%);
   opacity:.5; font-size:12px; }
 .setGrp.open::after { content:'▴'; }
@@ -523,7 +523,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
      иначе не виден на новом тёмном фоне. */
   background:var(--stone-fill-gold);border-color:var(--stone-border-gold);
   color:#f0c040;font-weight:700;box-shadow:var(--stone-shadow-gold); }
-.btn.ghost:active { color:#dce9ff; border-color:rgba(190,225,255,.5); }
+.btn.ghost:active { color:#dce9ff; border-color:rgba(240,192,64,.55); }
 .btn.small { padding:10px 18px; }
 /* 05.09.2026 «Удалить мои данные»: единственная по-настоящему необратимая кнопка в Настройках —
    существующий --danger (сдержанный коралл), не новый цвет. Макет: macet-udalit-dannye.html, одобрено. */
@@ -1395,8 +1395,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .chSignLead{font-size:12px;color:var(--muted);max-width:280px}
 .chSignBtn{pointer-events:auto;cursor:pointer;display:inline-flex;align-items:center;gap:.6em;
   border-radius:var(--r-btn);padding:13px 24px;font-family:inherit;font-size:14.5px;font-weight:600;
-  letter-spacing:.03em;color:#cddcf7;background:rgba(22,36,64,.68);
-  border:1px solid rgba(160,210,255,.34);box-shadow:0 0 12px rgba(120,170,255,.10);
+  letter-spacing:.03em;color:#dce9ff;background:rgba(14,18,32,.62);
+  border:1px solid rgba(201,164,92,.3);
   transition:transform .12s ease,border-color .2s,background .2s,color .2s}
 .chSignBtn:active{transform:scale(.97)}
 .chSignBtn .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -1506,17 +1506,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    сессией — id-скоуп (#feedbackScreen, 3 «класса» суммарно) гарантированно бьёт оба
    правила, не трогая плоский стиль .setPanel .btn на остальных экранах. */
 #feedbackScreen .btn.ghost, #feedbackScreen .btn.pri { border-radius:var(--r-btn); border:1px solid; }
-#feedbackScreen .btn.ghost { background:rgba(22,36,64,.68); border-color:rgba(160,210,255,.34);
-  box-shadow:0 0 12px rgba(120,170,255,.10); }
-#feedbackScreen .btn.pri { background:rgba(24,40,72,.7); border-color:rgba(190,225,255,.45);
-  box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); }
+#feedbackScreen .btn.ghost { background:rgba(14,18,32,.62); border-color:rgba(201,164,92,.3); }
+#feedbackScreen .btn.pri { background:rgba(14,18,32,.7); border-color:rgba(240,192,64,.5);
+  box-shadow:0 0 16px rgba(240,192,64,.14); } /* 16.09.2026 «Небесный прибор»: тот же материал, что у общих .btn.ghost/.btn.pri */
 /* 30.08.2026 (владелец): left-align («Скопировать самописец» и подобные) не был
    намеренным решением дизайна — просто так исторически легло правилом v1.92.0 и никто
    не заметил на коротких словах. Убрано: текст по центру — умолчание везде внутри
    .setPanel, кроме .modeIt (Режимы), у которой своя, более специфичная раскладка
    (двухстрочные имя+описание, align-items:center уже задан отдельно) и её это не
    касается. Раньше здесь же был узкий фикс только для .btn.pri — снят, стал не нужен. */
-.setPanel .btn:active { transform:none; background:rgba(120,170,255,.08); color:#dce9ff; }
+.setPanel .btn:active { transform:none; background:rgba(240,192,64,.08); color:#dce9ff; }
 /* 30.08.2026 (владелец, макет «отличные макеты, все нравится»): точечная линия между режимами
    (была тут же) снята — «так себе выглядит». Воздух между пунктами теперь держат сами карточки
    #modesScreen .modeIt ниже (тот же язык, что forgePresetTile/statCell), не линия. */
@@ -1524,7 +1523,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .setRow { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
   padding:13px 16px; font-size:14px; font-weight:600; letter-spacing:.03em; color:#dce9ff;
   cursor:pointer; transition:background .2s; } /* v1.92.0: без линеек — ровный шаг 13px, как у Nintendo; 09.09.2026: flex-wrap добавлен для «Размера текста» — на крупном шаге длинная подпись переносит значение под себя вместо обрезки за краем экрана */
-.setRow:active { background:rgba(120,170,255,.08); }
+.setRow:active { background:rgba(240,192,64,.08); }
 .setRow .setK { min-width:0; } /* 09.09.2026: без этого flex не даёт длинной подписи сжаться/перенестись, она просто выталкивает .setV за край */
 .setRow .setV { flex:none; color:rgba(158,178,224,.55); font-weight:600; }
 .setRow .setV.on { color:#8fff9f; text-shadow:0 0 10px rgba(140,255,160,.35); }
@@ -2080,10 +2079,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    голым текстом без контейнера (владелец вживую принял вписанное имя «HDHD» за баг). Взята
    та же рамка+свечение, что уже у #forgeFineBtn на этом экране — не новое число, повтор
    уже проверенного контраста. Макет: macet-02-09-forge-name-vidimoe-pole.html. */
-.forgeName{width:100%;box-sizing:border-box;background:rgba(22,38,56,.55);
-  border:0.8px solid rgba(160,210,255,.34);box-shadow:0 0 12px rgba(120,170,255,.10);border-radius:12px;
+.forgeName{width:100%;box-sizing:border-box;background:rgba(14,18,32,.62);
+  border:0.8px solid rgba(201,164,92,.3);border-radius:12px;
   padding:10px 12px;color:#eaf2ff;font:inherit;font-size:14px;text-align:center;outline:none}
-.forgeName:focus{border-color:rgba(190,225,255,.45)}
+.forgeName:focus{border-color:rgba(240,192,64,.5)}
 .forgeRow{display:flex;align-items:center;gap:10px;width:100%}
 .forgeLbl{font-size:12px;color:var(--muted);flex:none;width:74px;text-align:left}
 .forgeLblBlk{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px;text-transform:uppercase}
@@ -2092,7 +2091,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeChips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;width:100%}
 .forgeChip{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
   padding:6px 11px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
-.forgeChip.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+.forgeChip.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.6);color:#f0c040}
 /* 08.09.2026 (владелец: «Закреплённые»/«Случайные» слишком длинное слово) — вкладка-значок
    без текста, тот же .forgeChip, только квадратная и по центру иконки. */
 .forgeChip.iconOnly{width:34px;display:flex;align-items:center;justify-content:center;padding:6px}
@@ -2106,7 +2105,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeSeg.locked{opacity:.4;pointer-events:none} /* 02.09.2026: «Высокая ставка» держит Жизни/Бонусы — тап по ним больше не выглядит рабочим, раз реального эффекта нет */
 .forgeSegBtn{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);border-radius:10px;
   padding:7px 12px;font-size:12.5px;cursor:pointer;pointer-events:auto;transition:all .15s}
-.forgeSegBtn.sel{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+.forgeSegBtn.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.6);color:#f0c040}
 /* 30.08.2026: .forgeGrpLbl (плоские заголовки групп) удалён — три группы «Тонкой настройки»
    стали аккордеоном (.setGrp.spoiler, тот же класс что в Настройках), правило больше нигде не используется */
 /* 11.09.2026 «Лаборатория цвета» (владелец, макет laboratoriya-tsveta-11-09-2026.html, одобрено):
@@ -2122,7 +2121,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .labBtn{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;padding:9px 12px;
   border-radius:10px;border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--ink);
   font-size:11.5px;letter-spacing:.04em;width:100%;cursor:pointer;pointer-events:auto;transition:all .15s}
-.labBtn:active{background:rgba(120,170,255,.12);border-color:rgba(190,225,255,.45)}
+.labBtn:active{background:rgba(240,192,64,.12);border-color:rgba(240,192,64,.5)}
 .labBtn .ic{width:14px;height:14px;stroke:var(--gold-hi);fill:none;stroke-width:2}
 #forgeHarmonyModal{position:fixed;inset:0;z-index:61;display:none;background:rgba(4,7,16,.82);
   align-items:center;justify-content:center;padding:20px}
@@ -2179,7 +2178,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .forgeTab.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.55);color:#f0c040}
 .forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:min(94%,560px);margin-top:2px} /* v1.86.0: тихие плитки-программы; 01.09.2026: было width:100% — держалось узким только пока родителем был .setPanel (сам width:min(92%,380px)); после переноса в раскладке родитель — широкий .scrBody, плитки расползлись во весь экран. Ограничение теперь своё, не одолженное у родителя.
    02.09.2026: 380→560 — владелец захотел весь экран Конструктора одной ширины, не только Расстановку. */
-.forgePreset{border:1px solid rgba(140,170,255,.3);background:rgba(16,24,54,.55);color:#bcd2ff;border-radius:999px;
+.forgePreset{border:1px solid rgba(201,164,92,.3);background:rgba(14,18,32,.62);color:#bcd2ff;border-radius:999px;
   padding:6px 12px;font-size:12px;cursor:pointer;pointer-events:auto;transition:all .15s}
 .forgePreset:active{transform:scale(.95)}
 /* ---- v1.85.0 «Сначала небо»: живое превью, ручка «Жар», спойлер; v1.86.0 — вторая сборка сцены ---- */
@@ -2188,7 +2187,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    высота 130px и то же скругление var(--r-card,16px), что у карточки Мастерской и карточки
    режима. Три места на трёх разных экранах читаются одной семьёй, не тремя случайными
    размерами (владелец: «размер сильно большой» — было 168px в первом заходе, ужато до 130). */
-#forgePreview{width:100%;height:130px;border-radius:var(--r-card);border:1px solid rgba(140,170,255,.18);
+#forgePreview{width:100%;height:130px;border-radius:var(--r-card);border:1px solid rgba(201,164,92,.25);
   display:block;background:#0b1626}
 /* имя по центру — свободная зона между верхним рядом кнопок (Перемешать/Сохранить, top:10px,
    34px) и рядом стикеров внизу; плейсхолдер «Дайте имя», пока forgeName пуст (forgeSkyPaint). */
@@ -2241,8 +2240,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)} /* небо программы — тихий свотч, не плакат */
 .forgePresetTile.misty .sw::after{content:'';position:absolute;inset:0;border-radius:inherit;
   background:linear-gradient(180deg,rgba(190,205,235,.4),rgba(190,205,235,.06))} /* дымка на туманных */
-.forgePresetTile.sel{border-color:rgba(190,225,255,.55);background:rgba(120,170,255,.10);color:#eaf2ff;
-  box-shadow:0 0 14px rgba(120,170,255,.12)} /* выбранная программа светится вполголоса */
+.forgePresetTile.sel{border-color:rgba(240,192,64,.6);background:rgba(20,16,8,.75);color:#f0c040;
+  box-shadow:0 0 14px rgba(240,192,64,.14)} /* выбранная программа светится вполголоса; 16.09.2026 «Небесный прибор» */
 .forgePresetTile:active{transform:scale(.97)}
 /* 05.09.2026 «Мастерская»: витрина трасс — карточки шире forgePresetTile (имя+автор+мета+
    действия), свотч крупнее (52px, живое небо А, статично — см. forgeMiniSwatchPaint в forge.js).
@@ -2683,11 +2682,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #ptDragValue.show{display:block}
 /* кузница — не аккордеон: кнопкам-действиям возвращаем стекло, спойлер остаётся тихой строкой (v1.86.0) */
 .forgePanel .btn.pri,.forgePanel .btn.ghost:not(.spoiler){
-  border:1px solid rgba(160,210,255,.18);border-radius:var(--r-btn);
-  background:rgba(10,18,36,.55);justify-content:center;padding:14px 26px;margin:8px 0}
-.forgePanel .btn.pri{background:rgba(24,40,72,.7);border-color:rgba(190,225,255,.45);color:#f2f7ff;
-  box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05)}
-.forgePanel .btn.ghost:not(.spoiler){background:rgba(10,18,36,.4);border-color:rgba(160,210,255,.12);color:#9fb4d8;font-weight:500}
+  border:1px solid rgba(201,164,92,.3);border-radius:var(--r-btn);
+  background:rgba(14,18,32,.62);justify-content:center;padding:14px 26px;margin:8px 0}
+.forgePanel .btn.pri{background:rgba(14,18,32,.7);border-color:rgba(240,192,64,.5);color:#f2f7ff;
+  box-shadow:0 0 16px rgba(240,192,64,.14)} /* 16.09.2026 «Небесный прибор» */
+.forgePanel .btn.ghost:not(.spoiler){background:rgba(10,14,26,.5);border-color:rgba(201,164,92,.18);color:#9fb4d8;font-weight:500}
 .forgePanel .btn.ghost.small:not(.spoiler){padding:10px 18px}
 .heatRow{margin-top:10px}
 .heatRow .forgeLbl{width:auto;font-size:14px;color:#bcd2ff} /* «Жар» — хозяин строки, крупнее рядовых ручек */
@@ -2851,9 +2850,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 .gyroOfferOk{color:var(--gold-hi);}
 
 /* ---- тосты — тот же материал неба (цвет рамки по-прежнему задаёт код) ---- */
-#toast { background:rgba(10,18,36,.62); border:1px solid rgba(160,210,255,.22);
-  text-shadow:0 0 10px rgba(140,190,255,.3);
-  box-shadow:0 0 22px rgba(90,140,230,.10), inset 0 0 14px rgba(120,170,255,.05); }
+#toast { background:rgba(14,18,32,.7); border:1px solid rgba(201,164,92,.3);
+  text-shadow:0 0 10px rgba(240,192,64,.25);
+  box-shadow:0 0 16px rgba(240,192,64,.10); } /* 16.09.2026 «Небесный прибор»: нейтральный (без явного color-параметра) тост — латунь вместо синего; toast(txt,color) по-прежнему переопределяет для успеха/ошибки */
 
 /* ---- карточки итогов — то же стекло, что кнопки паузы ---- */
 .statCell { background:rgba(10,18,36,.5); border-color:rgba(160,210,255,.16); }
@@ -2878,12 +2877,12 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    ряд из двух равных кнопок вместо одиночного героя, см. #forgeSubSky.) */
 .btn.hero { font-size:19px; min-height:54px; margin-top:14px; margin-bottom:8px; }
 @keyframes retryLure {
-  0%,100% { box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); transform:scale(1); }
-  50% { box-shadow:0 0 30px rgba(130,180,255,.30), inset 0 0 16px rgba(130,180,255,.10); transform:scale(1.012); }
-}
+  0%,100% { box-shadow:0 0 16px rgba(240,192,64,.14); transform:scale(1); }
+  50% { box-shadow:0 0 30px rgba(240,192,64,.32); transform:scale(1.012); }
+} /* 16.09.2026 «Небесный прибор»: пульс синим на уже латунной кнопке .btn.pri.hero — было заметно на GameOver */
 #overQuiet { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:4px; } /* 01.09.2026: было 10px — тот же шаг (12), что уже держит ритм отступов игры, см. отчёт «Пространство в меню» */
 #overQuiet .btn { min-height:40px; padding:8px 14px; font-size:14px; opacity:.92;
-  background:rgba(22,36,64,.6); border-color:rgba(160,210,255,.28); } /* 01.09.2026: тихая тройка приглушена нарочно (opacity), но не должна тонуть в вуали — тот же контраст-буст, что у .btn.ghost, поверх уже пониженной видимости */
+  background:rgba(14,18,32,.62); border-color:rgba(201,164,92,.3); } /* 01.09.2026: тихая тройка приглушена нарочно (opacity), но не должна тонуть в вуали — тот же контраст-буст, что у .btn.ghost, поверх уже пониженной видимости; 16.09.2026 подтянута за латунной правкой .btn.ghost */
 #overQuiet .btn:hover, #overQuiet .btn:active { opacity:1; }
 /* 01.09.2026: «Карточка» — единственная кнопка тройки, доступная всегда (Вызов/Клип условные) —
    лёгкое золотое выделение отличает её как «якорь», не делает героем наравне с «Ещё раз» */
@@ -2981,9 +2980,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #dcWidget:empty, #dcJoinWidget:empty, #dcLogin:empty, #gWidget:empty, #gJoinWidget:empty { display:none; }
 
 /* Морзянка (v1.53.0): поле позывного */
-.csInput{width:100%;box-sizing:border-box;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(140,170,255,.28);background:rgba(10,16,34,.6);color:#eaf0ff;font:500 14px/1.2 inherit;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none}
+.csInput{width:100%;box-sizing:border-box;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(201,164,92,.3);background:rgba(14,18,32,.62);color:#eaf0ff;font:500 14px/1.2 inherit;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none}
 .csInput::placeholder{color:rgba(160,180,230,.4);letter-spacing:1px;text-transform:none}
-.csInput:focus{border-color:rgba(140,170,255,.6)}
+.csInput:focus{border-color:rgba(240,192,64,.5)}
 
 /* v1.74.0: маркер «стили применились» для сторожа стилей (аварийный inline его не дублирует) */
 :root{--cg-css-ok:1}
@@ -3258,9 +3257,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.323"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.323"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.323"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.324"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.324"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.324"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3643,7 +3642,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <div class="hint" id="feedbackHint" style="position:static;padding:10px 16px 4px"></div>
     <textarea id="feedbackText" rows="6" maxlength="28000"
       style="width:calc(100% - 32px);margin:8px 16px 4px;font-size:14px;line-height:1.4;
-             background:rgba(10,16,40,.6);color:#eaf0ff;border:1px solid rgba(120,170,255,.25);
+             background:rgba(14,18,32,.62);color:#eaf0ff;border:1px solid rgba(201,164,92,.3);
              border-radius:10px;padding:10px 12px;text-transform:none;letter-spacing:normal;
              outline:none;resize:none;font-family:inherit;box-sizing:border-box"></textarea>
     <div id="feedbackCount" style="text-align:right;margin:0 16px 10px;font-size:11px"></div>
@@ -4377,26 +4376,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.323" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.323"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.323"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.323"></script>
-<script defer src="js/game.js?v=1.478.323" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.323"></script>
-<script defer src="js/sync.js?v=1.478.323"></script>
-<script defer src="js/render.js?v=1.478.323"></script>
-<script defer src="js/planetarium.js?v=1.478.323"></script>
-<script defer src="js/goldstar.js?v=1.478.323"></script>
-<script defer src="js/finish.js?v=1.478.323"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.323"></script>
-<script defer src="js/gyro.js?v=1.478.323"></script>
-<script defer src="js/forge.js?v=1.478.323"></script>
-<script defer src="js/partitura.js?v=1.478.323"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.323"></script>
-<script defer src="js/card.js?v=1.478.323"></script>
-<script defer src="js/star.js?v=1.478.323"></script>
-<script defer src="js/cinema.js?v=1.478.323"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.323"></script>
+<script defer src="js/core.js?v=1.478.324" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.324"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.324"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.324"></script>
+<script defer src="js/game.js?v=1.478.324" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.324"></script>
+<script defer src="js/sync.js?v=1.478.324"></script>
+<script defer src="js/render.js?v=1.478.324"></script>
+<script defer src="js/planetarium.js?v=1.478.324"></script>
+<script defer src="js/goldstar.js?v=1.478.324"></script>
+<script defer src="js/finish.js?v=1.478.324"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.324"></script>
+<script defer src="js/gyro.js?v=1.478.324"></script>
+<script defer src="js/forge.js?v=1.478.324"></script>
+<script defer src="js/partitura.js?v=1.478.324"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.324"></script>
+<script defer src="js/card.js?v=1.478.324"></script>
+<script defer src="js/star.js?v=1.478.324"></script>
+<script defer src="js/cinema.js?v=1.478.324"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.324"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
