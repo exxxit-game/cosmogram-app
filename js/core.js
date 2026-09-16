@@ -534,7 +534,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION = '1.478.318'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION = '1.478.319'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 /* 11.09.2026 «Разбивка взлёта»: живой отчёт с Samsung A3 Core показал зонд дребезга
    (deviceProfileProbe, skymail.js) с max:1160ms в первые 2.5с взлёта — но зонд не блокирующий,
    он стартует и сразу отдаёт управление, а сам скачок мог случиться в ЛЮБОМ из тяжёлых шагов
@@ -1005,7 +1005,16 @@ function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один заз�
   // «СЧЁТ» вплотную к числу над ним (#scorePack, gap:2px) — не слипается, но заметно теснее.
   const sp=document.getElementById('scorePack');
   if(!sp) return;
+  /* 16.09.2026 (найдено живым Performance-трейсом, 6× CPU throttle, соседняя сессия —
+     ForcedReflow-инсайт): было read(rect)→write(2 переменные)→read(ещё 2 rect) — запись
+     CSS-переменной на documentElement между чтениями форсирует синхронный пересчёт layout
+     у второй пары getBoundingClientRect(). Все три rect читаются здесь ЗАРАНЕЕ, все три
+     setProperty — одним блоком после; числа не изменились (страж 223 проверяет только
+     порядок операций, не значения — их не трогал). */
   const rect=sp.getBoundingClientRect();
+  const th=document.getElementById('telemHud'), pp=document.getElementById('pausePack');
+  const thB=th?th.getBoundingClientRect().bottom:0, ppB=pp?pp.getBoundingClientRect().bottom:0;
+
   const gapPx = Math.round(rect.bottom+2)+'px';
   document.documentElement.style.setProperty('--topHudTop', gapPx);
   document.documentElement.style.setProperty('--telemHudTop', gapPx);
@@ -1015,8 +1024,6 @@ function syncScoreHudGap(){ // 23.08.2026 «Счёт и HUD — один заз�
      .corrEdge). Вместо новой забитой руками цифры — тот же измеритель: РЕАЛЬНЫЙ нижний край
      самого нижнего элемента HUD (телеметрия и левая кучка паузы/жизней — разной высоты на
      разных языках/раскладках), плюс небольшой запас. Владелец — «под HUD почти в притык». */
-  const th=document.getElementById('telemHud'), pp=document.getElementById('pausePack');
-  const thB=th?th.getBoundingClientRect().bottom:0, ppB=pp?pp.getBoundingClientRect().bottom:0;
   const corrTop=Math.round(Math.max(thB,ppB)+6)+'px';
   document.documentElement.style.setProperty('--corrEdgeTop', corrTop);
   /* 10.09.2026 (владелец, живой скрин: «0:22.1 · ЦЕЛЬ 10 000» далеко от HUD в Соревнованиях) —
