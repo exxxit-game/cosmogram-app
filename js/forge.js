@@ -969,9 +969,8 @@ const FORGE_HARMONY=[
   {k:'square',tKey:'forgeHarmSquare',off:90,  noteKey:'forgeHarmSquareNote'},
   {k:'mono',  tKey:'forgeHarmMono',  off:0,   noteKey:'forgeHarmMonoNote'},
 ];
-function forgeHarmonyFillLabels(){ // подписи кнопки/заголовка/схем/примечания — свой язык, вызывается из forgeFill()
+function forgeHarmonyFillLabels(){ // подписи кнопки/схем/примечания — свой язык, вызывается из forgeFill()
   const btnLbl=$('forgeHarmonyBtnLbl'); if(btnLbl) btnLbl.textContent=L.forgeHarmonyBtnLbl;
-  const title=$('forgeHarmonyTitle'); if(title) title.textContent=L.forgeHarmonyTitle;
   const row=$('forgeHarmonySchemes');
   if(row) for(const btn of row.children){
     const sc=FORGE_HARMONY.find(function(s){ return s.k===btn.dataset.k; });
@@ -997,9 +996,8 @@ function forgeHarmonySync(){
   if(ma){ ma.style.left=pa.left; ma.style.top=pa.top; }
   if(mb){ mb.style.left=pb.left; mb.style.top=pb.top; }
   const holeTxt=$('forgeHarmonyHoleTxt'); if(holeTxt) holeTxt.textContent=h1+'°\n→ '+h2+'°';
-  const prev=$('forgeHarmonyPreview');
-  if(prev){ const psl=forgePreviewMoodSL(forgeCfg.mood);
-    prev.style.background='linear-gradient(180deg, hsl('+h1+','+psl.S0+'%,'+psl.L0+'%), hsl('+h2+','+psl.S1+'%,'+psl.L1+'%))'; }
+  // 16.09.2026: полоска-подделка неба (#forgeHarmonyPreview) убрана — настоящее превью
+  // (#forgePreview, forgeSkyPaint) теперь видно одновременно с этим блоком, красится само.
   const note=$('forgeHarmonyNote'); const sc=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; });
   if(note && sc) note.textContent=L[sc.noteKey];
   const row=$('forgeHarmonySchemes');
@@ -1020,11 +1018,8 @@ function forgeHarmonySetH1FromEvent(ev){
   forgeCfg.h1=Math.round(((ang%360)+360)%360);
   forgeHarmonyApply(); forgeHarmonySync();
 }
-function forgeHarmonyOpen(){
-  const m=$('forgeHarmonyModal'); if(m) m.classList.add('open');
-  forgeHarmonySync(); sfx.click(); haptic('light');
-}
-function forgeHarmonyClose(){ const m=$('forgeHarmonyModal'); if(m) m.classList.remove('open'); }
+/* 16.09.2026: спойлер вместо модалки (index.html, .setGrp.spoiler #forgeHarmonyGrp) — та же
+   логика открытия/закрытия, что у forgeHardSpoilerGrp (wireOnLocal ниже, js/forge.js:734). */
 (function forgeHarmonyInit(){
   const row=$('forgeHarmonySchemes'); if(!row) return;
   FORGE_HARMONY.forEach(function(sc){
@@ -1033,8 +1028,14 @@ function forgeHarmonyClose(){ const m=$('forgeHarmonyModal'); if(m) m.classList.
     row.appendChild(b);
   });
   forgeHarmonyFillLabels(); // 15.09.2026: первая расстановка тоже идёт через L, не через мёртвый sc.t
-  wireOnLocal('forgeHarmonyBtn','click',forgeHarmonyOpen);
-  wireOnLocal('forgeHarmonyClose','click',forgeHarmonyClose);
+  wireOnLocal('forgeHarmonyGrp','click',function(){
+    sfx.click(); haptic('light');
+    this.classList.toggle('open');
+    const p=$('forgeHarmonyPanel'); if(!p) return;
+    const opening=p.classList.contains('hidden');
+    p.classList.toggle('hidden');
+    if(opening) forgeHarmonySync(); // тот же смысл, что раньше был у forgeHarmonyOpen() — свежие позиции колеса при раскрытии
+  });
   const wheel=$('forgeHarmonyWheel');
   if(wheel){
     let dragging=false;

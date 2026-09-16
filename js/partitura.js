@@ -204,11 +204,8 @@ function ptRenderPanel(){
   if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); return; }
   const p=pins[ptSelIdx];
   qe.classList.add('show');
-  // 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено «намного лучше»/«делай»):
-  // пузырёк — не блок в потоке, а плавающий якорь прямо у точки на ленте (Direct Manipulation,
-  // RESEARCH-2026-09-SINGLE-STEP-FLOW.md п.2). Лоток больше не прячется — ему незачем, пузырёк
-  // не делит с ним место.
-  ptPositionBubble(qe, p);
+  // 16.09.2026: панель — нижний лист (position:fixed, index.html), ptPositionBubble() (якорила
+  // её у самой точки) больше не нужна и удалена — точку по-прежнему видно по .pin.sel на ленте.
   const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
   const title=$('ptPanelTitle'); if(title) title.textContent=p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':(PT_KIND_LABEL[kindName]||'');
   const icon=$('ptPanelIcon'); if(icon) icon.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
@@ -237,22 +234,6 @@ function ptRenderPanel(){
   const mb=$('ptMarkerBox'); if(mb) mb.style.display=p.type==='marker'?'block':'none';
   const ph=$('ptPauseHint'); if(ph) ph.style.display=p.type==='pause'?'block':'none';
   if(p.type==='marker'){ const ta=$('ptNoteText'); if(ta){ ta.value=p.note||''; ta.oninput=()=>{ p.note=ta.value; ptRenderList(); }; } }
-}
-/* 12.09.2026: якорит пузырёк точки прямо у самой метки на ленте — тот же приём, что уже
-   проверен в макете (openBubble). Ставит ниже точки, если сверху не хватает места, иначе
-   выше; зажимает по горизонтали в границах #ptPanel, чтобы не вылезал за экран. */
-function ptPositionBubble(qe,p){
-  const panel=$('ptPanel'), track=$('ptTrack'); if(!panel||!track) return;
-  const pinEl=track.querySelector('.pin[data-idx="'+ptSelIdx+'"]');
-  const panelR=panel.getBoundingClientRect();
-  const anchorR=pinEl?pinEl.getBoundingClientRect():track.getBoundingClientRect();
-  const cx=anchorR.left+anchorR.width/2-panelR.left;
-  const qw=qe.offsetWidth||262;
-  let left=cx-qw/2; left=Math.max(4,Math.min(panelR.width-qw-4,left));
-  qe.style.left=left+'px';
-  const anchorBottom=anchorR.bottom-panelR.top, anchorTop=anchorR.top-panelR.top;
-  const below=anchorTop<140;
-  qe.style.top=(below?anchorBottom+10:anchorTop-8-qe.offsetHeight)+'px';
 }
 
 function ptFmtTime(s){ const m=Math.floor(s/60), sec=Math.round(s%60); return m+':'+String(sec).padStart(2,'0'); }

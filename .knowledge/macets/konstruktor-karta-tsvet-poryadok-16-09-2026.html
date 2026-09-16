@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор: Карта/Цвет/Сохранить — навести порядок</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --bg-1:#0f1f3d; --bg-2:#162638;
+    --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+    --stone-border-sel:rgba(201,164,92,.55);
+    --stone-shadow-sel:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 0 7px rgba(240,192,64,.4);
+    --stone-fill-gold:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+    --stone-border-gold:rgba(255,226,150,.7);
+    --stone-shadow-gold:inset 0 1.5px 2px rgba(255,250,230,.6),inset 0 -3px 5px rgba(110,72,8,.4),0 0 16px rgba(240,192,64,.28);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .cite{color:var(--muted);font-size:11.5px;display:block;margin-top:3px}
+  .measured{color:var(--bad);font-family:monospace;font-size:11.5px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:280px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:24px;padding:18px 14px;flex-shrink:0;position:relative;overflow:hidden}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .stepTitle{text-align:center;color:var(--gold-hi);font-weight:700;font-size:13px;letter-spacing:.05em;margin-bottom:10px}
+
+  .pillNew{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;font-size:11px;font-weight:700;
+    border-radius:999px;background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink)}
+  .iconNew{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink);font-size:12px}
+  .iconNew.dim{opacity:.3}
+  .ctaNew{display:block;width:100%;text-align:center;padding:13px;border-radius:999px;font-weight:800;font-size:13px;
+    background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);color:#1c1200;margin-top:14px}
+
+  .track-m{position:relative;height:44px;border-radius:14px;background:linear-gradient(180deg,#234,#012);margin-bottom:6px}
+  .track-m::before{content:'';position:absolute;left:0;right:0;top:50%;height:5px;border-radius:4px;transform:translateY(-50%);
+    background:rgba(255,255,255,.4)}
+  .corner{position:absolute;top:5px;left:5px;right:5px;display:flex;justify-content:space-between}
+  .cornerL,.cornerR{display:flex;gap:5px}
+  .pin-m{position:absolute;top:14px;width:18px;height:18px;border-radius:50%;background:#a06ad8;border:1.5px solid rgba(255,255,255,.4);
+    transform:translateX(-50%)}
+  .pin-m.sel{border-color:var(--gold-hi);box-shadow:0 0 8px rgba(240,192,64,.7)}
+  .ruler-m{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:8px}
+  .lenrow-m{height:24px;border-radius:12px;background:rgba(15,31,61,.7);border:1px solid var(--line);margin-bottom:8px;
+    display:flex;align-items:center;padding:0 8px;font-size:9px;color:var(--muted)}
+  .tray-m{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px}
+  .stk-m{width:100%;aspect-ratio:1;border-radius:50%;background:#0f1f3d;border:1.5px solid rgba(255,255,255,.2)}
+  .bubble-float{position:absolute;left:20px;right:20px;top:56px;background:rgba(10,18,32,.97);border:1px solid var(--line-gold);
+    border-radius:14px;padding:10px 12px;font-size:10px;color:var(--muted);z-index:5;box-shadow:0 10px 28px rgba(0,0,0,.6)}
+  .bubble-float b{color:var(--gold-hi);display:block;margin-bottom:6px;font-size:10.5px}
+  .covered{position:relative}
+  .covered::after{content:'ЗАКРЫТО ПУЗЫРЬКОМ';position:absolute;inset:0;background:rgba(224,83,61,.15);
+    border:1px dashed var(--bad);border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:8px;color:var(--bad);font-weight:700;letter-spacing:.04em;text-align:center}
+  .sheet-m{position:absolute;left:0;right:0;bottom:0;background:var(--bg-1);border-top:1px solid var(--line-gold);
+    border-radius:16px 16px 0 0;padding:12px 14px;box-shadow:0 -8px 24px rgba(0,0,0,.5)}
+  .sheet-m b{color:var(--gold-hi);font-size:11px}
+  .sheet-m .row2{display:flex;gap:6px;margin-top:8px}
+  .nudge-m{flex:1;height:30px;border-radius:9px;background:var(--stone-fill);border:1px solid var(--stone-border);
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink)}
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+  .swatchbig{height:70px;border-radius:12px;margin-bottom:8px}
+  .barPreview{height:22px;border-radius:8px}
+  .grpLbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px}
+  .spoiler-m{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:12px;
+    background:var(--stone-fill);border:1px solid var(--stone-border);font-size:10px;color:var(--ink);font-weight:700}
+  .wheel-m{width:110px;height:110px;border-radius:50%;margin:10px auto;
+    background:conic-gradient(from 0deg,red,yellow,lime,cyan,blue,magenta,red)}
+  .btnpair{display:flex;gap:8px;margin-top:10px}
+  .btn-pill{flex:1;padding:12px;border-radius:999px;text-align:center;font-size:11px;font-weight:700}
+  .btn-rect{flex:1;padding:12px;border-radius:14px;text-align:center;font-size:11px;font-weight:700}
+</style>
+</head>
+<body>
+<h1>Конструктор: Карта/Цвет/Сохранить — навести порядок</h1>
+<p class="sub">16.09.2026 · по живой жалобе владельца (4 скрина с телефона + разметка поверх браузера) — измерено в реальном DOM, не на глаз</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду «да» на направление по каждому блоку.</div>
+
+<section>
+<h2>Диагноз — с реальными числами из живого DOM</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div>Пузырёк редактирования точки (<code>#ptQuickEdit</code>) стоит от <span class="measured">y=137</span> до <span class="measured">y=341</span>. Под ним в тот же момент: строка «Длина» (<span class="measured">177-213</span>) — целиком под пузырьком; линейка-разметка (<span class="measured">219-229</span>) — целиком под пузырьком; лоток стикеров (<span class="measured">235-379</span>) — закрыт на <b style="color:var(--bad)">73% высоты</b>. Владелец: «невозможно пользоваться стикерами» — подтверждено измерением, не жалоба на глаз.</div></div>
+  <div class="diagItem"><b>2</b><div>Причина — не опечатка, а логика. <code>ptPositionBubble()</code> (js/partitura.js) решает «пузырёк выше или ниже точки» по правилу «если точка в верхних 140px панели — класть ниже». Лента на Карте физически ВСЕГДА в верхних ~90px панели, поэтому пузырёк ВСЕГДА кладётся ниже — и всегда упирается в то, что там уже есть, без исключений.</div></div>
+  <div class="diagItem"><b>3</b><div>«Полёт» на Сохранить — <code>border-radius:30px</code> (полная капсула, я сам сделал прошлым заходом). «Поделиться» рядом — осталась <code>border-radius:14px</code>. Одна пара кнопок в одном ряду — две разные формы.<span class="cite">измерено: getComputedStyle обеих кнопок</span></div></div>
+  <div class="diagItem"><b>4</b><div>Гармония цвета открывается отдельным полноэкранным окном (<code>#forgeHarmonyModal</code>, тёмный fullscreen-скрим) — настоящее превью неба (<code>#forgePreview</code>, canvas, рисуется живьём) физически не видно, пока окно открыто. Своя тонкая полоска-превью внутри окна — упрощённый двухцветный градиент, не совпадает с реальной картинкой (звёзды/туманности/густота там не нарисованы).</div></div>
+  <div class="diagItem"><b>5</b><div>Карта и Цвет — соседние шаги одного мастера, но у Карты в начале экрана всё слеплено (лента+3 кнопки+длина+линейка+лоток в первых ~380px), а у Цвета — то же количество контролов (4 ползунка) стоит просторно, с заметным воздухом между превью и первым слайдером. Один и тот же владелец делал обе панели, но не сверял их между собой.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Блок 1 — Карта: пузырёк точки → нижний лист, не плавающая карточка</h2>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:-4px auto 16px;text-align:center">
+  Идея «редактируй прямо у точки» (макет karta-tochno-kak-referens-12-09-2026.html, 12.09.2026) остаётся живой — точка
+  на ленте подсвечивается золотом, видно какую редактируешь. Но <b>сами контролы</b> переезжают туда, где место
+  гарантированно есть при любом количестве точек и любой их позиции — вниз экрана, тем же приёмом, что уже
+  «Список точек» (<code>#ptListOverlay</code>) и тост «вернуть» (<code>.ptToast</code>). Не третий новый способ показать
+  панель — тот же самый, что уже дважды одобрен в этом экране.
+</p>
+<div class="row">
+  <div class="phone" style="height:400px">
+    <div class="phoneLbl was">Было — пузырёк плавает поверх контента</div>
+    <div class="track-m">
+      <div class="corner">
+        <div class="cornerL"><div class="iconNew" style="width:18px;height:18px">7</div><div class="iconNew dim" style="width:18px;height:18px">↩</div></div>
+        <div class="cornerR"><div class="iconNew" style="width:18px;height:18px">🗑</div></div>
+      </div>
+      <div class="pin-m sel" style="left:50%"></div>
+    </div>
+    <div class="covered"><div class="lenrow-m">ДЛИНА ————●——— 1500М</div></div>
+    <div class="covered"><div class="ruler-m"><span>0М</span><span>375М</span><span>750М</span><span>1125М</span><span>1500М</span></div></div>
+    <div class="covered"><div class="tray-m"><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div></div></div>
+    <div class="bubble-float">
+      <b>⏸ ПЕРЕДЫШКА</b>
+      −10 · −1 · <b style="display:inline;color:var(--gold-hi)">380М</b> · +1 · +10<br>
+      Гарантия передышки в этой точке
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok);height:400px">
+    <div class="phoneLbl now">Стало — контролы внизу, ничего не закрыто</div>
+    <div class="track-m">
+      <div class="corner">
+        <div class="cornerL"><div class="iconNew" style="width:18px;height:18px">7</div><div class="iconNew" style="width:18px;height:18px">↩</div></div>
+        <div class="cornerR"><div class="iconNew" style="width:18px;height:18px">🗑</div></div>
+      </div>
+      <div class="pin-m sel" style="left:50%"></div>
+    </div>
+    <div class="lenrow-m">ДЛИНА ————●——— 1500М</div>
+    <div class="ruler-m"><span>0М</span><span>375М</span><span>750М</span><span>1125М</span><span>1500М</span></div>
+    <div class="tray-m"><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div><div class="stk-m"></div></div>
+    <div class="sheet-m">
+      <b>⏸ ПЕРЕДЫШКА</b> <span style="float:right;color:var(--bad);font-size:10px">УДАЛИТЬ</span>
+      <div class="row2">
+        <div class="nudge-m">−10</div><div class="nudge-m">−1</div><div class="nudge-m" style="color:var(--gold-hi);font-weight:700">380м</div><div class="nudge-m">+1</div><div class="nudge-m">+10</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Блок 2 — Карта ↔ Цвет: один визуальный ритм</h2>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:-4px auto 16px;text-align:center">
+  После починки Блока 1 верх Карты сам разгрузится (пузырёк больше не мельтешит поверх). Дальше — выровнять
+  фактический воздух между блоками на обоих шагах одним и тем же шагом отступа, а не «как получилось» у каждого
+  по отдельности. Карта — вкладка-лидер (в ней объективно больше типов контролов), поэтому цель — не сжать Карту,
+  а привести Цвет к тому же ритму: превью → первый контрол без лишнего зазора, дальше ряды с одинаковым gap.
+</p>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Конкретные пиксели отступов (margin-top превью/первого ряда, gap между .forgeRow) — измеряю и выравниваю в реальном коде при внедрении этого блока, не гадаю числа здесь в макете (правило «конкретика не в общем макете, а по факту» уже применялось раньше в этом же экране). Здесь фиксирую направление: <b style="color:var(--ok)">один и тот же ритм между шагами</b>, конкретные px — на этапе правки, сверяю getBoundingClientRect до/после.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Блок 3 — Сохранить: одна форма на пару кнопок</h2>
+<div class="row">
+  <div class="phone">
+    <div class="phoneLbl was">Было</div>
+    <div class="btnpair">
+      <div class="btn-pill ctaNew">ПОЛЁТ</div>
+      <div class="btn-rect" style="background:rgba(14,18,32,.62);border:1px solid rgba(201,164,92,.3);color:var(--cream)">ПОДЕЛИТЬСЯ</div>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)">
+    <div class="phoneLbl now">Стало — обе капсулой</div>
+    <div class="btnpair">
+      <div class="btn-pill ctaNew">ПОЛЁТ</div>
+      <div class="btn-pill pillNew" style="width:100%;padding:12px">ПОДЕЛИТЬСЯ</div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  «Поделиться» получает тот же радиус 999px, что и «Полёт» — не золотую заливку (это по-прежнему второе по
+  значимости действие, не главное CTA), только форму. Тот же приём, что уже применён к 4 разным классам-пилюлям
+  этого экрана прошлым заходом («один материал, а не 4 разных»), только для радиуса, не для заливки.
+</p>
+</section>
+
+<section>
+<h2>Блок 4 — Гармония: разворачивающийся блок внутри Цвет, не отдельное окно</h2>
+<div class="row">
+  <div class="phone" style="height:340px">
+    <div class="phoneLbl was">Было — окно поверх, настоящего превью не видно</div>
+    <div class="swatchbig" style="background:#111"></div>
+    <div class="grpLbl">Цвет неба ————●———— 180</div>
+    <div class="grpLbl">Второй цвет ———●————— 220</div>
+    <div class="pillNew" style="width:100%;margin-top:10px">◈ ПОДОБРАТЬ ГАРМОНИЮ</div>
+    <div class="bubble-float" style="top:60px;bottom:20px;display:flex;flex-direction:column;justify-content:center;align-items:center">
+      <b style="margin:0 0 8px">ГАРМОНИЯ ЦВЕТА</b>
+      <div class="wheel-m"></div>
+      <div class="barPreview" style="width:100%;background:linear-gradient(90deg,#711,#123)"></div>
+      <span style="font-size:8px;margin-top:4px">тонкая полоска — не похожа на настоящее небо</span>
+    </div>
+  </div>
+  <div class="phone" style="border-color:var(--ok);height:520px">
+    <div class="phoneLbl now">Стало — настоящее небо остаётся видно, гармония раскрывается под ним</div>
+    <div class="swatchbig" style="background:linear-gradient(160deg,#234,#012)"></div>
+    <div class="grpLbl">Цвет неба ————●———— 180</div>
+    <div class="grpLbl">Второй цвет ———●————— 220</div>
+    <div class="spoiler-m" style="margin-top:10px">◈ ПОДОБРАТЬ ГАРМОНИЮ ▾</div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:6px">
+      <div class="wheel-m" style="width:90px;height:90px"></div>
+      <div class="grid2" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <div class="pillNew" style="font-size:9px;padding:5px 9px">Компл.</div>
+        <div class="pillNew" style="font-size:9px;padding:5px 9px">Аналог.</div>
+        <div class="pillNew" style="font-size:9px;padding:5px 9px">Триада</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  Тот же приём, что уже «Точечная настройка» (<code>.setGrp.spoiler</code>) — открывается на месте, под настоящим
+  превью, которое всё это время продолжает жить (<code>forgeSkyPaint()</code> уже красит его каждый кадр,
+  ничего не меняется в рисовании). Тонкая полоска-превью внутри — убирается совсем, она была нужна только пока
+  настоящего превью не было видно одновременно с колесом; теперь оно видно всегда, костыль не нужен.
+</p>
+</section>
+
+<footer>Источники: живой код (index.html, js/forge.js, js/partitura.js — грепом и живыми измерениями в браузере,
+не по памяти) + 4 скриншота владельца с реального телефона + разметка владельца поверх браузерного превью этой
+сессии (тот же баг, что на телефоне, подтверждён в двух разных местах).<br>
+Не в макете: точные px-отступы Блока 2 (сверяются в реальном коде при внедрении, не здесь) и полная замена
+логики <code>ptPositionBubble()</code> — низкоуровневая переработка, само визуальное решение (нижний лист) уже
+здесь.</footer>
+</body>
+</html>
