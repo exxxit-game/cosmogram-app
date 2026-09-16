@@ -1,0 +1,99 @@
+<title>Макет: космический язык формы — не просто тёмное меню со звёздами</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+h2{font-size:14px;margin:28px 0 4px;color:#ffd76a}
+p.sub{color:var(--text-dim);font-size:12px;max-width:920px;margin:0 0 8px;line-height:1.6}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:16px;text-align:center;width:220px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:8px;line-height:1.4;text-align:left}
+.stage{width:100%;height:120px;border-radius:10px;background:radial-gradient(ellipse 80% 60% at 50% 30%,#141c34,#0a0e1e);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.font{font-family:'Exo 2',sans-serif}
+
+/* === 1. Орбитальная рамка вместо ровного прямоугольника === */
+.orbitCard{position:relative;width:150px;height:70px;border-radius:14px;
+  background:rgba(16,24,54,.6);display:flex;align-items:center;justify-content:center;color:#ffd76a;font-weight:700;font-size:13px}
+.orbitCard::before{content:'';position:absolute;inset:-1px;border-radius:14px;padding:1px;
+  background:linear-gradient(120deg,rgba(140,170,255,.05),rgba(255,215,106,.6) 48%,rgba(140,170,255,.05));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.orbitCard::after{content:'';position:absolute;width:180px;height:64px;border:1px solid rgba(200,225,255,.35);
+  border-radius:50%;transform:rotate(-8deg);pointer-events:none}
+
+/* === 2. Тумблер — не ползунок, а орбита с точкой (луна вокруг планеты), цвет состояния СОХРАНЁН зелёный/серый === */
+.orbitSw{position:relative;width:52px;height:26px}
+.orbitSw .track{position:absolute;inset:0;border:1px solid rgba(255,255,255,.15);border-radius:50%/50%;
+  border-radius:13px}
+.orbitSw .moon{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;transition:left .25s ease}
+.orbitSw.off .moon{left:3px;background:#7d8aa8;box-shadow:0 0 6px rgba(125,138,168,.4)}
+.orbitSw.on .moon{left:29px;background:#8fff9f;box-shadow:0 0 10px rgba(140,255,160,.6)}
+.orbitSw.on .track{border-color:rgba(140,255,160,.35)}
+.orbitSw .ring{position:absolute;top:50%;left:50%;width:64px;height:20px;border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;transform:translate(-50%,-50%) rotate(-15deg);pointer-events:none}
+
+/* === 3. Числа в "армиллярной" рамке — концентрические дуги + деления, как у настоящего астролябия === */
+.armillary{position:relative;width:100px;height:100px;display:flex;align-items:center;justify-content:center}
+.armillary svg{position:absolute;inset:0;width:100%;height:100%}
+.armillary b{font-size:20px;color:#ffd76a;text-shadow:0 0 10px rgba(255,200,80,.5);position:relative;z-index:1}
+
+/* === 4. Разделитель списка — не линия, а созвездие (точки+тонкие связи) === */
+.constDiv{display:flex;align-items:center;gap:6px;margin:14px 0;width:100%}
+.constDiv svg{flex:1;height:10px;width:100%}
+
+/* === 5. След нажатия — комета, та же физика, что у корабля в полёте === */
+.cometBtn{position:relative;overflow:hidden;padding:12px 22px;border-radius:14px;background:rgba(16,24,54,.55);
+  border:1px solid rgba(140,170,255,.22);color:#dce9ff;font-weight:600;font-size:13px;cursor:pointer}
+.cometBtn .trail{position:absolute;left:-40px;top:0;bottom:0;width:40px;
+  background:linear-gradient(90deg,transparent,rgba(255,215,106,.35),transparent);
+  animation:comet 2.6s ease-in-out infinite}
+@keyframes comet{0%{left:-40px}100%{left:100%}}
+</style>
+<h1 class="font">Космический язык формы — 5 конкретных приёмов</h1>
+<p class="sub">Не «тёмный фон + звёзды» (это у любой игры про космос), а форма и поведение элементов,
+которые физически заимствованы у реальной астрономии/небесной механики — той же, что уже
+исследована в этой сессии (орбитальный резонанс, армиллярные сферы, кольца планет).
+Зелёный/серый цвет состояния тумблера — НЕ трогаю, оставлен как есть.</p>
+
+<h2 class="font">1. Орбитальная рамка вместо ровного скругления</h2>
+<p class="sub">Уже есть в игре как приём для круглых кнопок (планета-кольцо у «назад»/паузы, 28.08.2026) —
+здесь тот же наклонный эллипс, но как ЧАСТИЧНАЯ рамка любой прямоугольной карточки, не только круглой
+кнопки — эллипс выходит за края и обрезается, будто карточка — окно, через которое видно кольцо планеты.</p>
+<div class="row"><div class="card"><div class="stage"><div class="orbitCard font">КОНСТРУКТОР</div></div>
+<div class="fact">Тот же мотив «планета-кольцо», что уже одобрен для #pauseBtn/.menuBack — расширен на карточки, а не изобретён заново.</div></div></div>
+
+<h2 class="font">2. Тумблер — орбита с луной, а не ползунок из чужого приложения</h2>
+<p class="sub">Обычный iOS-переключатель — это чужой, не наш язык (буквально форма из другой ОС). Здесь та же
+механика вкл/выкл, но луна движется по орбитальной дуге, а не по прямой — и вокруг трека тонкое кольцо,
+как у планеты. Цвет состояния — тот самый зелёный/серый, что ты вернул, без изменений.</p>
+<div class="row">
+  <div class="card"><div class="stage"><div class="orbitSw off"><div class="ring"></div><div class="track"></div><div class="moon"></div></div></div>
+  <div class="fact">Выключено — серая луна слева, как и раньше.</div></div>
+  <div class="card"><div class="stage"><div class="orbitSw on"><div class="ring"></div><div class="track"></div><div class="moon"></div></div></div>
+  <div class="fact">Включено — зелёная луна справа. Тот же смысл цвета, другая физика движения.</div></div>
+</div>
+
+<h2 class="font">3. Армиллярная рамка для важных чисел</h2>
+<p class="sub">Счёт, звёзды, прогресс — сейчас голое число. Кольца-деления вокруг числа — прямая цитата
+армиллярной сферы/астролябии (уже разбирались в `CELESTIAL-INSTRUMENTS.md`), не абстрактный декор.</p>
+<div class="row"><div class="card"><div class="stage">
+  <div class="armillary"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(200,225,255,.25)" stroke-width="1"/><circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,215,106,.3)" stroke-width="1" stroke-dasharray="2 4"/><g stroke="rgba(200,225,255,.4)" stroke-width="1">
+    <line x1="50" y1="4" x2="50" y2="10"/><line x1="50" y1="90" x2="50" y2="96"/><line x1="4" y1="50" x2="10" y2="50"/><line x1="90" y1="50" x2="96" y2="50"/>
+  </g></svg><b>10195</b></div>
+</div><div class="fact">Тонкие деления как у секстанта/астролябии — не «просто кружочек вокруг числа».</div></div></div>
+
+<h2 class="font">4. Разделитель списка — созвездие, не линия</h2>
+<p class="sub">Настройки/Достижения сейчас разделены плоской чертой (`var(--line)`) — как в любом приложении
+для заметок. Пунктир из звёзд-узлов с тонкими связями — тот же смысл (раздел закончен), другая форма.</p>
+<div class="row"><div class="card" style="width:400px"><div class="constDiv"><svg viewBox="0 0 300 10" preserveAspectRatio="none">
+  <line x1="0" y1="5" x2="300" y2="5" stroke="rgba(140,170,255,.15)" stroke-width="1"/>
+  <circle cx="30" cy="5" r="1.6" fill="#ffd76a"/><circle cx="110" cy="5" r="1.2" fill="#dce9ff"/>
+  <circle cx="180" cy="5" r="1.8" fill="#ffd76a"/><circle cx="260" cy="5" r="1.2" fill="#dce9ff"/>
+</svg></div><div class="fact">Замена одной строке CSS (`border-top` → тонкий SVG-паттерн), эффект на весь список разом.</div></div></div>
+
+<h2 class="font">5. След нажатия — комета, та же физика, что у корабля в полёте</h2>
+<p class="sub">Кнопки сейчас просто чуть темнеют при нажатии (`transform:scale(.97)`). Лёгкий пролетающий блик-хвост
+при появлении на экране — прямая цитата механики «След» за кораблём в полёте: меню и полёт начинают
+двигаться одним и тем же языком, не только выглядеть одним цветом.</p>
+<div class="row"><div class="card"><div class="stage"><div class="cometBtn font">ПОДДЕРЖКА<div class="trail"></div></div></div>
+<div class="fact">Тот же приём, что уже есть в реальном полёте (js/render.js, след корабля) — не новая анимация с нуля.</div></div></div>
