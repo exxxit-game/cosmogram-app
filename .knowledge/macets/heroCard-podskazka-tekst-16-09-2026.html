@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карточки режимов — текстовая подсказка вместо самолётика</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:20px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+  .phoneLbl.was{color:var(--bad)}
+  .phoneLbl.now{color:var(--ok)}
+  .cardWrap{width:300px}
+
+  /* ===== реальная карточка (те же числа, что в index.html: padding 12/13/10, height 130, radius var(--r-card)≈16px) ===== */
+  .card{position:relative;border-radius:16px;overflow:hidden;padding:12px 13px 10px;height:130px;
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;
+    border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .card::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,transparent 58%,rgba(0,0,0,.3) 100%)}
+  .cardClassic{background:linear-gradient(155deg,#1c2a5e 0%,#0a1030 75%)}
+  .cardRelay{background:linear-gradient(155deg,#5a1266 0%,#1e0524 78%)}
+  .modeName{font-weight:700;font-size:15.5px;letter-spacing:.03em;text-transform:uppercase;
+    text-shadow:0 1px 6px rgba(0,0,0,.5);position:relative;z-index:1}
+  .modeDesc{font-size:11.5px;color:#c9d3ec;margin-top:2px;line-height:1.35;max-width:78%;position:relative;z-index:1}
+  .iconOld{position:absolute;bottom:9px;right:15px;width:26px;height:26px;border-radius:50%;
+    background:var(--stone-fill);border:1px solid var(--stone-border);display:flex;align-items:center;
+    justify-content:center;font-size:12px;z-index:1}
+  .hintNew{position:absolute;bottom:9px;right:13px;max-width:34%;font-size:9px;line-height:1.3;
+    color:rgba(255,255,255,.55);text-align:right;letter-spacing:.02em;z-index:1;font-style:italic}
+  .trailGhost{position:absolute;left:13px;right:13px;top:14px;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)}
+</style>
+</head>
+<body>
+<h1>Карточки режимов — подсказка текстом, не иконкой</h1>
+<p class="sub">16.09.2026, третий заход того же вечера · твоя идея: «нажми на меня — нарисуется полёт» вместо кружка-самолётика</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду направление, потом «да».</div>
+
+<section>
+<h2>Идея с текстом внутри карточки</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Значок-самолётик (.playHint) убирается у всех карточек, где он есть (Классика/Небо месяца/Без касаний/Биатлон/Эстафета — 5 из 7; у Спидрана/Каравана его уже нет, там своя история с чипами варианта/тира).</div></div>
+  <div class="diagItem"><b>—</b><div>На его месте — короткая текстовая подсказка, тем же приглушённым курсивом, что не спорит с названием/описанием режима. Тон — подсказка «как это работает», не команда.</div></div>
+  <div class="diagItem"><b>—</b><div>Реальный «полёт рисуется на карточке» — это <code>.trail</code> (SVG-линия лучшего/призрачного забега, index.html:3476 и рядом), уже существует, просто пока пустая линия, пока не сыграл ни разу. Подсказку можно связать с этим фактом напрямую — «нажми, оставь свой след» перекликается с тем, что там буквально появится линия следа после первого полёта.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Классика — было / стало (3 варианта текста)</h2>
+<div class="row">
+  <div class="cardWrap">
+    <div class="phoneLbl was">Было</div>
+    <div class="card cardClassic">
+      <div class="iconOld">✈</div>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+  </div>
+  <div class="cardWrap">
+    <div class="phoneLbl now">Вариант А</div>
+    <div class="card cardClassic">
+      <div class="hintNew">нажми —<br>полетишь</div>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+  </div>
+  <div class="cardWrap">
+    <div class="phoneLbl now">Вариант Б</div>
+    <div class="card cardClassic">
+      <div class="hintNew">нажми,<br>оставь след</div>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+  </div>
+</div>
+<div class="row" style="margin-top:16px">
+  <div class="cardWrap">
+    <div class="phoneLbl now">Вариант В</div>
+    <div class="card cardClassic">
+      <div class="hintNew">карточка —<br>кнопка полёта</div>
+      <div class="modeName">Score Attack</div>
+      <div class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  А — самый простой и понятный, прямая инструкция. Б — перекликается с настоящей линией следа,
+  красивее, но чуть абстрактнее для первого раза. В — называет вещь буквально («это и есть кнопка»),
+  честно, но суше. Есть и четвёртый путь — не выбирать один текст навсегда, а показывать его только
+  первые несколько раз (пока у карточки нет своей линии следа, т.е. <code>.trail</code> пуст), дальше
+  прятать — тогда можно взять более длинную, самую объясняющую версию А, не боясь, что она надоест.
+</p>
+</section>
+
+<section>
+<h2>Эстафета — та же идея, с исправленной сегодня зоной клика</h2>
+<div class="row">
+  <div class="cardWrap">
+    <div class="phoneLbl was">Было (плюс сегодняшний баг — самолётик вне клика)</div>
+    <div class="card cardRelay">
+      <div class="iconOld">✈</div>
+      <div class="modeName">Эстафета</div>
+      <div class="modeDesc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</div>
+    </div>
+  </div>
+  <div class="cardWrap">
+    <div class="phoneLbl now">Стало</div>
+    <div class="card cardRelay">
+      <div class="hintNew">нажми —<br>полетишь</div>
+      <div class="modeName">Эстафета</div>
+      <div class="modeDesc">Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer style="max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px">
+Источники: живой код (index.html — реальные отступы/радиус/градиенты карточек, не придуманные) + твои слова в чате 16.09.2026.<br>
+Не в макете: карточки-исключения Спидран/Караван (у них справа чипы варианта/тира, не пустое место — своя, отдельная задача, если захочешь её тоже трогать).
+</footer>
+</body>
+</html>

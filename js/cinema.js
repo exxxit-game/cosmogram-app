@@ -382,6 +382,53 @@ async function cinemaDeleteFirst(){
   }catch(e){ return false; }
 }
 
+/* ---------- Галерея видео-рекордов (16.09.2026, владелец: «не просто одно видео... галерея») ----------
+   Тот же IndexedDB-стор (CINEMA_STORE), 6 именованных слотов по ключу 'gal_'+cat — Эстафета не
+   входит (у неё нет своего рекорда, см. cinemaGalleryCat ниже). Слот принимает УЖЕ готовый Blob
+   (см. cinemaHighlightStop) — здесь только хранение, кодирование не трогаем. */
+const CINEMA_GALLERY_CATS=['touch','daily','speedrun','caravan','slalom','biathlon'];
+async function cinemaSaveGallery(cat, blob){
+  try{
+    const db = await cinemaDb();
+    await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readwrite');
+      tx.objectStore(CINEMA_STORE).put(blob, 'gal_'+cat);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    db.close();
+    return true;
+  }catch(e){ return false; }
+}
+async function cinemaLoadGallery(cat){
+  try{
+    const db = await cinemaDb();
+    const blob = await new Promise((res, rej) => {
+      const tx = db.transaction(CINEMA_STORE, 'readonly');
+      const req = tx.objectStore(CINEMA_STORE).get('gal_'+cat);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror = () => rej(req.error);
+    });
+    db.close();
+    return blob;
+  }catch(e){ return null; }
+}
+/* Какой из 6 слотов относится к ТЕКУЩЕМУ полёту — тот же охват категорий, что у heroRecordFor()/
+   recordBadge (ui.js): Score Attack — один бакет на все три способа управления, Caravan — только
+   основной таймер 60с (доп. тиры 15/180 — личный рекорд, не в бейдж и не в галерею), Театр/Своя
+   трасса/Эстафета — вне галереи вообще (у Эстафеты нет своего рекорда, см. hc-relay — там никогда
+   не было recordBadge). */
+function cinemaGalleryCat(){
+  if (typeof S==='undefined') return null;
+  if (typeof runMode!=='undefined' && (runMode==='theater' || runMode==='custom')) return null;
+  if (S.mode==='relay') return null;
+  if (S.mode==='caravan') return (S.caravanTime && S.caravanTime!==60) ? null : 'caravan';
+  if (S.mode==='daily') return 'daily';
+  if (S.mode==='speedrun') return 'speedrun';
+  if (S.mode==='slalom') return 'slalom';
+  if (S.mode==='biathlon') return 'biathlon';
+  return 'touch';
+}
+
 /* ---------- Жизненный цикл: взлёт → посадка ----------
    Только самый первый полёт на этом устройстве — не спрашивая, «святое воспоминание»
    (решение владельца 28.08.2026). Любой следующий полёт эту запись не трогает —
@@ -399,7 +446,7 @@ async function cinemaFirstFlightStop(){
   const blob = await cinemaStop();
   Store.set('cinemaFirstDone', 1); // помечаем «было» независимо от успеха — вторая попытка не начнётся молча поверх первой
   if (blob) await cinemaSaveFirst(blob);
-  if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // карточка на главном — без ожидания следующего захода в меню
+  if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026: дверь на главном — без ожидания следующего захода в меню
 }
 
 /* ---------- Тест «цена записи в бою» (30.08.2026, владелец, живое устройство Samsung A03
@@ -500,6 +547,13 @@ async function cinemaHighlightStop(){
     const cat = wasRecord ? 'record' : 'nearrecord';
     const n = wasRecord ? 0 : Math.round(_cinemaHighlightBest-score);
     if (typeof cinemaClipRefresh==='function') cinemaClipRefresh(cat, n); // ui.js: показать кнопку «Клип» на «Итогах» + подсветить один раз
+    // 16.09.2026 «Галерея видео-рекордов»: тот же уже готовый Blob, без повторного кодирования —
+    // только настоящий рекорд (не «почти»), владелец: «новый рекорд заменяет старое видео».
+    // Честный нюанс (сказано владельцу прямо): wasRecord здесь — тот же грубый бакет по способу
+    // управления, что и раньше в этой функции, не точная формула heroRecordFor() с бейджа карточки —
+    // для Небо месяца/Спидрана/Слалома/Биатлона изредка может разойтись с числом на бейдже.
+    if (wasRecord){ const gc=cinemaGalleryCat(); if (gc){ await cinemaSaveGallery(gc, blob);
+      if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); } }
   }catch(e){} }
 }
 async function cinemaLoadHighlight(){
@@ -516,37 +570,82 @@ async function cinemaLoadHighlight(){
   }catch(e){ return null; }
 }
 
-/* ---------- Карточка на главном экране + плеер ----------
-   28.08.2026. Своя, независимая от setScreen() накладка (тот же приём, что у
-   achClaimShow/Hide в ach.js) — открытие/закрытие плеера не меняет текущий
-   экран под собой. Блоб-ссылка (URL.createObjectURL) держится, пока карточка
-   жива — отзывается перед выдачей новой, чтобы не копить объекты в памяти
-   вкладки при многократных сменах языка/возвратах в меню. */
-let _ffUrl=null;
-async function firstFlightRefresh(){
-  const card=$('firstFlightCard'); if(!card) return;
-  const blob = await cinemaLoadFirst();
-  if (!blob){ card.classList.add('hidden'); return; }
-  if (_ffUrl) URL.revokeObjectURL(_ffUrl);
-  _ffUrl = URL.createObjectURL(blob);
-  const thumb=$('firstFlightThumb'); if(thumb) thumb.src=_ffUrl;
-  card.classList.remove('hidden');
+/* ---------- Дверь на главном экране + экран галереи + плеер ----------
+   28.08.2026, переработано 16.09.2026 «Галерея видео-рекордов» (владелец, макет
+   galereya-video-rekordov-16-09-2026.html, вариант В): вместо одной широкой карточки —
+   компактная дверь (#flightGalleryBtn/#flightGalleryDoor, index.html) с числом накопленных
+   видео, за ней — обычный экран (setScreen('flightGallery')), не отдельная накладка, как раньше
+   у карточки. Плеер (#firstFlightPlayer) остаётся своей независимой накладкой (тот же приём,
+   что у achClaimShow/Hide в ach.js) — открытие/закрытие не меняет экран под собой.
+   Блоб-ссылки (URL.createObjectURL) держатся в _galUrls, пока экран галереи открыт — отзываются
+   перед каждым новым заполнением, чтобы не копить объекты в памяти вкладки. */
+let _galUrls={}, _galCurrentIsFirst=false;
+async function galleryCount(){
+  let n=0;
+  if (await cinemaLoadFirst()) n++;
+  for (const cat of CINEMA_GALLERY_CATS){ if (await cinemaLoadGallery(cat)) n++; }
+  return n;
 }
-function firstFlightFill(){
-  if (typeof L==='undefined' || !L.ffcTitle) return;
-  const t=$('ffcTitle'); if(t) t.textContent=L.ffcTitle;
-  const s=$('ffcSub'); if(s) s.textContent=L.ffcSub;
-  const d=$('firstFlightDel'); if(d) d.setAttribute('aria-label', L.ffcDel);
-  const c=$('firstFlightClose'); if(c) c.setAttribute('aria-label', L.ffcClose);
+async function galleryBtnRefresh(){
+  const door=$('flightGalleryDoor'); if(!door) return;
+  const n=await galleryCount();
+  const badge=$('flightGalleryBadge');
+  if (n>0){ door.classList.remove('hidden'); if(badge) badge.textContent=String(n); }
+  else door.classList.add('hidden');
 }
-function firstFlightOpen(){
-  const url=$('firstFlightThumb') && $('firstFlightThumb').src; if(!url) return;
-  playerOpen(url, ''); // «Первый полёт» — без реплики, всегда
-  const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку — только у клипа рекорда, не у этой записи
-  const st=$('ffStoryBtn'); if(st) st.classList.add('hidden'); // «В сторис» — тоже только у клипа
+function galleryFillCard_(id, blob){
+  const card=$(id); if(!card) return;
+  const thumb=card.querySelector('.galThumb'); const play=card.querySelector('.galPlay');
+  let v=thumb.querySelector('video');
+  if (blob){
+    if (!v){ v=document.createElement('video'); v.muted=true; v.playsInline=true; v.preload='metadata'; thumb.insertBefore(v,thumb.firstChild); }
+    const url=URL.createObjectURL(blob); _galUrls[id]=url; v.src=url;
+    card.classList.remove('galEmpty'); if(play) play.classList.remove('hidden');
+  } else {
+    if (v) v.remove();
+    card.classList.add('galEmpty'); if(play) play.classList.add('hidden');
+  }
+}
+async function galleryFill(){
+  Object.keys(_galUrls).forEach(k=>{ try{ URL.revokeObjectURL(_galUrls[k]); }catch(e){} });
+  _galUrls={};
+  galleryFillCard_('galCardFirst', await cinemaLoadFirst());
+  for (const cat of CINEMA_GALLERY_CATS){ galleryFillCard_('galCard_'+cat, await cinemaLoadGallery(cat)); }
+}
+function galleryFillLabels(){
+  if (typeof L==='undefined') return;
+  const t=$('flightGalleryTitle'); if(t && L.galTitle) t.textContent=L.galTitle;
+  const lbl=$('flightGalleryLbl'); if(lbl && L.galDoorLbl) lbl.textContent=L.galDoorLbl;
+  const pin=$('galPinLbl'); if(pin && L.galPinFirst) pin.textContent=L.galPinFirst;
+  const nameFirst=$('galNameFirst'); if(nameFirst && L.ffcTitle) nameFirst.textContent=L.ffcTitle;
+  // 16.09.2026: имена режимов в галерее — те же ключи, что уже наполняют карусель на главном
+  // экране (modeClassic/modeDaily/...), не свои новые/захардкоженные — незачем дублировать перевод
+  const GAL_NAME_KEY={touch:'modeClassic',daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan',slalom:'modeSlalom',biathlon:'modeBiathlon'};
+  Object.keys(GAL_NAME_KEY).forEach(cat=>{ const el=$('galName_'+cat); if(el && L[GAL_NAME_KEY[cat]]) el.textContent=L[GAL_NAME_KEY[cat]]; });
+  const nameRelay=$('galName_relay'); if(nameRelay && L.modeRelay) nameRelay.textContent=L.modeRelay;
+  document.querySelectorAll('#flightGalleryGrid .galEmptyLbl').forEach(el=>{ if(el.id!=='galEmptyFirst' && el.id!=='galEmptyRelay' && L.galEmptySlot) el.textContent=L.galEmptySlot; });
+  const emptyFirst=$('galEmptyFirst'); if(emptyFirst && L.galEmptyFirst) emptyFirst.textContent=L.galEmptyFirst;
+  const emptyRelay=$('galEmptyRelay'); if(emptyRelay && L.galRelayNote) emptyRelay.textContent=L.galRelayNote;
+  const del=$('ffDelBtn'); if(del && L.ffcDel) del.setAttribute('aria-label', L.ffcDel);
+  const close=$('firstFlightClose'); if(close && L.ffcClose) close.setAttribute('aria-label', L.ffcClose);
+}
+async function galleryOpen(){
+  galleryFillLabels();
+  await galleryFill();
+  if (typeof setScreen==='function') setScreen('flightGallery');
+  if (typeof sfx!=='undefined' && sfx.click) sfx.click();
+}
+function galleryCardOpen(id, cat){
+  const card=$(id); if(!card || card.classList.contains('galEmpty')) return;
+  const url=_galUrls[id]; if(!url) return;
+  _galCurrentIsFirst = (id==='galCardFirst');
+  playerOpen(url, ''); // без реплики — тот же выбор, что раньше был у «Первого полёта»
+  const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку/сторис — своя, отдельная история клипа с «Итогов», не эта галерея
+  const st=$('ffStoryBtn'); if(st) st.classList.add('hidden');
+  const del=$('ffDelBtn'); if(del) del.classList.toggle('hidden', !_galCurrentIsFirst); // «Удалить» — только у «Первого полёта», как и раньше
 }
 function firstFlightDelete(){
-  const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof firstFlightRefresh==='function') firstFlightRefresh(); }); };
+  const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof galleryBtnRefresh==='function') galleryBtnRefresh(); if(typeof galleryFill==='function') galleryFill(); playerClose(); }); };
   const msg=(typeof L!=='undefined' && L.ffcDelConfirm)||'Delete this video forever?';
   if (typeof tg!=='undefined' && tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); }); }
   else if (typeof confirm==='function'){ if(confirm(msg)) go(); }
@@ -827,8 +926,17 @@ function playerToggle(){
   else { v.pause(); if(b) b.classList.remove('playing'); }
 }
 (function playerWire(){ // грузится раньше ui.js — свои обработчики без общего wireOn()
-  const card=$('firstFlightCard'); if(card) card.addEventListener('click', firstFlightOpen);
-  const del=$('firstFlightDel'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
+  // 16.09.2026 «Галерея видео-рекордов»: дверь (#flightGalleryBtn) и «Назад» (#flightGalleryBackBtn)
+  // используют setScreen()/wireOn() — определены в ui.js, которая грузится ПОСЛЕ этого файла,
+  // поэтому их обработчики стоят там же, рядом с остальными экранами (не здесь). Здесь — только
+  // то, что своё, внутреннее: клик по карточке галереи и «Удалить» внутри плеера.
+  const grid=$('flightGalleryGrid');
+  if (grid) grid.addEventListener('click', e=>{
+    const c=e.target.closest('.galCard'); if(!c || c.classList.contains('galEmpty')) return;
+    const id=c.id, cat=id.indexOf('galCard_')===0 ? id.slice(8) : null;
+    galleryCardOpen(id, cat);
+  });
+  const del=$('ffDelBtn'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
   const close=$('firstFlightClose'); if(close) close.addEventListener('click', playerClose);
   const clipBtn=$('cinemaClipBtn'); if(clipBtn) clipBtn.addEventListener('click', cinemaClipOpen);
   const shareBtn=$('ffShareBtn'); if(shareBtn) shareBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipShare(); });

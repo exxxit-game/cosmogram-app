@@ -114,10 +114,15 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 function pauseGhostSync(){
   const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
   toggleCls('pauseBtn','ghost', nativeBack);
-  // firstFlightClose исключён: открывается прямо на экране меню (firstFlightOpen() не зовёт
-  // setScreen()), а там родная «Назад» Telegram всегда скрыта (setBack(name!=='menu')) — это
-  // «Закрыть» карточки, не «Назад» экрана, заменить её в этот момент нечем.
-  document.querySelectorAll('.menuBack:not(#firstFlightClose)').forEach(function(el){ el.classList.toggle('ghost', nativeBack); });
+  // firstFlightClose исключён: плеер открывается поверх текущего экрана (galleryCardOpen() в
+  // js/cinema.js не зовёт setScreen()) — если это меню, родная «Назад» Telegram там всегда
+  // скрыта (setBack(name!=='menu')). Это «Закрыть» плеера, не «Назад» экрана, заменить её
+  // в этот момент нечем. 16.09.2026: было firstFlightOpen() — функция убрана вместе со старой
+  // широкой карточкой, комментарий обновлён под новое имя (см. «Галерея видео-рекордов»).
+  // 16.09.2026: #ffDelBtn — тот же .menuBack-материал (кольцо-«крылья»), но это «Удалить», не
+  // «Назад» — исключён по той же причине, что и «Закрыть», иначе родная кнопка Telegram гасила бы
+  // единственный способ удалить «Первый полёт».
+  document.querySelectorAll('.menuBack:not(#firstFlightClose):not(#ffDelBtn)').forEach(function(el){ el.classList.toggle('ghost', nativeBack); });
   // 11.09.2026: тот же приём для «✕» окна «явления» — не .menuBack (свой стиль, без обруча,
   // владелец 10.09.2026), но та же логика «родная Назад есть — своя дверь гаснет».
   toggleCls('angarPvZoomClose','ghost', nativeBack);
@@ -148,6 +153,7 @@ function setScreen(name){
   toggleCls('feedbackScreen','hidden', name!=='feedback'); // 30.08.2026: написать разработчику
   toggleCls('equalityScreen','hidden', name!=='equality'); // 15.09.2026: «Равноправие» — текст Хартии
   toggleCls('gratitudeScreen','hidden', name!=='gratitude'); // 15.09.2026: «Благодарность» — заглушка «Скоро»
+  toggleCls('flightGalleryScreen','hidden', name!=='flightGallery'); // 16.09.2026: «Галерея видео-рекордов»
   toggleCls('relayMineScreen','hidden', name!=='relayMine'); // 07.09.2026: «Мои эстафеты» — единственный способ узнать судьбу этапа после сдачи
   toggleCls('forgeScreen','hidden', name!=='forge'); // v1.68.0: конструктор трассы; 06.09.2026: Мастерская внутри, своего экрана 'workshop' больше нет
   // v1.282.7: _fSkyRun нигде не сбрасывался обратно в false — однажды запущенный
@@ -227,7 +233,7 @@ function setScreen(name){
 const SCREEN_TITLE_ID={pause:'pauseTitle',settings:'settingsTitle',diag:'diagTitle',
   feedback:'feedbackTitle',hangar:'hangarTitle', // 15.09.2026: 'modes' убран — экран «Турниры» удалён
   ach:'achTitle',relayMine:'relayMineTitle',card:'cardTitle',forge:'forgeTitle',
-  equality:'equalityTitle',gratitude:'gratitudeTitle'}; // 15.09.2026: см. UNIFORM_TITLE_IDS ниже — оба НЕ в общем наборе, каждый считает свой минимум сам
+  equality:'equalityTitle',gratitude:'gratitudeTitle',flightGallery:'flightGalleryTitle'}; // 15.09.2026: см. UNIFORM_TITLE_IDS ниже — оба НЕ в общем наборе, каждый считает свой минимум сам; 16.09.2026: галерея видео-рекордов добавлена тем же приёмом
   /* 15.09.2026 (владелец: «и конструктор чтобы он поместился между кнопок по размеру текста, в
      один ряд с ними поставь»): 'forge' раньше сюда не входил — старый одиночный shrinkScreenTitle()
      сажал «КОНСТРУКТОР» на пол 24px и он всё равно не влезал в 28%-зону (владелец: «стало тупо»),
@@ -452,7 +458,7 @@ function heroCarouselFill(){
   put('modeRelay',L.modeRelay,L.modeRelayD); // 06.09.2026
   heroDotsInit();
   heroRecordBadgesFill();
-  heroPlayIconsFill();
+  heroPlayHintsFill();
   heroTrailsFill();
 }
 /* 15.09.2026 «Бейдж-рекорд на карточке»: тот же источник чисел, что уже копится по ходу игры
@@ -487,19 +493,13 @@ function heroRecordBadgesFill(){
     else el.classList.add('hidden');
   });
 }
-/* 15.09.2026 (владелец): вместо родового ▶ — твой собственный самолётик (текущий скин), «будто
-   с карточки в игру попадаешь». angarShip() — та же функция, что уже рисует маленький борт на
-   плитках Коллекции (js/ui.js:2094-2099, тот же canvas-приём: setTransform+translate+scale),
-   ей всё равно, кто её зовёт — просто рисует в переданный 2D-контекст. */
-function heroPlayIconsFill(){
-  const sk=(typeof SKINS_BY_ID!=='undefined' && SKINS_BY_ID.get(S.skin)) || (typeof SKINS!=='undefined'?SKINS[0]:null);
-  if(!sk) return;
-  document.querySelectorAll('.heroCard .playHintCv').forEach(function(cv){
-    const ctx=cv.getContext('2d'); if(!ctx) return;
-    ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.setTransform(2,0,0,2,0,0); ctx.translate(13,14);
-    angarShip(ctx, sk, .42, false);
-  });
+/* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой
+   подсказкой («нажми, оставь след») — просто заполняет L.heroHintTap в каждый .playHint, видимость
+   (показана/спрятана) решает heroTrailsFill() ниже, по тому же признаку, что красит саму линию
+   следа. Эстафета (#playHintRelay) в этот цикл не входит — своего .trail у неё нет вообще
+   (HERO_TRAIL_EL), подсказка остаётся всегда видна. */
+function heroPlayHintsFill(){
+  document.querySelectorAll('.heroCard .playHint').forEach(function(el){ el.textContent=L.heroHintTap; });
 }
 /* 15.09.2026 «Траектория рекорда фоном» (владелец, макет trayektoriya-rekorda-na-fone-kartochki,
    «отлично, мне нравится, есть личное»): та же лента, что несёт «смотреть»/«лететь рядом» в
@@ -512,14 +512,18 @@ const HERO_TRAIL_EL={touch:'trailClassic',daily:'trailDaily',speedrun:'trailSpee
 function heroTrailsFill(){
   Object.keys(HERO_TRAIL_EL).forEach(function(cat){
     const svg=$(HERO_TRAIL_EL[cat]); if(!svg) return;
+    // 16.09.2026: та же карточка, что и .trail — подсказка «нажми, оставь след» нужна, только
+    // пока следа ещё нет; querySelector, не $() — id не всегда совпадает с cat (playHintTouch, не playHinttouch)
+    const hintEl=document.querySelector('.heroCard .playHint[data-cat="'+cat+'"]');
     const gr=Store.get('ghostRun_'+cat, null);
     const track=(gr && typeof gr==='object')?gr.track:'';
     const g=(typeof ghostParse==='function' && track)?ghostParse(track):null;
-    if(!g || !g.xs || g.xs.length<2){ svg.innerHTML=''; return; }
+    if(!g || !g.xs || g.xs.length<2){ svg.innerHTML=''; if(hintEl) hintEl.classList.remove('hidden'); return; }
     const n=g.xs.length, STEP=Math.max(1,Math.floor(n/26)); // прореживаем до ~26 точек — узор, не полная лента
     let d='';
     for(let i=0;i<n;i+=STEP){ d += (d?' L':'M')+(g.xs[i]*320).toFixed(1)+','+(g.ys[i]*112).toFixed(1); }
     svg.innerHTML='<path d="'+d+'" fill="none" stroke="'+(HERO_TRAIL_COLOR[cat]||'#fff')+'" stroke-width="1.4" stroke-linecap="round"/>';
+    if(hintEl) hintEl.classList.add('hidden');
   });
 }
 function openAchTop(cat){ // 15.09.2026: тап по бейджу-рекорду на карточке — сразу в Достижения→Турниры на нужной дисциплине
@@ -1273,10 +1277,9 @@ function refreshMenu(){
      мы закрыли и её. Страж 110. */
   gridBalance($('menuRow')); // v1.45.0: «Продолжить полёт» убран — перезапуск сам возвращает в небо (bootFly), в сессии есть пауза // «Единая палуба»: сетка меню без одиноких половинок
   if (typeof duelBanner==='function') duelBanner(); // дуэль: плашка вызова в меню
-  if (typeof firstFlightRefresh==='function') firstFlightRefresh(); // 28.08.2026: «Первое воспоминание» — карточка появляется, если запись есть
+  if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026 «Галерея видео-рекордов»: дверь появляется/число обновляется, если есть хоть одно видео
   if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
-  if (typeof heroPlayIconsFill==='function') heroPlayIconsFill(); // 15.09.2026: скин мог смениться в Коллекции — самолётик на карточках догоняет его тут же
-  if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же
+  if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же; 16.09.2026: заодно гасит текстовую подсказку .playHint, если след теперь есть
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -3923,6 +3926,11 @@ wireOn('feedbackSendBtn', 'click', feedbackSend);
 // только из меню, тот же минимальный приём, что у setScreen+toMenu пары hangar/ach выше.
 wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); charterSignFill(); });
 wireOn('equalityBackBtn', 'click', toMenu);
+// 16.09.2026 «Галерея видео-рекордов»: дверь открывает обычный экран (тот же setScreen(), что и
+// остальные) — сама галерея (#flightGalleryGrid клики, плеер) живёт в js/cinema.js, здесь только
+// навигация, как у всех остальных экранов на этой странице.
+wireOn('flightGalleryBtn', 'click', ()=>{ if (typeof galleryOpen==='function') galleryOpen(); });
+wireOn('flightGalleryBackBtn', 'click', toMenu);
 /* 15.09.2026 «Равноправие»: подпись под Хартией — общий счётчик (cosmogram-charter, js/sync.js).
    charterSignFill() — при каждом открытии экрана, спрашивает status заново (число могло
    вырасти у других игроков, и свежая правда важнее лишнего запроса раз за открытие экрана). */
@@ -4134,7 +4142,7 @@ function applyLang(){
   angarFillFilterChips(); // 06.09.2026: чипы Тюнинга — свой язык, тот же приём (no-op, если экран сейчас не открыт — box отсутствует в DOM только у скрытых частей своей же разметки, сама разметка всегда в DOM)
   if (typeof ptFill==='function') ptFill(); // 01.09.2026: Партитура — своя лента, тот же вызов смены языка
   if (typeof cardFill==='function') cardFill(); // карточка для скриншота — свой язык (v1.73.0)
-  if (typeof firstFlightFill==='function') firstFlightFill(); // 28.08.2026: «Первое воспоминание» — карточка на главном
+  if (typeof galleryFillLabels==='function') galleryFillLabels(); // 16.09.2026 «Галерея видео-рекордов» — дверь/заголовок экрана/подписи, тот же приём
   setText('finalScoreLabel',L.finalScoreLabel);
   setText('hangarBtn',L.hangar);
   setText('feedbackBtn',L.feedbackBtn);

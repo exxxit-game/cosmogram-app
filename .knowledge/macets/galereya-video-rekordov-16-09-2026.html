@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Галерея видео-рекордов — компактная кнопка + экран галереи</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35);
+    --bad:#ff9a86; --ok:#8fff9f;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:22px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  .hist{max-width:640px;margin:0 auto 28px;padding:12px 16px;border-left:3px solid var(--gold);
+    background:rgba(255,255,255,.03);font-size:12px;color:var(--muted)}
+  .hist b{color:var(--gold-hi)}
+  section{max-width:900px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:20px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:26px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;color:var(--gold-hi)}
+
+  /* ===== фрагмент главного экрана: кнопки + место старой карточки ===== */
+  .menuFrag{width:300px;padding:16px;border-radius:16px;background:rgba(10,16,30,.55);border:1px solid var(--line)}
+  .fakeBtn{width:100%;height:44px;border-radius:12px;background:var(--stone-fill);border:1px solid var(--stone-border);
+    margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--cream)}
+  .fakeGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .fakeGrid .fakeBtn{margin-bottom:0}
+
+  /* «планета с кольцом» — тот же материал, что #pauseBtn/.menuBack (живой CSS index.html:958-994),
+     не придуман заново */
+  .galBtn{position:relative;width:44px;height:44px;border-radius:50%;flex:none;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    backdrop-filter:blur(8px);border:1.5px solid rgba(150,205,255,.55);
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    display:flex;align-items:center;justify-content:center;color:#eaf3ff}
+  .galBtn::before{content:'';position:absolute;top:50%;left:50%;width:64px;height:23px;
+    border:1.5px solid rgba(200,225,255,.55);border-radius:50%;transform:translate(-50%,-50%) rotate(-20deg)}
+  .galBtn svg{width:16px;height:16px;margin-left:2px;position:relative;z-index:1}
+  .galBadge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;
+    background:var(--gold-hi);color:#241f08;font-size:9px;font-weight:800;display:flex;align-items:center;
+    justify-content:center;z-index:2;font-variant-numeric:tabular-nums}
+  .galRow{display:flex;align-items:center;gap:12px;margin-top:16px}
+  .galRow .galLbl{font-size:12px;color:var(--muted)}
+  .galRow.center{justify-content:center;flex-direction:column;gap:8px}
+  .galRow.center .galLbl{font-size:10px;letter-spacing:.04em}
+
+  /* ===== экран галереи ===== */
+  .galScreen{width:340px;padding:16px 14px 20px;border-radius:18px;background:rgba(9,14,26,.75);border:1px solid var(--line)}
+  .galTitle{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-hi);
+    text-align:center;margin-bottom:14px}
+  .galGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .galCard{border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03);border:1px solid var(--line);position:relative}
+  .galThumb{height:80px;background:linear-gradient(160deg,#22345c,#0b1224);display:flex;align-items:center;justify-content:center;position:relative}
+  .galThumb.pinned{background:linear-gradient(160deg,#5a4312,#1e1604)}
+  .galThumb.empty{background:rgba(255,255,255,.02);border:1px dashed var(--line)}
+  .galPin{position:absolute;top:5px;left:5px;font-size:9px;padding:2px 6px;border-radius:8px;background:rgba(240,192,64,.18);
+    color:var(--gold-hi);font-weight:700;letter-spacing:.03em}
+  .galPlay{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+  .galPlay svg{width:11px;height:11px;color:#fff;margin-left:1px}
+  .galEmptyIc{color:var(--muted);font-size:10px;text-align:center;padding:0 8px}
+  .galName{font-size:10.5px;font-weight:700;padding:6px 8px 1px;color:var(--ink)}
+  .galDate{font-size:9px;color:var(--muted);padding:0 8px 7px}
+
+  footer{max-width:900px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Галерея видео-рекордов</h1>
+<p class="sub">16.09.2026 — компактная дверь на главном экране + экран галереи за ней</p>
+<div class="note">Это макет. Ничего не перенесено в игру — жду направление, потом «да».</div>
+
+<div class="hist">
+  <b>Было раньше:</b> одна широкая карточка «Ваш первый полёт / Сохранено навсегда» на главном
+  экране — превью-видео 52×52, заголовок, подзаголовок, кнопка «Удалить» (index.html:3544,
+  <code>#firstFlightCard</code>). Хранился только один-единственный клип — самый первый полёт
+  за всё время.<br><br>
+  <b>Стало (твои слова сегодня):</b> «не просто одно видео» — галерея: «Первый полёт» сохраняется
+  всегда отдельно, плюс по одному видео-рекорду на каждый из 7 режимов, новый рекорд заменяет
+  старое видео этого же режима. Вход в галерею — «не больше места, чем одна иконка или кнопка».
+</div>
+
+<section>
+<h2>1. Дверь в галерею — на месте старой карточки</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>Материал кнопки — «планета с кольцом», тот же самый, что уже используется у <code>#pauseBtn</code>/<code>.menuBack</code> (синее стекло, живой CSS, не придуман заново) — не латунь «Небесного прибора», это не прямоугольная кнопка меню.</div></div>
+  <div class="diagItem"><b>—</b><div>Бейдж-число сверху справа — сколько видео уже накоплено (пример: «8» — все режимы + первый полёт). Показывает, что там есть что смотреть, без текста.</div></div>
+  <div class="diagItem"><b>—</b><div>Текст под кнопкой — то, о чём ты спросил отдельно («по макету текста в карточке»): три варианта ниже, от совсем короткого до чуть длиннее.</div></div>
+</div>
+<div class="row">
+  <div>
+    <div class="phoneLbl">Было</div>
+    <div class="menuFrag">
+      <div class="fakeGrid">
+        <div class="fakeBtn">Коллекция</div><div class="fakeBtn">Достижения</div>
+        <div class="fakeBtn">Равноправие</div><div class="fakeBtn">Благодарность</div>
+        <div class="fakeBtn">Поддержка</div><div class="fakeBtn">Настройки</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(22,38,56,.6);border:1px solid rgba(190,225,255,.25)">
+        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(160deg,#22345c,#0b1224);flex:none"></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#eaf3ff">Ваш первый полёт</div><div style="font-size:10.5px;color:#9fb4d8;margin-top:2px">Сохранено навсегда</div></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="phoneLbl">Стало — вариант А (только иконка)</div>
+    <div class="menuFrag">
+      <div class="fakeGrid">
+        <div class="fakeBtn">Коллекция</div><div class="fakeBtn">Достижения</div>
+        <div class="fakeBtn">Равноправие</div><div class="fakeBtn">Благодарность</div>
+        <div class="fakeBtn">Поддержка</div><div class="fakeBtn">Настройки</div>
+      </div>
+      <div class="galRow">
+        <div class="galBtn"><span class="galBadge">8</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row" style="margin-top:20px">
+  <div>
+    <div class="phoneLbl">Вариант Б — иконка + короткая подпись</div>
+    <div class="menuFrag">
+      <div class="fakeGrid">
+        <div class="fakeBtn">Коллекция</div><div class="fakeBtn">Достижения</div>
+        <div class="fakeBtn">Равноправие</div><div class="fakeBtn">Благодарность</div>
+        <div class="fakeBtn">Поддержка</div><div class="fakeBtn">Настройки</div>
+      </div>
+      <div class="galRow center">
+        <div class="galBtn"><span class="galBadge">8</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div>
+        <div class="galLbl">Мои полёты</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="phoneLbl">Вариант В — иконка + подпись подлиннее</div>
+    <div class="menuFrag">
+      <div class="fakeGrid">
+        <div class="fakeBtn">Коллекция</div><div class="fakeBtn">Достижения</div>
+        <div class="fakeBtn">Равноправие</div><div class="fakeBtn">Благодарность</div>
+        <div class="fakeBtn">Поддержка</div><div class="fakeBtn">Настройки</div>
+      </div>
+      <div class="galRow center">
+        <div class="galBtn"><span class="galBadge">8</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div>
+        <div class="galLbl">Видео полётов</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:640px;margin:14px auto 0;text-align:center">
+  А — самая маленькая, ровно «одна иконка», как ты и просил дословно, но первый раз игрок может не
+  понять, что это дверь в галерею (бейдж «8» — единственная подсказка). Б/В добавляют короткую
+  подпись под кольцом — чуть больше вертикали (кнопка + 12px текста), зато сразу понятно, куда ведёт.
+</p>
+</section>
+
+<section>
+<h2>2. Экран галереи — открывается по тапу</h2>
+<div class="diag">
+  <div class="diagItem"><b>—</b><div>«Первый полёт» — всегда первая карточка, с золотой плашкой-закрепом, никогда не заменяется новым рекордом (твои слова: «первый полёт тоже сохраняется»).</div></div>
+  <div class="diagItem"><b>—</b><div>Дальше — 7 карточек, по одной на каждый режим карусели (те же названия и порядок, что на главном экране: Score Attack / Небо месяца / Speedrun / Caravan / Без касаний / Биатлон / Эстафета). Новый рекорд в режиме — новое видео заменяет старое (твои слова: «новый рекорд заменяет старое видео»).</div></div>
+  <div class="diagItem"><b>—</b><div>Режим без единого рекорда — пустая карточка-заглушка (пунктир), а не пропуск места: сетка остаётся ровной 2×4, видно сколько ещё предстоит.</div></div>
+</div>
+<div class="row">
+  <div>
+    <div class="phoneLbl">Заполнено частично (реалистичное начало игры)</div>
+    <div class="galScreen">
+      <div class="galTitle">Мои полёты</div>
+      <div class="galGrid">
+        <div class="galCard">
+          <div class="galThumb pinned"><span class="galPin">Первый</span><div class="galPlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div></div>
+          <div class="galName">Первый полёт</div><div class="galDate">08.09.2026</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb"><div class="galPlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div></div>
+          <div class="galName">Score Attack</div><div class="galDate">14.09.2026</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb empty"><div class="galEmptyIc">пока нет рекорда</div></div>
+          <div class="galName" style="color:var(--muted)">Небо месяца</div><div class="galDate">—</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb"><div class="galPlay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M8 5.5l10 6.5-10 6.5z"/></svg></div></div>
+          <div class="galName">Speedrun</div><div class="galDate">12.09.2026</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb empty"><div class="galEmptyIc">пока нет рекорда</div></div>
+          <div class="galName" style="color:var(--muted)">Caravan</div><div class="galDate">—</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb empty"><div class="galEmptyIc">пока нет рекорда</div></div>
+          <div class="galName" style="color:var(--muted)">Без касаний</div><div class="galDate">—</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb empty"><div class="galEmptyIc">пока нет рекорда</div></div>
+          <div class="galName" style="color:var(--muted)">Биатлон</div><div class="galDate">—</div>
+        </div>
+        <div class="galCard">
+          <div class="galThumb empty"><div class="galEmptyIc">пока нет рекорда</div></div>
+          <div class="galName" style="color:var(--muted)">Эстафета</div><div class="galDate">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="hist" style="border-left-color:var(--bad)">
+  <b>Отдельно, не в этом макете:</b> запись видео на КАЖДЫЙ рекорд режима (не только на первый
+  полёт) — это тот же механизм VideoEncoder, который в августе реально подвешивал слабые Android
+  (аварийный рубильник <code>CINEMA_DISABLED</code>, js/cinema.js) и сейчас включён один раз на
+  «первый полёт». Ты выбрал «сперва отдельно проверить нагрузку» — макет описывает только ЭКРАНЫ,
+  включение записи по всем режимам — отдельный шаг после проверки, не одновременно с этим макетом.
+</div>
+
+<footer>
+Источники: живой код (index.html — реальные CSS-токены/материал «планета с кольцом» #pauseBtn/.menuBack,
+#firstFlightCard, hero-карусель 7 режимов) + твои слова в чате 16.09.2026.
+</footer>
+</body>
+</html>
