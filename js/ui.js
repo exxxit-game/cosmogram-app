@@ -2929,7 +2929,13 @@ let heroCarouselAutoT=setInterval(function(){
   const n=car.children.length;
   const cur=Math.round(car.scrollLeft/w);
   const next=(cur+1)%n;
-  car.scrollTo({ left: next*w, behavior:'smooth' });
+  // 16.09.2026 (владелец, живой скрин: «линия остаётся» на карточках карусели): было
+  // next*w — умножение дробной ширины (getBoundingClientRect не целое число px) на индекс
+  // копит погрешность с каждой карточкой. offsetLeft — то же самое смещение, что браузер уже
+  // сам целочисленно посчитал для реальной раскладки, тот же приём, что уже верно для «Список
+  // точек»/якорей Конструктора — не пересчитывать вручную то, что DOM уже точно знает.
+  const target = car.children[next].offsetLeft - car.children[0].offsetLeft;
+  car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
@@ -4017,6 +4023,22 @@ function gratitudeSkyFill(){
   });
 }
 function grBubbleHide(){ const b=$('grBubble'); if(b) b.classList.remove('show'); grBubbleStarId=null; }
+/* 16.09.2026: см. комментарий у .grBubble (index.html) — считает реальную позицию пузырька
+   ПОСЛЕ того, как в него лёг текст (offsetWidth/Height настоящие, не догадка), а не заранее
+   фиксированным -112%. Зовётся и сразу (примерная сторона по точке), и ещё раз после того, как
+   имя/комментарий пришли с сервера (текст мог стать длиннее/короче — высота пузырька меняется). */
+function grPositionBubble(hit){
+  const bubble=$('grBubble'), wrap=$('grSkyWrap'); if(!bubble||!wrap) return;
+  const wrapR=wrap.getBoundingClientRect();
+  const px=hit.x/380*wrapR.width, py=hit.y/230*wrapR.height;
+  const bw=bubble.offsetWidth, bh=bubble.offsetHeight;
+  const spaceAbove=py, spaceBelow=wrapR.height-py;
+  const above = spaceAbove>=bh+14 || spaceAbove>=spaceBelow;
+  let left=Math.max(bw/2+4, Math.min(wrapR.width-bw/2-4, px));
+  bubble.style.left=left+'px';
+  bubble.style.top=(above ? py-14 : py+14)+'px';
+  bubble.style.transform='translate(-50%,'+(above?'-100%':'0')+')';
+}
 wireOn('grSky','click',function(ev){
   const cv=$('grSky'); if(!cv) return;
   const rect=cv.getBoundingClientRect();
@@ -4026,16 +4048,19 @@ wireOn('grSky','click',function(ev){
   if(!hit){ grBubbleHide(); return; }
   grBubbleStarId=hit.id;
   const bubble=$('grBubble');
-  if(bubble){ bubble.style.left=(hit.x/380*100)+'%'; bubble.style.top=(hit.y/230*100)+'%'; bubble.classList.add('show'); }
   const nameEl=$('grBubbleName'), cEl=$('grBubbleComment'), repBtn=$('grBubbleReport');
   if(nameEl) nameEl.textContent=''; if(cEl) cEl.textContent='';
-  if(repBtn) repBtn.classList.remove('sent');
+  // 16.09.2026: тухнет до ответа сервера — раньше была живой сразу, тап быстрее загрузки жаловался вслепую
+  if(repBtn){ repBtn.classList.remove('sent'); repBtn.disabled=true; }
+  if(bubble){ bubble.classList.add('show'); grPositionBubble(hit); }
   sfx.click(); haptic('light');
   syncGratitudeStar(hit.id).then(function(r){
     if(grBubbleStarId!==hit.id) return; // игрок уже тапнул другую звезду, пока грузилось
     if(!r || !r.ok){ grBubbleHide(); return; }
     if(nameEl) nameEl.textContent = r.name || L.grAnonLabel;
     if(cEl) cEl.textContent = r.comment || '';
+    if(repBtn) repBtn.disabled=false;
+    if(bubble) grPositionBubble(hit); // текст пришёл — высота пузырька могла измениться, пересчитать сторону
   });
 });
 wireOn('grBubbleReport','click',function(ev){
