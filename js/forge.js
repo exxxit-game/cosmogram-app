@@ -1182,7 +1182,14 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
       } else if(s==='random'){
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
+        // 17.09.2026 (владелец, референс с кубиками): свой символ (#i-dice), не общий с
+        // «Перемешать» (.pvBtn) — тот остаётся со старыми стрелками (#i-shuffle), владелец
+        // прямо поправил: не делать их одинаковыми, это разные действия.
+        // 17.09.2026, тем же вечером (владелец, живой скрин: «на фоне сердечка невзрачно,
+        // нужен цвет»): свой цвет через inline style — тот же приём, что уже у сердца
+        // (#ff9fb0) чуть выше, не завязан на .sel. Сиреневый — не занят соседями в этом же
+        // ряду (розовый лайк, золотая звезда карточек), «космический» тон, не случайный.
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#b39dff"><use href="#i-dice"></use></svg>';
       }
       b.addEventListener('click', function(){
         if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
