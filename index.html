@@ -402,7 +402,10 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    остальные складываются (аккордеон): на экране всегда всё помещается */
 .setGrp { width:min(92%, calc(380px / var(--ui-scale,1))); margin:2px 0 10px; padding:13px 40px 13px 16px; text-align:left; /* 09.09.2026: делённый на --ui-scale предел держит РЕАЛЬНУЮ ширину на экране постоянной при любом масштабе текста — карточка не растёт вширь, вместо этого строки внутри переносятся (см. .setRow ниже) */
   font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#c9d8f5;
-  background:rgba(22,38,56,.55); border:1px solid var(--line); border-radius:var(--r-card);
+  /* 16.09.2026 «Небесный прибор», второй заход (владелец: «применяй ко всем меню» — первый
+     коммит по ошибке задел только карточку режима, не тронул Настройки/Достижения и т.д.):
+     тонкая латунная рамка вместо нейтральной var(--line), тот же плоский тёмный фон. */
+  background:rgba(14,18,32,.62); border:1px solid rgba(201,164,92,.3); border-radius:var(--r-card);
   position:relative; cursor:pointer; transition:background .2s; } /* v1.92.0: ровный ритм — одинаковый шаг между всеми группами */
 .setGrpSub { display:block; margin-top:3px; font-size:11px; font-weight:600; letter-spacing:.04em;
   text-transform:none; color:rgba(158,178,224,.55); } /* v1.92.0: закрытая группа шёпотом отвечает, как себя чувствует (закон Nintendo) */
@@ -472,13 +475,22 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    («небо игры» переставало просвечивать), а не более прозрачным, как хотел владелец. Владелец
    прямо: «этот вариант был лучше» (про старый, с рамкой) — откачено полностью, тема остаётся
    в очереди на отдельный заход «улучшить по максимуму», не в спешке поверх старого. */
-.btn { pointer-events:auto; cursor:pointer; margin:6px 0;
+.btn { pointer-events:auto; cursor:pointer; margin:6px 0; position:relative;
   display:inline-flex; align-items:center; justify-content:center; gap:.55em;
   border-radius:var(--r-btn); padding:14px 26px;
   font-family:var(--font-ui); font-size:15px; font-weight:600; letter-spacing:.04em; /* 03.09.2026: вес 500/700 были подгонкой под Jura на кнопках — с возвратом Exo 2 вернули и родной вес 600 */
-  color:#dce9ff; background:rgba(10,18,36,.55); border:1px solid rgba(160,210,255,.18);
+  /* 16.09.2026 «Небесный прибор», второй заход (владелец: «применяй ко всем меню»): плоский
+     тёмный фон + тонкая латунная рамка вместо синеватого стекла — тот же язык, что у .setGrp/
+     .setPanel/бейджей карточки режима, теперь и на базовой кнопке, которая используется почти
+     на каждом экране игры (не только на Главном). */
+  color:#dce9ff; background:rgba(14,18,32,.62); border:1px solid rgba(201,164,92,.3);
   transition:transform .12s ease, border-color .2s, background .2s, color .2s; }
 .btn:active { transform:scale(.97); }
+/* Засечки по углам — корпус прибора, не орбита (владелец отдельно отклонил орбиту на прямоугольных
+   кнопках; засечки — другой мотив, только по двум противоположным углам). */
+.btn::before, .btn::after { content:''; position:absolute; width:7px; height:7px; pointer-events:none; opacity:.55; }
+.btn::before { top:4px; left:4px; border-top:1px solid rgba(201,164,92,.7); border-left:1px solid rgba(201,164,92,.7); }
+.btn::after { bottom:4px; right:4px; border-bottom:1px solid rgba(201,164,92,.7); border-right:1px solid rgba(201,164,92,.7); }
 .btn.pri { background:rgba(24,40,72,.7); border-color:rgba(190,225,255,.45); color:#f2f7ff;
   box-shadow:0 0 16px rgba(120,170,255,.12), inset 0 0 12px rgba(120,170,255,.05); }
 /* 01.09.2026 «Не вдавленным в игру»: на паузе вуали нет (снята целиком, см. #pauseScreen ниже) —
@@ -1247,18 +1259,20 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .ctlRow b { font-family:var(--font-disp); font-weight:400; font-size:14px; color:var(--cream); }
 
 #achTabs { display:flex; gap:8px; margin:2px 0 10px; pointer-events:auto; }
-.achTab { border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+/* 16.09.2026 «Небесный прибор»: латунная рамка вместо нейтральной, золотой акцент «выбрано»
+   вместо голубого — единый акцент со всей остальной игрой. */
+.achTab { border:1px solid rgba(201,164,92,.3); background:rgba(14,18,32,.62); color:var(--muted);
   border-radius:12px; padding:8px 18px; font-size:14px; cursor:pointer; }
-.achTab.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
+.achTab.sel { background:rgba(20,16,8,.75); border-color:rgba(240,192,64,.55); color:#f0c040; }
 #achTopWrap { width:min(92%,380px); pointer-events:auto; }
 /* 04.09.2026: было display:flex без wrap — 7 вкладок не помещались в одну строку на узком
    экране, обрезались по краям без подписи. flex-wrap сам разводит на нужное число строк
    (обычно 2 на телефоне), justify-content:center держит каждую строку по центру. */
 #topCats, #compTopCats { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:8px; } /* 06.09.2026: тот же ряд-контейнер, что и у личного топа, для нового экрана «Топ соревнований» */
 .topCat { display:flex; flex-direction:column; align-items:center; gap:3px;
-  border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+  border:1px solid rgba(201,164,92,.3); background:rgba(14,18,32,.62); color:var(--muted);
   border-radius:12px; padding:7px 12px; font-size:16px; cursor:pointer; }
-.topCat.sel { background:rgba(120,170,255,.10); border-color:rgba(190,225,255,.45); color:#eaf2ff; }
+.topCat.sel { background:rgba(20,16,8,.75); border-color:rgba(240,192,64,.55); color:#f0c040; }
 .topCatLbl { font-size:9.5px; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap; }
 #topMe, #compTopMe { color:rgba(143,255,159,.85); font-size:13px; text-align:center; min-height:18px; margin-bottom:6px; }
 /* 13.08.2026: «твои N — это M-е место» и приглашение под таблицей — тот же материал, что панели */
@@ -1347,8 +1361,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .achIt, .topIt, .rise { animation:riseIn .35s cubic-bezier(.22,1,.36,1) both; }
 
 /* ---- Настройки: строки-тумблеры с тонкими разделителями ---- */
-.setPanel { width:min(92%,380px); pointer-events:auto; background:rgba(22,38,56,.55);
-  border:1px solid var(--line); border-radius:var(--r-card); margin:2px 0 12px; overflow:hidden; }
+/* 16.09.2026 «Небесный прибор»: тот же плоский тёмный фон + латунная рамка, что у .setGrp выше */
+.setPanel { width:min(92%,380px); pointer-events:auto; background:rgba(14,18,32,.62);
+  border:1px solid rgba(201,164,92,.3); border-radius:var(--r-card); margin:2px 0 12px; overflow:hidden; }
 /* 15.09.2026 «Равноправие»: экран Хартии — тот же .setPanel, что у остальных текстовых
    экранов (Поддержка), только без формы — читаемая типографика длинного документа. */
 .charterBody { padding:14px 16px 20px; font-size:13.5px; line-height:1.55; color:var(--ink); }
@@ -1755,15 +1770,15 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    приём применён к #forgeSubTabs ниже — оба используют одинаковую маску. */
 .scrollFade{ -webkit-mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%);
   mask-image:linear-gradient(90deg,#000 0,#000 88%,transparent 100%); }
-.angarTab { flex:none; border:1px solid var(--line); background:rgba(22,38,56,.55); color:var(--muted);
+.angarTab { flex:none; border:1px solid rgba(201,164,92,.3); background:rgba(14,18,32,.62); color:var(--muted);
   border-radius:999px; padding:9px 12px; font-size:12px; font-weight:700; letter-spacing:.1em;
   text-transform:uppercase; cursor:pointer; white-space:nowrap; } /* 09.09.2026, владелец
   (живой скрин, обвёл красным лишние поля по бокам «Стиль»): было 16px, все 4 вкладки
   (Стиль/Эмодзи/Вспышка/След) не помещались в 92%-ширину, «След» обрезался — та же
   прокручиваемая строка, что и у #forgeSubTabs. Проверено численно: overflow был 22px при
   375px экране, после 12px — overflow=0, все 4 умещаются без прокрутки/обрезания. */
-.angarTab.sel { background:rgba(120,170,255,.12); border-color:rgba(190,225,255,.5); color:#eaf2ff;
-  box-shadow:0 0 16px rgba(120,170,255,.14); }
+.angarTab.sel { background:rgba(20,16,8,.75); border-color:rgba(240,192,64,.6); color:#f0c040;
+  box-shadow:0 0 16px rgba(240,192,64,.16); }
 #angarFilter { margin-bottom:12px; } /* 06.09.2026: .forgeChips уже задаёт flex/gap/центровку — своя ширина не нужна */
 /* Жетоны — три в ряд */
 #angarGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(92%,380px); }
@@ -1797,12 +1812,13 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   у всех остальных плиток в той же колонке, даже с короткими именами («Грани», «Ядро»).
   min-width:0 разрешает плитке сжаться до размера трека — обрезка по ellipsis (.nm) остаётся. */
 .angarIt .dot { position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
-  padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55); transition:border-color .2s, background .2s; }
+  /* 16.09.2026 «Небесный прибор»: латунная рамка вместо нейтральной var(--line) */
+  padding-bottom:26px; border:1px solid rgba(201,164,92,.3); background:rgba(16,26,50,.55); transition:border-color .2s, background .2s; }
 .angarIt canvas { width:62px; height:48px; }
 /* 28.08.2026: плитка декали — тот же короб, что у канваса корабля (.dot), но без канваса:
    сам символ эмодзи, крупно и по центру. Общий .sel-хайлайт ниже расширен на оба вида. */
 .angarIt .ch { position:relative; width:100%; aspect-ratio:1.12; border-radius:18px; display:grid; place-items:center;
-  padding-bottom:26px; border:1px solid var(--line); background:rgba(16,26,50,.55); font-size:26px; line-height:1;
+  padding-bottom:26px; border:1px solid rgba(201,164,92,.3); background:rgba(16,26,50,.55); font-size:26px; line-height:1;
   transition:border-color .2s, background .2s; }
 /* 06.09.2026, владелец (скрин с кружком): у «Без украшений» квадрат всегда пустой (ch:'' —
    глифа нет), а подпись висела отдельной строкой НИЖЕ него — пустая коробка сверху, текст,
@@ -2146,10 +2162,10 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 /* #forgeSubTabs (Карта/Цвет/Сохранить как вкладки-пилюли) удалён 12.09.2026 вместе со своими
    правилами скролла/маски-затухания выше — «Создать» стало тремя полноэкранными шагами
    (заголовок+точки прогресса, .forgeStepDot), длинной строки подписей больше нет физически. */
-.forgeTab{border:1px solid var(--line);background:rgba(22,38,56,.55);color:var(--muted);
+.forgeTab{border:1px solid rgba(201,164,92,.3);background:rgba(14,18,32,.62);color:var(--muted);
   border-radius:12px;padding:9px 22px;font-size:13.5px;font-weight:700;cursor:pointer;pointer-events:auto;
   flex:none;white-space:nowrap} /* flex:none — тот же приём, что .angarTab: не сжимать текст, дать строке прокручиваться */
-.forgeTab.sel{background:rgba(120,170,255,.10);border-color:rgba(190,225,255,.45);color:#eaf2ff}
+.forgeTab.sel{background:rgba(20,16,8,.75);border-color:rgba(240,192,64,.55);color:#f0c040}
 .forgePresets{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:min(94%,560px);margin-top:2px} /* v1.86.0: тихие плитки-программы; 01.09.2026: было width:100% — держалось узким только пока родителем был .setPanel (сам width:min(92%,380px)); после переноса в раскладке родитель — широкий .scrBody, плитки расползлись во весь экран. Ограничение теперь своё, не одолженное у родителя.
    02.09.2026: 380→560 — владелец захотел весь экран Конструктора одной ширины, не только Расстановку. */
 .forgePreset{border:1px solid rgba(140,170,255,.3);background:rgba(16,24,54,.55);color:#bcd2ff;border-radius:999px;
@@ -3231,9 +3247,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.319"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.319"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.319"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.320"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.320"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.320"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4350,26 +4366,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="firstFlightClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.319" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.319"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.319"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.319"></script>
-<script defer src="js/game.js?v=1.478.319" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.319"></script>
-<script defer src="js/sync.js?v=1.478.319"></script>
-<script defer src="js/render.js?v=1.478.319"></script>
-<script defer src="js/planetarium.js?v=1.478.319"></script>
-<script defer src="js/goldstar.js?v=1.478.319"></script>
-<script defer src="js/finish.js?v=1.478.319"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.319"></script>
-<script defer src="js/gyro.js?v=1.478.319"></script>
-<script defer src="js/forge.js?v=1.478.319"></script>
-<script defer src="js/partitura.js?v=1.478.319"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.319"></script>
-<script defer src="js/card.js?v=1.478.319"></script>
-<script defer src="js/star.js?v=1.478.319"></script>
-<script defer src="js/cinema.js?v=1.478.319"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.319"></script>
+<script defer src="js/core.js?v=1.478.320" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.320"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.320"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.320"></script>
+<script defer src="js/game.js?v=1.478.320" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.320"></script>
+<script defer src="js/sync.js?v=1.478.320"></script>
+<script defer src="js/render.js?v=1.478.320"></script>
+<script defer src="js/planetarium.js?v=1.478.320"></script>
+<script defer src="js/goldstar.js?v=1.478.320"></script>
+<script defer src="js/finish.js?v=1.478.320"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.320"></script>
+<script defer src="js/gyro.js?v=1.478.320"></script>
+<script defer src="js/forge.js?v=1.478.320"></script>
+<script defer src="js/partitura.js?v=1.478.320"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.320"></script>
+<script defer src="js/card.js?v=1.478.320"></script>
+<script defer src="js/star.js?v=1.478.320"></script>
+<script defer src="js/cinema.js?v=1.478.320"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.320"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
