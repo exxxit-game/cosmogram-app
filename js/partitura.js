@@ -129,6 +129,27 @@ function ptShowToast(text,undoFn){
   ptToastTimer=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+/* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Дальше», диагноз §7):
+   один шаг назад, не полная история — ptLastUndo хранит ровно одну функцию-откат последнего
+   значимого действия (добавил/убрал/подвинул точку, «Сбросить всё»), новое действие тихо
+   перезаписывает старое (та же логика «один уровень», что уже верна для тоста — .ptToast один
+   на экран, вторая жалоба «Поставил»/«Убрал» подряд заменяет undo у первой, не складывает).
+   Дополняет ptShowToast (тот гаснет через 3с и не покрывает драг/сброс), не заменяет — оба пути
+   зовут один и тот же revert и оба гасят кнопку через ptClearUndo(), так что нельзя отменить
+   одно и то же действие дважды (тап по тосту гасит и кнопку, тап по кнопке — тост никак не
+   трогает, но ptLastUndo уже null, второй нечаянный тап по тосту после кнопки просто не найдёт
+   точку/не навредит, т.к. revert идемпотентен относительно своих же данных). */
+let ptLastUndo=null;
+function ptSetUndo(revertFn){ ptLastUndo=revertFn; ptSyncUndoBtn(); }
+function ptClearUndo(){ ptLastUndo=null; ptSyncUndoBtn(); }
+function ptSyncUndoBtn(){ const b=$('ptUndoBtn'); if(b) b.disabled=!ptLastUndo; }
+function ptDoUndo(){
+  if(!ptLastUndo) return;
+  const fn=ptLastUndo;
+  sfx.click(); haptic('light');
+  fn(); // сам revert зовёт ptClearUndo() — единая точка гашения что для тоста, что для кнопки
+}
+
 function ptRender(justPoppedIdx){
   ptRenderPins(justPoppedIdx);
   ptRenderPanel();
@@ -290,7 +311,9 @@ function ptRemovePin(i){
   const pins=ptPins(); const p=pins[i]; if(!p) return;
   pins.splice(i,1); ptSelIdx=-1;
   sfx.click(); haptic('light');
-  ptShowToast('Убрал '+ptPinName(p),()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); });
+  const revert=()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); ptClearUndo(); };
+  ptShowToast('Убрал '+ptPinName(p),revert);
+  ptSetUndo(revert);
   ptRender();
 }
 function ptNudge(d){
@@ -313,6 +336,7 @@ function ptStartPinDrag(ev,i){
   ev.stopPropagation(); ptSelIdx=i; ptRender();
   const track=$('ptTrack'), panel=$('ptPanel'), qe=$('ptQuickEdit');
   if(qe) qe.classList.remove('show'); // прячем пузырёк на время драга — значение уже видно над пальцем
+  const startPins=ptPins(), startP=startPins[i], startAt=startP?startP.at:null; // 16.09.2026 «Дальше»: точка отсчёта для undo драга — у него, в отличие от add/remove, тоста не было
   const onMove=e=>{
     const pins=ptPins(); if(!pins[i]) return;
     pins[i].at=ptXToAt(track,e.clientX); ptSelIdx=i;
@@ -322,6 +346,11 @@ function ptStartPinDrag(ev,i){
   const onUp=()=>{
     document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp);
     const dv=$('ptDragValue'); if(dv) dv.classList.remove('show');
+    const pins=ptPins(), p=pins[i];
+    if(p && startAt!==null && p.at!==startAt){
+      const prevAt=startAt;
+      ptSetUndo(()=>{ const pp=ptPins(); if(pp[i]) pp[i].at=prevAt; ptRender(); ptClearUndo(); });
+    }
     ptRender();
   };
   document.addEventListener('pointermove',onMove);
@@ -389,7 +418,9 @@ function ptWireTray(){
         const pins=ptPins(); pins.push(p); ptSelIdx=pins.length-1;
         sfx.click(); haptic('medium');
         ptRender(ptSelIdx);
-        ptShowToast('Поставил '+ptPinName(p),()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); });
+        const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); ptClearUndo(); };
+        ptShowToast('Поставил '+ptPinName(p),revert);
+        ptSetUndo(revert);
       } else if(!moved){
         // 12.09.2026: тап без переноса на ленту (и без промаха мимо неё) — не «ничего не
         // произошло», а «взвести этот тип», см. комментарий у ptArmedType выше
@@ -409,7 +440,9 @@ function ptWireTray(){
       document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed')); ptArmedType=null;
       sfx.click(); haptic('medium');
       ptRender(ptSelIdx);
-      ptShowToast('Поставил '+ptPinName(p),()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); });
+      const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); ptClearUndo(); };
+      ptShowToast('Поставил '+ptPinName(p),revert);
+      ptSetUndo(revert);
     } else if(ptSelIdx>=0){
       ptSelIdx=-1; ptRender();
     }
@@ -417,6 +450,7 @@ function ptWireTray(){
 }
 function ptWireOnce(){
   if(ptWireOnce._done) return; ptWireOnce._done=1;
+  const undoBtn=$('ptUndoBtn'); if(undoBtn) undoBtn.addEventListener('click',ptDoUndo); // 16.09.2026 «Дальше»
   const del=$('ptDelBtn'); if(del) del.addEventListener('click',()=>{ if(ptSelIdx>=0) ptRemovePin(ptSelIdx); });
   const m10=$('ptMinus10'); if(m10) m10.addEventListener('click',()=>ptNudge(-10));
   const m1=$('ptMinus1'); if(m1) m1.addEventListener('click',()=>ptNudge(-1));
@@ -480,6 +514,24 @@ function ptWireOnce(){
     ptRenderRuler(); ptRender();
     if(typeof forgeGrpSubSync==='function') forgeGrpSubSync();
   });
+  // 16.09.2026 «Дальше» (диагноз §6): точный ввод числом рядом с 4 слайдерами Цвета.
+  ['ptHue1','ptHue2','ptDens','ptMood'].forEach(ptWireValInput);
+}
+/* 16.09.2026: <input type=number> рядом со слайдером — на change (блюр/Enter, не на каждый
+   символ, чтобы не мешать печатать) клампит в диапазон слайдера и отдаёт значение ЕМУ, тем же
+   'input'-событием, что и обычный драг — вся логика применения (forgeCfg.*, ptSyncColorUI,
+   forgeSkyKick) остаётся в одном месте у слайдера, не дублируется здесь. */
+function ptWireValInput(rangeId){
+  const numEl=$(rangeId+'V'), rangeEl=$(rangeId);
+  if(!numEl||!rangeEl||numEl._ptValWired) return; numEl._ptValWired=1;
+  numEl.addEventListener('change',function(){
+    const min=+rangeEl.min, max=+rangeEl.max;
+    let v=Math.round(+numEl.value);
+    if(!isFinite(v)) v=+rangeEl.value;
+    v=Math.min(max,Math.max(min,v));
+    numEl.value=v; rangeEl.value=v;
+    rangeEl.dispatchEvent(new Event('input',{bubbles:true}));
+  });
 }
 function ptSyncLenUI(){
   const ls=$('ptLenSlider'), lv=$('ptLenVal'), ib=$('ptInfBtn'); if(!ls) return;
@@ -497,10 +549,13 @@ function ptPaintTrackBg(){
 function ptSyncColorUI(){
   const h1=$('ptHue1'), h2=$('ptHue2'), dens=$('ptDens'), mood=$('ptMood'); if(!h1) return;
   h1.value=forgeCfg.h1; h2.value=forgeCfg.h2; dens.value=forgeCfg.dens; if(mood) mood.value=forgeCfg.mood;
-  const h1v=$('ptHue1V'); if(h1v) h1v.textContent=forgeCfg.h1;
-  const h2v=$('ptHue2V'); if(h2v) h2v.textContent=forgeCfg.h2;
-  const densv=$('ptDensV'); if(densv) densv.textContent=forgeCfg.dens;
-  const moodv=$('ptMoodV'); if(moodv) moodv.textContent=forgeCfg.mood;
+  // 16.09.2026 «Дальше»: .forgeVal (<b>) стал .forgeValInput (<input type=number>) — .value, не
+  // .textContent; document.activeElement не проверяем — тот же приём, что уже у .atval (точка на
+  // карте), там это тоже не защищено, и жалоб не было.
+  const h1v=$('ptHue1V'); if(h1v) h1v.value=forgeCfg.h1;
+  const h2v=$('ptHue2V'); if(h2v) h2v.value=forgeCfg.h2;
+  const densv=$('ptDensV'); if(densv) densv.value=forgeCfg.dens;
+  const moodv=$('ptMoodV'); if(moodv) moodv.value=forgeCfg.mood;
   const sw1=$('ptSw1'); if(sw1) sw1.style.background='hsl('+forgeCfg.h1+',60%,45%)';
   const sw2=$('ptSw2'); if(sw2) sw2.style.background='hsl('+forgeCfg.h2+',60%,45%)';
   ptPaintTrackBg();

@@ -1118,9 +1118,18 @@ function mapOver(sc){
    forgePresetMatch() убраны позже, в «Переосмыслении» того же дня — обоснование выше больше
    не про подсветку тайла, но forgeSanitize({}) остаётся правильным сбросом сам по себе.) */
 function forgeResetAll(){
+  // 16.09.2026 «Дальше» (диагноз §7, макет konstruktor-sozdat-redizayn-16-09-2026.html): «Сбросить
+  // всё» уже требует второго нажатия подряд (forgeResetBtn, forge.js), но ДО сегодня само стирание
+  // было безвозвратным. Снимок всего forgeCfg (простые данные — числа/строки/массив точек, JSON
+  // безопасен) даёт ptUndoBtn (index.html) настоящий откат, тем же ptSetUndo/ptClearUndo, что уже
+  // у add/remove/drag точки (js/partitura.js).
+  const before=JSON.parse(JSON.stringify(forgeCfg));
   forgeCfg=forgeSanitize({});
   forgeSyncWidgets(); Store.set('forgeLast',forgeCfg);
   toast(L.forgeReset||'Сброшено','rgba(160,210,255,.5)'); haptic('light');
+  if(typeof ptSetUndo==='function') ptSetUndo(function(){
+    forgeCfg=before; forgeSyncWidgets(); Store.set('forgeLast',forgeCfg); ptClearUndo();
+  });
 }
 
 /* ---------- 05.09.2026 «Мастерская»: экран-витрина — подписи, сортировка, список ---------- */
