@@ -204,16 +204,34 @@ function setScreen(name){
      едет вместе со всем экраном единым блоком, прыжка нет вообще. Работает и на экранах без scrIn
      (диагностика/поддержка/карточка/эстафета/Конструктор) — там animation изначально 'none', снимать
      нечего, код просто измеряет как раньше. */
+  retitleScreen(name);
+}
+/* 16.09.2026 (владелец, живой скрин: «кнопка заходит за нашу область запаса», Конструктор,
+   «Играть»/«Создать» наехали на заголовок) — вынесено из setScreen() в свою функцию: раньше
+   заголовок центрировался (centerTitleOnHeader) ТОЛЬКО в момент входа на экран, одним разом.
+   --sat-menu (index.html) — «правда» Telegram о вырезе/шапке — часто приходит НЕ сразу
+   (см. tgInsetsSync, js/core.js: «поздняя правда Telegram приходит через тишину»), уже ПОСЛЕ
+   входа на экран. Всё, что читает --sat-menu через CSS (padding-top экрана, «Назад», сама
+   вкладка «Играть»/«Создать» — обычный поток внутри .scrBody) пересчитывается само, браузер
+   это делает бесплатно. Заголовок — единственный, кто считает своё место ЖИВЬЁМ через JS
+   (centerTitleOnHeader/shrinkScreenTitle) один раз на входе — если правда о вырезе доехала
+   позже, весь экран корректно уехал вниз под НОВЫЙ --sat-menu, а заголовок остался на месте,
+   посчитанном под старое (обычно меньшее) значение — отсюда и наезд. tgInsetsSync теперь тоже
+   зовёt retitleScreen(screenName) после каждого обновления --sat-menu, тем же приёмом, что уже
+   есть у syncScoreHudGap() (полёт) — просто то же самое для заголовков меню-экранов. Гипотеза,
+   не подтверждённая на живом устройстве владельца (здесь нет моста Telegram, который присылает
+   safeAreaChanged с задержкой) — код при этом совершенно точно НЕ перевызывал центрирование при
+   такой задержке, это не «похоже на причину», это реальный пропуск вызова. */
+function retitleScreen(name){
   const stid=SCREEN_TITLE_ID[name];
-  if(stid){
-    const t=$(stid);
-    const scr=$(name+'Screen');
-    const prevAnim = scr ? scr.style.animation : null;
-    if(scr) scr.style.animation='none'; // на миг — только чтобы замерить устоявшуюся геометрию
-    shrinkScreenTitle(t);
-    centerTitleOnHeader(t);
-    if(scr) scr.style.animation = prevAnim || ''; // возвращаем — экран (и уже верно стоящий заголовок) анимируется как обычно
-  }
+  if(!stid) return;
+  const t=$(stid);
+  const scr=$(name+'Screen');
+  const prevAnim = scr ? scr.style.animation : null;
+  if(scr) scr.style.animation='none'; // на миг — только чтобы замерить устоявшуюся геометрию
+  shrinkScreenTitle(t);
+  centerTitleOnHeader(t);
+  if(scr) scr.style.animation = prevAnim || ''; // возвращаем — экран (и уже верно стоящий заголовок) анимируется как обычно
 }
 /* 14.09.2026 (владелец, живые телефоны): задача — заголовок помещается МЕЖДУ кнопками родной
    шапки Telegram («Назад»/крестик слева, chevron+три точки справа), в одной с ними строке И
@@ -2864,6 +2882,19 @@ function flyRelay(){
 }
 
 /* ---------- Привязка кнопок ---------- */
+/* 16.09.2026 (владелец, живой скрин: «текст говорит нажмите здесь, а нажимаешь на текст — не
+   работает, надо там нажимать») — .playHint переехал по центру карточки текстом «Нажмите здесь»,
+   но сам текст был pointer-events:none (чисто декоративный) — настоящая кнопка полёта осталась
+   внизу, где и была. Текст обещал одно, зона клика — другое. Один делегированный обработчик на
+   всю карусель: тап по подсказке находит НАСТОящую кнопку той же карточки (общий для всех 7 режимов
+   селектор .cardFlyBtn/.speedrunFlyBtn/.caravanFlyBtn/.relayFlyBtn, index.html) и кликает по ней —
+   тот же полёт, что и раньше, просто с ещё одной, честной зоной клика вместо декоративной. */
+document.getElementById('heroCarousel')?.addEventListener('click', function(e){
+  const hint=e.target.closest('.playHint'); if(!hint) return;
+  const card=hint.closest('.heroCard'); if(!card) return;
+  const btn=card.querySelector('.cardFlyBtn,.speedrunFlyBtn,.caravanFlyBtn,.relayFlyBtn');
+  if(btn) btn.click();
+});
 wireOn('startBtn', 'click', flyClassic); // в выбранной дисциплине (v1.42.0)
 wireOn('retryBtn', 'click', retryRun);
 wireOn('watchBtn', 'click', ()=>{ // v1.94.0 «Театр призраков» Т1: смотрим свой прыжок дня на том самом небе
@@ -4030,14 +4061,12 @@ function gratitudeSkyFill(){
   if(typeof syncGratitudeSky!=='function') return;
   syncGratitudeSky().then(function(r){
     grStars = (r && r.ok && Array.isArray(r.stars)) ? r.stars.map(function(row){ return Object.assign({id:row.id}, grStarPos(row.id)); }) : [];
-    const cnt=$('grStarCount'), hint=$('grHint'), empty=$('grEmpty');
+    const cnt=$('grStarCount'), empty=$('grEmpty');
     if(grStars.length>0){
       if(cnt){ cnt.textContent='★ '+grStars.length; cnt.classList.remove('hidden'); }
-      if(hint) hint.classList.remove('hidden');
       if(empty) empty.classList.add('hidden');
     } else {
       if(cnt) cnt.classList.add('hidden');
-      if(hint) hint.classList.add('hidden');
       if(empty){ empty.textContent=L.gratitudeEmptySky; empty.classList.remove('hidden'); }
     }
     if(!grRaf) grRaf=requestAnimationFrame(grDraw);
@@ -4092,8 +4121,14 @@ wireOn('grBubbleReport','click',function(ev){
     if(r && r.ok){ if(btn) btn.classList.add('sent'); toast(L.grReported,'rgba(240,192,64,.5)'); haptic('light'); }
   });
 });
-wireOn('grAmtUp','click',function(){ grAmt=Math.min(100000, grAmt+10); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
-wireOn('grAmtDown','click',function(){ grAmt=Math.max(1, grAmt-10); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
+/* 16.09.2026 (владелец: «фиксированная ставка... человек сам выберет сколько угодно, не
+   ограничивай его, если у него 7 звёзд есть, ему что по одной мне слать?!») — было ±10: со
+   старта в 1 (после «Коснись звезды» правки ниже сумма по умолчанию не менялась, минимум и так
+   был 1) шаг в 10 не давал остановиться ровно на 7 — либо 1, либо сразу 11, которых может не
+   быть. Шаг ±1 — та же кнопка, тот же физический контрол (не голое поле ввода, см. владелец:
+   «физические кнопки, не числовые виджеты»), просто без пропусков между значениями. */
+wireOn('grAmtUp','click',function(){ grAmt=Math.min(100000, grAmt+1); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
+wireOn('grAmtDown','click',function(){ grAmt=Math.max(1, grAmt-1); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
 wireOn('grAnonRow','click',function(){ const row=$('grAnonRow'); if(row) row.classList.toggle('on'); grFillNameRow(); sfx.click(); haptic('light'); });
 let _grSendBusy=false;
 wireOn('grSendBtn','click',function(){
@@ -4163,9 +4198,7 @@ function applyLang(){
   setText('equalityTitle',L.equalityTitle);
   setText('gratitudeBtn',L.gratitudeBtn);
   setText('gratitudeTitle',L.gratitudeTitle);
-  setText('gratitudeSoonTitle',L.gratitudeSoonTitle);
-  setText('gratitudeSoonDesc',L.gratitudeSoonDesc);
-  setText('grLead',L.grLead); setText('grCardT',L.grCardT);
+  setText('grCaption',L.grLead); setText('grCardT',L.grCardT);
   setText('grCommentLbl',L.grCommentLbl); setText('grAmountLbl',L.grAmountLbl); setText('grAnonLbl',L.grAnonLbl);
   setText('grSendLbl',L.grSendLbl);
   const grCiEl=$('grCommentInput'); if(grCiEl) grCiEl.placeholder=L.grCommentPh; // 16.09.2026: плейсхолдер-пример, не повтор слова «Комментарий»

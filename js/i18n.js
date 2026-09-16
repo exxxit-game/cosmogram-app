@@ -226,7 +226,6 @@ const I18N = {
     chSignCount:(n)=>{ const m10=n%10, m100=n%100; const one=m10===1&&m100!==11; const few=m10>=2&&m10<=4&&(m100<12||m100>14);
       return n+' '+(one?'пилот подписал':few?'пилота подписали':'пилотов подписали')+' Хартию'; },
     chSignOffline:'Нет соединения — попробуй позже', // 15.09.2026 «Равноправие»: подпись под Хартией
-    gratitudeSoonTitle:'Скоро', gratitudeSoonDesc:'Здесь появится «Небо благодарности» — каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.',
     // 15.09.2026 «Небо благодарности»: реальный экран вместо заглушки «Скоро» (бэкенд уже жил на сервере)
     grLead:'Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.',
     grCardT:'Твоя звезда', grCommentLbl:'Комментарий', grCommentPh:'Космическое спасибо', grAmountLbl:'Сколько Stars — сам решаешь',
@@ -455,7 +454,6 @@ const I18N = {
     chSignBtnLbl:'Sign', chSignBtnDone:'Signed',
     chSignCount:(n)=>n+(n===1?' pilot has signed the Charter':' pilots have signed the Charter'),
     chSignOffline:'No connection — try again later',
-    gratitudeSoonTitle:'Coming soon', gratitudeSoonDesc:'The "Sky of gratitude" is coming — every thank-you in Stars lights its own star in the sky shared by every player.',
     grLead:'Every thank-you in Stars lights its own star in the shared sky of all players.',
     grCardT:'Your star', grCommentLbl:'Comment', grCommentPh:'Cosmic thanks', grAmountLbl:'How many Stars — you decide',
     grAnonLbl:'Anonymous — your name won\'t be shown', grSendLbl:'Send via Stars',
@@ -661,7 +659,6 @@ const I18N = {
     chSignBtnLbl:'Firmar', chSignBtnDone:'Firmado',
     chSignCount:(n)=>n+(n===1?' piloto ha firmado la Carta':' pilotos han firmado la Carta'),
     chSignOffline:'Sin conexión — inténtalo más tarde',
-    gratitudeSoonTitle:'Próximamente', gratitudeSoonDesc:'Aquí aparecerá el «Cielo de la gratitud» — cada gracias en Stars enciende su propia estrella en el cielo compartido por todos los jugadores.',
     grLead:'Cada gracias en Stars enciende su propia estrella en el cielo compartido de todos los jugadores.',
     grCardT:'Tu estrella', grCommentLbl:'Comentario', grCommentPh:'Gracias cósmicas', grAmountLbl:'Cuántos Stars — tú decides',
     grAnonLbl:'Anónimo — tu nombre no se mostrará', grSendLbl:'Enviar con Stars',
@@ -886,7 +883,6 @@ const I18N = {
     chSignBtnLbl:'Assinar', chSignBtnDone:'Assinado',
     chSignCount:(n)=>n+(n===1?' piloto assinou a Carta':' pilotos assinaram a Carta'),
     chSignOffline:'Sem ligação — tenta mais tarde',
-    gratitudeSoonTitle:'Em breve', gratitudeSoonDesc:'Aqui vai aparecer o «Céu da gratidão» — cada obrigado em Stars acende sua própria estrela no céu compartilhado por todos os jogadores.',
     grLead:'Cada obrigado em Stars acende a sua própria estrela no céu partilhado de todos os jogadores.',
     grCardT:'A tua estrela', grCommentLbl:'Comentário', grCommentPh:'Obrigado cósmico', grAmountLbl:'Quantos Stars — tu decides',
     grAnonLbl:'Anónimo — o teu nome não aparece', grSendLbl:'Enviar com Stars',
@@ -1112,7 +1108,6 @@ const I18N = {
     chSignBtnLbl:'Signer', chSignBtnDone:'Signé',
     chSignCount:(n)=>n+(n===1?' pilote a signé la Charte':' pilotes ont signé la Charte'),
     chSignOffline:'Pas de connexion — réessaie plus tard',
-    gratitudeSoonTitle:'Bientôt', gratitudeSoonDesc:'Le « Ciel de la gratitude » arrive bientôt — chaque merci en Stars allume sa propre étoile dans le ciel partagé par tous les joueurs.',
     grLead:'Chaque merci en Stars allume sa propre étoile dans le ciel partagé de tous les joueurs.',
     grCardT:'Ton étoile', grCommentLbl:'Commentaire', grCommentPh:'Merci cosmique', grAmountLbl:'Combien de Stars — c’est toi qui décides',
     grAnonLbl:'Anonyme — ton nom ne sera pas affiché', grSendLbl:'Envoyer via Stars',

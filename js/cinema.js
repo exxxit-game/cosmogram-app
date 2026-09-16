@@ -635,9 +635,21 @@ async function galleryOpen(){
   if (typeof setScreen==='function') setScreen('flightGallery');
   if (typeof sfx!=='undefined' && sfx.click) sfx.click();
 }
-function galleryCardOpen(id, cat){
+/* 16.09.2026 (владелец, живое устройство: «просто можно видеть, что оно там есть, но нельзя
+   посмотреть») — было: url=_galUrls[id] и тихий return, если кэш ещё не готов. galleryFill()
+   заполняет _galUrls асинхронно (IndexedDB), и на реальном устройстве (медленнее локальной
+   раздачи) окно гонки между «карточка уже нарисована» и «URL уже в кэше» реально ловится —
+   тап в это окно ничего не делал и не жаловался. Теперь при промахе кэша грузим блоб заново
+   напрямую, без тихого выхода. */
+async function galleryCardOpen(id, cat){
   const card=$(id); if(!card || card.classList.contains('galEmpty')) return;
-  const url=_galUrls[id]; if(!url) return;
+  let url=_galUrls[id];
+  if(!url){
+    const blob = id==='galCardFirst' ? await cinemaLoadFirst() : (cat ? await cinemaLoadGallery(cat) : null);
+    if(!blob) return; // настоящей записи и правда нет (не гонка, а честно пусто) — .galEmpty к этому моменту уже должен был скрыть тап, но на всякий случай не открываем пустой плеер
+    url = URL.createObjectURL(blob);
+    _galUrls[id]=url;
+  }
   _galCurrentIsFirst = (id==='galCardFirst');
   playerOpen(url, ''); // без реплики — тот же выбор, что раньше был у «Первого полёта»
   const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку/сторис — своя, отдельная история клипа с «Итогов», не эта галерея

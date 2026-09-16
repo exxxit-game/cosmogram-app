@@ -610,7 +610,13 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    «Статус» в углу) заворачивалось в 5 строк — тесно, плохо читается. 2 строки + многоточие,
    полный текст остаётся в i18n.js, обрезается только показ на узкой карточке. */
 .heroCard .modeDesc{font-size:11px;opacity:.85;line-height:1.3;margin-top:3px;max-width:82%;
-  color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  text-wrap:balance} /* 16.09.2026 (владелец: «должно аккуратно распределяться по строкам»,
+  «находить симметрию между собой») — 7 разных предложений переносятся каждое по-своему
+  (обычный перенос по ширине, без учёта соседних строк — вторая строка то короткая-на-два-слова,
+  то длинная), text-wrap:balance — штатное CSS-свойство именно под эту задачу (двух строк с
+  похожей длиной), не выдуманное подгонкой под один текст; на не поддерживающих браузерах молча
+  откатывается к обычному переносу, не ломает ничего. */
 /* 16.09.2026: .playHint сталкивался с modeDesc, пока подсказка стояла в правом нижнем углу —
    сужение modeDesc было костылём именно под то положение (49×11px нахлёст, измерено вживую на
    Эстафете). Подсказка переехала в свободную зону по центру карточки (см. её комментарий ниже,
@@ -659,7 +665,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    требует сужать modeDesc вообще, никакого компромисса с обрезкой длинного текста Эстафеты. */
 .heroCard .playHint{position:absolute;top:36px;left:50%;transform:translateX(-50%);width:130px;
   font-size:9.5px;line-height:1.3;color:var(--gold-hi);opacity:.6;
-  text-align:center;letter-spacing:.02em;pointer-events:none;z-index:1}
+  text-align:center;letter-spacing:.02em;pointer-events:auto;cursor:pointer;z-index:1}
+  /* 16.09.2026: pointer-events:auto (было none) — текст «Нажмите здесь» теперь и правда
+     нажимаем, см. делегированный обработчик на #heroCarousel в js/ui.js. */
 .heroCard .playHint.hidden{display:none} /* прячется, когда у карточки уже есть свой .trail — см. heroTrailsFill() */
 /* 15.09.2026 (страж 194): у Спидрана/Каравана .forgeSeg (переключатель варианта/тира) —
    абсолютная колонка в правом НИЖНЕМ углу, в той же строке, что текст кнопки полёта — сузил
@@ -855,7 +863,11 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    подходит к границе безопасной зоны, чем уже проверенные вживую заголовки. Более тесная
    max-width — только этим двум, не трогает остальные восемь (правка не подтверждена на
    реальном устройстве — ждёт живой проверки). */
-#equalityTitle, #gratitudeTitle { max-width:calc(100% - 140px); }
+/* 16.09.2026 (владелец: «наша извечная проблема... текст заходит на кнопку назад у телеграмма»,
+   Галерея видео-рекордов, реальный скрин) — тот же самый класс, что уже чинился здесь 15.09.2026
+   для Благодарности/Равноправия: #flightGalleryTitle («Видео полётов», два слова) тоже не входит
+   в UNIFORM_TITLE_IDS, тоже садится на кегль шире общего минимума. Тот же самый проверенный запас. */
+#equalityTitle, #gratitudeTitle, #flightGalleryTitle { max-width:calc(100% - 140px); }
 .miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
 #feedbackCount { color:rgba(158,178,224,.6); }
 /* 30.08.2026: цвет раньше жил в inline style на самом элементе — тот побеждает любой
@@ -1454,12 +1466,15 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    «да»/«делай»): вводная фраза — по центру (была прижата к левому краю без причины); небо
    выросло 230→340px — «звёзд ждём много, небо сразу должно быть большим», место освободила
    убранная .grPrivacy (см. её след ниже) и более собранная карточка формы. */
-.grLead{font-size:13px;color:var(--muted);line-height:1.5;padding:0 4px;margin-bottom:14px;text-align:center}
 .grSkyWrap{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);
   background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);height:340px;margin-bottom:10px}
 .grSkyWrap canvas{display:block;width:100%;height:100%}
-.grHint{position:absolute;left:12px;bottom:10px;font-size:10.5px;color:var(--muted);
-  background:rgba(4,7,16,.55);padding:4px 9px;border-radius:999px;pointer-events:none}
+/* 16.09.2026 (владелец: «перенести текст... в экран») — было .grLead, отдельным абзацем НАД
+   небом (margin-bottom:14px, обычный текст в потоке) — теперь подпись внутри самого неба,
+   тем же неброским приёмом, что раньше нёс .grHint («коснись звезды», теперь убран целиком). */
+.grCaption{position:absolute;left:12px;right:12px;bottom:10px;font-size:10.5px;color:var(--muted);
+  background:rgba(4,7,16,.55);padding:6px 12px;border-radius:14px;pointer-events:none;
+  text-align:center;line-height:1.4}
 .grStarCount{position:absolute;right:12px;top:10px;font-size:11px;color:var(--gold-hi);font-weight:700;
   background:rgba(4,7,16,.55);padding:4px 10px;border-radius:999px}
 .grEmpty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -2203,8 +2218,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #forgeHarmonyNote{font-size:10.5px;color:var(--muted);text-transform:none;line-height:1.4;letter-spacing:.02em}
 /* 06.09.2026 «Играть/Создать»: тот же визуальный язык, что .achTab на Достижениях — не
    изобретаем новый, экран и так получает новую структуру. */
-.forgeTabs{display:flex;gap:8px;justify-content:center;width:min(94%,560px);margin-bottom:2px;pointer-events:auto;
-  margin-left:auto;margin-right:auto} /* 07.09.2026: #forgeTabs (Играть/Создать) — прямой ребёнок
+.forgeTabs{display:flex;gap:8px;justify-content:center;width:min(94%,560px);margin-top:10px;margin-bottom:2px;pointer-events:auto;
+  margin-left:auto;margin-right:auto} /* 16.09.2026 (владелец, живой скрин+запись: «обводка наезжает» на заголовок «Конструктор») —
+  golden-рамка/свечение .forgeTab.sel — общий токен --stone-border-sel/--stone-shadow-sel, тот же,
+  что у .forgeChip.sel/.forgeSegBtn.sel в этом же файле — сегодня же явно объединён владельцем
+  («тот же камень/кольцо для каждой кнопочки»), сужать её здесь одной — тихо отменить то решение.
+  Вместо этого — небольшой зазор сверху, без правки общего материала.
+  07.09.2026: #forgeTabs (Играть/Создать) — прямой ребёнок
   .scrBody, .scrBody сам его центрирует (align-items:center) — этому явный margin не был нужен.
   Но #forgeSubTabs (Расстановка/Небо/Сложность) тем же классом лежит на уровень глубже, .scrBody
   до него не достаёт — 0px слева/23px справа, замерено вживую. Явный margin:auto работает
@@ -3371,9 +3391,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.334"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.334"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.334"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.335"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.335"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.335"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -3902,11 +3922,15 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="gratitudeBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="gratitudeTitle">Благодарность</div>
   <div class="scrBody">
-    <p class="grLead" id="grLead">Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</p>
     <div class="grSkyWrap" id="grSkyWrap"> <!-- 16.09.2026: id добавлен — grPositionBubble() (js/ui.js) меряет эту рамку по $()/getElementById, класс без id ей не найти -->
       <canvas id="grSky"></canvas>
       <div class="grStarCount hidden" id="grStarCount"></div>
-      <div class="grHint hidden" id="grHint">коснись звезды</div>
+      <!-- 16.09.2026 (владелец: «перенести текст... в экран», «коснись звезды убрать») — .grLead
+           (было отдельным абзацем НАД небом) переехало сюда, заменив собой .grHint («коснись
+           звезды») целиком — одна подпись вместо двух, всегда видна (не зависит от того, есть
+           ли уже звёзды), в отличие от старого .grHint, который показывался только когда звёзды
+           уже были. -->
+      <div class="grCaption" id="grCaption">Каждое спасибо в Stars зажигает свою звезду в общем небе всех игроков.</div>
       <div class="grEmpty hidden" id="grEmpty"></div>
       <div class="grBubble" id="grBubble">
         <div class="grBubbleTxt"><b id="grBubbleName"></b><span id="grBubbleComment"></span></div>
@@ -4557,26 +4581,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.334" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.334"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.334"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.334"></script>
-<script defer src="js/game.js?v=1.478.334" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.334"></script>
-<script defer src="js/sync.js?v=1.478.334"></script>
-<script defer src="js/render.js?v=1.478.334"></script>
-<script defer src="js/planetarium.js?v=1.478.334"></script>
-<script defer src="js/goldstar.js?v=1.478.334"></script>
-<script defer src="js/finish.js?v=1.478.334"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.334"></script>
-<script defer src="js/gyro.js?v=1.478.334"></script>
-<script defer src="js/forge.js?v=1.478.334"></script>
-<script defer src="js/partitura.js?v=1.478.334"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.334"></script>
-<script defer src="js/card.js?v=1.478.334"></script>
-<script defer src="js/star.js?v=1.478.334"></script>
-<script defer src="js/cinema.js?v=1.478.334"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.334"></script>
+<script defer src="js/core.js?v=1.478.335" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.335"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.335"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.335"></script>
+<script defer src="js/game.js?v=1.478.335" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.335"></script>
+<script defer src="js/sync.js?v=1.478.335"></script>
+<script defer src="js/render.js?v=1.478.335"></script>
+<script defer src="js/planetarium.js?v=1.478.335"></script>
+<script defer src="js/goldstar.js?v=1.478.335"></script>
+<script defer src="js/finish.js?v=1.478.335"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.335"></script>
+<script defer src="js/gyro.js?v=1.478.335"></script>
+<script defer src="js/forge.js?v=1.478.335"></script>
+<script defer src="js/partitura.js?v=1.478.335"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.335"></script>
+<script defer src="js/card.js?v=1.478.335"></script>
+<script defer src="js/star.js?v=1.478.335"></script>
+<script defer src="js/cinema.js?v=1.478.335"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.335"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
