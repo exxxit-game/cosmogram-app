@@ -575,13 +575,26 @@ document.querySelectorAll('.recordBadge').forEach(function(b){
   document.addEventListener('pointerdown', function(e){
     if (!e.target.closest('.exxxitCard')) return;
     cancel();
-    timer = setTimeout(function(){ timer = null; toggleDebugConsole(); }, HOLD_MS);
+    timer = setTimeout(function(){ timer = null; toggleDebugConsole(); showEnvAlert(); }, HOLD_MS);
   });
   document.addEventListener('pointerup', cancel);
   document.addEventListener('pointercancel', cancel);
   document.addEventListener('pointerleave', cancel);
   if (Store.get('debugConsole', false)) loadDebugConsole();
 })();
+// 17.09.2026, шестая находка того же вечера: Eruda (сеть/Shadow DOM/иконка — три разных повода
+// не показаться) оказалась слишком ненадёжной именно для того единственного, что было нужно
+// прямо сейчас, — реальные цифры safe-area с телефона владельца. alert() рисует сама
+// операционная система поверх абсолютно всего, без сети, без Shadow DOM, без z-index игры —
+// то же долгое нажатие показывает его сразу, никакого второго действия («Добавить
+// автодиагностику») не нужно. Полноценная Eruda (loadDebugConsole ниже) продолжает
+// пытаться загрузиться параллельно, для будущей полной отладки — но эта строка не ждёт её.
+function showEnvAlert(){
+  try{
+    const env = (typeof BEACON!=='undefined' && BEACON.envCtx) ? BEACON.envCtx() : 'BEACON.envCtx недоступен';
+    alert('Cosmogram v'+GAME_VERSION+' · '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?')+'\n'+env);
+  }catch(e){ try{ alert('showEnvAlert упал: '+String(e).slice(0,120)); }catch(e2){} }
+}
 function loadDebugConsole(){
   if (window.eruda){ window.eruda.show(); erudaVisCheck(); return; }
   const s = document.createElement('script');
