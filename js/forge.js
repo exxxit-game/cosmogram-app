@@ -1197,7 +1197,11 @@ function mapOver(sc){
   // 30.08.2026 «Единый паспорт забега»: числа этого забега (миссия/дистанция/звёзды/комбо) теперь
   // строит runPassFill() (#runHead/#runPass) — здесь дублировать их старой сеткой больше не нужно,
   // остаётся только имя трассы + плашка победы.
-  if(statsEl) statsEl.innerHTML='<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill">'+ic('plane')+(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
+  // 18.09.2026 (сквозная проверка всей игры на XSS): S.customName — чужие данные (имя трассы
+  // из диплинка или Мастерской, см. forgeSanitize/sanitizeTrackName), сейчас безопасно только
+  // потому, что опасные символы вырезаются ДО сохранения — здесь экранируем ещё раз, на месте
+  // вставки в innerHTML, чтобы не зависеть от того, что апстрим-очистка никогда не даст сбой.
+  if(statsEl) statsEl.innerHTML='<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill">'+ic('plane')+escapeHtml(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
   runPassFill();
   if (typeof cardCapture==='function') cardCapture(sc,{win:!!S.mapWin}); // v1.73.0: карточка и для своей трассы — с именем автора
   const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
