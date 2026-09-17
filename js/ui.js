@@ -571,15 +571,29 @@ document.querySelectorAll('.recordBadge').forEach(function(b){
 (function debugConsoleWire(){
   const HOLD_MS = 2000;
   let timer = null;
-  function cancel(){ if (timer){ clearTimeout(timer); timer = null; } }
+  // 17.09.2026, девятая находка того же вечера — вместо ещё одной догадки: полная трассировка
+  // в тот же бортовой журнал, что уже ДВАЖДЫ подряд честно дошёл через «Добавить
+  // автодиагностику» (единственный канал сегодня, ни разу не подведший). Следующая лента
+  // покажет буквально, на каком именно шаге обрывается — старт/отмена/срабатывание/какой
+  // именно код дальше выполнился, без единого предположения с моей стороны.
+  function dbg(msg){ if (typeof BB!=='undefined') BB.log('debug','hold: '+msg); }
+  function cancel(reason){ if (timer){ clearTimeout(timer); timer = null; dbg('отменено — '+reason); } }
   document.addEventListener('pointerdown', function(e){
     if (!e.target.closest('.exxxitCard')) return;
-    cancel();
-    timer = setTimeout(function(){ timer = null; toggleDebugConsole(); showEnvAlert(); }, HOLD_MS);
+    dbg('pointerdown на карточке, старт таймера '+HOLD_MS+'мс');
+    cancel('новый pointerdown поверх старого');
+    timer = setTimeout(function(){
+      timer = null;
+      dbg('таймер дожил до конца — зову toggleDebugConsole()');
+      try{ toggleDebugConsole(); dbg('toggleDebugConsole() отработал без исключения'); }
+      catch(e){ dbg('toggleDebugConsole() упал — '+String(e).slice(0,80)); }
+      try{ showEnvAlert(); dbg('showEnvAlert() отработал без исключения'); }
+      catch(e){ dbg('showEnvAlert() упал — '+String(e).slice(0,80)); }
+    }, HOLD_MS);
   });
-  document.addEventListener('pointerup', cancel);
-  document.addEventListener('pointercancel', cancel);
-  document.addEventListener('pointerleave', cancel);
+  document.addEventListener('pointerup', function(){ cancel('pointerup'); });
+  document.addEventListener('pointercancel', function(){ cancel('pointercancel — браузер сам оборвал последовательность'); });
+  document.addEventListener('pointerleave', function(){ cancel('pointerleave'); });
   if (Store.get('debugConsole', false)) loadDebugConsole();
 })();
 // 17.09.2026, шестая находка того же вечера: Eruda (сеть/Shadow DOM/иконка — три разных повода
@@ -597,12 +611,17 @@ function showEnvAlert(){
   // tg.showAlert() (мост уже подключён, js/vendor/telegram-web-app.js). `tg` в моей среде
   // ВСЕГДА null (initData настоящего Телеграма у меня быть не может) — эту находку было
   // физически невозможно поймать своим тестированием, не по невнимательности.
+  const dbg = function(msg){ if (typeof BB!=='undefined') BB.log('debug','alert: '+msg); };
   const env = (typeof BEACON!=='undefined' && BEACON.envCtx) ? BEACON.envCtx() : 'BEACON.envCtx недоступен';
   const text = 'Cosmogram v'+GAME_VERSION+' · '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?')+'\n'+env;
+  const hasTg = typeof tg!=='undefined' && !!tg;
+  const hasShowAlert = hasTg && typeof tg.showAlert==='function';
+  dbg('tg='+hasTg+' tg.showAlert='+hasShowAlert);
   try{
-    if (typeof tg!=='undefined' && tg && typeof tg.showAlert==='function'){ tg.showAlert(text); return; }
-  }catch(e){}
-  try{ alert(text); }catch(e){ try{ alert('showEnvAlert упал: '+String(e).slice(0,120)); }catch(e2){} }
+    if (hasShowAlert){ tg.showAlert(text); dbg('tg.showAlert() вызван без исключения'); return; }
+  }catch(e){ dbg('tg.showAlert() упал — '+String(e).slice(0,80)); }
+  try{ alert(text); dbg('нативный alert() вызван без исключения'); }
+  catch(e){ dbg('нативный alert() тоже упал — '+String(e).slice(0,80)); }
 }
 function loadDebugConsole(){
   if (window.eruda){ window.eruda.show(); erudaVisCheck(); return; }
