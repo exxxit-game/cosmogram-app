@@ -502,8 +502,20 @@ async function cinemaTestStop(){
    (картинка всё равно работает), так что ошибиться в диапазоне не критично, точная
    калибровка — по данным теста на A03 Core, когда будут. */
 const CINEMA_HIGHLIGHT_MIN_FPS = 40;
+/* 17.09.2026 (владелец: «первый рекорд тоже должен записаться, а не только следующий») —
+   раньше ждали ТОЛЬКО Q._baseFps: он снимается один раз за вкладку, но лишь после 60 секунд
+   суммарного времени полёта (render.js qualityTick) — число, измеренное для СОВСЕМ другой
+   задачи (диагностика просадок кадров, fps_drop), а не для решения «писать видео или нет».
+   Первый рекорд свежего режима почти всегда ставится раньше этой минуты — запись пропускалась
+   целиком, а следующий рекорд (уже после минуты) писался. Пока живого замера ещё нет — решаем
+   по уже готовой оценке мощности телефона (gfxTier(), core.js — та же, по которой само
+   авто-качество графики решает уровень эффектов): слабый (0) по-прежнему без записи, средний
+   и флагман (1/2) пишут сразу. Как только Q._baseFps появится — точный живой замер побеждает,
+   как и раньше. Страж 266. */
 function cinemaHighlightEligible(){
-  return typeof Q!=='undefined' && Q._baseFps!=null && Q._baseFps >= CINEMA_HIGHLIGHT_MIN_FPS;
+  if (typeof Q==='undefined') return false;
+  if (Q._baseFps!=null) return Q._baseFps >= CINEMA_HIGHLIGHT_MIN_FPS;
+  return typeof gfxTier==='function' && gfxTier()>=1;
 }
 let _cinemaHighlightWatcher=0, _cinemaHighlightBest=0;
 function cinemaHighlightStart(canvas){
