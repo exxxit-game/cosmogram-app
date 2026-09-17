@@ -2136,8 +2136,9 @@ function angarPvZoomShareGate(){
    «Поделиться» (файлом, navigator.share) — тот же путь, не тронут, владелец не просил. */
 wireOn('angarPvZoomShare','click',()=>{
   const b=$('angarPvZoomShare'); if(!b||!angarPvZoomItem) return;
-  const sc=angarPvStoryCanvasStart();
-  cinemaAngarZoomShare(sc.canvas, ()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ sc.stop(); b.disabled=false; b.classList.remove('recording'); });
+  // 18.09.2026: cinemaAngarZoomShareEntry (cinema.js) сама выбирает движок (Mediabunny
+  // или старый запасной путь) и сама ведёт холст — здесь только кнопка-индикатор.
+  cinemaAngarZoomShareEntry(()=>{ b.disabled=true; b.classList.add('recording'); }, ()=>{ b.disabled=false; b.classList.remove('recording'); });
 });
 
 /* 28.08.2026 «Настоящая звезда»: цена скина и кошелёк рисовались плоской иконкой i-star4

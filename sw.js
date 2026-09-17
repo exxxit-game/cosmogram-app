@@ -5,7 +5,7 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.478.369';
+const V = '1.478.370';
 const CACHE = 'cosmogram-v' + V;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 // 01.09.2026: partitura.js добавлен в index.html вместе с Партитурой, но забыт здесь — страж 29
@@ -13,7 +13,7 @@ const CACHE = 'cosmogram-v' + V;
 // и в index.html (partitura.js зависит от forgeCfg/FORGE_KINDS).
 const JS_FILES = [
   'i18n','core','blackbox','skymail','input','game','ach','sync','render','planetarium',
-  'goldstar','finish','music','gyro','forge','partitura','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min','vendor/eruda.min'
+  'goldstar','finish','music','gyro','forge','partitura','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min','vendor/eruda.min','vendor/mediabunny.min'
 ];
 const SHELL = [
   './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше
@@ -30,6 +30,7 @@ const SHELL = [
   'fonts/jura-cyrillic.woff2', 'fonts/jura-latin.woff2', 'fonts/OFL-Jura.txt', // 04.09.2026: только карточка exxxit game studio на «Написать разработчику»
   'js/vendor/mp4-muxer-license/LICENSE', // 28.08.2026: MIT-текст рядом с вендором, тот же приём, что у шрифтов
   'js/vendor/eruda-license/LICENSE', // 17.09.2026: тот же приём — MIT-текст рядом с вендором
+  'js/vendor/mediabunny-license/LICENSE', // 18.09.2026: тот же приём — MPL-2.0 текст рядом с вендором
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png',
   'icons/icon-maskable-512.png', 'icons/favicon-32.png', 'icons/og-image.png'
 ];

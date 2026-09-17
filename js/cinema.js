@@ -896,6 +896,97 @@ async function cinemaAngarZoomShare(canvas, onStart, onEnd){
   finally{ _cinemaOwner=null; _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
 }
 
+/* ---------- Mediabunny: запись явления для «Поделиться» (18.09.2026) ----------
+   Вендоренная ESM-библиотека (js/vendor/mediabunny.min.js, Vanilagy/mediabunny, MPL-2.0) —
+   официальный преемник mp4-muxer (автор сам объявил mp4-muxer устаревшим, см. коммит
+   «cinemaHighlightEligible»/памятка владельца [[feedback_vendor_bibliotek_...]]). Живой тест
+   владельца («Поделиться явлением», Коллекция): «не было плавности... часть изображения
+   терялась». Причина (страж 267) — отдельный от отрисовки таймер захвата. Здесь — не
+   полумера (синхронизация через requestAnimationFrame), а корень: рисование и захват кадра
+   идут В ОДНОМ И ТОМ ЖЕ тике одного цикла, второго таймера просто НЕТ вообще —
+   `CanvasSource` Mediabunny создан именно под этот приём («один холст, свой цикл, каждый
+   кадр — в файл», см. документация mediabunny.dev/guide/media-sources).
+   Область применения — НАРОЧНО только этот один путь (запись явления, без кольцевой
+   обрезки/подрезки). Кольцевой движок cinemaStart/cinemaStop (первый полёт, хайлайт
+   рекорда — там подрезка последних N секунд, склейка сегментов) НЕ трогается здесь —
+   отдельная, более крупная задача, не в этом заходе. */
+let _mediabunnyMod=null, _mediabunnyLoadFailed=false;
+async function loadMediabunny(){
+  if (_mediabunnyMod) return _mediabunnyMod;
+  if (_mediabunnyLoadFailed) return null;
+  try{ _mediabunnyMod = await import('./vendor/mediabunny.min.js?v='+GAME_VERSION); return _mediabunnyMod; }
+  catch(e){ _mediabunnyLoadFailed=true; if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('mediabunny_load_fail', String((e&&e.message)||e).slice(0,60)); return null; }
+}
+async function cinemaAngarZoomShareMB(mb, onStart, onEnd){
+  _cinemaAngarZoomBusy=true;
+  if (typeof onStart==='function') onStart();
+  let videoSource=null;
+  try{
+    const d=Math.min(window.devicePixelRatio||1, (typeof dprCap!=='undefined'?dprCap:2));
+    const BW=270, BH=480; // логический короб 9:16, тот же приём «короб × dpr», что был у angarPvStoryCanvasStart
+    const cv=document.createElement('canvas');
+    cv.width=Math.round(BW*d); cv.height=Math.round(BH*d);
+    const x=cv.getContext('2d');
+    x.setTransform(d,0,0,d,0,0);
+
+    const codec = await mb.getFirstEncodableVideoCodec(['avc','vp9'], { width:cv.width, height:cv.height });
+    if (!codec){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+
+    const output = new mb.Output({ format:new mb.Mp4OutputFormat(), target:new mb.BufferTarget() });
+    videoSource = new mb.CanvasSource(cv, { codec, quality:new mb.Quality(0.8) });
+    output.addVideoTrack(videoSource);
+    await output.start();
+
+    const frameMs = 1000/30, t0 = performance.now();
+    let lastGrabAt = -Infinity; // 18.09.2026: штамп времени и длительность кадра — из РЕАЛЬНЫХ часов
+      // (elapsed/сколько реально прошло с прошлого захвата), не из счётчика «кадр №N при 30/сек» —
+      // тот подсчёт молча предполагал, что кадры и правда идут строго по 33мс. На практике сам
+      // await videoSource.add() иногда занимает дольше (кодировщик занят) — счётчик кадров начинал
+      // отставать от настоящих часов, и итоговое видео получалось короче настоящих 4 секунд записи
+      // (страж 268 поймал живьём: 2.1с вместо ~4с). Реальные часы этой ошибке не подвержены.
+    await new Promise((resolve)=>{
+      const loop=async ()=>{
+        const now = performance.now(), elapsed = now-t0;
+        angarPvStoryDraw(x, BW, BH, elapsed); // рисуем
+        if (now-lastGrabAt >= frameMs){ // и тут же, в ЭТОМ ЖЕ тике, захватываем — не отдельным циклом
+          const gapS = (lastGrabAt===-Infinity ? frameMs : (now-lastGrabAt))/1000;
+          lastGrabAt = now;
+          try{ await videoSource.add(elapsed/1000, gapS); }catch(e){}
+        }
+        if (elapsed >= CINEMA_ANGAR_ZOOM_MS){ resolve(); return; }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    });
+
+    videoSource.close(); videoSource=null;
+    await output.finalize();
+    const blob = new Blob([output.target.buffer], { type:'video/mp4' });
+    const file = new File([blob],'cosmogram-yavlenie.mp4',{type:'video/mp4'});
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      if (typeof haptic==='function') haptic('light');
+    } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
+  }catch(e){
+    try{ if(videoSource) videoSource.close(); }catch(_){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
+  }
+  finally{ _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
+}
+/* Точка входа (зовётся из ui.js вместо отдельной пары angarPvStoryCanvasStart+
+   cinemaAngarZoomShare): пробует Mediabunny — та САМА создаёт и ведёт свой холст (один
+   цикл на рисование и захват, см. выше), поэтому здесь НЕ создаём холст заранее — иначе
+   старый angarPvStoryCanvasStart() запустил бы свой ВТОРОЙ, никому не нужный цикл рисования
+   параллельно. Падает на старый путь (cinemaStart/cinemaStop, уже с фиксом рассинхрона —
+   страж 267) только если библиотека не загрузилась вообще — честный, дешёвый запасной путь,
+   не выдуманный «на всякий случай». */
+async function cinemaAngarZoomShareEntry(onStart, onEnd){
+  if (_cinemaAngarZoomBusy || cinemaActive()) return;
+  const mb = await loadMediabunny();
+  if (mb) return cinemaAngarZoomShareMB(mb, onStart, onEnd);
+  const sc = angarPvStoryCanvasStart();
+  return cinemaAngarZoomShare(sc.canvas, onStart, ()=>{ sc.stop(); if (typeof onEnd==='function') onEnd(); });
+}
+
 /* «В сторис» на «Клипе» (05.09.2026, «Доделать Кино полёта») — тот же путь, что cardStory()
    в card.js для картинки, только вместо PNG → mp4: экспортируем клип с вжатой рамкой
    (cinemaExportHighlightCard — та же функция, что уже кормит системное «Поделиться» выше),
