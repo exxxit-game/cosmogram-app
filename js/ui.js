@@ -865,7 +865,13 @@ function gameOver(){
   const cat=caravanOtherTier?('caravan'+caravanOtherTier):(S.mode==='caravan'?'caravan':(S.mode==='relay'?'relay':mode));
   const modeKey=caravanOtherTier?('bestCaravan'+caravanOtherTier):(S.mode==='caravan'?'bestCaravan':(S.mode==='relay'?'bestRelayLeg':(mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')))); // v1.280.0: добавлена ветка keys
   const prevCat=saneNumber(Store.get(modeKey,0),0);
-  const isRecord = sc>prevCat && sc>0;
+  // 17.09.2026: у Неба месяца/Спидрана/Слалома/Биатлона свой личный рекорд (dailyBest/srBest/
+  // slalomBest/biathlonBest, ниже) — caravan/relay уже были исключены через cat/modeKey выше,
+  // а эти четыре нет: их sc проваливался в bestTouch/bestGyro/bestKeys (т.к. cat=mode — способ
+  // управления, не режим), тихо переписывая чужой личный рекорд Score Attack чужим счётом и
+  // чужим следом полёта. Страж 262 (tests/guard.mjs) поймал это живым тестом.
+  const foreignRecordMode = S.mode==='daily'||S.mode==='speedrun'||S.mode==='slalom'||S.mode==='biathlon';
+  const isRecord = !foreignRecordMode && sc>prevCat && sc>0;
   const ghostBeatNow=!!(typeof ghostForeign!=='undefined' && ghostForeign && foreignFrom==='top' &&
     ghostPid>0 && ghostCat && cat===ghostCat && ghostBest>0 && sc>ghostBest); // призрачная месть: призрак из топа, та же категория, счёт выше его планки
   if (isRecord){ Store.set(modeKey,sc); haptic('success'); if (typeof confetti==='function') confetti(); // вау-момент
@@ -976,6 +982,7 @@ function gameOver(){
     const dd=S.dailyDay||trackDayKey();
     const prevDl=Store.get('dailyBest',null), prevDlSc=(prevDl && prevDl.d===dd)?prevDl.s:0;
     if (sc>prevDlSc){ Store.set('dailyBest',{d:dd,s:sc});
+      if (rec.length>=20 && typeof ghostSave==='function') ghostSave('daily'); // 17.09.2026: своей ветки не было вообще — карточка дня не могла нарисовать след ни разу, тем же приёмом, что и у Спидрана/Слалома/Биатлона 15.09.2026
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
   }
   // 07.09.2026: 1CC убран из игры (владелец: 2 попытки в реальный день на общий месячный сид
