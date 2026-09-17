@@ -586,7 +586,12 @@ function loadDebugConsole(){
   if (window.eruda){ window.eruda.show(); return; }
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/eruda'; // 17.09.2026: грузится только по явному вызову владельца, не для всех игроков разом
-  s.onload = function(){ if (window.eruda) window.eruda.init(); };
+  // 17.09.2026 (владелец вживую, матом — реальная находка): eruda.init() САМ ПО СЕБЕ только
+  // ставит маленькую иконку-вход, панель не открывает — нужен ещё отдельный тап по ней. Иконка
+  // мелкая, тёмная, в нижнем углу — на реальном телефоне владелец её физически не нашёл. Раньше
+  // это означало «включил, но ничего не видно», без второго действия панель не открывалась
+  // никогда. eruda.show() сразу после init() — панель раскрыта сама, без поиска иконки.
+  s.onload = function(){ if (window.eruda){ window.eruda.init(); window.eruda.show(); } };
   s.onerror = function(){ haptic('error'); }; // 17.09.2026: раньше неудачная загрузка (нет сети) была совсем молчаливой — теперь хотя бы вибро-сигнал, что что-то не так
   document.head.appendChild(s);
 }
