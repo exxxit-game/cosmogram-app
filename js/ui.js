@@ -80,6 +80,7 @@ function backAction(){
   else if(screenName==='feedback') closeFeedback(); // 02.09.2026: владелец, живое устройство — нативная «Назад» на этом экране молчала, ветки не было вовсе
   else if(screenName==='equality') toMenu(); // 15.09.2026: тот же пропуск, что у feedback выше — «Равноправие»/«Благодарность» появились в setScreen(), сюда добавить забыли
   else if(screenName==='gratitude') toMenu();
+  else if(screenName==='flightGallery') toMenu(); // 17.09.2026 (владелец, ревизия по памяти о повторяющемся баге): тот же пропуск в четвёртый раз — экран добавлен 16.09.2026 в setScreen(), сюда (нативная/аппаратная «Назад» Telegram) добавить забыли; круглая кнопка flightGalleryBackBtn работала, эта ветка — нет
 }
 if (tg && tg.BackButton && tgv('6.1')){
   try{ tg.BackButton.onClick(backAction); }catch(e){}
