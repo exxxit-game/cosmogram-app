@@ -442,13 +442,15 @@ function speedrunCardFill(){
       seg.appendChild(b);
     });
   }
-  // 15.09.2026 (владелец: «в спидран будут иконки» — SSG=цель/фикс, RSG=shuffle/случайное):
-  // готовые иконки спрайта (#i-target уже стоит на вкладке Caravan в Топе, #i-shuffle — на
-  // «Перемешать» в Кузнице), не нарисованы заново. title несёт подпись — SSG/RSG остаются
-  // доступны на подсказке/скринридеру, просто не печатаются буквами на самой пилюле.
-  seg.children[0].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-target"></use></svg>';
+  // 15.09.2026 (владелец: «в спидран будут иконки» — SSG=цель/фикс, RSG=shuffle/случайное) →
+  // 17.09.2026 (владелец, живой макет speedrun-ikonki-ssg-rsg-17-09-2026.html, «Да, делай»):
+  // #i-target/#i-shuffle не читались как пара ОДНОГО режима (мишень и shuffle — из разных
+  // смысловых семейств) — свои i-repeat/i-zigzag, нарисованы и проверены в макете (10 вариантов
+  // сразу, живой размер кнопки 19px, владелец выбрал 3+6). title несёт подпись — SSG/RSG
+  // остаются доступны на подсказке/скринридеру, просто не печатаются буквами на самой пилюле.
+  seg.children[0].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-repeat"></use></svg>';
   seg.children[0].title=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
-  seg.children[1].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
+  seg.children[1].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-zigzag"></use></svg>';
   seg.children[1].title=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
 }
 /* 15.09.2026: заменяет modesFill() — экран «Турниры» удалён, те же 7 подписей теперь льются
