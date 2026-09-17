@@ -556,20 +556,30 @@ document.querySelectorAll('.recordBadge').forEach(function(b){
   b.addEventListener('click', function(e){ e.stopPropagation(); openAchTop(b.dataset.cat); });
 });
 /* 17.09.2026 (владелец, «да, но спрятать» — Eruda): консоль отладки только для владельца,
-   не для игроков — ничего не грузится, пока её явно не позвали. 7 тапов по логотипу
-   COSMOGRAM на главном экране за 3 секунды переключает — тот же приём, что уже в самом
-   Telegram (7 тапов по номеру версии в Settings), владелец сам его назвал вживую. Обычный
-   игрок физически не может наткнуться на это случайно — 7 тапов подряд по надписи логотипа
-   не бывает в обычной игре ни разу. */
+   не для игроков — ничего не грузится, пока её явно не позвали. Обычный игрок физически не
+   может наткнуться на это случайно — держать палец 2 секунды без движения не бывает в
+   обычной игре ни разу.
+   17.09.2026, второй заход (владелец вживую, матом: «сделай удобно, но чтоб случайно не
+   нажималось»): было 7 тапов за 3 секунды по #brandName (логотип COSMOGRAM на главном) —
+   тот же приём, что в Telegram Settings, но на практике неудобно ловить окно. Заодно
+   выяснилось: владелец жал вообще не туда — на СВОЙ логотип студии (.exxxitCard,
+   exxxitLogoHTML() ниже, экран «Написать разработчику»), «я разработчик, это мой логотип».
+   Долгое нажатие (2000мс) вместо счёта тапов, и на правильном элементе — .exxxitCard живёт в
+   innerHTML, который aboutFill() перерисовывает заново при каждом входе на экран, поэтому
+   слушатель — делегированный на document (переживает любую перерисовку), не подвешен на сам
+   узел напрямую. */
 (function debugConsoleWire(){
-  const el = $('brandName'); if(!el) return;
-  let taps = [];
-  el.addEventListener('click', function(){
-    const now = Date.now();
-    taps = taps.filter(function(t){ return now - t < 3000; });
-    taps.push(now);
-    if (taps.length >= 7){ taps = []; toggleDebugConsole(); }
+  const HOLD_MS = 2000;
+  let timer = null;
+  function cancel(){ if (timer){ clearTimeout(timer); timer = null; } }
+  document.addEventListener('pointerdown', function(e){
+    if (!e.target.closest('.exxxitCard')) return;
+    cancel();
+    timer = setTimeout(function(){ timer = null; toggleDebugConsole(); }, HOLD_MS);
   });
+  document.addEventListener('pointerup', cancel);
+  document.addEventListener('pointercancel', cancel);
+  document.addEventListener('pointerleave', cancel);
   if (Store.get('debugConsole', false)) loadDebugConsole();
 })();
 function loadDebugConsole(){
@@ -577,6 +587,7 @@ function loadDebugConsole(){
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/eruda'; // 17.09.2026: грузится только по явному вызову владельца, не для всех игроков разом
   s.onload = function(){ if (window.eruda) window.eruda.init(); };
+  s.onerror = function(){ haptic('error'); }; // 17.09.2026: раньше неудачная загрузка (нет сети) была совсем молчаливой — теперь хотя бы вибро-сигнал, что что-то не так
   document.head.appendChild(s);
 }
 function toggleDebugConsole(){
