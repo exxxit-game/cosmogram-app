@@ -2674,12 +2674,24 @@ function angarUnwear(){
    путь от angarAct() выше. Ссылку на инвойс даёт только сервер (цена там же, не отсюда,
    см. syncBuySkinInvoice). Владение подтверждает ТОЛЬКО ответ premium_owned после оплаты —
    S.ownedSkins пополняется лишь тогда, локальный кэш никогда не решает сам за себя. */
+/* 18.09.2026 (сквозная проверка устойчивости к плохой связи, владелец: «делай») — не было
+   защиты от повторного тапа, хотя ровно тот же класс дыры уже находили и чинили у
+   «благодарности» (_grSendBusy, grSendBtn выше): медленный syncBuySkinInvoice() или просто
+   открытый лист оплаты Stars — окно, где нетерпеливый повторный тап заводит ВТОРОЙ инвойс
+   поверх первого. Тот фикс тогда забыли протянуть сюда — тот же повторяющийся паттерн
+   «починили в одном месте, забыли в похожем», что уже был в проекте шесть раз за один вечер.
+   Снимается не сразу после создания инвойса, а внутри колбэка openInvoice — тем же приёмом и
+   по той же причине, что и там: лист оплаты может провисеть открытым долго. */
+let _angarBuyBusy=false;
 function angarBuyPremium(item, els){
+  if(_angarBuyBusy) return;
   const tw = typeof tgApp==='function' ? tgApp() : null;
   if(!tw || !tw.openInvoice){ toast(L.premiumTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; }
+  _angarBuyBusy=true;
   syncBuySkinInvoice(item.id).then(res=>{
-    if(!res || !res.ok || !res.link){ toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); return; }
+    if(!res || !res.ok || !res.link){ _angarBuyBusy=false; toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); return; }
     tw.openInvoice(res.link, status=>{
+      _angarBuyBusy=false;
       if(status!=='paid') return;
       syncPremiumOwned().then(o=>{
         if(o && o.ok && Array.isArray(o.owned)){
