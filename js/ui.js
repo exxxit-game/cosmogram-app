@@ -555,6 +555,37 @@ function openAchTop(cat){ // 15.09.2026: тап по бейджу-рекорду
 document.querySelectorAll('.recordBadge').forEach(function(b){
   b.addEventListener('click', function(e){ e.stopPropagation(); openAchTop(b.dataset.cat); });
 });
+/* 17.09.2026 (владелец, «да, но спрятать» — Eruda): консоль отладки только для владельца,
+   не для игроков — ничего не грузится, пока её явно не позвали. 7 тапов по логотипу
+   COSMOGRAM на главном экране за 3 секунды переключает — тот же приём, что уже в самом
+   Telegram (7 тапов по номеру версии в Settings), владелец сам его назвал вживую. Обычный
+   игрок физически не может наткнуться на это случайно — 7 тапов подряд по надписи логотипа
+   не бывает в обычной игре ни разу. */
+(function debugConsoleWire(){
+  const el = $('brandName'); if(!el) return;
+  let taps = [];
+  el.addEventListener('click', function(){
+    const now = Date.now();
+    taps = taps.filter(function(t){ return now - t < 3000; });
+    taps.push(now);
+    if (taps.length >= 7){ taps = []; toggleDebugConsole(); }
+  });
+  if (Store.get('debugConsole', false)) loadDebugConsole();
+})();
+function loadDebugConsole(){
+  if (window.eruda){ window.eruda.show(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/eruda'; // 17.09.2026: грузится только по явному вызову владельца, не для всех игроков разом
+  s.onload = function(){ if (window.eruda) window.eruda.init(); };
+  document.head.appendChild(s);
+}
+function toggleDebugConsole(){
+  const on = !Store.get('debugConsole', false);
+  Store.set('debugConsole', on);
+  sfx.click(); haptic('success');
+  if (on) loadDebugConsole();
+  else location.reload(); // 17.09.2026: у Eruda нет честного «выгрузиться совсем» — проще перезагрузить экран без неё
+}
 function heroDotsInit(){ // точки-индикатор — создаются один раз, дальше только heroCarouselDotsSync() переключает .on
   const car=$('heroCarousel'), dots=$('heroDots'); if(!car||!dots||dots.children.length) return;
   for(let i=0;i<car.children.length;i++){ const d=document.createElement('div'); d.className='heroDot'+(i===0?' on':''); dots.appendChild(d); }
