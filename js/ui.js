@@ -590,10 +590,19 @@ document.querySelectorAll('.recordBadge').forEach(function(b){
 // автодиагностику») не нужно. Полноценная Eruda (loadDebugConsole ниже) продолжает
 // пытаться загрузиться параллельно, для будущей полной отладки — но эта строка не ждёт её.
 function showEnvAlert(){
+  // 17.09.2026, восьмая находка того же вечера, вероятная настоящая причина полной тишины даже
+  // от системного alert(): реальный Telegram WebView (в отличие от моего браузера, где `tg`
+  // всегда null — нет настоящей initData) часто молча подавляет нативные alert()/confirm() —
+  // официально рекомендованная замена внутри Telegram именно поэтому и существует:
+  // tg.showAlert() (мост уже подключён, js/vendor/telegram-web-app.js). `tg` в моей среде
+  // ВСЕГДА null (initData настоящего Телеграма у меня быть не может) — эту находку было
+  // физически невозможно поймать своим тестированием, не по невнимательности.
+  const env = (typeof BEACON!=='undefined' && BEACON.envCtx) ? BEACON.envCtx() : 'BEACON.envCtx недоступен';
+  const text = 'Cosmogram v'+GAME_VERSION+' · '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?')+'\n'+env;
   try{
-    const env = (typeof BEACON!=='undefined' && BEACON.envCtx) ? BEACON.envCtx() : 'BEACON.envCtx недоступен';
-    alert('Cosmogram v'+GAME_VERSION+' · '+((typeof tg!=='undefined'&&tg&&tg.platform)||navigator.platform||'?')+'\n'+env);
-  }catch(e){ try{ alert('showEnvAlert упал: '+String(e).slice(0,120)); }catch(e2){} }
+    if (typeof tg!=='undefined' && tg && typeof tg.showAlert==='function'){ tg.showAlert(text); return; }
+  }catch(e){}
+  try{ alert(text); }catch(e){ try{ alert('showEnvAlert упал: '+String(e).slice(0,120)); }catch(e2){} }
 }
 function loadDebugConsole(){
   if (window.eruda){ window.eruda.show(); erudaVisCheck(); return; }
