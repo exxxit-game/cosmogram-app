@@ -1049,7 +1049,8 @@ function forgeHarmonyFillLabels(){ // подписи кнопки/схем/пр�
   const row=$('forgeHarmonySchemes');
   if(row) for(const btn of row.children){
     const sc=FORGE_HARMONY.find(function(s){ return s.k===btn.dataset.k; });
-    if(sc) btn.textContent=L[sc.tKey];
+    const txt=btn.querySelector('.forgeHarmTxt'); // 17.09.2026: btn.textContent стирал бы иконку рядом — целимся в подпись отдельно
+    if(sc && txt) txt.textContent=L[sc.tKey];
   }
   const note=$('forgeHarmonyNote'); const cur=FORGE_HARMONY.find(function(s){ return s.k===forgeHarmonyScheme; });
   if(note && cur) note.textContent=L[cur.noteKey];
@@ -1095,10 +1096,28 @@ function forgeHarmonySetH1FromEvent(ev){
 }
 /* 16.09.2026: спойлер вместо модалки (index.html, .setGrp.spoiler #forgeHarmonyGrp) — та же
    логика открытия/закрытия, что у forgeHardSpoilerGrp (wireOnLocal ниже, js/forge.js:734). */
+/* 17.09.2026 (владелец, повторно: «комфорт почти не вижу... подобрать гармонию легло чисто»):
+   7 названий («Комплементарная»/«Сплит-комплементарная»/«Тетрада» и т.д.) — термины теории
+   цвета, ничего не говорят человеку, который её не изучал (то же самое, что уже отмечало
+   исследование RESEARCH-2026-09-KONSTRUKTOR-UX-CHILD-ADULT.md про «иконка без подписи не
+   очевидна» — тут наоборот, подпись без иконки). Честная мини-иконка: кольцо с двумя точками
+   на настоящем offset схемы (FORGE_HARMONY[].off) — механизм ВСЕГДА даёт ровно 2 цвета, даже
+   у «Тетрады»/«Квадрата» (см. комментарий выше про «честное упрощение до ОДНОГО партнёра»),
+   рисовать там 3-4 точки было бы враньём про то, что реально произойдёт. Не выдумано на глаз —
+   угол читается из тех же чисел, что и считает сам forgeHarmonyTargetH2(). */
+function forgeHarmonySchemeIconSVG(offDeg){
+  const rad=(offDeg-90)*Math.PI/180; // -90: 0° рисуем как «12 часов», не «3 часа»
+  const x=(12+9*Math.cos(rad)).toFixed(1), y=(12+9*Math.sin(rad)).toFixed(1);
+  return '<svg class="forgeHarmIco" viewBox="0 0 24 24" aria-hidden="true">'+
+    '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".5"/>'+
+    '<circle cx="12" cy="3" r="2.6" fill="currentColor"/>'+
+    '<circle cx="'+x+'" cy="'+y+'" r="2.6" fill="currentColor" opacity=".55"/></svg>';
+}
 (function forgeHarmonyInit(){
   const row=$('forgeHarmonySchemes'); if(!row) return;
   FORGE_HARMONY.forEach(function(sc){
-    const b=document.createElement('button'); b.type='button'; b.className='forgeChip'; b.textContent=L[sc.tKey]; b.dataset.k=sc.k;
+    const b=document.createElement('button'); b.type='button'; b.className='forgeChip'; b.dataset.k=sc.k;
+    b.innerHTML=forgeHarmonySchemeIconSVG(sc.off)+'<span class="forgeHarmTxt">'+L[sc.tKey]+'</span>';
     b.addEventListener('click', function(){ forgeHarmonyScheme=sc.k; forgeHarmonyApply(); forgeHarmonySync(); sfx.click(); haptic('light'); });
     row.appendChild(b);
   });
