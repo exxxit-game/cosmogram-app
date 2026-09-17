@@ -152,14 +152,33 @@ function ptPinSizeFor(n){ if(n<=10) return 36; if(n<=20) return 30; if(n<=35) re
    обычный случай (только ряд 0) сам приходится точно на середину окна, использует его, а не
    жмётся кверху. ROW_H 30→22 (пины и сами умерены, см. ptPinSizeFor выше). */
 const PT_ROW_OFFSETS=[0,-22,22];
-function ptSpreadOffsets(pins){
+/* 17.09.2026 (владелец, живой разговор: «нужно тестировать в самых худших условиях» — прогнал
+   35 точек вперемешку, не 1-7, как весь вечер до этого): старый ptSpreadOffsets был скользящим
+   счётчиком «streak», не настоящей группировкой — при плотной трассе (много точек ближе THRESH
+   друг к другу подряд, не только пары-тройки) он крутил те же 3 offset'а по кругу для ДЕСЯТКОВ
+   точек одновременно, они садились друг на друга и по горизонтали тоже (offset решает только
+   вертикальный ряд, не расстояние по X). Настоящая группировка — ниже, ptComputeClusters:
+   честные цепочки соседей ближе THRESH. Дальше в ptRenderPins() группа ≤3 точек — как раньше
+   (по одной, 3 ряда), группа >3 — один маркер «+N», тап открывает список точек (тот же путь,
+   что «Список точек», не новый экран). */
+const PT_CLUSTER_ROW_MAX=PT_ROW_OFFSETS.length; // 3 — столько отдельных точек ряды ещё тянут не наезжая
+function ptComputeClusters(pins){
   const sorted=pins.map((p,i)=>({i,at:p.at})).sort((a,b)=>a.at-b.at);
-  const offs=new Array(pins.length).fill(0);
-  const THRESH=ptLen()*0.035, ROWS=3;
-  let streak=0;
-  for(let k=1;k<sorted.length;k++){
-    if(sorted[k].at-sorted[k-1].at<THRESH){ streak++; offs[sorted[k].i]=PT_ROW_OFFSETS[streak%ROWS]; } else streak=0;
+  const THRESH=ptLen()*0.035;
+  const clusters=[]; let cur=[];
+  for(let k=0;k<sorted.length;k++){
+    if(k>0 && sorted[k].at-sorted[k-1].at<THRESH) cur.push(sorted[k].i);
+    else { if(cur.length) clusters.push(cur); cur=[sorted[k].i]; }
   }
+  if(cur.length) clusters.push(cur);
+  return clusters;
+}
+function ptSpreadOffsets(pins){
+  const offs=new Array(pins.length).fill(0);
+  ptComputeClusters(pins).forEach(function(idxs){
+    if(idxs.length>PT_CLUSTER_ROW_MAX) return; // схлопнутая группа — свой маркер, не индивидуальные offset'ы
+    idxs.forEach(function(idx,pos){ offs[idx]=PT_ROW_OFFSETS[pos%PT_CLUSTER_ROW_MAX]; });
+  });
   return offs;
 }
 function ptPinName(p){ return p.type==='pause'?'передышку':p.type==='marker'?'заметку':(PT_KIND_LABEL[FORGE_KINDS[p.kind]]||'').toLowerCase(); }
@@ -232,7 +251,12 @@ function ptRenderPins(justPoppedIdx){
      (36/30/24/20px) × 3 симметричных ряда укладываются в [0,130]. */
   const pinTop=65-pinSz/2;
   const offs=ptSpreadOffsets(pins);
+  const clusters=ptComputeClusters(pins);
+  // 17.09.2026: индексы, ушедшие под общий маркер «+N» ниже — по одной точке их не рисуем.
+  const collapsed=new Set();
+  clusters.forEach(function(idxs){ if(idxs.length>PT_CLUSTER_ROW_MAX) idxs.forEach(function(idx){ collapsed.add(idx); }); });
   pins.forEach((p,i)=>{
+    if(collapsed.has(i)) return;
     const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
     const lbl=document.createElement('div');
     lbl.className='pin-lbl'+(i===ptSelIdx?' sel':''); lbl.style.left=ptAtToPctSafe(p.at);
@@ -255,6 +279,24 @@ function ptRenderPins(justPoppedIdx){
     sw.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
     el.appendChild(sw);
     el.addEventListener('pointerdown',ev=>ptStartPinDrag(ev,i));
+    track.appendChild(el);
+  });
+  // 17.09.2026: один маркер «+N» на схлопнутую группу — тап открывает уже готовый «Список точек»
+  // (тот же #ptListOverlay, что у #ptListGrp), там доступна КАЖДАЯ точка группы по отдельности.
+  clusters.forEach(function(idxs){
+    if(idxs.length<=PT_CLUSTER_ROW_MAX) return;
+    const ats=idxs.map(function(idx){ return pins[idx].at; });
+    const at=Math.round((Math.min.apply(null,ats)+Math.max.apply(null,ats))/2);
+    const el=document.createElement('div');
+    el.className='pin cluster'+(idxs.indexOf(ptSelIdx)>=0?' sel':'');
+    el.style.left=ptAtToPctSafe(at);
+    el.style.top=pinTop+'px';
+    el.textContent='+'+idxs.length;
+    el.addEventListener('click',function(ev){
+      ev.stopPropagation(); sfx.click(); haptic('light');
+      ptRenderList();
+      const ov=$('ptListOverlay'); if(ov) ov.classList.add('show');
+    });
     track.appendChild(el);
   });
   const cnt=$('ptCnt'); if(cnt) cnt.textContent=pins.length;
