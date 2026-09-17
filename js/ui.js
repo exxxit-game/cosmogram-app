@@ -3882,7 +3882,12 @@ function renderTopFor(screen, getCat, ids){
         jn.classList.remove('hidden');
       }
     }
-    if(!d.top || !d.top.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
+    // 18.09.2026 (сквозная проверка защиты от неожиданной формы ответа сервера): было
+    // !d.top.length — правдивая проверка длины у СТРОКИ тоже проходит (труcm непустая строка
+    // тоже даёт .length>0), а d.top.forEach/.map ниже это не переживёт. Array.isArray — тот же
+    // приём, что уже используют все соседние потребители (syncPremiumOwned/syncGratitudeSky/
+    // syncRelayMyChains/workshopList).
+    if(!Array.isArray(d.top) || !d.top.length){ list.innerHTML='<div class="topMsg">'+L.topEmpty+'</div>'; return; }
     // 10.09.2026: Слалом/Биатлон/Спидран несут ленту прямо в строке топа — см. FIXED_COURSE_KEY выше
     topFixedTrackByPid={};
     if (FIXED_COURSE_KEY[askCat]) d.top.forEach(r=>{ if(r.pid && typeof r.track==='string') topFixedTrackByPid[r.pid]={track:r.track, skin:r.skin, name:r.name}; });
