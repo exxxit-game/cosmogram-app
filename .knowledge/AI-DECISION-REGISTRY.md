@@ -98,14 +98,17 @@
 >   уже есть защитный триггер `rls_auto_enable`/функции `_enforce_no_public_execute`/
 >   `_enforce_no_public_table_access`, найденные тем же запросом (див. урок 06.09.2026 про
 >   `ALTER DEFAULT PRIVILEGES` выше — похоже, тогда же и появились).
-> - **1 VIEW в `public` без `security_invoker=true`**: `forge_workshop_view` (владелец —
->   `postgres`, по умолчанию исполняется с его правами = обходит RLS нижележащих таблиц). ⚠️
->   **Сейчас безопасно** (`anon`/`authenticated` не имеют `GRANT` на сам view — живой `curl`
->   вернул `42501`), но это ЛАТЕНТНАЯ ловушка: если когда-нибудь этому view дадут `GRANT SELECT`
->   для публичного показа мастерской (вероятная будущая задача — название прямо про это), RLS
->   `forge_workshop`/`forge_workshop_reports` тихо обойдётся. Не починено сейчас (правило —
->   любая живая правка схемы требует отдельного явного «да», это новая находка, не то, что
->   владелец уже разрешил); стоит поднять явным вопросом при следующей работе над Мастерской.
+> - ~~**1 VIEW в `public` без `security_invoker=true`**: `forge_workshop_view`~~ —
+>   **ПОЧИНЕНО 17.09.2026** (владелец, явное «да» на прямой вопрос). Было: владелец вида —
+>   `postgres`, по умолчанию исполнялся с его правами = обходил бы RLS нижележащих таблиц,
+>   если бы `anon`/`authenticated` когда-нибудь получили `GRANT SELECT`. `ALTER VIEW
+>   public.forge_workshop_view SET (security_invoker = true);` — подтверждено трижды: (1)
+>   `pg_options_to_table(reloptions)` вернул `security_invoker:true`, (2) `get_advisors`
+>   пересчитан заново — прежней находки по этому view в выдаче больше нет, список 27
+>   RLS-без-политик не изменился (не задело), (3) живой вызов `cosmogram-workshop` (`action:
+>   'list'`) вернул настоящие данные Мастерской — service_role Edge Function обходит RLS
+>   независимо от `security_invoker`, поведение для игроков не изменилось, залатана только
+>   латентная дыра на случай будущего публичного `GRANT`.
 > - **Storage: 4 бакета** (`cosmogram`/`cards`/`clips` — public, `diag` — private, 61 файл
 >   диагностики). `storage.objects` — RLS включён, политик 0, при этом `anon`/`authenticated`
 >   имеют полный табличный `GRANT` (это стандартная поставка Supabase — защита целиком на RLS,
