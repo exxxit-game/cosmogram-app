@@ -583,7 +583,7 @@ document.querySelectorAll('.recordBadge').forEach(function(b){
   if (Store.get('debugConsole', false)) loadDebugConsole();
 })();
 function loadDebugConsole(){
-  if (window.eruda){ window.eruda.show(); return; }
+  if (window.eruda){ window.eruda.show(); erudaVisCheck(); return; }
   const s = document.createElement('script');
   // 17.09.2026 (владелец вживую, матом — третья находка): грузили с cdn.jsdelivr.net — на его
   // реальном телефоне (Telegram WebView) до чужого сайта не достучаться (сеть/ограничения самого
@@ -594,13 +594,41 @@ function loadDebugConsole(){
   // его туда пишет); sw.js кэширует файл ровно под этим URL — без хвоста здесь был бы промах
   // мимо кэша при каждом обращении, даже офлайн.
   s.src = 'js/vendor/eruda.min.js?v='+GAME_VERSION;
+  if (typeof BB!=='undefined') BB.log('debug','eruda: script tag appended, ждём onload');
   // 17.09.2026 (та же находка, что выше по треку — «нашёл в коде»): eruda.init() САМ ПО СЕБЕ
   // только ставит маленькую иконку-вход, панель не открывает — нужен ещё отдельный тап по ней.
   // Иконка мелкая, тёмная, в нижнем углу — на реальном телефоне владелец её физически не нашёл.
   // eruda.show() сразу после init() — панель раскрыта сама, без поиска иконки.
-  s.onload = function(){ if (window.eruda){ window.eruda.init(); window.eruda.show(); } };
-  s.onerror = function(){ haptic('error'); }; // свой файл тоже может не отдаться (обрыв кэша SW) — вибро-сигнал вместо тишины
+  // 17.09.2026, пятая находка — даже локальный файл (см. выше) с подтверждённой правильной
+  // версией у владельца всё ещё не показал панель (только вибро). Раз причина не воспроизвелась
+  // у меня ни разу — пишем в тот же бортовой журнал, что уже умеет читать «Добавить
+  // автодиагностику» (без нового действия от владельца), каждый шаг отдельно, чтобы при
+  // следующей попытке разрыв был виден в самой ленте, не только «сработало / не сработало».
+  s.onload = function(){
+    if (typeof BB!=='undefined') BB.log('debug','eruda: onload, window.eruda='+(typeof window.eruda));
+    if (window.eruda){ window.eruda.init(); window.eruda.show(); erudaVisCheck(); }
+  };
+  s.onerror = function(){ haptic('error'); if (typeof BB!=='undefined') BB.log('debug','eruda: onerror — файл не отдался'); };
   document.head.appendChild(s);
+}
+function erudaVisCheck(){ // 17.09.2026: реальная видимость после show(), не только факт вызова.
+  // Первая версия мерила getBoundingClientRect() на #eruda самом — у Eruda Shadow DOM, хост-
+  // элемент честно 0×0 даже когда панель внутри тени видна и работает (собственная layout-рамка
+  // хоста не включает position:fixed содержимое тени) — смотрим внутрь тени, не на хост.
+  setTimeout(function(){
+    try{
+      const el = document.getElementById('eruda');
+      if (!el){ if (typeof BB!=='undefined') BB.log('debug','eruda: НЕТ #eruda в DOM'); return; }
+      const sr = el.shadowRoot;
+      if (!sr){ if (typeof BB!=='undefined') BB.log('debug','eruda: #eruda есть, но shadowRoot нет'); return; }
+      const panel = sr.querySelector('.eruda-dev-tools, [class*="eruda"]');
+      const r = panel ? panel.getBoundingClientRect() : null;
+      const msg = panel
+        ? ('shadow-панель w'+Math.round(r.width)+'h'+Math.round(r.height)+' cs-display:'+getComputedStyle(panel).display+' cs-vis:'+getComputedStyle(panel).visibility)
+        : ('shadowRoot есть, детей '+sr.children.length+', первый: '+(sr.children[0]?sr.children[0].className:'-'));
+      if (typeof BB!=='undefined') BB.log('debug','eruda: '+msg);
+    }catch(e){ if (typeof BB!=='undefined') BB.log('debug','eruda: erudaVisCheck упал — '+String(e).slice(0,60)); }
+  }, 400);
 }
 function toggleDebugConsole(){
   const on = !Store.get('debugConsole', false);
