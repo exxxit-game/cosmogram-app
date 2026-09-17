@@ -256,11 +256,28 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
 
   const frameMs = 1000/30;
   const t0 = performance.now();
-  let frameN = 0;
+  let frameN = 0, lastGrabAt = -Infinity;
+  /* 18.09.2026 (владелец, живой тест «Поделиться явлением»: «не было плавности... часть
+     изображения терялась») — раньше кадр захватывался отдельным setInterval(33мс), НЕ связанным
+     с циклом, который рисует сам холст (requestAnimationFrame — у angarPvStoryDraw и у главного
+     рендер-цикла игры). Два независимых ритма на одном холсте: setInterval мог поймать кадр
+     СЕРЕДИНОЙ перерисовки (рваный кадр — «часть терялась») и плыл по времени сам по себе, не по
+     реальному ритму отрисовки браузера (рывки — «не было кинематографичности»). Теперь захват сам
+     себя планирует через requestAnimationFrame — тем же ритмом, что и отрисовка — и ВНУТРИ этого
+     держит целевые ~30 кадров/сек вручную (не каждый paint браузера кладём в видео, только не
+     реже 33мс). Полностью проблему не снимает (это отдельный, независимо запланированный
+     requestAnimationFrame, не тот же самый тик, что у конкретной функции отрисовки — для полного
+     решения нужен захват кадра ИЗ ТОГО ЖЕ тика, что и рисование, это отдельная, более крупная
+     задача на Mediabunny CanvasSource), но убирает рассинхрон таймера — реальный источник рывков. */
+  const rafBox = { id: 0 };
   const grab = () => {
     if (!_cinemaRec) return;
+    rafBox.id = requestAnimationFrame(grab); // планируем следующий тик сразу — сбой ниже не должен остановить запись
+    const now = performance.now();
+    if (now - lastGrabAt < frameMs) return; // держим целевую частоту кадров, не каждый paint
+    lastGrabAt = now;
     // 30.08.2026 (владелец, экстренно — живое зависание на A03 Core и Oppo): без этой проверки
-    // encoder.encode() звался каждые 33мс независимо от того, успевает ли кодировщик — на слабом
+    // encoder.encode() звался бы независимо от того, успевает ли кодировщик — на слабом
     // устройстве программное кодирование одного кадра может занять дольше 33мс, и очередь внутри
     // VideoEncoder росла без остановки (задокументированная ловушка WebCodecs, encodeQueueSize —
     // MDN/спецификация). Порог 2 — общепринятое значение из примеров WebCodecs, не выдуман с нуля.
@@ -273,13 +290,14 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
     try{
       let src = canvas;
       if (ov){ ov.octx.drawImage(canvas,0,0); cinemaDrawOverlay(ov.octx, canvas.width, canvas.height, overlayCaption); src = ov.oc; }
-      frame = new VideoFrame(src, { timestamp: Math.round((performance.now()-t0)*1000) });
+      frame = new VideoFrame(src, { timestamp: Math.round((now-t0)*1000) });
       // ключевой кадр раз в ~2 сек (и всегда самый первый) — иначе обрезке кольца не от чего оттолкнуться
       encoder.encode(frame, { keyFrame: (frameN % 60 === 0) });
       frameN++;
     }catch(e){} // один пропущенный кадр не должен уронить всю запись
     finally{ if (frame) frame.close(); }
   };
+  rafBox.id = requestAnimationFrame(grab);
   _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, maxWindowUs, makeMuxer,
     getDecoderConfig: () => decoderConfig,
     markRecord: () => { // первое пересечение рекорда — единственное, второе не бывает
@@ -292,14 +310,14 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
     },
     getPinnedUs: () => pinnedUs,
     getSnapshot: () => snapshot,
-    timer: setInterval(grab, frameMs) };
+    timer: rafBox };
   return true;
 }
 function cinemaMarkRecord(){ if (_cinemaRec && _cinemaRec.markRecord) _cinemaRec.markRecord(); } // 30.08.2026: снаружи, без правки ядра — вызывающий код сам решает, когда счёт обогнал рекорд
 async function cinemaStop(){
   if (!_cinemaRec) return null;
   const { encoder, muxer, target, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
-  clearInterval(timer);
+  cancelAnimationFrame(timer.id); // 18.09.2026: timer теперь {id} от requestAnimationFrame, не число setInterval — см. cinemaStart
   _cinemaRec = null;
   try{ await encoder.flush(); }catch(e){} // сбой flush() (нестабильное устройство) не должен пропускать close() ниже
   try{ encoder.close(); }catch(e){} // 30.08.2026: раньше стоял внутри общего try сразу после flush() — сбой flush() пропускал close(), кодировщик (и его нативный ресурс) не освобождался
