@@ -2690,23 +2690,30 @@ function angarBuyPremium(item, els){
   _angarBuyBusy=true;
   syncBuySkinInvoice(item.id).then(res=>{
     if(!res || !res.ok || !res.link){ _angarBuyBusy=false; toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); return; }
-    tw.openInvoice(res.link, status=>{
-      _angarBuyBusy=false;
-      if(status!=='paid') return;
-      syncPremiumOwned().then(o=>{
-        if(o && o.ok && Array.isArray(o.owned)){
-          let changed=false;
-          o.owned.forEach(id=>{ if(!S.ownedSkins.includes(id)){ S.ownedSkins.push(id); changed=true; } });
-          if(changed) Store.set('ownedSkins', S.ownedSkins);
-        }
-        S.skin=item.id; Store.set('skin', item.id);
-        angarApplyPremiumFlash(item);
-        sfx.buy(); haptic('success');
-        angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
-        angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
-        if (typeof achCheck==='function') achCheck();
+    /* 18.09.2026 (сквозная проверка, найдено при поиске похожих дыр в игре целиком) — если
+       tw.openInvoice() сам бросит исключение синхронно (нестандартный/старый клиент Telegram —
+       единственный вызов, что ниже реально пробует внешний мост), колбэк ни разу не позовётся,
+       _angarBuyBusy=false внутри него не выполнится НИКОГДА, и кнопка покупки замолкнет
+       навсегда до перезагрузки игры — без единой подсказки игроку, что случилось. */
+    try{
+      tw.openInvoice(res.link, status=>{
+        _angarBuyBusy=false;
+        if(status!=='paid') return;
+        syncPremiumOwned().then(o=>{
+          if(o && o.ok && Array.isArray(o.owned)){
+            let changed=false;
+            o.owned.forEach(id=>{ if(!S.ownedSkins.includes(id)){ S.ownedSkins.push(id); changed=true; } });
+            if(changed) Store.set('ownedSkins', S.ownedSkins);
+          }
+          S.skin=item.id; Store.set('skin', item.id);
+          angarApplyPremiumFlash(item);
+          sfx.buy(); haptic('success');
+          angarVisibleList().forEach((it2,i)=>{ const el=els[i]; if(el) angarItemFill(el,it2); });
+          angarBuyFill(); refreshMenu(); updateLives(); angarPvWake();
+          if (typeof achCheck==='function') achCheck();
+        });
       });
-    });
+    }catch(e){ _angarBuyBusy=false; toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); }
   });
 }
 /* 09.09.2026 «Свёрнутые группы Эмодзи»: сам подзаголовок группы — тап по нему прячет/показывает
@@ -4309,13 +4316,19 @@ wireOn('grSendBtn','click',function(){
     // инвойса и вебхуком, см. комментарий у gratitude_create_invoice на сервере). openInvoice
     // по контракту Telegram Web App SDK всегда зовёт колбэк, когда лист закрыт — неважно как
     // (оплата/отмена/провал), запасного таймаута не нужно.
-    tw.openInvoice(res.link, function(status){
-      _grSendBusy=false;
-      if(status!=='paid') return;
-      if(commentEl) commentEl.value='';
-      toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
-      gratitudeSkyFill();
-    });
+    /* 18.09.2026 (сквозная проверка, найдено при поиске похожих дыр в игре целиком) — та же
+       дыра, что и у angarBuyPremium(): если tw.openInvoice() сам бросит исключение синхронно,
+       колбэк не позовётся, _grSendBusy не снимется никогда, кнопка «Отправить» замолкнет
+       навсегда до перезагрузки. */
+    try{
+      tw.openInvoice(res.link, function(status){
+        _grSendBusy=false;
+        if(status!=='paid') return;
+        if(commentEl) commentEl.value='';
+        toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
+        gratitudeSkyFill();
+      });
+    }catch(e){ _grSendBusy=false; toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); }
   });
 });
 window.addEventListener('resize', function(){ const scr=$('gratitudeScreen'); if(scr && !scr.classList.contains('hidden')) grResizeCanvas(); });
