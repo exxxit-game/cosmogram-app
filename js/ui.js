@@ -2705,6 +2705,13 @@ function angarBuyPremium(item, els){
             o.owned.forEach(id=>{ if(!S.ownedSkins.includes(id)){ S.ownedSkins.push(id); changed=true; } });
             if(changed) Store.set('ownedSkins', S.ownedSkins);
           }
+          /* 18.09.2026 (сквозная проверка) — оплата уже подтверждена самим Telegram
+             (status==='paid' выше) ДО этой строки — но если syncPremiumOwned() не дошёл до
+             сервера (сеть), S.skin ставился на предмет, которого нет в S.ownedSkins. Следующая
+             загрузка игры сама снимает такой скин (см. проверку при старте hangar), и купленный
+             только что скин молча слетал бы без всякой причины для игрока. Раз оплата реальна —
+             считаем предмет купленным локально прямо сейчас, не дожидаясь сервера ещё раз. */
+          if(!S.ownedSkins.includes(item.id)){ S.ownedSkins.push(item.id); Store.set('ownedSkins', S.ownedSkins); }
           S.skin=item.id; Store.set('skin', item.id);
           angarApplyPremiumFlash(item);
           sfx.buy(); haptic('success');

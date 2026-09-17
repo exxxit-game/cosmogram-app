@@ -818,15 +818,28 @@ function forgeIsVerified(code){
    экран, готовый паттерн игры), не связанный с самим действием «отправить код другу».
    08.09.2026 «Clear Check»: вопрос вообще не задаётся, если этот ТОЧНЫЙ код ни разу не
    пройден по-настоящему — вместо диалога тост с объяснением, что нужно сделать сначала. */
+/* 18.09.2026 (сквозная проверка всей игры на похожие дыры, владелец: «всей игры касается») —
+   не было защиты от повторного тапа: mapShare() зовёт mapAskPublish() без единой блокировки,
+   двойной тап открывает ДВА диалога подтверждения, подтвердив оба — workshopSubmit() уйдёт на
+   сервер дважды. Тот же приём, что уже применён у angarBuyPremium/grSendBtn: флаг ставится ДО
+   диалога (не после «да»), снимается либо на «нет», либо когда сама отправка полностью
+   отработала (успех или отказ) — не сразу после показа диалога. */
+let _mapPublishBusy=false;
 function mapAskPublish(code, name){
   if(typeof workshopSubmit!=='function') return;
   if(!forgeIsVerified(code)){ toast(L.forgeNeedRealRun||'Сначала пролети это небо по-настоящему — потом можно опубликовать','rgba(255,159,176,.5)'); return; }
+  if(_mapPublishBusy) return;
+  _mapPublishBusy=true;
   const msg=L.forgePublishConfirm||'Опубликовать это небо в Галерее — увидят все?';
   const go=()=>{ workshopSubmit(code, name).then(res=>{
     if(res && res.ok) toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)');
-  }).catch(()=>{}); };
-  if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); }); }
-  else if(typeof confirm==='function'){ if(confirm(msg)) go(); }
+  }).catch(()=>{}).finally(()=>{ _mapPublishBusy=false; }); };
+  const declined=()=>{ _mapPublishBusy=false; };
+  try{
+    if(tg && typeof tg.showConfirm==='function'){ tg.showConfirm(msg, ok=>{ if(ok) go(); else declined(); }); }
+    else if(typeof confirm==='function'){ if(confirm(msg)) go(); else declined(); }
+    else declined();
+  }catch(e){ declined(); }
 }
 function mapShare(){ // v1.87.0: «Поделиться» живёт в итогах трассы — там, где случился восторг, а не на панели кузницы
   const cfg=forgeSanitize(forgeCfg);
