@@ -1179,8 +1179,16 @@ function mapOver(sc){
   if(workshopPlayingCode){
     if(S.mapWin){
       if(typeof workshopPlayed==='function') workshopPlayed(workshopPlayingCode);
-      const played=workshopPlayedCodes();
-      if(played.indexOf(workshopPlayingCode)<0){ played.push(workshopPlayingCode); Store.set('workshopPlayedCodes',played); }
+      let played=workshopPlayedCodes();
+      if(played.indexOf(workshopPlayingCode)<0){
+        played.push(workshopPlayingCode);
+        // 18.09.2026 (сквозная проверка всей игры на неограниченный рост): тот же приём и тот
+        // же потолок, что уже есть у forgeVerified (FORGE_VERIFY_MAX=200) в двух шагах выше —
+        // список честно пройденных кодов раньше не подрезался вообще, в отличие от всех
+        // остальных подобных списков в этом файле и в sync.js.
+        if(played.length>FORGE_VERIFY_MAX) played=played.slice(played.length-FORGE_VERIFY_MAX);
+        Store.set('workshopPlayedCodes',played);
+      }
     }
     workshopPlayingCode=null;
   }
@@ -1603,8 +1611,12 @@ wireOnLocal('workshopList','click',function(e){
       // 15.09.2026 (владелец, прямое решение — реверс находки 3.1 от 14.09.2026): лайк
       // самому себе теперь разрешён, сервер (cosmogram-workshop) больше не возвращает
       // own_track для vote — ветка-тост под неё снята вместе с сервером, не только здесь.
-      const mine=workshopMyVotes(); const idx=mine.indexOf(code);
+      let mine=workshopMyVotes(); const idx=mine.indexOf(code);
       if(res.hearted && idx<0) mine.push(code); else if(!res.hearted && idx>=0) mine.splice(idx,1);
+      // 18.09.2026 (сквозная проверка всей игры на неограниченный рост): тот же потолок, что и
+      // у workshopPlayedCodes рядом — список лайков раньше рос без предела, если игрок никогда
+      // не снимал старые лайки.
+      if(mine.length>FORGE_VERIFY_MAX) mine=mine.slice(mine.length-FORGE_VERIFY_MAX);
       Store.set('workshopMyVotes',mine);
       act.classList.toggle('voted', res.hearted); // заливка сердца — CSS
       // 15.09.2026: видимого счётчика рядом со значком больше нет (единая карточка, значок
