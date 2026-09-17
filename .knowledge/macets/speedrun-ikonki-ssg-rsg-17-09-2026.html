@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Спидран — иконки «Постоянная»/«Случайная», вся пачка сразу</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --stone-shadow:inset 0 1px 1.5px rgba(255,255,255,.25),inset 0 -2px 4px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:20px 14px 70px;line-height:1.5}
+  h1{font-size:17px;color:var(--gold-hi);text-align:center;margin:0 0 4px;letter-spacing:.02em}
+  .sub{text-align:center;color:var(--muted);font-size:12px;margin:0 0 20px}
+  h2{color:var(--gold);font-size:13px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:6px;margin:28px auto 12px;max-width:900px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;max-width:900px;margin:0 auto}
+  .cell{background:#0d1730;border:1px solid #263452;border-radius:12px;padding:10px 4px;text-align:center}
+  .pill{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--stone-fill);border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);color:var(--ink);margin:0 auto 6px}
+  .pill svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .cell span{font-size:9px;color:var(--muted);display:block}
+  .num{color:var(--gold-hi);font-weight:700}
+</style>
+</head>
+<body>
+<h1>Спидран — вся пачка вариантов сразу</h1>
+<p class="sub">17.09.2026 · макет · иконки в настоящем размере кнопки (44px кружок / 19px иконка)</p>
+
+<h2>«Постоянная» — 5 вариантов</h2>
+<div class="grid">
+  <div class="cell"><div class="pill" id="c1"></div><span class="num">1</span><span>восьмёрка</span></div>
+  <div class="cell"><div class="pill" id="c2"></div><span class="num">2</span><span>замок</span></div>
+  <div class="cell"><div class="pill" id="c3"></div><span class="num">3</span><span>повтор-круг</span></div>
+  <div class="cell"><div class="pill" id="c4"></div><span class="num">4</span><span>булавка</span></div>
+  <div class="cell"><div class="pill" id="c5"></div><span class="num">5</span><span>флаг</span></div>
+</div>
+
+<h2>«Случайная» — 5 вариантов</h2>
+<div class="grid">
+  <div class="cell"><div class="pill" id="c6"></div><span class="num">6</span><span>зигзаг</span></div>
+  <div class="cell"><div class="pill" id="c7"></div><span class="num">7</span><span>shuffle (старая)</span></div>
+  <div class="cell"><div class="pill" id="c8"></div><span class="num">8</span><span>кость</span></div>
+  <div class="cell"><div class="pill" id="c9"></div><span class="num">9</span><span>«?» в круге</span></div>
+  <div class="cell"><div class="pill" id="c10"></div><span class="num">10</span><span>звезда</span></div>
+</div>
+
+<h2>Твой выбор — 3 + 6, стрелка у «повтор-круг» исправлена</h2>
+<div class="grid" style="grid-template-columns:repeat(2,84px);justify-content:center">
+  <div class="cell"><div class="pill" id="cFinal1"></div><span>Постоянная</span></div>
+  <div class="cell"><div class="pill" id="cFinal2"></div><span>Случайная</span></div>
+</div>
+
+<footer style="max-width:900px;margin:36px auto 0;text-align:center;color:var(--muted);font-size:11px">
+Скажи два номера (один из первой пятёрки, один из второй) — соберу их парой на карточке и покажу.
+</footer>
+
+<script>
+const ICONS = {
+  1: '<svg viewBox="0 0 24 24"><path d="M12,12 A5,5 0 1,1 2,12 A5,5 0 1,1 12,12 M12,12 A5,5 0 1,0 22,12 A5,5 0 1,0 12,12" stroke-width="1.8"/><path d="M17.6,7.2 L19.4,8 L18.5,9.7" stroke-width="1.8"/></svg>',
+  2: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-width="1.8"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  3: '<svg viewBox="0 0 24 24"><path d="M20,12 A8,8 0 1,1 12,4" stroke-width="1.8"/><path d="M13,1.5 16.5,3.3 13.3,6.3" stroke-width="1.8"/></svg>',
+  4: '<svg viewBox="0 0 24 24"><path d="M12 21s7-7.5 7-12.5A7 7 0 0 0 5 8.5C5 13.5 12 21 12 21Z" stroke-width="1.8"/><circle cx="12" cy="8.5" r="2.3" stroke-width="1.8"/></svg>',
+  5: '<svg viewBox="0 0 24 24"><path d="M6 21V4" stroke-width="1.8"/><path d="M6 4h11l-3 4 3 4H6" stroke-width="1.8"/></svg>',
+  6: '<svg viewBox="0 0 24 24"><path d="M3 17H9L15 7H21" stroke-width="1.8"/><path d="M18 4.5 21.3 7 18 9.5" stroke-width="1.8"/><path d="M6 19.5 2.7 17 6 14.5" stroke-width="1.8"/></svg>',
+  7: '<svg viewBox="0 0 24 24"><path d="M3 7h3.5L15 17h3.5M3 17h3.5l2.4-3.2M12.6 8.8L15 7h3.5M16 4.5 18.5 7 16 9.5M16 14.5 18.5 17 16 19.5" stroke-width="1.8"/></svg>',
+  8: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5" stroke-width="1.8"/><circle cx="9" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  9: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.3" stroke-width="1.8"/><path d="M9.2 9.6a3 3 0 1 1 4.6 2.5c-1.1.7-1.6 1.2-1.6 2.3" stroke-width="1.8"/><circle cx="12" cy="17.4" r="1" fill="currentColor" stroke="none"/></svg>',
+  10:'<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6L12 3Z" stroke-width="1.8" stroke-linejoin="round"/></svg>'
+};
+Object.keys(ICONS).forEach(k=>{ document.getElementById('c'+k).innerHTML = ICONS[k]; });
+document.getElementById('cFinal1').innerHTML = ICONS[3];
+document.getElementById('cFinal2').innerHTML = ICONS[6];
+</script>
+</body>
+</html>
