@@ -545,7 +545,8 @@ function forgeFill(){ // подписи + состояние виджетов п
     // русском, id у них раньше не было вовсе (index.html), добавлены вместе с этим фиксом.
     ['forgeHardSpoilerGrpT',L.forgeHardSpoilerGrpT],['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
-    ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog]];
+    ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
+    ['ptEmptyHintTxt',L.ptEmptyHint]];
   // 12.09.2026: forgeResetBtn убрана из этого цикла — теперь круглый значок-корзина
   // (index.html, .ptCornerBtn), не текст; textContent затирал бы иконку. aria-label
   // остаётся на кнопке в HTML напрямую, L.forgeResetBtn по-прежнему используется как
@@ -983,26 +984,40 @@ function forgeFavHintMaybeShow(isEmpty){
   Store.set('forgeFavHintSeen',1);
   hint.classList.remove('hidden');
 }
+/* 17.09.2026 (владелец, «Делай», макет konstruktor-sozdat-globalny-redizayn-17-09-2026.html):
+   было — все FORGE_FAV_MAX (20) мест кружками всегда, почти все пунктирные пустые. Теперь —
+   свои (заполненные) все видны как раньше, пустых-превью только это число, остаток — «+N»
+   текстом. Число не выдумано под макет — подобрано так, чтобы пустой ряд (0 избранных) не
+   выглядел ни голым (1-2 было бы мало), ни снова стеной (весь FORGE_FAV_MAX было бы старым
+   поведением); 5 — тот же порядок величины, что уже был у ряда до роста лимита 7→20 09.09.2026. */
+const FORGE_FAV_EMPTY_PREVIEW=5;
 function forgeFavRowSync(){
   const row=$('forgeFavRow'); if(!row) return;
   const list=Store.get('skyFavorites')||[];
   forgeFavHintMaybeShow(list.length===0);
   row.innerHTML='';
-  for(let i=0;i<FORGE_FAV_MAX;i++){
-    const fav=list[i];
-    if(fav){
-      const b=document.createElement('button');
-      b.className='favSwatch';
-      const psl=forgePreviewMoodSL(fav.mood);
-      b.style.background='hsl('+fav.h1+','+psl.S0+'%,'+psl.L0+'%)';
-      if(fav.name) b.title=fav.name;
-      forgeFavAttachPress(b, i);
-      row.appendChild(b);
-    } else {
-      const e=document.createElement('span');
-      e.className='favEmpty';
-      row.appendChild(e);
-    }
+  list.forEach(function(fav,i){
+    const b=document.createElement('button');
+    b.className='favSwatch';
+    const psl=forgePreviewMoodSL(fav.mood);
+    b.style.background='hsl('+fav.h1+','+psl.S0+'%,'+psl.L0+'%)';
+    if(fav.name) b.title=fav.name;
+    forgeFavAttachPress(b, i);
+    row.appendChild(b);
+  });
+  const emptyLeft=FORGE_FAV_MAX-list.length;
+  const emptyShown=Math.min(emptyLeft,FORGE_FAV_EMPTY_PREVIEW);
+  for(let i=0;i<emptyShown;i++){
+    const e=document.createElement('span');
+    e.className='favEmpty';
+    row.appendChild(e);
+  }
+  const more=emptyLeft-emptyShown;
+  if(more>0){
+    const m=document.createElement('span');
+    m.className='favMore';
+    m.textContent='+'+more;
+    row.appendChild(m);
   }
 }
 wireOnLocal('forgeSaveFavBtn','click',function(){ forgeFavSave(forgeCfg, '', $('forgeSaveFavBtn')); forgeFavRowSync(); });

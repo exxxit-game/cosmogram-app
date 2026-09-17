@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Создать — тот же язык, что у карточки Играть</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:20px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:920px;margin:0 auto 40px}
+  h2{color:var(--gold);font-size:15px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:6px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:22px}
+  .row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone{width:290px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);border-radius:22px;padding:16px 14px}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)} .phoneLbl.now{color:var(--ok)}
+
+  /* карточка-эталон Играть, для памяти */
+  .refCard{border:1px solid rgba(201,164,92,.5);border-radius:16px;background:rgba(22,38,56,.45);
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset;height:100px;position:relative;overflow:hidden;
+    background-image:linear-gradient(160deg,#3a2350,#170c28)}
+  .refCorner{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--stone-fill);border:1px solid var(--stone-border)}
+  .refName{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:700}
+
+  /* БЫЛО — плоский список без границ между разделами */
+  .flowGrpH{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+  .flowGrpH:first-child{margin-top:0;padding-top:0;border-top:none}
+  .flowRow{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px}
+  .flowChips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+  .fchip{font-size:9px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted)}
+  .flowSpoiler{font-size:10px;font-weight:700;padding:9px 0;color:var(--ink)}
+
+  /* СТАЛО — каждый подраздел собственная карточка, тот же язык, что у .wRow */
+  .subCard{border:1px solid rgba(201,164,92,.35);border-radius:12px;background:rgba(22,38,56,.35);
+    box-shadow:0 4px 12px rgba(0,0,0,.25);margin-bottom:10px;overflow:hidden}
+  .subCardHead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+    background:rgba(201,164,92,.06);cursor:pointer}
+  .subCardHead b{font-size:11px;letter-spacing:.03em}
+  .subCardHead .cnt{font-size:9px;color:var(--muted);font-weight:500}
+  .subCardBody{padding:4px 12px 12px}
+  .miniRow{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px;align-items:center}
+  .miniBar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin:0 8px}
+  .miniChips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+  .mchip2{font-size:9px;padding:4px 8px;border-radius:8px;background:var(--stone-fill);border:1px solid var(--stone-border);color:var(--ink)}
+  footer{max-width:920px;margin:36px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>«Создать» — тот же язык карточки, что уже отполирован на «Играть»</h1>
+<p class="sub">17.09.2026 · «Франкенштейн ещё раз» — владелец прав, техническая починка не равна тому же уровню отделки</p>
+<div class="note">Макет. Ничего не перенесено в игру.</div>
+
+<section>
+<h2>Что именно сделало карточку «Играть» элегантной — не пересказ, а разбор CSS (index.html:2416+)</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div>Один физический контур на весь блок: <code>.wRow</code> — золотая рамка+тень+фон ОДИН РАЗ,
+  всё внутри (картинка, имя, значки) лежит НА этом одном фоне, не в своих отдельных под-рамках.</div></div>
+  <div class="diagItem"><b>2</b><div>Все элементы — оверлеем НА картинке (position:absolute), не отдельными
+  строками, растягивающими карточку вниз. Высота карточки не растёт от количества значков.</div></div>
+  <div class="diagItem"><b>3</b><div>Ничего не «плавает» в общем потоке без контейнера — у каждой группы
+  значков свой чёткий якорь (.wTopRow/.wActionStack/.wNameStack), не «как получилось после подряд идущих правок».</div></div>
+</div>
+<div class="row">
+  <div class="phone" style="width:200px">
+    <div class="phoneLbl now">Играть — эталон</div>
+    <div class="refCard"><div class="refCorner"></div><div class="refName">Разминка</div></div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>«Точечная настройка» — было ↔ стало</h2>
+<p style="color:var(--muted);font-size:12px;max-width:680px;margin:-4px auto 16px;text-align:center">
+  Вчерашняя правка (независимые под-спойлеры) решила задачу «не всё сразу» технически, но не дала им
+  СОБСТВЕННОГО контура — заголовок просто плыл в общем потоке между чужими блоками, ровно как раньше
+  плыли заголовки-разделители. Тот же баг на новом месте. Теперь у каждого подраздела — своя карточка,
+  тот же приём, что уже держит <code>.wRow</code>: рамка+фон+тень один раз на блок, не голый текст.
+</p>
+<div class="row">
+  <div class="phone">
+    <div class="phoneLbl was">Было — просто текст-разделитель в общем потоке</div>
+    <div class="flowGrpH">Темп неба</div>
+    <div class="flowRow"><span>Плотность</span><span>50</span></div>
+    <div class="flowRow"><span>Скорость</span><span>50</span></div>
+    <div class="flowSpoiler">Старт ▾</div>
+    <div class="flowSpoiler">Преграды ▾</div>
+    <div class="flowChips"><span class="fchip">Астероид</span><span class="fchip">Обломок</span><span class="fchip">Мина</span></div>
+  </div>
+  <div class="phone" style="border-color:var(--ok)">
+    <div class="phoneLbl now">Стало — у каждого подраздела своя карточка</div>
+    <div class="subCard">
+      <div class="subCardHead"><b>ТЕМП НЕБА</b><span class="cnt">3 ручки ▴</span></div>
+      <div class="subCardBody">
+        <div class="miniRow"><span>Плотность</span><span class="miniBar"></span><span>50</span></div>
+        <div class="miniRow"><span>Скорость</span><span class="miniBar"></span><span>50</span></div>
+      </div>
+    </div>
+    <div class="subCard">
+      <div class="subCardHead"><b>СТАРТ</b><span class="cnt">▾</span></div>
+    </div>
+    <div class="subCard">
+      <div class="subCardHead"><b>ПРЕГРАДЫ</b><span class="cnt">8 видов ▴</span></div>
+      <div class="subCardBody">
+        <div class="miniChips"><span class="mchip2">Астероид</span><span class="mchip2">Обломок</span><span class="mchip2">Мина</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer>Источник: index.html:2410-2550 (.wRow и семья) — измерено по факту разметки, не по памяти.</footer>
+</body>
+</html>

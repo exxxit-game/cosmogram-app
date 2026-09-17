@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Создать — целиком заново, эталон Играть</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8; --muted2:#5a6784;
+    --line:rgba(255,255,255,.07); --line-gold:rgba(201,164,92,.4);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.2);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    /* один шаг отступов на весь макет, не «как в какой день дописали» */
+    --sp-1:6px; --sp-2:10px; --sp-3:16px; --sp-4:24px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:20px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:680px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:960px;margin:0 auto 44px}
+  h2{color:var(--gold);font-size:15px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:6px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0;min-width:20px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .phone{width:300px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);border-radius:24px;
+    padding:0;overflow:hidden}
+  .phoneHead{padding:14px 16px 10px;text-align:center}
+  .phoneLbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-bottom:6px}
+  .stepT{font-size:13px;font-weight:700;color:var(--gold-hi);letter-spacing:.04em}
+  .dots{display:flex;justify-content:center;gap:5px;margin-top:6px}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .dot.on{background:var(--gold-hi);width:16px;border-radius:3px}
+  .scr{padding:0 var(--sp-3) var(--sp-3)}
+
+  /* ---------- ТИР 1: главное содержимое шага — крупнее, ярче, больше воздуха ---------- */
+  .hero{border:1px solid rgba(201,164,92,.5);border-radius:16px;overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 20px rgba(201,164,92,.14) inset;margin-bottom:var(--sp-3)}
+  .heroTrack{height:118px;position:relative;background:linear-gradient(160deg,#2a1830,#130a1e)}
+  .heroTrack::before{content:'';position:absolute;left:24px;right:24px;top:50%;height:4px;background:rgba(255,255,255,.35);border-radius:3px;transform:translateY(-50%)}
+  .heroCorner{position:absolute;top:8px;width:22px;height:22px;border-radius:50%;background:var(--stone-fill);border:1px solid var(--stone-border)}
+  .heroEmptyHint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;color:var(--muted2);font-size:10px;letter-spacing:.02em;pointer-events:none}
+  .heroEmptyHint .plus{width:26px;height:26px;border-radius:50%;border:1.5px dashed var(--muted2);display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:2px}
+  .heroLen{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;font-size:12px;color:var(--cream)}
+  .heroLen .bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.18);position:relative}
+  .heroLen .bar::after{content:'';position:absolute;left:4%;top:-5px;width:14px;height:14px;border-radius:50%;background:var(--gold-hi)}
+  .heroSwatch{height:100px;border-radius:16px;border:1px solid rgba(201,164,92,.5);
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 20px rgba(201,164,92,.14) inset;
+    background:linear-gradient(160deg,#3a2028,#170c1e);margin-bottom:var(--sp-3);position:relative}
+  .heroSliders{padding:0 14px 12px}
+  .hRow{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--cream)}
+  .hRow label{width:78px;flex-shrink:0;color:var(--ink);font-weight:600}
+  .hRow .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.15);position:relative}
+  .hRow .bar::after{content:'';position:absolute;left:45%;top:-5px;width:15px;height:15px;border-radius:50%;background:#8ab4ff}
+  .hRow .val{width:26px;text-align:right;color:var(--gold-hi);font-weight:700;font-size:12px}
+
+  /* тир 1 иконка-ряд */
+  .heroTray{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:var(--sp-3)}
+  .trayIc{width:100%;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .trayCap{font-size:8px;color:var(--muted);text-align:center;margin-top:3px}
+
+  /* ---------- ТИР 2: вспомогательные, но нужные часто — компактнее, тише ---------- */
+  .t2Row{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;font-size:11px;color:var(--muted);
+    border-top:1px solid var(--line)}
+  .t2Row:first-child{border-top:none}
+  .t2chips{display:flex;gap:5px}
+  .t2chip{font-size:9px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted)}
+  .t2chip.sel{color:var(--gold-hi);border-color:var(--line-gold)}
+  .favWrap{margin-top:var(--sp-2)}
+  .favHead{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  .favDots{display:flex;gap:5px;flex-wrap:wrap}
+  .favD{width:16px;height:16px;border-radius:50%;border:1px dashed rgba(255,255,255,.15)}
+  .favD.filled{border-style:solid;border-color:rgba(255,255,255,.3)}
+  .favMore{font-size:9px;color:var(--muted2);align-self:center;margin-left:2px}
+
+  /* ---------- ТИР 3: спрятано за спойлером, тише всех — мелкий текст, приглушённый камень ---------- */
+  .t3{margin-top:var(--sp-3)}
+  .t3Head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;
+    background:rgba(255,255,255,.025);border:1px solid var(--line);font-size:10px;color:var(--muted);cursor:pointer}
+  .t3Sub{border:1px solid var(--line);border-radius:9px;margin:6px 0 0;overflow:hidden;background:rgba(255,255,255,.015)}
+  .t3SubHead{display:flex;justify-content:space-between;padding:7px 10px;font-size:9.5px;color:var(--muted);font-weight:700}
+  .t3SubBody{padding:2px 10px 8px}
+  .t3miniRow{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted2);margin-top:5px}
+  .t3bar{flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin:0 6px}
+  .t3chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+  .t3chip{font-size:8px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted2)}
+  .wheelMini{width:64px;height:64px;border-radius:50%;margin:8px auto 6px;
+    background:conic-gradient(from 0deg,red,yellow,lime,cyan,blue,magenta,red);opacity:.85}
+
+  .cta{display:block;text-align:center;padding:14px;border-radius:999px;font-weight:800;font-size:13px;margin:var(--sp-4) 14px 14px;
+    background:linear-gradient(180deg,rgba(240,192,64,.95),rgba(201,164,92,.95));color:#1c1200;
+    box-shadow:0 6px 20px rgba(201,164,92,.3)}
+</style>
+</head>
+<body>
+<h1>«Создать» — не заплатка, а один заход по всему экрану</h1>
+<p class="sub">17.09.2026 · «там всё проблема, не контур» — три яруса важности вместо одного плоского списка,
+один и тот же шаг отступа (6/10/16/24px) на оба шага целиком</p>
+<div class="note">Макет. Ничего не перенесено в игру.</div>
+
+<section>
+<h2>Принцип — три яруса, не один плоский список</h2>
+<div class="diag">
+  <div class="diagItem"><b>1</b><div><b style="color:var(--ok)">Главное</b> (лента точек / превью+4 ползунка) — крупный текст,
+  яркий цвет, золотая рамка-герой, как у самой карточки «Играть». Всегда развёрнуто, всегда на виду.</div></div>
+  <div class="diagItem"><b>2</b><div><b style="color:var(--gold-hi)">Частое, но не главное</b> (Туман/Избранное) — компактные
+  строки без своей рамки-героя, мельче, тише, но без лишнего тапа — видно сразу.</div></div>
+  <div class="diagItem"><b>3</b><div><b style="color:var(--muted)">Редкое</b> (Точечная настройка/Гармония) — за спойлером,
+  самый мелкий и приглушённый текст, «камень» без свечения — глаз сразу понимает, что это не то, с чего начинать.</div></div>
+  <div class="diagItem"><b>—</b><div>Пустая лента (0 точек) — раньше голый цветной прямоугольник. Теперь подсказка
+  «плюс — поставь первую точку», как приглашение, не пустота-которую-забыли.</div></div>
+  <div class="diagItem"><b>—</b><div>Избранное — раньше все 20 кружков всегда в полный размер, почти все пустые.
+  Теперь мельче и тише, свои (закрашенные) — крупнее пустых; пустые почти не спорят за внимание.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Карта — целиком</h2>
+<div class="row">
+  <div class="phone">
+    <div class="phoneHead"><div class="phoneLbl">стало</div><div class="stepT">КАРТА</div><div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div></div>
+    <div class="scr">
+      <div class="hero">
+        <div class="heroTrack">
+          <div class="heroCorner" style="left:8px">0</div>
+          <div class="heroCorner" style="left:36px">↩</div>
+          <div class="heroCorner" style="right:8px">🗑</div>
+          <div class="heroEmptyHint"><div class="plus">+</div>поставь первую точку</div>
+        </div>
+        <div class="heroLen"><span>ДЛИНА</span><div class="bar"></div><b style="color:var(--gold-hi)">1500М</b></div>
+      </div>
+      <div class="heroTray">
+        <div><div class="trayIc" style="background:linear-gradient(180deg,#8fd9c4,#8fd9c4aa)">⏸</div><div class="trayCap">Передышка</div></div>
+        <div><div class="trayIc" style="background:linear-gradient(180deg,#d999ff,#d999ffaa)">✎</div><div class="trayCap">Заметка</div></div>
+        <div><div class="trayIc" style="background:linear-gradient(180deg,#9c8a72,#9c8a72aa)">⬡</div><div class="trayCap">Астероид</div></div>
+        <div><div class="trayIc" style="background:linear-gradient(180deg,#4ecf7a,#4ecf7aaa)">▭</div><div class="trayCap">Обломок</div></div>
+        <div><div class="trayIc" style="background:linear-gradient(180deg,#b073ea,#b073eaaa)">⬡</div><div class="trayCap">Дрейфер</div></div>
+      </div>
+      <div class="t3">
+        <div class="t3Head"><b>ТОЧЕЧНАЯ НАСТРОЙКА</b><span>▾</span></div>
+        <div class="t3Sub">
+          <div class="t3SubHead">ТЕМП НЕБА <span>3 ручки ▴</span></div>
+          <div class="t3SubBody">
+            <div class="t3miniRow"><span>Плотность</span><span class="t3bar"></span><span>50</span></div>
+            <div class="t3miniRow"><span>Скорость</span><span class="t3bar"></span><span>50</span></div>
+          </div>
+        </div>
+        <div class="t3Sub"><div class="t3SubHead">СТАРТ <span>▾</span></div></div>
+        <div class="t3Sub"><div class="t3SubHead">ПРЕГРАДЫ <span>8 видов ▾</span></div></div>
+      </div>
+      <div class="cta" style="margin-left:0;margin-right:0">ПОДТВЕРДИТЬ КАРТУ ✓</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Цвет — целиком</h2>
+<div class="row">
+  <div class="phone">
+    <div class="phoneHead"><div class="phoneLbl">стало</div><div class="stepT">ЦВЕТ</div><div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div></div>
+    <div class="scr">
+      <div class="heroSwatch">
+        <div class="heroCorner" style="right:8px;top:8px">🎴</div>
+        <div class="heroCorner" style="left:8px;top:8px">⤨</div>
+      </div>
+      <div class="heroSliders">
+        <div class="hRow"><label>Цвет неба</label><div class="bar"></div><span class="val">28</span></div>
+        <div class="hRow"><label>Второй цвет</label><div class="bar"></div><span class="val">208</span></div>
+        <div class="hRow"><label>Густота</label><div class="bar"></div><span class="val">50</span></div>
+        <div class="hRow"><label>Настроение</label><div class="bar"></div><span class="val">50</span></div>
+      </div>
+      <div class="t2Row"><span>ТУМАН</span><div class="t2chips"><span class="t2chip sel">Нет</span><span class="t2chip">Лёгкий</span><span class="t2chip">Густой</span></div></div>
+      <div class="t2Row" style="display:block">
+        <div class="favHead">🎴 Избранное</div>
+        <div class="favDots">
+          <div class="favD filled" style="background:#3a4a20"></div><div class="favD filled" style="background:#1f6b2e"></div>
+          <div class="favD filled" style="background:#7a1a1a"></div><div class="favD filled" style="background:#6a2a9a"></div>
+          <div class="favD"></div><div class="favD"></div><div class="favD"></div><div class="favD"></div><div class="favD"></div>
+          <span class="favMore">+11</span>
+        </div>
+      </div>
+      <div class="t3">
+        <div class="t3Head"><b>ПОДОБРАТЬ ГАРМОНИЮ</b><span>▾</span></div>
+        <div class="t3Sub">
+          <div class="wheelMini"></div>
+          <div class="t3chips" style="justify-content:center;display:flex">
+            <span class="t3chip">Компл.</span><span class="t3chip">Аналог.</span><span class="t3chip">Триада</span>
+          </div>
+        </div>
+      </div>
+      <div class="cta" style="margin-left:0;margin-right:0">ПОДТВЕРДИТЬ ЦВЕТ ✓</div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:680px;margin:14px auto 0;text-align:center">
+  Избранное: было 20 кружков всегда в полный размер (18-22px), почти все пунктирные пустые — теперь
+  свои крупнее (16px, закрашены), пустые — только на 5-9 штук вперёд (16px, тонкий пунктир, тише),
+  остаток — числом «+11», не стеной пустых кругов. Гармония: колесо меньше (64px вместо ~150),
+  абзац-объяснение убран из вида по умолчанию (не единственный источник — схемы подписаны сами по
+  себе понятно: «Компл.», «Триада» и т.д., длинное объяснение не обязано быть постоянно видимым).
+</p>
+</section>
+
+<footer style="max-width:960px;margin:36px auto 0;text-align:center;color:var(--muted);font-size:11px">
+Источник иерархии: .wRow (index.html:2416) — единственный контур-герой, остальное — надстройка поверх, не равные по весу элементы.
+</footer>
+</body>
+</html>
