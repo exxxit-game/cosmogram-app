@@ -20,6 +20,27 @@ const SYNC_CATS=['gyro','touch','bullet','dist','keys'];
    КАЖДОМ возврате из OAuth, без единого исключения. Поймано только через живую консоль
    браузера владельца — сервер эту ошибку никогда не видел (падает раньше сети). */
 const POST_TIMEOUT=10000;
+/* 18.09.2026 «Нарастающая пауза» (сквозная проверка устойчивости к плохой связи, владелец,
+   после объяснения — «делай»): каждая очередь (главная/день/спидран/слалом/биатлон/эстафета)
+   и раньше не долбила сервер в цикле — просто пробовала при следующем естественном поводе
+   (конец игры/'online'/загрузка). Слабое место — нестабильная связь, где 'online' моргает
+   часто подряд: без паузы каждое такое мгновенное «вернулся интернет» сразу же лезет в сеть
+   заново, без разбора, что предыдущая попытка секунду назад уже провалилась. Растущая пауза
+   после КАЖДОЙ временной неудачи (не отказа-навсегда — тот и так больше не повторяется, см.
+   правку выше про 401/400/409/429): 2с→4с→8с→16с→32с→60с (потолок), сброс до нуля любой
+   успешной или отказанной-навсегда попыткой. Ключ ('main'/'daily'/...) — раздельно на очередь,
+   не одна общая: сбой одного пути (скажем, эстафеты) не должен придерживать остальные, которые
+   могут работать нормально. Только в памяти вкладки — переживать перезагрузку незачем, тот же
+   принцип, что уже у _syncFlying/_dailyFlying и прочих полётных флагов этого файла. */
+const BACKOFF_BASE_MS=2000, BACKOFF_MAX_MS=60000;
+const _syncBackoff={};
+function syncBackoffReady(key){ const b=_syncBackoff[key]; return !b || Date.now()>=b.until; }
+function syncBackoffFail(key){
+  const b=_syncBackoff[key] || (_syncBackoff[key]={fails:0,until:0});
+  b.fails++;
+  b.until = Date.now() + Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * Math.pow(2, b.fails-1));
+}
+function syncBackoffReset(key){ delete _syncBackoff[key]; }
 
 /* ---------- Несколько входов, одна таблица ----------
    initData — внутри мини-аппа; webAuth — старая веб-сессия Telegram Login Widget (виджет
@@ -279,6 +300,7 @@ function syncFlush(extra){
      раньше рекорда, ради чего вся правка и делалась. */
   if(_syncFlying) return (_syncFlying = _syncFlying.catch(()=>{}).then(()=>syncFlush(extra)));
   if(typeof isLabEnv==='function' && isLabEnv()){ Store.set('syncQ',[]); return Promise.resolve(); } // v1.108.1: печать лаборатории — тестовый забег не долетает до боевого топа
+  if(!syncBackoffReady('main')) return Promise.resolve(); // 18.09.2026: недавняя временная неудача — ждём растущую паузу, не долбим сеть на каждый повод
   /* v1.282.20 «Ничья отправка не съедает чужую».
      Прошлая редакция чинила только половину беды: промис больше не подменялся, а очередь
      по-прежнему затиралась целиком (Store.set('syncQ',[])). Живой сценарий: на старте идёт
@@ -313,13 +335,14 @@ function syncFlush(extra){
     if(r.ok || r.status===401 || r.status===400 || r.status===409){ // принято (или отказ навсегда) — вычитаем доставленное
       drain();
       if(r.ok || r.status===400 || r.status===409) drainExtra();
-    } else if(r.status===429){ drain(); } // extra остаётся: уведомление повторится после антифлуда
-    // 5xx / сеть — оставляем в очереди до следующего gameOver
+      syncBackoffReset('main');
+    } else if(r.status===429){ drain(); syncBackoffReset('main'); } // extra остаётся: уведомление повторится после антифлуда
+    else { syncBackoffFail('main'); } // 5xx — временная неудача, оставляем в очереди И растим паузу до следующей попытки
     /* v1.282.20: раньше отправка резолвилась пустотой — звавшему нечего было узнать об
        исходе. Дневнику это нужно: он вычёркивает дни только по ответу сервера. Возвращаем
        разобранное тело (или null), поведение очереди при этом не меняется ни на строку. */
     return r.ok ? r.json().catch(()=>null) : null;
-  }).catch(()=>null /* офлайн: очередь ждёт */)
+  }).catch(()=>{ syncBackoffFail('main'); return null; } /* офлайн: очередь ждёт, растим паузу */)
     .finally(()=>{ _syncFlying=null; }); // поводок снят — следующий забег отправит заново
   _syncFlying=p;
   return p;
@@ -464,9 +487,10 @@ function syncDailyFlush(){
   // (выше в этом файле, v1.282.14) уже чинил ровно это — та же цепочка здесь.
   if(_dailyFlying) return (_dailyFlying = _dailyFlying.catch(()=>{}).then(()=>syncDailyFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  if(!syncBackoffReady('daily')) return Promise.resolve(null); // 18.09.2026: недавняя временная неудача — растущая пауза
   const q=syncDailyQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'daily_submit'},syncAuth(),item)).then(r=>{
-    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    if(!r){ syncBackoffFail('daily'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
     /* 18.09.2026 (сквозная проверка устойчивости к плохой связи): раньше очередь чистили ТОЛЬКО
        по r.ok — 401/400/409/429 (протухшая подпись, неверные данные, уже обработано,
        антифлуд) оставались в очереди и слались ПОВТОРНО НАВСЕГДА при каждом заходе в игру.
@@ -475,9 +499,10 @@ function syncDailyFlush(){
        (спидран/слалом/биатлон). Отказ навсегда — переотправлять нечего, не «ошибка, ещё раз». */
     if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
       Store.set('dailyQ',syncDailyQueue().filter(x=>x!==item));
-    }
+      syncBackoffReset('daily');
+    } else { syncBackoffFail('daily'); } // 5xx — временная неудача, растим паузу
     return r;
-  }).catch(()=>null).finally(()=>{ _dailyFlying=null; });
+  }).catch(()=>{ syncBackoffFail('daily'); return null; }).finally(()=>{ _dailyFlying=null; });
   _dailyFlying=p; return p;
 }
 function syncDailySubmit(o){ // {day, score, skin, track?} — сохраняем до подтверждения сервера
@@ -534,15 +559,17 @@ let _speedrunFlying=null;
 function syncSpeedrunFlush(){
   if(_speedrunFlying) return (_speedrunFlying = _speedrunFlying.catch(()=>{}).then(()=>syncSpeedrunFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  if(!syncBackoffReady('speedrun')) return Promise.resolve(null); // 18.09.2026: растущая пауза
   const q=syncSpeedrunQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'speedrun_submit'},syncAuth(),item)).then(r=>{
-    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    if(!r){ syncBackoffFail('speedrun'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
     // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
     if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
       Store.set('speedrunQ',syncSpeedrunQueue().filter(x=>x!==item));
-    }
+      syncBackoffReset('speedrun');
+    } else { syncBackoffFail('speedrun'); }
     return r;
-  }).catch(()=>null).finally(()=>{ _speedrunFlying=null; });
+  }).catch(()=>{ syncBackoffFail('speedrun'); return null; }).finally(()=>{ _speedrunFlying=null; });
   _speedrunFlying=p; return p;
 }
 function syncSpeedrunSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
@@ -576,15 +603,17 @@ let _slalomFlying=null;
 function syncSlalomFlush(){
   if(_slalomFlying) return (_slalomFlying = _slalomFlying.catch(()=>{}).then(()=>syncSlalomFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  if(!syncBackoffReady('slalom')) return Promise.resolve(null); // 18.09.2026: растущая пауза
   const q=syncSlalomQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'slalom_submit'},syncAuth(),item)).then(r=>{
-    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    if(!r){ syncBackoffFail('slalom'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
     // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
     if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
       Store.set('slalomQ',syncSlalomQueue().filter(x=>x!==item));
-    }
+      syncBackoffReset('slalom');
+    } else { syncBackoffFail('slalom'); }
     return r;
-  }).catch(()=>null).finally(()=>{ _slalomFlying=null; });
+  }).catch(()=>{ syncBackoffFail('slalom'); return null; }).finally(()=>{ _slalomFlying=null; });
   _slalomFlying=p; return p;
 }
 function syncSlalomSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
@@ -616,15 +645,17 @@ let _biathlonFlying=null;
 function syncBiathlonFlush(){
   if(_biathlonFlying) return (_biathlonFlying = _biathlonFlying.catch(()=>{}).then(()=>syncBiathlonFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  if(!syncBackoffReady('biathlon')) return Promise.resolve(null); // 18.09.2026: растущая пауза
   const q=syncBiathlonQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'biathlon_submit'},syncAuth(),item)).then(r=>{
-    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    if(!r){ syncBackoffFail('biathlon'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
     // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
     if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
       Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
-    }
+      syncBackoffReset('biathlon');
+    } else { syncBackoffFail('biathlon'); }
     return r;
-  }).catch(()=>null).finally(()=>{ _biathlonFlying=null; });
+  }).catch(()=>{ syncBackoffFail('biathlon'); return null; }).finally(()=>{ _biathlonFlying=null; });
   _biathlonFlying=p; return p;
 }
 function syncBiathlonSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
@@ -683,9 +714,10 @@ let _relayFlying=null;
 function syncRelayFlush(){
   if(_relayFlying) return (_relayFlying = _relayFlying.catch(()=>{}).then(()=>syncRelayFlush()));
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
+  if(!syncBackoffReady('relay')) return Promise.resolve(null); // 18.09.2026: растущая пауза
   const q=syncRelayQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=relayPost(Object.assign({action:'relay_submit_leg'},syncAuth(),item)).then(r=>{
-    if(!r) return null;
+    if(!r){ syncBackoffFail('relay'); return null; }
     // 06.09.2026: тело читаем при ЛЮБОМ HTTP-статусе — stale_or_own_leg (409, «меня опередили»)
     // тоже несёт полезный код в теле, а ранний выход по r.ok его бы никогда не увидел.
     // 18.09.2026 (сквозная проверка устойчивости к плохой связи): но 401/400/429 (протухшая
@@ -693,10 +725,13 @@ function syncRelayFlush(){
     // что чинили у daily/speedrun/slalom/биатлон, добавлена и здесь, по статусу, независимо от тела.
     const terminalByStatus = r.status===401 || r.status===400 || r.status===429;
     return r.json().catch(()=>null).then(d=>{
-      if(terminalByStatus || (d && d.ok) || (d && d.error==='stale_or_own_leg')) Store.set('relayQ',syncRelayQueue().filter(x=>x!==item)); // успех — сдано; stale_or_own_leg — шанс ушёл, повторять нечего
+      if(terminalByStatus || (d && d.ok) || (d && d.error==='stale_or_own_leg')){
+        Store.set('relayQ',syncRelayQueue().filter(x=>x!==item)); // успех — сдано; stale_or_own_leg — шанс ушёл, повторять нечего
+        syncBackoffReset('relay');
+      } else { syncBackoffFail('relay'); } // 5xx / неопознанный отказ в теле — временная неудача, растим паузу
       return d;
     });
-  }).catch(()=>null).finally(()=>{ _relayFlying=null; });
+  }).catch(()=>{ syncBackoffFail('relay'); return null; }).finally(()=>{ _relayFlying=null; });
   _relayFlying=p; return p;
 }
 function syncRelaySubmitLeg(o){ // {chain_id, leg, track, time_sec, score_end, lives_end, skin} → {ok,done,leg}|null
