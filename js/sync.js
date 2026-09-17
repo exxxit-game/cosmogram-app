@@ -466,8 +466,16 @@ function syncDailyFlush(){
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
   const q=syncDailyQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'daily_submit'},syncAuth(),item)).then(r=>{
-    if(!r || !r.ok) return null;
-    Store.set('dailyQ',syncDailyQueue().filter(x=>x!==item));
+    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    /* 18.09.2026 (сквозная проверка устойчивости к плохой связи): раньше очередь чистили ТОЛЬКО
+       по r.ok — 401/400/409/429 (протухшая подпись, неверные данные, уже обработано,
+       антифлуд) оставались в очереди и слались ПОВТОРНО НАВСЕГДА при каждом заходе в игру.
+       Тот же класс дыры, что уже чинили у syncFlush() (главный путь очков, 27.08.2026
+       «Replay-защита записи рекорда») — просто забыли протянуть сюда и в 3 соседние копии
+       (спидран/слалом/биатлон). Отказ навсегда — переотправлять нечего, не «ошибка, ещё раз». */
+    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
+      Store.set('dailyQ',syncDailyQueue().filter(x=>x!==item));
+    }
     return r;
   }).catch(()=>null).finally(()=>{ _dailyFlying=null; });
   _dailyFlying=p; return p;
@@ -528,8 +536,11 @@ function syncSpeedrunFlush(){
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
   const q=syncSpeedrunQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'speedrun_submit'},syncAuth(),item)).then(r=>{
-    if(!r || !r.ok) return null;
-    Store.set('speedrunQ',syncSpeedrunQueue().filter(x=>x!==item));
+    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
+    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
+      Store.set('speedrunQ',syncSpeedrunQueue().filter(x=>x!==item));
+    }
     return r;
   }).catch(()=>null).finally(()=>{ _speedrunFlying=null; });
   _speedrunFlying=p; return p;
@@ -567,8 +578,11 @@ function syncSlalomFlush(){
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
   const q=syncSlalomQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'slalom_submit'},syncAuth(),item)).then(r=>{
-    if(!r || !r.ok) return null;
-    Store.set('slalomQ',syncSlalomQueue().filter(x=>x!==item));
+    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
+    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
+      Store.set('slalomQ',syncSlalomQueue().filter(x=>x!==item));
+    }
     return r;
   }).catch(()=>null).finally(()=>{ _slalomFlying=null; });
   _slalomFlying=p; return p;
@@ -604,8 +618,11 @@ function syncBiathlonFlush(){
   if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
   const q=syncBiathlonQueue(), item=q[0]; if(!item) return Promise.resolve(null);
   const p=syncDailyPost(Object.assign({action:'biathlon_submit'},syncAuth(),item)).then(r=>{
-    if(!r || !r.ok) return null;
-    Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
+    if(!r) return null; // сеть/таймаут — очередь ждёт следующего триггера
+    // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
+    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
+      Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
+    }
     return r;
   }).catch(()=>null).finally(()=>{ _biathlonFlying=null; });
   _biathlonFlying=p; return p;
@@ -671,8 +688,12 @@ function syncRelayFlush(){
     if(!r) return null;
     // 06.09.2026: тело читаем при ЛЮБОМ HTTP-статусе — stale_or_own_leg (409, «меня опередили»)
     // тоже несёт полезный код в теле, а ранний выход по r.ok его бы никогда не увидел.
+    // 18.09.2026 (сквозная проверка устойчивости к плохой связи): но 401/400/429 (протухшая
+    // подпись/неверные данные/антифлуд) могли прийти вообще БЕЗ тела с ok/error — та же дыра,
+    // что чинили у daily/speedrun/slalom/биатлон, добавлена и здесь, по статусу, независимо от тела.
+    const terminalByStatus = r.status===401 || r.status===400 || r.status===429;
     return r.json().catch(()=>null).then(d=>{
-      if((d && d.ok) || (d && d.error==='stale_or_own_leg')) Store.set('relayQ',syncRelayQueue().filter(x=>x!==item)); // успех — сдано; stale_or_own_leg — шанс ушёл, повторять нечего
+      if(terminalByStatus || (d && d.ok) || (d && d.error==='stale_or_own_leg')) Store.set('relayQ',syncRelayQueue().filter(x=>x!==item)); // успех — сдано; stale_or_own_leg — шанс ушёл, повторять нечего
       return d;
     });
   }).catch(()=>null).finally(()=>{ _relayFlying=null; });
