@@ -709,7 +709,7 @@ window.addEventListener('blur',mouseRelease);         // окно потерял
 /* v1.282.20 «Клавиши не залипают»: keyup слушается только на window, поэтому Alt+Tab с зажатой
    стрелкой (или системное сочетание, перехватившее клавишу) оставляет руль в нажатом положении.
    Возврат в игру — и самолёт сам едет в стену. Пауза при сворачивании ставится, но ввод не чистит. */
-function keysRelease(){ input.keyL=input.keyR=input.keyU=input.keyD=false; }
+function keysRelease(){ input.keyL=input.keyR=input.keyU=input.keyD=false; keyHeld.l=keyHeld.r=keyHeld.u=keyHeld.d=false; }
 window.addEventListener('blur',keysRelease);
 /* 18.09.2026 (сквозная проверка всей игры, владелец: «делай») — ровно тот же класс бага, что
    и у клавиш выше, но для касания: touchend/touchcancel слушается только на реальном отпускании
@@ -732,6 +732,14 @@ window.addEventListener('contextmenu',e=>e.preventDefault());
 const PAD_DZ=.2; // мёртвая зона стика: дрейф без нажатия не рулит
 let padPrev={a:false,st:false}, padLastId=null; // padLastId — v1.99.7: стыковка/отстыковка на ленту
 const padOwn={l:false,r:false,u:false,d:false}; // какие флаги руля поставил штурвал — только их и снимает
+/* 18.09.2026 (соло-аудит согласованности устройств, находка 3): штурвал возврат стика в
+   нейтраль гасил input.keyX БЕЗУСЛОВНО, даже если ту же клавишу в этот момент реально
+   держит клавиатура — keyHeld ниже honest-но отражает физическое состояние клавиши
+   (keydown/keyup), и штурвал теперь гасит флаг, только если клавиатура его не держит.
+   Симметрично починено и обратное направление (keyup клавиатуры не гасит флаг, которым
+   в этот момент владеет штурвал) — тот же класс бага, не задокументированный в находке,
+   но тот же самый паттерн «снял чужую руку с руля». */
+const keyHeld={l:false,r:false,u:false,d:false};
 function pollGamepad(){
   if(typeof navigator==='undefined'||typeof navigator.getGamepads!=='function') return;
   let gp=null;
@@ -741,16 +749,16 @@ function pollGamepad(){
   const pid=gp?String(gp.id||'pad'):null; // v1.99.7 «Чёрный ящик»: фронты стыковки — не каждый кадр
   if(pid!==padLastId){ if(typeof BB!=='undefined') BB.log('helm', pid!=null?'connected '+pid.slice(0,40):'disconnected'); padLastId=pid; }
   if(!gp){ padPrev.a=padPrev.st=false;
-    if(padOwn.l){input.keyL=false;padOwn.l=false;} if(padOwn.r){input.keyR=false;padOwn.r=false;}
-    if(padOwn.u){input.keyU=false;padOwn.u=false;} if(padOwn.d){input.keyD=false;padOwn.d=false;}
-    return; } // штурвал отстыковался — сдаём только свои флаги
+    if(padOwn.l){padOwn.l=false; if(!keyHeld.l) input.keyL=false;} if(padOwn.r){padOwn.r=false; if(!keyHeld.r) input.keyR=false;}
+    if(padOwn.u){padOwn.u=false; if(!keyHeld.u) input.keyU=false;} if(padOwn.d){padOwn.d=false; if(!keyHeld.d) input.keyD=false;}
+    return; } // штурвал отстыковался — сдаём только свои флаги, чужую (клавиатурную) руку не трогаем
   const ax=gp.axes[0]||0, ay=gp.axes[1]||0;
   const btn=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
   const L=ax<-PAD_DZ||btn(14), R=ax>PAD_DZ||btn(15), U=ay<-PAD_DZ||btn(12), D=ay>PAD_DZ||btn(13);
-  if(L){input.keyL=true;padOwn.l=true;} else if(padOwn.l){input.keyL=false;padOwn.l=false;}
-  if(R){input.keyR=true;padOwn.r=true;} else if(padOwn.r){input.keyR=false;padOwn.r=false;}
-  if(U){input.keyU=true;padOwn.u=true;} else if(padOwn.u){input.keyU=false;padOwn.u=false;}
-  if(D){input.keyD=true;padOwn.d=true;} else if(padOwn.d){input.keyD=false;padOwn.d=false;}
+  if(L){input.keyL=true;padOwn.l=true;} else if(padOwn.l){padOwn.l=false; if(!keyHeld.l) input.keyL=false;}
+  if(R){input.keyR=true;padOwn.r=true;} else if(padOwn.r){padOwn.r=false; if(!keyHeld.r) input.keyR=false;}
+  if(U){input.keyU=true;padOwn.u=true;} else if(padOwn.u){padOwn.u=false; if(!keyHeld.u) input.keyU=false;}
+  if(D){input.keyD=true;padOwn.d=true;} else if(padOwn.d){padOwn.d=false; if(!keyHeld.d) input.keyD=false;}
   const a=btn(0), st=btn(9); // фронты, не уровни: зажатая кнопка не долбит
   if(a&&!padPrev.a){ const scr=ekran(); if(scr==='menu') runStart(); else if(scr==='over') retryRun(); }
   if(st&&!padPrev.st){ const scr=ekran(); if(scr==='game') pauseGame(); else if(scr==='pause') resumeGame(); }
@@ -823,18 +831,18 @@ window.addEventListener('keydown',e=>{
   // раньше 'a'/'A' не срабатывало на AZERTY/QWERTZ (там на месте W/A/S/D другие буквы), только на QWERTY/ЙЦУКЕН
   const isSteerKey = keyMatchesDir('left',e)||keyMatchesDir('right',e)||keyMatchesDir('up',e)||keyMatchesDir('down',e);
   if(isSteerKey && ekran()==='game') keysOneHandHintMaybe();
-  if(keyMatchesDir('left',e)){input.keyL=true;e.preventDefault();}
-  if(keyMatchesDir('right',e)){input.keyR=true;e.preventDefault();}
-  if(keyMatchesDir('up',e)){input.keyU=true;e.preventDefault();}
-  if(keyMatchesDir('down',e)){input.keyD=true;e.preventDefault();}
+  if(keyMatchesDir('left',e)){input.keyL=true;keyHeld.l=true;e.preventDefault();}
+  if(keyMatchesDir('right',e)){input.keyR=true;keyHeld.r=true;e.preventDefault();}
+  if(keyMatchesDir('up',e)){input.keyU=true;keyHeld.u=true;e.preventDefault();}
+  if(keyMatchesDir('down',e)){input.keyD=true;keyHeld.d=true;e.preventDefault();}
   if(k===' '||k==='Enter'){ const scr=ekran(); if(scr==='menu') runStart(); else if(scr==='over') retryRun(); e.preventDefault(); } // как главная кнопка экрана: выбранная дисциплина, не всегда классика
   if(k==='Escape'||c==='KeyP'){ const scr=ekran(); if(scr==='game') pauseGame(); else if(scr==='pause') resumeGame(); }
 });
 window.addEventListener('keyup',e=>{
   // v1.282.13: отпускание слушаем ВСЕГДА, без фильтра. Поднять руль обязаны в любом
   // случае — иначе клавиша, зажатая до того, как фокус ушёл в поле ввода, залипнет.
-  if(keyMatchesDir('left',e))input.keyL=false;
-  if(keyMatchesDir('right',e))input.keyR=false;
-  if(keyMatchesDir('up',e))input.keyU=false;
-  if(keyMatchesDir('down',e))input.keyD=false;
+  if(keyMatchesDir('left',e)){keyHeld.l=false; if(!padOwn.l)input.keyL=false;}
+  if(keyMatchesDir('right',e)){keyHeld.r=false; if(!padOwn.r)input.keyR=false;}
+  if(keyMatchesDir('up',e)){keyHeld.u=false; if(!padOwn.u)input.keyU=false;}
+  if(keyMatchesDir('down',e)){keyHeld.d=false; if(!padOwn.d)input.keyD=false;}
 });
