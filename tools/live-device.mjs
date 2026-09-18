@@ -241,7 +241,23 @@ async function cmdScreenshot(pageId, outPath, port){
   const result = await cdpCall(port, pageId, 'Page.captureScreenshot', { format: 'png' });
   if (!result || !result.data) fail('CDP не вернул данные снимка');
   writeFileSync(outPath, Buffer.from(result.data, 'base64'));
-  console.log('saved ' + outPath);
+  console.log('saved ' + outPath + ' (CDP — см. предупреждение в шапке файла: может тихо отдать устаревший кадр, для реальной проверки фона/цвета используй hwshot)');
+}
+
+/* 19.09.2026, найдено живьём (соло-аудит, продолжение того же захода): Page.captureScreenshot
+   ТИХО отдавал серый плейсхолдер вместо настоящего кадра на «видимой» по /json странице —
+   три подряд снимка через `screenshot` показывали плоский серый фон вместо звёздного градиента.
+   Проверка computed style (getComputedStyle(document.body).backgroundColor) сразу показала
+   настоящий rgb(11,22,38) — тёмно-синий, не серый; adb screencap (аппаратный, минуя CDP-
+   композит вовсе) подтвердил: фон правильный. НИ ОДНОЙ ошибки от CDP при этом не было — просто
+   неверный кадр с кодом успеха. hwshot — то же самое, что measure-title-clearance.mjs уже
+   использует для нативных элементов Telegram, здесь как самостоятельная команда для любой
+   визуальной проверки, не только геометрии заголовка. */
+function cmdHwshot(serial, outPath){
+  if (!serial || !outPath) fail('usage: hwshot <serial> <outPngPath>');
+  const buf = Buffer.from(sh(`adb -s ${serial} exec-out screencap -p | base64`).replace(/\n/g, ''), 'base64');
+  writeFileSync(outPath, buf);
+  console.log('saved ' + outPath + ' (аппаратный adb screencap — настоящий кадр экрана, надёжнее CDP screenshot)');
 }
 
 async function cmdTap(pageId, x, y, port){
@@ -264,13 +280,15 @@ const HELP = `live-device.mjs — живая отладка подключённ
   console <pageId> [durationMs] [port]
   screenshot <pageId> <outPngPath> [port]
   tap <pageId> <x> <y> [port]
-  wake <serial> [port]`;
+  wake <serial> [port]
+  hwshot <serial> <outPngPath>   — настоящий кадр экрана (adb screencap), надёжнее screenshot`;
 
 try {
   switch (cmd) {
     case 'devices': cmdDevices(); break;
     case 'forward': cmdForward(args[0], args[1] && Number(args[1])); break;
     case 'wake': await cmdWake(args[0], args[1] && Number(args[1])); break;
+    case 'hwshot': cmdHwshot(args[0], args[1]); break;
     case 'pages': await cmdPages(args[0] && Number(args[0])); break;
     case 'eval': await cmdEval(args[0], args[1], args[2] && Number(args[2])); break;
     case 'console': await cmdConsole(args[0], args[1], args[2] && Number(args[2])); break;
