@@ -4721,6 +4721,36 @@ startLoop();
   }).observe(document.body,{childList:true,subtree:true});
 })();
 
+/* 18.09.2026 «Гироскоп молчит»: короткое сообщение под HUD, когда сигнал датчика пропадает
+   посреди полёта (владелец, макет giroskop-pod-hud-kompaktno-18-09-2026.html, «делай»).
+   game.js уже считает переход сам, каждый кадр (watchdog 600мс, game.js:2022):
+   input.useGyro = gyroUnlocked() && performance.now()-input._t<600. Здесь — только чтение
+   этого готового флага снаружи, независимым rAF-опросом; core (core.js/game.js/input.js)
+   не тронут ни строкой. Экран проверяем тем же способом, что уже читает render.js
+   (screenName==='game' && S.running && !S.paused) — иначе смена экрана или пауза читались
+   бы как «сигнал пропал», хотя датчик тут ни при чём. */
+let gyroLostWasOn = false, gyroLostHideT = null;
+function gyroLostTick(){
+  const inFlight = typeof screenName!=='undefined' && screenName==='game'
+    && typeof S!=='undefined' && S && S.running && !S.paused
+    && typeof input!=='undefined';
+  if (inFlight){
+    if (gyroLostWasOn && !input.useGyro) gyroLostShow();
+    gyroLostWasOn = input.useGyro;
+  } else {
+    gyroLostWasOn = false; // не в полёте — следующий вход не должен решить, что сигнал только что пропал
+  }
+  requestAnimationFrame(gyroLostTick);
+}
+function gyroLostShow(){
+  const el = $('gyroLostMsg'); if(!el) return;
+  el.textContent = L.gyroLostMsg;
+  el.classList.add('show');
+  clearTimeout(gyroLostHideT);
+  gyroLostHideT = setTimeout(()=>el.classList.remove('show'), 1500);
+}
+requestAnimationFrame(gyroLostTick);
+
 /* v1.282.14 «Маяк взлёта». Последняя исполняемая строка последнего скрипта игры.
    Проверка «поднялись ли мы» в index.html опирается именно на неё: косвенные признаки
    для этого негодны — const в мёртвой зоне бросает ReferenceError вместо 'undefined',
