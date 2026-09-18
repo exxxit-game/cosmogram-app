@@ -81,6 +81,21 @@
   [Physics Today — Light as a Feather: Structural Elements Give Peacock Plumes Their Color](https://physicstoday.aip.org/news/light-as-a-feather-structural-elements-give-peacock-plumes-their-color),
   [PMC — Reflections on iridescent neck and breast feathers of the peacock, Pavo cristatus](https://pmc.ncbi.nlm.nih.gov/articles/PMC6304014/).
 
+## ОБНОВЛЕНИЕ 18.09.2026 — как именно вырастает «ёлочка»: механическое коробление мембраны (2024-2025)
+
+Референс владельца (фигуры реальной статьи) — проверено WebSearch: свежее (2024-2025)
+исследование «Cell membrane buckling governs early-stage ridge formation in butterfly wing
+scales» показывает механизм РОСТА структуры, а не только её готовый вид. Задокументированный
+процесс: рост мембраны клетки-чешуйки, стеснённой регулярно расположенными пучками актина,
+вызывает механическую неустойчивость коробления (buckling) — гладкая поверхность превращается
+в регулярные «протогребни» уже к **35,8–41,0% времени развития куколки**, и только ПОТОМ на
+вершинах этих коробленых складок откладывается кутикула, застывающая в итоговую слоистую
+«ёлочку». Честная научная деталь: старая (почти 40-летняя) гипотеза объясняла шаг гребней
+уменьшением расстояния между пучками актина — новые данные это не подтверждают (шаг гребней
+остаётся постоянным после появления), механизм коробления сложнее одной простой причины.
+[Cell Reports Physical Science, 2024 — Cell membrane buckling governs early-stage ridge
+formation](https://www.cell.com/cell-reports-physical-science/fulltext/S2666-3864(24)00332-1).
+
 ## Тир 2 — реальный, задокументированный, но более узкий по числу независимых подтверждающих исследований механизм
 
 - **Круговая поляризация отражённого света жуков-скарабеев — задокументированно редкое в природе
