@@ -832,7 +832,11 @@ function mapAskPublish(code, name){
   _mapPublishBusy=true;
   const msg=L.forgePublishConfirm||'Опубликовать это небо в Галерее — увидят все?';
   const go=()=>{ workshopSubmit(code, name).then(res=>{
+    // 18.09.2026 (аудит тишины-без-сигнала, владелец «да»): раньше отказ сервера (сеть/модерация/
+    // антифлуд) не показывал вообще ничего — игрок не знал, опубликовано ли небо. Тот же тост,
+    // что уже 6 раз применён в этом же файле для того же паттерна (workshopVote/workshopNotice и т.д.).
     if(res && res.ok) toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)');
+    else toast(L.syncOffline,'rgba(255,159,176,.5)');
   }).catch(()=>{}).finally(()=>{ _mapPublishBusy=false; }); };
   const declined=()=>{ _mapPublishBusy=false; };
   try{
@@ -1710,7 +1714,9 @@ wireOnLocal('workshopList','click',function(e){
     // всё равно проверяет OWNER_ID сам, кнопка здесь лишь скрыта для остальных игроков.
     const next = row.dataset.status==='pinned' ? 'normal' : 'pinned';
     workshopModerate(code, next).then(function(res){
-      if(!res || !res.ok) return;
+      // 18.09.2026 (аудит тишины-без-сигнала, владелец «да»): та же дыра, что у mapAskPublish —
+      // отказ сервера тихо ничего не делал, значок оставался в прежнем состоянии без объяснения.
+      if(!res || !res.ok){ toast(L.syncOffline,'rgba(255,159,176,.5)'); return; }
       row.dataset.status=next;
       act.classList.toggle('active', next==='pinned'); // заливка булавки — CSS
       // 07.09.2026, владелец («не понятно что произошло после нажатия»): смена эмодзи одна,
@@ -1724,7 +1730,7 @@ wireOnLocal('workshopList','click',function(e){
     // владельцу (или уже помеченным трекам всем), сервер сам проверяет OWNER_ID ещё раз.
     const next = row.dataset.featured==='1' ? false : true;
     workshopModerateFeatured(code, next).then(function(res){
-      if(!res || !res.ok) return;
+      if(!res || !res.ok){ toast(L.syncOffline,'rgba(255,159,176,.5)'); return; }
       row.dataset.featured = next ? '1' : '0';
       act.classList.toggle('active', next);
       toast(next ? (L.workshopFeatured||'Отмечено золотой звездой') : (L.workshopUnfeatured||'Метка снята'), 'rgba(255,214,140,.5)');
@@ -1735,7 +1741,7 @@ wireOnLocal('workshopList','click',function(e){
   if(act.dataset.act==='hide'){
     const next = row.dataset.status==='hidden' ? 'normal' : 'hidden';
     workshopModerate(code, next).then(function(res){
-      if(!res || !res.ok) return;
+      if(!res || !res.ok){ toast(L.syncOffline,'rgba(255,159,176,.5)'); return; }
       row.dataset.status=next;
       const eyeSvg=act.querySelector('svg');
       eyeSvg.innerHTML = next==='hidden'
