@@ -223,7 +223,7 @@ const I18N = {
     stars:'Звёзды', maxCombo:'Макс. комбо', share:'Поделиться', bestByControl:'Личные рекорды по управлению',
     home:'На экран «Домой»',
     feedbackBtn:'Поддержка', feedbackTitle:'Поддержка', // 15.09.2026 (владелец): кнопка на главном тоже стала «Поддержка» — было «Написать разработчику», теперь то же слово, что и заголовок экрана
-    equalityBtn:'Равноправие', equalityTitle:'Хартия', gratitudeBtn:'Благодарность', gratitudeTitle:'Спасибо', // 18.09.2026: заголовки ЭКРАНОВ короче кнопок меню — владелец, «Хартия» как имя официального документа (короче и по делу, не просто ради зазора); «Спасибо» — исходно от зазора до «Назад», см. index.html
+    equalityBtn:'Хартия', equalityTitle:'Хартия', gratitudeBtn:'Спасибо', gratitudeTitle:'Спасибо', // 18.09.2026 (владелец, живой скрин главного меню: «дебилизм, если в одном месте называется одно, а в другом — другое») — кнопка и заголовок экрана теперь одно слово, тот же принцип, что уже у feedbackBtn/feedbackTitle («Поддержка») с 15.09.2026; раньше кнопки меню («Равноправие»/«Благодарность») были длиннее заголовков экранов («Хартия»/«Спасибо», см. их родные комментарии выше по файлу про зазор до «Назад») — само по себе не баг, но с точки зрения игрока это разные названия одной и той же вещи
     chSignLead:'Если ты согласен с этими словами — поставь свою подпись под Хартией', chSignLeadDone:'Спасибо. Твоя подпись — часть Хартии, как и подписи остальных',
     chSignBtnLbl:'Подписать', chSignBtnDone:'Подписано',
     // 15.09.2026 (владелец, живая проверка: «1 пилотов» — число не склоняется): русское
@@ -461,7 +461,7 @@ const I18N = {
     gyroStatTg:'Sensor: Telegram · live', gyroStatWeb:'Sensor: web channel · live', gyroStatNone:'Sensor silent — use your finger',
     stars:'Stars', maxCombo:'Max combo', share:'Share', bestByControl:'Personal records by control',
     feedbackBtn:'Support', feedbackTitle:'Support',
-    equalityBtn:'Equality', equalityTitle:'Charter', gratitudeBtn:'Gratitude', gratitudeTitle:'Thanks',
+    equalityBtn:'Charter', equalityTitle:'Charter', gratitudeBtn:'Thanks', gratitudeTitle:'Thanks',
     chSignLead:'If you agree with these words, add your signature to the Charter', chSignLeadDone:'Thank you. Your signature is now part of the Charter, alongside everyone else\'s',
     chSignBtnLbl:'Sign', chSignBtnDone:'Signed',
     chSignCount:(n)=>n+(n===1?' pilot has signed the Charter':' pilots have signed the Charter'),
@@ -671,7 +671,7 @@ const I18N = {
     gyroStatNone:'Sensor en silencio — juega con el dedo',
     stars:'Estrellas', maxCombo:'Combo máx.', share:'Compartir', home:'Añadir a inicio', bestByControl:'Récords personales por control',
     feedbackBtn:'Soporte', feedbackTitle:'Soporte',
-    equalityBtn:'Igualdad', equalityTitle:'Carta', gratitudeBtn:'Gratitud', gratitudeTitle:'Gracias',
+    equalityBtn:'Carta', equalityTitle:'Carta', gratitudeBtn:'Gracias', gratitudeTitle:'Gracias',
     chSignLead:'Si estás de acuerdo con estas palabras, firma la Carta', chSignLeadDone:'Gracias. Tu firma ya es parte de la Carta, junto a las demás',
     chSignBtnLbl:'Firmar', chSignBtnDone:'Firmado',
     chSignCount:(n)=>n+(n===1?' piloto ha firmado la Carta':' pilotos han firmado la Carta'),
@@ -900,7 +900,7 @@ const I18N = {
     gyroStatNone:'Sensor em silêncio — jogue com o dedo',
     stars:'Estrelas', maxCombo:'Combo máx.', share:'Compartilhar', home:'Adicionar à tela inicial', bestByControl:'Recordes pessoais por controle',
     feedbackBtn:'Suporte', feedbackTitle:'Suporte',
-    equalityBtn:'Igualdade', equalityTitle:'Carta', gratitudeBtn:'Gratidão', gratitudeTitle:'Obrigado',
+    equalityBtn:'Carta', equalityTitle:'Carta', gratitudeBtn:'Obrigado', gratitudeTitle:'Obrigado',
     chSignLead:'Se concordas com estas palavras, assina a Carta', chSignLeadDone:'Obrigado. A tua assinatura já faz parte da Carta, junto com as outras',
     chSignBtnLbl:'Assinar', chSignBtnDone:'Assinado',
     chSignCount:(n)=>n+(n===1?' piloto assinou a Carta':' pilotos assinaram a Carta'),
@@ -1130,7 +1130,7 @@ const I18N = {
     gyroStatTg:'Capteur : Telegram · actif', gyroStatWeb:'Capteur : canal web · actif', gyroStatNone:'Capteur silencieux — utilise ton doigt',
     stars:'Étoiles', maxCombo:'Combo max', share:'Partager', bestByControl:'Records personnels par contrôle',
     feedbackBtn:'Support', feedbackTitle:'Support',
-    equalityBtn:'Égalité', equalityTitle:'Charte', gratitudeBtn:'Gratitude', gratitudeTitle:'Merci',
+    equalityBtn:'Charte', equalityTitle:'Charte', gratitudeBtn:'Merci', gratitudeTitle:'Merci',
     chSignLead:'Si tu es d\'accord avec ces mots, signe la Charte', chSignLeadDone:'Merci. Ta signature fait désormais partie de la Charte, aux côtés des autres',
     chSignBtnLbl:'Signer', chSignBtnDone:'Signé',
     chSignCount:(n)=>n+(n===1?' pilote a signé la Charte':' pilotes ont signé la Charte'),
