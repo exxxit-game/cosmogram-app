@@ -711,7 +711,16 @@ window.addEventListener('blur',mouseRelease);         // окно потерял
    Возврат в игру — и самолёт сам едет в стену. Пауза при сворачивании ставится, но ввод не чистит. */
 function keysRelease(){ input.keyL=input.keyR=input.keyU=input.keyD=false; }
 window.addEventListener('blur',keysRelease);
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) keysRelease(); });
+/* 18.09.2026 (сквозная проверка всей игры, владелец: «делай») — ровно тот же класс бага, что
+   и у клавиш выше, но для касания: touchend/touchcancel слушается только на реальном отпускании
+   пальца, а Alt-Tab/сворачивание/системный жест (Android «назад») этого события не пришлют
+   вовсе. Самолёт застывал в последней точке касания, а первое НОВОЕ касание после возврата
+   молча терялось — tDown оставался true (см. touchstart выше: «второй палец не сбрасывает
+   жест первого», а после разворачивания это уже НЕ второй палец, а новый первый, которому
+   некому сказать, что старый tDown устарел). touchEnd() — та же чистка, что уже есть в
+   touchGone(), просто ещё и по blur/скрытию вкладки, не только по настоящему touchend. */
+window.addEventListener('blur',touchEnd);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){ keysRelease(); touchEnd(); } });
 window.addEventListener('contextmenu',e=>e.preventDefault());
 
 /* ---------- Клавиатура (desktop fallback: стрелки + WASD + рус. раскладка) ---------- */
