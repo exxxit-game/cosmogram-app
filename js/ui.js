@@ -1395,6 +1395,11 @@ function toMenu(){
   setScreen('menu');
   music.start('menu'); // вернулись в меню — медленные пэды
   engine.stop(); // в меню самолётик молчит
+  /* 18.09.2026 (владелец, версии на двух телефонах разошлись на пять правок из-за долгой
+     вкладки без перезагрузки — index.html, controllerchange) — здесь ВСЁ уже безопасно
+     свёрнуто (S.running=false выше, попытка дня не потеряна): если пока игрок летал,
+     подъехала новая версия, применяем её именно сейчас, а не посреди управления самолётом. */
+  if (typeof swReloadPending!=='undefined' && swReloadPending && typeof swApplyReload==='function') swApplyReload();
 }
 function endTheater(){ // v1.94.0 «Театр призраков» Т1: занавес — спектакль кончился, возвращаемся на итоги; книги и касса не тронуты
   S.running=false; S.paused=false; S.dying=0; S.pausing=0; releaseAwake();
