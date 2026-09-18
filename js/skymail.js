@@ -260,7 +260,17 @@ const BEACON=(()=>{
     window.addEventListener('error',e=>{ if(e&&e.message){
       const loc=e.filename?(String(e.filename).split('/').pop()+':'+e.lineno+':'+e.colno):'';
       const stack=(e.error && e.error.stack) ? String(e.error.stack) : '';
-      drop('error',(loc?loc+' ':'')+e.message, perfCtx(), stack);
+      /* 18.09.2026 «Закон К18» (ERROR-CATALOG.md): браузер прячет filename/lineno/colno/error
+         для ошибок из непрозрачного источника (сторонний инжект — расширение, антивирус-
+         прокси на Android и т.п., НЕ про crossorigin наших <script> — все они same-origin).
+         Настоящий баг в нашем коде ВСЕГДА приходит с заполненным filename. Пустые loc И stack
+         одновременно — надёжный признак именно внешнего шума. Владелец («разделить»): игрок
+         не должен думать, что мы «чиним» то, чего мы даже не видим — отдельный kind, не
+         считается в errCount, не будит окно «экипаж знает» (см. flush()/note() выше), но
+         всё ещё уходит на сервер тихим счётчиком — вдруг вместо редких 12/15дней однажды
+         станет 200/день, тогда это само по себе тревога. */
+      const opaque = !loc && !stack;
+      drop(opaque?'error_opaque':'error',(loc?loc+' ':'')+e.message, perfCtx(), stack);
     } });
     window.addEventListener('unhandledrejection',e=>{
       const reason=e && e.reason;
