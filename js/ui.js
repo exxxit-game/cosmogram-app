@@ -4285,6 +4285,17 @@ function grPositionBubble(hit){
   const bubble=$('grBubble'), wrap=$('grSkyWrap'); if(!bubble||!wrap) return;
   const wrapR=wrap.getBoundingClientRect();
   const px=hit.x/380*wrapR.width, py=hit.y/230*wrapR.height;
+  /* 18.09.2026 (пойман стражем 228 в полном прогоне — на узком экране пузырёк вылезал за левый
+     край): .grBubble абсолютно спозиционирован только через left (right:auto), а ширина у него
+     auto — по правилам CSS shrink-to-fit доступное место для такого элемента отсчитывается ОТ
+     его собственного left ДО правого края контейнера, то есть offsetWidth ЗАВИСИТ от текущего
+     left. Раньше left читался ДО перепозиционирования — на первом вызове left ещё от прошлой
+     точки (или 0/unset), offsetWidth получался НЕ ТЕМ, что будет после переезда, клэмп считал
+     по чужой ширине. Сброс left в 0 перед чтением — то же самое сначала-переезд-потом-замер, что
+     уже применяется у центрируемых заголовков (centerTitleOnHeader) — даёт задаче ту же ширину,
+     что была бы при максимально доступном месте (по факту ограничена max-width:78% в CSS,
+     тем самым числом, что и раньше, просто честно измеренным). */
+  bubble.style.left='0px';
   const bw=bubble.offsetWidth, bh=bubble.offsetHeight;
   const spaceAbove=py, spaceBelow=wrapR.height-py;
   const above = spaceAbove>=bh+14 || spaceAbove>=spaceBelow;
