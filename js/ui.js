@@ -4449,9 +4449,12 @@ function applyLang(){
   setText('gratitudeBtn',L.gratitudeBtn);
   setText('gratitudeTitle',L.gratitudeTitle);
   setText('grCaption',L.grLead); setText('grCardT',L.grCardT);
-  setText('grCommentLbl',L.grCommentLbl); setText('grAmountLbl',L.grAmountLbl); setText('grAnonLbl',L.grAnonLbl);
+  setText('grAnonLbl',L.grAnonLbl);
   setText('grSendLbl',L.grSendLbl);
-  const grCiEl=$('grCommentInput'); if(grCiEl) grCiEl.placeholder=L.grCommentPh; // 16.09.2026: плейсхолдер-пример, не повтор слова «Комментарий»
+  // 18.09.2026 (владелец, живой скрин с разметкой): отдельные ярлыки «Комментарий»/«Сколько Stars —
+  // решаете сами» убраны целиком — grCommentLbl/grAmountLbl (i18n.js) и их элементы (index.html)
+  // удалены вместе с этим вызовом. Приглашение к комментарию теперь целиком внутри плейсхолдера.
+  const grCiEl=$('grCommentInput'); if(grCiEl) grCiEl.placeholder=L.grCommentPh;
   if (typeof grFillNameRow==='function') grFillNameRow(); // 15.09.2026: «Покажется как:»/«Имя скрыто» — свой язык
   // 15.09.2026: signIn/empty заполняются один раз в gratitudeSkyFill() (реальный запрос к серверу) —
   // полный повторный вызов здесь на каждую смену языка был бы лишним сетевым запросом; текст
