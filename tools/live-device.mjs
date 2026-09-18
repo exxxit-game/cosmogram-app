@@ -36,6 +36,15 @@
      node tools/live-device.mjs tap <pageId> <x> <y> [port]
        — настоящий touch-жест (Input.dispatchTouchEvent) — Telegram WebView этого требует,
          мышиный click может не долететь до того же обработчика, что реальный палец.
+     node tools/live-device.mjs wake <serial> [port]
+       — 18.09.2026, найдено живьём (владелец разблокировал экран, screenshot/tap всё равно
+         сперва падали TIMEOUT — оказалось, экран проснулся, а сам Telegram — нет, был на
+         списке чатов, мини-игра свёрнута в нижнюю плашку). Будит экран (adb keyevent), если
+         спал, поднимает Telegram на передний план (adb monkey -p org.telegram.messenger).
+         ЧЕСТНО НЕ ДОГАДЫВАЕТСЯ дальше: если страница WebView после этого всё ещё [свёрнуто]
+         (мини-игра свёрнута в плашку внутри Telegram, не сам Telegram в фоне) — координаты
+         плашки меняются от экрана к экрану, гадать рискованно; печатает явную подсказку
+         «сам разверни на телефоне» вместо тыка вслепую.
 
    Пример полного захода на новом подключении:
      node tools/live-device.mjs devices
@@ -76,6 +85,45 @@ function cmdForward(serial, port){
   const pid = m[1];
   sh(`adb -s ${serial} forward tcp:${port} localabstract:webview_devtools_remote_${pid}`);
   console.log(`forwarded tcp:${port} -> ${serial}:webview_devtools_remote_${pid}`);
+}
+
+async function cmdWake(serial, port){
+  if (!serial) fail('usage: wake <serial> [port]');
+  port = port || PORT_DEFAULT;
+  const power = sh(`adb -s ${serial} shell dumpsys power`);
+  const asleep = /mWakefulness=Asleep/.test(power);
+  if (asleep) {
+    sh(`adb -s ${serial} shell input keyevent KEYCODE_WAKEUP`);
+    console.log('экран разбужен (был asleep)');
+  } else {
+    console.log('экран уже был awake');
+  }
+  const activity = sh(`adb -s ${serial} shell dumpsys activity activities`);
+  const resumedMatch = activity.match(/ResumedActivity: ActivityRecord\{[^}]*\s(\S+)\/\S+/);
+  const resumedPkg = resumedMatch ? resumedMatch[1] : '(не определить)';
+  if (resumedPkg !== 'org.telegram.messenger') {
+    sh(`adb -s ${serial} shell monkey -p org.telegram.messenger -c android.intent.category.LAUNCHER 1`);
+    console.log(`Telegram поднят на передний план (был активен: ${resumedPkg})`);
+    await new Promise(r => setTimeout(r, 1500));
+  } else {
+    console.log('Telegram уже был на переднем плане');
+  }
+  try {
+    const pages = await listPages(port);
+    const gamePage = pages.find(p => /cosmogram-app\/($|index\.html)/.test(p.url) || p.url.endsWith('cosmogram-app/'));
+    if (!gamePage) {
+      console.log('⚠ страница игры не найдена в списке CDP-вкладок — форвард настроен? (live-device.mjs forward), или Telegram открыт не на чате с игрой.');
+      return;
+    }
+    const hidden = JSON.parse(gamePage.description || '{}').visible === false;
+    if (hidden) {
+      console.log(`⚠ страница игры (${gamePage.id}) всё ещё [свёрнуто] — Telegram спереди, но сама мини-игра свёрнута в нижнюю плашку. Координаты плашки на разных экранах разные, тыкать вслепую рискованно (можно попасть не туда) — разверни её на телефоне сам (тап по плашке "Cosmogram" внизу экрана), потом снова pages/screenshot.`);
+    } else {
+      console.log(`✅ страница игры (${gamePage.id}) видима и готова к screenshot/tap`);
+    }
+  } catch (e) {
+    console.log('не удалось проверить CDP-вкладки (' + e.message + ') — форвард настроен?');
+  }
 }
 
 async function listPages(port){
@@ -215,12 +263,14 @@ const HELP = `live-device.mjs — живая отладка подключённ
   eval <pageId> <jsExpression> [port]
   console <pageId> [durationMs] [port]
   screenshot <pageId> <outPngPath> [port]
-  tap <pageId> <x> <y> [port]`;
+  tap <pageId> <x> <y> [port]
+  wake <serial> [port]`;
 
 try {
   switch (cmd) {
     case 'devices': cmdDevices(); break;
     case 'forward': cmdForward(args[0], args[1] && Number(args[1])); break;
+    case 'wake': await cmdWake(args[0], args[1] && Number(args[1])); break;
     case 'pages': await cmdPages(args[0] && Number(args[0])); break;
     case 'eval': await cmdEval(args[0], args[1], args[2] && Number(args[2])); break;
     case 'console': await cmdConsole(args[0], args[1], args[2] && Number(args[2])); break;
