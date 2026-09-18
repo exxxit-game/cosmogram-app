@@ -174,7 +174,7 @@ function trimRing(ring, windowUs, pinnedUs, maxWindowUs){
    весь модуль сознательно избегает. CINEMA_SNAPSHOT_SPAN_US — сколько снимка вокруг момента брать. */
 const CINEMA_SNAPSHOT_SPAN_US = 4_000_000; // ~4 сек — предложенное число, не проверено с владельцем отдельно
 async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
-  const made = makeMuxer();
+  const adapter = await makeMuxer(); // 18.09.2026: makeMuxer теперь асинхронный адаптер (Mediabunny/legacy), см. makeMuxerAdapter выше
   let offset = 0, firstChunk = true;
   for (const seg of segments){
     if (!seg || !seg.length) continue;
@@ -188,14 +188,52 @@ async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
         chunkToAdd = new EncodedVideoChunk({ type: e.chunk.type, timestamp: newTs, duration: e.chunk.duration, data: buf });
       }
       if (firstChunk && decoderConfig && !(meta && meta.decoderConfig)) meta = { ...(meta||{}), decoderConfig };
-      try{ made.muxer.addVideoChunk(chunkToAdd, meta); }catch(err){}
+      await adapter.addChunk(chunkToAdd, meta);
       firstChunk = false;
     }
     const lastE = seg[seg.length-1];
     offset += (lastE.ts - segStart) + (lastE.chunk.duration || 33333); // следующий сегмент начинается сразу после этого
   }
-  made.muxer.finalize();
-  return new Blob([made.target.buffer], { type: 'video/mp4' });
+  const buf = await adapter.finalize();
+  if (!buf) return null;
+  return new Blob([buf], { type: 'video/mp4' });
+}
+/* 18.09.2026 (владелец: «везде подключи, чтобы было правильно» — перевод самого кольцевого
+   движка на Mediabunny, отдельная крупная задача, ранее сознательно отложенная). Официальный
+   гайд миграции mp4-muxer→Mediabunny (vanilagy.github.io/mp4-muxer/MIGRATION-GUIDE.html) даёт
+   низкоуровневый класс ИМЕННО под этот случай — EncodedVideoPacketSource принимает уже
+   закодированные чанки (как EncodedVideoChunk от VideoEncoder), сама не кодирует ничего заново.
+   Это значит: вся кольцевая логика ниже (grab()/trimRing()/markRecord()/cinemaMuxSegments —
+   обрезка окна, закреплённый момент рекорда, склейка сегментов) работает с сырыми чанками
+   и НЕ МЕНЯЕТСЯ ВООБЩЕ — меняется только то, что делает финальную упаковку в mp4 из уже
+   готовых чанков. adapter{addChunk,finalize} — общий интерфейс для обеих версий (Mediabunny/
+   старый mp4-muxer), остальной код кольца зовёт только его, не знает, какая версия внутри.
+   Честный запасной путь на старый mp4-muxer остаётся — тот же принцип, что уже у
+   loadMediabunny()/cinemaExportHighlightCardMB ниже, не выдуман заново. */
+async function makeMuxerAdapter(mb, muxCodec, width, height, frameRate){
+  if (mb){
+    // 18.09.2026 (пойман живым прогоном стража): fastStart:'reserve' (пример из гайда миграции)
+    // требует заранее знать maximumPacketCount — у кольцевого буфера длина заранее не известна
+    // (окно постоянно подрезается/растягивается). Без опции — тот же режим по умолчанию, что уже
+    // работает в cinemaExportHighlightCardMB/cinemaAngarZoomShareMB ниже, не выдумываю новый.
+    const target = new mb.BufferTarget();
+    const output = new mb.Output({ format:new mb.Mp4OutputFormat(), target });
+    const videoSource = new mb.EncodedVideoPacketSource(muxCodec);
+    output.addVideoTrack(videoSource, { frameRate });
+    await output.start();
+    return {
+      target,
+      addChunk: async (chunk, meta) => { try{ await videoSource.add(mb.EncodedPacket.fromEncodedChunk(chunk), meta); }catch(e){} },
+      finalize: async () => { try{ await output.finalize(); }catch(e){ return null; } return target.buffer; },
+    };
+  }
+  const target = new Mp4Muxer.ArrayBufferTarget();
+  const muxer = new Mp4Muxer.Muxer({ target, video:{ codec:muxCodec, width, height, frameRate }, fastStart:'in-memory', firstTimestampBehavior:'offset' });
+  return {
+    target,
+    addChunk: async (chunk, meta) => { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} },
+    finalize: async () => { try{ muxer.finalize(); }catch(e){ return null; } return target.buffer; },
+  };
 }
 // 30.08.2026 (владелец, экстренно): живое зависание на A03 Core И на Oppo при ручном тесте
 // FPS-записи — механизм явно тяжелее, чем показала песочница на компьютере. Рубильник в одном
@@ -223,24 +261,21 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
     ov = { oc, octx: oc.getContext('2d') };
   }
 
-  const muxCfg = { video: { codec: picked.mux, width: canvas.width, height: canvas.height, frameRate: 30 },
-    fastStart: 'in-memory', firstTimestampBehavior: 'offset' }; // кадры идут от performance.now() — не с нуля, см. d.ts
-  const makeMuxer = () => {
-    const t = new Mp4Muxer.ArrayBufferTarget();
-    const m = new Mp4Muxer.Muxer({ target: t, ...muxCfg });
-    return { target: t, muxer: m };
-  };
+  // 18.09.2026: makeMuxer пробует Mediabunny первой (mb!=null), честный запасной путь на
+  // старый mp4-muxer — makeMuxerAdapter() сама решает, обе ветки дают одинаковый {addChunk,finalize}.
+  const mb = await loadMediabunny();
+  const makeMuxer = () => makeMuxerAdapter(mb, picked.mux, canvas.width, canvas.height, 30);
 
   const ring = ringWindowUs ? [] : null;
-  let target=null, muxer=null, decoderConfig=null, pinnedUs=null, snapshot=null, snapshotGrowUntil=0;
+  let adapter=null, decoderConfig=null, pinnedUs=null, snapshot=null, snapshotGrowUntil=0;
   // 30.08.2026: VideoEncoder кладёт decoderConfig только в meta САМОГО ПЕРВОГО чанка сессии, не в каждый
   // ключевой — обрезка кольца выбрасывает тот чанк, и новый муксер без decoderConfig на своём первом чанке
   // падал в finalize() (проверено живьём: mp4-muxer.min.js TypeError на null.colorSpace). Запоминаем его
   // один раз и подставляем обратно первому чанку в обрезанном окне (и в снимке — см. markRecord ниже).
-  if (!ring){ const made = makeMuxer(); target = made.target; muxer = made.muxer; }
+  if (!ring){ adapter = await makeMuxer(); }
 
   const encoder = new VideoEncoder({
-    output: (chunk, meta) => {
+    output: async (chunk, meta) => {
       if (meta && meta.decoderConfig && !decoderConfig) decoderConfig = meta.decoderConfig;
       if (ring){
         const entry = { chunk, meta, ts: chunk.timestamp, key: chunk.type==='key' };
@@ -248,7 +283,7 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
         trimRing(ring, ringWindowUs, pinnedUs, maxWindowUs);
         if (snapshot && entry.ts <= snapshotGrowUntil) snapshot.push(entry); // снимок момента растёт своим окном, кольцо его не подрежет
       }
-      else { try{ muxer.addVideoChunk(chunk, meta); }catch(e){} }
+      else { await adapter.addChunk(chunk, meta); }
     },
     error: (e) => { if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_enc_err', String((e&&e.message)||e)); },
   });
@@ -298,7 +333,7 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
     finally{ if (frame) frame.close(); }
   };
   rafBox.id = requestAnimationFrame(grab);
-  _cinemaRec = { encoder, muxer, target, ring, ringWindowUs, maxWindowUs, makeMuxer,
+  _cinemaRec = { encoder, adapter, ring, ringWindowUs, maxWindowUs, makeMuxer,
     getDecoderConfig: () => decoderConfig,
     markRecord: () => { // первое пересечение рекорда — единственное, второе не бывает
       if (pinnedUs!=null || !ring) return;
@@ -316,7 +351,7 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
 function cinemaMarkRecord(){ if (_cinemaRec && _cinemaRec.markRecord) _cinemaRec.markRecord(); } // 30.08.2026: снаружи, без правки ядра — вызывающий код сам решает, когда счёт обогнал рекорд
 async function cinemaStop(){
   if (!_cinemaRec) return null;
-  const { encoder, muxer, target, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
+  const { encoder, adapter, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
   cancelAnimationFrame(timer.id); // 18.09.2026: timer теперь {id} от requestAnimationFrame, не число setInterval — см. cinemaStart
   _cinemaRec = null;
   try{ await encoder.flush(); }catch(e){} // сбой flush() (нестабильное устройство) не должен пропускать close() ниже
@@ -331,16 +366,18 @@ async function cinemaStop(){
         trimRing(ring, ringWindowUs, null, ringWindowUs); // ring — теперь просто обычный короткий хвост, без пина
         return await cinemaMuxSegments(makeMuxer, dc, [snapshot, ring]);
       }
-      const made = makeMuxer();
-      ring.forEach((e, i) => {
-        const meta = (i===0 && dc && !(e.meta && e.meta.decoderConfig)) ? { ...e.meta, decoderConfig: dc } : e.meta;
-        try{ made.muxer.addVideoChunk(e.chunk, meta); }catch(err){}
-      });
-      made.muxer.finalize();
-      return new Blob([made.target.buffer], { type: 'video/mp4' });
+      // 18.09.2026 (пойман живым прогоном стража 300: обрезанное видео проигрывалось ПОЛНОЙ
+      // длиной записи, не окном — старый Mp4Muxer сам перебазировал штампы первого чанка в 0
+      // через firstTimestampBehavior:'offset', у нового упаковщика такого нет, а после обрезки
+      // кольца первый оставшийся чанк несёт большой «настоящий» штамп времени от начала записи,
+      // не от начала окна). cinemaMuxSegments уже умеет перебазировать штампы правильно (тот
+      // же приём нужен и здесь) — зовём её с одним сегментом вместо повторения той же логики
+      // второй раз в двух местах.
+      return await cinemaMuxSegments(makeMuxer, dc, [ring]);
     }
-    muxer.finalize();
-    return new Blob([target.buffer], { type: 'video/mp4' });
+    const buf = await adapter.finalize();
+    if (!buf) return null;
+    return new Blob([buf], { type: 'video/mp4' });
   }catch(e){ return null; }
 }
 function cinemaActive(){ return !!_cinemaRec; }
@@ -608,8 +645,14 @@ async function cinemaLoadHighlight(){
    у карточки. Плеер (#firstFlightPlayer) остаётся своей независимой накладкой (тот же приём,
    что у achClaimShow/Hide в ach.js) — открытие/закрытие не меняет экран под собой.
    Блоб-ссылки (URL.createObjectURL) держатся в _galUrls, пока экран галереи открыт — отзываются
-   перед каждым новым заполнением, чтобы не копить объекты в памяти вкладки. */
-let _galUrls={}, _galCurrentIsFirst=false;
+   перед каждым новым заполнением, чтобы не копить объекты в памяти вкладки.
+   18.09.2026 (владелец: «кнопку шеринга надо вернуть в тех моментах, где у нас есть видео —
+   в Коллекции, в видео») — _galBlobs рядом с _galUrls: сам Blob нужен «Поделиться» отдельно от
+   URL (video.src берёт URL, navigator.share({files}) берёт File из Blob — разные потребители
+   одного и того же объекта, проще один раз сохранить оба, чем перезапрашивать IndexedDB заново
+   при каждом тапе «Поделиться»). */
+let _galUrls={}, _galBlobs={}, _galCurrentIsFirst=false, _galCurrentId=null;
+let _ffShareMode='clip'; // 'clip' — «Момент полёта» с Итогов (пересборка с рамкой/репликой через mediabunny); 'gallery' — сырое видео из Коллекции/«Первого полёта» (делится как есть, без пересборки)
 async function galleryCount(){
   let n=0;
   if (await cinemaLoadFirst()) n++;
@@ -629,7 +672,8 @@ function galleryFillCard_(id, blob){
   let v=thumb.querySelector('video');
   if (blob){
     if (!v){ v=document.createElement('video'); v.muted=true; v.playsInline=true; v.preload='metadata'; thumb.insertBefore(v,thumb.firstChild); }
-    const url=URL.createObjectURL(blob); _galUrls[id]=url; v.src=url;
+    const url=URL.createObjectURL(blob); _galUrls[id]=url; _galBlobs[id]=blob; v.src=url; // 18.09.2026: blob кэшируется рядом с URL — cinemaGalleryShare() открывает карточку уже с готовым превью, blob должен быть тут же, не только при первом же открытии плеера
+
     card.classList.remove('galEmpty'); if(play) play.classList.remove('hidden');
   } else {
     if (v) v.remove();
@@ -638,7 +682,7 @@ function galleryFillCard_(id, blob){
 }
 async function galleryFill(){
   Object.keys(_galUrls).forEach(k=>{ try{ URL.revokeObjectURL(_galUrls[k]); }catch(e){} });
-  _galUrls={};
+  _galUrls={}; _galBlobs={}; // 18.09.2026: blob-кэш чистится вместе с URL-кэшем, тот же жизненный цикл
   galleryFillCard_('galCardFirst', await cinemaLoadFirst());
   for (const cat of CINEMA_GALLERY_CATS){ galleryFillCard_('galCard_'+cat, await cinemaLoadGallery(cat)); }
 }
@@ -678,13 +722,41 @@ async function galleryCardOpen(id, cat){
     const blob = id==='galCardFirst' ? await cinemaLoadFirst() : (cat ? await cinemaLoadGallery(cat) : null);
     if(!blob) return; // настоящей записи и правда нет (не гонка, а честно пусто) — .galEmpty к этому моменту уже должен был скрыть тап, но на всякий случай не открываем пустой плеер
     url = URL.createObjectURL(blob);
-    _galUrls[id]=url;
+    _galUrls[id]=url; _galBlobs[id]=blob;
   }
-  _galCurrentIsFirst = (id==='galCardFirst');
+  _galCurrentIsFirst = (id==='galCardFirst'); _galCurrentId = id;
   playerOpen(url, ''); // без реплики — тот же выбор, что раньше был у «Первого полёта»
-  const sb=$('ffShareBtn'); if(sb) sb.classList.add('hidden'); // экспорт в карточку/сторис — своя, отдельная история клипа с «Итогов», не эта галерея
+  // 18.09.2026 (владелец: «кнопку шеринга надо вернуть в тех моментах, где у нас есть видео») —
+  // раньше «Поделиться»/«В сторис» гасились здесь целиком («своя история клипа с «Итогов»,
+  // не эта галерея»). «Поделиться» теперь работает и тут — делится сырым видео как есть, без
+  // пересборки карточки (нет реплики/категории рекорда для сырой записи, пересобирать нечего).
+  // «В сторис» остаётся только у клипа — там понятная реплика/повод для сторис, у произвольной
+  // сохранённой записи такого повода нет, не выдумываю его здесь.
+  _ffShareMode='gallery';
+  cinemaClipShareGate();
   const st=$('ffStoryBtn'); if(st) st.classList.add('hidden');
   const del=$('ffDelBtn'); if(del) del.classList.toggle('hidden', !_galCurrentIsFirst); // «Удалить» — только у «Первого полёта», как и раньше
+}
+/* 18.09.2026 (владелец: «кнопку шеринга надо вернуть в тех моментах, где у нас есть видео»)
+   — сырое видео из Коллекции/«Первого полёта» делится КАК ЕСТЬ, без пересборки: у него нет
+   реплики/категории рекорда, вжигать в кадр нечего, а сама пересборка (VideoEncoder+муксер)
+   существует только ради рамки-бейджа у клипа. Простой File+navigator.share, тот же путь, что
+   у cardShare()/cinemaAngarZoomShare() — не изобретаю новый. */
+let _cinemaGalleryShareBusy=false;
+async function cinemaGalleryShare(){
+  if (_cinemaGalleryShareBusy) return; _cinemaGalleryShareBusy=true;
+  const b=$('ffShareBtn'); const oldTxt=b?b.textContent:'';
+  if(b) b.disabled=true;
+  try{
+    const blob=_galBlobs[_galCurrentId];
+    if(!blob){ if(typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)'); return; }
+    const file=new File([blob],'cosmogram-video.mp4',{type:'video/mp4'});
+    if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      if (typeof haptic==='function') haptic('light');
+    } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
+  }catch(e){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
+  finally{ _cinemaGalleryShareBusy=false; if(b){ b.disabled=false; b.textContent=oldTxt; } }
 }
 function firstFlightDelete(){
   const go=()=>{ cinemaDeleteFirst().then(()=>{ if(typeof galleryBtnRefresh==='function') galleryBtnRefresh(); if(typeof galleryFill==='function') galleryFill(); playerClose(); }); };
@@ -717,9 +789,26 @@ async function cinemaClipOpen(){
   const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
   const cap = cat ? cinemaPickLine(cat, n) : ''; // 'record' — без числа, 'nearrecord' — «не хватило N очков»
   playerOpen(_clipUrl, cap);
-  const sb=$('ffShareBtn'); if(sb) sb.classList.remove('hidden'); // «Поделиться» — только у клипа, не у «Первого полёта»
+  // 18.09.2026: раньше «Поделиться» показывался здесь безусловно (единственное место в игре без
+  // гейта — см. аудит RESEARCH-2026-09-VIDEO-SHARE-VENDOR-AUDIT.md, находка Б); теперь та же
+  // проверка возможности (navigator.share/canShare), что уже у cardShareGate/angarPvZoomShareGate.
+  _ffShareMode='clip';
+  cinemaClipShareGate();
   if(typeof L!=='undefined' && L.cardStory){ const st=$('ffStoryBtn'); if(st) st.textContent=L.cardStory; } // тот же ключ, что у карточки — не заводим новый перевод
   cinemaClipStoryGate(); // «В сторис» — тоже только у клипа, и только там, где мост это умеет
+}
+/* 18.09.2026 (аудит RESEARCH-2026-09-VIDEO-SHARE-VENDOR-AUDIT.md, находка Б): единственная из
+   шести кнопок «поделиться» в игре без проверки возможности — игрок видел кнопку, тапал, ждал
+   сборку, и только тогда узнавал, что браузер не умеет. Тот же приём, что уже у
+   angarPvZoomShareGate() (ui.js) — пробный File, тот же MIME. */
+function cinemaClipShareGate(){
+  const b=$('ffShareBtn'); if(!b) return;
+  let can=false;
+  try{
+    const probe=new File(['x'],'t.mp4',{type:'video/mp4'});
+    can=!!(navigator.share && navigator.canShare && navigator.canShare({files:[probe]}));
+  }catch(e){}
+  b.classList.toggle('hidden', !can);
 }
 
 /* ---------- Экспорт клипа как карточки (01.09.2026) ----------
@@ -789,7 +878,60 @@ function cinemaDrawCardBadge(x, realW, caption, tc){
 /* Пересобирает уже сохранённый клип: та же запись + вжигаем рамку/реплику этим разом.
    Возвращает Blob('video/mp4') или null (честный отказ — старое устройство/нет клипа/кодек
    не собрался), вызывающий код (cinemaClipShare) сам решает, что показать при null. */
+/* 18.09.2026 (владелец, после аудита RESEARCH-2026-09-VIDEO-SHARE-VENDOR-AUDIT.md: «убирай
+   старую устаревшую хрень, раз есть новая») — пересборка карточки клипа переезжает на
+   Mediabunny (js/vendor/mediabunny.min.js), тем же приёмом, что уже проверен вживую в
+   cinemaAngarZoomShareMB() выше в этом файле (Output+Mp4OutputFormat+BufferTarget+CanvasSource
+   вместо ручного VideoEncoder+Mp4Muxer.Muxer). Цикл чтения кадров (video.currentTime+'seeked')
+   не тронут — он не имеет отношения к муксеру, работает одинаково с любой библиотекой сборки.
+   Старый mp4-muxer путь остаётся честным запасным (cinemaExportHighlightCardLegacy), если
+   Mediabunny не подгрузится — тот же принцип, что уже у loadMediabunny()/mediabunny_load_fail
+   в cinemaAngarZoomShareEntry ниже, не выдуман заново. */
 async function cinemaExportHighlightCard(){
+  const mb = await loadMediabunny();
+  return mb ? await cinemaExportHighlightCardMB(mb) : await cinemaExportHighlightCardLegacy();
+}
+async function cinemaExportHighlightCardMB(mb){
+  const blob = await cinemaLoadHighlight(); if(!blob) return null;
+  const cat = typeof Store!=='undefined' ? Store.get('cinemaClipCat','') : '';
+  const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
+  const caption = cat ? cinemaPickLine(cat, n) : ''; if(!caption) return null;
+  const tc = CINEMA_CARD_TIER[cat] || CINEMA_CARD_TIER.nearrecord;
+
+  const v=document.createElement('video'); v.muted=true; v.playsInline=true;
+  const srcUrl=URL.createObjectURL(blob); v.src=srcUrl;
+  let videoSource=null;
+  try{
+    await new Promise((res,rej)=>{ v.addEventListener('loadedmetadata',res,{once:true}); v.addEventListener('error',()=>rej(new Error('video_load')),{once:true}); });
+    const W=v.videoWidth, H=v.videoHeight;
+    const codec = await mb.getFirstEncodableVideoCodec(['avc','vp9'], { width:W, height:H });
+    if (!codec) return null;
+
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const xc=cv.getContext('2d');
+    const output = new mb.Output({ format:new mb.Mp4OutputFormat(), target:new mb.BufferTarget() });
+    videoSource = new mb.CanvasSource(cv, { codec, quality:new mb.Quality(0.8) });
+    output.addVideoTrack(videoSource);
+    await output.start();
+
+    const FPS=20, frameS=1/FPS, N=Math.max(1,Math.floor(v.duration*FPS));
+    for(let i=0;i<N;i++){
+      const t=i/FPS;
+      v.currentTime=Math.min(t, Math.max(0,v.duration-0.001));
+      await new Promise(res=>v.addEventListener('seeked',res,{once:true}));
+      xc.drawImage(v,0,0,W,H);
+      cinemaDrawCardBadge(xc, W, caption, tc);
+      try{ await videoSource.add(t, frameS); }catch(e){}
+    }
+    videoSource.close(); videoSource=null;
+    await output.finalize();
+    return new Blob([output.target.buffer], { type:'video/mp4' });
+  }catch(e){
+    if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_card_enc_err', String((e&&e.message)||e));
+    return null;
+  } finally { URL.revokeObjectURL(srcUrl); if(videoSource){ try{videoSource.close();}catch(e){} } }
+}
+async function cinemaExportHighlightCardLegacy(){
   const blob = await cinemaLoadHighlight(); if(!blob) return null;
   const cat = typeof Store!=='undefined' ? Store.get('cinemaClipCat','') : '';
   const n = typeof Store!=='undefined' ? saneNumberSafe(Store.get('cinemaClipN',0)) : 0;
@@ -1072,7 +1214,10 @@ function playerToggle(){
   const del=$('ffDelBtn'); if(del) del.addEventListener('click', e=>{ e.stopPropagation(); firstFlightDelete(); });
   const close=$('firstFlightClose'); if(close) close.addEventListener('click', playerClose);
   const clipBtn=$('cinemaClipBtn'); if(clipBtn) clipBtn.addEventListener('click', cinemaClipOpen);
-  const shareBtn=$('ffShareBtn'); if(shareBtn) shareBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipShare(); });
+  // 18.09.2026: одна и та же кнопка теперь обслуживает два разных сценария (клип с
+  // пересборкой карточки / сырое видео из Коллекции) — режим ставит galleryCardOpen()/
+  // cinemaClipOpen() в _ffShareMode перед показом кнопки, здесь только развилка по нему.
+  const shareBtn=$('ffShareBtn'); if(shareBtn) shareBtn.addEventListener('click', e=>{ e.stopPropagation(); if(_ffShareMode==='gallery') cinemaGalleryShare(); else cinemaClipShare(); });
   const storyBtn=$('ffStoryBtn'); if(storyBtn) storyBtn.addEventListener('click', e=>{ e.stopPropagation(); cinemaClipStory(); });
   const v=$('firstFlightVideo');
   if (v){
