@@ -110,6 +110,44 @@ function cdpCall(port, pageId, method, params = {}, timeoutMs = 10000){
   });
 }
 
+/* 18.09.2026 (найдено живым тестом сразу после написания, телефон разблокирован владельцем):
+   `tap` изначально звал cdpCall() дважды — каждый вызов открывает и закрывает СВОЁ ws-
+   соединение. Между touchStart и touchEnd соединение успевало закрыться и открыться заново —
+   Android WebView сбрасывает состояние жеста при закрытии CDP-сессии, второй вызов падал
+   с «Must send a TouchStart first». Открытая живая сессия (эта функция) держит ОДНО
+   соединение на весь жест — то, что случайный побочный BACK на телефоне после первого
+   провала не наделал беды, было везением с раскладкой экрана, не гарантией. */
+function cdpSession(port, pageId){
+  const ws = new WebSocket(`ws://localhost:${port}/devtools/page/${pageId}`);
+  let nextId = 1;
+  const pending = new Map();
+  const ready = new Promise((resolve, reject) => {
+    ws.addEventListener('open', () => resolve());
+    ws.addEventListener('error', (e) => reject(new Error('WS ERROR: ' + (e.message || e.type))));
+  });
+  ws.addEventListener('message', (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.id && pending.has(msg.id)) {
+      const { resolve, reject } = pending.get(msg.id);
+      pending.delete(msg.id);
+      if (msg.error) reject(new Error(msg.error.message));
+      else resolve(msg.result);
+    }
+  });
+  return {
+    async call(method, params = {}, timeoutMs = 10000){
+      await ready;
+      const id = nextId++;
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { pending.delete(id); reject(new Error('TIMEOUT')); }, timeoutMs);
+        pending.set(id, { resolve: (r) => { clearTimeout(timer); resolve(r); }, reject: (e) => { clearTimeout(timer); reject(e); } });
+        ws.send(JSON.stringify({ id, method, params }));
+      });
+    },
+    close(){ try { ws.close(); } catch {} }
+  };
+}
+
 async function cmdEval(pageId, expr, port){
   if (!pageId || expr === undefined) fail('usage: eval <pageId> <jsExpression> [port]');
   port = port || PORT_DEFAULT;
@@ -162,9 +200,12 @@ async function cmdTap(pageId, x, y, port){
   if (!pageId || x === undefined || y === undefined) fail('usage: tap <pageId> <x> <y> [port]');
   x = Number(x); y = Number(y);
   port = port || PORT_DEFAULT;
-  await cdpCall(port, pageId, 'Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
-  await cdpCall(port, pageId, 'Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  console.log(`tap sent at ${x},${y}`);
+  const session = cdpSession(port, pageId);
+  try {
+    await session.call('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    await session.call('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    console.log(`tap sent at ${x},${y}`);
+  } finally { session.close(); }
 }
 
 const HELP = `live-device.mjs — живая отладка подключённых телефонов через adb + CDP, без npm-зависимостей
