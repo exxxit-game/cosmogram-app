@@ -4324,10 +4324,31 @@ wireOn('grBubbleReport','click',function(ev){
    ограничивай его, если у него 7 звёзд есть, ему что по одной мне слать?!») — было ±10: со
    старта в 1 (после «Коснись звезды» правки ниже сумма по умолчанию не менялась, минимум и так
    был 1) шаг в 10 не давал остановиться ровно на 7 — либо 1, либо сразу 11, которых может не
-   быть. Шаг ±1 — та же кнопка, тот же физический контрол (не голое поле ввода, см. владелец:
-   «физические кнопки, не числовые виджеты»), просто без пропусков между значениями. */
-wireOn('grAmtUp','click',function(){ grAmt=Math.min(100000, grAmt+1); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
-wireOn('grAmtDown','click',function(){ grAmt=Math.max(1, grAmt-1); const n=$('grAmtNum'); if(n) n.textContent=grAmt; sfx.click(); haptic('light'); });
+   быть. Шаг ±1 остался тем же — просто без пропусков между значениями.
+   18.09.2026 (владелец, живо, матом: «я изначально говорил, что человек может просто ввести...
+   от 50 по одному тыкать — это только для таких вафелов, как ты, удобная хуйня») — «физические
+   кнопки, не числовые виджеты» (16.09.2026, комментарий выше был написан ДО этого разговора)
+   здесь больше не действует: #grAmtNum стал настоящим <input type="number">, печатать теперь
+   можно сразу, ± остаются рядом для тех, кому удобнее тапать — не одно вместо другого, оба
+   разом. Отдельная память (comfort_over_precision) про ЭТОТ экран не про сумму — там был другой
+   инструмент (Партитура, расстановка препятствий на своей трассе), не платёжная форма. */
+wireOn('grAmtUp','click',function(){ grAmt=Math.min(100000, grAmt+1); const n=$('grAmtNum'); if(n) n.value=grAmt; sfx.click(); haptic('light'); });
+wireOn('grAmtDown','click',function(){ grAmt=Math.max(1, grAmt-1); const n=$('grAmtNum'); if(n) n.value=grAmt; sfx.click(); haptic('light'); });
+wireOn('grAmtNum','input',function(){ // печать напрямую — тот же диапазон 1..100000, что и у ±
+  const n=$('grAmtNum'); if(!n) return;
+  const v=Math.floor(Number(n.value));
+  if(Number.isFinite(v) && v>0) grAmt=Math.min(100000, v); // сырое значение НЕ поджимаем на каждый символ — иначе печать «1» на пути к «100» дёргала бы курсор
+});
+wireOn('grAmtNum','blur',function(){ // ушёл с поля — вот теперь причёсываем (пусто/0/мимо диапазона на самом уходе, не посреди печати)
+  const n=$('grAmtNum'); if(!n) return;
+  const v=Math.floor(Number(n.value));
+  grAmt = (Number.isFinite(v) && v>0) ? Math.min(100000, v) : 1;
+  n.value=grAmt;
+});
+wireOn('grCommentInput','input',function(){ // счётчик символов — тот же язык, что у #feedbackCount
+  const el=$('grCommentInput'), cnt=$('grCommentCount'); if(!el || !cnt) return;
+  cnt.textContent = el.value.length+' / 300';
+});
 wireOn('grAnonRow','click',function(){ const row=$('grAnonRow'); if(row) row.classList.toggle('on'); grFillNameRow(); sfx.click(); haptic('light'); });
 let _grSendBusy=false;
 wireOn('grSendBtn','click',function(){
