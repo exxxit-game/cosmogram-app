@@ -1709,20 +1709,36 @@ function fxMatWootz(ctx,sk,nowMs){
   });
   ctx.restore();
 }
+/* 18.09.2026 «Скины не должны жрать зря», продолжение уборки 09.09.2026 (соло-аудит
+   производительности, угол 2, владелец подтвердил список из 9 скинов явно): позиции клеток
+   зависят только от row/col, не от времени — раньше пересчитывались (121 [row,col] + cx/cy +
+   фильтр по границам) заново каждый отрисованный кадр. Теперь строятся один раз и кешируются,
+   тем же приёмом, что уже работает у соседей (plateauCellsBuild и т.д.). */
+let chainmailCells=null;
+function chainmailCellsBuild(){
+  if(!chainmailCells){
+    chainmailCells=[];
+    const R=2.9;
+    for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+      const off=(row%2)*R;
+      chainmailCells.push([col*R*1.7+off, row*R*1.15]);
+    }
+  }
+  return chainmailCells;
+}
 function fxMatChainmail(ctx,sk,nowMs){
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
   const R=2.9;
-  const cells=[]; for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++) cells.push([row,col]);
+  const cells=chainmailCellsBuild();
   const shown=Math.floor(p*cells.length)+1; // кольца реально собираются одно за другим, настоящая сборка полотна
-  cells.slice(0,shown).forEach(([row,col])=>{
-    const off=(row%2)*R;
-    const cx=col*R*1.7+off, cy=row*R*1.15;
-    if(Math.abs(cx)>15||cy<-20||cy>12) return;
-    ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.4;
+  ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.4;
+  for(let i=0;i<shown;i++){
+    const cx=cells[i][0], cy=cells[i][1];
+    if(Math.abs(cx)>15||cy<-20||cy>12) continue;
     ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,Math.PI/4,0,6.283); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,-Math.PI/4,0,6.283); ctx.stroke(); // 6-в-1: второй граф связности, не просто гуще
-  });
+  }
   ctx.restore();
 }
 function fxCulPersian(ctx,sk,nowMs){ // Тебриз — раньше был отдельной копией того же кода, теперь честно зовёт общую (culPersianCitySprite) функцию, как и остальные 4
@@ -1737,37 +1753,54 @@ function fxCulPersian(ctx,sk,nowMs){ // Тебриз — раньше был о�
 // приём, что и в первой волне — внутренний ctx.scale(N,N) макета (уже откалиброван по
 // координатам корпуса, см. content-scale правку 08.09.2026) сохранён как есть в своём
 // save/restore, фон-заливка убрана (реальный корпус уже закрашен sk.body в drawPlane).
+/* 18.09.2026, та же уборка (см. chainmailCellsBuild выше): позиции клеток тапы статичны. */
+let tapaCells=null;
+function tapaCellsBuild(){
+  if(!tapaCells){
+    tapaCells=[];
+    for(let row=-2;row<=2;row++) for(let col=-2;col<=2;col++) tapaCells.push([col*0.62, row*0.62]);
+  }
+  return tapaCells;
+}
 function fxCulTapa(ctx,sk,nowMs){ // Тонганская тапа (нгату) — мотив «манулуа» проступает блок за блоком
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3600)/3600;
   ctx.save(); ctx.scale(9.7,9.7);
-  const order=[]; for(let row=-2;row<=2;row++) for(let col=-2;col<=2;col++) order.push([row,col]);
-  const shown=Math.floor(p*order.length)+1;
-  order.slice(0,shown).forEach(([row,col],idx)=>{
-    const cx=col*0.62, cy=row*0.62;
+  const cells=tapaCellsBuild();
+  const shown=Math.floor(p*cells.length)+1;
+  for(let idx=0;idx<shown;idx++){
+    const cx=cells[idx][0], cy=cells[idx][1];
     const fresh=idx>=shown-2;
     ctx.fillStyle='#1c1108';
     ctx.beginPath(); ctx.moveTo(cx,cy-0.24); ctx.lineTo(cx+0.24,cy); ctx.lineTo(cx,cy+0.24); ctx.lineTo(cx-0.24,cy); ctx.closePath(); ctx.fill();
     ctx.fillStyle=fresh?'#e8b060':'#c98a3a';
     ctx.beginPath(); ctx.arc(cx,cy-0.09,0.07,0,6.283); ctx.fill();
     ctx.beginPath(); ctx.arc(cx,cy+0.09,0.07,0,6.283); ctx.fill();
-  });
+  }
   ctx.restore(); ctx.restore();
+}
+/* 18.09.2026, та же уборка: сам ряд строк (-3..3) статичен, кэшируется — геометрия внутри
+   ряда (col-цикл) остаётся живой на кадр, как и была (не входит в находку исследования). */
+let andesRows=null;
+function andesRowsBuild(){
+  if(!andesRows){ andesRows=[]; for(let row=-3;row<=3;row++) andesRows.push(row); }
+  return andesRows;
 }
 function fxCulAndesFront(ctx,sk,nowMs){ // Андское ткачество, лицевая сторона — комплементарная перевязка нарастает рядами
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3200)/3200;
   ctx.save(); ctx.scale(10,10);
   ctx.fillStyle='#c94f4f';
-  const rows=[]; for(let row=-3;row<=3;row++) rows.push(row);
+  const rows=andesRowsBuild();
   const shownRows=Math.floor(p*rows.length)+1;
-  rows.slice(0,shownRows).forEach(row=>{
+  for(let ri=0;ri<shownRows;ri++){
+    const row=rows[ri];
     for(let col=-3;col<=3;col++){
       if((row+col)%2!==0) continue;
       const cx=col*0.32, cy=row*0.32;
       ctx.beginPath(); ctx.moveTo(cx,cy-0.14); ctx.lineTo(cx+0.14,cy); ctx.lineTo(cx,cy+0.14); ctx.lineTo(cx-0.14,cy); ctx.closePath(); ctx.fill();
     }
-  });
+  }
   ctx.restore(); ctx.restore();
 }
 function fxCulTatreez(ctx,sk,nowMs){ // Палестинская татрииз — счётный крест растёт кольцами от центра
@@ -1787,16 +1820,23 @@ function fxCulTatreez(ctx,sk,nowMs){ // Палестинская татрииз 
   }
   ctx.restore(); ctx.restore();
 }
+/* 18.09.2026, та же уборка: ряд строк статичен. */
+let navajoTGHRows=null;
+function navajoTGHRowsBuild(){
+  if(!navajoTGHRows){ navajoTGHRows=[]; for(let row=-4;row<=4;row++) navajoTGHRows.push(row); }
+  return navajoTGHRows;
+}
 function fxCulNavajoTwoGrey(ctx,sk,nowMs){ // Навахо, Two Grey Hills — небелёная шерсть, ряды нарастают на станке
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3200)/3200;
   ctx.save(); ctx.scale(10,10);
-  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const rows=navajoTGHRowsBuild();
   const shown=Math.floor(p*rows.length)+1;
-  rows.slice(0,shown).forEach(row=>{
+  for(let i=0;i<shown;i++){
+    const row=rows[i];
     ctx.strokeStyle=row%2===0?'#5a4a30':'#8a7a5a'; ctx.lineWidth=0.05;
     ctx.beginPath(); ctx.moveTo(-1.3,row*0.16); ctx.lineTo(1.3,row*0.16); ctx.stroke();
-  });
+  }
   ctx.restore(); ctx.restore();
 }
 function fxCulNavajoGanado(ctx,sk,nowMs){ // Навахо, Ganado — ступенчатые ромбы нарастают от края
@@ -1813,16 +1853,23 @@ function fxCulNavajoGanado(ctx,sk,nowMs){ // Навахо, Ganado — ступе
   }
   ctx.restore(); ctx.restore();
 }
+/* 18.09.2026, та же уборка: ряд строк статичен. */
+let navajoCrystalRows=null;
+function navajoCrystalRowsBuild(){
+  if(!navajoCrystalRows){ navajoCrystalRows=[]; for(let row=-4;row<=4;row++) navajoCrystalRows.push(row); }
+  return navajoCrystalRows;
+}
 function fxCulNavajoCrystal(ctx,sk,nowMs){ // Навахо, Crystal — растительные красители, полосы без каймы
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3200)/3200;
   ctx.save(); ctx.scale(10,10);
   const hues=['#6a5a3a','#b0a070','#4a3f28'];
-  const rows=[]; for(let row=-4;row<=4;row++) rows.push(row);
+  const rows=navajoCrystalRowsBuild();
   const shown=Math.floor(p*rows.length)+1;
-  rows.slice(0,shown).forEach(row=>{
+  for(let i=0;i<shown;i++){
+    const row=rows[i];
     ctx.fillStyle=hues[(row+9)%3]; ctx.fillRect(-1.3,row*0.16-0.07,2.6,0.13);
-  });
+  }
   ctx.restore(); ctx.restore();
 }
 function culCintemaniUnit(ctx,cx,cy,scale){
@@ -1852,16 +1899,28 @@ function cintemaniUnitSprite(){
   }
   return cintemaniSpr;
 }
+/* 18.09.2026, та же уборка: позиции штампов статичны (row/col → cx/cy), только сколько
+   уже проштамповано меняется по времени. */
+let cintemaniCells=null;
+function cintemaniCellsBuild(){
+  if(!cintemaniCells){
+    cintemaniCells=[];
+    for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++){
+      cintemaniCells.push([col*11+(row%2)*5.5, row*7-2]);
+    }
+  }
+  return cintemaniCells;
+}
 function fxCulCintemani(ctx,sk,nowMs){ // Турецкий чинтемани — три круга + тигровые полосы, штампуется одно за другим
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
-  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-2;col<=2;col++) cells.push([row,col]);
+  const cells=cintemaniCellsBuild();
   const shown=Math.floor(p*cells.length)+1;
   const spr=cintemaniUnitSprite();
-  cells.slice(0,shown).forEach(([row,col])=>{
-    const cx=col*11+(row%2)*5.5, cy=row*7-2;
+  for(let i=0;i<shown;i++){
+    const cx=cells[i][0], cy=cells[i][1];
     ctx.drawImage(spr.c, cx+spr.OX, cy+spr.OY, spr.W, spr.H);
-  });
+  }
   ctx.restore();
 }
 function fxCulOlzii(ctx,sk,nowMs){ // Монгольский войлок, Өлзий — замкнутый узел трассируется от начала до узла
@@ -1975,19 +2034,26 @@ function tnalakBandSprite(colIdx){
   tnalakSprites[colIdx]=spr;
   return spr;
 }
+/* 18.09.2026, та же уборка: ряд строк статичен. */
+let tnalakRows=null;
+function tnalakRowsBuild(){
+  if(!tnalakRows){ tnalakRows=[]; for(let row=-2;row<=2;row++) tnalakRows.push(row); }
+  return tnalakRows;
+}
 function fxCulTnalak(ctx,sk,nowMs){ // Филиппинский т'налак — краска ikat проступает полосой за полосой
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
   ctx.save(); ctx.scale(10,10);
-  const rows=[]; for(let row=-2;row<=2;row++) rows.push(row);
+  const rows=tnalakRowsBuild();
   const shown=Math.floor(p*rows.length)+1;
-  rows.slice(0,shown).forEach((row,idx)=>{
+  for(let idx=0;idx<shown;idx++){
+    const row=rows[idx];
     const justDyed=idx===shown-1;
     const alpha=justDyed?0.4+0.6*((p*rows.length)%1):1;
     const spr=tnalakBandSprite(row%2===0?0:1);
     ctx.globalAlpha=alpha;
     ctx.drawImage(spr.c, -1.3-spr.pad/10, row*0.3-0.1-spr.pad/10, spr.w/10, spr.h/10);
-  });
+  }
   ctx.globalAlpha=1;
   ctx.restore(); ctx.restore();
 }
@@ -2065,19 +2131,31 @@ function fxMatPatternWeld(ctx,sk,nowMs){ // Дамаскирование — с�
   }
   ctx.restore(); ctx.restore();
 }
+/* 18.09.2026, та же уборка: позиции колец статичны. */
+let chainmail4Cells=null;
+function chainmail4CellsBuild(){
+  if(!chainmail4Cells){
+    chainmail4Cells=[];
+    const R=0.16;
+    for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++){
+      const off=(row%2)*R;
+      chainmail4Cells.push([col*R*1.7+off, row*R*1.5]);
+    }
+  }
+  return chainmail4Cells;
+}
 function fxMatChainmail4(ctx,sk,nowMs){ // Кольчуга 4-в-1 (европейское) — каждое кольцо продето ровно через 4 соседних
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3400)/3400;
   ctx.save(); ctx.scale(11,11);
   const R=0.16;
-  const cells=[]; for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++) cells.push([row,col]);
+  const cells=chainmail4CellsBuild();
   const shown=Math.floor(p*cells.length)+1;
-  cells.slice(0,shown).forEach(([row,col])=>{
-    const off=(row%2)*R;
-    const cx=col*R*1.7+off, cy=row*R*1.5;
-    ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.03;
+  ctx.strokeStyle='hsla(210,12%,72%,.85)'; ctx.lineWidth=0.03;
+  for(let i=0;i<shown;i++){
+    const cx=cells[i][0], cy=cells[i][1];
     ctx.beginPath(); ctx.ellipse(cx,cy,R*0.85,R*0.6,Math.PI/4,0,6.283); ctx.stroke();
-  });
+  }
   ctx.restore(); ctx.restore();
 }
 function fxMatMarbleVein(ctx,sk,nowMs){ // Мраморные жилы — трещина реально растёт и ветвится со временем (геологический процесс)
@@ -2120,24 +2198,38 @@ function fxMatFrost(ctx,sk,nowMs){ // Иней/лёд — дендрит рас�
   for(let i=0;i<6;i++) branch(0,0,i*Math.PI/3,0.5,total);
   ctx.restore(); ctx.restore();
 }
+/* 18.09.2026, та же уборка, единственная из девяти с доп. ценой — раньше ещё и пересортировывала
+   (`.sort()`) результат заново каждый кадр, хотя порядок «от центра наружу» тоже не меняется
+   со временем, только row/col. Теперь позиции + сортировка считаются один раз. */
+let shellHexCells=null;
+function shellHexCellsBuild(){
+  if(!shellHexCells){
+    shellHexCells=[];
+    const dx=0.4, dy=dx*Math.sqrt(3)/2;
+    for(let row=-3;row<=3;row++) for(let col=-3;col<=3;col++){
+      const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
+      const r=Math.hypot(cx,cy);
+      if(r>1.3) continue;
+      shellHexCells.push([cx,cy,r]);
+    }
+    shellHexCells.sort((a,b)=>a[2]-b[2]);
+  }
+  return shellHexCells;
+}
 function fxMatShellHex(ctx,sk,nowMs){ // Панцирь черепахи — гексагональная решётка растёт кольцом наружу
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%3600)/3600;
   ctx.save(); ctx.scale(9.2,9.2);
-  const dx=0.4, dy=dx*Math.sqrt(3)/2;
-  const cells=[]; for(let row=-3;row<=3;row++) for(let col=-3;col<=3;col++){
-    const cx=col*dx*1.5, cy=row*dy*2+(col%2!==0?dy:0);
-    if(Math.hypot(cx,cy)>1.3) continue;
-    cells.push([cx,cy,Math.hypot(cx,cy)]);
-  }
-  cells.sort((a,b)=>a[2]-b[2]);
+  const dx=0.4;
+  const cells=shellHexCellsBuild();
   const shown=Math.floor(p*cells.length)+1;
-  cells.slice(0,shown).forEach(([cx,cy])=>{
-    ctx.strokeStyle='#c9a83a'; ctx.lineWidth=0.025;
+  ctx.strokeStyle='#c9a83a'; ctx.lineWidth=0.025;
+  for(let i=0;i<shown;i++){
+    const cx=cells[i][0], cy=cells[i][1];
     ctx.beginPath();
     for(let k=0;k<6;k++){ const a=k*Math.PI/3; const x=cx+Math.cos(a)*dx*0.55, y=cy+Math.sin(a)*dx*0.55; k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
     ctx.closePath(); ctx.stroke();
-  });
+  }
   ctx.restore(); ctx.restore();
 }
 /* 09.09.2026 «Скины не должны жрать зря»: hue/lightness зависят только от row (+p) — ВСЕ
