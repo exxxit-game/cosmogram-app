@@ -241,7 +241,14 @@ async function cmdScreenshot(pageId, outPath, port){
   const result = await cdpCall(port, pageId, 'Page.captureScreenshot', { format: 'png' });
   if (!result || !result.data) fail('CDP не вернул данные снимка');
   writeFileSync(outPath, Buffer.from(result.data, 'base64'));
-  console.log('saved ' + outPath + ' (CDP — см. предупреждение в шапке файла: может тихо отдать устаревший кадр, для реальной проверки фона/цвета используй hwshot)');
+  console.log('saved ' + outPath);
+  /* 19.09.2026: проверил три способа автоматически поймать враньё CDP (document.visibilityState,
+     document.hasFocus()/hidden, размер PNG-файла в байтах) — ни один не сработал, все три
+     докладывали «всё нормально» в момент, когда кадр был заведомо неверным (страница сама не
+     знает, что отдаёт устаревший композит). Честного автоматического детектора не существует —
+     единственная защита - громкое предупреждение при КАЖДОМ вызове, не только в комментарии
+     наверху файла, который легко пропустить. */
+  console.error('⚠ ВНИМАНИЕ: эта команда (CDP screenshot) может тихо отдать УСТАРЕВШИЙ кадр без единой ошибки — доказано живьём 19.09.2026 (грей вместо звёздного фона, все проверки "страница видима" при этом отвечали true). Для настоящей визуальной проверки используй: node tools/live-device.mjs hwshot <serial> <outPngPath>');
 }
 
 /* 19.09.2026, найдено живьём (соло-аудит, продолжение того же захода): Page.captureScreenshot
