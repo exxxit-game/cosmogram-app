@@ -13,7 +13,7 @@
 /* ---------- Кэш DOM-ссылок (не дёргаем getElementById в тиках) ---------- */
 const elScore=$('score'), elCombo=$('combo'), elLivesC=$('livesCanvas'),
       elPillStarsN=$('pillStarsN'), elDistN=$('distN'),
-      elBanner=$('banner'), elVignette=$('vignette'),
+      elVignette=$('vignette'),
       // v1.282.21: табло дисциплин искалось getElementById В КАЖДОМ КАДРЕ Спидрана, Трассы дня,
       // Театра и Своей трассы — при том, что шапка этого файла прямо запрещает такое в тиках.
       // Остальные узлы HUD честно закэшированы с самого начала, эти два забыли.
@@ -2589,13 +2589,6 @@ function showPopup(txt,x,y,color){
 }
 
 /* ---------- HUD ---------- */
-let bannerTimer=null;
-function showBanner(html, sub){
-  elBanner.innerHTML = html + (sub||'');
-  elBanner.classList.add('show');
-  clearTimeout(bannerTimer);
-  bannerTimer=setTimeout(()=>elBanner.classList.remove('show'), 1500);
-}
 function updateCombo(){
   if (S.combo>=3){ elCombo.textContent=L.combo+' ×'+S.combo; elCombo.style.opacity=1; }
   else elCombo.style.opacity=0;

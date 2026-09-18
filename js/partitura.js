@@ -106,7 +106,6 @@ function ptXToAt(track,clientX){
   const p=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
   return Math.round(p*ptLen()/5)*5;
 }
-function ptAtToPct(at){ return (at/ptLen()*100).toFixed(2)+'%'; }
 /* 16.09.2026 (живой скрин с телефона, поймано сразу же после увеличения ленты до 130px):
    точка у самого начала трассы (at≈0) рисовалась центром ровно в left:0 — при мелких пинах
    (16px, была лента 60px) это едва задевало угловые кнопки, но при новых крупных (до 52px)

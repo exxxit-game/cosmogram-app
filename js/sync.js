@@ -60,10 +60,6 @@ function syncTgAuth(){ const w=Store.get('tgAuthSess',null); return (w && w.sess
    никогда даже не увидит tgAuth, и протухание так и осталось бы непочиненным. */
 function syncAuth(){ const d=syncInitData(); if(d){ const t=syncTgAuth(); return t ? {initData:d, tgAuth:t} : {initData:d}; } const w=syncWebAuth(); if(w) return {webAuth:w}; const c=syncDcAuth(); if(c) return {dcAuth:c}; const g=syncGAuth(); if(g) return {gAuth:g}; return null; }
 function syncAvailable(){ return !!syncAuth(); }
-function ghostAccessStateForAuth(isAuthed, labels){
-  const text = (labels && labels.accGuest) || 'Sign in with Telegram';
-  return isAuthed ? null : text;
-}
 function syncAuthName(){ // имя для «ты в таблице как …»
   try{ const u=tg && tg.initDataUnsafe && tg.initDataUnsafe.user; if(u && u.first_name) return String(u.first_name); }catch(e){}
   const w=syncWebAuth(); if(w) return String(w.first_name||'Игрок');
