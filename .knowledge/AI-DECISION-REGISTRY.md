@@ -13,7 +13,7 @@
 |----|---------|--------|-------------|-------------|--------------|
 | A1 | Canvas 2D ← WebGL/WebGPU | ✅ ФИНАЛЬНО | ✅ в бою | ~14 объектов — WebGL избыточен | [ARCHITECTURE.md §12][AI-ROADMAP.md:0] |
 | A2 | mulberry32 PRNG (заперт) | ✅ ФИНАЛЬНО | ✅ в бою | Детерминизм требует предсказуемого ГПСЧ | [ARCHITECTURE.md:3][AI-ROADMAP.md:0] |
-| A3 | PWA/Service Worker выключен | ✅ ФИНАЛЬНО | ✅ в бою | Осознанное решение с v1.20.0 | [CHARTER.md:Art.39][ARCHITECTURE.md:2] |
+| A3 | PWA/Service Worker включён | ✅ ФИНАЛЬНО | ✅ в бою | Выключался с v1.20.0, включён обратно 18.09.2026 (владелец) — соответствует Ст.39 Хартии | [CHARTER.md:Art.39][ARCHITECTURE.md:2] |
 | A4 | Нет npm-зависимостей | ✅ ФИНАЛЬНО | ✅ в бою | Избыточность сборщика | [STYLE-GUIDE.md §6 п.8] |
 | A5 | Web Worker/OffscreenCanvas-worker | ✅ ФИНАЛЬНО | ✅ в бою | Не мигрировать | [ARCHITECTURE.md §12] |
 | A6 | Vanilla JS (нет TypeScript) | ✅ ФИНАЛЬНО | ✅ в бою | Производительность, читаемость | [PROJECT.md:2][ARCHITECTURE.md:2] |
