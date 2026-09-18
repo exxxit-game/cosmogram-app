@@ -174,7 +174,9 @@ function trimRing(ring, windowUs, pinnedUs, maxWindowUs){
    весь модуль сознательно избегает. CINEMA_SNAPSHOT_SPAN_US — сколько снимка вокруг момента брать. */
 const CINEMA_SNAPSHOT_SPAN_US = 4_000_000; // ~4 сек — предложенное число, не проверено с владельцем отдельно
 async function cinemaMuxSegments(makeMuxer, decoderConfig, segments){
-  const adapter = await makeMuxer(); // 18.09.2026: makeMuxer теперь асинхронный адаптер (Mediabunny/legacy), см. makeMuxerAdapter выше
+  let adapter; // 18.09.2026: makeMuxer теперь асинхронный адаптер (Mediabunny/legacy), см. makeMuxerAdapter выше
+  try{ adapter = await makeMuxer(); }
+  catch(e){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_muxer_start_fail', String((e&&e.message)||e).slice(0,60)); return null; } // тот же класс отказа, что в cinemaStart() выше — единственный вызывающий (cinemaStop) уже подстрахован своим try/catch, но не полагаемся на это молча
   let offset = 0, firstChunk = true;
   for (const seg of segments){
     if (!seg || !seg.length) continue;
@@ -272,7 +274,16 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
   // ключевой — обрезка кольца выбрасывает тот чанк, и новый муксер без decoderConfig на своём первом чанке
   // падал в finalize() (проверено живьём: mp4-muxer.min.js TypeError на null.colorSpace). Запоминаем его
   // один раз и подставляем обратно первому чанку в обрезанном окне (и в снимке — см. markRecord ниже).
-  if (!ring){ adapter = await makeMuxer(); }
+  if (!ring){
+    // 18.09.2026 (второй аудит другими методами): await output.start() внутри makeMuxerAdapter()
+    // не был обёрнут — если муксер бросит (кодек принят isConfigSupported(), но отвергнут самим
+    // муксером, или внутренняя ошибка Streams API), reject летел необработанным исключением из
+    // cinemaStart(), а cinemaFirstFlightStart() зовёт её НАМЕРЕННО без await/catch («взлёт не
+    // должен ждать подбор кодека») — тишина и для игрока, и для BEACON. Тот же честный «false»,
+    // что и у остальных отказов этой функции (нет канваса/нет кодека), не новый путь.
+    try{ adapter = await makeMuxer(); }
+    catch(e){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_muxer_start_fail', String((e&&e.message)||e).slice(0,60)); return false; }
+  }
 
   const encoder = new VideoEncoder({
     output: async (chunk, meta) => {
@@ -408,7 +419,7 @@ async function cinemaSaveFirst(blob){
     });
     db.close();
     return true;
-  }catch(e){ return false; }
+  }catch(e){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_idb_save_fail', 'first:'+String((e&&e.message)||e).slice(0,50)); return false; } // 18.09.2026 (второй аудит): «святое воспоминание» могло не дойти до хранилища без единого следа
 }
 async function cinemaLoadFirst(){
   try{
@@ -434,7 +445,7 @@ async function cinemaDeleteFirst(){
     db.close();
     Store.set('cinemaFirstDone', 0); // 28.08.2026: удалил — можно, чтобы записалось заново на следующем полёте
     return true;
-  }catch(e){ return false; }
+  }catch(e){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_idb_save_fail', 'delete_first:'+String((e&&e.message)||e).slice(0,50)); return false; } // 18.09.2026 (второй аудит): раньше firstFlightDelete() закрывала плеер и перерисовывала галерею, как будто удаление удалось, даже если оно тихо не удалось
 }
 
 /* ---------- Галерея видео-рекордов (16.09.2026, владелец: «не просто одно видео... галерея») ----------
@@ -452,7 +463,7 @@ async function cinemaSaveGallery(cat, blob){
     });
     db.close();
     return true;
-  }catch(e){ return false; }
+  }catch(e){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_idb_save_fail', 'gallery:'+String((e&&e.message)||e).slice(0,50)); return false; } // 18.09.2026 (второй аудит): галерея видео-рекордов могла молча не сохранить новый рекорд
 }
 async function cinemaLoadGallery(cat){
   try{
@@ -1110,7 +1121,16 @@ async function cinemaAngarZoomShareMB(mb, onStart, onEnd){
       if (typeof haptic==='function') haptic('light');
     } else if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Поделиться файлом не умеет этот браузер','rgba(255,159,176,.5)');
   }catch(e){
-    try{ if(videoSource) videoSource.close(); }catch(_){} // отказ игрока в системном окне — не ошибка, молчим (тот же дух, что cardShare())
+    try{ if(videoSource) videoSource.close(); }catch(_){}
+    /* 18.09.2026 (второй аудит другими методами): раньше ЛЮБОЕ исключение здесь молчало —
+       настоящий отказ игрока в системном окне («Поделиться» → «Отмена») И непредвиденная
+       ошибка (например, output.start() бросил) падали в один и тот же немой catch. navigator.
+       share() у настоящего отказа игрока отклоняет промис DOMException'ом с name==='AbortError' —
+       отличаем по этому имени, не гадаем по типу исключения. */
+    if (!e || e.name!=='AbortError'){
+      if (typeof toast==='function') toast((typeof L!=='undefined'&&L.cinemaShareErr)||'Не вышло — попробуй ещё раз','rgba(255,159,176,.5)');
+      if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('cinema_angar_mb_fail', String((e&&e.message)||e).slice(0,60));
+    }
   }
   finally{ _cinemaAngarZoomBusy=false; if (typeof onEnd==='function') onEnd(); }
 }
