@@ -855,8 +855,12 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
     navigator.share({text:txt, url:link}).catch(()=>{});
     haptic('success'); mapAskPublish(code, cfg.n); return;
   }
-  try{ window.open(shareUrl,'_blank'); }catch(e2){}
-  haptic('success'); mapAskPublish(code, cfg.n);
+  // 18.09.2026 (второй видео-аудит другими методами): раньше публикация предлагалась
+  // независимо от того, реально ли открылось окно — блокировщик всплывающих отдаёт null
+  // без исключения, «успех» был ложным. Тот же приём, что уже у duelBtn (ui.js:4168,
+  // v1.282.20) — считаем успехом только реально открывшееся окно.
+  let w=null; try{ w=window.open(shareUrl,'_blank'); }catch(e2){}
+  if (w){ haptic('success'); mapAskPublish(code, cfg.n); }
 }
 /* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
 function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины

@@ -341,7 +341,7 @@ function cardShare(){
   if(!b||!cv||b._busy) return; b._busy=1;
   cv.toBlob(async function(blob){
     b._busy=0;
-    if(!blob) return;
+    if(!blob){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('card_share_fail','toblob_null'); return; } // 18.09.2026 (второй видео-аудит): та же дыра, что уже была у cardSave() до её собственного сигнала
     try{
       const file=new File([blob], 'cosmogram-'+(cardData.sc||0)+'.png', {type:'image/png'});
       if(!navigator.canShare({files:[file]})) return;
