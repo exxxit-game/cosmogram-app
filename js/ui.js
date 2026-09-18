@@ -912,6 +912,20 @@ function startGame(saved){
   Store.del('savedRun');
 }
 function retryRun(){ startGame(); } // «ЕЩЁ РАЗ» — в той же дисциплине (v1.42.0)
+/* 18.09.2026 (владелец, живой телефон: «поиграл кучу раз в разные режимы, линии на карточках
+   меню так и не появились») — ghostSave(cat) писал линию (heroTrailsFill(), выше в этом файле)
+   только В МОМЕНТ, когда счёт бьёт СТАРЫЙ личный рекорд. У владельца рекорды старые и высокие —
+   свежие тестовые забеги их не превышали, а значит НИ ОДНОЙ линии никогда не появлялось, хотя
+   полётов было много. Та же логика, что уже чинили для видео первого полёта раньше в этой же
+   сессии (cinemaHighlightEligible: первый забег в чистом режиме тоже должен засчитаться, не
+   только второй) — здесь тот же принцип: если линии для категории ещё нет вообще, первый же
+   полёт должен её оставить, даже не побив старое число. Дальше — как раньше, только настоящие
+   новые рекорды двигают линию дальше. */
+function ghostSaveIfFirstEver(cat){
+  if (typeof ghostSave!=='function' || typeof ghostCatBucket!=='function') return;
+  if (Store.get('ghostRun_'+ghostCatBucket(cat), null)) return; // линия для этой категории уже есть — ничего не трогаем
+  ghostSave(cat); // сам ghostSave коротко отсеет слишком короткий забег (rec.length<20)
+}
 function gameOver(){
   if (typeof premSkinPerfReport==='function') premSkinPerfReport(); // 05.09.2026: диагностика fx-времени 30 доп. премиум-скинов — одно сообщение на посадку, не каждый кадр
   if (typeof cinemaFirstFlightStop==='function') cinemaFirstFlightStop(); // 28.08.2026: стоп до любого раннего return ниже — первый полёт всегда должен сохраниться, каким бы ни оказался финиш
@@ -975,6 +989,7 @@ function gameOver(){
   if (isRecord){ Store.set(modeKey,sc); haptic('success'); if (typeof confetti==='function') confetti(); // вау-момент
     setTimeout(()=>{ if (typeof hapticMorse==='function') hapticMorse(myCallsign()); },950); // виброэфир: позывной «передан в эфир» (v1.54.0)
     if (typeof ghostSave==='function') ghostSave(cat); } // призрак: траектория рекордного забега — 15.09.2026: своя лента на дисциплину, cat уже посчитан выше
+  else if (!foreignRecordMode && sc>0) ghostSaveIfFirstEver(cat); // 18.09.2026: не побил старый рекорд — но если линии для этой категории ещё нет вообще, первый полёт её всё равно оставляет
   if (isRecord && prevCat>0) Stats.recBeats=(Stats.recBeats||0)+1; // побит СУЩЕСТВУЮЩИЙ рекорд категории (первый зачёт — не в счёт)
   if (sc>S.best){ S.best=sc; Store.set('best',sc); } // общий максимум — для HUD и меню
   const distM=Math.floor(S.dist); // чистый пробег: без бонусов, единый для всех режимов
@@ -987,18 +1002,21 @@ function gameOver(){
     const prevSr=saneNumber(Store.get(srKey,0),0);
     if (!prevSr || S.time<prevSr){ Store.set(srKey,S.time); srNewBest=true;
       if (typeof ghostSave==='function') ghostSave('speedrun'); } // 15.09.2026: своя ветка победы (S.srWin) — ghostSave выше в общем isRecord её не видел, след не сохранялся ни на одной победе
+    else ghostSaveIfFirstEver('speedrun'); // 18.09.2026: победа есть, старое время не побито — но линия для категории может быть ещё пустой
   }
   let slalomNewBest=false; // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — рекорд считается только на настоящей победе
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored){
     const prevSl=saneNumber(Store.get('slalomBest',0),0);
     if (!prevSl || S.time<prevSl){ Store.set('slalomBest',S.time); slalomNewBest=true;
       if (typeof ghostSave==='function') ghostSave('slalom'); } // 15.09.2026: та же дыра, что у Спидрана — своя ветка победы, общий ghostSave(cat) выше её не касался
+    else ghostSaveIfFirstEver('slalom'); // 18.09.2026: та же добавка, что у Спидрана
   }
   let biathlonNewBest=false; // 06.09.2026 «Биатлон»: тот же приём — S.time уже несёт штрафы на этот момент
   if (S.mode==='biathlon' && S.biathlonWin && !S.wasRestored){
     const prevBi=saneNumber(Store.get('biathlonBest',0),0);
     if (!prevBi || S.time<prevBi){ Store.set('biathlonBest',S.time); biathlonNewBest=true;
       if (typeof ghostSave==='function') ghostSave('biathlon'); } // 15.09.2026: та же дыра — своя ветка победы
+    else ghostSaveIfFirstEver('biathlon'); // 18.09.2026: та же добавка, что у Спидрана/Слалома
   }
   S.wallet += S.starsCollected;
   Store.set('wallet', S.wallet);
@@ -1082,6 +1100,7 @@ function gameOver(){
     if (sc>prevDlSc){ Store.set('dailyBest',{d:dd,s:sc});
       if (rec.length>=20 && typeof ghostSave==='function') ghostSave('daily'); // 17.09.2026: своей ветки не было вообще — карточка дня не могла нарисовать след ни разу, тем же приёмом, что и у Спидрана/Слалома/Биатлона 15.09.2026
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
+    else if (rec.length>=20) ghostSaveIfFirstEver('daily'); // 18.09.2026: та же добавка — сегодняшнее число не рекорд дня, но линия для «Неба месяца» может быть ещё пустой
   }
   // 07.09.2026: 1CC убран из игры (владелец: 2 попытки в реальный день на общий месячный сид
   // убивали саму идею «одного шанса», ради которой аркадный 1CC существует) — daily1ccBest
