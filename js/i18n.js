@@ -162,6 +162,12 @@ const I18N = {
     workshopHearts:(n)=>'Лайков: '+n, // 15.09.2026: значок лайка на карточке сжат до кружка без подписи (владелец, «Единая карточка») — число не пропало, ушло в title (подсказка); тот же приём «Слово: N», что у workshopPlays выше — обходит русское склонение по числу (1 лайк/2 лайка/5 лайков), не нужно спрягать
    workshopAuthor:(n)=>'Автор: '+n, // 08.09.2026: имя автора теперь показано на самой карточке (владелец, живой макет), не только внутри «Мои»; 09.09.2026, владелец: «не создал, а автор» — точнее слово
     workshopReport:'Пожаловаться', workshopReported:'Мы проверим название этого неба.', // 08.09.2026 (владелец, живой макет): было «Спасибо, посмотрим» — не говорило, кому жалуешься и на что; текст теперь называет ровно что проверяется; 15.09.2026: EN/ES/PT/FR получили перевод (аудит)
+    // 18.09.2026 «Показать в Случайных» (макет konstruktor-pokazat-v-sluchaynyh-18-09-2026.html,
+    // владелец: «В. Флажок») — автор своей же трассы поднимает её шанс в «Случайных» на 7 дней
+    // (cosmogram-workshop, notice). «дн.» вместо слова «дней/дня/день» — тот же приём, что уже
+    // у workshopHearts/workshopPlays выше, обходит русское склонение по числу.
+    workshopNotice:'Показать в Случайных', workshopNoticed:'Показано в Случайных',
+    workshopNoticeCooldown:(n)=>'Ещё раз — через '+n+' дн.',
     workshopPin:'Закрепить', workshopHide:'Скрыть', // видны только владельцу-модератору; 15.09.2026: EN/ES/PT/FR получили перевод на случай, если модерация когда-то откроется не только владельцу
     workshopPinned:'Закреплено', workshopUnpinned:'Откреплено', workshopHidden:'Скрыто от игроков', workshopUnhidden:'Снова видно всем', // 07.09.2026: тост-подтверждение — смены одного эмодзи было мало, владелец не понимал, сработало ли
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
@@ -234,7 +240,7 @@ const I18N = {
     gratitudeSignInFirst:'войдите через Telegram, чтобы отправить звезду',
     gratitudeEmptySky:'пока небо пустое — станьте первой звездой',
     grAnonLabel:'Аноним', grReported:'Спасибо, мы посмотрим', grSendFail:'Не получилось — попробуйте ещё раз',
-    grSent:'Звезда зажглась. Спасибо!', grNameHidden:'Имя скрыто — отправите анонимно',
+    grSent:'Звезда зажглась. Спасибо!',
     grNameShownLbl:'Покажется как: ', grNameFallback:'Пилот',
     feedbackHint:'Идея или ошибка. Читаю каждое сообщение. С уважением, EXXXIT.', // 08.09.2026, владелец: «создатель игры» → подпись студии, как на карточке ниже на этом же экране; 16.09.2026, владелец: убрал «вопрос» — форма не отвечает игроку, не стоит обещать словом то, чего нет
     forgeFavHint:'Нажми значок над превью — сохранишь это небо сюда, до 20 штук', // 17.09.2026, «Делай»: разовая подсказка у пустого ряда «Избранное», тот же приём, что у кошелька — не постоянный текст; число поднято вместе с FORGE_FAV_MAX 7→20 в тот же вечер
@@ -394,6 +400,8 @@ const I18N = {
     workshopAuthor:(n)=>'Author: '+n,
     workshopFav:'Copy palette', workshopFavSaved:'Saved to favorites', workshopFavFull:'Favorites full (7 of 7)',
     workshopReport:'Report', workshopReported:"We'll review this sky's name.",
+    workshopNotice:'Boost in Random', workshopNoticed:'Boosted in Random',
+    workshopNoticeCooldown:(n)=>'Again in '+n+'d',
     workshopPin:'Pin', workshopHide:'Hide',
     workshopPinned:'Pinned', workshopUnpinned:'Unpinned', workshopHidden:'Hidden from players', workshopUnhidden:'Visible to everyone again',
     forgeTitle:'Builder', forgeNamePh:'Name it', forgeDefName:'Pilot track',
@@ -464,7 +472,7 @@ const I18N = {
     gratitudeSignInFirst:'sign in via Telegram to send a star',
     gratitudeEmptySky:'the sky is still empty — be the first star',
     grAnonLabel:'Anonymous', grReported:'Thanks, we\'ll take a look', grSendFail:'Didn\'t go through — try again',
-    grSent:'Your star is lit. Thank you!', grNameHidden:'Name hidden — you\'ll send anonymously',
+    grSent:'Your star is lit. Thank you!',
     grNameShownLbl:'Will show as: ', grNameFallback:'Pilot',
     feedbackHint:'An idea or a bug. I read every message. — The game’s creator',
     forgeFavHint:'Tap the icon above the preview to save this sky here — up to 20',
@@ -606,6 +614,8 @@ const I18N = {
     workshopAuthor:(n)=>'Autor: '+n,
     workshopFav:'Copiar paleta', workshopFavSaved:'Guardado en favoritos', workshopFavFull:'Favoritos lleno (7 de 7)',
     workshopReport:'Denunciar', workshopReported:'Revisaremos el nombre de este cielo.',
+    workshopNotice:'Mostrar en Aleatorios', workshopNoticed:'Mostrado en Aleatorios',
+    workshopNoticeCooldown:(n)=>'De nuevo en '+n+' d',
     workshopPin:'Fijar', workshopHide:'Ocultar',
     workshopPinned:'Fijado', workshopUnpinned:'Desfijado', workshopHidden:'Oculto para los jugadores', workshopUnhidden:'Visible para todos de nuevo',
     forgeTitle:'Constructor', forgeNamePh:'Ponle nombre', forgeDefName:'Pista del piloto',
@@ -672,7 +682,7 @@ const I18N = {
     gratitudeSignInFirst:'inicia sesión con Telegram para enviar una estrella',
     gratitudeEmptySky:'el cielo aún está vacío — sé la primera estrella',
     grAnonLabel:'Anónimo', grReported:'Gracias, lo revisaremos', grSendFail:'No se pudo enviar — inténtalo de nuevo',
-    grSent:'Tu estrella se encendió. ¡Gracias!', grNameHidden:'Nombre oculto — enviarás de forma anónima',
+    grSent:'Tu estrella se encendió. ¡Gracias!',
     grNameShownLbl:'Se mostrará como: ', grNameFallback:'Piloto',
     feedbackHint:'Una idea o un error. Leo cada mensaje. Atentamente, el creador del juego.',
     forgeFavHint:'Toca el icono sobre la vista previa para guardar este cielo aquí — hasta 20',
@@ -833,6 +843,8 @@ const I18N = {
     workshopAuthor:(n)=>'Autor: '+n,
     workshopFav:'Copiar paleta', workshopFavSaved:'Guardado nos favoritos', workshopFavFull:'Favoritos cheio (7 de 7)',
     workshopReport:'Denunciar', workshopReported:'Vamos rever o nome deste céu.',
+    workshopNotice:'Mostrar em Aleatórios', workshopNoticed:'Mostrado em Aleatórios',
+    workshopNoticeCooldown:(n)=>'De novo em '+n+' d',
     workshopPin:'Fixar', workshopHide:'Esconder',
     workshopPinned:'Fixado', workshopUnpinned:'Desafixado', workshopHidden:'Escondido dos jogadores', workshopUnhidden:'Visível para todos de novo',
     forgeTitle:'Construtor', forgeNamePh:'Dá-lhe um nome', forgeDefName:'Pista do piloto',
@@ -899,7 +911,7 @@ const I18N = {
     gratitudeSignInFirst:'inicia sessão com o Telegram para enviar uma estrela',
     gratitudeEmptySky:'o céu ainda está vazio — sê a primeira estrela',
     grAnonLabel:'Anónimo', grReported:'Obrigado, vamos verificar', grSendFail:'Não foi possível enviar — tenta de novo',
-    grSent:'A tua estrela acendeu. Obrigado!', grNameHidden:'Nome oculto — vais enviar como anónimo',
+    grSent:'A tua estrela acendeu. Obrigado!',
     grNameShownLbl:'Vai aparecer como: ', grNameFallback:'Piloto',
     feedbackHint:'Uma ideia ou um erro. Leio cada mensagem. Atenciosamente, o criador do jogo.',
     forgeFavHint:'Toque no ícone acima da prévia para salvar este céu aqui — até 20',
@@ -1057,6 +1069,8 @@ const I18N = {
     workshopAuthor:(n)=>'Auteur : '+n,
     workshopFav:'Copier la palette', workshopFavSaved:'Enregistré dans les favoris', workshopFavFull:'Favoris complets (7 sur 7)',
     workshopReport:'Signaler', workshopReported:'Nous allons vérifier le nom de ce ciel.',
+    workshopNotice:'Mettre en avant dans Aléatoire', workshopNoticed:'Mis en avant dans Aléatoire',
+    workshopNoticeCooldown:(n)=>'De nouveau dans '+n+' j',
     workshopPin:'Épingler', workshopHide:'Masquer',
     workshopPinned:'Épinglé', workshopUnpinned:'Désépinglé', workshopHidden:'Caché aux joueurs', workshopUnhidden:'De nouveau visible pour tous',
     forgeTitle:'Constructeur', forgeNamePh:'Donne-lui un nom', forgeDefName:'Trace du pilote',
@@ -1127,7 +1141,7 @@ const I18N = {
     gratitudeSignInFirst:'connecte-toi via Telegram pour envoyer une étoile',
     gratitudeEmptySky:'le ciel est encore vide — sois la première étoile',
     grAnonLabel:'Anonyme', grReported:'Merci, on va vérifier', grSendFail:'Ça n’a pas marché — réessaie',
-    grSent:'Ton étoile s’est allumée. Merci !', grNameHidden:'Nom caché — tu enverras anonymement',
+    grSent:'Ton étoile s’est allumée. Merci !',
     grNameShownLbl:'Affiché comme : ', grNameFallback:'Pilote',
     feedbackHint:'Une idée ou un bug. Je lis chaque message. Bien à toi, le créateur du jeu.',
     forgeFavHint:'Appuie sur l’icône au-dessus de l’aperçu pour enregistrer ce ciel ici — jusqu’à 20',

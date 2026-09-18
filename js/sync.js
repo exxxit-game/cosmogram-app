@@ -786,6 +786,17 @@ function workshopReport(code){ // 05.09.2026: жалоба — владелец 
     return r.json().catch(()=>null);
   });
 }
+function workshopNotice(code){ // 18.09.2026 «Показать в Случайных» — автор своей же трассы поднимает её шанс в
+  // «Случайных» на 7 дней (cosmogram-workshop, action:'notice'); владение/кулдаун проверяет сервер, не клиент.
+  // В отличие от vote/report выше, ошибка (403 forbidden / 429 cooldown) — не «сеть отвалилась», это
+  // содержательный ответ, который UI должен показать игроку (см. клик-обработчик в forge.js) — поэтому
+  // здесь read JSON и при !r.ok, а не схлопываем сразу в null, как остальные workshopXxx() функции.
+  if(!syncAvailable()) return Promise.resolve(null);
+  return workshopPost(Object.assign({action:'notice', code:code}, syncAuth())).then(r=>{
+    if(!r) return null;
+    return r.json().catch(()=>null);
+  });
+}
 function workshopModerate(code, status){ // 05.09.2026: закрепить/скрыть — сервер сам проверяет OWNER_ID, кнопка лишь скрыта для остальных
   if(!syncAvailable()) return Promise.resolve(null);
   return workshopPost(Object.assign({action:'moderate', code:code, status:status}, syncAuth())).then(r=>{

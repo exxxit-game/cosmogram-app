@@ -4249,7 +4249,11 @@ function grFillNameRow(){
   const row=$('grNameRow'); if(!row) return;
   const anonRow=$('grAnonRow'), anon = anonRow && anonRow.classList.contains('on');
   row.textContent='';
-  if(anon){ row.textContent=L.grNameHidden; return; }
+  // 18.09.2026 (владелец, живой скрин: «эта подсказка вообще лишняя» — галочка «Анонимно» под
+  // ней уже говорит то же самое) — раньше сюда писался L.grNameHidden («Имя скрыто — отправите
+  // анонимно»), повторяя своими словами состояние чекбокса прямо над собой. Анонимно — строка
+  // просто пустая (.grNameRow:empty в index.html схлопывает и отступ под ней).
+  if(anon) return;
   const lbl=document.createElement('span'); lbl.textContent=L.grNameShownLbl;
   const b=document.createElement('b'); b.textContent=(typeof syncAuthName==='function' && syncAuthName()) || L.grNameFallback;
   row.appendChild(lbl); row.appendChild(b);
@@ -4319,7 +4323,19 @@ wireOn('grSky','click',function(ev){
   sfx.click(); haptic('light');
   syncGratitudeStar(hit.id).then(function(r){
     if(grBubbleStarId!==hit.id) return; // игрок уже тапнул другую звезду, пока грузилось
-    if(!r || !r.ok){ grBubbleHide(); return; }
+    // 18.09.2026 (владелец, живой скрин: «по комментарию и по имени вообще ничего, почему так?»)
+    // — раньше любой сбой запроса молча закрывал пузырёк через grBubbleHide(). Живые логи
+    // Supabase (function_edge_logs) нашли настоящую причину именно в его случае: cosmogram-sync
+    // на несколько секунд реально ответил 404 (не офлайн — Wi-Fi был, сам поймал себя на ложном
+    // выводе про авиарежим), сам восстановился. Раз причина может быть любой (не только офлайн) —
+    // текст нейтральный, тот же L.grSendFail, что уже стоит у соседней кнопки «Отправить» этого
+    // же экрана, не выдуман заново и не утверждает конкретную причину, которую не проверить.
+    if(!r || !r.ok){
+      if(nameEl) nameEl.textContent='';
+      if(cEl) cEl.textContent=L.grSendFail||'Не получилось — попробуйте ещё раз';
+      if(bubble) grPositionBubble(hit);
+      return;
+    }
     if(nameEl) nameEl.textContent = r.name || L.grAnonLabel;
     if(cEl) cEl.textContent = r.comment || '';
     if(bubble) grPositionBubble(hit); // текст пришёл — высота пузырька могла измениться, пересчитать сторону

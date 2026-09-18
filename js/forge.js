@@ -1295,7 +1295,23 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
       // но currentColor наследовал общий серый/белый цвет чипа (.forgeChip/.forgeChip.sel) — сердце
       // технически было залито, просто не тем цветом, который в игре УЖЕ значит «лайк» (.wVote.voted,
       // #ff9fb0). Свой цвет через инлайновый style — не зависит от .sel, всегда узнаваемо розовое.
-      if(s==='fav'){
+      if(s==='new'){
+        // 18.09.2026 (макет konstruktor-znachki-filtrov-18-09-2026.html, владелец «Делай»):
+        // «Новые»/«Вау»/«Растёт» были единственными тремя чипами со словом в этом ряду —
+        // слово не влезало вместе с остальными icon-only соседями (♥/🎲) без переноса на
+        // телефоне (живой скрин). Плюс — тематически «новое», простая узнаваемая форма.
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffd76a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5v9M7.5 12h9"></path></svg>';
+      } else if(s==='top'){
+        // «Искра» — владелец выбрал эту форму для «Вау», золотая (решил не перекрашивать в
+        // розовый — не путать с ♥ рядом, два золотых значка отличаются формой, не цветом).
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path><path d="M19 15.5c.2 1.6.5 2.4 1.1 3 .6.6 1.4.9 3 1.1-1.6.2-2.4.5-3 1.1-.6.6-.9 1.4-1.1 3-.2-1.6-.5-2.4-1.1-3-.6-.6-1.4-.9-3-1.1 1.6-.2 2.4-.5 3-1.1.6-.6.9-1.4 1.1-3z"></path></svg>';
+      } else if(s==='trending'){
+        // Стрелка роста — узнаваема без слова, решено раньше остальных двух в том же макете.
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>';
+      } else if(s==='fav'){
         b.classList.add('iconOnly');
         b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
       } else if(s==='random'){
@@ -1319,8 +1335,9 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
   }
   if(sortEl) WORKSHOP_SORTS.forEach(function(s,i){
     const chip=sortEl.children[i];
-    if(s==='fav'||s==='random') chip.title = L['workshopSort_'+s] || s; // значок без видимого слова — title остаётся для подсказки при наведении/скринридера
-    else chip.textContent = L['workshopSort_'+s] || s;
+    // 18.09.2026: все 5 чипов ряда стали icon-only (было только у 'fav'/'random') — слово
+    // нигде не выводится текстом, title остаётся везде для подсказки при наведении/скринридера
+    chip.title = L['workshopSort_'+s] || s;
     // 'fav' и 'top' оба реально шлют sort='top' на сервер — различает их только workshopLikedOnly,
     // поэтому подсветка каждого чипа явно проверяет этот флаг, не только совпадение sort-строки.
     const sel = s==='fav' ? (workshopSortMode==='top' && workshopLikedOnly) : (s===workshopSortMode && !(s==='top' && workshopLikedOnly));
@@ -1461,6 +1478,11 @@ function workshopRenderList(){
       '<div class="wInfoActions">'+
       '<button class="wCorner" data-act="fav" title=""><svg class="ic" viewBox="0 0 24 24"><use href="#i-color-fan"></use></svg></button>'+
       '<button class="wCorner wCornerDanger" data-act="report" title=""><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z" stroke-linejoin="round"></path><rect x="10.7" y="9.2" width="2.6" height="6" rx="1.3" fill="#0b1626"></rect><rect x="10.7" y="16.6" width="2.6" height="2.4" rx="1.2" fill="#0b1626"></rect></svg></button>'+
+      // 18.09.2026 «Показать в Случайных» (макет konstruktor-pokazat-v-sluchaynyh-18-09-2026.html,
+      // владелец: «В. Флажок») — третий значок в той же панели, скрыт по умолчанию (.hidden),
+      // видимость решает JS ниже: только своя трасса (is_mine с сервера) и только пока открыта
+      // вкладка «Случайные» — тот же принцип, что уже решён раньше («живёт внутри 🔀»).
+      '<button class="wCorner wNotice hidden" data-act="notice" title=""><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4a1 1 0 0 1 1-1h1"></path><path d="M6 3h11.5a1 1 0 0 1 .8 1.6L15.5 8l2.8 3.4a1 1 0 0 1-.8 1.6H6V3z"></path></svg></button>'+
       '</div>'+
       '</div>'+
       // 15.09.2026: Полёт/Изменить были в правом нижнем углу, столбиком.
@@ -1550,6 +1572,25 @@ function workshopRenderList(){
       }
       const reportBtn=row.querySelector('[data-act="report"]'); if(reportBtn) reportBtn.title=L.workshopReport||'Пожаловаться';
       const favBtn=row.querySelector('[data-act="fav"]'); if(favBtn) favBtn.title=L.workshopFav||'Скопировать палитру';
+      // 18.09.2026 «Показать в Случайных»: видна только своя трасса (t.is_mine, честно с сервера —
+      // не клиентская проверка) и только на вкладке «Случайные» (workshopSortMode==='random',
+      // решено раньше — «живёт внутри 🔀»). Дни до конца кулдауна — только для подписи на кнопке;
+      // сам запрет ставит сервер по своему noticed_at при клике, здесь просто отражение того же числа.
+      const noticeBtn=row.querySelector('[data-act="notice"]');
+      if(noticeBtn){
+        const showNotice = !!t.is_mine && workshopSortMode==='random';
+        noticeBtn.classList.toggle('hidden', !showNotice);
+        if(showNotice){
+          const NOTICE_COOLDOWN_DAYS=7; // тот же срок, что NOTICE_COOLDOWN_DAYS в cosmogram-workshop
+          let daysLeft=0;
+          if(t.noticed_at){
+            const elapsed=(Date.now()-new Date(t.noticed_at).getTime())/86400000;
+            daysLeft=Math.max(0, Math.ceil(NOTICE_COOLDOWN_DAYS-elapsed));
+          }
+          noticeBtn.classList.toggle('used', daysLeft>0);
+          noticeBtn.title = daysLeft>0 ? (L.workshopNoticeCooldown?L.workshopNoticeCooldown(daysLeft):'') : (L.workshopNotice||'Показать в Случайных');
+        }
+      }
       row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
       if(pickStarBtn) pickStarBtn.classList.toggle('active', !!t.featured); // заливка звезды — CSS, тот же приём, что .wPin.active
       if(isOwner){
@@ -1638,6 +1679,27 @@ wireOnLocal('workshopList','click',function(e){
     // не разместить, гасим (disabled уже даёт :disabled-стиль), подтверждение остаётся тостом.
     act.disabled=true;
     workshopReport(code); haptic('light'); toast(L.workshopReported||'Мы проверим название этого неба.', 'rgba(255,159,176,.5)');
+  }
+  if(act.dataset.act==='notice'){
+    // 18.09.2026 «Показать в Случайных»: сервер — единственный, кто по-настоящему решает
+    // владение и кулдаун (см. cosmogram-workshop, action:'notice') — кнопка здесь лишь
+    // отражает последний известный ответ, не блокирует тап сама по себе (уже .used визуально
+    // тусклая, но клик всё равно уходит на сервер и получает содержательный ответ).
+    if(act.classList.contains('used')) { haptic('light'); return; }
+    workshopNotice(code).then(function(res){
+      if(!res){ toast(L.syncOffline||'Нет соединения — попробуй позже', 'rgba(255,159,176,.5)'); return; }
+      if(res.error==='cooldown'){
+        act.classList.add('used');
+        act.title = L.workshopNoticeCooldown ? L.workshopNoticeCooldown(res.daysLeft) : '';
+        toast(L.workshopNoticeCooldown ? L.workshopNoticeCooldown(res.daysLeft) : '', 'rgba(240,192,64,.5)');
+        return;
+      }
+      if(res.error || !res.ok){ toast(L.syncOffline||'Не получилось — попробуй позже', 'rgba(255,159,176,.5)'); return; }
+      act.classList.add('used');
+      act.title = L.workshopNoticeCooldown ? L.workshopNoticeCooldown(7) : '';
+      toast(L.workshopNoticed||'Показано в Случайных', 'rgba(240,192,64,.5)');
+    });
+    haptic('light');
   }
   if(act.dataset.act==='pin'){
     // 05.09.2026: один статус на трассу — закрепить снимает «скрыто», если было; сервер
