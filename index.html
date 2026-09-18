@@ -854,8 +854,19 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #toLoc:empty { margin:0; min-height:0; }
 
 /* ---- Заголовки экранов ---- */
+/* 18.09.2026 (владелец, два реальных телефона — Samsung SM-A032F и Oppo CPH2631, маркер-тест
+   на #gratitudeTitle: метка ровно на getBoundingClientRect() левого края, та же техника, что
+   уже была на Oppo CPH2565 15.09.2026): родная пилюля «Назад» у Telegram (со словом, не только
+   стрелкой) на обоих телефонах реально заканчивается ВПРИТЫК к длинным заголовкам — измерено
+   у «Благодарность»/«Видео полётов» (76-78px левого края, ноль буфера) и подтверждено тем же
+   классом у уже жаловавшегося «Равноправие» (90px) — тот же диапазон риска держат «Диагностика»/
+   «Конструктор»/«Достижения» (90-94px), просто ещё не пойманы живой жалобой. Не разовая правка
+   трёх ID точечно (владелец: «одна и та же проблема» — чинить весь класс разом, не по жалобе за
+   раз) — letter-spacing:.05em снят с БАЗОВОГО .screenTitle целиком: тот же шрифт/размер/перенос,
+   просто чуть плотнее буквы (владелец выбрал этот вариант явно — «сжать буквы», бесплатно, без
+   переноса на 2 строки и без шрифта мельче общего пола). */
 .screenTitle { font-family:var(--font-disp); font-weight:400;
-  font-size:clamp(28px,7.5vw,42px); letter-spacing:.05em; color:var(--ink);
+  font-size:clamp(28px,7.5vw,42px); letter-spacing:0; color:var(--ink);
   text-shadow:0 0 22px rgba(140,180,255,.18); margin-bottom:20px;
   /* 30.08.2026: text-align:start было незаметно на коротких заголовках («Достижения») —
      блок сам сжимается по содержимому (flex align-items:center) и выглядит центрированным.
@@ -879,7 +890,17 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 /* 16.09.2026 (владелец: «наша извечная проблема... текст заходит на кнопку назад у телеграмма»,
    Галерея видео-рекордов, реальный скрин) — тот же самый класс, что уже чинился здесь 15.09.2026
    для Благодарности/Равноправия: #flightGalleryTitle («Видео полётов», два слова) тоже не входит
-   в UNIFORM_TITLE_IDS, тоже садится на кегль шире общего минимума. Тот же самый проверенный запас. */
+   в UNIFORM_TITLE_IDS, тоже садится на кегль шире общего минимума.
+   18.09.2026 (владелец, два реальных телефона — Samsung SM-A032F и Oppo CPH2631 — маркер-тест:
+   метка ровно на левом крае заголовка через getBoundingClientRect(), тот же приём, что уже был
+   на Oppo CPH2565 15.09.2026): родная пилюля «Назад» у Telegram (со словом, не только стрелкой)
+   на обоих телефонах реально заканчивается ВПРИТЫК к метке — 140px запаса дают только 76px
+   слева, без единого пикселя буфера. Числа здесь ПОКА не тронуты (140 остаётся) — живая
+   проверка показала, что просто увеличить запас нельзя: «БЛАГОДАРНОСТЬ» уже стоит на общем
+   шрифтовом полу (24px, shrinkScreenTitle) и на одной строке только потому, что 220px box
+   (100%-140px) ей хватает впритык (207.84px реальная ширина); более узкий box заставит либо
+   перенос на 2 строки, либо шрифт мельче пола — оба варианта дизайнерское решение, не баг,
+   ждёт словом владельца, какой из двух. */
 #equalityTitle, #gratitudeTitle, #flightGalleryTitle { max-width:calc(100% - 140px); }
 .miniPill .ic { vertical-align:-0.15em; margin-right:.35em; }
 #feedbackCount { color:rgba(158,178,224,.6); }
@@ -3711,9 +3732,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.388"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.388"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.388"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.389"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.389"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.389"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4976,26 +4997,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.388" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.388"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.388"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.388"></script>
-<script defer src="js/game.js?v=1.478.388" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.388"></script>
-<script defer src="js/sync.js?v=1.478.388"></script>
-<script defer src="js/render.js?v=1.478.388"></script>
-<script defer src="js/planetarium.js?v=1.478.388"></script>
-<script defer src="js/goldstar.js?v=1.478.388"></script>
-<script defer src="js/finish.js?v=1.478.388"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.388"></script>
-<script defer src="js/gyro.js?v=1.478.388"></script>
-<script defer src="js/forge.js?v=1.478.388"></script>
-<script defer src="js/partitura.js?v=1.478.388"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.388"></script>
-<script defer src="js/card.js?v=1.478.388"></script>
-<script defer src="js/star.js?v=1.478.388"></script>
-<script defer src="js/cinema.js?v=1.478.388"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.388"></script>
+<script defer src="js/core.js?v=1.478.389" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.389"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.389"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.389"></script>
+<script defer src="js/game.js?v=1.478.389" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.389"></script>
+<script defer src="js/sync.js?v=1.478.389"></script>
+<script defer src="js/render.js?v=1.478.389"></script>
+<script defer src="js/planetarium.js?v=1.478.389"></script>
+<script defer src="js/goldstar.js?v=1.478.389"></script>
+<script defer src="js/finish.js?v=1.478.389"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.389"></script>
+<script defer src="js/gyro.js?v=1.478.389"></script>
+<script defer src="js/forge.js?v=1.478.389"></script>
+<script defer src="js/partitura.js?v=1.478.389"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.389"></script>
+<script defer src="js/card.js?v=1.478.389"></script>
+<script defer src="js/star.js?v=1.478.389"></script>
+<script defer src="js/cinema.js?v=1.478.389"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.389"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
