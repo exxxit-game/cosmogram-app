@@ -4297,10 +4297,8 @@ wireOn('grSky','click',function(ev){
   if(!hit){ grBubbleHide(); return; }
   grBubbleStarId=hit.id;
   const bubble=$('grBubble');
-  const nameEl=$('grBubbleName'), cEl=$('grBubbleComment'), repBtn=$('grBubbleReport');
+  const nameEl=$('grBubbleName'), cEl=$('grBubbleComment');
   if(nameEl) nameEl.textContent=''; if(cEl) cEl.textContent='';
-  // 16.09.2026: тухнет до ответа сервера — раньше была живой сразу, тап быстрее загрузки жаловался вслепую
-  if(repBtn){ repBtn.classList.remove('sent'); repBtn.disabled=true; }
   if(bubble){ bubble.classList.add('show'); grPositionBubble(hit); }
   sfx.click(); haptic('light');
   syncGratitudeStar(hit.id).then(function(r){
@@ -4308,18 +4306,12 @@ wireOn('grSky','click',function(ev){
     if(!r || !r.ok){ grBubbleHide(); return; }
     if(nameEl) nameEl.textContent = r.name || L.grAnonLabel;
     if(cEl) cEl.textContent = r.comment || '';
-    if(repBtn) repBtn.disabled=false;
     if(bubble) grPositionBubble(hit); // текст пришёл — высота пузырька могла измениться, пересчитать сторону
   });
 });
-wireOn('grBubbleReport','click',function(ev){
-  ev.stopPropagation();
-  if(!grBubbleStarId) return;
-  const btn=$('grBubbleReport'); if(btn && btn.classList.contains('sent')) return;
-  syncGratitudeReport(grBubbleStarId).then(function(r){
-    if(r && r.ok){ if(btn) btn.classList.add('sent'); toast(L.grReported,'rgba(240,192,64,.5)'); haptic('light'); }
-  });
-});
+// 18.09.2026 (владелец: «людям не нужна возможность составлять жалобу, мы сами будем за этим
+// смотреть») — обработчик #grBubbleReport убран вместе с самой кнопкой (index.html); syncGratitudeReport
+// (js/sync.js) оставлен нетронутым — серверный маршрут может ещё пригодиться нам самим напрямую.
 /* 16.09.2026 (владелец: «фиксированная ставка... человек сам выберет сколько угодно, не
    ограничивай его, если у него 7 звёзд есть, ему что по одной мне слать?!») — было ±10: со
    старта в 1 (после «Коснись звезды» правки ниже сумма по умолчанию не менялась, минимум и так
