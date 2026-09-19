@@ -42,7 +42,9 @@
           { "type": "command", "command": ".claude/hooks/no-double-background.sh" },
           { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" },
           { "type": "command", "command": ".claude/hooks/no-secrets-in-commit.sh" },
-          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" }
+          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" },
+          { "type": "command", "command": ".claude/hooks/no-windows-path-redirect.sh" },
+          { "type": "command", "command": ".claude/hooks/no-broad-taskkill.sh" }
         ]
       },
       {
