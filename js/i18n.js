@@ -174,6 +174,10 @@ const I18N = {
     fkRock:'Астероид', fkDebris:'Обломок', fkDrift:'Дрейфер', fkMine:'Мина',
     fkSat:'Спутник', fkComet:'Комета', fkSeeker:'Ловец', fkGate:'Ворота',
     forgeGrpHard:'Сложность', // v1.69.0; 02.09.2026: «Настроение»→«Туман» переехало в Расстановку, «Состав» переехал сюда же — обе больше не отдельные группы
+    // 20.09.2026, фильтр Мастерской (владелец: «делай сразу всё», формула сложности проверена
+    // численно на 8 пресетах перед кодом): кнопка отдельно слева от ряда сортировки (не 7-й чип).
+    workshopFilterBtn:'Фильтр', workshopFilterDiffAny:'Любая', workshopFilterDiffEasy:'Просто',
+    workshopFilterDiffMed:'Средне', workshopFilterDiffHard:'Сложно',
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
     forgeLives:'Жизни', forgeWave:'Стартовая жара',
     forgeWaveHint:'С какой волны начинаешь — выше значит больше видов препятствий сразу',
@@ -416,6 +420,8 @@ const I18N = {
     fkRock:'Asteroid', fkDebris:'Debris', fkDrift:'Drifter', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comet', fkSeeker:'Seeker', fkGate:'Gate',
     forgeGrpHard:'Difficulty', // v1.69.0
+    workshopFilterBtn:'Filter', workshopFilterDiffAny:'Any', workshopFilterDiffEasy:'Easy',
+    workshopFilterDiffMed:'Medium', workshopFilterDiffHard:'Hard',
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
     forgeLives:'Lives', forgeWave:'Starting heat',
     forgeWaveHint:'Which wave you start at — higher means more obstacle types right away',
@@ -633,6 +639,8 @@ const I18N = {
     fkRock:'Asteroide', fkDebris:'Escombro', fkDrift:'Vagabundo', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Buscador', fkGate:'Puerta',
     forgeGrpHard:'Dificultad',
+    workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Cualquiera', workshopFilterDiffEasy:'Fácil',
+    workshopFilterDiffMed:'Media', workshopFilterDiffHard:'Difícil',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'En qué oleada empiezas — más alto significa más tipos de obstáculos de inmediato',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
@@ -864,6 +872,8 @@ const I18N = {
     fkRock:'Asteroide', fkDebris:'Destroço', fkDrift:'Errante', fkMine:'Mina', fkSat:'Satélite',
     fkComet:'Cometa', fkSeeker:'Perseguidor', fkGate:'Portal',
     forgeGrpHard:'Dificuldade',
+    workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Qualquer', workshopFilterDiffEasy:'Fácil',
+    workshopFilterDiffMed:'Média', workshopFilterDiffHard:'Difícil',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'Em que onda você começa — mais alto significa mais tipos de obstáculos de uma vez',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
@@ -1091,6 +1101,8 @@ const I18N = {
     fkRock:'Astéroïde', fkDebris:'Débris', fkDrift:'Dériveur', fkMine:'Mine',
     fkSat:'Satellite', fkComet:'Comète', fkSeeker:'Chercheur', fkGate:'Portail',
     forgeGrpHard:'Difficulté',
+    workshopFilterBtn:'Filtre', workshopFilterDiffAny:'Toutes', workshopFilterDiffEasy:'Facile',
+    workshopFilterDiffMed:'Moyenne', workshopFilterDiffHard:'Difficile',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
     forgeLives:'Vies', forgeWave:'Intensité de départ',
     forgeWaveHint:'À quelle vague tu commences — plus haut veut dire plus de types d’obstacles tout de suite',

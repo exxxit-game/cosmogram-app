@@ -1302,6 +1302,160 @@ const WORKSHOP_SORTS=['new','top','trending','fav','random','mine']; // 13.09.20
 // «да»): 6-й чип — ставит workshopSortMode='mine', та ветка уже существовала в
 // workshopRenderList() (12.09.2026, ждала именно этой кнопки), просто нажимать было негде.
 let workshopLikedOnly=false;
+
+/* ---------- 20.09.2026, фильтр Мастерской ---------- */
+// Три измерения сразу (владелец: «делай сразу всё», не по частям):
+// 1) длина — двуручный ползунок по реальным границам forgeSanitize (1000-25000, шаг 250, 0=бесконечная)
+// 2) сложность — НЕ сырое поле «Жизни» (владелец сам поймал: 1-2-3 «Жизни» ≠ «сложность», и
+//    направление обратное — меньше жизней ЖЁСТЧЕ, не проще); составная формула ниже, веса и
+//    границы взяты из реальной механики (js/game.js) и проверены численно на всех 8 официальных
+//    пресетах ДО того, как попасть в код (не с ходу вписаны).
+// 3) препятствия — те же 8 видов/цветов, что уже на карточке трассы (js/partitura.js), тап — исключить.
+const WORKSHOP_FILTER_LEN_MIN=1000, WORKSHOP_FILTER_LEN_MAX=25000, WORKSHOP_FILTER_LEN_STEP=250;
+// Слайдер физически идёт до 25250 (на один шаг дальше настоящего потолка 25000) — последнее деление
+// читается как «бесконечная» (l=0 в реальном конфиге), тот же приём, что уже был на макете («25000+»).
+const WORKSHOP_FILTER_LEN_INF=WORKSHOP_FILTER_LEN_MAX+WORKSHOP_FILTER_LEN_STEP;
+
+// Вес «опасности» вида препятствия — из реальной механики game.js, не придумано: ловец наводится
+// вдвое сильнее мины (комментарий в game.js прямым текстом), ворота — точный «дышащий» просвет
+// (тоже прямой комментарий); rock/debris — простейшая прямая угроза без наведения.
+const WORKSHOP_DIFF_KIND_WEIGHT={rock:.15,debris:.15,drift:.25,mine:.35,sat:.25,comet:.4,seeker:.7,gate:.6};
+const WORKSHOP_DIFF_KIND_SUM=FORGE_KINDS.reduce(function(s,k){ return s+WORKSHOP_DIFF_KIND_WEIGHT[k]; },0);
+// Границы 1/3 и 2/3 ТЕОРЕТИЧЕСКОГО размаха формулы (не размаха 8 официальных пресетов — владелец
+// прямо: «пресеты мы наделали от балды, чтобы просто были для начала», настоящий потолок сложности
+// открыт только тому, кто выкрутит вообще всё на максимум). Проверено численно на всех 8 пресетах
+// перед тем, как эти границы попали в код — ни один пресет не доходит до «Сложно», это ожидаемо
+// и подтверждено владельцем («надо исходить от максимума, а не от того, что мы там наделали»).
+const WORKSHOP_DIFF_RAW_MIN=(WORKSHOP_DIFF_KIND_WEIGHT.rock/WORKSHOP_DIFF_KIND_SUM)-0.8-0.8;
+const WORKSHOP_DIFF_RAW_MAX=1+1+1+1+0.5;
+const WORKSHOP_DIFF_T1=WORKSHOP_DIFF_RAW_MIN+(WORKSHOP_DIFF_RAW_MAX-WORKSHOP_DIFF_RAW_MIN)/3;
+const WORKSHOP_DIFF_T2=WORKSHOP_DIFF_RAW_MIN+(WORKSHOP_DIFF_RAW_MAX-WORKSHOP_DIFF_RAW_MIN)*2/3;
+function forgeDifficultyScore(cfg){
+  const density=cfg.d/100, speed=cfg.s/100, wave=(cfg.w-1)/5, wind=(cfg.wind||0)/100;
+  let kindSum=0;
+  FORGE_KINDS.forEach(function(k,i){ if(cfg.e>>i&1) kindSum+=WORKSHOP_DIFF_KIND_WEIGHT[k]; });
+  const kind=kindSum/WORKSHOP_DIFF_KIND_SUM;
+  const bonusRelief=cfg.b/3, livesRelief=(cfg.lv-1)/2;
+  return density+speed+wave+kind+0.5*wind-0.8*bonusRelief-0.8*livesRelief;
+}
+function forgeDifficultyBucket(cfg){ // 1=Просто, 2=Средне, 3=Сложно
+  const s=forgeDifficultyScore(cfg);
+  return s<WORKSHOP_DIFF_T1 ? 1 : (s<WORKSHOP_DIFF_T2 ? 2 : 3);
+}
+
+let workshopFilterOpen=false;
+let workshopFilterLenFrom=WORKSHOP_FILTER_LEN_MIN, workshopFilterLenTo=WORKSHOP_FILTER_LEN_INF; // по умолчанию — весь диапазон, фильтр неактивен
+let workshopFilterDiff=0; // 0=любая, 1/2/3=бакет
+const workshopFilterExcludedKinds=new Set(); // индексы FORGE_KINDS, исключённые игроком
+
+function workshopFilterActiveCount(){
+  let n=0;
+  if(workshopFilterLenFrom>WORKSHOP_FILTER_LEN_MIN || workshopFilterLenTo<WORKSHOP_FILTER_LEN_INF) n++;
+  if(workshopFilterDiff) n++;
+  if(workshopFilterExcludedKinds.size) n++;
+  return n;
+}
+function workshopFilterMatches(t){
+  const cfg=forgeDecode(t.code);
+  if(!cfg) return true; // код не читается — тот же fail-open приём, что у стикеров препятствий ниже (workshopRenderList)
+  if(workshopFilterLenFrom>WORKSHOP_FILTER_LEN_MIN || workshopFilterLenTo<WORKSHOP_FILTER_LEN_INF){
+    const l = cfg.l===0 ? Infinity : cfg.l;
+    const from = workshopFilterLenFrom, to = workshopFilterLenTo>=WORKSHOP_FILTER_LEN_INF ? Infinity : workshopFilterLenTo;
+    if(l<from || l>to) return false;
+  }
+  if(workshopFilterDiff && forgeDifficultyBucket(cfg)!==workshopFilterDiff) return false;
+  if(workshopFilterExcludedKinds.size){
+    for(const idx of workshopFilterExcludedKinds){ if(cfg.e>>idx&1) return false; }
+  }
+  return true;
+}
+function workshopFilterLenLabel(v){ return v>=WORKSHOP_FILTER_LEN_INF ? (L.forgeInf||'∞') : (v+' '+'м'); }
+function workshopFilterUpdateSliderUI(){
+  const min=$('workshopFilterLenMin'), max=$('workshopFilterLenMax');
+  if(!min||!max) return;
+  min.value=workshopFilterLenFrom; max.value=workshopFilterLenTo;
+  const pct=v=>(v-WORKSHOP_FILTER_LEN_MIN)/(WORKSHOP_FILTER_LEN_INF-WORKSHOP_FILTER_LEN_MIN)*100;
+  const fill=$('workshopFilterLenFill');
+  if(fill){ fill.style.left=pct(workshopFilterLenFrom)+'%'; fill.style.right=(100-pct(workshopFilterLenTo))+'%'; }
+  const fromEl=$('workshopFilterLenFrom'), toEl=$('workshopFilterLenTo');
+  if(fromEl) fromEl.textContent=workshopFilterLenFrom+' м';
+  if(toEl) toEl.textContent=workshopFilterLenLabel(workshopFilterLenTo);
+}
+function workshopFilterUpdateBadge(){
+  const badge=$('workshopFilterBadge'), btn=$('workshopFilterBtn');
+  const n=workshopFilterActiveCount();
+  if(badge){ badge.textContent=n; badge.classList.toggle('hidden', !n); }
+  if(btn) btn.classList.toggle('sel', !!n);
+}
+function workshopFilterBuildDiffChips(){
+  const row=$('workshopFilterDiff'); if(!row || row.children.length) return;
+  const opts=[[0,'workshopFilterDiffAny'],[1,'workshopFilterDiffEasy'],[2,'workshopFilterDiffMed'],[3,'workshopFilterDiffHard']];
+  opts.forEach(function(opt){
+    const b=document.createElement('button'); b.type='button'; b.className='wFilterChip'; b.dataset.diff=opt[0];
+    b.addEventListener('click', function(){
+      workshopFilterDiff = workshopFilterDiff===opt[0] ? 0 : opt[0];
+      workshopFilterFillPanel(); workshopFilterUpdateBadge(); workshopRenderList(); sfx.click(); haptic('light');
+    });
+    row.appendChild(b);
+  });
+}
+function workshopFilterBuildObChips(){
+  const row=$('workshopFilterOb'); if(!row || row.children.length) return;
+  FORGE_KINDS.forEach(function(k,idx){
+    const b=document.createElement('button'); b.type='button'; b.className='wFilterObChip'; b.dataset.kind=idx;
+    b.title=L['fk'+k.charAt(0).toUpperCase()+k.slice(1)]||k;
+    b.innerHTML='<span class="ic" style="color:'+(typeof PT_KIND_COLOR!=='undefined'?PT_KIND_COLOR[k]:'#fff')+'">'+(typeof PT_ICON_SVG!=='undefined'?PT_ICON_SVG[k]:'')+'</span>';
+    b.addEventListener('click', function(){
+      if(workshopFilterExcludedKinds.has(idx)) workshopFilterExcludedKinds.delete(idx); else workshopFilterExcludedKinds.add(idx);
+      workshopFilterFillPanel(); workshopFilterUpdateBadge(); workshopRenderList(); sfx.click(); haptic('light');
+    });
+    row.appendChild(b);
+  });
+}
+function workshopFilterFillPanel(){
+  if(typeof L==='undefined'||!L.workshopFilterBtn) return;
+  const lenLbl=$('workshopFilterLenLbl'); if(lenLbl) lenLbl.textContent=L.forgeLen;
+  const diffLbl=$('workshopFilterDiffLbl'); if(diffLbl) diffLbl.textContent=L.forgeGrpHard;
+  const obLbl=$('workshopFilterObLbl'); if(obLbl) obLbl.textContent=L.forgeEn;
+  const resetBtn=$('workshopFilterReset'); if(resetBtn) resetBtn.textContent=L.forgeResetBtn;
+  workshopFilterBuildDiffChips();
+  workshopFilterBuildObChips();
+  Array.from($('workshopFilterDiff').children).forEach(function(c){ c.textContent=L['workshopFilterDiff'+(['Any','Easy','Med','Hard'][+c.dataset.diff])]; c.classList.toggle('sel', +c.dataset.diff===workshopFilterDiff); });
+  Array.from($('workshopFilterOb').children).forEach(function(c){ c.classList.toggle('off', workshopFilterExcludedKinds.has(+c.dataset.kind)); });
+  workshopFilterUpdateSliderUI();
+  workshopFilterUpdateBadge();
+}
+function workshopFilterReset(){
+  workshopFilterLenFrom=WORKSHOP_FILTER_LEN_MIN; workshopFilterLenTo=WORKSHOP_FILTER_LEN_INF;
+  workshopFilterDiff=0; workshopFilterExcludedKinds.clear();
+  workshopFilterFillPanel(); workshopRenderList();
+}
+function workshopFilterWireOnce(){
+  const btn=$('workshopFilterBtn'); if(!btn || btn.dataset.wired) return;
+  btn.dataset.wired='1';
+  btn.addEventListener('click', function(){
+    workshopFilterOpen=!workshopFilterOpen;
+    $('workshopFilterPanel').classList.toggle('hidden', !workshopFilterOpen);
+    if(workshopFilterOpen) workshopFilterFillPanel();
+    sfx.click(); haptic('light');
+  });
+  const minEl=$('workshopFilterLenMin'), maxEl=$('workshopFilterLenMax');
+  function onSlide(){
+    let from=+minEl.value, to=+maxEl.value;
+    if(from>to){ if(this===minEl){ to=from; maxEl.value=to; } else { from=to; minEl.value=from; } }
+    workshopFilterLenFrom=from; workshopFilterLenTo=to;
+    workshopFilterUpdateSliderUI(); workshopFilterUpdateBadge();
+  }
+  if(minEl) minEl.addEventListener('input', onSlide);
+  if(maxEl) maxEl.addEventListener('input', onSlide);
+  // 20.09.2026: применяется вживую по мере движения ползунка (input), но сам ререндер списка —
+  // только по отпусканию (change), чтобы не гонять запрос на каждый промежуточный пиксель драга.
+  function onSlideDone(){ workshopRenderList(); sfx.click(); haptic('light'); }
+  if(minEl) minEl.addEventListener('change', onSlideDone);
+  if(maxEl) maxEl.addEventListener('change', onSlideDone);
+  const resetBtn=$('workshopFilterReset'); if(resetBtn) resetBtn.addEventListener('click', function(){ workshopFilterReset(); sfx.click(); haptic('light'); });
+}
+
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
   const LBL=[['workshopEmpty',L.workshopEmpty]]; // 06.09.2026: forgeWorkshopBtn убран вместе с отдельным экраном — Галерея теперь вкладка «Играть»; 08.09.2026: workshopSub убран целиком (см. i18n.js); заголовок workshopTitle убран целиком следом (лишняя надпись без функции)
@@ -1393,6 +1547,8 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
     const sel = s==='fav' ? (workshopSortMode==='top' && workshopLikedOnly) : (s===workshopSortMode && !(s==='top' && workshopLikedOnly));
     chip.classList.toggle('sel', sel);
   });
+  const filterBtn=$('workshopFilterBtn');
+  if(filterBtn){ filterBtn.title=L.workshopFilterBtn; workshopFilterWireOnce(); workshopFilterUpdateBadge(); if(workshopFilterOpen) workshopFilterFillPanel(); }
 }
 function workshopMyVotes(){ return saneArray(Store.get('workshopMyVotes',[]),[]); }
 function workshopRenderList(){
@@ -1416,6 +1572,11 @@ function workshopRenderList(){
     let tracks=(res && res.ok && Array.isArray(res.tracks)) ? res.tracks : [];
     const mine=workshopMyVotes();
     if(likedOnly) tracks=tracks.filter(function(t){ return mine.indexOf(t.code)>=0; }); // «Твои» — сужаем уже полученный топ по лайкам, без отдельного запроса на сервер
+    // 20.09.2026, фильтр Мастерской: тем же приёмом, что и likedOnly выше — сужаем уже
+    // полученный список клиентом (forgeDecode того же кода, что дальше и так декодируется
+    // для стикеров/миниатюры ниже), без отдельного запроса на сервер. Нет длины/сложности/
+    // препятствий в самом трек-объекте с сервера — только в его коде.
+    if(workshopFilterActiveCount()) tracks=tracks.filter(workshopFilterMatches);
     // 16.09.2026 (владелец: «Разминка сделай первым, в списке она стала самой последней. Люди
     // должны с неё начинать, пусть хотя бы раз в неё сыграют, и потом она уже может
     // путешествовать по списку куда угодно»): живой запрос к forge_workshop (Supabase) нашёл

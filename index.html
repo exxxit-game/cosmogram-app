@@ -2402,6 +2402,54 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    .forgeChip'ов на левый край через flex:0 0 auto больше не нужен без соседней fixed-кнопки:
    вернулось поведение .forgeChips по умолчанию — перенос строк, если 5 чипов не влезли). */
 .forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+/* 20.09.2026, фильтр Мастерской (макет masterskaya-filtr-polzunok-i-pozitsiya-20-09-2026.html,
+   вариант «Б», владелец «Да»): кнопка отдельно слева от ряда сортировки, тонкая черта делит —
+   сортировка меняет порядок уже видимого, фильтр сужает список, владелец прямо просил не
+   смешивать визуально. Цвета — те же токены, что у .forgeChip.sel (--gold-hi/--stone-border-sel). */
+.wFilterRow{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;flex-wrap:wrap}
+/* .forgeChips несёт width:100% (верно, когда это единственный элемент строки — было так до
+   сегодня) — внутри .wFilterRow рядом с кнопкой/чертой это выталкивало #workshopSort на всю
+   ширину ряда целиком, отправляя кнопку с чертой переносом на отдельную строку сверху (поймано
+   живым скриншотом, не на глаз пропущено). Точечный override только в этом контексте. */
+.wFilterRow .forgeChips{width:auto;flex:1 1 auto;min-width:0}
+.wFilterBtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--stone-border);
+  background:var(--stone-fill);color:var(--muted);display:flex;align-items:center;justify-content:center;
+  position:relative;flex:none;cursor:pointer;transition:all .15s}
+.wFilterBtn .ic{width:15px;height:15px}
+.wFilterBtn.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:#f0c040}
+.wFilterBadge{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 2px;border-radius:7px;
+  background:#f0c040;color:#2c1f08;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.wFilterSep{width:1px;align-self:stretch;background:var(--stone-border);margin:0 2px;flex:none}
+.wFilterPanel{background:rgba(15,31,61,.97);border:1px solid rgba(255,255,255,.12);border-radius:14px;
+  padding:14px;margin-top:10px;width:100%;box-sizing:border-box}
+.wFilterPanel .forgeLblBlk:not(:first-child){margin-top:14px}
+/* Двуручный ползунок — два родных <input type=range>, наложенных друг на друга (тот же приём,
+   что везде используют для dual-range без сторонней библиотеки): трек прозрачный у обоих,
+   ручка (::-webkit-slider-thumb/::-moz-range-thumb) кликабельна, остальная область — нет. */
+.wFilterSlider{position:relative;height:18px;margin:14px 4px 6px}
+.wFilterSliderTrack{position:absolute;left:0;right:0;top:8px;height:4px;background:rgba(120,140,180,.25);border-radius:2px}
+.wFilterSliderFill{position:absolute;top:0;height:4px;background:#f0c040;border-radius:2px}
+.wFilterRange{position:absolute;left:0;right:0;top:0;width:100%;height:18px;margin:0;
+  background:transparent;pointer-events:none;-webkit-appearance:none;appearance:none}
+.wFilterRange::-webkit-slider-runnable-track{background:transparent;height:18px}
+.wFilterRange::-moz-range-track{background:transparent;height:18px}
+.wFilterRange::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:16px;height:16px;
+  border-radius:50%;background:#f0c040;border:2px solid #1a2440;box-shadow:0 2px 6px rgba(0,0,0,.4);
+  margin-top:1px;cursor:pointer}
+.wFilterRange::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#f0c040;
+  border:2px solid #1a2440;box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:pointer}
+.wFilterSliderLabels{display:flex;justify-content:space-between;font-size:10px;color:#6b7394}
+.wFilterChipsRow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.wFilterChip{padding:6px 11px;border-radius:999px;border:1px solid var(--stone-border);
+  background:var(--stone-fill);font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s}
+.wFilterChip.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:#f0c040}
+.wFilterObChip{width:32px;height:32px;border-radius:8px;border:1px solid var(--stone-border);
+  background:var(--stone-fill);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s}
+.wFilterObChip .ic{width:16px;height:16px}
+.wFilterObChip.off{opacity:.3}
+.wFilterApplyBtn{margin-top:14px;width:100%;padding:10px;border-radius:10px;border:1px solid rgba(240,192,64,.55);
+  background:rgba(240,192,64,.14);color:#f0c040;font-size:12px;font-weight:700;text-align:center;
+  letter-spacing:.03em;cursor:pointer}
 .forgeSeg.locked{opacity:.4;pointer-events:none} /* 02.09.2026: «Высокая ставка» держит Жизни/Бонусы — тап по ним больше не выглядит рабочим, раз реального эффекта нет */
 /* 16.09.2026: тот же перевод на --stone-*, что у .forgeChip выше — единый материал ряда чипов Конструктора. */
 .forgeSegBtn{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--muted);border-radius:10px;
@@ -3912,9 +3960,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.463"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.463"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.463"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.465"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.465"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.465"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4567,7 +4615,41 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          («сердце» и «кубик» одинаково читаемы без текста после того, как игрок увидел их на этом
          же экране один раз), не тот случай непонятной голой иконки, из-за которого «Сюрприз»
          уезжал в 12.09. -->
-    <div class="forgeChips" id="workshopSort"></div>
+    <!-- 20.09.2026 (владелец, макет masterskaya-filtr-polzunok-i-pozitsiya-20-09-2026.html,
+         вариант «Б», явное «Да»): значок фильтра — ОТДЕЛЬНО слева от ряда сортировки, с тонкой
+         разделительной чертой — сортировка меняет порядок уже видимого, фильтр сужает список,
+         владелец прямо попросил не путать визуально одно с другим (не 7-й чип общего ряда). */ -->
+    <div class="wFilterRow" id="workshopFilterRow">
+      <button class="wFilterBtn" id="workshopFilterBtn" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg><span class="wFilterBadge hidden" id="workshopFilterBadge"></span></button>
+      <div class="wFilterSep"></div>
+      <div class="forgeChips" id="workshopSort"></div>
+    </div>
+    <!-- Панель — три измерения СРАЗУ (владелец: «делай сразу всё», не по частям). Длина —
+         двуручный ползунок (владелец выбрал явно, не готовые корзины — «этот вариант мне
+         больше нравится», честнее к реальному непрерывному диапазону 1000-25000м). Сложность —
+         не сырое поле «Жизни» (владелец сам поймал, что 1-2-3 «Жизни» ≠ «сложность» и направление
+         обратное), а составная формула (js/forge.js forgeDifficultyScore), проверенная численно
+         на всех 8 официальных пресетах перед тем, как попасть в код. Границы — от теоретического
+         размаха формулы, не от того, что «мы там наделали, по большей части от балды» (владелец,
+         дословно) — иначе будущий по-настоящему экстремальный самодельный трек оказался бы
+         неотличим в фильтре от уже существующих пресетов. -->
+    <div class="wFilterPanel hidden" id="workshopFilterPanel">
+      <div class="forgeLblBlk" id="workshopFilterLenLbl"></div>
+      <div class="wFilterSlider">
+        <div class="wFilterSliderTrack"><div class="wFilterSliderFill" id="workshopFilterLenFill"></div></div>
+        <input type="range" class="wFilterRange" id="workshopFilterLenMin" min="1000" max="25250" step="250">
+        <input type="range" class="wFilterRange" id="workshopFilterLenMax" min="1000" max="25250" step="250">
+      </div>
+      <div class="wFilterSliderLabels"><span id="workshopFilterLenFrom"></span><span id="workshopFilterLenTo"></span></div>
+
+      <div class="forgeLblBlk" id="workshopFilterDiffLbl"></div>
+      <div class="wFilterChipsRow" id="workshopFilterDiff"></div>
+
+      <div class="forgeLblBlk" id="workshopFilterObLbl"></div>
+      <div class="wFilterChipsRow" id="workshopFilterOb"></div>
+
+      <button class="wFilterApplyBtn" id="workshopFilterReset" type="button"></button>
+    </div>
     <div id="workshopList" class="workshopList"></div>
     <div class="hint hidden" id="workshopEmpty" style="text-align:center;margin-top:14px">пока пусто — поделись своим небом, и оно появится здесь</div>
     </div>
@@ -5188,26 +5270,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.463" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.463"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.463"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.463"></script>
-<script defer src="js/game.js?v=1.478.463" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.463"></script>
-<script defer src="js/sync.js?v=1.478.463"></script>
-<script defer src="js/render.js?v=1.478.463"></script>
-<script defer src="js/planetarium.js?v=1.478.463"></script>
-<script defer src="js/goldstar.js?v=1.478.463"></script>
-<script defer src="js/finish.js?v=1.478.463"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.463"></script>
-<script defer src="js/gyro.js?v=1.478.463"></script>
-<script defer src="js/forge.js?v=1.478.463"></script>
-<script defer src="js/partitura.js?v=1.478.463"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.463"></script>
-<script defer src="js/card.js?v=1.478.463"></script>
-<script defer src="js/star.js?v=1.478.463"></script>
-<script defer src="js/cinema.js?v=1.478.463"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.463"></script>
+<script defer src="js/core.js?v=1.478.465" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.465"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.465"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.465"></script>
+<script defer src="js/game.js?v=1.478.465" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.465"></script>
+<script defer src="js/sync.js?v=1.478.465"></script>
+<script defer src="js/render.js?v=1.478.465"></script>
+<script defer src="js/planetarium.js?v=1.478.465"></script>
+<script defer src="js/goldstar.js?v=1.478.465"></script>
+<script defer src="js/finish.js?v=1.478.465"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.465"></script>
+<script defer src="js/gyro.js?v=1.478.465"></script>
+<script defer src="js/forge.js?v=1.478.465"></script>
+<script defer src="js/partitura.js?v=1.478.465"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.465"></script>
+<script defer src="js/card.js?v=1.478.465"></script>
+<script defer src="js/star.js?v=1.478.465"></script>
+<script defer src="js/cinema.js?v=1.478.465"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.465"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
