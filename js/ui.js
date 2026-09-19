@@ -2171,6 +2171,12 @@ function angarPvZoomDraw(t){
    рисует один кадр и останавливается ради заряда — тот единственный кадр иногда ловил холст ДО
    того, как карточка факта заняла место, с чужой шириной. Own canvas ниже не имеет этой
    болезни вообще: свой размер, никогда не зависит от разметки окна зума. */
+/* 19.09.2026, восьмым заходом (владелец: «когда делятся явлением, должна уходить вся
+   карточка — рисунок, название, описание — вместе, иначе непонятно, что там отображается»).
+   До этой правки узор+имя уже были (см. историю ниже), а текст-факт — единственное, что
+   реально отсутствовало в шаринге, хотя в самом окне «крупно» он есть всегда. Композиция —
+   та же, что в живом окне (плашка имени сверху, узор, язычок COSMOGRAM + карточка факта
+   снизу), не придумана заново — узор просто ужат, чтобы осталось место снизу под текст. */
 function angarPvStoryDraw(x, BW, BH, tMs){
   x.clearRect(0,0,BW,BH);
   const bg=x.createRadialGradient(BW*0.5,BH*0.35,0,BW*0.5,BH*0.35,Math.max(BW,BH)*0.8);
@@ -2180,8 +2186,8 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   const item=angarPvZoomItem, cat=angarPvZoomCat;
   if(item){
     x.save();
-    x.translate(BW/2, BH*0.4);
-    const m=BW; // короткая сторона портретного кадра — узор занимает её почти целиком, как у экрана зума (min(W,H))
+    x.translate(BW/2, BH*0.32); // 19.09.2026: было 0.4 — узор чуть выше и мельче, освобождает место карточке факта снизу
+    const m=BW*0.82; // 19.09.2026: было BW — узор ужат на ~18%, тот же приём (translate, не новая формула), что уже применялся сегодня в angarPvZoomDraw
     const skin=(typeof SKINS_BY_ID!=='undefined')?(SKINS_BY_ID.get(S.skin)||SKINS[0]):null;
     const base=skin?skin.glow.slice(0,skin.glow.lastIndexOf(',')+1):'rgba(255,255,255,';
     const col=a=>base+Math.max(0,a).toFixed(2)+')';
@@ -2209,19 +2215,45 @@ function angarPvStoryDraw(x, BW, BH, tMs){
     x.font='700 '+fs+'px "Exo 2", sans-serif';
     x.fillStyle='#f4f6fb';
     x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=Math.round(BW*0.012);
-    x.fillText(name, BW/2, BH*0.82, BW*0.86);
+    x.fillText(name, BW/2, BH*0.58, BW*0.86); // 19.09.2026: было 0.82 — поднято, освобождает низ под карточку факта
     x.shadowBlur=0;
   }
 
-  const tagW=Math.round(BW*0.4), tagH=Math.round(BW*0.1), tagY=BH*0.91, r=6;
-  const tx=BW/2-tagW/2, ty=tagY-tagH/2;
+  // 19.09.2026: язычок COSMOGRAM + карточка факта — та же пара, что #angarPvZoomMark/#angarPvZoomFact
+  // в живом окне (index.html), тот же золотой/тёмно-синий язык, не выдуман для шаринга отдельно.
+  const fact=item&&item.fact;
+  const cardX=BW*0.08, cardW=BW*0.84, cardY=BH*0.655, tagH=Math.round(BW*0.09);
+  x.font='700 '+Math.round(BW*0.032)+'px "Exo 2", sans-serif';
+  x.textAlign='left';
+  const tagText='COSMOGRAM', tagPad=Math.round(BW*0.03);
+  const tagW=Math.round(x.measureText(tagText).width+tagPad*2);
   x.fillStyle='#dba93c';
   x.beginPath();
-  x.moveTo(tx+r,ty); x.arcTo(tx+tagW,ty,tx+tagW,ty+tagH,r); x.arcTo(tx+tagW,ty+tagH,tx,ty+tagH,r);
-  x.arcTo(tx,ty+tagH,tx,ty,r); x.arcTo(tx,ty,tx+tagW,ty,r); x.closePath(); x.fill();
-  x.font='600 '+Math.round(BW*0.034)+'px "Exo 2", sans-serif';
-  x.fillStyle='#2c1f08';
-  x.fillText('COSMOGRAM', BW/2, tagY+BW*0.012);
+  x.moveTo(cardX+6,cardY); x.arcTo(cardX+tagW,cardY,cardX+tagW,cardY+tagH,6); x.arcTo(cardX+tagW,cardY+tagH,cardX,cardY+tagH,6);
+  x.lineTo(cardX,cardY+6); x.arcTo(cardX,cardY,cardX+tagW,cardY,6); x.closePath(); x.fill();
+  x.fillStyle='#2c1f08'; x.textBaseline='middle';
+  x.fillText(tagText, cardX+tagPad, cardY+tagH/2+1);
+
+  if(fact){
+    const boxY=cardY+tagH-2, fs2=Math.round(BW*0.036), lh=fs2*1.4, padX=Math.round(BW*0.045), padY=Math.round(BW*0.04);
+    x.font='500 '+fs2+'px "Exo 2", sans-serif';
+    const maxW=cardW-padX*2;
+    const words=fact.split(' '); const lines=[]; let cur='';
+    for(const w of words){ const t=cur?cur+' '+w:w; if(x.measureText(t).width>maxW && cur){ lines.push(cur); cur=w; } else cur=t; }
+    if(cur) lines.push(cur);
+    const maxLines=6; const shown=lines.slice(0,maxLines);
+    if(lines.length>maxLines && shown.length){ shown[shown.length-1]=shown[shown.length-1].replace(/\s*\S*$/,'')+'…'; }
+    const boxH=padY*2+shown.length*lh;
+    x.fillStyle='rgba(15,31,61,.95)'; x.strokeStyle='rgba(219,169,60,.5)'; x.lineWidth=1;
+    const r2=10;
+    x.beginPath();
+    x.moveTo(cardX,boxY); x.lineTo(cardX+cardW-r2,boxY); x.arcTo(cardX+cardW,boxY,cardX+cardW,boxY+r2,r2);
+    x.lineTo(cardX+cardW,boxY+boxH-r2); x.arcTo(cardX+cardW,boxY+boxH,cardX+cardW-r2,boxY+boxH,r2);
+    x.lineTo(cardX+r2,boxY+boxH); x.arcTo(cardX,boxY+boxH,cardX,boxY+boxH-r2,r2);
+    x.lineTo(cardX,boxY); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle='#dfe6ff'; x.textAlign='center'; x.textBaseline='alphabetic';
+    shown.forEach((ln,i)=>x.fillText(ln, BW/2, boxY+padY+fs2*0.85+i*lh, maxW));
+  }
 }
 /* Собственный офскрин-канвас под запись — не размер живого окна, поэтому не ловит ни его
    разметку, ни его же экономию заряда (Q.level===0 «один кадр и тишина» там оправдана для
