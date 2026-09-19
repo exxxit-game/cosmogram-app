@@ -35,7 +35,12 @@ const WORKSHOP_RIBBON_EYES=
 // harakterov-20-09-2026.html), закреплены ДЕТЕРМИНИРОВАННО за кодом трассы, не рандом на
 // каждый показ — тот же код всегда даёт тот же характер. Простой хэш (djb2-подобный), не
 // криптографический — детерминизм важнее равномерности распределения.
-const WORKSHOP_RIBBON_CHARS=['char-bouncy','char-sparkle','char-wave','char-droopy'];
+// 20.09.2026: было 4 (личный топ-выбор владельца) — владелец: «зачем нам 4? если все 12
+// разные, пусть все и будут... идём с расчётом, что будет много игроков» — все 12
+// предложенных (masterskaya-lenta-bolshoy-nabor-harakterov-20-09-2026.html), не только топ.
+const WORKSHOP_RIBBON_CHARS=['char-bouncy','char-sparkle','char-wave','char-droopy',
+  'char-calm','char-sleepy','char-curious','char-nervous','char-sideeye','char-surprised',
+  'char-googly','char-dramatic'];
 function workshopRibbonCharClass(code){
   let h=5381;
   for(let i=0;i<code.length;i++){ h=((h<<5)+h+code.charCodeAt(i))|0; }
