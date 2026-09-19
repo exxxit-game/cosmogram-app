@@ -1313,17 +1313,28 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         // «Новые»/«Вау»/«Растёт» были единственными тремя чипами со словом в этом ряду —
         // слово не влезало вместе с остальными icon-only соседями (♥/🎲) без переноса на
         // телефоне (живой скрин). Плюс — тематически «новое», простая узнаваемая форма.
+        // 19.09.2026 (владелец, живой скрин: «цвет не появился»): голый атрибут stroke="#.."
+        // перебивался общим .forgeChip .ic{stroke:currentColor} — тот же класс ошибки, что
+        // уже поймали 13.09.2026 у ♥ (см. её комментарий ниже). currentColor+inline style —
+        // тот же рабочий приём, не выдумано заново.
+        // 19.09.2026, тем же вечером (владелец: «плюсик не нравится, поставь колокольчик»):
+        // «+» → колокольчик (Lucide/Feather «bell», готовая форма, не нарисована на глаз —
+        // тот же принцип, что уже применялся сегодня к другим иконкам). Свой голубой —
+        // не занят соседями в этом ряду (золото/золото/зелёный/розовый/сиреневый).
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffd76a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5v9M7.5 12h9"></path></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:#6cc3ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>';
       } else if(s==='top'){
         // «Искра» — владелец выбрал эту форму для «Вау», золотая (решил не перекрашивать в
         // розовый — не путать с ♥ рядом, два золотых значка отличаются формой, не цветом).
+        // 19.09.2026: та же правка currentColor, что у «new» выше — голый fill="#.." тоже
+        // перебивался общим .ic{fill:none}.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path><path d="M19 15.5c.2 1.6.5 2.4 1.1 3 .6.6 1.4.9 3 1.1-1.6.2-2.4.5-3 1.1-.6.6-.9 1.4-1.1 3-.2-1.6-.5-2.4-1.1-3-.6-.6-1.4-.9-3-1.1 1.6-.2 2.4-.5 3-1.1.6-.6.9-1.4 1.1-3z"></path></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path><path d="M19 15.5c.2 1.6.5 2.4 1.1 3 .6.6 1.4.9 3 1.1-1.6.2-2.4.5-3 1.1-.6.6-.9 1.4-1.1 3-.2-1.6-.5-2.4-1.1-3-.6-.6-1.4-.9-3-1.1 1.6-.2 2.4-.5 3-1.1.6-.6.9-1.4 1.1-3z"></path></svg>';
       } else if(s==='trending'){
         // Стрелка роста — узнаваема без слова, решено раньше остальных двух в том же макете.
+        // 19.09.2026: та же правка currentColor, что у «new»/«top» выше.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>';
       } else if(s==='fav'){
         b.classList.add('iconOnly');
         b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
