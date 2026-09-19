@@ -2183,10 +2183,24 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   bg.addColorStop(0,'#12224a'); bg.addColorStop(1,'#0a1030');
   x.fillStyle=bg; x.fillRect(0,0,BW,BH);
 
+  // 19.09.2026, третьим заходом (владелец: «название почему-то внизу, раньше было по-другому» —
+  // в живом окне «крупно» плашка имени СВЕРХУ, над рисунком; здесь была нарисована МЕЖДУ
+  // рисунком и фактом — не порядок реальной карточки. Имя перенесено ДО рисунка и выше по Y,
+  // рисунок сдвинут ниже, чтобы не наезжать на имя). */
   const item=angarPvZoomItem, cat=angarPvZoomCat;
+  x.textAlign='center'; x.textBaseline='alphabetic';
+  const name=item?((cat==='color' && typeof item.name==='number')?((typeof L!=='undefined'&&L.skinNames&&L.skinNames[item.name])||''):(item.name||'')):'';
+
+  // 19.09.2026, пятым заходом (владелец: «явление на название заходит» — узор физически
+  // выше своей точки translate больше, чем есть места до низа плашки имени, у разных узоров
+  // это по-разному, подгонять под каждый — не тот путь; владелец явно: узор ДОЛЖЕН заходить
+  // ПОД плашку по Z-порядку, не должен становиться меньше). Рисунок теперь красится ПЕРВЫМ,
+  // плашка имени — ПОСЛЕ (её непрозрачный фон перекрывает верхушку узора там, где они
+  // пересекаются) — тот же приём слоёв, что в живом окне: плашка имени лежит поверх канвы
+  // (см. комментарий у #angarPvZoomCv в index.html, 19.09.2026, про то же самое для DOM-версии).
   if(item){
     x.save();
-    x.translate(BW/2, BH*0.32); // 19.09.2026: было 0.4 — узор чуть выше и мельче, освобождает место карточке факта снизу
+    x.translate(BW/2, BH*0.38);
     const m=BW*0.82; // 19.09.2026: было BW — узор ужат на ~18%, тот же приём (translate, не новая формула), что уже применялся сегодня в angarPvZoomDraw
     const skin=(typeof SKINS_BY_ID!=='undefined')?(SKINS_BY_ID.get(S.skin)||SKINS[0]):null;
     const base=skin?skin.glow.slice(0,skin.glow.lastIndexOf(',')+1):'rgba(255,255,255,';
@@ -2208,29 +2222,68 @@ function angarPvStoryDraw(x, BW, BH, tMs){
     x.restore();
   }
 
-  x.textAlign='center'; x.textBaseline='alphabetic';
-  const name=item?((cat==='color' && typeof item.name==='number')?((typeof L!=='undefined'&&L.skinNames&&L.skinNames[item.name])||''):(item.name||'')):'';
+  x.textAlign='center'; x.textBaseline='alphabetic'; // угол/масштаб узора выше мог сбить настройки контекста
   if(name){
-    const fs=Math.round(BW*0.052);
+    /* 19.09.2026, четвёртым заходом (владелец: «название без своей оправы — в игре оно в
+       своей ячейке, тут просто голый текст»): плашка — та же (градиент+золотая черта сверху),
+       что #angarPvZoomName в живом окне (index.html), не рисуется тут отдельным изобретением.
+       Перенос строк — тем же приёмом, что уже у карточки факта ниже (measureText+накопление). */
+    const fs=Math.round(BW*0.048);
     x.font='700 '+fs+'px "Exo 2", sans-serif';
-    x.fillStyle='#f4f6fb';
-    x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=Math.round(BW*0.012);
-    x.fillText(name, BW/2, BH*0.58, BW*0.86); // 19.09.2026: было 0.82 — поднято, освобождает низ под карточку факта
-    x.shadowBlur=0;
+    const nmaxW=BW*0.78, nPadX=Math.round(BW*0.05), nPadY=Math.round(BW*0.035), nlh=fs*1.25;
+    const nWords=name.split(' '); const nLines=[]; let nCur='';
+    for(const w of nWords){ const t=nCur?nCur+' '+w:w; if(x.measureText(t).width>nmaxW && nCur){ nLines.push(nCur); nCur=w; } else nCur=t; }
+    if(nCur) nLines.push(nCur);
+    const plateW=BW*0.82, plateH=nPadY*2+nLines.length*nlh, plateX=BW*0.09, plateY=BH*0.10-plateH/2, pr=14;
+    const pGrad=x.createLinearGradient(0,plateY,0,plateY+plateH);
+    // 19.09.2026, шестым заходом (владелец, отметил кружком на скрине: тонкая голубая линия
+    // узора просвечивает сквозь текст «Grand-design» — измерено, разница до 155 единиц RGB
+    // в затронутых пикселях): в живом DOM #angarPvZoomName фон .95-.96 alpha безопасен — под
+    // ним ничего не нарисовано, что могло бы просвечивать. Здесь плашка красится ПОВЕРХ уже
+    // нарисованного узора (порядок исправлен этим же заходом сессии) — полупрозрачность даёт
+    // реальную протечку цвета. Alpha=1 только в этой canvas-копии, не меняет DOM-версию.
+    pGrad.addColorStop(0,'rgba(24,42,78,1)'); pGrad.addColorStop(1,'rgba(15,31,61,1)');
+    x.fillStyle=pGrad; x.strokeStyle='rgba(255,255,255,.10)'; x.lineWidth=1;
+    x.beginPath();
+    x.moveTo(plateX+pr,plateY); x.lineTo(plateX+plateW-pr,plateY); x.arcTo(plateX+plateW,plateY,plateX+plateW,plateY+pr,pr);
+    x.lineTo(plateX+plateW,plateY+plateH-pr); x.arcTo(plateX+plateW,plateY+plateH,plateX+plateW-pr,plateY+plateH,pr);
+    x.lineTo(plateX+pr,plateY+plateH); x.arcTo(plateX,plateY+plateH,plateX,plateY+plateH-pr,pr);
+    x.lineTo(plateX,plateY+pr); x.arcTo(plateX,plateY,plateX+pr,plateY,pr);
+    x.closePath(); x.fill(); x.stroke();
+    // золотая черта сверху — тот же акцент, что #angarPvZoomName:before
+    const nAccGrad=x.createLinearGradient(plateX+18,0,plateX+plateW-18,0);
+    nAccGrad.addColorStop(0,'rgba(219,169,60,0)'); nAccGrad.addColorStop(.2,'#dba93c');
+    nAccGrad.addColorStop(.5,'#f0c040'); nAccGrad.addColorStop(.8,'#dba93c'); nAccGrad.addColorStop(1,'rgba(219,169,60,0)');
+    x.fillStyle=nAccGrad;
+    x.fillRect(plateX+18, plateY, plateW-36, 2);
+    x.fillStyle='#f4f6fb'; x.textAlign='center'; x.textBaseline='alphabetic';
+    nLines.forEach((ln,i)=>x.fillText(ln, BW/2, plateY+nPadY+fs*0.85+i*nlh, nmaxW));
   }
 
-  // 19.09.2026: язычок COSMOGRAM + карточка факта — та же пара, что #angarPvZoomMark/#angarPvZoomFact
-  // в живом окне (index.html), тот же золотой/тёмно-синий язык, не выдуман для шаринга отдельно.
+  // 19.09.2026, второй заход (владелец, живой скрин: «плохо прорисовывается, особенно
+  // COSMOGRAM» + «карточка какая-то старая осталась»): язычок ниже чинит СВОЙ баг геометрии —
+  // path строился ТРЕМЯ arcTo вперемешку с одним lineTo (нижний-правый угол по ошибке тоже
+  // скруглялся, нижний-левый не замыкался как надо) — реальный CSS #angarPvZoomMark
+  // (border-radius:8px 8px 0 0) круглит ТОЛЬКО верхние два угла, нижние — острые. Путь
+  // переписан по стандартной схеме «4 стороны + 2 arcTo» (те же вершины, что и у корректно
+  // работающей карточки факта чуть ниже), не полу-скруглённый гибрид. Карточка факта заодно
+  // получила тот же линейный градиент+акцент слева, что уже стоит у #angarPvZoomFact в
+  // живом окне (index.html) — раньше здесь был плоский fillStyle, отсюда «старый вид».
   const fact=item&&item.fact;
-  const cardX=BW*0.08, cardW=BW*0.84, cardY=BH*0.655, tagH=Math.round(BW*0.09);
+  const cardX=BW*0.08, cardW=BW*0.84, cardY=BH*0.655, tagH=Math.round(BW*0.09), tagR=8; // 8px — реальный border-radius #angarPvZoomMark (8px 8px 0 0), не придумано
   x.font='700 '+Math.round(BW*0.032)+'px "Exo 2", sans-serif';
   x.textAlign='left';
   const tagText='COSMOGRAM', tagPad=Math.round(BW*0.03);
   const tagW=Math.round(x.measureText(tagText).width+tagPad*2);
   x.fillStyle='#dba93c';
   x.beginPath();
-  x.moveTo(cardX+6,cardY); x.arcTo(cardX+tagW,cardY,cardX+tagW,cardY+tagH,6); x.arcTo(cardX+tagW,cardY+tagH,cardX,cardY+tagH,6);
-  x.lineTo(cardX,cardY+6); x.arcTo(cardX,cardY,cardX+tagW,cardY,6); x.closePath(); x.fill();
+  x.moveTo(cardX, cardY+tagH); // низ-лево (острый угол)
+  x.lineTo(cardX, cardY+tagR);
+  x.arcTo(cardX, cardY, cardX+tagR, cardY, tagR); // верх-лево скруглён
+  x.lineTo(cardX+tagW-tagR, cardY);
+  x.arcTo(cardX+tagW, cardY, cardX+tagW, cardY+tagR, tagR); // верх-право скруглён
+  x.lineTo(cardX+tagW, cardY+tagH); // низ-право (острый угол)
+  x.closePath(); x.fill();
   x.fillStyle='#2c1f08'; x.textBaseline='middle';
   x.fillText(tagText, cardX+tagPad, cardY+tagH/2+1);
 
@@ -2244,13 +2297,21 @@ function angarPvStoryDraw(x, BW, BH, tMs){
     const maxLines=6; const shown=lines.slice(0,maxLines);
     if(lines.length>maxLines && shown.length){ shown[shown.length-1]=shown[shown.length-1].replace(/\s*\S*$/,'')+'…'; }
     const boxH=padY*2+shown.length*lh;
-    x.fillStyle='rgba(15,31,61,.95)'; x.strokeStyle='rgba(219,169,60,.5)'; x.lineWidth=1;
     const r2=10;
+    const grad=x.createLinearGradient(0,boxY,0,boxY+boxH);
+    grad.addColorStop(0,'rgba(24,42,78,.96)'); grad.addColorStop(1,'rgba(15,31,61,.95)');
+    x.fillStyle=grad; x.strokeStyle='rgba(255,255,255,.10)'; x.lineWidth=1;
     x.beginPath();
     x.moveTo(cardX,boxY); x.lineTo(cardX+cardW-r2,boxY); x.arcTo(cardX+cardW,boxY,cardX+cardW,boxY+r2,r2);
     x.lineTo(cardX+cardW,boxY+boxH-r2); x.arcTo(cardX+cardW,boxY+boxH,cardX+cardW-r2,boxY+boxH,r2);
     x.lineTo(cardX+r2,boxY+boxH); x.arcTo(cardX,boxY+boxH,cardX,boxY+boxH-r2,r2);
     x.lineTo(cardX,boxY); x.closePath(); x.fill(); x.stroke();
+    // золотая полоса вдоль левого края — тот же акцент, что #angarPvZoomFact:before в живом окне
+    const accGrad=x.createLinearGradient(0,boxY+8,0,boxY+boxH-8);
+    accGrad.addColorStop(0,'rgba(219,169,60,0)'); accGrad.addColorStop(.2,'#dba93c');
+    accGrad.addColorStop(.5,'#f0c040'); accGrad.addColorStop(.8,'#dba93c'); accGrad.addColorStop(1,'rgba(219,169,60,0)');
+    x.fillStyle=accGrad;
+    x.fillRect(cardX, boxY+8, 2, boxH-16);
     x.fillStyle='#dfe6ff'; x.textAlign='center'; x.textBaseline='alphabetic';
     shown.forEach((ln,i)=>x.fillText(ln, BW/2, boxY+padY+fs2*0.85+i*lh, maxW));
   }
