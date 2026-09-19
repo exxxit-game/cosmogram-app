@@ -4165,6 +4165,15 @@ function lsysString(style){
   for(let i=0;i<LSYS_N;i++) str=str.split('').map(ch=>ch==='F'?'F[+F]F[-F]F':ch).join('');
   return LSYS_STR_CACHE[style]=str;
 }
+/* 19.09.2026 «Вспышка покрупнее» (владелец, живая жалоба: «в начале почти не видно», плюс
+   отдельная просьба — та же вспышка должна повторяться и на финише, не только на старте):
+   живой макет .knowledge/macets/vspyshka-uvelichenie-19-09-2026.html (то же уравнение
+   renderFlashPattern, два числа увеличены) — владелец подтвердил явным «да», «так покрасивее».
+   Один общий множитель, не два отдельных числа в двух местах: применяется через ctx.scale()
+   вокруг вызова renderFlashPattern (сама функция и её числа внутри не трогаются — остаются
+   «эталоном 1×», масштаб накладывается снаружи), и к радиусу свечения — единственное число,
+   которое меняет и старт, и будущий финиш разом. */
+const FLASH_SCALE=50/26; // ≈1.92 — даёт ровно 50px свечения (было 26), макет показывал это же число
 function renderFlashPattern(c, style, p, col){
   const ring=(rp,widthFrom,widthTo)=>{
     if(rp<=0) return;
@@ -5572,12 +5581,22 @@ function drawLaunchFlash(){
      своего окна (_launchFlashActive false→true), дальше держит её неподвижно всё время
      показа; руль уводит борт от неё, а не наоборот. */
   if(!_launchFlashActive){ _launchFlashActive=true; _launchFlashX=renderPlaneX; _launchFlashY=renderPlaneY-46; }
-  ctx.save(); ctx.translate(_launchFlashX,_launchFlashY);
-  const fg=ctx.createRadialGradient(0,0,2,0,0,26);
+  drawFlashBurst(_launchFlashX,_launchFlashY,fl.style,p,col,base);
+}
+/* 19.09.2026 «Вспышка покрупнее»: общее тело старой drawLaunchFlash (свечение+узор) — теперь
+   зовётся и стартом (выше), и финишем (js/finish.js, тот же принцип, что уже у confetti()).
+   x,y — где рисовать (ловится один раз за вызов, сам вызывающий решает следить за кораблём или
+   нет — здесь только отрисовка). base — 'rgba(r,g,b,' борта (skin.glow), тот же цвет что аура. */
+function drawFlashBurst(x,y,style,p,col,base){
+  ctx.save(); ctx.translate(x,y);
+  const glowR=26*FLASH_SCALE;
+  const fg=ctx.createRadialGradient(0,0,2,0,0,glowR);
   fg.addColorStop(0,base+'.30)'); fg.addColorStop(1,base+'0)');
   ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=fg;
-  ctx.beginPath(); ctx.arc(0,0,26,0,6.283); ctx.fill(); ctx.restore();
-  renderFlashPattern(ctx, fl.style, p, col);
+  ctx.beginPath(); ctx.arc(0,0,glowR,0,6.283); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.scale(FLASH_SCALE,FLASH_SCALE);
+  renderFlashPattern(ctx, style, p, col);
+  ctx.restore();
   ctx.restore();
 }
 function drawPlane(sh,nowMs){

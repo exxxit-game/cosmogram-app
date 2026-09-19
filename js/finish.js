@@ -21,10 +21,10 @@
 const FINISH=(()=>{
   const LEAD_M=300; // 13.09.2026, владелец: за сколько метров до финиша арка входит в поле зрения
   const COLS=['255,215,106','168,200,255','255,159,176','143,255,159']; // 04.09.2026 confetti() — тот же набор 4 цветов, что уже победа/рекорд
-  let remain=null, active=false, shockA=0, shards=[], textAge=0;
+  let remain=null, active=false, shockA=0, shards=[], textAge=0, flashAge=0, flashX=0, flashY=0, flashDurCur=.6;
   const TEXT_LIFE=1.1; // 19.09.2026 «Космо финиш»: чуть дольше самого занавеса (.9с), чтобы надпись не срезало сменой экрана
 
-  function reset(){ remain=null; active=false; shockA=0; shards=[]; textAge=0; } // зовёт startGame: новый взлёт — чистый лист
+  function reset(){ remain=null; active=false; shockA=0; shards=[]; textAge=0; flashAge=0; } // зовёт startGame: новый взлёт — чистый лист
   function setRemain(m){ if(!active) remain=(m==null)?null:Math.max(0,m); }
 
   function farY(){ return fieldT()+fieldH()*.16; } // высоко над рабочей зоной корабля — «далеко впереди»
@@ -36,7 +36,16 @@ const FINISH=(()=>{
 
   function trigger(){ // вместо startDying() в момент победы — арка (если была) разлетается на месте корабля
     active=true; shockA=1; shards=[]; textAge=0.0001; // 19.09.2026 «Космо финиш»: >0, не 0 — tick() ниже проверяет textAge>0, чтобы новый reset() (0) сразу гасил старую надпись
-    const prox=1, cx=plane.x, cy=plane.y-6, N=26;
+    // 19.09.2026 «Вспышка на финише» (владелец, явное «да»): та же вспышка, что уже украшает
+    // старт (js/render.js: drawFlashBurst/FLASH_SCALE, тот же тюнинг-слот S.launchFx, тот же
+    // цвет борта) — не второй отдельный эффект, ОДИН источник, два момента показа. Один разовый
+    // всплеск (владелец сам выбрал: «на старте — одна вспышка», финиш — тоже один, не зацикленно,
+    // чтобы не соперничать с уже занятым кадром — салют+кольцо+надпись). flashDur(price) — та
+    // же формула «подороже — подольше», что уже у старта, не новое правило.
+    flashAge=0.0001; flashX=plane.x; flashY=plane.y-6;
+    const flFin=(typeof S!=='undefined' && S.launchFx && typeof FLASHES_BY_ID!=='undefined') ? FLASHES_BY_ID.get(S.launchFx) : null;
+    flashDurCur=(flFin && typeof flashDur==='function') ? flashDur(flFin.price) : .6;
+    const prox=1, cx=plane.x, cy=plane.y-6, N=12; // 19.09.2026: было 26 — см. комментарий у draw() выше, вспышка теперь главная, конфетти — фон под ней — см. комментарий у draw() выше, вспышка теперь главная, конфетти — фон под ней
     for(let i=0;i<N;i++){
       const u=i/(N-1), p=remain!=null? gateArcPoint(u,prox) : {x:cx+(Math.random()-.5)*40,y:cy+(Math.random()-.5)*14};
       const ang=Math.atan2(p.y-cy,p.x-cx)+((Math.random()-.5)*.7), sp=1.7+Math.random()*3.0, flake=Math.random()<.5;
@@ -49,6 +58,7 @@ const FINISH=(()=>{
 
   function tick(dt){
     if(textAge>0) textAge=Math.min(TEXT_LIFE, textAge+dt); // 19.09.2026 «Космо финиш»: своя жизнь, не завязана на active/shards — переживает их угасание
+    if(flashAge>0) flashAge=Math.min(flashDurCur, flashAge+dt); // 19.09.2026 «Вспышка на финише»: тоже своя жизнь, отдельная от confetti/shockA
     if(!active) return;
     for(let i=shards.length-1;i>=0;i--){ const s=shards[i]; s.age+=dt;
       if(s.age>s.life){ shards.splice(i,1); continue; }
@@ -72,34 +82,62 @@ const FINISH=(()=>{
       ctx.stroke();
       ctx.restore();
     }
-    if(!active) return;
-    /* 13.09.2026 (владелец, живой замер пикселей канваса: «просил цветной салют, вижу просто
-       белый») — было И тонкое цветное кольцо ударной волны, И заливка ВСЕГО экрана тёплым
-       белым (fillRect на весь canvas) поверх — обе они непрозрачные и крупные, сами осколки
-       (1.6-4.6px) рядом с ними физически терялись. Первая правка (два кольца, gold+blue) не
-       помогла — 'lighter' складывает две ЯРКИЕ полупрозрачные краски В ТОЙ ЖЕ точке в светлый,
-       почти белый оттенок (это свойство аддитивного смешения, не баг конкретных чисел). Кольцо
-       теперь ОДНО, приглушённое (пик .28, не .5) — маленький сдержанный акцент под настоящим
-       героем сцены, самими цветными осколками, а не второй источник белого рядом с первым. */
-    if(shockA>0){
-      const cy=plane.y-6, r=(1-shockA)*160;
+    /* 19.09.2026: было `if(!active) return;` здесь — гасило и надпись, и (теперь) вспышку
+       ВМЕСТЕ с салютом/кольцом, хотя у каждой уже своя, отдельная продолжительность жизни
+       (textAge/flashAge). Скрытый риск: как только шарды+кольцо гаснут (active=false, чуть
+       больше секунды), надпись/вспышка обрывались бы посреди своей анимации, если бы их
+       собственный срок ещё не истёк. Теперь `if(active)` оборачивает ТОЛЬКО то, что реально
+       зависит от active (кольцо+шарды) — надпись и вспышка ниже рисуются по своим таймерам,
+       без оглядки на это поле. */
+    if(active){
+      /* 13.09.2026 (владелец, живой замер пикселей канваса: «просил цветной салют, вижу просто
+         белый») — было И тонкое цветное кольцо ударной волны, И заливка ВСЕГО экрана тёплым
+         белым (fillRect на весь canvas) поверх — обе они непрозрачные и крупные, сами осколки
+         (1.6-4.6px) рядом с ними физически терялись. Первая правка (два кольца, gold+blue) не
+         помогла — 'lighter' складывает две ЯРКИЕ полупрозрачные краски В ТОЙ ЖЕ точке в светлый,
+         почти белый оттенок (это свойство аддитивного смешения, не баг конкретных чисел). Кольцо
+         теперь ОДНО, приглушённое (пик .28, не .5) — маленький сдержанный акцент под настоящим
+         героем сцены, самими цветными осколками, а не второй источник белого рядом с первым.
+         19.09.2026, вторым заходом (владелец: «вспышки продаются в магазине, направь туда» —
+         теперь, когда есть настоящая, персональная вспышка (ниже), общий безликий салют — уже
+         не главный герой сцены, а фон под ней): осколков было 26, теперь 12 — вспышка не тонет
+         в конфетти, но «праздник» ещё читается, не голая точка. Число см. у trigger(). */
+      if(shockA>0){
+        const cy=plane.y-6, r=(1-shockA)*160;
+        ctx.save(); ctx.globalCompositeOperation='lighter';
+        ctx.strokeStyle='rgba('+COLS[0]+','+(shockA*.28)+')'; ctx.lineWidth=1.6*shockA+.4;
+        ctx.beginPath(); ctx.arc(plane.x,cy,r,0,6.283); ctx.stroke();
+        ctx.restore();
+      }
       ctx.save(); ctx.globalCompositeOperation='lighter';
-      ctx.strokeStyle='rgba('+COLS[0]+','+(shockA*.28)+')'; ctx.lineWidth=1.6*shockA+.4;
-      ctx.beginPath(); ctx.arc(plane.x,cy,r,0,6.283); ctx.stroke();
+      for(const s of shards){ const a=1-s.age/s.life; if(a<=0) continue;
+        if(s.flake){ ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot);
+          ctx.fillStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.fillRect(-s.size*1.5,-s.size*.6,s.size*3,s.size*1.2); ctx.restore();
+        } else {
+          ctx.strokeStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.lineWidth=s.size*1.1; ctx.lineCap='round';
+          ctx.beginPath(); ctx.moveTo(s.x-s.vx*.4,s.y-s.vy*.4); ctx.lineTo(s.x,s.y); ctx.stroke();
+          ctx.fillStyle='rgba('+s.col+','+Math.min(1,a*1.3).toFixed(2)+')';
+          ctx.beginPath(); ctx.arc(s.x,s.y,s.size*.6,0,6.283); ctx.fill();
+        }
+      }
       ctx.restore();
     }
-    ctx.save(); ctx.globalCompositeOperation='lighter';
-    for(const s of shards){ const a=1-s.age/s.life; if(a<=0) continue;
-      if(s.flake){ ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(s.rot);
-        ctx.fillStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.fillRect(-s.size*1.5,-s.size*.6,s.size*3,s.size*1.2); ctx.restore();
-      } else {
-        ctx.strokeStyle='rgba('+s.col+','+a.toFixed(2)+')'; ctx.lineWidth=s.size*1.1; ctx.lineCap='round';
-        ctx.beginPath(); ctx.moveTo(s.x-s.vx*.4,s.y-s.vy*.4); ctx.lineTo(s.x,s.y); ctx.stroke();
-        ctx.fillStyle='rgba('+s.col+','+Math.min(1,a*1.3).toFixed(2)+')';
-        ctx.beginPath(); ctx.arc(s.x,s.y,s.size*.6,0,6.283); ctx.fill();
+    /* 19.09.2026 «Вспышка на финише» (владелец, явное «да» на макет
+       vspyshka-uvelichenie-19-09-2026.html): та же самая вспышка, что уже на старте —
+       drawFlashBurst (js/render.js), тот же тюнинг-слот S.launchFx, та же ×~1.92 формула
+       (FLASH_SCALE), не второй отдельный эффект. Нет вспышки (S.launchFx=0/'none') — просто
+       не рисуется, конфетти/текст остаются достаточным подтверждением победы сами по себе. */
+    if(flashAge>0 && flashAge<flashDurCur && typeof drawFlashBurst==='function' && typeof S!=='undefined' && S.launchFx && typeof FLASHES_BY_ID!=='undefined'){
+      const fl=FLASHES_BY_ID.get(S.launchFx);
+      if(fl && fl.style!=='none'){
+        const skin=(typeof SKINS_BY_ID!=='undefined'&&typeof S!=='undefined')?(SKINS_BY_ID.get(S.skin)||SKINS[0]):null;
+        if(skin){
+          const base=skin.glow.slice(0,skin.glow.lastIndexOf(',')+1);
+          const col=a=>base+Math.max(0,a).toFixed(2)+')';
+          drawFlashBurst(flashX,flashY,fl.style,flashAge/flashDurCur,col,base);
+        }
       }
     }
-    ctx.restore();
     /* 19.09.2026 «Космо финиш», ВТОРЫМ заходом (владелец, живой скрин: «надпись на общественном
        туалете», «внизу», «не чувствуется как победа»). Первая попытка ошиблась дважды:
        (1) шрифт Exo 2 + мягкое additive-свечение без тёмной обводки — тускло, теряется на любом
