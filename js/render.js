@@ -5813,14 +5813,21 @@ function loop(t){
   if (drawForce || scr!==loopScr){ // принудительный кадр не трогает часы сна; смена экрана на паузу — взводит их
     drawForce=false;
     if (scr!==loopScr){ loopScr=scr; if(scr==='pause') pauseT0=t; }
-    frameTick(t); draw(); menuDrawT=t; return;
+    frameTick(t); draw(); if(typeof cinemaOnFrameDrawn==='function') cinemaOnFrameDrawn(); menuDrawT=t; return;
   }
-  if (scr==='game'){ frameTick(t); draw(); return; }
+  if (scr==='game'){ frameTick(t); draw(); if(typeof cinemaOnFrameDrawn==='function') cinemaOnFrameDrawn(); return; }
   if (scr==='pause'){
-    if (t-menuDrawT>=((t-pauseT0<2000)?33:250)){ frameTick(t); draw(); menuDrawT=t; }
+    if (t-menuDrawT>=((t-pauseT0<2000)?33:250)){ frameTick(t); draw(); if(typeof cinemaOnFrameDrawn==='function') cinemaOnFrameDrawn(); menuDrawT=t; }
     return;
   }
-  if (t-menuDrawT>=33){ frameTick(t); draw(); menuDrawT=t; }
+  if (t-menuDrawT>=33){ frameTick(t); draw(); if(typeof cinemaOnFrameDrawn==='function') cinemaOnFrameDrawn(); menuDrawT=t; }
 }
+/* 19.09.2026 (страж 267 поймал регрессию захвата видео — 2 кадра/300мс в headless-тесте, 0 на
+   реальном подключённом телефоне): захват кадра для «Кино полёта» (js/cinema.js) раньше сам себя
+   планировал отдельным requestAnimationFrame — не тем же тиком, что рисование, браузер мог
+   придержать/пропустить его независимо от главного цикла. cinemaOnFrameDrawn() — вызов дешёвого
+   раннего выхода (запись почти всегда не идёт), звучит здесь, сразу после каждого реального
+   draw(), четыре места разом (полёт/принудительный кадр/пауза/оверлеи ~30fps) — тот самый тик,
+   которого не хватало. Владелец явно разрешил править render.js для этой конкретной задачи. */
 function startLoop(){ if(!rafId){ lastTime=performance.now(); rafId=requestAnimationFrame(loop); } }
 function stopLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId=0; } }

@@ -308,19 +308,22 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
      с циклом, который рисует сам холст (requestAnimationFrame — у angarPvStoryDraw и у главного
      рендер-цикла игры). Два независимых ритма на одном холсте: setInterval мог поймать кадр
      СЕРЕДИНОЙ перерисовки (рваный кадр — «часть терялась») и плыл по времени сам по себе, не по
-     реальному ритму отрисовки браузера (рывки — «не было кинематографичности»). Теперь захват сам
-     себя планирует через requestAnimationFrame — тем же ритмом, что и отрисовка — и ВНУТРИ этого
-     держит целевые ~30 кадров/сек вручную (не каждый paint браузера кладём в видео, только не
-     реже 33мс). Полностью проблему не снимает (это отдельный, независимо запланированный
-     requestAnimationFrame, не тот же самый тик, что у конкретной функции отрисовки — для полного
-     решения нужен захват кадра ИЗ ТОГО ЖЕ тика, что и рисование, это отдельная, более крупная
-     задача на Mediabunny CanvasSource), но убирает рассинхрон таймера — реальный источник рывков. */
-  const rafBox = { id: 0 };
+     реальному ритму отрисовки браузера (рывки — «не было кинематографичности»). Первый фикс того
+     же вечера (свой независимый requestAnimationFrame здесь же) снял рассинхрон таймера, но не был
+     тем же тиком, что рисование — сам код честно предупреждал: «для полного решения нужен захват
+     кадра ИЗ ТОГО ЖЕ тика, что и рисование».
+     19.09.2026 (страж 267 поймал регрессию: 2 кадра за 300мс в headless-тесте; живой замер на
+     подключённом телефоне cf3beda0/CPH2631 через CDP — 0 кадров за 300мс). Настоящий фикс: grab()
+     больше не планирует сам себя — это просто функция, вызываемая СНАРУЖИ, из того же тика, что и
+     реальное рисование (render.js:loop(), сразу после draw(), см. cinemaOnFrameDrawn() ниже).
+     Троттлинг до целевых ~30 кадров/сек остаётся (игровой цикл тикает чаще, особенно на 90/120Гц
+     экранах) — раньше он решал «когда вообще проснуться», теперь — «взять этот тик или пропустить».
+     Отдельного таймера для остановки в cinemaStop() больше не нужно — синхронный вызов, нечего
+     отменять. */
   const grab = () => {
     if (!_cinemaRec) return;
-    rafBox.id = requestAnimationFrame(grab); // планируем следующий тик сразу — сбой ниже не должен остановить запись
     const now = performance.now();
-    if (now - lastGrabAt < frameMs) return; // держим целевую частоту кадров, не каждый paint
+    if (now - lastGrabAt < frameMs) return; // держим целевую частоту кадров, не каждый вызов
     lastGrabAt = now;
     // 30.08.2026 (владелец, экстренно — живое зависание на A03 Core и Oppo): без этой проверки
     // encoder.encode() звался бы независимо от того, успевает ли кодировщик — на слабом
@@ -343,8 +346,7 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
     }catch(e){} // один пропущенный кадр не должен уронить всю запись
     finally{ if (frame) frame.close(); }
   };
-  rafBox.id = requestAnimationFrame(grab);
-  _cinemaRec = { encoder, adapter, ring, ringWindowUs, maxWindowUs, makeMuxer,
+  _cinemaRec = { encoder, adapter, ring, ringWindowUs, maxWindowUs, makeMuxer, grab,
     getDecoderConfig: () => decoderConfig,
     markRecord: () => { // первое пересечение рекорда — единственное, второе не бывает
       if (pinnedUs!=null || !ring) return;
@@ -355,16 +357,20 @@ async function cinemaStart(canvas, ringWindowUs, maxWindowUs, overlayCaption, bi
       snapshotGrowUntil = pinnedUs + CINEMA_SNAPSHOT_SPAN_US;
     },
     getPinnedUs: () => pinnedUs,
-    getSnapshot: () => snapshot,
-    timer: rafBox };
+    getSnapshot: () => snapshot };
   return true;
 }
 function cinemaMarkRecord(){ if (_cinemaRec && _cinemaRec.markRecord) _cinemaRec.markRecord(); } // 30.08.2026: снаружи, без правки ядра — вызывающий код сам решает, когда счёт обогнал рекорд
+/* 19.09.2026: захват кадра для видео больше не планирует себя сам (см. разбор в cinemaStart) —
+   этот вызов должен звучать из того же тика, что и настоящее рисование канваса. Единственный
+   зовущий — render.js:loop(), сразу после каждого реального draw() (все 4 места, где он
+   вызывается: полёт, оверлеи ~30fps, пауза, принудительный кадр). Проверка _cinemaRec пустая
+   почти всегда (запись не идёт) — дешёвый ранний выход, не нагружает обычный кадр игры. */
+function cinemaOnFrameDrawn(){ if (_cinemaRec && _cinemaRec.grab) _cinemaRec.grab(); }
 async function cinemaStop(){
   if (!_cinemaRec) return null;
-  const { encoder, adapter, timer, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
-  cancelAnimationFrame(timer.id); // 18.09.2026: timer теперь {id} от requestAnimationFrame, не число setInterval — см. cinemaStart
-  _cinemaRec = null;
+  const { encoder, adapter, ring, ringWindowUs, maxWindowUs, makeMuxer, getDecoderConfig, getPinnedUs, getSnapshot } = _cinemaRec;
+  _cinemaRec = null; // 19.09.2026: сама эта присвоение — единственное, что нужно для остановки захвата; grab() выше проверяет _cinemaRec первой же строкой, нечего отменять
   try{ await encoder.flush(); }catch(e){} // сбой flush() (нестабильное устройство) не должен пропускать close() ниже
   try{ encoder.close(); }catch(e){} // 30.08.2026: раньше стоял внутри общего try сразу после flush() — сбой flush() пропускал close(), кодировщик (и его нативный ресурс) не освобождался
   try{
