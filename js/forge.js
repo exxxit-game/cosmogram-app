@@ -1506,14 +1506,19 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         // раньше стоявший здесь (см. её комментарий ниже) — цвета просто поменялись местами,
         // новый не придуман.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M12 20 V12.5" stroke="#5ec95e" stroke-width="1.7" stroke-linecap="round" fill="none"></path><ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)" fill="#5ec95e"></ellipse><ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)" fill="#5ec95e"></ellipse></svg>';
+        // 20.09.2026, владелец, измерено (canvas ink-bbox, не на глаз): росток занимал всего
+        // 57×55% площади против 65-85% у соседей — реально мельче, не показалось. scale(1.21)
+        // подгоняет под то же среднее покрытие (~68%), что у уже нормальных значков (♥/➕).
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" style="transform:scale(1.21)"><path d="M12 20 V12.5" stroke="#5ec95e" stroke-width="1.7" stroke-linecap="round" fill="none"></path><ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)" fill="#5ec95e"></ellipse><ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)" fill="#5ec95e"></ellipse></svg>';
       } else if(s==='top'){
         // «Искра» — владелец выбрал эту форму для «Вау», золотая (решил не перекрашивать в
         // розовый — не путать с ♥ рядом, два золотых значка отличаются формой, не цветом).
         // 19.09.2026: та же правка currentColor, что у «new» выше — голый fill="#.." тоже
         // перебивался общим .ic{fill:none}.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path><path d="M19 15.5c.2 1.6.5 2.4 1.1 3 .6.6 1.4.9 3 1.1-1.6.2-2.4.5-3 1.1-.6.6-.9 1.4-1.1 3-.2-1.6-.5-2.4-1.1-3-.6-.6-1.4-.9-3-1.1 1.6-.2 2.4-.5 3-1.1.6-.6.9-1.4 1.1-3z"></path></svg>';
+        // 20.09.2026, владелец, измерено: искра занимала 79×87% площади против 65-85% у
+        // соседей — заметно крупнее (особенно по высоте). scale(.82) подгоняет под среднее ~68%.
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a;transform:scale(.82)" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path><path d="M19 15.5c.2 1.6.5 2.4 1.1 3 .6.6 1.4.9 3 1.1-1.6.2-2.4.5-3 1.1-.6.6-.9 1.4-1.1 3-.2-1.6-.5-2.4-1.1-3-.6-.6-1.4-.9-3-1.1 1.6-.2 2.4-.5 3-1.1.6-.6.9-1.4 1.1-3z"></path></svg>';
       } else if(s==='trending'){
         // Стрелка роста — узнаваема без слова, решено раньше остальных двух в том же макете.
         // 19.09.2026: та же правка currentColor, что у «new»/«top» выше.
@@ -1543,7 +1548,9 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         // нужен цвет»): свой цвет через inline style — тот же приём, что уже у сердца
         // (#ff9fb0) чуть выше, не завязан на .sel. Сиреневый — не занят соседями в этом же
         // ряду (розовый лайк, золотая звезда карточек), «космический» тон, не случайный.
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#b39dff"><use href="#i-dice"></use></svg>';
+        // 20.09.2026, владелец, измерено: кубик занимал всего 45×45% площади — самый мелкий
+        // из всех семи значков ряда (почти вдвое меньше «Вау»). scale(1.51) подгоняет под ~68%.
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#b39dff;transform:scale(1.51)"><use href="#i-dice"></use></svg>';
       }
       b.addEventListener('click', function(){
         if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
