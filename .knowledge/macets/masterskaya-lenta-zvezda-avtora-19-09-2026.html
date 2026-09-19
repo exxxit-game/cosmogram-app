@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:460px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center}
+  h2{font-size:12px;font-weight:600;margin:0 0 8px;color:#c9a45c}
+  /* ---- реальные значения из index.html, не выдуманы ---- */
+  .wRow{position:relative;width:170px;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset}
+  .wBanner{position:relative;height:130px;background:radial-gradient(ellipse at 50% 30%,#1b2a4a 0%,#0b1626 80%)}
+  .wBanner:after{content:"";position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 60% 60%,#fff,transparent),radial-gradient(1px 1px at 80% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 40% 80%,#fff,transparent);opacity:.55}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wName{position:absolute;left:10px;bottom:8px;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .wBody{padding:10px 12px 12px}
+  .wChips{display:flex;gap:6px}
+  .chip{width:20px;height:20px;border-radius:50%;background:rgba(14,18,32,.7);border:1px solid rgba(201,164,92,.35)}
+  /* ---- лента: диагональ левый верхний угол, тот же золотой язык, что у .wPickStar.active (#dba93c) ---- */
+  .ribbonWrap{position:absolute;top:0;left:0;width:76px;height:76px;overflow:hidden;pointer-events:none;z-index:3}
+  .ribbon{position:absolute;width:120px;top:16px;left:-32px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);
+    box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:3px 0;text-align:center}
+  .ribbon span{display:block;font-size:8.5px;font-weight:800;letter-spacing:.02em;color:#2c1f08;line-height:1.25;text-transform:uppercase}
+  .note{font-size:10px;color:#6b7394;margin-top:8px;max-width:170px}
+</style></head>
+<body>
+<h1>Мастерская — лента «Звезда автора» вместо мелкой звезды</h1>
+<p class="sub">Звезда-переключатель остаётся только владельцу (клик, чтобы отметить). Обычный игрок
+  вместо неё видит угловую ленту — тот же золотой язык, что у активной звезды (#dba93c). Три варианта
+  ниже: русский, английский, и самый длинный перевод (французский) — чтобы лента гарантированно не
+  переполнилась ни на одном языке.</p>
+<div class="row">
+  <div class="col">
+    <h2>RU — «Звезда автора» (13 симв.)</h2>
+    <div class="wRow">
+      <div class="ribbonWrap"><div class="ribbon"><span>Звезда<br>автора</span></div></div>
+      <div class="wBanner"><div class="wScrim"></div><div class="wName">Разминка</div></div>
+      <div class="wBody"><div class="wChips"><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div></div></div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>EN — «Author's star» (13 симв.)</h2>
+    <div class="wRow">
+      <div class="ribbonWrap"><div class="ribbon"><span>Author's<br>star</span></div></div>
+      <div class="wBanner"><div class="wScrim"></div><div class="wName">Warm-up</div></div>
+      <div class="wBody"><div class="wChips"><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div></div></div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>FR — самый длинный (18 симв.)</h2>
+    <div class="wRow">
+      <div class="ribbonWrap"><div class="ribbon"><span>Étoile de<br>l'auteur</span></div></div>
+      <div class="wBanner"><div class="wScrim"></div><div class="wName">Échauffement</div></div>
+      <div class="wBody"><div class="wChips"><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div></div></div>
+    </div>
+    <div class="note">Даже самый длинный вариант помещается в две строки без переноса на третью.</div>
+  </div>
+</div>
+</body></html>
