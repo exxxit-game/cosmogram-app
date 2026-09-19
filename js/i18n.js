@@ -264,6 +264,7 @@ const I18N = {
     hangarBuy:'Купить', hangarWear:'Надеть', hangarWorn:'Надет', hangarUnwear:'Снять', walletYours:'Ваши звёзды',
     premiumTgOnly:'Покупка за Stars доступна только в Telegram', // 04.09.2026 «Эксклюзивные скины за Stars»
     brandSub:'Одно небо для всех',   // 13.08.2026: обещание игры на главном экране
+    finishText:'КОСМО ФИНИШ', // 19.09.2026 «Космо финиш», владелец — короткая надпись в момент победы (js/finish.js)
     calibrated:'Гироскоп откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
     gyroLostMsg:'Гироскоп молчит', // 18.09.2026: короткое сообщение под HUD при потере сигнала в полёте (макет, владелец «делай»)
@@ -497,6 +498,7 @@ const I18N = {
     hangarBuy:'Buy', hangarWear:'Equip', hangarWorn:'Equipped', hangarUnwear:'Unequip', walletYours:'Your stars',
     premiumTgOnly:'Star purchases are available in Telegram only',
     brandSub:'One sky for everyone',
+    finishText:'COSMO FINISH',
     calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
     gyroLostMsg:'Gyroscope silent',
@@ -709,6 +711,7 @@ const I18N = {
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', hangarUnwear:'Quitar', walletYours:'Tus estrellas',
     premiumTgOnly:'La compra con Stars solo está disponible en Telegram',
     brandSub:'Un cielo para todos', // v1.282.15: значок валюты вернулся — цена без него читалась как голое число
+    finishText:'COSMO META',
     calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
@@ -940,6 +943,7 @@ const I18N = {
     hangarBuy:'Comprar', hangarWear:'Equipar', hangarWorn:'Equipado', hangarUnwear:'Retirar', walletYours:'Suas estrelas',
     premiumTgOnly:'Compra com Stars disponível apenas no Telegram',
     brandSub:'Um céu para todos', // v1.282.15: значок валюты вернулся
+    finishText:'COSMO CHEGADA',
     calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
@@ -1172,6 +1176,7 @@ const I18N = {
     hangarBuy:'Acheter', hangarWear:'\u00c9quiper', hangarWorn:'\u00c9quip\u00e9', hangarUnwear:'Retirer', walletYours:'Tes \u00e9toiles',
     premiumTgOnly:'Achat en Stars disponible uniquement sur Telegram',
     brandSub:'Un ciel pour tous',
+    finishText:'COSMO ARRIVÉE',
     calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
     gyroLostMsg:'Gyroscope silencieux',

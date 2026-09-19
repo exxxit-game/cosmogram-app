@@ -21,9 +21,10 @@
 const FINISH=(()=>{
   const LEAD_M=300; // 13.09.2026, владелец: за сколько метров до финиша арка входит в поле зрения
   const COLS=['255,215,106','168,200,255','255,159,176','143,255,159']; // 04.09.2026 confetti() — тот же набор 4 цветов, что уже победа/рекорд
-  let remain=null, active=false, shockA=0, shards=[];
+  let remain=null, active=false, shockA=0, shards=[], textAge=0;
+  const TEXT_LIFE=1.1; // 19.09.2026 «Космо финиш»: чуть дольше самого занавеса (.9с), чтобы надпись не срезало сменой экрана
 
-  function reset(){ remain=null; active=false; shockA=0; shards=[]; } // зовёт startGame: новый взлёт — чистый лист
+  function reset(){ remain=null; active=false; shockA=0; shards=[]; textAge=0; } // зовёт startGame: новый взлёт — чистый лист
   function setRemain(m){ if(!active) remain=(m==null)?null:Math.max(0,m); }
 
   function farY(){ return fieldT()+fieldH()*.16; } // высоко над рабочей зоной корабля — «далеко впереди»
@@ -34,7 +35,7 @@ const FINISH=(()=>{
   }
 
   function trigger(){ // вместо startDying() в момент победы — арка (если была) разлетается на месте корабля
-    active=true; shockA=1; shards=[];
+    active=true; shockA=1; shards=[]; textAge=0.0001; // 19.09.2026 «Космо финиш»: >0, не 0 — tick() ниже проверяет textAge>0, чтобы новый reset() (0) сразу гасил старую надпись
     const prox=1, cx=plane.x, cy=plane.y-6, N=26;
     for(let i=0;i<N;i++){
       const u=i/(N-1), p=remain!=null? gateArcPoint(u,prox) : {x:cx+(Math.random()-.5)*40,y:cy+(Math.random()-.5)*14};
@@ -47,6 +48,7 @@ const FINISH=(()=>{
   }
 
   function tick(dt){
+    if(textAge>0) textAge=Math.min(TEXT_LIFE, textAge+dt); // 19.09.2026 «Космо финиш»: своя жизнь, не завязана на active/shards — переживает их угасание
     if(!active) return;
     for(let i=shards.length-1;i>=0;i--){ const s=shards[i]; s.age+=dt;
       if(s.age>s.life){ shards.splice(i,1); continue; }
@@ -98,10 +100,33 @@ const FINISH=(()=>{
       }
     }
     ctx.restore();
+    /* 19.09.2026 «Космо финиш» (владелец, живая жалоба «чувство будто врезался» — на самом деле
+       корень уже починен 13.09.2026 арка/крен/дым; настоящая находка — момент победы был
+       ПОЛНОСТЬЮ немым, ни звука, ни вибро, salut тихий сам по себе — тишина в кульминации
+       читается как «что-то не так», не как «я выиграл»). Короткая надпись поверх салюта —
+       быстрый рост (0-0.18с, лёгкий перехлёст) → пауза → угасание в последние 0.3с, живёт
+       чуть дольше самого занавеса (TEXT_LIFE=1.1с против .9с dyingT), чтобы не срезалась
+       сменой экрана на полуслове. */
+    if(textAge>0 && textAge<TEXT_LIFE){
+      const grow=Math.min(1,textAge/.18), fadeOut=textAge>TEXT_LIFE-.3 ? Math.max(0,(TEXT_LIFE-textAge)/.3) : 1;
+      const scale=grow<1 ? .7+.36*grow-.06*Math.sin(grow*Math.PI) : 1; // лёгкий перехлёст на подходе, без пружины на глаз
+      const a=Math.min(1,grow*1.4)*fadeOut;
+      if(a>0.01){
+        const txt=(typeof L!=='undefined' && L.finishText) || 'КОСМО ФИНИШ';
+        ctx.save(); ctx.globalCompositeOperation='lighter';
+        ctx.translate(plane.x, plane.y-46); ctx.scale(scale,scale);
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.font='800 22px "Exo 2",-apple-system,"Segoe UI",Roboto,sans-serif';
+        ctx.shadowColor='rgba(255,215,106,'+(.8*a)+')'; ctx.shadowBlur=14;
+        ctx.fillStyle='rgba(255,236,180,'+a+')';
+        ctx.fillText(txt,0,0);
+        ctx.restore();
+      }
+    }
   }
 
   return { reset, setRemain, trigger, tick, draw,
-    _state:()=>({active,remain,shardsN:shards.length,shockA}),
+    _state:()=>({active,remain,shardsN:shards.length,shockA,textAge}),
     _poke:(m)=>{ remain=m; } }; // страж: задать remain напрямую, без честного расстояния из S.dist
 })();
 const finishReset=()=>FINISH.reset();
