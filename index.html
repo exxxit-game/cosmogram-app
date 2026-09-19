@@ -273,7 +273,12 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   justify-content:center; z-index:10; pointer-events:none; }
 /* читаемость экранов поверх живого фона: затемнение без blur (дорого на слабых).
    v1.34.0 «Единая палуба»: все окна — одна вуаль неба, как у оффера гироскопа в полёте */
-#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #diagScreen, #cardScreen, #feedbackScreen {
+/* 19.09.2026 (владелец, живой скрин + разбор RESEARCH-2026-09-EKRANY-EDINOOBRAZIE-KARTOCHEK.md):
+   #equalityScreen (Хартия, 15.09.2026) и #gratitudeScreen (Спасибо, 15-18.09.2026) родились
+   ПОСЛЕ этого правила («v1.34.0 Единая палуба») и никогда не попадали в список — правило само
+   говорит «все окна — одна вуаль неба», не «кроме двух новых». Не додумано заново, тот же
+   rgba, что и у остальных семи. */
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #diagScreen, #cardScreen, #feedbackScreen, #equalityScreen, #gratitudeScreen {
   background:rgba(6,10,24,.45); }
 /* 15.09.2026 «Стиль А» (владелец, макет stil-igry-glavny-ekran-3-varianta-15-09-2026.html,
    вариант A «Глубокий космос + золото + вихрь», одобрено на реальном телефоне): золотой
@@ -1511,9 +1516,20 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    .grSkyWrap больше не рисует свои border/radius/margin — их несёт .grUnified снаружи. */
 /* 18.09.2026 (владелец, живой скрин с разметкой — «блок касается краёв экрана, ни у одного
    другого экрана такого нет»): боковой отступ 16px — то же число, что и у карточек Мастерской
-   (#forgeTabPlay{padding:0 16px}), измерено вживую, не придумано. */
-.grUnified{border-radius:var(--r-card);border:1px solid var(--stone-border);overflow:hidden;
-  background:var(--stone-fill);margin:0 16px 14px}
+   (#forgeTabPlay{padding:0 16px}), измерено вживую, не придумано.
+   19.09.2026 (владелец, разбор через RESEARCH-2026-09-EKRANY-EDINOOBRAZIE-KARTOCHEK.md):
+   .grUnified — единственный экран, который не попал в проход 16.09.2026 («Небесный прибор»,
+   владелец: «применяй ко всем меню»), сводивший Настройки/Хартию/Достижения/Диагностику/
+   Поддержку к одному .setPanel — родился двумя днями позже, отдельной задачей, никто не
+   сверил. Формула ширины и цвет фона/рамки теперь те же, что у .setPanel (5 экранов, не
+   выдумано заново): min(92%,380px) на узком телефоне даёт ~15-17px с каждой стороны — тот
+   же боковой отступ 16px, что уже был здесь, просто с потолком 380px на широких экранах,
+   которого раньше не было. rgba(14,18,32,.62)/rgba(201,164,92,.3) — не через общие токены
+   --stone-fill/--stone-border (те держат ещё 13+ других элементов игры, трогать их шире
+   не просили и это другая, более крупная задача), а тем же приёмом, что .setPanel — на
+   этой конкретной карточке напрямую. */
+.grUnified{width:min(92%,380px);margin:2px auto 12px;border-radius:var(--r-card);
+  border:1px solid rgba(201,164,92,.3);overflow:hidden;background:rgba(14,18,32,.62)}
 /* 18.09.2026: высота неба выросла на реально освободившееся место — измерено вживую в два
    захода: удаление обоих отдельных ярлыков (293.55px → 256.35px высоты карточки, +37.2px),
    затем сокращение textarea с rows=3 на rows=2 под более короткий плейсхолдер (256.35px →
