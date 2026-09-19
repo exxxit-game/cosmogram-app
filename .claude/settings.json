@@ -41,7 +41,8 @@
           { "type": "command", "command": ".claude/hooks/version-guard.sh" },
           { "type": "command", "command": ".claude/hooks/no-double-background.sh" },
           { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" },
-          { "type": "command", "command": ".claude/hooks/no-secrets-in-commit.sh" }
+          { "type": "command", "command": ".claude/hooks/no-secrets-in-commit.sh" },
+          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" }
         ]
       },
       {
