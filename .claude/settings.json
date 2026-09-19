@@ -58,6 +58,14 @@
           { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" }
+        ]
+      }
     ]
   }
 }
