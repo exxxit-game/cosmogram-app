@@ -69,6 +69,14 @@
           { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=warn node .claude/hooks/claim-check-hook.mjs" }
+        ]
+      }
     ]
   }
 }
