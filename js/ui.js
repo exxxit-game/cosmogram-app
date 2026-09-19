@@ -1989,7 +1989,10 @@ const ANGAR_PV_FIT_VERT={62:0.55};
    Общий Havail*0.12 (angarPvZoomDraw) не трогаем — тот сдвигает ВСЕ узоры разом, владелец
    поймал, что это ломает центровку мелких/симметричных (Пульсар-маяк). Здесь — точечно,
    только тем трём, кому реально не хватает, добавочным слагаемым к тому же translate. */
-const ANGAR_PV_ZOOM_EXTRA_DROP={59:28, 64:28, 65:28};
+/* 19.09.2026, владелец напрямую: убрать добавленный сегодня же сдвиг вниз у id=65 (Flocculent) —
+   мешает, не просил. Убран полностью, не подобран заново — 59/64 не трогаю, жалоба была
+   конкретно про 65. */
+const ANGAR_PV_ZOOM_EXTRA_DROP={59:28, 64:28};
 const ANGAR_PV_FIT_TRAIL={15:0.467,16:0.467};
 let angarPvZoomRaf=0, angarPvZoomCat=null, angarPvZoomItem=null;
 function angarPvZoomDraw(t){
