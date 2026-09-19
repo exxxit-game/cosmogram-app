@@ -1549,8 +1549,12 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         // (#ff9fb0) чуть выше, не завязан на .sel. Сиреневый — не занят соседями в этом же
         // ряду (розовый лайк, золотая звезда карточек), «космический» тон, не случайный.
         // 20.09.2026, владелец, измерено: кубик занимал всего 45×45% площади — самый мелкий
-        // из всех семи значков ряда (почти вдвое меньше «Вау»). scale(1.51) подгоняет под ~68%.
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#b39dff;transform:scale(1.51)"><use href="#i-dice"></use></svg>';
+        // из всех семи значков ряда (почти вдвое меньше «Вау»). 20.09.2026, владелец, живой
+        // скрин: 1.51 оказался перебором — «сюрприз теперь самый огромный». Сплошная квадратная
+        // рамка кубика «весит» на глаз больше, чем тонкий контур сердца/плюса при том же %
+        // площади bbox — метрика площади не учитывала форму. Сбавлено до 1.15, проверено
+        // крупным кропом рядом с соседями (не общим беглым скриншотом, как в первый раз).
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#b39dff;transform:scale(1.15)"><use href="#i-dice"></use></svg>';
       }
       b.addEventListener('click', function(){
         if(s==='fav'){ workshopSortMode='top'; workshopLikedOnly=true; } // 12.09.2026: было спрятано за повторным тапом по «Лайки» — теперь настоящий отдельный чип, один тап
