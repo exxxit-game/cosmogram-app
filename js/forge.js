@@ -24,12 +24,23 @@ const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']
 const FORGE_RESET_ICON='<svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg>'; // 12.09.2026: круглый значок-корзина у forgeResetBtn в покое (index.html .ptCornerBtn), текст только в состоянии «Точно?»
 // 20.09.2026, лента .wAuthorRibbon (index.html) — долгий вечер поисков (текст → «Космо-звезда»
 // → 5 звёзд-рейтинга → созвездие, дважды поправленное геометрически → отказ от идеи вовсе).
-// ФИНАЛ: два моргающих «глаза» с бровками — CSS-анимация (@keyframes wRibbonBlink в index.html),
-// не картинка. Живой макет masterskaya-lenta-morgayuschie-glaza-20-09-2026.html, вариант «Б»,
-// явное «Б, делай». Разметка — простые div'ы (глаза/бровки), не SVG; стили/анимация — в CSS.
+// Два моргающих «глаза» с бровками — CSS-анимация, не картинка. Разметка — простые div'ы.
+// eyeL/eyeR — нужны характеру «Волна» (моргают по очереди, не синхронно), остальные
+// характеры целятся в общий класс .eye и не различают лево/право.
 const WORKSHOP_RIBBON_EYES=
   '<div class="browRow"><div class="brow"></div><div class="brow"></div></div>'+
-  '<div class="eye"></div><div class="eye"></div>';
+  '<div class="eye eyeL"></div><div class="eye eyeR"></div>';
+// «Семья характеров» (владелец: «у всех будет по-разному... намного больше жизни») — 4 личных
+// топ-пика владельца из 11 предложенных (масштаб проверен: masterskaya-lenta-bolshoy-nabor-
+// harakterov-20-09-2026.html), закреплены ДЕТЕРМИНИРОВАННО за кодом трассы, не рандом на
+// каждый показ — тот же код всегда даёт тот же характер. Простой хэш (djb2-подобный), не
+// криптографический — детерминизм важнее равномерности распределения.
+const WORKSHOP_RIBBON_CHARS=['char-bouncy','char-sparkle','char-wave','char-droopy'];
+function workshopRibbonCharClass(code){
+  let h=5381;
+  for(let i=0;i<code.length;i++){ h=((h<<5)+h+code.charCodeAt(i))|0; }
+  return WORKSHOP_RIBBON_CHARS[Math.abs(h)%WORKSHOP_RIBBON_CHARS.length];
+}
 const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
@@ -1641,7 +1652,8 @@ function workshopRenderList(){
       // переключателем ниже) — видимость решает forEach ниже (t.featured && !isOwner).
       // 20.09.2026: текст на ленте заменён на моргающие глаза (владелец решил в разговоре,
       // см. комментарий у WORKSHOP_RIBBON_EYES выше) — L.workshopAuthorRibbon больше не читается здесь.
-      '<div class="wAuthorRibbon hidden"><span>'+WORKSHOP_RIBBON_EYES+'</span></div>'+
+      // Характер — детерминированно по t.code (workshopRibbonCharClass), не рандом на показ.
+      '<div class="wAuthorRibbon hidden '+workshopRibbonCharClass(t.code)+'"><span>'+WORKSHOP_RIBBON_EYES+'</span></div>'+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
       // главного экрана» + «подсказка будет только на Разминке, один раз нажали, проверили,
