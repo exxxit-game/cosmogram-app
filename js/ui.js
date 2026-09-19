@@ -445,13 +445,16 @@ function speedrunCardFill(){
   }
   // 15.09.2026 (владелец: «в спидран будут иконки» — SSG=цель/фикс, RSG=shuffle/случайное) →
   // 17.09.2026 (владелец, живой макет speedrun-ikonki-ssg-rsg-17-09-2026.html, «Да, делай»):
-  // #i-target/#i-shuffle не читались как пара ОДНОГО режима (мишень и shuffle — из разных
-  // смысловых семейств) — свои i-repeat/i-zigzag, нарисованы и проверены в макете (10 вариантов
-  // сразу, живой размер кнопки 19px, владелец выбрал 3+6). title несёт подпись — SSG/RSG
-  // остаются доступны на подсказке/скринридеру, просто не печатаются буквами на самой пилюле.
+  // #i-target/#i-shuffle не читались как пара — мишень (i-target) была из другого смыслового
+  // семейства, не сам shuffle. Свой i-repeat вместо мишени тогда прижился. →
+  // 19.09.2026 (владелец, прямое слово): RSG вернулась к исходному замыслу 15.09 — #i-shuffle
+  // (те же скрещенные стрелки), i-repeat у SSG остаётся — пара «повтор/перемешать», тот же
+  // язык, что у любого плеера. #i-shuffle освобождён от «Перемешать» в Партитуре (см. #i-help,
+  // ptRandomSkyBtn ниже) — больше не конфликтует. title несёт подпись — SSG/RSG остаются
+  // доступны на подсказке/скринридеру, просто не печатаются буквами на самой пилюле.
   seg.children[0].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-repeat"></use></svg>';
   seg.children[0].title=L.speedrunSSG; seg.children[0].classList.toggle('sel', !rsg);
-  seg.children[1].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-zigzag"></use></svg>';
+  seg.children[1].innerHTML='<svg class="ic" style="width:12px;height:12px" aria-hidden="true"><use href="#i-shuffle"></use></svg>';
   seg.children[1].title=L.speedrunRSG; seg.children[1].classList.toggle('sel', rsg);
 }
 /* 15.09.2026: заменяет modesFill() — экран «Турниры» удалён, те же 7 подписей теперь льются
