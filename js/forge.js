@@ -1289,7 +1289,10 @@ let workshopSortMode='new';
 // заход) перенесено на сервер (forge_workshop.featured, действие moderate), звезда теперь
 // настоящая кнопка в самой карточке, видимая владельцу всегда, остальным — только на
 // реально помеченных треках.
-const WORKSHOP_SORTS=['new','top','trending','fav','random']; // 13.09.2026: «Сюрприз» вернулся в общий ряд пятым чипом (владелец, прямая правка) — был вынесен 12.09.2026 отдельной кнопкой из-за подписи, которая не влезала; теперь идёт значком без подписи, тем же приёмом, что уже есть у 'fav' ниже — вернулось меньше места, чем занимала отдельная кнопка снаружи ряда. «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
+const WORKSHOP_SORTS=['new','top','trending','fav','random','mine']; // 13.09.2026: «Сюрприз» вернулся в общий ряд пятым чипом (владелец, прямая правка) — был вынесен 12.09.2026 отдельной кнопкой из-за подписи, которая не влезала; теперь идёт значком без подписи, тем же приёмом, что уже есть у 'fav' ниже — вернулось меньше места, чем занимала отдельная кнопка снаружи ряда. «Плюс» — sort, реально отправляемый на сервер для чипа 'fav' — тот же 'top', просто с workshopLikedOnly=true, см. клик ниже
+// 19.09.2026 «Мои небеса» (владелец, макет konstruktor-sozdat-svoe-nebo-19-09-2026.html, явное
+// «да»): 6-й чип — ставит workshopSortMode='mine', та ветка уже существовала в
+// workshopRenderList() (12.09.2026, ждала именно этой кнопки), просто нажимать было негде.
 let workshopLikedOnly=false;
 function workshopFillLabels(){ // тот же приём, что forgeFill() выше — вызывается из applyLang (ui.js)
   if(typeof L==='undefined'||!L.workshopEmpty) return;
@@ -1312,22 +1315,20 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
         // 18.09.2026 (макет konstruktor-znachki-filtrov-18-09-2026.html, владелец «Делай»):
         // «Новые»/«Вау»/«Растёт» были единственными тремя чипами со словом в этом ряду —
         // слово не влезало вместе с остальными icon-only соседями (♥/🎲) без переноса на
-        // телефоне (живой скрин). Плюс — тематически «новое», простая узнаваемая форма.
+        // телефоне (живой скрин).
         // 19.09.2026 (владелец, живой скрин: «цвет не появился»): голый атрибут stroke="#.."
         // перебивался общим .forgeChip .ic{stroke:currentColor} — тот же класс ошибки, что
         // уже поймали 13.09.2026 у ♥ (см. её комментарий ниже). currentColor+inline style —
         // тот же рабочий приём, не выдумано заново.
-        // 19.09.2026, тем же вечером (владелец: «плюсик не нравится, поставь колокольчик»):
-        // «+» → колокольчик, готовая форма (Heroicons «bell», solid), не нарисована на глаз —
-        // тот же принцип, что уже применялся сегодня к другим иконкам. Свой голубой — не занят
-        // соседями в этом ряду (золото/золото/зелёный/розовый/сиреневый).
-        // 19.09.2026, ещё позже (владелец: «колокольчик большой и пустой внутри»): заменён
-        // stroke-контур на ЗАЛИТУЮ форму (та же логика, что у ♥/✨ рядом — заливка, не контур).
-        // Залитый контур сам по себе занимал 18.1×19.5 из 24×24 — заметно больше соседей
-        // (♥ 16×15.2, ✨ 16.4×16.4) — измерено getBoundingClientRect(), не на глаз. Масштаб
-        // 0.84 от центра даёт 15.2×16.4 — совпадает с соседями по размеру.
+        // 19.09.2026, восьмым заходом (владелец, макет konstruktor-sozdat-svoe-nebo-19-09-2026.html,
+        // явное «да»): колокольчик «слишком заметный, привлекает внимание» — заменён на росток
+        // (два листка на стебле, владелец сам предложил «фреш/свежее», уточнено до ростка,
+        // не одиночного листа, чтобы не читалось как «эко» само по себе). Цвет — зелёный
+        // (#5ec95e), тот же, что раньше был у «Растёт» — тот в это же время забрал синий,
+        // раньше стоявший здесь (см. её комментарий ниже) — цвета просто поменялись местами,
+        // новый не придуман.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#6cc3ff"><g transform="translate(12,12) scale(.84) translate(-12,-12)"><path fill-rule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z" clip-rule="evenodd"></path></g></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M12 20 V12.5" stroke="#5ec95e" stroke-width="1.7" stroke-linecap="round" fill="none"></path><ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)" fill="#5ec95e"></ellipse><ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)" fill="#5ec95e"></ellipse></svg>';
       } else if(s==='top'){
         // «Искра» — владелец выбрал эту форму для «Вау», золотая (решил не перекрашивать в
         // розовый — не путать с ♥ рядом, два золотых значка отличаются формой, не цветом).
@@ -1338,8 +1339,20 @@ function workshopFillLabels(){ // тот же приём, что forgeFill() в�
       } else if(s==='trending'){
         // Стрелка роста — узнаваема без слова, решено раньше остальных двух в том же макете.
         // 19.09.2026: та же правка currentColor, что у «new»/«top» выше.
+        // 19.09.2026, восьмым заходом (владелец): цвет отдан ростку (см. «new» выше) — забрала
+        // взамен свободный синий (#6cc3ff, раньше был у колокольчика). Направление стрелки
+        // (вправо-вверх) НЕ менялось — пробовал развернуть влево по просьбе, владелец тут же
+        // поправил «визуально не то», вернул как было.
         b.classList.add('iconOnly');
-        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>';
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:#6cc3ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg>';
+      } else if(s==='mine'){
+        // 19.09.2026 «Мои небеса» (владелец, макет konstruktor-sozdat-svoe-nebo-19-09-2026.html,
+        // явное «да»): плюсик — владелец сам выбрал эту форму («вот здесь плюсик будет
+        // идеально»), после того как забраковал придуманный «планета+звезда». Коралловый —
+        // не занят соседями в этом ряду. Размер — измерен getBoundingClientRect() против
+        // остальных пяти значков (владелец: «плюсик уже больше, чем всё остальное»), не на глаз.
+        b.classList.add('iconOnly');
+        b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:#ff8a5c" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>';
       } else if(s==='fav'){
         b.classList.add('iconOnly');
         b.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg>';
@@ -1426,6 +1439,17 @@ function workshopRenderList(){
           if(cta) cta.addEventListener('click', function(){
             workshopSortMode='top'; workshopLikedOnly=false;
             workshopFillLabels(); workshopRenderList(); sfx.click(); haptic('light');
+          });
+        } else if(workshopSortMode==='mine'){
+          // 19.09.2026 «Создай своё первое небо» (владелец, макет
+          // konstruktor-sozdat-svoe-nebo-19-09-2026.html, явное «да»): та же дверь, что уже
+          // была у пустого «Избранное» выше (реальная кнопка вместо тупика), только ведёт на
+          // вкладку «Создать» — тот же forgeTabSet('create'), что у кнопки вверху экрана.
+          emptyEl.innerHTML=(L.workshopEmptyMine||'у тебя ещё нет своих небес')+
+            '<br><button class="btn ghost" id="workshopMineEmptyCTA" style="margin-top:10px">'+(L.workshopMineEmptyCTA||'Создать')+'</button>';
+          const mineCta=$('workshopMineEmptyCTA');
+          if(mineCta) mineCta.addEventListener('click', function(){
+            sfx.click(); haptic('light'); forgeTabSet('create');
           });
         } else if(L.workshopEmpty) emptyEl.textContent=L.workshopEmpty;
       }

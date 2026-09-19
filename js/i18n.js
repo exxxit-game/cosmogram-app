@@ -109,6 +109,7 @@ const I18N = {
     workshopEmpty:'пока пусто — поделись своим небом, и оно появится здесь',
     workshopEmptyFav:'пока пусто — сохрани понравившееся небо, и оно появится здесь', // 12.09.2026: отдельная фраза от workshopEmpty — «поделись своим» тут не при чём, это твои лайки, не твои публикации
     workshopFavEmptyCTA:'Смотреть Топ',
+    workshopEmptyMine:'у тебя ещё нет своих небес — собери своё первое в Конструкторе', workshopMineEmptyCTA:'Создать', // 19.09.2026: значок «Мои небеса», макет konstruktor-sozdat-svoe-nebo-19-09-2026.html
     workshopPickTitle:'Отмечено автором игры',
     workshopSignInFirst:'войди через Telegram, чтобы увидеть свои небеса',
     workshopSort_new:'Новые', workshopSort_top:'Вау', workshopSort_fav:'Избранное', workshopSort_mine:'Мои', workshopSort_random:'Сюрприз', workshopSort_trending:'Растёт', // 16.09.2026, владелец: «Топ»→«Вау»
@@ -393,6 +394,7 @@ const I18N = {
     forgePublished:'Published in the Gallery',
     workshopTitle:'Gallery', workshopEmpty:'still empty — share your sky and it will show up here',
     workshopEmptyFav:'still empty — like a sky you enjoy and it will show up here', workshopFavEmptyCTA:'Browse Top',
+    workshopEmptyMine:"you don't have any skies yet — build your first one in the Constructor", workshopMineEmptyCTA:'Create',
     workshopPickTitle:"Picked by the game's author", workshopSignInFirst:'sign in via Telegram to see your skies',
     workshopSort_new:'New', workshopSort_top:'Wow', workshopSort_fav:'Favorites', workshopSort_mine:'Mine', workshopSort_random:'Surprise', workshopSort_trending:'Trending',
     workshopFeatured:'Marked with a gold star', workshopUnfeatured:'Mark removed',
@@ -608,6 +610,7 @@ const I18N = {
     forgePublished:'Publicado en la Galería',
     workshopTitle:'Galería', workshopEmpty:'aún vacío — comparte tu cielo y aparecerá aquí',
     workshopEmptyFav:'aún vacío — dale me gusta a un cielo que te guste y aparecerá aquí', workshopFavEmptyCTA:'Ver Top',
+    workshopEmptyMine:'todavía no tienes tus propios cielos — crea el primero en el Constructor', workshopMineEmptyCTA:'Crear',
     workshopPickTitle:'Elegido por el autor del juego', workshopSignInFirst:'inicia sesión con Telegram para ver tus cielos',
     workshopSort_new:'Nuevos', workshopSort_top:'Guau', workshopSort_fav:'Favoritos', workshopSort_mine:'Míos', workshopSort_random:'Sorpresa', workshopSort_trending:'Tendencia',
     workshopFeatured:'Marcado con estrella dorada', workshopUnfeatured:'Marca quitada',
@@ -838,6 +841,7 @@ const I18N = {
     forgePublished:'Publicado na Galeria',
     workshopTitle:'Galeria', workshopEmpty:'ainda vazio — partilha o teu céu e ele aparece aqui',
     workshopEmptyFav:'ainda vazio — gosta de um céu e ele aparece aqui', workshopFavEmptyCTA:'Ver Top',
+    workshopEmptyMine:'ainda não tens os teus próprios céus — cria o primeiro no Construtor', workshopMineEmptyCTA:'Criar',
     workshopPickTitle:'Escolhido pelo autor do jogo', workshopSignInFirst:'inicia sessão com o Telegram para veres os teus céus',
     workshopSort_new:'Novos', workshopSort_top:'Uau', workshopSort_fav:'Favoritos', workshopSort_mine:'Meus', workshopSort_random:'Surpresa', workshopSort_trending:'Em alta',
     workshopFeatured:'Marcado com estrela dourada', workshopUnfeatured:'Marca removida',
@@ -1065,6 +1069,7 @@ const I18N = {
     forgePublished:'Publié dans la Galerie',
     workshopTitle:'Galerie', workshopEmpty:'encore vide — partage ton ciel et il apparaîtra ici',
     workshopEmptyFav:'encore vide — aime un ciel et il apparaîtra ici', workshopFavEmptyCTA:'Voir le Top',
+    workshopEmptyMine:"tu n'as pas encore de ciel à toi — crée le premier dans le Constructeur", workshopMineEmptyCTA:'Créer',
     workshopPickTitle:"Choisi par l'auteur du jeu", workshopSignInFirst:'connecte-toi via Telegram pour voir tes ciels',
     workshopSort_new:'Nouveaux', workshopSort_top:'Waouh', workshopSort_fav:'Favoris', workshopSort_mine:'Les miens', workshopSort_random:'Surprise', workshopSort_trending:'Tendance',
     workshopFeatured:"Marqué d'une étoile dorée", workshopUnfeatured:'Marque retirée',
