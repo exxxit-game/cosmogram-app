@@ -749,9 +749,17 @@ const WORKSHOP_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmog
 function workshopPost(payload){
   return syncFetch(WORKSHOP_URL,payload).catch(()=>null);
 }
-function workshopList(sort){ // sort: 'new'|'top'|'plays'|'mine' — витрина публична, 'mine' одна требует личность
+function workshopList(sort){ // sort: 'new'|'top'|'plays'|'mine' — витрина публична, гостю можно любую (кроме 'mine')
   if(sort==='mine' && !syncAvailable()) return Promise.resolve(null);
-  const body = sort==='mine' ? Object.assign({action:'list', sort:sort}, syncAuth()) : {action:'list', sort:sort};
+  /* 19.09.2026 (владелец, живой замер на реальном телефоне: звезда «Выбор автора» кликабельна
+     только на одной карточке из восьми): найдено — личность (syncAuth(), initData/tgAuth)
+     отправлялась ТОЛЬКО при sort==='mine'. Сервер (cosmogram-workshop/index.ts) же честно
+     пытается опознать личность на ЛЮБОМ сорте — «чтобы владелец увидел скрытые трассы прямо
+     в обычной витрине» (комментарий там же) — и возвращает isOwner для каждого сорта. Гостю
+     по-прежнему можно смотреть без входа (syncAuth() отдаёт null/undefined полей, если входа
+     нет — Object.assign с пустым объектом ничего не меняет), но у вошедшего игрока (тем более
+     владельца) личность должна долетать на любой вкладке, не только «Мои». */
+  const body = Object.assign({action:'list', sort:sort}, syncAuth()||{});
   return workshopPost(body).then(r=>{
     if(!r || !r.ok) return null;
     return r.json().catch(()=>null);
