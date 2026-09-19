@@ -100,26 +100,40 @@ const FINISH=(()=>{
       }
     }
     ctx.restore();
-    /* 19.09.2026 «Космо финиш» (владелец, живая жалоба «чувство будто врезался» — на самом деле
-       корень уже починен 13.09.2026 арка/крен/дым; настоящая находка — момент победы был
-       ПОЛНОСТЬЮ немым, ни звука, ни вибро, salut тихий сам по себе — тишина в кульминации
-       читается как «что-то не так», не как «я выиграл»). Короткая надпись поверх салюта —
-       быстрый рост (0-0.18с, лёгкий перехлёст) → пауза → угасание в последние 0.3с, живёт
-       чуть дольше самого занавеса (TEXT_LIFE=1.1с против .9с dyingT), чтобы не срезалась
-       сменой экрана на полуслове. */
+    /* 19.09.2026 «Космо финиш», ВТОРЫМ заходом (владелец, живой скрин: «надпись на общественном
+       туалете», «внизу», «не чувствуется как победа»). Первая попытка ошиблась дважды:
+       (1) шрифт Exo 2 + мягкое additive-свечение без тёмной обводки — тускло, теряется на любом
+       фоне неба (владелец УЖЕ отклонял Exo2 именно для всплывающего текста этого типа, см.
+       комментарий у popups в render.js:2901-2906 — «Впритык»/«Ворота» и т.п., «читаемость на
+       любом фоне» тёмной обводкой, системный шрифт, решение владельца, не Exo2);
+       (2) координата «выше корабля на 46px» — у корабля разная высота на экране (у поля игры
+       нижняя половина шире, там же обычно и летает), надпись то и дело утыкалась в самый низ.
+       Фикс — тот же приём, что уже держит все игровые попапы (render.js): тёмная обводка
+       (strokeText) под яркой золотой заливкой + halo-дубль покрупнее полупрозрачный сзади,
+       системный шрифт. Позиция — фиксированная точка в верхней трети игрового поля (не завязана
+       на текущий Y корабля), крупнее (22→30px), с интервалом между буквами (вручную посимвольно —
+       ctx.letterSpacing не везде поддержан в WebView Telegram, надёжнее не полагаться на него). */
     if(textAge>0 && textAge<TEXT_LIFE){
       const grow=Math.min(1,textAge/.18), fadeOut=textAge>TEXT_LIFE-.3 ? Math.max(0,(TEXT_LIFE-textAge)/.3) : 1;
       const scale=grow<1 ? .7+.36*grow-.06*Math.sin(grow*Math.PI) : 1; // лёгкий перехлёст на подходе, без пружины на глаз
       const a=Math.min(1,grow*1.4)*fadeOut;
       if(a>0.01){
         const txt=(typeof L!=='undefined' && L.finishText) || 'КОСМО ФИНИШ';
-        ctx.save(); ctx.globalCompositeOperation='lighter';
-        ctx.translate(plane.x, plane.y-46); ctx.scale(scale,scale);
+        const tx=plane.x, ty=fieldT()+fieldH()*.30; // фиксированная точка верхней трети поля — не «над кораблём», корабль сам может стоять где угодно по высоте
+        ctx.save();
+        ctx.translate(tx,ty); ctx.scale(scale,scale);
         ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.font='800 22px "Exo 2",-apple-system,"Segoe UI",Roboto,sans-serif';
-        ctx.shadowColor='rgba(255,215,106,'+(.8*a)+')'; ctx.shadowBlur=14;
-        ctx.fillStyle='rgba(255,236,180,'+a+')';
-        ctx.fillText(txt,0,0);
+        ctx.font='800 30px -apple-system,"Segoe UI",Roboto,sans-serif';
+        // посимвольный интервал (надёжнее letterSpacing в WebView) — считаем общую ширину, рисуем от левого края к центру
+        const sp=3, chars=txt.split(''), widths=chars.map(c=>ctx.measureText(c).width);
+        const total=widths.reduce((a,b)=>a+b,0)+sp*(chars.length-1);
+        let cx=-total/2;
+        ctx.globalAlpha=a*.3; ctx.fillStyle='#ffd76a'; ctx.save(); ctx.scale(1.16,1.16); ctx.fillText(txt,0,0); ctx.restore(); // halo — тот же приём, что у popups (render.js:2912-2913)
+        ctx.globalAlpha=a; ctx.textAlign='left';
+        ctx.lineWidth=3; ctx.lineJoin='round'; ctx.strokeStyle='rgba(10,14,28,.65)';
+        ctx.fillStyle='#ffd76a';
+        for(let i=0;i<chars.length;i++){ const w=widths[i], x=cx+w/2;
+          ctx.strokeText(chars[i],x-w/2,0); ctx.fillText(chars[i],x-w/2,0); cx+=w+sp; }
         ctx.restore();
       }
     }
