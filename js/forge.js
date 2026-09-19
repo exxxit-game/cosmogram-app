@@ -1444,6 +1444,9 @@ function workshopRenderList(){
     listEl.innerHTML=tracks.map(function(t){
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
+      // 19.09.2026 «Звезда автора»: лента для всех, КРОМЕ владельца (тот пользуется звездой-
+      // переключателем ниже) — видимость решает forEach ниже (t.featured && !isOwner).
+      '<div class="wAuthorRibbon hidden"><span>'+(L.workshopAuthorRibbon||'')+'</span></div>'+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
       // главного экрана» + «подсказка будет только на Разминке, один раз нажали, проверили,
@@ -1540,11 +1543,15 @@ function workshopRenderList(){
       // значков ряда (15.09.2026: .wTopRow, не отдельный столбик).
       // 12.09.2026 (второй заход, владелец): честный флаг с сервера (forge_workshop.featured
       // через moderate) вместо статического WORKSHOP_FEATURED_CODES — раньше пометить трек
-      // мог только я правкой кода, теперь сам владелец тапом. Игрокам звезда видна только у
-      // реально помеченных треков; владельцу — всегда (пустой контур на непомеченных), чтобы
-      // было чем нажать.
+      // мог только я правкой кода, теперь сам владелец тапом. Владельцу звезда видна всегда
+      // (пустой контур на непомеченных), чтобы было чем нажать.
+      // 19.09.2026 «Звезда автора» (владелец, макет, явное «да»): звезда-переключатель теперь
+      // ТОЛЬКО у владельца — остальные игроки видят угловую ленту (.wAuthorRibbon) вместо неё,
+      // не пустой некликабельный значок.
       const pickStarBtn=row.querySelector('.wPickStar');
-      if(pickStarBtn) pickStarBtn.classList.toggle('hidden', !t.featured && !isOwner);
+      if(pickStarBtn) pickStarBtn.classList.toggle('hidden', !isOwner);
+      const ribbonEl=row.querySelector('.wAuthorRibbon');
+      if(ribbonEl) ribbonEl.classList.toggle('hidden', !(t.featured && !isOwner));
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
