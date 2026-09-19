@@ -114,7 +114,6 @@ const I18N = {
     workshopSignInFirst:'войди через Telegram, чтобы увидеть свои небеса',
     workshopSort_new:'Новые', workshopSort_top:'Вау', workshopSort_fav:'Избранное', workshopSort_mine:'Мои', workshopSort_random:'Сюрприз', workshopSort_trending:'Растёт', // 16.09.2026, владелец: «Топ»→«Вау»
     workshopFeatured:'Отмечено золотой звездой', workshopUnfeatured:'Метка снята', // 12.09.2026: тост-подтверждение тапа по звезде «Выбор автора», тот же приём, что у workshopPinned/workshopUnpinned
-    workshopAuthorRibbon:'Звезда автора', // 19.09.2026: лента в углу карточки для всех игроков вместо кликабельной звезды (та остаётся только у владельца)
     workshopVoteLocked:'Долети до конца, чтобы оценить', // 12.09.2026 «Честный лайк»: голос без хотя бы одного честного прохождения не принимается
     // 12.09.2026, владелец: «кнопка лайки — это просто лайки», второй, углублённый заход
     // исследования (.knowledge/RESEARCH-2026-09-WORKSHOP-DISCOVERY.md) — «Лайки»→«Топ» (не
@@ -399,7 +398,6 @@ const I18N = {
     workshopPickTitle:"Picked by the game's author", workshopSignInFirst:'sign in via Telegram to see your skies',
     workshopSort_new:'New', workshopSort_top:'Wow', workshopSort_fav:'Favorites', workshopSort_mine:'Mine', workshopSort_random:'Surprise', workshopSort_trending:'Trending',
     workshopFeatured:'Marked with a gold star', workshopUnfeatured:'Mark removed',
-    workshopAuthorRibbon:"Author's star",
     workshopVoteLocked:'Finish the flight to rate it',
     workshopEdit:'Edit', workshopEditTip:'To create your own sky, tap "Edit".', workshopPlays:(n)=>'Runs: '+n, workshopHearts:(n)=>'Likes: '+n,
     workshopAuthor:(n)=>'Author: '+n,
@@ -616,7 +614,6 @@ const I18N = {
     workshopPickTitle:'Elegido por el autor del juego', workshopSignInFirst:'inicia sesión con Telegram para ver tus cielos',
     workshopSort_new:'Nuevos', workshopSort_top:'Guau', workshopSort_fav:'Favoritos', workshopSort_mine:'Míos', workshopSort_random:'Sorpresa', workshopSort_trending:'Tendencia',
     workshopFeatured:'Marcado con estrella dorada', workshopUnfeatured:'Marca quitada',
-    workshopAuthorRibbon:'Estrella del autor',
     workshopVoteLocked:'Termina el vuelo para valorarlo',
     workshopEdit:'Editar', workshopEditTip:'Para crear tu propio cielo, toca «Editar».', workshopPlays:(n)=>'Vuelos: '+n, workshopHearts:(n)=>'Me gusta: '+n,
     workshopAuthor:(n)=>'Autor: '+n,
@@ -848,7 +845,6 @@ const I18N = {
     workshopPickTitle:'Escolhido pelo autor do jogo', workshopSignInFirst:'inicia sessão com o Telegram para veres os teus céus',
     workshopSort_new:'Novos', workshopSort_top:'Uau', workshopSort_fav:'Favoritos', workshopSort_mine:'Meus', workshopSort_random:'Surpresa', workshopSort_trending:'Em alta',
     workshopFeatured:'Marcado com estrela dourada', workshopUnfeatured:'Marca removida',
-    workshopAuthorRibbon:'Estrela do autor',
     workshopVoteLocked:'Termina o voo para avaliar',
     workshopEdit:'Editar', workshopEditTip:'Para criares o teu próprio céu, toca em «Editar».', workshopPlays:(n)=>'Voos: '+n, workshopHearts:(n)=>'Gostos: '+n,
     workshopAuthor:(n)=>'Autor: '+n,
@@ -1077,7 +1073,6 @@ const I18N = {
     workshopPickTitle:"Choisi par l'auteur du jeu", workshopSignInFirst:'connecte-toi via Telegram pour voir tes ciels',
     workshopSort_new:'Nouveaux', workshopSort_top:'Waouh', workshopSort_fav:'Favoris', workshopSort_mine:'Les miens', workshopSort_random:'Surprise', workshopSort_trending:'Tendance',
     workshopFeatured:"Marqué d'une étoile dorée", workshopUnfeatured:'Marque retirée',
-    workshopAuthorRibbon:"Étoile de l'auteur",
     workshopVoteLocked:'Termine le vol pour le noter',
     workshopEdit:'Modifier', workshopEditTip:'Pour créer ton propre ciel, touche « Modifier ».', workshopPlays:(n)=>'Vols : '+n, workshopHearts:(n)=>"J'aime : "+n,
     workshopAuthor:(n)=>'Auteur : '+n,
