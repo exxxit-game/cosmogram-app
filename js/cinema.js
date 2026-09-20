@@ -506,17 +506,31 @@ function cinemaGalleryCat(){
    (решение владельца 28.08.2026). Любой следующий полёт эту запись не трогает —
    ручной способ записывать ещё что-то, помимо первого раза, обсуждается отдельно,
    здесь не реализован. */
+/* 20.09.2026 (владелец, живой Oppo, реальный запуск полёта): «первый полёт» и «Момент полёта»
+   вызываются друг за другом СИНХРОННО (ui.js: cinemaFirstFlightStart, следующей строкой
+   cinemaHighlightStart) — оба без await. Старая проверка «занято?» смотрела на cinemaActive()
+   (т.е. на _cinemaRec), а он выставляется только ГЛУБОКО внутри cinemaStart(), после нескольких
+   await (подбор кодека/Mediabunny/VideoEncoder) — в момент проверки он ещё пустой. Итог, живьём
+   подтверждено дважды с чистой перезагрузки: _cinemaOwner='first' тут же перезаписывался на
+   'highlight' следующей же строкой, «первый полёт» никогда не сохранялся ни на одном устройстве,
+   где cinemaHighlightEligible() истинна (то есть почти везде). Плюс — два cinemaStart() гонялись
+   одновременно за один и тот же _cinemaRec, лишняя нагрузка на кодек ровно там, где эту нагрузку
+   специально старались не удваивать. Правильная проверка — _cinemaOwner, он выставляется
+   СИНХРОННО, до всех await, и ловит гонку в тот же тик, когда она случается. */
 function cinemaFirstFlightStart(canvas){
   if (Store.get('cinemaFirstDone', 0)) return; // уже было — не пишем второй раз поверх
-  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (тест) — не перехватываем
+  if (_cinemaOwner || cinemaActive()) return; // 20.09.2026: _cinemaOwner ловит гонку раньше, чем cinemaActive() успевает узнать
   _cinemaOwner='first';
-  cinemaStart(canvas); // намеренно без await — взлёт не должен ждать подбор кодека
+  // 20.09.2026: раньше не было .then() совсем — при отказе кодека _cinemaOwner='first' застревал
+  // навсегда (ничего его не сбрасывало), блокируя вообще любую запись до конца вкладки.
+  cinemaStart(canvas).then(ok=>{ if(!ok && _cinemaOwner==='first') _cinemaOwner=null; }); // намеренно без await на верхнем уровне — взлёт не должен ждать подбор кодека
 }
 async function cinemaFirstFlightStop(){
-  if (!cinemaActive() || _cinemaOwner!=='first') return; // либо не первый полёт, либо кодек не нашёлся на старте, либо запись сейчас чужая — тихо, без ошибки
-  _cinemaOwner=null;
-  const blob = await cinemaStop();
+  if (_cinemaOwner!=='first') return; // не наша очередь (перехвачено/ещё не начиналось) — тихо, без ошибки
+  _cinemaOwner=null; // 20.09.2026: сброс СРАЗУ, а не только при удачной cinemaActive() — иначе owner застревал при слишком быстрой посадке (кодек не успел выставить _cinemaRec)
   Store.set('cinemaFirstDone', 1); // помечаем «было» независимо от успеха — вторая попытка не начнётся молча поверх первой
+  if (!cinemaActive()) return; // кодек не успел/не нашёлся — нечего останавливать и сохранять
+  const blob = await cinemaStop();
   if (blob) await cinemaSaveFirst(blob);
   if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026: дверь на главном — без ожидания следующего захода в меню
 }
@@ -535,7 +549,7 @@ function cinemaTestArm(){ Store.set('cinemaTestArmed',1); }
 let _cinemaTestSamples=null, _cinemaTestTimer=0, _cinemaTestOn=false;
 function cinemaTestStart(canvas){
   _cinemaTestOn=false; _cinemaTestSamples=[];
-  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (первый полёт) — не перехватываем
+  if (_cinemaOwner || cinemaActive()) return; // 20.09.2026: _cinemaOwner — та же правка гонки, что у cinemaFirstFlightStart выше
   _cinemaOwner='test';
   cinemaStart(canvas).then(ok=>{
     _cinemaTestOn=ok;
@@ -545,8 +559,10 @@ function cinemaTestStart(canvas){
 }
 async function cinemaTestStop(){
   if(_cinemaTestTimer){ clearInterval(_cinemaTestTimer); _cinemaTestTimer=0; }
-  if(!_cinemaTestOn || _cinemaOwner!=='test'){ _cinemaTestOn=false; return; }
-  _cinemaTestOn=false; _cinemaOwner=null;
+  if(_cinemaOwner!=='test'){ _cinemaTestOn=false; return; } // не наша очередь — тихо
+  const wasOn=_cinemaTestOn;
+  _cinemaTestOn=false; _cinemaOwner=null; // 20.09.2026: сброс всегда, не только при wasOn — иначе owner='test' мог застрять, если посадка случилась раньше, чем кодек успел ответить
+  if(!wasOn) return; // кодек не успел даже стартовать — нечего останавливать и показывать
   const blob=await cinemaStop();
   const s=_cinemaTestSamples||[];
   const avg=s.length?+(s.reduce((a,b)=>a+b,0)/s.length).toFixed(1):0;
@@ -592,7 +608,7 @@ function cinemaHighlightEligible(){
 let _cinemaHighlightWatcher=0, _cinemaHighlightBest=0;
 function cinemaHighlightStart(canvas){
   if (!cinemaHighlightEligible()) return; // слабое/неизвестное устройство — тихо пропускаем, картинка всё равно есть
-  if (cinemaActive()) return; // 30.08.2026: место занято чужой записью (первый полёт/тест) — не перехватываем
+  if (_cinemaOwner || cinemaActive()) return; // 20.09.2026: _cinemaOwner — та же правка гонки, что у cinemaFirstFlightStart выше (без неё эта строка и крала 'first' себе)
   _cinemaOwner='highlight';
   const mode = (typeof controlMode==='function') ? controlMode() : 'touch'; // game.js, только чтение — как и S/Store/Q везде в этом файле
   const modeKey = (typeof S!=='undefined' && S.mode==='caravan') ? 'bestCaravan' : (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // 05.09.2026: Caravan — свой рекорд, не по управлению (тот же приём, что в ui.js gameOver())
@@ -618,8 +634,9 @@ function saneNumberSafe(v){ v=+v; return (isFinite(v) && v>=0) ? v : 0; } // Sto
    зовёт cinemaPickLine() в момент открытия плеера. */
 async function cinemaHighlightStop(){
   if (_cinemaHighlightWatcher){ clearInterval(_cinemaHighlightWatcher); _cinemaHighlightWatcher=0; }
-  if (!cinemaActive() || _cinemaOwner!=='highlight') return;
-  _cinemaOwner=null;
+  if (_cinemaOwner!=='highlight') return; // не наша очередь — тихо
+  _cinemaOwner=null; // 20.09.2026: сброс до проверки cinemaActive() — иначе owner='highlight' мог застрять при слишком быстрой посадке (см. cinemaFirstFlightStop выше, та же правка)
+  if (!cinemaActive()) return; // кодек не успел/не нашёлся — нечего останавливать
   const score = typeof S!=='undefined' ? S.score : 0;
   const wasRecord = score>_cinemaHighlightBest;
   const wasNear = !wasRecord && _cinemaHighlightBest>0 && score>=_cinemaHighlightBest*0.9; // владелец: «в пределах 10% от рекорда»
