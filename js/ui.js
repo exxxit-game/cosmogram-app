@@ -484,6 +484,7 @@ function heroCarouselFill(){
   heroRecordBadgesFill();
   heroPlayHintsFill();
   heroTrailsFill();
+  heroRelayChainFill();
 }
 /* 15.09.2026 «Бейдж-рекорд на карточке»: тот же источник чисел, что уже копится по ходу игры
    (Store-ключи, которыми же топ считает «моё место» — myBestFor выше). Score Attack показывает
@@ -549,6 +550,29 @@ function heroTrailsFill(){
     svg.innerHTML='<path d="'+d+'" fill="none" stroke="'+(HERO_TRAIL_COLOR[cat]||'#fff')+'" stroke-width="1.4" stroke-linecap="round"/>';
     if(hintEl) hintEl.classList.add('hidden');
   });
+}
+/* 20.09.2026 «Живая цепочка Эстафеты» (макет, владелец: «Отлично, делай»): честный снимок
+   очереди relay_get_open в момент захода на главный экран — если есть открытая цепочка,
+   светится её реальный этап; если открытой нет, светится 1 (новая цепочка и правда начнётся
+   с 1-го, это не выдумка). Без входа/при отказе сети — оставляем обычный текст .playHint
+   (heroPlayHintsFill выше), ромбики не подставляются: не показываем то, чего не проверили.
+   Пока только снимок на заход в меню, не живое обновление на месте — как часто заново
+   спрашивать сервер, пока сидишь на меню, не трогая карточку, владелец ещё не решил отдельно
+   (это настоящий сетевой вызов, не бесплатный трюк на клиенте). */
+function heroRelayChainFill(){
+  const hint=$('playHintRelay'); if(!hint) return;
+  if (!syncAvailable() || typeof syncRelayGetOpen!=='function') return;
+  syncRelayGetOpen().then(r=>{
+    if (screenName!=='menu') return; // ушёл с меню, пока ответ шёл
+    const hintNow=$('playHintRelay'); if(!hintNow) return;
+    if (!r || !r.ok) return; // сеть подвела — оставляем обычный текст, не гадаем
+    const leg = r.chain ? r.chain.leg : 1;
+    hintNow.classList.remove('hidden');
+    hintNow.style.opacity='1';
+    hintNow.innerHTML='<span class="relayChainRow">'+[1,2,3,4].map(n=>
+      '<span class="relayChainNode'+(n===leg?' on':'')+'"><span>'+n+'</span></span>'
+    ).join('')+'</span>';
+  }).catch(()=>{});
 }
 function openAchTop(cat){ // 15.09.2026: тап по бейджу-рекорду на карточке — сразу в Достижения→Турниры на нужной дисциплине
   sfx.click(); haptic('light');
