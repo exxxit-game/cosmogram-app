@@ -55,6 +55,15 @@ function workshopRibbonCharClass(code){
    выше оставлена как есть (страж 318 её тоже проверяет отдельно) — просто больше не вызывается
    из рендера списка. Fisher-Yates, свой источник случайности не нужен — Math.random() тут не
    про честность результата, чисто украшение. */
+// 21.09.2026 «Лента для всех, не только featured» (владелец: «если это только мне возможность
+// останется, это глупо») — та же логика перетасовки, что уже была у характеров (WORKSHOP_RIBBON_CHARS
+// выше), теперь и для формы: один общий перетасованный набор на весь текущий показ списка.
+const WORKSHOP_RIBBON_SHAPES=['dot','star','tri','diamond','hex','cross','ring'];
+function workshopRibbonShapeHtml(shape){
+  if(shape==='star') return '<svg class="eye eyeL" viewBox="0 0 24 24" fill="#2c1f08"><use href="#i-star5-outline"></use></svg>'+
+    '<svg class="eye eyeR" viewBox="0 0 24 24" fill="#2c1f08"><use href="#i-star5-outline"></use></svg>';
+  return '<div class="eye eyeL shp-'+shape+'"></div><div class="eye eyeR shp-'+shape+'"></div>';
+}
 function shuffleArray(arr){
   for(let i=arr.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
@@ -1774,6 +1783,7 @@ function workshopRenderList(){
     // см. комментарий у shuffleArray() выше. Раздаётся по кругу (% длины) — если рядов больше
     // 12, дальше начинаются повторы, это ожидаемо и честно (пул конечен).
     const ribbonCharsShuffled=shuffleArray(WORKSHOP_RIBBON_CHARS.slice());
+    const ribbonShapesShuffled=shuffleArray(WORKSHOP_RIBBON_SHAPES.slice());
     listEl.innerHTML=tracks.map(function(t,ribbonIdx){
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
@@ -1786,7 +1796,14 @@ function workshopRenderList(){
       // звёздочку»): data-act="pickstar" — та же ветка обработчика (js/forge.js ниже), что уже
       // работала со звездой, ни одной новой строчки логики клика не понадобилось. Для игрока
       // pointer-events:none (index.html) делает этот атрибут недостижимым, безопасно.
-      '<div class="wAuthorRibbon hidden '+ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length]+'" data-act="pickstar"><span>'+WORKSHOP_RIBBON_EYES+'</span></div>'+
+      // 21.09.2026: форма — та же перетасовка, что у характера, независимая ось. Бровки
+      // (WORKSHOP_RIBBON_EYES) остаются только у кружка — они буквально «брови глаза», на
+      // других формах (звезда/ромб/шестиугольник/крестик/треугольник/кольцо) не имеют смысла.
+      (function(){
+        const shape=ribbonShapesShuffled[ribbonIdx%ribbonShapesShuffled.length];
+        const inner=(shape==='dot'?WORKSHOP_RIBBON_EYES:workshopRibbonShapeHtml(shape));
+        return '<div class="wAuthorRibbon hidden '+ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length]+'" data-act="pickstar"><span>'+inner+'</span></div>';
+      })()+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
       // главного экрана» + «подсказка будет только на Разминке, один раз нажали, проверили,
@@ -1896,8 +1913,12 @@ function workshopRenderList(){
       if(pickStarBtn) pickStarBtn.classList.add('hidden');
       const ribbonEl=row.querySelector('.wAuthorRibbon');
       if(ribbonEl){
-        ribbonEl.classList.toggle('hidden', !(t.featured || isOwner));
+        // 21.09.2026: лента теперь у ВСЕХ треков, не только featured (владелец: «если это
+        // только мне возможность останется, это глупо») — .featured лишь красит её отдельным
+        // холодным цветом (index.html: .wAuthorRibbon.featured), не решает видимость.
+        ribbonEl.classList.remove('hidden');
         ribbonEl.classList.toggle('ownerPick', isOwner);
+        ribbonEl.classList.toggle('featured', !!t.featured);
       }
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
@@ -1911,7 +1932,12 @@ function workshopRenderList(){
       const infoAuthor=row.querySelector('[data-role="info-author"]');
       const infoPlays=row.querySelector('[data-role="info-plays"]');
       if(infoAuthor) infoAuthor.textContent=L.workshopAuthor?L.workshopAuthor(t.author_name||''):'Автор: '+(t.author_name||'');
-      if(infoPlays) infoPlays.textContent=L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0);
+      // 21.09.2026 «Лайки наконец видны» (владелец нашёл: счётчик лайков нигде не показывался,
+      // жил только в title кнопки .wVote) — дописываем рядом с запусками, та же строка (i),
+      // не на ленте (лента — только форма/характер, декоративная, число сюда не поместили бы
+      // на скролле из многих карточек одновременно, владелец согласился: «давай пробовать»).
+      if(infoPlays) infoPlays.textContent=(L.workshopPlays?L.workshopPlays(t.plays||0):'Запуски: '+(t.plays||0))+
+        ' · '+(L.workshopHeartsCount?L.workshopHeartsCount(t.hearts||0):'Лайков: '+(t.hearts||0));
       // 08.09.2026 (владелец, живой макет): значки препятствий — настоящий набор Партитуры
       // (js/partitura.js PT_ICON_SVG/PT_KIND_COLOR/PT_KIND_LABEL), не текстовые таблетки —
       // тот же язык, что уже есть в Расстановке, просто переиспользован здесь. Измерено

@@ -657,14 +657,42 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    накладывалась на 2-строчное описание, проверено зумом на живом экране). Оба — реальные
    элементы, не текст в псевдоэлементе, бейдж — свой <button> (тап уводит в Достижения→Турниры,
    отдельно от тапа по остальной карточке). */
-.heroCard .recordBadge{all:unset;position:absolute;top:9px;left:9px;display:flex;align-items:center;
-  gap:3px;padding:3px 7px;border-radius:20px;background:var(--stone-fill);
-  border:1px solid var(--stone-border);box-shadow:var(--stone-shadow);font-size:10px;font-weight:700;color:var(--gold-hi);
-  cursor:pointer;z-index:2;box-sizing:border-box}
-/* 16.09.2026 (владелец: «найди стиль целиком, каждую кнопочку») — тот же камень, что у всей
-   карточки, был последним элементом на старом стекле rgba(255,255,255,.12/.24). */
-.heroCard .recordBadge span{font-variant-numeric:tabular-nums}
+/* 21.09.2026 «Лента с формой/характером вместо бейджа-таблетки» (владелец, долгое обсуждение
+   с макетами — форма закреплена за режимом, характер растёт от личных рекордов, см.
+   .wAuthorRibbon в Мастерской, тот же приём геометрии). Точка вращения ленты C=(28,22.5) —
+   измерена живьём (getBoundingClientRect) с эталонной .wAuthorRibbon 76×76, top/left ниже —
+   не подобраны на глаз, а вычислены как C.y-H/2 для настоящей высоты контента каждой формы. */
+.heroCard .recordBadge{all:unset;position:absolute;top:0;left:0;width:76px;height:76px;
+  overflow:hidden;cursor:pointer;z-index:2;box-sizing:border-box}
 .heroCard .recordBadge.hidden{display:none}
+.heroCard .recordBadge .band{position:absolute;width:120px;left:-32px;transform:rotate(-45deg);
+  background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px 0}
+.heroCard .recordBadge .shapesRow{display:flex;gap:6px}
+.heroCard .recordBadge .num{font-family:var(--font-disp);font-weight:800;font-size:12px;
+  color:#2c1f08;line-height:1;display:block;font-variant-numeric:tabular-nums}
+.heroCard .recordBadge .shp{flex:none;display:block;background:#2c1f08;
+  animation:wRibbonBlink 4.2s ease-in-out infinite}
+.heroCard .recordBadge .shp-dot{width:10px;height:10px;border-radius:50%}
+.heroCard .recordBadge .shp-tri{width:10px;height:10px;clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+.heroCard .recordBadge .shp-diamond{width:10px;height:10px;transform:rotate(45deg);border-radius:2px}
+.heroCard .recordBadge .shp-hex{width:12px;height:12px;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)}
+.heroCard .recordBadge .shp-cross{width:12px;height:12px;clip-path:polygon(38% 0%,62% 0%,62% 38%,100% 38%,100% 62%,62% 62%,62% 100%,38% 100%,38% 62%,0% 62%,0% 38%,38% 38%)}
+.heroCard .recordBadge .shp-star{width:13px;height:13px;animation:wRibbonBlink 4.2s ease-in-out infinite}
+/* top у каждой формы свой — измеренная высота контента разная (звезда/шестиугольник/крестик
+   чуть крупнее кружка/треугольника/ромба), top=C.y-H/2 даёт одинаковый визуальный центр ленты. */
+.heroCard .recordBadge.shape-dot .band,.heroCard .recordBadge.shape-tri .band,.heroCard .recordBadge.shape-diamond .band{top:7.5px}
+.heroCard .recordBadge.shape-hex .band,.heroCard .recordBadge.shape-cross .band{top:6.5px}
+.heroCard .recordBadge.shape-star .band{top:6px}
+/* Характер (какой из wRibbon* keyframes) — те же анимации, что уже определены у .wAuthorRibbon
+   выше в этом файле, просто нацелены на .shp вместо .eye. Стартовый (stage 0) характер на
+   каждый режим — подобран владельцем по теме режима, рост по личным рекордам — следующий шаг. */
+.heroCard .recordBadge.a-sparkle .shp{animation-name:wRibbonSparkle;animation-duration:5.4s}
+.heroCard .recordBadge.a-dramatic .shp{animation-name:wRibbonDramatic;animation-duration:10s}
+.heroCard .recordBadge.a-bouncy .shp{animation-name:wRibbonBouncy;animation-duration:4.6s;animation-timing-function:cubic-bezier(.34,1.56,.64,1)}
+.heroCard .recordBadge.a-nervous .shp{animation-name:wRibbonNervous;animation-duration:2.2s}
+.heroCard .recordBadge.a-wave .shp:first-child{animation-name:wRibbonBlink;animation-duration:5.5s}
+.heroCard .recordBadge.a-wave .shp:last-child{animation-name:wRibbonBlink;animation-duration:5.5s;animation-delay:.18s}
 /* 15.09.2026→16.09.2026: .playHint прошла путь круглая-иконка-со-своим-самолётиком (несколько
    заходов — угол, кольцо, блик, всё убиралось/двигалось по живым скринам) → сегодня, третий
    заход того же вечера, владелец решил заменить весь круг текстовой подсказкой — идея владельца:
@@ -2922,6 +2950,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 @keyframes wRibbonGooglyBlink{0%,92%,100%{opacity:1} 95%{opacity:1} 96%{transform:scaleY(.12)} 97%{opacity:1}}
 .wAuthorRibbon.char-dramatic .eye{animation:wRibbonDramatic 10s ease-in-out infinite}
 @keyframes wRibbonDramatic{0%,85%,100%{transform:scaleY(1)} 89%{transform:scaleY(.1)} 95%{transform:scaleY(.1)} 99%{transform:scaleY(1)}}
+/* 21.09.2026 «Лента для всех, не только featured» (владелец: «если это только мне возможность
+   останется, это глупо») — форма поверх .eye/.eyeL/.eyeR модификатором (все 12 характеров
+   выше продолжают работать на любой форме без дублирования keyframes, .eye остаётся базовым
+   классом-целью анимации, shp-* только переопределяет геометрию). Звезда — то же проверенное
+   sprite-число #i-star5-outline, что уже используется на ленте рекорда режимов. */
+.wAuthorRibbon .shp-hex{border-radius:0;clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)}
+.wAuthorRibbon .shp-tri{border-radius:0;clip-path:polygon(50% 0%,0% 100%,100% 100%)}
+.wAuthorRibbon .shp-diamond{border-radius:2px;transform:rotate(45deg)}
+.wAuthorRibbon .shp-cross{border-radius:0;clip-path:polygon(38% 0%,62% 0%,62% 38%,100% 38%,100% 62%,62% 62%,62% 100%,38% 100%,38% 62%,0% 62%,0% 38%,38% 38%)}
+.wAuthorRibbon .shp-ring{background:none!important;border:2.5px solid #2c1f08;box-sizing:border-box}
+.wAuthorRibbon svg.eye{background:none!important;width:15px;height:15px}
+/* Метка владельца («Звезда автора», t.featured) — отдельный холодный цвет вместо золота,
+   чтобы личный пик не терялся среди золотых лент у всех остальных треков (владелец: «если я
+   делаю метку, там будет цвет, а так они вот такие будут» — «бриллиантики»). Класс .featured
+   отражает t.featured напрямую (видно всем игрокам), НЕ путать с существующим .ownerPick —
+   тот значит «сейчас смотрит владелец» (интерактивность клика), другая ось, оба класса
+   независимы и могут стоять на ленте одновременно. */
+.wAuthorRibbon.featured span{background:linear-gradient(180deg,#dbe9ff,#9fb8d9)!important}
+.wAuthorRibbon.featured .eye{background:#12233f}
+.wAuthorRibbon.featured .shp-ring{border-color:#12233f}
 /* 20.09.2026 «Лента вместо звезды у владельца» (владелец: «тусклая», вариант А из двух
    показанных): у обычного игрока лента — чистый декор (pointer-events:none выше, .active не
    участвует — она либо есть, либо .hidden). У владельца лента теперь САМА кнопка — видна
@@ -4166,9 +4214,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.495"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.495"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.495"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.496"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.496"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.496"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4291,39 +4339,39 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
       <div class="heroCarousel" id="heroCarousel">
         <div class="heroCard hc-classic">
           <svg class="trail" id="trailClassic" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeClassic" data-cat="touch">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-dot" id="recBadgeClassic" data-cat="touch"><span class="band"><span class="shapesRow"><span class="shp shp-dot"></span><span class="shp shp-dot"></span></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="touch" id="playHintTouch"></div>
           <button type="button" class="cardFlyBtn" id="startBtn"><span class="modeName">Score Attack</span><span class="modeDesc">Лети, пока хватит жизней — свободный полёт без правил</span></button>
         </div>
         <div class="heroCard hc-daily">
           <svg class="trail" id="trailDaily" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeDaily" data-cat="daily">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-star a-sparkle" id="recBadgeDaily" data-cat="daily"><span class="band"><span class="shapesRow"><svg class="shp shp-star" viewBox="0 0 24 24" fill="#2c1f08"><use href="#i-star5-outline"></use></svg><svg class="shp shp-star" viewBox="0 0 24 24" fill="#2c1f08"><use href="#i-star5-outline"></use></svg></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="daily" id="playHintDaily"></div>
           <button type="button" class="cardFlyBtn" id="modeDaily"><span class="modeName">Небо месяца</span><span class="modeDesc">Одно небо на всех игроков — весь месяц, поставь рекорд</span></button>
         </div>
         <div class="heroCard hc-speedrun">
           <svg class="trail" id="trailSpeedrun" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeSpeedrun" data-cat="speedrun">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-diamond a-dramatic" id="recBadgeSpeedrun" data-cat="speedrun"><span class="band"><span class="shapesRow"><span class="shp shp-diamond"></span><span class="shp shp-diamond"></span></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="speedrun" id="playHintSpeedrun"></div>
           <button type="button" class="speedrunFlyBtn" id="modeSpeedrunFly"><span class="modeName">Speedrun</span><span class="modeDesc">10 000 очков на время — чистый хронометраж</span></button>
           <div class="forgeSeg" id="speedrunVariantSeg"></div>
         </div>
         <div class="heroCard hc-caravan">
           <svg class="trail" id="trailCaravan" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeCaravan" data-cat="caravan">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-hex a-bouncy" id="recBadgeCaravan" data-cat="caravan"><span class="band"><span class="shapesRow"><span class="shp shp-hex"></span><span class="shp shp-hex"></span></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="caravan" id="playHintCaravan"></div>
           <button type="button" class="caravanFlyBtn" id="modeCaravanFly"><span class="modeName">Caravan</span><span class="modeDesc"></span></button>
           <div class="forgeSeg" id="caravanTierSeg"></div>
         </div>
         <div class="heroCard hc-slalom">
           <svg class="trail" id="trailSlalom" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeSlalom" data-cat="slalom">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-tri a-nervous" id="recBadgeSlalom" data-cat="slalom"><span class="band"><span class="shapesRow"><span class="shp shp-tri"></span><span class="shp shp-tri"></span></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="slalom" id="playHintSlalom"></div>
           <button type="button" class="cardFlyBtn" id="modeSlalom"><span class="modeName">Без касаний</span><span class="modeDesc">Ворота на время — одно касание срывает заезд</span></button>
         </div>
         <div class="heroCard hc-biathlon">
           <svg class="trail" id="trailBiathlon" viewBox="0 0 320 112" preserveAspectRatio="none"></svg>
-          <button class="recordBadge hidden" id="recBadgeBiathlon" data-cat="biathlon">🏆 <span></span></button>
+          <button class="recordBadge hidden shape-cross a-wave" id="recBadgeBiathlon" data-cat="biathlon"><span class="band"><span class="shapesRow"><span class="shp shp-cross"></span><span class="shp shp-cross"></span></span><span class="num"></span></span></button>
           <div class="playHint" data-cat="biathlon" id="playHintBiathlon"></div>
           <button type="button" class="cardFlyBtn" id="modeBiathlon"><span class="modeName">Биатлон</span><span class="modeDesc">Скорость + 2 рубежа «собери всё», штраф — время</span></button>
         </div>
@@ -5505,26 +5553,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.495" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.495"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.495"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.495"></script>
-<script defer src="js/game.js?v=1.478.495" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.495"></script>
-<script defer src="js/sync.js?v=1.478.495"></script>
-<script defer src="js/render.js?v=1.478.495"></script>
-<script defer src="js/planetarium.js?v=1.478.495"></script>
-<script defer src="js/goldstar.js?v=1.478.495"></script>
-<script defer src="js/finish.js?v=1.478.495"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.495"></script>
-<script defer src="js/gyro.js?v=1.478.495"></script>
-<script defer src="js/forge.js?v=1.478.495"></script>
-<script defer src="js/partitura.js?v=1.478.495"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.495"></script>
-<script defer src="js/card.js?v=1.478.495"></script>
-<script defer src="js/star.js?v=1.478.495"></script>
-<script defer src="js/cinema.js?v=1.478.495"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.495"></script>
+<script defer src="js/core.js?v=1.478.496" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.496"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.496"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.496"></script>
+<script defer src="js/game.js?v=1.478.496" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.496"></script>
+<script defer src="js/sync.js?v=1.478.496"></script>
+<script defer src="js/render.js?v=1.478.496"></script>
+<script defer src="js/planetarium.js?v=1.478.496"></script>
+<script defer src="js/goldstar.js?v=1.478.496"></script>
+<script defer src="js/finish.js?v=1.478.496"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.496"></script>
+<script defer src="js/gyro.js?v=1.478.496"></script>
+<script defer src="js/forge.js?v=1.478.496"></script>
+<script defer src="js/partitura.js?v=1.478.496"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.496"></script>
+<script defer src="js/card.js?v=1.478.496"></script>
+<script defer src="js/star.js?v=1.478.496"></script>
+<script defer src="js/cinema.js?v=1.478.496"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.496"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

@@ -513,8 +513,8 @@ function heroRecordBadgesFill(){
    ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(function(pair){
     const el=$(pair[0]); if(!el) return;
     const r=heroRecordFor(pair[1]);
-    const span=el.querySelector('span');
-    if(r.val>0){ if(span) span.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); }
+    const numEl=el.querySelector('.num'); // 21.09.2026: было querySelector('span') — ловило .band (первый span), не число
+    if(r.val>0){ if(numEl) numEl.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); }
     else el.classList.add('hidden');
   });
 }
