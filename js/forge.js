@@ -537,12 +537,17 @@ function forgeChipBuild(el,text,get,set){
   if(!el) return;
   if(!el.children.length){
     const b=document.createElement('button');
-    b.className='forgeChip';
+    // 20.09.2026 (владелец, тот же макет: «человек не находит нужную кнопку, потому что она не
+    // выглядит как кнопка») — целая строка-предложение читалась неотличимо от соседнего .hint.
+    // Постоянная точка-маркер (.forgeToggleChip) — виден как тумблер до и после нажатия, не
+    // только в выбранном состоянии.
+    b.className='forgeChip forgeToggleChip';
+    b.innerHTML='<span class="dot"></span><span class="t"></span>';
     b.addEventListener('click',function(){ set(!get()?1:0); forgeSyncWidgets(); sfx.click(); haptic('light'); });
     el.appendChild(b);
   }
   el._text=text;
-  el._sync=function(){ el.children[0].textContent=el._text; el.children[0].classList.toggle('sel',!!get()); };
+  el._sync=function(){ el.children[0].querySelector('.t').textContent=el._text; el.children[0].classList.toggle('sel',!!get()); };
 }
 /* 01.09.2026 «Пространство в меню»: forgeSkyBuild() (свотчи «Небо») удалена — дублировала
    свободные ползунки h1/h2 в Расстановке, не зная о них. FORGE_SKYS/forgeCfg.sky остаются
@@ -596,7 +601,19 @@ function forgeFill(){ // подписи + состояние виджетов п
     chips.innerHTML='';
     FORGE_KINDS.forEach(function(k,i){
       const b=document.createElement('button');
-      b.className='forgeChip'; b.dataset.bit=i; b.textContent=names[i];
+      // 20.09.2026 (владелец, макет konstruktor-karta-tochechnaya-komfort-20-09-2026.html, «отлично»):
+      // тот же цветной язык значков, что уже в лотке (PT_ICON_SVG/PT_KIND_COLOR, partitura.js) и
+      // в фильтре Мастерской (.wFilterObChip) — раньше голая текстовая пилюля была третьим разным
+      // оформлением одного и того же набора из 8 видов на одном экране.
+      b.className='forgeChip forgeObChip'; b.dataset.bit=i;
+      const icColor=(typeof PT_KIND_COLOR!=='undefined')?PT_KIND_COLOR[k]:'#8fa3c8';
+      const icSvg=(typeof PT_ICON_SVG!=='undefined')?PT_ICON_SVG[k]:'';
+      b.innerHTML='<span class="ic" style="background:'+icColor+'">'+icSvg+'</span><span class="t"></span>';
+      b.querySelector('.t').textContent=names[i];
+      // тот же множитель веса, что уже у лотка (ptWireTray, partitura.js) — тот же относительный
+      // размер значка внутри кружка (22px/60%), один расчёт на оба места.
+      const icScale=(typeof PT_ICON_WEIGHT_SCALE!=='undefined')?PT_ICON_WEIGHT_SCALE[k]:null;
+      const icSvgEl=b.querySelector('.ic svg'); if(icScale && icSvgEl) icSvgEl.style.transform='scale('+icScale+')';
       b.addEventListener('click',function(){
         forgeCfg.e^=(1<<i); if(!forgeCfg.e) forgeCfg.e=(1<<i); // последний вид не гасим — небо не бывает пустым насовсем
         sfx.click(); haptic('light');
@@ -610,7 +627,7 @@ function forgeFill(){ // подписи + состояние виджетов п
       chips.appendChild(b);
     });
   }
-  if(chips) for(let i=0;i<8;i++) chips.children[i].textContent=names[i];
+  if(chips) for(let i=0;i<8;i++){ const t=chips.children[i].querySelector('.t'); if(t) t.textContent=names[i]; }
   // сегменты
   forgeSegBuild($('forgeSeg'),FORGE_LENS.map(function(m){ return {v:m,t:m>0?m+' '+(L.unitM||'м'):L.forgeInf}; }),
     function(){return forgeCfg.l;},function(v){forgeCfg.l=v;});
@@ -1390,7 +1407,7 @@ function workshopFilterMatches(t){
   }
   return true;
 }
-function workshopFilterLenLabel(v){ return v+' '+'м'; } // 20.09.2026: «∞»-деление убрано, см. комментарий у WORKSHOP_FILTER_LEN_INF выше
+function workshopFilterLenLabel(v){ return v+' '+(L.unitM||'м'); } // 20.09.2026: «∞»-деление убрано, см. комментарий у WORKSHOP_FILTER_LEN_INF выше; страж 71 — единица только из словаря, не литералом
 function workshopFilterUpdateSliderUI(){
   const min=$('workshopFilterLenMin'), max=$('workshopFilterLenMax');
   if(!min||!max) return;
@@ -1399,7 +1416,7 @@ function workshopFilterUpdateSliderUI(){
   const fill=$('workshopFilterLenFill');
   if(fill){ fill.style.left=pct(workshopFilterLenFrom)+'%'; fill.style.right=(100-pct(workshopFilterLenTo))+'%'; }
   const fromEl=$('workshopFilterLenFrom'), toEl=$('workshopFilterLenTo');
-  if(fromEl) fromEl.textContent=workshopFilterLenFrom+' м';
+  if(fromEl) fromEl.textContent=workshopFilterLenFrom+' '+(L.unitM||'м'); // страж 71 — единица только из словаря
   if(toEl) toEl.textContent=workshopFilterLenLabel(workshopFilterLenTo);
 }
 function workshopFilterUpdateBadge(){

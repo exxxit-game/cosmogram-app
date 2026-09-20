@@ -21,7 +21,11 @@ const PT_KIND_LABEL={rock:'Астероид',debris:'Обломок',drift:'Др
    зелёный (было синим, конфликтовало с Передышкой и Спутником). comet/mine/seeker/gate/drift не
    трогаю — они и так не путаются ни с кем. Пары «Передышка»/«Заметка» (index.html, не тут — их
    цвет отдельный, роль не «преграда») сдвинуты тем же заходом. */
-const PT_KIND_COLOR={rock:'#9c8a72',debris:'#4ecf7a',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffe14a',gate:'#22b8dd'}; // seeker сверен с render.js (08.09.2026: ярко-жёлтый вместо янтарного)
+// 20.09.2026 (владелец, живой разговор): «не вижу смысла, чтобы обломок был зелёного цвета» —
+// зелёный в игре везде читается «безопасно/растёт», не подходит опасности по смыслу. Своп с
+// Передышкой буквально его же словами: «передышке цвет как у обломка, обломку — её цвет» — оба
+// значения уже были в игре (index.html .sticker.pause), просто меняются местами, не выдуманы.
+const PT_KIND_COLOR={rock:'#9c8a72',debris:'#8fd9c4',drift:'#b073ea',mine:'#ff5f6d',sat:'#4f7fe6',comet:'#ff9a52',seeker:'#ffe14a',gate:'#22b8dd'}; // seeker сверен с render.js (08.09.2026: ярко-жёлтый вместо янтарного)
 const PT_ICON_SVG={
   pause:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="6.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/><rect x="13.5" y="4" width="4" height="16" rx="1.5" fill="currentColor"/></svg>',
   marker:'<svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 21l1.2-5.6L15.6 3.9a1.6 1.6 0 0 1 2.3 0l2.2 2.2a1.6 1.6 0 0 1 0 2.3L8.6 19.8 3 21z" fill="currentColor"/></svg>',
@@ -49,6 +53,16 @@ const PT_ICON_SVG={
   seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="12" cy="12" r="6.3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6"><line x1="12" y1="2.7" x2="12" y2="5.3"/><line x1="12" y1="18.7" x2="12" y2="21.3"/><line x1="2.7" y1="12" x2="5.3" y2="12"/><line x1="18.7" y1="12" x2="21.3" y2="12"/><line x1="5.6" y1="5.6" x2="7.4" y2="7.4"/><line x1="16.6" y1="16.6" x2="18.4" y2="18.4"/><line x1="18.4" y1="5.6" x2="16.6" y2="7.4"/><line x1="7.4" y1="16.6" x2="5.6" y2="18.4"/></g><rect x="9" y="10.3" width="2.4" height="2.4" fill="#2a2230"/><rect x="12.6" y="10.3" width="2.4" height="2.4" fill="#2a2230"/></svg>',
   gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
 };
+/* 20.09.2026 (владелец, живой разговор + макет konstruktor-karta-tochechnaya-komfort-20-09-2026.html):
+   «вес» значков в лотке (canvas ink%, живой замер на #ptTray) плясал 13.4%-41.2% при одинаковом
+   42px боксе — та же ловушка, что вчера была с кубиком в Мастерской: одинаковая рамка, разный
+   визуальный вес значка внутри. Множители к среднему ≈26% — только для мест с ЭТИМ конкретным
+   размером (лоток 42px/60% и «Преграды» Точечной настройки 22px, тот же относительный масштаб
+   значка внутри своего кружка); НЕ трогает PT_ICON_SVG сам по себе — фильтр Мастерской
+   (.wFilterObChip, 16px/100%, уже проверен и исправлен отдельно 20.09.2026 раньше вечером) и
+   свотчи «Точечная настройка»/список событий (партитура) рисуют значок в другой относительной
+   пропорции контейнера — тот же множитель там дал бы новый перекос, не решение. */
+const PT_ICON_WEIGHT_SCALE={pause:1.08,marker:1.07,rock:.84,debris:1.19,drift:.85,mine:.85,sat:1.13,comet:1.39,seeker:.79,gate:1.02};
 const PT_MAX=150; // 09.09.2026 (владелец): было 50, поднято по прямой просьбе
 let ptSelIdx=-1;
 
@@ -480,7 +494,10 @@ function ptWireTray(){
     const item=document.createElement('div'); item.className='stickerItem';
     const s=document.createElement('div'); s.className='sticker '+(d.t==='kind'?'':d.t); s.dataset.t=d.t; s.dataset.k=d.k;
     if(d.t==='kind'){ const c=PT_KIND_COLOR[FORGE_KINDS[d.k]]||'#8fa3c8'; s.style.background='linear-gradient(180deg, '+c+', '+c+'dd)'; s.style.boxShadow='0 0 14px '+c+'77, inset 0 0 0 1px rgba(255,255,255,.28)'; }
+    const ptKey=d.t==='kind'?FORGE_KINDS[d.k]:d.t;
     s.innerHTML=d.t==='kind'?(PT_ICON_SVG[FORGE_KINDS[d.k]]||''):PT_ICON_SVG[d.t];
+    const ptScale=PT_ICON_WEIGHT_SCALE[ptKey]; const svgEl=s.querySelector('svg');
+    if(ptScale && svgEl) svgEl.style.transform='scale('+ptScale+')';
     const cap=document.createElement('div'); cap.className='stickerCap'; cap.textContent=d.cap;
     item.appendChild(s); item.appendChild(cap);
     tray.appendChild(item);
