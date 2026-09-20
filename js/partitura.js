@@ -280,11 +280,12 @@ function ptRenderPins(justPoppedIdx){
   const pins=ptPins();
   track.querySelectorAll('.pin,.pin-lbl').forEach(e=>e.remove());
   track.classList.toggle('has-pins',pins.length>0);
-  // 20.09.2026 (владелец, живой отчёт: «у нас уже было место для этого» — #ptEmptyHint
-  // «поставь первую точку» уже занимает эту же зону, пока лента пуста): подпись-разница
-  // лотка (#ptTrayHint, index.html) показывается ТОЛЬКО когда лента уже не пуста — ровно
-  // когда #ptEmptyHint сам гаснет (has-pins), не одновременно с ним, никакого дублирования.
-  const trayHintEl=$('ptTrayHint'); if(trayHintEl) trayHintEl.classList.toggle('hidden',pins.length===0);
+  // 20.09.2026 (владелец, живой отчёт, два захода подряд): отдельный блок-подпись под лотком
+  // (#ptTrayHint) убран целиком — «одноразовая подсказка уже существует» (#ptEmptyHint
+  // «поставь первую точку»), не нужно было городить рядом второй текст/механизм, надо было
+  // слить смысл в уже готовое место. Разница лотка/«Преграды» теперь — часть текста самого
+  // #ptEmptyHintTxt (js/i18n.js, ptEmptyHint), видна тем же способом, что и раньше: пока
+  // лента пуста, гаснет с первой точкой — ничего нового не добавлено.
   const pinSz=ptPinSizeFor(pins.length);
   track.style.setProperty('--pinSz',pinSz+'px');
   /* 02.09.2026→16.09.2026: раньше pinTop нарочно смещал базу ВВЕРХ, чтобы зарезервировать

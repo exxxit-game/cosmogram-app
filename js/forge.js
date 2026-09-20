@@ -579,7 +579,10 @@ function forgeFill(){ // подписи + состояние виджетов п
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
     ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],
-    ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],['forgeBonusLbl',L.forgeBonus],
+    ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],
+    // 20.09.2026: forgeBonusLbl (заголовок-дубль внутри бывшей подгруппы) удалён вместе с
+    // разметкой — «Бонусы» теперь имя чипа (forgeBonusGrpLbl), тот же ключ L.forgeBonus.
+    ['forgeBonusGrpLbl',L.forgeBonus],
     ['forgeFogLbl',L.forgeFog],
     // 15.09.2026 (аудит шага «Цвет»): 6 подписей были захардкожены прямо в index.html, только
     // на русском — не переводились ни разу. forgeSkyLbl/forgeLenLbl — убраны из списка тут же,
@@ -592,7 +595,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     // удалён при переходе на 3 чипа, ключ L.forgeHardSpoilerGrpT остался в i18n.js неиспользуемым.
     ['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgeDiffMeterLbl',L.forgeDiffMeterLbl],
-    ['ptTrayHint',L.ptTrayHint],['forgeObstHint',L.forgeObstHint],
+    ['forgeObstHint',L.forgeObstHint],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];
@@ -831,7 +834,7 @@ wireOnLocal('forgeStepDots','click',function(ev){
    20.09.2026, продолжение (чипы вместо единого спойлера): раньше проверялся один общий
    forgeHardSpoilerGrp.open — теперь его нет, «открыта Точечная настройка» стало «открыт хотя бы
    один из трёх независимых чипов», проверяем все три явно. */
-const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeObstGrp'];
+const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeBonusGrp','forgeObstGrp'];
 function forgeReserveForQuickEdit(){
   const scrBody=document.querySelector('#forgeScreen .scrBody'); if(!scrBody) return;
   const qe=$('ptQuickEdit');
@@ -847,17 +850,40 @@ function forgeReserveForQuickEdit(){
    17-09-2026.html): три подраздела «Точечной настройки» (Темп неба/Старт/Преграды) — не
    аккордеон-радио, каждый переключается независимо. 20.09.2026: триггер стал компактным чипом
    (.forgeFineChip) вместо строки-спойлера — сама функция не изменилась, ей всё равно, какой
-   именно элемент открывает/закрывает панель. */
+   именно элемент открывает/закрывает панель.
+   20.09.2026, отменено (владелец, живой телефон, измерено): независимость двух самых длинных
+   разделов, открытых вместе («Темп неба» 161px + «Старт» 464px), давала 1177px контента на
+   800px реальный экран — переполнение, кнопка «Подтвердить карту» перекрывала подсказку.
+   «Бонусы» выделены в свой, 4-й, чип (FORGE_FINE_PANEL_OF ниже), и все четыре стали настоящим
+   аккордеоном — открытие любого закрывает остальные три. */
+const FORGE_FINE_PANEL_OF={forgeTempoGrp:'forgeTempoPanel',forgeStartGrp:'forgeStartPanel',
+  forgeBonusGrp:'forgeBonusPanel',forgeObstGrp:'forgeObstPanel'};
 function forgeWireSubSpoiler(grpId, panelId){
   wireOnLocal(grpId,'click',function(){
     sfx.click(); haptic('light');
-    this.classList.toggle('open');
-    const p=$(panelId); if(p) p.classList.toggle('hidden');
+    const willOpen=!this.classList.contains('open');
+    // 20.09.2026: аккордеон закрывает соседей как побочный эффект клика по ЛЮБОМУ чипу, не
+    // только по «Преграды» — подсказка-разница (forgeObstHint) должна гаситься навсегда и в
+    // этом случае тоже, не только когда закрывают «Преграды» явным повторным кликом по нему же.
+    if($('forgeObstGrp')?.classList.contains('open') && grpId!=='forgeObstGrp') Store.set('forgeObstHintSeen',1);
+    FORGE_FINE_CHIP_IDS.forEach(function(id){
+      const g=$(id); if(g) g.classList.remove('open');
+      const p=$(FORGE_FINE_PANEL_OF[id]); if(p) p.classList.add('hidden');
+    });
+    const nowOpen=willOpen;
+    if(nowOpen){ this.classList.add('open'); const p=$(panelId); if(p) p.classList.remove('hidden'); }
     requestAnimationFrame(forgeReserveForQuickEdit);
+    // 20.09.2026 (владелец: «он в первый раз воспользовался и понял, как оно работает» —
+    // тот же разовый паттерн, что у forgeFavHint выше). Только «Преграды» несёт
+    // подпись-разницу (forgeObstHint) — закрытие панели, после того как её открыли и
+    // увидели, гасит подсказку навсегда, тем же Store-флагом.
+    if(grpId==='forgeObstGrp' && !nowOpen) Store.set('forgeObstHintSeen',1);
+    if(grpId==='forgeObstGrp'){ const h=$('forgeObstHint'); if(h) h.classList.toggle('hidden', !nowOpen || !!Store.get('forgeObstHintSeen',0)); }
   });
 }
 forgeWireSubSpoiler('forgeTempoGrp','forgeTempoPanel');
 forgeWireSubSpoiler('forgeStartGrp','forgeStartPanel');
+forgeWireSubSpoiler('forgeBonusGrp','forgeBonusPanel');
 forgeWireSubSpoiler('forgeObstGrp','forgeObstPanel');
 
 /* ---------- Чтение формы / действия ---------- */
