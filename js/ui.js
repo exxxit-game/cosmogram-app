@@ -2143,8 +2143,16 @@ function angarPvZoomDraw(t){
         renderTrailPattern(x, item.style, col);
       }
       x.restore();
-      const nameEl=$('angarPvZoomName');
-      if(nameEl) nameEl.textContent=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
+      const nameEl=$('angarPvZoomName'), nameTxtEl=$('angarPvZoomNameTxt');
+      if(nameEl && nameTxtEl){
+        nameTxtEl.textContent=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
+        // 20.09.2026: centerTitleOnHeader — та же функция, что держит любой другой заголовок
+        // игры «в одну строку» с родным «Назад»/⌄/⋮ (js/ui.js). shrinkScreenTitle() НЕ подходит
+        // сюда — она уменьшает шрифт ОТ крупного (28-42px, .screenTitle) ДО пола 24px, а тут
+        // шрифт и так меньше пола (18px) — функция молча ничего не делает, длинные имена лезли
+        // за «✕». Перенос на 2 строки остаётся обычным CSS (max-width), как и был раньше.
+        centerTitleOnHeader(nameEl);
+      }
       const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
       if(factEl && wrapEl){
         if(item.fact){ factEl.textContent=item.fact; wrapEl.classList.remove('hidden'); }
