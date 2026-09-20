@@ -216,6 +216,13 @@ function ptShowToast(text,undoFn){
   const undoEl=t.querySelector('.undo');
   undoEl.classList.toggle('hidden', !undoFn);
   undoEl.onclick=undoFn?(()=>{ undoFn(); const si=ptUndoStack.indexOf(undoFn); if(si>=0) ptUndoStack.splice(si,1); ptSyncUndoBtn(); t.classList.remove('show'); clearTimeout(ptToastTimer); }):null;
+  // 20.09.2026 (владелец, видео с реального телефона): тост садился прямо на панель точки
+  // (#ptQuickEdit) — оба position:fixed снизу экрана, тост (z-index 40) частично тонул под
+  // панелью (z-index 41), «Вернуть» перекрывал число метров панели. Тост теперь встаёт НАД
+  // панелью, когда она открыта — считаем её реальную высоту, не гадаем числом.
+  const qe=document.getElementById('ptQuickEdit');
+  const qeVisible=qe && qe.classList.contains('show');
+  t.style.bottom = qeVisible ? (qe.getBoundingClientRect().height+12)+'px' : '';
   t.classList.add('show');
   clearTimeout(ptToastTimer);
   ptToastTimer=setTimeout(()=>t.classList.remove('show'),3000);
