@@ -276,7 +276,6 @@ const I18N = {
     finishText:'КОСМО ФИНИШ', // 19.09.2026 «Космо финиш», владелец — короткая надпись в момент победы (js/finish.js)
     calibrated:'Гироскоп откалиброван', calWait:'Держи телефон ровно…', calIng:'калибр…', calZero:'нуль', noTilt:'Нет данных датчика', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Открыть «Полёт без рук»', gyroUnlockedOk:'«Полёт без рук» открыт!',
-    gyroLostMsg:'Гироскоп молчит', // 18.09.2026: короткое сообщение под HUD при потере сигнала в полёте (макет, владелец «делай»)
     tooNarrowTitle:'Экран слишком узкий', tooNarrowHint:'Разверните окно, чтобы полететь',
     /* 13.08.2026: альбомную ориентацию мы не поддерживаем — решение владельца. Раньше окно
        говорило «слишком узкий, поверните экран» тому, кто экран как раз повернул: совет вёл
@@ -513,7 +512,6 @@ const I18N = {
     finishText:'COSMO FINISH',
     calibrated:'Gyro calibrated', calWait:'Hold the phone steady…', calIng:'calibr…', calZero:'zero', noTilt:'No sensor data', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Unlock “Hands-Free Flight”', gyroUnlockedOk:'“Hands-Free Flight” unlocked!',
-    gyroLostMsg:'Gyroscope silent',
     tooNarrowTitle:'Screen too narrow', tooNarrowHint:'Widen the window to fly',
     landTitle:'Turn the phone upright', landHint:'The game is made for a vertical screen',
     setGyroOff:'Hands-Free Flight', gyroOffOk:'Helm returned to finger',
@@ -730,7 +728,6 @@ const I18N = {
     calibrated:'Giroscopio calibrado', calWait:'Sostén el teléfono firme…', calIng:'calibr…', calZero:'cero',
     noTilt:'Sin datos del sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Vuelo sin manos»', gyroUnlockedOk:'¡«Vuelo sin manos» abierto!',
-    gyroLostMsg:'Giroscopio en silencio',
     tooNarrowTitle:'Pantalla muy angosta', tooNarrowHint:'Ensancha la ventana para volar',
     landTitle:'Gira el teléfono', landHint:'El juego está hecho para pantalla vertical',
     setGyroOff:'Vuelo sin manos', gyroOffOk:'Mando devuelto al dedo',
@@ -965,7 +962,6 @@ const I18N = {
     calibrated:'Giroscópio calibrado', calWait:'Segure o telefone firme…', calIng:'calibr…', calZero:'zero',
     noTilt:'Sem dados do sensor', wallet:ic('star4','i-s4')+' ', // v1.282.15: и в кошельке
     gyroUnlockBtn:'Abrir «Voo sem mãos»', gyroUnlockedOk:'«Voo sem mãos» aberto!',
-    gyroLostMsg:'Giroscópio em silêncio',
     tooNarrowTitle:'Tela muito estreita', tooNarrowHint:'Alargue a janela para voar',
     landTitle:'Gire o telefone', landHint:'O jogo foi feito para tela vertical',
     setGyroOff:'Voo sem mãos', gyroOffOk:'Comando devolvido ao dedo',
@@ -1200,7 +1196,6 @@ const I18N = {
     finishText:'COSMO ARRIVÉE',
     calibrated:'Gyroscope calibré', calWait:'Garde le téléphone immobile…', calIng:'calibr…', calZero:'zéro', noTilt:'Aucune donnée du capteur', wallet:ic('star4','i-s4')+' ',
     gyroUnlockBtn:'Débloquer « Vol mains libres »', gyroUnlockedOk:'« Vol mains libres » débloqué !',
-    gyroLostMsg:'Gyroscope silencieux',
     tooNarrowTitle:'Écran trop étroit', tooNarrowHint:'Élargis la fenêtre pour voler',
     landTitle:'Tourne le téléphone', landHint:'Le jeu est conçu pour un écran vertical',
     setGyroOff:'Vol mains libres', gyroOffOk:'Commandes rendues au doigt',

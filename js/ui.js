@@ -5040,33 +5040,33 @@ startLoop();
   }).observe(document.body,{childList:true,subtree:true});
 })();
 
-/* 18.09.2026 «Гироскоп молчит»: короткое сообщение под HUD, когда сигнал датчика пропадает
-   посреди полёта (владелец, макет giroskop-pod-hud-kompaktno-18-09-2026.html, «делай»).
-   game.js уже считает переход сам, каждый кадр (watchdog 600мс, game.js:2022):
-   input.useGyro = gyroUnlocked() && performance.now()-input._t<600. Здесь — только чтение
-   этого готового флага снаружи, независимым rAF-опросом; core (core.js/game.js/input.js)
-   не тронут ни строкой. Экран проверяем тем же способом, что уже читает render.js
-   (screenName==='game' && S.running && !S.paused) — иначе смена экрана или пауза читались
-   бы как «сигнал пропал», хотя датчик тут ни при чём. */
-let gyroLostWasOn = false, gyroLostHideT = null;
+/* 20.09.2026 (владелец, живой полёт: «табличка перекрывает игровое поле... убери её») —
+   видимая табличка «Гироскоп молчит» (18.09.2026) убрана целиком. Причина ложных
+   срабатываний была честно починена тем же вечером (game.js: useGyro теперь держится живым
+   до 3с, не 0.6с — см. комментарий у input.useGyro в game.js), но сам принцип остался
+   неверным для владельца: уведомление ПОВЕРХ игрового поля во время полёта — не то место и
+   не то время объяснять игроку про сигнал датчика, даже если срабатывает редко и честно.
+   Полёт продолжает вести себя ровно так же (руль плавно уходит к нулю при реальной потере,
+   input.js), просто без текста об этом на экране.
+   20.09.2026, тем же вечером (владелец: «если гироскоп молчит, это не мы решаем — надо
+   следить за этим, а не табличкой во время игры»): раз игрок ничего не должен видеть, а
+   реальную частоту настоящих (не ложных) потерь сигнала всё равно стоит знать нам —
+   событие тихо идёт в «Чёрный ящик»/BEACON вместо экрана, ни разу не показываясь игроку. */
+let gyroLostWasOn = false;
 function gyroLostTick(){
   const inFlight = typeof screenName!=='undefined' && screenName==='game'
     && typeof S!=='undefined' && S && S.running && !S.paused
     && typeof input!=='undefined';
   if (inFlight){
-    if (gyroLostWasOn && !input.useGyro) gyroLostShow();
+    if (gyroLostWasOn && !input.useGyro){
+      if (typeof BB!=='undefined') BB.log('gyro','lost'); // v1.99.7 «Чёрный ящик» — та же лента, что у остальных тихих событий гироскопа (chan steer/zero restore)
+      if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('gyro_lost_in_flight', gyroSrc||'?');
+    }
     gyroLostWasOn = input.useGyro;
   } else {
     gyroLostWasOn = false; // не в полёте — следующий вход не должен решить, что сигнал только что пропал
   }
   requestAnimationFrame(gyroLostTick);
-}
-function gyroLostShow(){
-  const el = $('gyroLostMsg'); if(!el) return;
-  el.textContent = L.gyroLostMsg;
-  el.classList.add('show');
-  clearTimeout(gyroLostHideT);
-  gyroLostHideT = setTimeout(()=>el.classList.remove('show'), 1500);
 }
 requestAnimationFrame(gyroLostTick);
 
