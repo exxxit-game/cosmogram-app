@@ -588,7 +588,10 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['ptMoodLbl',L.ptMoodLbl],['ptMoodHint',L.ptMoodHint],['forgeFavLbl',L.forgeFavLbl],['forgeFavHint',L.forgeFavHint],
     // 15.09.2026 (аудит шага «Сохранить»): те же 3 заголовка группы — тоже были только на
     // русском, id у них раньше не было вовсе (index.html), добавлены вместе с этим фиксом.
-    ['forgeHardSpoilerGrpT',L.forgeHardSpoilerGrpT],['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
+    // 20.09.2026: forgeHardSpoilerGrpT убран из цикла — сам элемент (общий заголовок-спойлер)
+    // удалён при переходе на 3 чипа, ключ L.forgeHardSpoilerGrpT остался в i18n.js неиспользуемым.
+    ['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
+    ['forgeDiffMeterLbl',L.forgeDiffMeterLbl],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];
@@ -696,6 +699,7 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
   if(typeof ptRender==='function'){ ptSelIdx=-1; ptRender(); if(typeof ptRenderRuler==='function') ptRenderRuler(); if(typeof ptSyncLenUI==='function') ptSyncLenUI(); if(typeof ptSyncColorUI==='function') ptSyncColorUI(); } // 01.09.2026: пресет/код друга сменил forgeCfg.sc/.l/.h1/.h2/.dens — лента и ползунки Партитуры должны это увидеть
   if(typeof ptSyncTrayAvailability==='function') ptSyncTrayAvailability(); // 02.09.2026: «Состав» мог включить/выключить вид — лоток стикеров должен это честно показать
+  if(typeof forgeUpdateDiffMeter==='function') forgeUpdateDiffMeter(); // 20.09.2026: кольцо «Сложность неба» — та же общая точка выхода, что и остальные виджеты
 }
 function forgeOpen(){ forgeCfg=forgeSanitize(Store.get('forgeLast',null)||forgeCfg); forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill();
   forgeFavRowSync(); // 10.09.2026: свежий список избранного при каждом входе — мог измениться в другой вкладке/сессии
@@ -821,32 +825,28 @@ wireOnLocal('forgeStepDots','click',function(ev){
    визуально наложение. Тот же класс бага и то же лекарство, что уже нашли для тоста
    (ptShowToast, страж 324) — реальная высота quickEdit меряется и резервируется padding-bottom
    на скролл-контейнере, а не подбирается числом. Один и тот же вызов после КАЖДОГО действия,
-   которое может изменить любую из двух высот (открыть/закрыть Точечную настройку, открыть/
-   закрыть любой вложенный подспойлер, выбрать/снять точку — quickEdit меняет .show). */
+   которое может изменить любую из двух высот (открыть/закрыть любой из трёх чипов Точечной
+   настройки, выбрать/снять точку — quickEdit меняет .show).
+   20.09.2026, продолжение (чипы вместо единого спойлера): раньше проверялся один общий
+   forgeHardSpoilerGrp.open — теперь его нет, «открыта Точечная настройка» стало «открыт хотя бы
+   один из трёх независимых чипов», проверяем все три явно. */
+const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeObstGrp'];
 function forgeReserveForQuickEdit(){
   const scrBody=document.querySelector('#forgeScreen .scrBody'); if(!scrBody) return;
   const qe=$('ptQuickEdit');
-  const spoilerOpen=!!(document.getElementById('forgeHardSpoilerGrp')?.classList.contains('open'));
+  const fineOpen=FORGE_FINE_CHIP_IDS.some(function(id){ return document.getElementById(id)?.classList.contains('open'); });
   const qeShown=!!(qe && qe.classList.contains('show'));
-  if(qeShown && spoilerOpen){
+  if(qeShown && fineOpen){
     scrBody.style.paddingBottom=(qe.getBoundingClientRect().height+16)+'px';
   } else {
     scrBody.style.paddingBottom='';
   }
 }
-/* 09.09.2026 «Точечная настройка»: одиночный спойлер (не аккордеон с несколькими панелями,
-   как SET_GRPS в ui.js) — просто открыть/закрыть свою же панель, тем же классом .setGrp.spoiler,
-   что уже используется в Настройках/«Список точек» (Расстановка). */
-wireOnLocal('forgeHardSpoilerGrp','click',function(){
-  sfx.click(); haptic('light');
-  this.classList.toggle('open');
-  const p=$('forgeHardSpoilerPanel'); if(p) p.classList.toggle('hidden');
-  requestAnimationFrame(forgeReserveForQuickEdit);
-});
 /* 17.09.2026 (владелец, «Делай», макет konstruktor-tochechnaya-nastroyka-vlozhennye-spoylery-
-   17-09-2026.html): три вложенных спойлера внутри «Точечной настройки» (Темп неба/Старт/
-   Преграды) — не аккордеон-радио, каждый переключается независимо, тот же приём, что у
-   forgeHardSpoilerGrp самого выше, просто три отдельных экземпляра. */
+   17-09-2026.html): три подраздела «Точечной настройки» (Темп неба/Старт/Преграды) — не
+   аккордеон-радио, каждый переключается независимо. 20.09.2026: триггер стал компактным чипом
+   (.forgeFineChip) вместо строки-спойлера — сама функция не изменилась, ей всё равно, какой
+   именно элемент открывает/закрывает панель. */
 function forgeWireSubSpoiler(grpId, panelId){
   wireOnLocal(grpId,'click',function(){
     sfx.click(); haptic('light');
@@ -1419,6 +1419,26 @@ function forgeDifficultyScore(cfg){
 function forgeDifficultyBucket(cfg){ // 1=Просто, 2=Средне, 3=Сложно
   const s=forgeDifficultyScore(cfg);
   return s<WORKSHOP_DIFF_T1 ? 1 : (s<WORKSHOP_DIFF_T2 ? 2 : 3);
+}
+/* 20.09.2026 «Сложность неба» на шаге «Карта» (владелец, живой инжект-макет, «Да» на «Планета
+   с кольцом»): та же формула/пороги, что уже проверены у фильтра Мастерской выше — не вторая
+   отдельная система оценки. Кольцо — дуга через stroke-dasharray, окружность r=13 (см. index.html
+   #forgeDiffRingArc), fraction=bucket/3 (1/3, 2/3, 3/3 заполнения). Цвета — реальные токены игры
+   (--ok/--gold-hi/--danger), не новые. Вызывается из forgeSyncWidgets() (общая точка конфиг→
+   виджеты) и напрямую из 'input' ползунков Плотность/Скорость/Солнечный ветер (те трое, в отличие
+   от Жизней/Волны/Бонусов/Преград, не проходят через forgeSyncWidgets на каждое движение —
+   см. их wireOnLocal ниже). */
+const FORGE_DIFF_R=13, FORGE_DIFF_C=2*Math.PI*FORGE_DIFF_R;
+const FORGE_DIFF_COLOR={1:'var(--ok)',2:'var(--gold-hi)',3:'var(--danger)'};
+function forgeUpdateDiffMeter(){
+  const arc=$('forgeDiffRingArc'), val=$('forgeDiffMeterVal'); if(!arc||!val) return;
+  const bucket=forgeDifficultyBucket(forgeCfg);
+  const color=FORGE_DIFF_COLOR[bucket];
+  const label=bucket===1?L.workshopFilterDiffEasy:(bucket===2?L.workshopFilterDiffMed:L.workshopFilterDiffHard);
+  const dash=FORGE_DIFF_C*(bucket/3);
+  arc.style.stroke=color;
+  arc.style.strokeDasharray=dash+' '+(FORGE_DIFF_C-dash);
+  val.textContent=label; val.style.color=color;
 }
 
 let workshopFilterOpen=false;
@@ -2113,9 +2133,9 @@ wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); })
    другой виджет, пресет, смена языка) возвращал слайдер на старое значение: правка автора
    молча пропадала, а живое мини-небо на неё вообще не отзывалось. Здесь намеренно НЕ зовём
    forgeSyncWidgets — он переписал бы value прямо под пальцем; хватает подписи и неба. */
-wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.value=this.value; forgeSkyKick(); });
-wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.value=this.value; forgeSkyKick(); });
-wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.value=this.value; }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика; 16.09.2026: .value, не .textContent (реальный input)
+wireOnLocal('forgeDen', 'input', function(){ forgeCfg.d=+this.value; const v=$('forgeDenV'); if(v) v.value=this.value; forgeSkyKick(); forgeUpdateDiffMeter(); });
+wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('forgeSpdV'); if(v) v.value=this.value; forgeSkyKick(); forgeUpdateDiffMeter(); });
+wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.value=this.value; forgeUpdateDiffMeter(); }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика; 16.09.2026: .value, не .textContent (реальный input); 20.09.2026: живое кольцо «Сложность неба» — эти три ползунка не проходят через forgeSyncWidgets на каждое движение, зовём отдельно
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
 wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; });

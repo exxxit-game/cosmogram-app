@@ -179,6 +179,7 @@ const I18N = {
     // численно на 8 пресетах перед кодом): кнопка отдельно слева от ряда сортировки (не 7-й чип).
     workshopFilterBtn:'Фильтр', workshopFilterDiffAny:'Любая', workshopFilterDiffEasy:'Просто',
     workshopFilterDiffMed:'Средне', workshopFilterDiffHard:'Сложно',
+    forgeDiffMeterLbl:'Сложность неба', // 20.09.2026: живое кольцо на шаге «Карта», те же слова buckets (workshopFilterDiffEasy/Med/Hard), что уже выше у фильтра Мастерской
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
     forgeLives:'Жизни', forgeWave:'Стартовая жара',
     forgeWaveHint:'С какой волны начинаешь — выше значит больше видов препятствий сразу',
@@ -248,7 +249,7 @@ const I18N = {
     grAnonLabel:'Аноним', grReported:'Спасибо, мы посмотрим', grSendFail:'Не получилось — попробуйте ещё раз',
     grSent:'Звезда зажглась. Спасибо!',
     grNameShownLbl:'Покажется как: ', grNameFallback:'Пилот',
-    feedbackHint:'Идея или ошибка. Читаю каждое сообщение. С уважением, EXXXIT.', // 08.09.2026, владелец: «создатель игры» → подпись студии, как на карточке ниже на этом же экране; 16.09.2026, владелец: убрал «вопрос» — форма не отвечает игроку, не стоит обещать словом то, чего нет
+    feedbackHint:'Идея или ошибка? Каждое сообщение помогает не только вам — оно делает небо чуть лучше для всех. Спасибо! — EXXXIT', // 08.09.2026, владелец: «создатель игры» → подпись студии; 16.09.2026: убрал «вопрос»; 20.09.2026, владелец, дословно (текст присланный им же, не мой черновик): текст был «сырой, нету в нём дружелюбия» — новый смысл «мы одной крови»: сообщив об ошибке, ты чинишь её не только себе, а сразу всем игрокам, кто с ней столкнётся
     forgeFavHint:'Нажми значок над превью — сохранишь это небо сюда, до 20 штук', // 17.09.2026, «Делай»: разовая подсказка у пустого ряда «Избранное», тот же приём, что у кошелька — не постоянный текст; число поднято вместе с FORGE_FAV_MAX 7→20 в тот же вечер
     forgeRecapLen:'Длина', forgeRecapPts:'Точек', ptEmptyHint:'поставь первую точку',
     feedbackPlaceholder:'Опишите, что случилось или добавьте автодиагностику и скриншот.', feedbackSend:'Отправить', // 08.09.2026, владелец: подсказка теперь явно называет обе кнопки ниже — не обязательно писать текст, если приложить диагностику/снимок; 13.09.2026, владелец: точка в конце фразы
@@ -423,6 +424,7 @@ const I18N = {
     forgeGrpHard:'Difficulty', // v1.69.0
     workshopFilterBtn:'Filter', workshopFilterDiffAny:'Any', workshopFilterDiffEasy:'Easy',
     workshopFilterDiffMed:'Medium', workshopFilterDiffHard:'Hard',
+    forgeDiffMeterLbl:'Sky difficulty',
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
     forgeLives:'Lives', forgeWave:'Starting heat',
     forgeWaveHint:'Which wave you start at — higher means more obstacle types right away',
@@ -484,7 +486,7 @@ const I18N = {
     grAnonLabel:'Anonymous', grReported:'Thanks, we\'ll take a look', grSendFail:'Didn\'t go through — try again',
     grSent:'Your star is lit. Thank you!',
     grNameShownLbl:'Will show as: ', grNameFallback:'Pilot',
-    feedbackHint:'An idea or a bug. I read every message. — The game’s creator',
+    feedbackHint:'Got a bug or an idea? Every message helps — not just you, it makes the sky a little better for everyone. Thank you! — EXXXIT', // 20.09.2026: same warmer text as ru, see comment there
     forgeFavHint:'Tap the icon above the preview to save this sky here — up to 20',
     forgeRecapLen:'Length', forgeRecapPts:'Points', ptEmptyHint:'place your first point',
     feedbackPlaceholder:'Describe what happened', feedbackSend:'Send',
@@ -642,6 +644,7 @@ const I18N = {
     forgeGrpHard:'Dificultad',
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Cualquiera', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Media', workshopFilterDiffHard:'Difícil',
+    forgeDiffMeterLbl:'Dificultad del cielo',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'En qué oleada empiezas — más alto significa más tipos de obstáculos de inmediato',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
@@ -698,7 +701,7 @@ const I18N = {
     grAnonLabel:'Anónimo', grReported:'Gracias, lo revisaremos', grSendFail:'No se pudo enviar — inténtalo de nuevo',
     grSent:'Tu estrella se encendió. ¡Gracias!',
     grNameShownLbl:'Se mostrará como: ', grNameFallback:'Piloto',
-    feedbackHint:'Una idea o un error. Leo cada mensaje. Atentamente, el creador del juego.',
+    feedbackHint:'¿Una idea o un error? Cada mensaje ayuda — no solo a ti, hace el cielo un poco mejor para todos. ¡Gracias! — EXXXIT', // 20.09.2026: mismo texto más cálido que ru, ver comentario ahí
     forgeFavHint:'Toca el icono sobre la vista previa para guardar este cielo aquí — hasta 20',
     forgeRecapLen:'Longitud', forgeRecapPts:'Puntos', ptEmptyHint:'pon tu primer punto',
     feedbackPlaceholder:'Describe qué pasó', feedbackSend:'Enviar',
@@ -875,6 +878,7 @@ const I18N = {
     forgeGrpHard:'Dificuldade',
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Qualquer', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Média', workshopFilterDiffHard:'Difícil',
+    forgeDiffMeterLbl:'Dificuldade do céu',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'Em que onda você começa — mais alto significa mais tipos de obstáculos de uma vez',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
@@ -931,7 +935,7 @@ const I18N = {
     grAnonLabel:'Anónimo', grReported:'Obrigado, vamos verificar', grSendFail:'Não foi possível enviar — tenta de novo',
     grSent:'A tua estrela acendeu. Obrigado!',
     grNameShownLbl:'Vai aparecer como: ', grNameFallback:'Piloto',
-    feedbackHint:'Uma ideia ou um erro. Leio cada mensagem. Atenciosamente, o criador do jogo.',
+    feedbackHint:'Uma ideia ou um erro? Cada mensagem ajuda — não só você, torna o céu um pouco melhor para todos. Obrigado! — EXXXIT', // 20.09.2026: mesmo texto mais caloroso que ru, ver comentário lá
     forgeFavHint:'Toque no ícone acima da prévia para salvar este céu aqui — até 20',
     forgeRecapLen:'Comprimento', forgeRecapPts:'Pontos', ptEmptyHint:'coloque seu primeiro ponto',
     feedbackPlaceholder:'Descreva o que aconteceu', feedbackSend:'Enviar',
@@ -1104,6 +1108,7 @@ const I18N = {
     forgeGrpHard:'Difficulté',
     workshopFilterBtn:'Filtre', workshopFilterDiffAny:'Toutes', workshopFilterDiffEasy:'Facile',
     workshopFilterDiffMed:'Moyenne', workshopFilterDiffHard:'Difficile',
+    forgeDiffMeterLbl:'Difficulté du ciel',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
     forgeLives:'Vies', forgeWave:'Intensité de départ',
     forgeWaveHint:'À quelle vague tu commences — plus haut veut dire plus de types d’obstacles tout de suite',
@@ -1165,7 +1170,7 @@ const I18N = {
     grAnonLabel:'Anonyme', grReported:'Merci, on va vérifier', grSendFail:'Ça n’a pas marché — réessaie',
     grSent:'Ton étoile s’est allumée. Merci !',
     grNameShownLbl:'Affiché comme : ', grNameFallback:'Pilote',
-    feedbackHint:'Une idée ou un bug. Je lis chaque message. Bien à toi, le créateur du jeu.',
+    feedbackHint:'Une idée ou un bug ? Chaque message aide — pas seulement toi, il rend le ciel un peu meilleur pour tout le monde. Merci ! — EXXXIT', // 20.09.2026: même texte plus chaleureux que ru, voir commentaire là-bas
     forgeFavHint:'Appuie sur l’icône au-dessus de l’aperçu pour enregistrer ce ciel ici — jusqu’à 20',
     forgeRecapLen:'Longueur', forgeRecapPts:'Points', ptEmptyHint:'place ton premier point',
     feedbackPlaceholder:'Décris ce qui s\'est passé', feedbackSend:'Envoyer',
