@@ -1328,9 +1328,14 @@ let workshopLikedOnly=false;
 //    пресетах ДО того, как попасть в код (не с ходу вписаны).
 // 3) препятствия — те же 8 видов/цветов, что уже на карточке трассы (js/partitura.js), тап — исключить.
 const WORKSHOP_FILTER_LEN_MIN=1000, WORKSHOP_FILTER_LEN_MAX=25000, WORKSHOP_FILTER_LEN_STEP=250;
-// Слайдер физически идёт до 25250 (на один шаг дальше настоящего потолка 25000) — последнее деление
-// читается как «бесконечная» (l=0 в реальном конфиге), тот же приём, что уже был на макете («25000+»).
-const WORKSHOP_FILTER_LEN_INF=WORKSHOP_FILTER_LEN_MAX+WORKSHOP_FILTER_LEN_STEP;
+// 20.09.2026 (владелец, живой разговор): «∞»-деление убрано — обоснование («старые уже
+// разосланные коды друзей с бесконечной трассой») было выдумано, не проверено; живая проверка
+// в тот же вечер (Supabase, public.forge_workshop) — 0 строк, ни одной опубликованной трассы
+// вообще, владелец подтвердил, что и по прямой ссылке другу ни разу подтверждённо не сработало.
+// WORKSHOP_FILTER_LEN_INF остаётся именем константы (её ждёт страж 323 и остальной код как
+// «сентинел полного диапазона»), но теперь РАВНА настоящему потолку — деления «правее максимума»
+// больше нет, слайдер физически кончается на 25000, как и потолок создания трассы (ptLenSlider).
+const WORKSHOP_FILTER_LEN_INF=WORKSHOP_FILTER_LEN_MAX;
 
 // Вес «опасности» вида препятствия — из реальной механики game.js, не придумано: ловец наводится
 // вдвое сильнее мины (комментарий в game.js прямым текстом), ворота — точный «дышащий» просвет
@@ -1385,7 +1390,7 @@ function workshopFilterMatches(t){
   }
   return true;
 }
-function workshopFilterLenLabel(v){ return v>=WORKSHOP_FILTER_LEN_INF ? (L.forgeInf||'∞') : (v+' '+'м'); }
+function workshopFilterLenLabel(v){ return v+' '+'м'; } // 20.09.2026: «∞»-деление убрано, см. комментарий у WORKSHOP_FILTER_LEN_INF выше
 function workshopFilterUpdateSliderUI(){
   const min=$('workshopFilterLenMin'), max=$('workshopFilterLenMax');
   if(!min||!max) return;
