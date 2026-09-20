@@ -331,9 +331,13 @@ function ptRenderPins(justPoppedIdx){
 function ptRenderPanel(){
   const qe=$('ptQuickEdit'); if(!qe) return;
   const pins=ptPins();
-  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); return; }
+  // 20.09.2026: quickEdit меняет .show здесь в обе стороны независимо от «Точечной настройки» —
+  // тот же резерв места, что и у неё (forgeReserveForQuickEdit, forge.js), должен пересчитаться
+  // и тут, иначе порядок «сперва открыл точку, потом настройку» не покрыт.
+  if(ptSelIdx<0||!pins[ptSelIdx]){ qe.classList.remove('show'); if(typeof forgeReserveForQuickEdit==='function') requestAnimationFrame(forgeReserveForQuickEdit); return; }
   const p=pins[ptSelIdx];
   qe.classList.add('show');
+  if(typeof forgeReserveForQuickEdit==='function') requestAnimationFrame(forgeReserveForQuickEdit);
   // 16.09.2026: панель — нижний лист (position:fixed, index.html), ptPositionBubble() (якорила
   // её у самой точки) больше не нужна и удалена — точку по-прежнему видно по .pin.sel на ленте.
   const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;

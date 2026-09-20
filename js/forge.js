@@ -812,6 +812,28 @@ wireOnLocal('forgeStepDots','click',function(ev){
   const dot=ev.target.closest('.forgeStepDot'); if(!dot||!dot.classList.contains('done')) return; // вперёд без подтверждения не прыгаем
   sfx.click(); haptic('light'); forgeSubTabSet(dot.dataset.sub);
 });
+/* 20.09.2026 «Точечная настройка накрыта панелью точки» (владелец, живой телефон, прямое
+   слово, поймано вместе в реальном времени — см. feedback_zhivoy_rezhim_telefon_vmeste_udobno):
+   `.panel.quickEdit` (index.html, position:fixed, низ экрана) не знает о существовании
+   раскрывшейся «Точечной настройки» — та растёт в обычном потоке `.scrBody` (flex:1 1 auto,
+   overflow-y:auto), но `.scrBody` тоже не знает о quickEdit, не резервирует под неё место.
+   Итог, замерено живьём: зазор между открывшейся строкой и краем панели точки — ~9px,
+   визуально наложение. Тот же класс бага и то же лекарство, что уже нашли для тоста
+   (ptShowToast, страж 324) — реальная высота quickEdit меряется и резервируется padding-bottom
+   на скролл-контейнере, а не подбирается числом. Один и тот же вызов после КАЖДОГО действия,
+   которое может изменить любую из двух высот (открыть/закрыть Точечную настройку, открыть/
+   закрыть любой вложенный подспойлер, выбрать/снять точку — quickEdit меняет .show). */
+function forgeReserveForQuickEdit(){
+  const scrBody=document.querySelector('#forgeScreen .scrBody'); if(!scrBody) return;
+  const qe=$('ptQuickEdit');
+  const spoilerOpen=!!(document.getElementById('forgeHardSpoilerGrp')?.classList.contains('open'));
+  const qeShown=!!(qe && qe.classList.contains('show'));
+  if(qeShown && spoilerOpen){
+    scrBody.style.paddingBottom=(qe.getBoundingClientRect().height+16)+'px';
+  } else {
+    scrBody.style.paddingBottom='';
+  }
+}
 /* 09.09.2026 «Точечная настройка»: одиночный спойлер (не аккордеон с несколькими панелями,
    как SET_GRPS в ui.js) — просто открыть/закрыть свою же панель, тем же классом .setGrp.spoiler,
    что уже используется в Настройках/«Список точек» (Расстановка). */
@@ -819,6 +841,7 @@ wireOnLocal('forgeHardSpoilerGrp','click',function(){
   sfx.click(); haptic('light');
   this.classList.toggle('open');
   const p=$('forgeHardSpoilerPanel'); if(p) p.classList.toggle('hidden');
+  requestAnimationFrame(forgeReserveForQuickEdit);
 });
 /* 17.09.2026 (владелец, «Делай», макет konstruktor-tochechnaya-nastroyka-vlozhennye-spoylery-
    17-09-2026.html): три вложенных спойлера внутри «Точечной настройки» (Темп неба/Старт/
@@ -829,6 +852,7 @@ function forgeWireSubSpoiler(grpId, panelId){
     sfx.click(); haptic('light');
     this.classList.toggle('open');
     const p=$(panelId); if(p) p.classList.toggle('hidden');
+    requestAnimationFrame(forgeReserveForQuickEdit);
   });
 }
 forgeWireSubSpoiler('forgeTempoGrp','forgeTempoPanel');
