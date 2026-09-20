@@ -592,6 +592,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     // удалён при переходе на 3 чипа, ключ L.forgeHardSpoilerGrpT остался в i18n.js неиспользуемым.
     ['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgeDiffMeterLbl',L.forgeDiffMeterLbl],
+    ['ptTrayHint',L.ptTrayHint],['forgeObstHint',L.forgeObstHint],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];

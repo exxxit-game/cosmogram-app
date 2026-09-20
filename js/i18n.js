@@ -180,6 +180,11 @@ const I18N = {
     workshopFilterBtn:'Фильтр', workshopFilterDiffAny:'Любая', workshopFilterDiffEasy:'Просто',
     workshopFilterDiffMed:'Средне', workshopFilterDiffHard:'Сложно',
     forgeDiffMeterLbl:'Сложность неба', // 20.09.2026: живое кольцо на шаге «Карта», те же слова buckets (workshopFilterDiffEasy/Med/Hard), что уже выше у фильтра Мастерской
+    // 20.09.2026 (владелец, живой отчёт: «в двух местах одно и то же, непонятно, что где
+    // означает» — лоток и «Преграды» показывают одни 8 значков, но с разным смыслом): короткая
+    // подпись-разница под каждым блоком, формулировку предложил ассистент, владелец подтвердил «Да».
+    ptTrayHint:'Перетащи сюда — препятствие встанет ровно в эту точку трассы.',
+    forgeObstHint:'Выбранные виды будут случайно появляться по всей трассе — не про конкретную точку.',
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
     forgeLives:'Жизни', forgeWave:'Стартовая жара',
     forgeWaveHint:'С какой волны начинаешь — выше значит больше видов препятствий сразу',
@@ -425,6 +430,8 @@ const I18N = {
     workshopFilterBtn:'Filter', workshopFilterDiffAny:'Any', workshopFilterDiffEasy:'Easy',
     workshopFilterDiffMed:'Medium', workshopFilterDiffHard:'Hard',
     forgeDiffMeterLbl:'Sky difficulty',
+    ptTrayHint:'Drag here — the obstacle lands at this exact point on the track.',
+    forgeObstHint:'Selected kinds appear randomly along the whole track — not about one exact point.',
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
     forgeLives:'Lives', forgeWave:'Starting heat',
     forgeWaveHint:'Which wave you start at — higher means more obstacle types right away',
@@ -645,6 +652,8 @@ const I18N = {
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Cualquiera', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Media', workshopFilterDiffHard:'Difícil',
     forgeDiffMeterLbl:'Dificultad del cielo',
+    ptTrayHint:'Arrastra aquí — el obstáculo se coloca justo en este punto de la pista.',
+    forgeObstHint:'Los tipos elegidos aparecen al azar en toda la pista — no se trata de un punto concreto.',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'En qué oleada empiezas — más alto significa más tipos de obstáculos de inmediato',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
@@ -879,6 +888,8 @@ const I18N = {
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Qualquer', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Média', workshopFilterDiffHard:'Difícil',
     forgeDiffMeterLbl:'Dificuldade do céu',
+    ptTrayHint:'Arraste aqui — o obstáculo fica exatamente neste ponto da pista.',
+    forgeObstHint:'Os tipos escolhidos aparecem aleatoriamente por toda a pista — não é sobre um ponto específico.',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'Em que onda você começa — mais alto significa mais tipos de obstáculos de uma vez',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
@@ -1109,6 +1120,8 @@ const I18N = {
     workshopFilterBtn:'Filtre', workshopFilterDiffAny:'Toutes', workshopFilterDiffEasy:'Facile',
     workshopFilterDiffMed:'Moyenne', workshopFilterDiffHard:'Difficile',
     forgeDiffMeterLbl:'Difficulté du ciel',
+    ptTrayHint:"Glisse ici — l'obstacle se place exactement à ce point de la piste.",
+    forgeObstHint:'Les types choisis apparaissent au hasard sur toute la piste — pas à un point précis.',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
     forgeLives:'Vies', forgeWave:'Intensité de départ',
     forgeWaveHint:'À quelle vague tu commences — plus haut veut dire plus de types d’obstacles tout de suite',

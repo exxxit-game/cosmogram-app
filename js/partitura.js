@@ -43,15 +43,31 @@ const PT_ICON_SVG={
   // у «Ловца» два тёмных КВАДРАТИКА внутри тела читаются как глаза, у «Ворот» два круглых
   // пилона тоже читаются как глаза (владелец сам это заметил и указал) — мине владелец явно
   // попросил КРУГЛЫЕ глаза, не квадратные, «разделять их», не повторять форму ловца один в один.
-  mine:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="12" x2="22" y2="12"/><line x1="16.2" y1="16.2" x2="19.1" y2="19.1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="7.8" y1="16.2" x2="4.9" y2="19.1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="7.8" y1="7.8" x2="4.9" y2="4.9"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="16.2" y1="7.8" x2="19.1" y2="4.9"/></g><circle cx="10.2" cy="11.5" r="1.3" fill="#2a2230"/><circle cx="13.8" cy="11.5" r="1.3" fill="#2a2230"/></svg>',
+  // 20.09.2026, продолжение (тот же живой отчёт): на лотке (крупный размер) глаза читаются
+  // хорошо, но в фильтре Мастерской (16px) те же самые r=1.3 глаза почти теряются среди
+  // шипов — не другой SVG, тот же самый, просто относительно мелкая деталь на маленьком
+  // размере. Увеличены (r 1.3→1.7, разведены чуть шире, чтобы не слиться) — тот же приём,
+  // что уже дал «Воротам» читаемые глаза при этом фиксе (см. gate ниже).
+  mine:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="12" x2="22" y2="12"/><line x1="16.2" y1="16.2" x2="19.1" y2="19.1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="7.8" y1="16.2" x2="4.9" y2="19.1"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="7.8" y1="7.8" x2="4.9" y2="4.9"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="16.2" y1="7.8" x2="19.1" y2="4.9"/></g><circle cx="9.9" cy="11.5" r="1.7" fill="#2a2230"/><circle cx="14.1" cy="11.5" r="1.7" fill="#2a2230"/></svg>',
   sat:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="10" y="9.5" width="4" height="5" rx="1" fill="currentColor"/><rect x="1.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><rect x="16.5" y="8.5" width="6" height="7" rx="1.3" fill="currentColor" opacity=".85"/><line x1="7.5" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="12" x2="16.5" y2="12" stroke="currentColor" stroke-width="1.6"/></svg>',
   comet:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="16" cy="8" r="3.4" fill="currentColor"/><path d="M14 10.2C10 12 5.5 15 2 21c5.5-2.6 9.5-5.3 12.6-9.4z" fill="currentColor" opacity=".55"/></svg>',
   // 17.09.2026 (владелец: «проверь каждую по факту»): было 3 концентрических кольца-мишень —
   // в полёте (render.js, ветка mine/seeker) ловец физически та же колючая сфера, что мина, просто
   // квадратные «глаза» вместо круглых, тупые шипы-штрихи вместо острых треугольных, плюс тонкое
   // внешнее кольцо-прицел (o.r+11). Иконка теперь повторяет ЭТУ форму, не отдельную мишень.
-  seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="12" cy="12" r="6.3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6"><line x1="12" y1="2.7" x2="12" y2="5.3"/><line x1="12" y1="18.7" x2="12" y2="21.3"/><line x1="2.7" y1="12" x2="5.3" y2="12"/><line x1="18.7" y1="12" x2="21.3" y2="12"/><line x1="5.6" y1="5.6" x2="7.4" y2="7.4"/><line x1="16.6" y1="16.6" x2="18.4" y2="18.4"/><line x1="18.4" y1="5.6" x2="16.6" y2="7.4"/><line x1="7.4" y1="16.6" x2="5.6" y2="18.4"/></g><rect x="9" y="10.3" width="2.4" height="2.4" fill="#2a2230"/><rect x="12.6" y="10.3" width="2.4" height="2.4" fill="#2a2230"/></svg>',
-  gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="19" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>'
+  // 20.09.2026: тот же фикс легибости, что у mine выше — квадратные глаза увеличены
+  // (2.4×2.4 → 3.2×3.2), центры не сдвинуты, чтобы не задеть уже проверенное позиционирование
+  // относительно колец/шипов.
+  seeker:'<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="12" cy="12" r="6.3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6"><line x1="12" y1="2.7" x2="12" y2="5.3"/><line x1="12" y1="18.7" x2="12" y2="21.3"/><line x1="2.7" y1="12" x2="5.3" y2="12"/><line x1="18.7" y1="12" x2="21.3" y2="12"/><line x1="5.6" y1="5.6" x2="7.4" y2="7.4"/><line x1="16.6" y1="16.6" x2="18.4" y2="18.4"/><line x1="18.4" y1="5.6" x2="16.6" y2="7.4"/><line x1="7.4" y1="16.6" x2="5.6" y2="18.4"/></g><rect x="8.6" y="9.9" width="3.2" height="3.2" fill="#2a2230"/><rect x="12.2" y="9.9" width="3.2" height="3.2" fill="#2a2230"/></svg>',
+  // 20.09.2026 (владелец, живой отчёт, дважды подряд, скрин реальной игры): «Ворота» тоже
+  // должны читаться как глаза (сам пилон = один зрачок), но иконка была ПОЛОЙ обводкой
+  // (fill:none) — вместо глаза просто «синее заходит», ни тела, ни зрачка. Сверено с реальным
+  // полётом (render.js:3407-3421, drawObstacle ветка 'gate'): там пилон — ЗАЛИТЫЙ круг
+  // (fillStyle='#3d5a80') с блеском-радужкой и мигающим тёмным зрачком, «тот же язык, что уже
+  // у Мины/Ловца» (комментарий 17.09.2026 в самом render.js). Иконка теперь повторяет эту
+  // форму: залитое тело пилона + тёмный зрачок (#2a2230 — тот же цвет глаз, что у mine/seeker
+  // выше, не новый), не выдумано заново.
+  gate:'<svg viewBox="0 0 24 24" width="22" height="22"><line x1="6" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="12" r="4.2" fill="currentColor"/><circle cx="19" cy="12" r="4.2" fill="currentColor"/><circle cx="5" cy="12" r="1.6" fill="#2a2230"/><circle cx="19" cy="12" r="1.6" fill="#2a2230"/></svg>'
 };
 /* 20.09.2026 (владелец, живой разговор + макет konstruktor-karta-tochechnaya-komfort-20-09-2026.html):
    «вес» значков в лотке (canvas ink%, живой замер на #ptTray) плясал 13.4%-41.2% при одинаковом

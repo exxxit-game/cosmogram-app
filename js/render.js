@@ -1199,16 +1199,35 @@ function fxCosNebula(ctx,sk,nowMs){ // Биполярная (hourglass) тума
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,0.6,0,6.283); ctx.fill();
   ctx.restore();
 }
+/* 20.09.2026 (владелец, живой скрин реальной игры: «сломаны спирали», рукава налезают друг на
+   друга) — раньше startAng каждого рукава выбирался ПОЛНОСТЬЮ случайно по всему кругу (rnd()*7,
+   больше 2π) при span до 1.3 рад (~74°) — при 7 рукавах суммарный охват (~378°) уже превышал
+   сам круг (360°), пересечения были почти неизбежны математически, не невезение одного сида.
+   Проверено численно (не на глаз, Node-скрипт с тем же mulberry32): 60 разных сидов подряд —
+   ни один не дал раскладку без пересечений, у сида 7 (тот, что в игре) было 5 пересекающихся
+   пар из 21. Фикс — SECTOR_W делит круг на 7 честных секторов, каждый рукав получает случайное
+   место и длину ТОЛЬКО внутри своего сектора (margin — отступ от соседей) — та же случайность
+   что и раньше, просто не через весь круг. Заодно span сужен (было 0.6-1.3, стало 0.32-0.66) —
+   короче, «отдельные обрывки», ближе к идее Flocculent — и радиус-полоса сужена (было +6.5,
+   стало +4.2), чтобы даже при пересечении секторов на стыке пересечение было маловероятным.
+   Перепроверено тем же Node-скриптом на новых числах: 200 сидов подряд, 0 пересекающихся пар
+   у всех, включая сид 7. Вращение с разной скоростью (дифференциальная ротация, ownSpeed) не
+   тронуто — рукава по-прежнему проходят близко друг к другу ВО ВРЕМЯ движения, это и есть смысл
+   эффекта, не баг; убрано только постоянное слипание с самого начала. */
 function fxCosGalaxyFloc(ctx,sk,nowMs){ // Flocculent — короткие рукава, каждый со своей скоростью (диф. ротация)
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%7000)/7000;
   const rnd=mulberry32(7);
+  const SECTOR_W=2*Math.PI/7, SECTOR_MARGIN=0.06;
   for(let i=0;i<7;i++){
-    const startAng=rnd()*7, startR=4.5+rnd()*3.5, span=0.6+rnd()*0.7;
+    const span=0.32+rnd()*0.34;
+    const maxOffset=Math.max(0,SECTOR_W-span-2*SECTOR_MARGIN);
+    const startAng=i*SECTOR_W+SECTOR_MARGIN+rnd()*maxOffset;
+    const startR=4.5+rnd()*3.5;
     const ownSpeed=1/(startR/13+0.3);
     ctx.save(); ctx.rotate(p*2*Math.PI*0.4*ownSpeed);
     ctx.beginPath();
-    for(let t=0;t<=1;t+=0.08){ const th=startAng+t*span, r=startR+t*6.5; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    for(let t=0;t<=1;t+=0.08){ const th=startAng+t*span, r=startR+t*4.2; const x=r*Math.cos(th), y=r*Math.sin(th); t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
     ctx.strokeStyle='hsla(200,70%,70%,.7)'; ctx.lineWidth=0.45; ctx.stroke();
     ctx.restore();
   }
