@@ -70,6 +70,7 @@ const I18N = {
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войдите, чтобы лететь в эстафете',
     relayMineTitle:'Статус', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом. 14.09.2026: заголовок сокращён с «Статус эстафет» до «Статус» — на --menu-buf:-15px «Статус эстафет» (14 симв.) не влезал по ширине даже переносом (см. modesTitle выше, тот же класс правки); слово и так уже само по себе используется как подпись кнопки на строку выше — контекст «эстафет» не теряется.
     relayMineWaiting:(n)=>'Ждёт этап '+n, relayMineDone:'Завершена', // 07.09.2026: судьба своего этапа после сдачи — раньше её нельзя было узнать вообще никак
+    relayMineExpired:'Не сложилась', // 20.09.2026 «Мягкое истечение»: та же логика, что у Дуэли (DUEL_TTL_MS, 30 дней) — цепочка, которую никто не подхватил, тихо перестаёт висеть «Ждёт» вечно
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Дайте имя', forgeDefName:'Небо пилота',
@@ -386,7 +387,7 @@ const I18N = {
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in to fly in the relay',
     relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
-    relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete',
+    relayMineWaiting:(n)=>'Waiting on leg '+n, relayMineDone:'Complete', relayMineExpired:'Didn\'t work out',
     relayFailStart:'Could not start the relay — try again',
     modeForge:'Builder', modeForgeD:'Build your run and share the code', // v1.68.0; 01.09.2026: unified name, was «Custom track»
     // 15.09.2026 (аудит): весь блок Мастерской/Галереи (Играть-вкладка Конструктора) и часть
@@ -607,7 +608,7 @@ const I18N = {
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión para volar en los relevos',
     relayMineTitle:'Estado', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
-    relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado',
+    relayMineWaiting:(n)=>'Esperando el tramo '+n, relayMineDone:'Completado', relayMineExpired:'No se logró',
     relayFailStart:'No se pudo iniciar el relevo — inténtalo de nuevo',
     modeForge:'Constructor', modeForgeD:'Arma tu vuelo y comparte el código', // 01.09.2026: nombre unificado, antes «Pista propia»
     forgeNeedRealRun:'Primero vuela este cielo de verdad — luego podrás publicarlo',
@@ -840,7 +841,7 @@ const I18N = {
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre para voar no revezamento',
     relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
-    relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído',
+    relayMineWaiting:(n)=>'Aguardando o trecho '+n, relayMineDone:'Concluído', relayMineExpired:'Não deu certo',
     relayFailStart:'Não deu para começar o revezamento — tente de novo',
     modeForge:'Construtor', modeForgeD:'Monte seu voo e compartilhe o código', // 01.09.2026: nome unificado, antes «Pista própria»
     forgeNeedRealRun:'Primeiro voa este céu de verdade — depois podes publicá-lo',
@@ -1070,7 +1071,7 @@ const I18N = {
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi pour voler dans le relais',
     relayMineTitle:'État', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
-    relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé',
+    relayMineWaiting:(n)=>'En attente de l’étape '+n, relayMineDone:'Terminé', relayMineExpired:'N’a pas abouti',
     relayFailStart:'Impossible de démarrer le relais — réessaie',
     modeForge:'Constructeur', modeForgeD:'Compose ton vol et partage le code', // 01.09.2026: nom unifié, avant «Trace personnalisée»
     forgeNeedRealRun:"D'abord vole vraiment ce ciel — ensuite tu pourras le publier",

@@ -3986,7 +3986,13 @@ function renderRelayMine(){
     if (!d.chains || !d.chains.length){ list.innerHTML='<div class="topMsg">'+L.relayMineEmpty+'</div>'; return; }
     list.innerHTML=d.chains.map(function(c){
       const names=(c.legs||[]).map(function(l){ return escapeHtml(l.name||'?'); }).join(' → ');
-      const statusTxt = c.status==='done' ? L.relayMineDone : L.relayMineWaiting(c.leg);
+      // 20.09.2026 «Мягкое истечение» (владелец, прямое слово — переворачивает решение
+      // 07.09.2026 «цепочка держится вечно», см. AI-DECISION-REGISTRY): тот же срок, что у
+      // Дуэли (DUEL_TTL_MS), тот же дух — никого не обвиняем, просто честно перестаём висеть
+      // «Ждёт» вечно. Ничего не меняет в relay_get_open (кому сервер предлагает подхватить
+      // цепочку) — только в том, что видит здесь игрок, который уже вложился в свой этап.
+      const expired = c.status==='open' && c.updated_at && (Date.now()-new Date(c.updated_at).getTime())>DUEL_TTL_MS;
+      const statusTxt = c.status==='done' ? L.relayMineDone : (expired ? L.relayMineExpired : L.relayMineWaiting(c.leg));
       return '<div class="relayMineRow'+(c.status==='done'?' done':'')+'">'
         +'<div class="relayMineNames">'+names+'</div>'
         +'<div class="relayMineMeta"><span class="relayMineSc">'+fmtN(c.score)+'</span><span class="relayMineStatus">'+statusTxt+'</span></div>'
