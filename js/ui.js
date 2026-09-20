@@ -509,13 +509,18 @@ function heroRecordFor(cat){
   return { val:0, isTime:false };
 }
 function heroRecordBadgesFill(){
-  [['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSpeedrun','speedrun'],
-   ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(function(pair){
+  // 20.09.2026 (владелец: «добавили игре жизни» — перенести дух ленты Мастерской на карточки
+  // режимов): лента (recRibbon*) показывается/прячется тем же самым условием r.val>0, что уже
+  // решает видимость бейджа рядом — один источник истины, не второй независимый флаг.
+  [['recBadgeClassic','touch','recRibbonClassic'],['recBadgeDaily','daily','recRibbonDaily'],
+   ['recBadgeSpeedrun','speedrun','recRibbonSpeedrun'],['recBadgeCaravan','caravan','recRibbonCaravan'],
+   ['recBadgeSlalom','slalom','recRibbonSlalom'],['recBadgeBiathlon','biathlon','recRibbonBiathlon']].forEach(function(pair){
     const el=$(pair[0]); if(!el) return;
     const r=heroRecordFor(pair[1]);
     const span=el.querySelector('span');
-    if(r.val>0){ if(span) span.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); }
-    else el.classList.add('hidden');
+    const ribbon=$(pair[2]);
+    if(r.val>0){ if(span) span.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); if(ribbon) ribbon.classList.remove('hidden'); }
+    else { el.classList.add('hidden'); if(ribbon) ribbon.classList.add('hidden'); }
   });
 }
 /* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой
