@@ -46,6 +46,22 @@ function workshopRibbonCharClass(code){
   for(let i=0;i<code.length;i++){ h=((h<<5)+h+code.charCodeAt(i))|0; }
   return WORKSHOP_RIBBON_CHARS[Math.abs(h)%WORKSHOP_RIBBON_CHARS.length];
 }
+/* 20.09.2026 «Разные при каждом заходе» (владелец, прямое слово — переворачивает решение
+   того же дня «детерминировано по коду»): «любой из двенадцати, каждый раз по-разному... но
+   чтобы не одинаковые были, если на одном экране» — трасса больше не привязана навсегда к
+   одному характеру; вместо этого один общий перетасованный набор на весь текущий показ списка,
+   раздаётся по кругу — при 12 характерах и ≤12 одновременно видимых лент повторов не бывает
+   вообще, а сам порядок меняется заново при каждом workshopRenderList(). workshopRibbonCharClass()
+   выше оставлена как есть (страж 318 её тоже проверяет отдельно) — просто больше не вызывается
+   из рендера списка. Fisher-Yates, свой источник случайности не нужен — Math.random() тут не
+   про честность результата, чисто украшение. */
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    const tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+  }
+  return arr;
+}
 const FORGE_LENS=[1000,1500,4000,5000,0]; // 0 = бесконечная; 30.08.2026 (владелец): 500 снят — «почти нечего лететь», 1000 стал новым минимумом; 2500 стал 5000 — «мало»
 const FORGE_SKYS=[0,60,120,180,240,300]; // сдвиг оттенка неба: синее → индиго → фиолет → пурпур → маджента → роза
 /* v1.282.23 (партия 22): forgeSkyLoop() искал свой экран через getElementById на КАЖДОМ
@@ -1683,15 +1699,23 @@ function workshopRenderList(){
     // звезда/лайк/инфо/[Закрепить/Скрыть] — один ряд наверху; имя — над значками препятствий
     // внизу слева; Полёт/Изменить — столбиком в правом нижнем углу. Подробности — у самой
     // разметки ниже и в CSS index.html (.wRow/.wBanner/.wTopRow/.wNameStack/.wActionStack).
-    listEl.innerHTML=tracks.map(function(t){
+    // 20.09.2026: один общий перетасованный набор характеров на весь текущий показ списка —
+    // см. комментарий у shuffleArray() выше. Раздаётся по кругу (% длины) — если рядов больше
+    // 12, дальше начинаются повторы, это ожидаемо и честно (пул конечен).
+    const ribbonCharsShuffled=shuffleArray(WORKSHOP_RIBBON_CHARS.slice());
+    listEl.innerHTML=tracks.map(function(t,ribbonIdx){
       return '<div class="wRow">'+
       '<div class="wBanner"><canvas width="300" height="150"></canvas><div class="wScrim"></div>'+
-      // 19.09.2026 «Звезда автора»: лента для всех, КРОМЕ владельца (тот пользуется звездой-
-      // переключателем ниже) — видимость решает forEach ниже (t.featured && !isOwner).
+      // 19.09.2026 «Звезда автора»: лента для всех — видимость/интерактивность решает forEach
+      // ниже (t.featured && !isOwner для игроков, всегда видна и нажимаема для владельца).
       // 20.09.2026: текст на ленте заменён на моргающие глаза (владелец решил в разговоре,
       // см. комментарий у WORKSHOP_RIBBON_EYES выше) — L.workshopAuthorRibbon больше не читается здесь.
-      // Характер — детерминированно по t.code (workshopRibbonCharClass), не рандом на показ.
-      '<div class="wAuthorRibbon hidden '+workshopRibbonCharClass(t.code)+'"><span>'+WORKSHOP_RIBBON_EYES+'</span></div>'+
+      // 20.09.2026 «Лента вместо звезды у владельца» (прямое слово: «я хочу, чтобы у меня было
+      // так же само, как у игроков, только нажимал бы я на эту ленточку, как раньше на
+      // звёздочку»): data-act="pickstar" — та же ветка обработчика (js/forge.js ниже), что уже
+      // работала со звездой, ни одной новой строчки логики клика не понадобилось. Для игрока
+      // pointer-events:none (index.html) делает этот атрибут недостижимым, безопасно.
+      '<div class="wAuthorRibbon hidden '+ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length]+'" data-act="pickstar"><span>'+WORKSHOP_RIBBON_EYES+'</span></div>'+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
       // главного экрана» + «подсказка будет только на Разминке, один раз нажали, проверили,
@@ -1793,10 +1817,17 @@ function workshopRenderList(){
       // 19.09.2026 «Звезда автора» (владелец, макет, явное «да»): звезда-переключатель теперь
       // ТОЛЬКО у владельца — остальные игроки видят угловую ленту (.wAuthorRibbon) вместо неё,
       // не пустой некликабельный значок.
+      // 20.09.2026: звезда-переключатель у владельца упразднена — теперь и он нажимает на ту же
+      // ленту, что видят игроки (владелец, прямое слово: «чтобы так же само было, как в игре»).
+      // .wPickStar остаётся в разметке (index.html), но всегда .hidden — не удаляю узел совсем,
+      // тот же осторожный приём, что уже применён к самой ленте (12.09.2026, комментарий выше).
       const pickStarBtn=row.querySelector('.wPickStar');
-      if(pickStarBtn) pickStarBtn.classList.toggle('hidden', !isOwner);
+      if(pickStarBtn) pickStarBtn.classList.add('hidden');
       const ribbonEl=row.querySelector('.wAuthorRibbon');
-      if(ribbonEl) ribbonEl.classList.toggle('hidden', !(t.featured && !isOwner));
+      if(ribbonEl){
+        ribbonEl.classList.toggle('hidden', !(t.featured || isOwner));
+        ribbonEl.classList.toggle('ownerPick', isOwner);
+      }
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
       row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
@@ -1874,6 +1905,7 @@ function workshopRenderList(){
       }
       row.dataset.featured=t.featured?'1':'0'; // 12.09.2026: читает click-обработчик ниже при тапе pickstar
       if(pickStarBtn) pickStarBtn.classList.toggle('active', !!t.featured); // заливка звезды — CSS, тот же приём, что .wPin.active
+      if(ribbonEl) ribbonEl.classList.toggle('active', !!t.featured); // 20.09.2026: тот же источник, что у звезды — тусклая лента у владельца, пока не отмечено
       if(isOwner){
         const pinBtn=row.querySelector('.wPin'), hideBtn=row.querySelector('.wHide');
         pinBtn.title=L.workshopPin||'Закрепить';
