@@ -2169,12 +2169,17 @@ function angarPvZoomDraw(t){
       x.restore();
       const nameEl=$('angarPvZoomName'), nameTxtEl=$('angarPvZoomNameTxt');
       if(nameEl && nameTxtEl){
-        nameTxtEl.textContent=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
-        // 20.09.2026: centerTitleOnHeader — та же функция, что держит любой другой заголовок
-        // игры «в одну строку» с родным «Назад»/⌄/⋮ (js/ui.js). shrinkScreenTitle() НЕ подходит
-        // сюда — она уменьшает шрифт ОТ крупного (28-42px, .screenTitle) ДО пола 24px, а тут
-        // шрифт и так меньше пола (18px) — функция молча ничего не делает, длинные имена лезли
-        // за «✕». Перенос на 2 строки остаётся обычным CSS (max-width), как и был раньше.
+        const rawName=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
+        // 20.09.2026, второй заход (владелец, живой скрин: «АККРЕЦИОННЫЙ ДИСК» и «ЧЁРНОЙ ДЫРЫ» —
+        // два слова на строке налезают на родную «Назад»/⌄/⋮): обычный CSS-перенос (max-width)
+        // кладёт на строку столько слов, сколько влезает по ширине — у центрированного текста
+        // широкая двухсловная строка выходит за безопасную зону по бокам. Ровно одно слово на
+        // строке, всегда, независимо от длины имени — <br> между каждым словом, не CSS.
+        nameTxtEl.innerHTML=rawName.split(' ').filter(Boolean).map(escapeHtml).join('<br>');
+        // centerTitleOnHeader — та же функция, что держит любой другой заголовок игры «в одну
+        // строку» с родным «Назад»/⌄/⋮ (js/ui.js). shrinkScreenTitle() НЕ подходит сюда — она
+        // уменьшает шрифт ОТ крупного (28-42px, .screenTitle) ДО пола 24px, а тут шрифт и так
+        // меньше пола (18px) — функция молча ничего не делает.
         centerTitleOnHeader(nameEl);
       }
       const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
