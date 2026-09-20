@@ -509,13 +509,17 @@ function heroRecordFor(cat){
   return { val:0, isTime:false };
 }
 function heroRecordBadgesFill(){
+  // 21.09.2026 (владелец: «пока рекорда нет, там просто глаза отображаются») — лента теперь
+  // видна ВСЕГДА (форма+характер — живая декорация режима, не привязана к наличию рекорда).
+  // Только число прячется (visibility, не display — сохраняет высоту .num, геометрия ленты
+  // не зависит от того, есть рекорд или нет, не переоткрывает всю сагу с центровкой).
   [['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSpeedrun','speedrun'],
    ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(function(pair){
     const el=$(pair[0]); if(!el) return;
     const r=heroRecordFor(pair[1]);
-    const numEl=el.querySelector('.num'); // 21.09.2026: было querySelector('span') — ловило .band (первый span), не число
-    if(r.val>0){ if(numEl) numEl.textContent=r.isTime?fmtTime(r.val):fmtN(r.val); el.classList.remove('hidden'); }
-    else el.classList.add('hidden');
+    const numEl=el.querySelector('.num');
+    el.classList.remove('hidden');
+    if(numEl) numEl.textContent = r.val>0 ? (r.isTime?fmtTime(r.val):fmtN(r.val)) : '';
   });
 }
 /* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой
