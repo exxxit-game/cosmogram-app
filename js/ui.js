@@ -521,7 +521,12 @@ function heroRecordBadgesFill(){
     const r=heroRecordFor(pair[1]);
     const numEl=el.querySelector('.num');
     el.classList.remove('hidden');
-    if(numEl) numEl.textContent = r.val>0 ? (r.isTime?fmtTime(r.val):fmtN(r.val)) : L.heroRibbonNoRecord;
+    if(numEl){
+      numEl.textContent = r.val>0 ? (r.isTime?fmtTime(r.val):fmtN(r.val)) : L.heroRibbonNoRecord;
+      // 21.09.2026: фраза шире любого числа (проверено координатно) — свой меньший размер,
+      // чтобы реально помещаться на видимой части ленты с запасом, не впритык.
+      numEl.classList.toggle('txt', r.val<=0);
+    }
   });
 }
 /* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой
