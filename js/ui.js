@@ -511,15 +511,17 @@ function heroRecordFor(cat){
 function heroRecordBadgesFill(){
   // 21.09.2026 (владелец: «пока рекорда нет, там просто глаза отображаются») — лента теперь
   // видна ВСЕГДА (форма+характер — живая декорация режима, не привязана к наличию рекорда).
-  // Только число прячется (visibility, не display — сохраняет высоту .num, геометрия ленты
-  // не зависит от того, есть рекорд или нет, не переоткрывает всю сагу с центровкой).
+  // 21.09.2026, дословно повторено владельцем после отката: без рекорда — глаза ВМЕСТЕ с
+  // фразой L.heroRibbonNoRecord («ПОЛЕТЕЛИ?»), не пустая строка — геометрия ленты уже не
+  // зависит от того, есть рекорд или нет (см. index.html у .recordBadge .band), так что
+  // текст в .num безопасен для уже посчитанной центровки в обоих случаях.
   [['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSpeedrun','speedrun'],
    ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(function(pair){
     const el=$(pair[0]); if(!el) return;
     const r=heroRecordFor(pair[1]);
     const numEl=el.querySelector('.num');
     el.classList.remove('hidden');
-    if(numEl) numEl.textContent = r.val>0 ? (r.isTime?fmtTime(r.val):fmtN(r.val)) : '';
+    if(numEl) numEl.textContent = r.val>0 ? (r.isTime?fmtTime(r.val):fmtN(r.val)) : L.heroRibbonNoRecord;
   });
 }
 /* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой

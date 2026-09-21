@@ -66,6 +66,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой; 10.09.2026: было 300м, владелец — «мало, конец сразу»
     heroHintTap:'Чтобы начать полёт, нажмите здесь.', // 16.09.2026 (владелец, дословно, финальная правка текста того же вечера): вместо иконки-самолётика на карточках режимов — текстовая подсказка, прячется сама после первого забега (.trail появляется)
+    heroRibbonNoRecord:'ПОЛЕТЕЛИ?', // 21.09.2026 (владелец, дословно): пока рекорда нет, глаза на ленте + эта фраза вместо числа
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
     relayFail:'Этап не сдан — цепочка ждёт снова', relaySignInFirst:'войдите, чтобы лететь в эстафете',
     relayMineTitle:'Статус', relayMineBtnLbl:'Статус', relayMineEmpty:'Ты ещё не летал в эстафете', // 08.09.2026: было «Мои эстафеты» дважды подряд с самим словом «Эстафета» рядом — повтор. Кнопка теперь просто «Статус» (стоит внутри карточки Эстафеты, контекст рядом объясняет); заголовок отдельного экрана — «Статус эстафет», там уже нет карточки-подсказки рядом. 14.09.2026: заголовок сокращён с «Статус эстафет» до «Статус» — на --menu-buf:-15px «Статус эстафет» (14 симв.) не влезал по ширине даже переносом (см. modesTitle выше, тот же класс правки); слово и так уже само по себе используется как подпись кнопки на строку выше — контекст «эстафет» не теряется.
@@ -388,6 +389,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+' miss'+(n===1?'':'es'),
     modeRelay:'Relay', modeRelayD:'Open chain: 4 legs of 1000m, fly yours — hand off to the next pilot',
     heroHintTap:'tap, leave your trail',
+    heroRibbonNoRecord:'FLY?',
     relayWatching:(n)=>'Watching leg '+n+'…', relayLegSent:(n)=>'Leg '+n+' submitted', relayChainDone:'Relay complete!',
     relayFail:'Leg not completed — the chain is waiting again', relaySignInFirst:'sign in to fly in the relay',
     relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'You haven\'t flown in a relay yet',
@@ -610,6 +612,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' fallo':' fallos'),
     modeRelay:'Relevos', modeRelayD:'Cadena abierta: 4 tramos de 1000m, vuela el tuyo — pásaselo al siguiente',
     heroHintTap:'toca, deja tu huella',
+    heroRibbonNoRecord:'¿VOLAR?',
     relayWatching:(n)=>'Viendo el tramo '+n+'…', relayLegSent:(n)=>'Tramo '+n+' enviado', relayChainDone:'¡Relevos completados!',
     relayFail:'Tramo no completado — la cadena vuelve a esperar', relaySignInFirst:'inicia sesión para volar en los relevos',
     relayMineTitle:'Estado', relayMineBtnLbl:'Estado', relayMineEmpty:'Aún no has volado en un relevo',
@@ -844,6 +847,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' erro':' erros'),
     modeRelay:'Revezamento', modeRelayD:'Corrente aberta: 4 trechos de 1000m, voe o seu — passe para o próximo',
     heroHintTap:'toca, deixa o teu rasto',
+    heroRibbonNoRecord:'VOAR?',
     relayWatching:(n)=>'Vendo o trecho '+n+'…', relayLegSent:(n)=>'Trecho '+n+' enviado', relayChainDone:'Revezamento concluído!',
     relayFail:'Trecho não concluído — a corrente volta a esperar', relaySignInFirst:'entre para voar no revezamento',
     relayMineTitle:'Status', relayMineBtnLbl:'Status', relayMineEmpty:'Você ainda não voou em um revezamento',
@@ -1075,6 +1079,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+(n===1?' raté':' ratés'),
     modeRelay:'Relais', modeRelayD:'Chaîne ouverte : 4 étapes de 1000m, vole la tienne — passe le relais',
     heroHintTap:'touche, laisse ta trace',
+    heroRibbonNoRecord:'VOLER ?',
     relayWatching:(n)=>'Je regarde l’étape '+n+'…', relayLegSent:(n)=>'Étape '+n+' envoyée', relayChainDone:'Relais terminé !',
     relayFail:'Étape non terminée — la chaîne attend de nouveau', relaySignInFirst:'connecte-toi pour voler dans le relais',
     relayMineTitle:'État', relayMineBtnLbl:'État', relayMineEmpty:'Tu n’as pas encore volé dans un relais',
