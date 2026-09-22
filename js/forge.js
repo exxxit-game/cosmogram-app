@@ -64,6 +64,38 @@ function workshopRibbonShapeHtml(shape){
     '<svg class="eye eyeR" viewBox="0 0 24 24" fill="#2c1f08"><use href="#i-star5-outline"></use></svg>';
   return '<div class="eye eyeL shp-'+shape+'"></div><div class="eye eyeR shp-'+shape+'"></div>';
 }
+// 22.09.2026 «Лестница уровней неба» (владелец, макет masterskaya-lestnitsa-urovney-22-09-2026.html,
+// явное «Устраивай, делай») — награда за реальный рост трека (запуски+лайки с сервера, t.plays/
+// t.hearts — оба уже приходят с бэкенда, см. использование t.hearts у .wVote выше), не за
+// придуманный статус. ПОРОГИ ЗАВЕДОМО ВРЕМЕННЫЕ (владелец прямо попросил пометить): реальная
+// база сейчас — максимум 4 запуска, 1 лайк на всю игру (Supabase, 22.09.2026), числа взяты
+// маленькими нарочно, поднять позже, когда игроков станет больше. НЕ считать эти числа
+// финальными при следующей правке.
+//
+// Уровень 3 (доп. цвет ленты) НАМЕРЕННО не реализован здесь — владелец явно отложил выбор
+// цвета («потом придумаем ещё цвета, космические») на отдельную сессию. Золото — потолок,
+// только метка владельца (t.featured), не награда за уровень.
+const WORKSHOP_TIER_THRESHOLDS=[ // [уровень, мин.запусков, мин.лайков]
+  [1,5,0], [2,10,0]
+];
+function workshopTrackLevel(t){
+  const plays=t.plays||0, hearts=t.hearts||0;
+  let lvl=0;
+  for(let i=0;i<WORKSHOP_TIER_THRESHOLDS.length;i++){
+    const th=WORKSHOP_TIER_THRESHOLDS[i];
+    if(plays>=th[1] && hearts>=th[2]) lvl=th[0];
+  }
+  return lvl;
+}
+// Уровень 2 «обжилось»: форма/характер перестают тасоваться при каждом показе — закрепляются
+// детерминированно за кодом трассы (тот же приём, что уже есть у workshopRibbonCharClass выше,
+// просто применяется выборочно, не для всех). Соль 's:' у формы — чтобы форма и характер одного
+// трека не совпадали механически из-за одного и того же хэша.
+function workshopRibbonShapeClass(code){
+  let h=5381; const salted='s:'+code;
+  for(let i=0;i<salted.length;i++){ h=((h<<5)+h+salted.charCodeAt(i))|0; }
+  return WORKSHOP_RIBBON_SHAPES[Math.abs(h)%WORKSHOP_RIBBON_SHAPES.length];
+}
 function shuffleArray(arr){
   for(let i=arr.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
@@ -1814,10 +1846,15 @@ function workshopRenderList(){
       // 21.09.2026: форма — та же перетасовка, что у характера, независимая ось. Бровки
       // (WORKSHOP_RIBBON_EYES) остаются только у кружка — они буквально «брови глаза», на
       // других формах (звезда/ромб/шестиугольник/крестик/треугольник/кольцо) не имеют смысла.
+      // 22.09.2026 «Лестница уровней неба» (см. комментарий у WORKSHOP_TIER_THRESHOLDS выше):
+      // от уровня 2 форма/характер больше не тасуются — закреплены хэшем кода трассы.
       (function(){
-        const shape=ribbonShapesShuffled[ribbonIdx%ribbonShapesShuffled.length];
+        const lvl=workshopTrackLevel(t);
+        const shape=lvl>=2?workshopRibbonShapeClass(t.code):ribbonShapesShuffled[ribbonIdx%ribbonShapesShuffled.length];
+        const charCls=lvl>=2?workshopRibbonCharClass(t.code):ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length];
         const inner=(shape==='dot'?WORKSHOP_RIBBON_EYES:workshopRibbonShapeHtml(shape));
-        return '<div class="wAuthorRibbon hidden '+ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length]+'" data-act="pickstar"><span>'+inner+'</span></div>';
+        const tierCls=(lvl>=1?' tier1':'');
+        return '<div class="wAuthorRibbon hidden '+charCls+tierCls+'" data-act="pickstar"><span>'+inner+'</span></div>';
       })()+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
