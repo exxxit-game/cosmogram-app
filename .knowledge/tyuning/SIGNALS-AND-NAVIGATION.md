@@ -50,6 +50,11 @@
   брали в лодку: она служила инструментом ОБУЧЕНИЯ на берегу, реальная навигация в море шла по
   памяти и ощущению качки корпуса каноэ. [Penn Museum — Marshall Islands Cartography](https://www.penn.museum/sites/expedition/marshall-islands-cartography/),
   [Smarthistory — Navigation Chart, Marshall Islands](https://smarthistory.org/chart-marshall/).
+  Дополнено 22.09.2026 — владелец лично нашёл и просмотрел живьём все три реальных экземпляра в
+  Библиотеке Конгресса, все из Маджуро, 1920-е годы:
+  [маттанг](https://www.loc.gov/resource/g9461p.ct003133/),
+  [меддо](https://www.loc.gov/resource/g9461p.ct003134/),
+  [реббелиб](https://www.loc.gov/resource/g9461p.ct003132/).
 - **Полинезийский звёздный компас (houses of the compass)** — не физический прибор, а мысленная
   разметка горизонта на 32 «дома» (houses) с шагом 11,25° (360°/32), привязанных к точкам восхода
   и захода конкретных звёзд, солнца и луны — направление читается не по стрелке, а по тому, какая
