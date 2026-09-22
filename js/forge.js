@@ -759,6 +759,20 @@ function forgeStepExit(){
   if(title) title.classList.remove('hidden');
   if(tabs) tabs.classList.remove('hidden');
 }
+/* 22.09.2026 (владелец, живой скрин: «название гуляет, то вверх, то вниз, должно быть там,
+   где кнопки Телеграма») — #forgeStepTitle стоял только на CSS-формуле padding-top
+   (#forgeStepHead, index.html), той же, что держит ВСЕ остальные заголовки экранов как
+   базовую позицию — но, в отличие от них, никогда не получал добавочную живую центровку
+   (centerTitleOnHeader/shrinkScreenTitle, js/ui.js), которая у остальных срабатывает и на
+   входе (retitleScreen), и при позднем приходе правды Telegram (tgInsetsSync → retitleScreen).
+   Тот же приём, тот же код — просто дотянут до третьего заголовка, который раньше стоял в
+   стороне от общей системы. Вызывается и на входе в шаг (forgeSubTabSet — единственное место,
+   что меняет текст), и из retitleScreen в js/ui.js, когда шаг «Создать» реально на экране. */
+function forgeStepRetitle(){
+  const t=$('forgeStepTitle'); if(!t) return;
+  if(typeof shrinkScreenTitle==='function') shrinkScreenTitle(t);
+  if(typeof centerTitleOnHeader==='function') centerTitleOnHeader(t);
+}
 const FORGE_STEP_ORDER=['arrange','sky','hard'];
 // 15.09.2026 (тот же аудит, что нашёл 6 подписей шага «Цвет» и 3 заголовка «Сохранить» — эти
 // два объекта были ровно тем же классом бага, просто не строкой в index.html, а константой
@@ -806,6 +820,7 @@ function forgeSubTabSet(s){
     }
   }
   const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE()[forgeSub];
+  forgeStepRetitle(); // 22.09.2026: та же живая центровка, что у всех остальных заголовков экранов — раньше «Карта»/«Небо»/«Сохранить» стояли только на CSS-формуле, «плавали»
   const idx=FORGE_STEP_ORDER.indexOf(forgeSub);
   document.querySelectorAll('.forgeStepDot').forEach(function(d){
     const di=FORGE_STEP_ORDER.indexOf(d.dataset.sub);

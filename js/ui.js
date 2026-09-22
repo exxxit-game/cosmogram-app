@@ -232,6 +232,10 @@ function retitleScreen(name){
   if(scr) scr.style.animation='none'; // на миг — только чтобы замерить устоявшуюся геометрию
   shrinkScreenTitle(t);
   centerTitleOnHeader(t);
+  // 22.09.2026: «Создать» подменяет обычный #forgeTitle своим #forgeStepTitle (Карта/Небо/
+  // Сохранить) — та же поздняя правда Telegram, что выше пересчитала forgeTitle, должна
+  // долетать и до него, когда он реально на экране (forgeTitle тогда спрятан forgeStepEnter).
+  if(name==='forge' && t && t.classList.contains('hidden') && typeof forgeStepRetitle==='function') forgeStepRetitle();
   if(scr) scr.style.animation = prevAnim || ''; // возвращаем — экран (и уже верно стоящий заголовок) анимируется как обычно
 }
 /* 14.09.2026 (владелец, живые телефоны): задача — заголовок помещается МЕЖДУ кнопками родной
