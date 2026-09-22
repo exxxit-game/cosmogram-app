@@ -201,6 +201,17 @@ canvas{display:block}
      --sat) — жизни всё ещё под «⌄»/«⋮». Добавлен --js-sar — тот же приём страховки, что уже
      есть у --js-sat: JS-подсчитанный запасной пол в core.js/tgInsetsSync(), не только мост. */
   --sar:max(env(safe-area-inset-right), var(--tg-safe-area-inset-right,0px), var(--tg-content-safe-area-inset-right,0px), var(--js-sar,0px));
+  /* 22.09.2026 (аудит дыр/инструментов): --sal (лево) симметрично --sar выше, но БЕЗ JS-подсчитанного
+     запасного пола (--js-sar появился только после живого подтверждения «мёртвого нуля» именно
+     у ПРАВОГО инсета на конкретном устройстве владельца — для левого такого подтверждения нет,
+     выдумывать число нельзя). На каждом протестированном сейчас устройстве все три источника
+     дают 0px — значение --sal тоже 0px, ничего не сдвигается, менять поведение существующих
+     экранов эта строка не может. Единственный реальный кандидат-потребитель — .menuBack — и тот
+     недостижим на телефоне (альбомная ориентация блокируется «Поверните телефон» раньше, чем
+     экран с .menuBack вообще откроется, см. resize()/tooNarrow в core.js); на широком
+     планшете/десктопе в альбомной раскладке .menuBack уже сидит на честных 16px от НАСТОЯЩЕГО
+     края экрана (.overlay: position:fixed;inset:0), не за отступом. */
+  --sal:max(env(safe-area-inset-left), var(--tg-safe-area-inset-left,0px), var(--tg-content-safe-area-inset-left,0px));
   /* 02.09.2026 «Пространство в меню», пункт 5: верхний отступ «Старта» и «Итогов» держали
      ДВЕ отдельные строки calc(12px + var(--sat-menu) + var(--menu-buf)) — значения совпадали, но
      случайно, риск был в том, что при правке одного забудут про второй. Одна переменная —
@@ -1135,7 +1146,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    формы, но разные символы») — своё стекло, свой круг, тот же размер 32px. Стоит абсолютом
    поверх .overlay (тот fixed;inset:0), top совпадает с padding-top самого экрана — тот же
    уровень, что и заголовок. */
-.menuBack { position:absolute; top:calc(10px + var(--sat-menu)); left:16px; width:32px; height:32px; border-radius:50%;
+.menuBack { position:absolute; top:calc(10px + var(--sat-menu)); left:calc(16px + var(--sal)); width:32px; height:32px; border-radius:50%;
   background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   border:1.5px solid rgba(150,205,255,.55);
