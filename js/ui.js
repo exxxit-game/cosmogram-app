@@ -825,7 +825,7 @@ function startGame(saved){
     caravanTime:(runMode==='caravan'?caravanTierGet():60), // 07.09.2026 «Пуля/Блиц»: выбор игрока на кнопке режима, снимается один раз на старте — смена переключателя посреди полёта (невозможна физически, экран другой) всё равно не задела бы текущий забег
     speedrunRSG:srRSG, // 11.09.2026 «Speedrun RSG»: тот же приём, что у caravanTime — снимается один раз на старте, не читается заново посреди полёта
     biathlonWin:0,biathlonR1Done:0,biathlonMisses:0,biathlonSnapSpawned:0,biathlonSnapCollected:0,relayLegDone:0,seed:freshSeed,
-    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
+    mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customHSTier:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 23.09.2026: customHSTier — «Ставка ×8» (0/1/2); 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
   if(typeof BB!=='undefined') BB.log('takeoff', String(runMode||'')); // v1.99.7 «Чёрный ящик»: взлёт — на ленту
   prevTiltX=0; prevTiltY=0; prevTX=null; prevTY=null; lastSmoothShown=-1; // Smooth Flight: чистый замер
@@ -850,6 +850,7 @@ function startGame(saved){
        к S.speed напрямую и была верна, её не трогаем. */
     S.customE=fc.e; S.customD=forgeDensityMul(fc.d)/(am.d||1); S.customS=forgeSpeedMul(fc.s)*am.s; S.customL=fc.l; S.customName=fc.n||L.forgeDefName;
     S.customW=fc.w; S.customFlat=fc.fl; S.customB=fc.b; S.customLv=fc.lv; S.customWG=fc.wg?1:0; S.customHS=fc.hs?1:0; // v1.282.15: старые коды (v1/v2) летят со старой раскладкой преград // потолок жизней автора — бонус-жизнь его не пробьёт (v1.70.0); 31.08.2026: «Высокая ставка»
+    S.customHSTier=fc.hsTier||0; // 23.09.2026 «Ставка ×8»: 0/1/2 — источник истины для scoreMult() (js/game.js), customHS выше остаётся булевым дублем
     S.customWind=fc.wind||0; // 06.09.2026 «Солнечный ветер» — 0 у старых кодов без поля, обычные режимы этот флаг вообще не читают
     S.customH1=fc.h1; S.customH2=fc.h2; // 01.09.2026 «Свой фон»: forgeSanitize уже гарантирует оба поля (выводит из legacy sky, если автор не трогал свободный цвет явно)
     S.customMood=fc.mood; // 01.09.2026 «Настроение неба»: forgeSanitize гарантирует поле (50 по умолчанию — сегодняшний вид)

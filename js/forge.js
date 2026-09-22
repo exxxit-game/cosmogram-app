@@ -260,11 +260,18 @@ function forgeSanitize(c){ // вход недоверенный — код пр�
   // не только те же настройки. Своя новая трасса — свежий seed; чужой код — seed едет вместе с ним.
   o.seed=(isFinite(+c.seed)&&+c.seed>0)?Math.floor(+c.seed):Math.floor(Math.random()*4294967296);
   o.wg=c.wg?1:0; // 1 — старая раскладка: волновой гейт держит выбранные автором виды до своей волны
-  o.hs=c.hs?1:0; // 31.08.2026 «Высокая ставка»: форсирует 1 жизнь и бонусы выкл — не отдельная механика,
-  // а форс уже существующих полей; принудительно поверх любых значений полей выше, а не только
-  // как совет в интерфейсе — иначе чужой код с hs=1, но подкрученными lv/b, тихо давал бы больше
-  // жизней/бонусов, чем ставка обещает.
-  if(o.hs){ o.lv=1; o.b=0; }
+  // 31.08.2026 «Высокая ставка», расширено 23.09.2026 «Ставка ×8»: forgeCfg.hsTier — 0=выкл,
+  // 1=×4 (жизни=1, бонусы=выкл), 2=×8 (то же + стартовая жара=макс). forgeCfg.hs остаётся
+  // булевым дублем (hsTier>=1) — читают старые части кода (js/ui.js S.customHS) и старые CG2-
+  // коды без нового extFlags-бита (см. forgeBitsUnpack: код без бита4 даёт hsTier=undefined,
+  // сюда приходит только c.hs — деградирует к tier=1/×4, не к максимальному ×8, безопасная
+  // сторона ошибки). Форс принудительный поверх любых значений полей выше, а не только как
+  // совет в интерфейсе — иначе чужой код с hsTier=2, но подкрученными lv/b/w, тихо давал бы
+  // больше жизней/бонусов/мягче старт, чем ставка обещает — тот же принцип, что был у hs.
+  o.hsTier=clamp(Math.round(isFinite(+c.hsTier)?+c.hsTier:(c.hs?1:0)),0,2);
+  o.hs=o.hsTier>=1?1:0;
+  if(o.hsTier>=1){ o.lv=1; o.b=0; }
+  if(o.hsTier>=2){ o.w=6; }
   // 31.08.2026 «Партитура»: вход недоверенный (код приходит извне) — не клэмпим мусорное
   // событие до валидного, а выбрасываем целиком, как и требует план («at — конечное
   // неотрицательное число, иначе событие отбрасывается»). Максимум 50 — лишние отрезаны.
@@ -357,12 +364,19 @@ function forgeBitsPack(cfg){
   // 06.09.2026 «Солнечный ветер»: бит3 extFlags — 1 байт силы порывов (0-100), тем же приёмом,
   // что уже трижды применён выше (сложи хвост на хвост, не переделывай нижние слои). Всегда 1 —
   // новый интерфейс всегда пишет поле, старые коды без этого бита читаются как wind=0 (выкл).
-  const extFlags=[1|2|4|8];
+  // 23.09.2026 «Ставка ×8»: бит4 extFlags — 1 байт hsTier (0-2), тот же приём. СУЩЕСТВУЮЩИЙ
+  // 1-битный hs в головном 71-битном блоке НЕ ТРОГАЕМ (менять его размер сдвинуло бы все поля
+  // после него, включая seed — сломало бы уже розданные коды) — старое поле остаётся булевым
+  // дублем (hsTier>=1) для приложений до этой правки: они видят «высокая ставка есть», просто
+  // не знают про ×8, честно играют как ×4 (мягкая деградация, не крах и не выдуманный ×8 без
+  // спроса). Новое приложение, читая НОВЫЙ код — использует hsTier из хвоста, не старый бит.
+  const extFlags=[1|2|4|8|16];
   const lenTail=[(cfg.l>>8)&255, cfg.l&255];
   const colorTail=[(cfg.h1>>8)&255, cfg.h1&255, (cfg.h2>>8)&255, cfg.h2&255, cfg.dens&255];
   const moodTail=[cfg.mood&255];
   const windTail=[cfg.wind&255];
-  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail, windTail));
+  const hsTierTail=[(cfg.hsTier||0)&255];
+  return new Uint8Array(head.concat(nameBytes.length, nameBytes, scOut, extFlags, lenTail, colorTail, moodTail, windTail, hsTierTail));
 }
 function forgeBitsUnpack(bytes){
   const HEAD=9; // Math.ceil(71/8)
@@ -393,7 +407,7 @@ function forgeBitsUnpack(bytes){
   // «Непрерывная длина» / «Свой фон»: код БЕЗ этого хвоста (розданный до 01.09.2026) просто
   // не доходит сюда — l остаётся старым приближением из lIdx, h1/h2 выводятся из legacy sky
   // в forgeSanitize (та же формула, что уже рисовала это небо раньше), ровно как читалось раньше.
-  let l=FORGE_LENS[lIdx], h1, h2, dens, mood, wind;
+  let l=FORGE_LENS[lIdx], h1, h2, dens, mood, wind, hsTier;
   if(cursor<bytes.length){
     const extFlags=bytes[cursor]||0;
     let p=cursor+1;
@@ -407,8 +421,13 @@ function forgeBitsUnpack(bytes){
     // 06.09.2026 «Солнечный ветер»: бит3, 1 байт — код без него (розданный до этой правки)
     // просто не доходит сюда, wind остаётся undefined → forgeSanitize подставит 0 (выкл).
     if((extFlags&8) && p<bytes.length){ wind=bytes[p]; p+=1; }
+    // 23.09.2026 «Ставка ×8»: бит4, 1 байт — код без него (розданный до этой правки, включая
+    // все коды с обычной «Высокой ставкой» ×4 до сегодня) даёт hsTier=undefined —
+    // forgeSanitize сама выведет его из старого булева hs (hs?1:0), то есть старые коды с
+    // hs=1 корректно читаются как tier=1/×4, не теряют смысл и не разгоняются до ×8 без спроса.
+    if((extFlags&16) && p<bytes.length){ hsTier=bytes[p]; p+=1; }
   }
-  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, seed, wind, wg:0, sc:sc };
+  return { n, d, s, e, l, lv, w, fl, b, sky:FORGE_SKYS[skyIdx], h1, h2, dens, mood, fog, hs, hsTier, seed, wind, wg:0, sc:sc };
 }
 function forgeEncode(cfg){
   const bytes=forgeBitsPack(cfg);
@@ -635,6 +654,7 @@ function forgeFill(){ // подписи + состояние виджетов п
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
+    ['forgeWindHint',L.forgeWindHint],
     ['forgeHeatLbl',L.forgeHeat],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],
     // 20.09.2026: forgeBonusLbl (заголовок-дубль внутри бывшей подгруппы) удалён вместе с
@@ -692,17 +712,32 @@ function forgeFill(){ // подписи + состояние виджетов п
      кнопка». Теперь set() игнорирует тап, пока ставка активна — то же самое, что
      forgeSanitize уже гарантирует, только видно сразу, а не после полёта. */
   forgeSegBuild($('forgeLivesSeg'),[{v:1,t:'1'},{v:2,t:'2'},{v:3,t:'3'}],
-    function(){return forgeCfg.lv;},function(v){ if(!forgeCfg.hs) forgeCfg.lv=v; });
+    function(){return forgeCfg.lv;},function(v){ if(!forgeCfg.hsTier) forgeCfg.lv=v; });
   forgeSegBuild($('forgeWaveSeg'),[{v:1,t:'1'},{v:2,t:'2'},{v:3,t:'3'},{v:4,t:'4'},{v:5,t:'5'},{v:6,t:'6'}],
-    function(){return forgeCfg.w;},function(v){forgeCfg.w=v;});
-  forgeSegBuild($('forgeBonusSeg'),[{v:0,t:L.bOff},{v:1,t:L.bRare},{v:2,t:L.bNorm},{v:3,t:L.bOften}],
-    function(){return forgeCfg.b;},function(v){ if(!forgeCfg.hs) forgeCfg.b=v; });
+    function(){return forgeCfg.w;},function(v){ if(forgeCfg.hsTier!==2) forgeCfg.w=v; }); // 23.09.2026: «Ставка ×8» форсирует максимум, тот же приём, что уже у Жизни/Бонусов под ×4
+  /* 23.09.2026 «Бонусы компактнее» + «Ставка ×8» (владелец, живой разбор — макет
+     bonusy-i-temp-szhatie-22-09-2026.html, «делаем»): «Высокая ставка» была отдельным чипом-
+     тумблером под этими же сегментами (forgeHSChip, см. историю ниже) — теперь это 5-я/6-я
+     кнопка В ТОМ ЖЕ ряду. Один виджет вместо двух, один forgeCfg.hsTier (0=выкл, 1=×4, 2=×8)
+     вместо булева hs — forgeCfg.hs остаётся булевым дублем (hsTier>=1) для обратной
+     совместимости со старыми CG2-кодами без нового хвоста (см. forgeBitsPack/Unpack). ×8
+     форсирует дополнительно ещё и Стартовую жару на максимум (6) — ×4 сам по себе оправдан
+     тем, что уже забирает жизни+бонусы, а вот ×8 требует ЕЩЁ одной честной жертвы, иначе это
+     просто «то же самое, но с большим числом» (владелец сам поднял этот вопрос). */
+  forgeSegBuild($('forgeBonusSeg'),
+    [{v:0,t:L.bOff},{v:1,t:L.bRare},{v:2,t:L.bNorm},{v:3,t:L.bOften},{v:'hs4',t:L.forgeHS4},{v:'hs8',t:L.forgeHS8}],
+    function(){ return forgeCfg.hsTier===2?'hs8':forgeCfg.hsTier===1?'hs4':forgeCfg.b; },
+    function(v){
+      if(v==='hs4'){ forgeCfg.hsTier=1; forgeCfg.hs=1; forgeCfg.lv=1; forgeCfg.b=0; }
+      else if(v==='hs8'){ forgeCfg.hsTier=2; forgeCfg.hs=1; forgeCfg.lv=1; forgeCfg.b=0; forgeCfg.w=6; }
+      else { forgeCfg.hsTier=0; forgeCfg.hs=0; forgeCfg.b=v; }
+    });
   forgeSegBuild($('forgeFogSeg'),[{v:0,t:L.fog0},{v:1,t:L.fog1},{v:2,t:L.fog2}],
     function(){return forgeCfg.fog;},function(v){forgeCfg.fog=v;});
   forgeChipBuild($('forgeFlatChip'),L.forgeFlat,function(){return forgeCfg.fl;},function(v){forgeCfg.fl=v;});
-  forgeChipBuild($('forgeHSChip'),L.forgeHS,function(){return forgeCfg.hs;},function(v){
-    forgeCfg.hs=v; if(v){ forgeCfg.lv=1; forgeCfg.b=0; } // 31.08.2026: форс сразу виден в сегментах, не только на старте
-  });
+  // 31.08.2026-23.09.2026: forgeHSChip (отдельный чип-тумблер «Высокая ставка») удалён —
+  // переехал внутрь forgeBonusSeg выше как 5-я/6-я кнопка. forgeChipBuild(forgeHSChip,...)
+  // здесь стоял три недели, теперь роль полностью закрыта forgeSegBuild(forgeBonusSeg,...).
   // v1.85.0: ручка «Жар» и спойлер тонкой настройки — живут на сцене, не в сегментах
   const heat=$('forgeHeat');
   if(heat&&!heat._bound){ heat._bound=1; heat.addEventListener('input',function(){
@@ -719,13 +754,22 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.value=forgeCfg.s;
   const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.value=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»; 16.09.2026: .forgeValInput — .value, не .textContent (реальный input, не <b>)
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
-  const livesSegEl=$('forgeLivesSeg'), bonusSegEl=$('forgeBonusSeg'); // 02.09.2026: те же два, что set() теперь игнорирует под «Высокой ставкой» — видно сразу, не только по бездействию тапа
-  if(livesSegEl) livesSegEl.classList.toggle('locked',!!forgeCfg.hs);
-  if(bonusSegEl) bonusSegEl.classList.toggle('locked',!!forgeCfg.hs);
-  // 02.09.2026: forgeHSChip строится тем же forgeChipBuild(), что и forgeFlatChip — обоим
-  // нужен вызов _sync() отсюда, иначе кнопка навсегда остаётся без подписи (владелец вживую:
-  // «под кнопкой часто видно пустую кнопку»). Забыли добавить соседа в список — страж 147.
-  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip','forgeHSChip'].forEach(function(id){
+  const livesSegEl=$('forgeLivesSeg'), waveSegEl=$('forgeWaveSeg'); // 02.09.2026: то же, что set() теперь игнорирует под «Ставкой» — видно сразу, не только по бездействию тапа
+  if(livesSegEl) livesSegEl.classList.toggle('locked',!!forgeCfg.hsTier);
+  // 23.09.2026: forgeBonusSeg сам больше не «locked» отдельно от себя — выбор Ставки теперь И
+  // ЕСТЬ его собственное выбранное состояние (5-я/6-я кнопка того же ряда), а не блокировка
+  // поверх соседнего виджета. Локается только forgeWaveSeg, и только под ×8 (форсирует жару=6).
+  if(waveSegEl) waveSegEl.classList.toggle('locked',forgeCfg.hsTier===2);
+  const hsNoteEl=$('forgeHSNote');
+  if(hsNoteEl){
+    const t = forgeCfg.hsTier===2?L.forgeHSNote8:forgeCfg.hsTier===1?L.forgeHSNote4:'';
+    hsNoteEl.textContent=t; hsNoteEl.classList.toggle('hidden',!t);
+  }
+  // 02.09.2026: чипам, построенным forgeChipBuild()/forgeSegBuild(), нужен вызов _sync() отсюда,
+  // иначе виджет навсегда остаётся без подписи (владелец вживую: «под кнопкой часто видно
+  // пустую кнопку»). Забыли добавить соседа в список — страж 147. forgeHSChip убран из списка
+  // 23.09.2026 вместе с самим элементом (см. комментарий выше в forgeFill()).
+  ['forgeSeg','forgeLivesSeg','forgeWaveSeg','forgeBonusSeg','forgeFogSeg','forgeFlatChip'].forEach(function(id){
     const el=$(id); if(el&&el._sync) el._sync();
   });
   forgeSkyKick(); // небо перерисовывается на каждый поворот ручки
@@ -910,6 +954,10 @@ function forgeWireSubSpoiler(grpId, panelId){
     });
     const nowOpen=willOpen;
     if(nowOpen){ this.classList.add('open'); const p=$(panelId); if(p) p.classList.remove('hidden'); }
+    // 23.09.2026: одноразовые подсказки ветра/жары показываются в момент первого открытия
+    // СВОЕГО чипа, не раньше — иначе сработали бы ещё до того, как игрок вообще увидел ползунок.
+    if(nowOpen && grpId==='forgeTempoGrp') forgeHintMaybeShow('forgeWindHint','forgeWindHintSeen');
+    if(nowOpen && grpId==='forgeStartGrp') forgeHintMaybeShow('forgeWaveHint','forgeWaveHintSeen');
     requestAnimationFrame(forgeReserveForQuickEdit);
   });
 }
@@ -1151,6 +1199,18 @@ function forgeFavHintMaybeShow(isEmpty){
   const hint=$('forgeFavHint'); if(!hint) return;
   if(!isEmpty || Store.get('forgeFavHintSeen',0)){ hint.classList.add('hidden'); return; }
   Store.set('forgeFavHintSeen',1);
+  hint.classList.remove('hidden');
+}
+/* 23.09.2026 (владелец, живой разбор: «в старте прожар тоже сделай этот текст одноразовый, чтобы
+   там не висел всё время»): тот же разовый приём, что у forgeMoodHintMaybeShow/forgeFavHintMaybeShow
+   выше — одна общая функция вместо третьей и четвёртой копии, разница только в id подсказки и
+   ключе Store. Вызывается из forgeWireSubSpoiler ниже, в момент когда владелец открывает сам чип
+   («Темп неба» → подсказка ветра, «Старт» → подсказка жары) — не на общем forgeFill/forgeSyncWidgets,
+   иначе сработало бы один раз за всю игру ещё ДО того, как игрок вообще увидел ползунок. */
+function forgeHintMaybeShow(hintId, storeKey){
+  const hint=$(hintId); if(!hint) return;
+  if(Store.get(storeKey,0)) return;
+  Store.set(storeKey,1);
   hint.classList.remove('hidden');
 }
 /* 17.09.2026 (владелец, «Делай», макет konstruktor-sozdat-globalny-redizayn-17-09-2026.html):
