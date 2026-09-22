@@ -75,7 +75,7 @@ const I18N = {
     relayFailStart:'Не вышло начать эстафету — попробуй ещё раз',
     modeForge:'Конструктор', modeForgeD:'Собери свой забег и поделись кодом', // v1.68.0; 28.08.2026: «трасса»→«небо»; 01.09.2026: единое имя «Конструктор» вместо «Своё небо»/«Партитура»/«Кузница» — владелец, до начала работы над UI Партитуры
     forgeTitle:'Конструктор', forgeNamePh:'Дайте имя', forgeDefName:'Небо пилота',
-    forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeEn:'Преграды', forgeLen:'Длина неба', forgeInf:'∞',
+    forgeDen:'Плотность', forgeSpd:'Скорость', forgeWind:'Солнечный ветер', forgeLen:'Длина неба', forgeInf:'∞',
     forgePlayBtn:'Полёт', forgeShareMapBtn:'Поделиться', // 08.09.2026: свой ключ для кнопки Конструктора — L.start общий с главной кнопкой меню («Начать полёт»), трогать его сюда нельзя (та же ловушка, что уже была с AUTH_MAX_AGE_SEC). «Небом» убрано у «Поделиться» — короче, стоит парой с «Полёт» внутри вкладки «Небо», не общим блоком под всеми тремя
     forgeCopied:'Код скопирован — шли другу!', forgeBadCode:'Код не распознан', forgeWin:'Финиш!',
     // 08.09.2026 «Раздельная публикация»: раньше «Поделиться» тихо публиковало небо в Галерею
@@ -183,8 +183,6 @@ const I18N = {
     forgeDiffMeterLbl:'Сложность неба', // 20.09.2026: живое кольцо на шаге «Карта», те же слова buckets (workshopFilterDiffEasy/Med/Hard), что уже выше у фильтра Мастерской
     // 20.09.2026 (владелец, живой отчёт: «в двух местах одно и то же, непонятно, что где
     // означает» — лоток и «Преграды» показывают одни 8 значков, но с разным смыслом): короткая
-    // подпись-разница под каждым блоком, формулировку предложил ассистент, владелец подтвердил «Да».
-    forgeObstHint:'Выбранные виды будут случайно появляться по всей трассе — не про конкретную точку.',
     forgeFine:'Тонкая настройка', forgeHeat:'Жар', // v1.85.0 «Сначала небо»
     forgeLives:'Жизни', forgeWave:'Стартовая жара',
     forgeWaveHint:'С какой волны начинаешь — выше значит больше видов препятствий сразу',
@@ -419,7 +417,7 @@ const I18N = {
     workshopPin:'Pin', workshopHide:'Hide',
     workshopPinned:'Pinned', workshopUnpinned:'Unpinned', workshopHidden:'Hidden from players', workshopUnhidden:'Visible to everyone again',
     forgeTitle:'Builder', forgeNamePh:'Name it', forgeDefName:'Pilot track',
-    forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeEn:'Obstacles', forgeLen:'Track length', forgeInf:'∞',
+    forgeDen:'Density', forgeSpd:'Speed', forgeWind:'Solar wind', forgeLen:'Track length', forgeInf:'∞',
     forgeShareMapBtn:'Share this sky',
     forgeCopied:'Code copied — send it to a friend!', forgeBadCode:'Code not recognized', forgeWin:'Finish!',
     forgeGuest:"Friend's track loaded — hit Fly", forgeReset:'Reset', forgeResetBtn:'Reset all', forgeShareTxt:'Fly my track «%s» in Cosmogram!',
@@ -430,7 +428,6 @@ const I18N = {
     workshopFilterBtn:'Filter', workshopFilterDiffAny:'Any', workshopFilterDiffEasy:'Easy',
     workshopFilterDiffMed:'Medium', workshopFilterDiffHard:'Hard',
     forgeDiffMeterLbl:'Sky difficulty',
-    forgeObstHint:'Selected kinds appear randomly along the whole track — not about one exact point.',
     forgeFine:'Fine tuning', forgeHeat:'Heat', // v1.85.0 «Сначала небо»
     forgeLives:'Lives', forgeWave:'Starting heat',
     forgeWaveHint:'Which wave you start at — higher means more obstacle types right away',
@@ -639,7 +636,7 @@ const I18N = {
     workshopPin:'Fijar', workshopHide:'Ocultar',
     workshopPinned:'Fijado', workshopUnpinned:'Desfijado', workshopHidden:'Oculto para los jugadores', workshopUnhidden:'Visible para todos de nuevo',
     forgeTitle:'Constructor', forgeNamePh:'Ponle nombre', forgeDefName:'Pista del piloto',
-    forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeEn:'Obstáculos', forgeLen:'Longitud de la pista', forgeInf:'∞',
+    forgeDen:'Densidad', forgeSpd:'Velocidad', forgeWind:'Viento solar', forgeLen:'Longitud de la pista', forgeInf:'∞',
     forgeShareMapBtn:'Compartir este cielo',
     forgeCopied:'Código copiado — ¡envíalo a un amigo!', forgeBadCode:'Código no reconocido',
     forgeWin:'¡Meta!', forgeGuest:'Pista de un amigo cargada — pulsa Volar', forgeReset:'Restablecido', forgeResetBtn:'Restablecer todo',
@@ -651,7 +648,6 @@ const I18N = {
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Cualquiera', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Media', workshopFilterDiffHard:'Difícil',
     forgeDiffMeterLbl:'Dificultad del cielo',
-    forgeObstHint:'Los tipos elegidos aparecen al azar en toda la pista — no se trata de un punto concreto.',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'En qué oleada empiezas — más alto significa más tipos de obstáculos de inmediato',
     forgeFlat:'Calor plano — sin progresión', forgeHS:'Apuesta alta — 1 vida, sin bonus, puntos ×4', forgeBonus:'Bonos', forgeSky:'Cielo', forgeFog:'Niebla',
@@ -874,7 +870,7 @@ const I18N = {
     workshopPin:'Fixar', workshopHide:'Esconder',
     workshopPinned:'Fixado', workshopUnpinned:'Desafixado', workshopHidden:'Escondido dos jogadores', workshopUnhidden:'Visível para todos de novo',
     forgeTitle:'Construtor', forgeNamePh:'Dá-lhe um nome', forgeDefName:'Pista do piloto',
-    forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeEn:'Obstáculos', forgeLen:'Comprimento da pista', forgeInf:'∞',
+    forgeDen:'Densidade', forgeSpd:'Velocidade', forgeWind:'Vento solar', forgeLen:'Comprimento da pista', forgeInf:'∞',
     forgeShareMapBtn:'Compartilhar este céu',
     forgeCopied:'Código copiado — envie a um amigo!', forgeBadCode:'Código não reconhecido',
     forgeWin:'Chegada!', forgeGuest:'Pista de um amigo carregada — toque em Voar', forgeReset:'Redefinido', forgeResetBtn:'Redefinir tudo',
@@ -886,7 +882,6 @@ const I18N = {
     workshopFilterBtn:'Filtro', workshopFilterDiffAny:'Qualquer', workshopFilterDiffEasy:'Fácil',
     workshopFilterDiffMed:'Média', workshopFilterDiffHard:'Difícil',
     forgeDiffMeterLbl:'Dificuldade do céu',
-    forgeObstHint:'Os tipos escolhidos aparecem aleatoriamente por toda a pista — não é sobre um ponto específico.',
     forgeFine:'Ajuste fino', forgeHeat:'Calor', forgeLives:'Vidas', forgeWave:'Calor inicial',
     forgeWaveHint:'Em que onda você começa — mais alto significa mais tipos de obstáculos de uma vez',
     forgeFlat:'Calor constante — sem progressão', forgeHS:'Aposta alta — 1 vida, sem bônus, pontos ×4', forgeBonus:'Bônus', forgeSky:'Céu', forgeFog:'Neblina',
@@ -1106,7 +1101,7 @@ const I18N = {
     workshopPin:'Épingler', workshopHide:'Masquer',
     workshopPinned:'Épinglé', workshopUnpinned:'Désépinglé', workshopHidden:'Caché aux joueurs', workshopUnhidden:'De nouveau visible pour tous',
     forgeTitle:'Constructeur', forgeNamePh:'Donne-lui un nom', forgeDefName:'Trace du pilote',
-    forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeEn:'Obstacles', forgeLen:'Longueur de la trace', forgeInf:'∞',
+    forgeDen:'Densité', forgeSpd:'Vitesse', forgeWind:'Vent solaire', forgeLen:'Longueur de la trace', forgeInf:'∞',
     forgeShareMapBtn:'Partager ce ciel',
     forgeCopied:'Code copié — envoie-le à un ami !', forgeBadCode:'Code non reconnu', forgeWin:'Arrivée !',
     forgeGuest:"Trace d'un ami chargée — appuie sur Voler", forgeReset:'Réinitialisé', forgeResetBtn:'Tout réinitialiser', forgeShareTxt:'Vole sur ma trace « %s » dans Cosmogram !',
@@ -1117,7 +1112,6 @@ const I18N = {
     workshopFilterBtn:'Filtre', workshopFilterDiffAny:'Toutes', workshopFilterDiffEasy:'Facile',
     workshopFilterDiffMed:'Moyenne', workshopFilterDiffHard:'Difficile',
     forgeDiffMeterLbl:'Difficulté du ciel',
-    forgeObstHint:'Les types choisis apparaissent au hasard sur toute la piste — pas à un point précis.',
     forgeFine:'Réglage fin', forgeHeat:'Intensité',
     forgeLives:'Vies', forgeWave:'Intensité de départ',
     forgeWaveHint:'À quelle vague tu commences — plus haut veut dire plus de types d’obstacles tout de suite',

@@ -527,7 +527,7 @@ function ptWireTray(){
     .concat(FORGE_KINDS.map((k,i)=>({t:'kind',k:i,cap:PT_KIND_LABEL[k]||k})));
   tray.innerHTML='';
   stickerDefs.forEach(function(d){
-    const item=document.createElement('div'); item.className='stickerItem';
+    const item=document.createElement('div'); item.className='stickerItem'+(d.t==='kind'?' kind':''); // .kind — подпись становится кликабельным переключателем (см. CSS .stickerItem.kind .stickerCap), у Передышки/Заметки такого действия нет
     const s=document.createElement('div'); s.className='sticker '+(d.t==='kind'?'':d.t); s.dataset.t=d.t; s.dataset.k=d.k;
     if(d.t==='kind'){ const c=PT_KIND_COLOR[FORGE_KINDS[d.k]]||'#8fa3c8'; s.style.background='linear-gradient(180deg, '+c+', '+c+'dd)'; s.style.boxShadow='0 0 14px '+c+'77, inset 0 0 0 1px rgba(255,255,255,.28)'; }
     const ptKey=d.t==='kind'?FORGE_KINDS[d.k]:d.t;
@@ -576,6 +576,22 @@ function ptWireTray(){
     };
     document.addEventListener('pointermove',onMove);
     document.addEventListener('pointerup',onUp);
+  });
+  /* 22.09.2026 «Слияние полосы значков и Преград», пересмотрено в тот же вечер: первая версия
+     держала долгое нажатие ПРЯМО НА ЗНАЧКЕ — владелец верно поймал, что перетаскивание тоже
+     начинается с касания-и-паузы (человек целится, куда тащить), и 2-секундный таймер мог
+     сработать раньше, чем палец сдвинется — случайное вкл/выкл вместо переноса. Перенесено на
+     ПОДПИСЬ под значком (.stickerCap) — отдельная область того же стикера, тот же один «дом»
+     для обеих функций (значок ставит/тащит, подпись переключает участие в случайной генерации),
+     но физически не пересекается с драгом значка вообще — обычный короткий тап, без таймера. */
+  tray.addEventListener('click',ev=>{
+    const cap=ev.target.closest('.stickerCap'); if(!cap) return;
+    const item=cap.closest('.stickerItem'); const s=item.querySelector('.sticker');
+    if(!s || s.dataset.t!=='kind') return;
+    const i=+s.dataset.k;
+    forgeCfg.e^=(1<<i); if(!forgeCfg.e) forgeCfg.e=(1<<i); // последний вид не гасим — небо не бывает пустым насовсем, тот же приём, что раньше был у forgeChips
+    sfx.click(); haptic('light');
+    if(typeof forgeSyncWidgets==='function') forgeSyncWidgets(); // сама перекрасит .excluded (ptSyncTrayAvailability внутри) и пересоберёт небо
   });
   if(track) track.addEventListener('click',ev=>{
     if(ev.target.closest('.pin')) return; // клик по самой точке обрабатывается её собственным pointerdown/ptStartPinDrag

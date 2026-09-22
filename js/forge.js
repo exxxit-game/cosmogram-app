@@ -635,7 +635,7 @@ function forgeFill(){ // подписи + состояние виджетов п
      бы заполнение экрана конструктора на середине. Список + цикл компактнее девятнадцати
      одинаковых строк с одинаковой проверкой. */
   const LBL=[['forgeTitle',L.forgeTitle],['forgeDenLbl',L.forgeDen],['forgeSpdLbl',L.forgeSpd],['forgeWindLbl',L.forgeWind],
-    ['forgeHeatLbl',L.forgeHeat],['forgeEnLbl',L.forgeEn],
+    ['forgeHeatLbl',L.forgeHeat],
     ['forgeLivesLbl',L.forgeLives],['forgeWaveLbl',L.forgeWave],['forgeWaveHint',L.forgeWaveHint],
     // 20.09.2026: forgeBonusLbl (заголовок-дубль внутри бывшей подгруппы) удалён вместе с
     // разметкой — «Бонусы» теперь имя чипа (forgeBonusGrpLbl), тот же ключ L.forgeBonus.
@@ -652,7 +652,6 @@ function forgeFill(){ // подписи + состояние виджетов п
     // удалён при переходе на 3 чипа, ключ L.forgeHardSpoilerGrpT остался в i18n.js неиспользуемым.
     ['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgeDiffMeterLbl',L.forgeDiffMeterLbl],
-    ['forgeObstHint',L.forgeObstHint],
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];
@@ -673,40 +672,15 @@ function forgeFill(){ // подписи + состояние виджетов п
   // переехал на главный экран, id="konstruktorBtn") — строка, что красила её подпись,
   // больше не на что указывать, снята вместе с ней.
   const fnEl=$('forgeName'); if(fnEl) fnEl.placeholder=L.forgeNamePh;
-  // враги
-  const names=[L.fkRock,L.fkDebris,L.fkDrift,L.fkMine,L.fkSat,L.fkComet,L.fkSeeker,L.fkGate];
-  const chips=$('forgeChips');
-  if(chips && chips.children.length!==8){
-    chips.innerHTML='';
-    FORGE_KINDS.forEach(function(k,i){
-      const b=document.createElement('button');
-      // 20.09.2026 (владелец, макет konstruktor-karta-tochechnaya-komfort-20-09-2026.html, «отлично»):
-      // тот же цветной язык значков, что уже в лотке (PT_ICON_SVG/PT_KIND_COLOR, partitura.js) и
-      // в фильтре Мастерской (.wFilterObChip) — раньше голая текстовая пилюля была третьим разным
-      // оформлением одного и того же набора из 8 видов на одном экране.
-      b.className='forgeChip forgeObChip'; b.dataset.bit=i;
-      const icColor=(typeof PT_KIND_COLOR!=='undefined')?PT_KIND_COLOR[k]:'#8fa3c8';
-      const icSvg=(typeof PT_ICON_SVG!=='undefined')?PT_ICON_SVG[k]:'';
-      b.innerHTML='<span class="ic" style="background:'+icColor+'">'+icSvg+'</span><span class="t"></span>';
-      b.querySelector('.t').textContent=names[i];
-      // тот же множитель веса, что уже у лотка (ptWireTray, partitura.js) — тот же относительный
-      // размер значка внутри кружка (22px/60%), один расчёт на оба места.
-      const icScale=(typeof PT_ICON_WEIGHT_SCALE!=='undefined')?PT_ICON_WEIGHT_SCALE[k]:null;
-      const icSvgEl=b.querySelector('.ic svg'); if(icScale && icSvgEl) icSvgEl.style.transform='scale('+icScale+')';
-      b.addEventListener('click',function(){
-        forgeCfg.e^=(1<<i); if(!forgeCfg.e) forgeCfg.e=(1<<i); // последний вид не гасим — небо не бывает пустым насовсем
-        sfx.click(); haptic('light');
-        /* v1.282.13: пересобираем всё, а не только свой класс. Раньше чип красил сам себя и
-           замолкал — мини-небо продолжало показывать прошлый состав, а подсветка пресета
-           врала, пока не тронешь другой виджет. forgeSyncWidgets и класс проставит, и небо
-           перерисует: обещание модуля «небо перерисовывается на каждый поворот ручки»
-           наконец выполняется и для видов преград. */
-        forgeSyncWidgets();
-      });
-      chips.appendChild(b);
-    });
-  }
-  if(chips) for(let i=0;i<8;i++){ const t=chips.children[i].querySelector('.t'); if(t) t.textContent=names[i]; }
+  // 22.09.2026: отдельная панель чипов «враги» (forgeChips/forgeObChip) убрана — переключение
+  // forgeCfg.e теперь живёт на подписи под значком прямо в лотке «Карты» (js/partitura.js,
+  // ptWireTray, слушатель клика по .stickerCap). ВАЖНО (замечено при удалении, не решено):
+  // это была единственная точка, где имена видов шли через L.fkRock..fkGate (переведены на
+  // 4 языка) — подпись в лотке всегда использовала PT_KIND_LABEL (partitura.js), жёстко русский
+  // текст, ни на что не переключается. С удалением этой панели L.fkRock..fkGate становятся
+  // полностью неиспользуемыми, а подпись в лотке (единственное оставшееся место) — по-прежнему
+  // не переведена ни для одного языка, кроме русского. Сама подпись была нелокализована и до
+  // этой правки, тут ничего не ухудшилось для игроков, но резерв на перевод (L.fk*) теперь мёртв.
   // сегменты
   forgeSegBuild($('forgeSeg'),FORGE_LENS.map(function(m){ return {v:m,t:m>0?m+' '+(L.unitM||'м'):L.forgeInf}; }),
     function(){return forgeCfg.l;},function(v){forgeCfg.l=v;});
@@ -745,8 +719,6 @@ function forgeSyncWidgets(){ // конфиг → виджеты
   const spdEl=$('forgeSpd'), spdVEl=$('forgeSpdV'); if(spdEl) spdEl.value=forgeCfg.s; if(spdVEl) spdVEl.value=forgeCfg.s;
   const windEl=$('forgeWind'), windVEl=$('forgeWindV'); if(windEl) windEl.value=forgeCfg.wind||0; if(windVEl) windVEl.value=forgeCfg.wind||0; // 06.09.2026 «Солнечный ветер»; 16.09.2026: .forgeValInput — .value, не .textContent (реальный input, не <b>)
   const heat=$('forgeHeat'); if(heat){ heat.value=forgeHeatGet(); const hV=$('forgeHeatV'); if(hV) hV.textContent=forgeHeatGet(); } // «Жар» следует за плотностью автора
-  const chips=$('forgeChips'); if(chips) for(let i=0;i<chips.children.length;i++)
-    chips.children[i].classList.toggle('sel',!!(forgeCfg.e>>i&1));
   const livesSegEl=$('forgeLivesSeg'), bonusSegEl=$('forgeBonusSeg'); // 02.09.2026: те же два, что set() теперь игнорирует под «Высокой ставкой» — видно сразу, не только по бездействию тапа
   if(livesSegEl) livesSegEl.classList.toggle('locked',!!forgeCfg.hs);
   if(bonusSegEl) bonusSegEl.classList.toggle('locked',!!forgeCfg.hs);
@@ -902,7 +874,7 @@ wireOnLocal('forgeStepDots','click',function(ev){
    20.09.2026, продолжение (чипы вместо единого спойлера): раньше проверялся один общий
    forgeHardSpoilerGrp.open — теперь его нет, «открыта Точечная настройка» стало «открыт хотя бы
    один из трёх независимых чипов», проверяем все три явно. */
-const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeBonusGrp','forgeObstGrp'];
+const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeBonusGrp'];
 function forgeReserveForQuickEdit(){
   const scrBody=document.querySelector('#forgeScreen .scrBody'); if(!scrBody) return;
   const qe=$('ptQuickEdit');
@@ -915,25 +887,23 @@ function forgeReserveForQuickEdit(){
   }
 }
 /* 17.09.2026 (владелец, «Делай», макет konstruktor-tochechnaya-nastroyka-vlozhennye-spoylery-
-   17-09-2026.html): три подраздела «Точечной настройки» (Темп неба/Старт/Преграды) — не
+   17-09-2026.html): подразделы «Точечной настройки» (тогда — Темп неба/Старт/Преграды) — не
    аккордеон-радио, каждый переключается независимо. 20.09.2026: триггер стал компактным чипом
    (.forgeFineChip) вместо строки-спойлера — сама функция не изменилась, ей всё равно, какой
    именно элемент открывает/закрывает панель.
    20.09.2026, отменено (владелец, живой телефон, измерено): независимость двух самых длинных
    разделов, открытых вместе («Темп неба» 161px + «Старт» 464px), давала 1177px контента на
    800px реальный экран — переполнение, кнопка «Подтвердить карту» перекрывала подсказку.
-   «Бонусы» выделены в свой, 4-й, чип (FORGE_FINE_PANEL_OF ниже), и все четыре стали настоящим
-   аккордеоном — открытие любого закрывает остальные три. */
+   «Бонусы» выделены в свой чип (FORGE_FINE_PANEL_OF ниже), и все стали настоящим аккордеоном —
+   открытие любого закрывает остальные.
+   22.09.2026: «Преграды», 4-й чип, убран целиком — та же функция переехала на подпись под
+   значком в лотке «Карты» (см. forgeFill() выше), сейчас в аккордеоне снова три чипа. */
 const FORGE_FINE_PANEL_OF={forgeTempoGrp:'forgeTempoPanel',forgeStartGrp:'forgeStartPanel',
-  forgeBonusGrp:'forgeBonusPanel',forgeObstGrp:'forgeObstPanel'};
+  forgeBonusGrp:'forgeBonusPanel'};
 function forgeWireSubSpoiler(grpId, panelId){
   wireOnLocal(grpId,'click',function(){
     sfx.click(); haptic('light');
     const willOpen=!this.classList.contains('open');
-    // 20.09.2026: аккордеон закрывает соседей как побочный эффект клика по ЛЮБОМУ чипу, не
-    // только по «Преграды» — подсказка-разница (forgeObstHint) должна гаситься навсегда и в
-    // этом случае тоже, не только когда закрывают «Преграды» явным повторным кликом по нему же.
-    if($('forgeObstGrp')?.classList.contains('open') && grpId!=='forgeObstGrp') Store.set('forgeObstHintSeen',1);
     FORGE_FINE_CHIP_IDS.forEach(function(id){
       const g=$(id); if(g) g.classList.remove('open');
       const p=$(FORGE_FINE_PANEL_OF[id]); if(p) p.classList.add('hidden');
@@ -941,18 +911,15 @@ function forgeWireSubSpoiler(grpId, panelId){
     const nowOpen=willOpen;
     if(nowOpen){ this.classList.add('open'); const p=$(panelId); if(p) p.classList.remove('hidden'); }
     requestAnimationFrame(forgeReserveForQuickEdit);
-    // 20.09.2026 (владелец: «он в первый раз воспользовался и понял, как оно работает» —
-    // тот же разовый паттерн, что у forgeFavHint выше). Только «Преграды» несёт
-    // подпись-разницу (forgeObstHint) — закрытие панели, после того как её открыли и
-    // увидели, гасит подсказку навсегда, тем же Store-флагом.
-    if(grpId==='forgeObstGrp' && !nowOpen) Store.set('forgeObstHintSeen',1);
-    if(grpId==='forgeObstGrp'){ const h=$('forgeObstHint'); if(h) h.classList.toggle('hidden', !nowOpen || !!Store.get('forgeObstHintSeen',0)); }
   });
 }
 forgeWireSubSpoiler('forgeTempoGrp','forgeTempoPanel');
 forgeWireSubSpoiler('forgeStartGrp','forgeStartPanel');
 forgeWireSubSpoiler('forgeBonusGrp','forgeBonusPanel');
-forgeWireSubSpoiler('forgeObstGrp','forgeObstPanel');
+// 22.09.2026: forgeObstGrp/forgeObstPanel/forgeObstHint убраны целиком (см. комментарий в
+// forgeFill() выше) — «Преграды» переключаются подписью в лотке «Карты», отдельного чипа/панели
+// для этого больше нет. Store-флаг 'forgeObstHintSeen' остался в старых сохранённых профилях
+// игроков как безвредный мёртвый ключ (ничего его больше не читает и не пишет) — не мигрируем.
 
 /* ---------- Чтение формы / действия ---------- */
 function forgeReadForm(){
