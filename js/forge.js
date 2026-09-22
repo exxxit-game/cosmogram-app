@@ -922,7 +922,7 @@ wireOnLocal('forgeStepDots','click',function(ev){
    20.09.2026, продолжение (чипы вместо единого спойлера): раньше проверялся один общий
    forgeHardSpoilerGrp.open — теперь его нет, «открыта Точечная настройка» стало «открыт хотя бы
    один из трёх независимых чипов», проверяем все три явно. */
-const FORGE_FINE_CHIP_IDS=['forgeTempoGrp','forgeStartGrp','forgeBonusGrp'];
+const FORGE_FINE_CHIP_IDS=['forgeStartGrp','forgeTempoGrp','forgeBonusGrp']; // 23.09.2026: порядок совпадает с разметкой (index.html forgeFineChips) — владелец, «старт, темп неба и бонусы»
 function forgeReserveForQuickEdit(){
   const scrBody=document.querySelector('#forgeScreen .scrBody'); if(!scrBody) return;
   const qe=$('ptQuickEdit');
