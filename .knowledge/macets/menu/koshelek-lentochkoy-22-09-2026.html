@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Кошелёк в Коллекции — пилюля vs лента, было/стало</title>
+<style>
+  body{margin:0;background:#05070f;font-family:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    display:flex;gap:28px;justify-content:center;flex-wrap:wrap;padding:28px;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .col h3{color:#8fa0c8;font-size:14px;font-weight:600;margin:0;letter-spacing:.03em;text-align:center;max-width:340px;}
+  .phone{width:340px;height:520px;border-radius:28px;background:radial-gradient(ellipse at 50% 0%,#0d1636 0%,#05070f 60%);
+    border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;padding:14px 14px 0;box-sizing:border-box;}
+  .stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20px 30px,#fff,transparent),
+    radial-gradient(1px 1px at 90px 80px,#fff,transparent),radial-gradient(1px 1px at 160px 40px,#fff,transparent),
+    radial-gradient(1px 1px at 40px 140px,#fff,transparent),radial-gradient(1px 1px at 220px 200px,#fff,transparent),
+    radial-gradient(1px 1px at 280px 100px,#fff,transparent),radial-gradient(1px 1px at 120px 260px,#fff,transparent);
+    opacity:.5;}
+  .hdr{position:relative;height:40px;display:flex;align-items:center;justify-content:space-between;z-index:2;}
+  .back{display:flex;align-items:center;gap:6px;color:#eaf2ff;font-size:14px;font-weight:600;}
+  .back .arrow{width:26px;height:26px;border-radius:50%;background:linear-gradient(160deg,rgba(30,48,92,.82),rgba(8,14,34,.85));
+    display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .tgnav{display:flex;align-items:center;gap:10px;color:#8fa0c8;font-size:16px;opacity:.85;}
+  .title{position:relative;text-align:center;color:#f4f6fb;font-size:24px;font-weight:800;letter-spacing:.03em;
+    text-transform:uppercase;margin:4px 0 14px;z-index:2;}
+  .card{position:relative;width:100%;height:150px;border-radius:16px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
+    box-shadow:inset 0 0 40px rgba(80,130,220,.10);display:flex;align-items:center;justify-content:center;}
+  /* 22.09.2026: было "Аккреционный диск" — обрезал сам, хотя настоящее имя в живом коде
+     (js/game.js) полностью "Аккреционный диск чёрной дыры" (29 симв.), а самые длинные реальные
+     имена в игре доходят до 60-77 симв. ("Японский знак «плата за обслуживание»»,
+     "Ладонь с растопыренными пальцами"). Владелец поймал: макет проверял короткое имя, которое
+     я сам придумал, а не то, что реально бывает — теперь оба варианта ниже на самых длинных
+     настоящих именах, не на удобных коротких. */
+  .cardName{position:absolute;top:6px;left:6px;right:6px;text-align:center;font-size:13px;font-weight:600;
+    color:#eaf2ff;letter-spacing:.02em;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 12px rgba(0,0,0,.5);}
+  .ship{width:70px;height:70px;filter:drop-shadow(0 0 18px rgba(160,190,255,.5));}
+  .gem{width:100%;height:100%;}
+  .tabs{display:flex;gap:8px;margin-top:12px;}
+  .tab{flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);color:#8fa0c8;font-size:11px;font-weight:700;letter-spacing:.02em;
+    text-transform:uppercase;}
+  .tab.active{background:rgba(255,215,106,.12);border-color:rgba(255,215,106,.4);color:#ffe6a0;}
+  .note{max-width:340px;color:#c9d4ee;font-size:13px;line-height:1.5;text-align:center;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+  .badge.was{background:rgba(255,90,90,.15);color:#ff9a9a;border:1px solid rgba(255,90,90,.35);}
+  .badge.now{background:rgba(61,220,90,.15);color:#8ff0a4;border:1px solid rgba(61,220,90,.35);}
+  .badge.bad{background:rgba(255,150,60,.15);color:#ffb870;border:1px solid rgba(255,150,60,.4);}
+
+  /* «Было» — реальные значения из живого index.html (#angarWallet, строки 2337-2351),
+     ничего не подобрано заново. */
+  .walletPill{position:absolute;bottom:0;right:0;height:26px;display:flex;align-items:center;gap:5px;padding:0 9px;
+    background:rgba(14,18,32,.72);backdrop-filter:blur(6px);
+    border:1px solid rgba(201,164,92,.35);border-radius:12px 0 12px 0;}
+  .walletPill .gem{width:15px;height:15px;flex:none;}
+  .walletPill b{font-family:'Exo 2',sans-serif;color:#f0c040;font-weight:600;font-size:12.5px;letter-spacing:.03em;}
+
+  /* «Стало» — та же лента (та же геометрия/градиент/поворот), что уже в живом коде у карточек
+     режимов и Мастерской (index.html, .recordBadge .band / .wAuthorRibbon span), просто с
+     кошельковым жетоном вместо формы-характера. Ничего не придумано заново под эту задачу. */
+  .walletRibbon{position:absolute;top:0;right:0;width:76px;height:76px;overflow:hidden;pointer-events:none}
+  .walletRibbon .band{position:absolute;width:120px;top:8px;right:-32px;transform:rotate(45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px 2.8px 1px 0}
+  .walletRibbon .gem{width:13px;height:13px;flex:none}
+  .walletRibbon b{font-family:'Exo 2',sans-serif;font-weight:800;font-size:12px;color:#2c1f08;line-height:1}
+  /* 22.09.2026 (владелец поймал живьём): «снизу» — не просто зеркало «сверху» по top/bottom и
+     повороту. Градиент linear-gradient(180deg,свет,тень) в ЛОКАЛЬНЫХ координатах ленты кладёт
+     светлый край у локального top — у ленты СВЕРХУ (top:8px) это как раз внешний, угловой край
+     (совпадает с тем, как уже сделаны ленты режимов). У ленты СНИЗУ (bottom:8px) местный «top»
+     после разворота оказывается ВНУТРИ карточки, а не у угла — та же самая светлая сторона
+     теперь смотрит не туда, снаружи выходит тёмный край. Результат — перевёрнутый на вид
+     градиент, ровно то, что заметил владелец. Разворот направления (0deg вместо 180deg)
+     возвращает светлый край к углу. */
+  .walletRibbon.bottomBand .band{background:linear-gradient(0deg,#f0c040,#dba93c)}
+  .mark{position:absolute;border:3px solid #3ddc5a;border-radius:50%;transform:rotate(-8deg);}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <!-- реальный путь из index.html:4177, не нарисован заново -->
+  <symbol id="i-star5-outline" viewBox="0 0 24 24"><path d="M12 3.5 14.4 9.3 20.7 9.8 15.9 13.9 17.4 20.1 12 16.7 6.6 20.1 8.1 13.9 3.3 9.8 9.6 9.3z"></path></symbol>
+</defs></svg>
+
+<div class="col">
+  <span class="badge was">Было (реальный код)</span>
+  <h3>Пилюля внизу — на самом длинном реальном имени в игре (77 симв., js/game.js)</h3>
+  <div class="phone">
+    <div class="stars"></div>
+    <div class="hdr">
+      <div class="back"><div class="arrow">←</div>Назад</div>
+      <div class="tgnav">⌄ ⋮</div>
+    </div>
+    <div class="title">Коллекция</div>
+    <div class="card">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletPill">
+        <svg class="gem" viewBox="0 0 24 24"><polygon points="12,2 21,9 17,22 7,22 3,9" fill="#ffd66a"/></svg>
+        <b>1575</b>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Все</div><div class="tab">Новое</div><div class="tab">Куплено</div>
+    </div>
+  </div>
+  <p class="note" style="max-width:340px">Пилюля внизу — длинное имя (2 строки) её вообще не задевает, они на разных концах карточки.</p>
+</div>
+
+<div class="col">
+  <span class="badge bad">Лента СВЕРХУ справа — так, как я сначала нарисовал</span>
+  <h3>То же самое длинное имя — лента врезается прямо в текст</h3>
+  <div class="phone">
+    <div class="stars"></div>
+    <div class="hdr">
+      <div class="back"><div class="arrow">←</div>Назад</div>
+      <div class="tgnav">⌄ ⋮</div>
+    </div>
+    <div class="title">Коллекция</div>
+    <div class="card">
+      <div class="cardName" style="right:60px">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon">
+        <div class="band">
+          <svg class="gem" viewBox="0 0 24 24"><polygon points="12,2 21,9 17,22 7,22 3,9" fill="#2c1f08"/></svg>
+          <b>1575</b>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Все</div><div class="tab">Новое</div><div class="tab">Куплено</div>
+    </div>
+  </div>
+  <p class="note" style="max-width:340px;color:#ff9a9a">Честно: даже отодвинув текст (right:60px, было 6px) под ленту, при переносе на 2 строки
+  вторая строка всё равно задевает угол ленты. Мой первый макет этого не проверял вообще —
+  вы правы, это был реальный промах, не мелочь.</p>
+</div>
+
+<div class="col">
+  <span class="badge now">Лента СНИЗУ справа — на месте нынешней пилюли</span>
+  <h3>То же длинное имя — лента там же, где пилюля сейчас, конфликта нет</h3>
+  <div class="phone">
+    <div class="stars"></div>
+    <div class="hdr">
+      <div class="back"><div class="arrow">←</div>Назад</div>
+      <div class="tgnav">⌄ ⋮</div>
+    </div>
+    <div class="title">Коллекция</div>
+    <div class="card">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon bottomBand" style="top:auto;bottom:0">
+        <div class="band" style="top:auto;bottom:8px;transform:rotate(-45deg)">
+          <svg class="gem" viewBox="0 0 24 24"><polygon points="12,2 21,9 17,22 7,22 3,9" fill="#2c1f08"/></svg>
+          <b>1575</b>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Все</div><div class="tab">Новое</div><div class="tab">Куплено</div>
+    </div>
+  </div>
+  <p class="note" style="max-width:340px">Тот же приём, что уже решил эту же задачу для пилюли (koshelek-v-karte-13-09-2026.html,
+  «шапка свободна для длинных элементов») — угол СНИЗУ у длинных имён всегда свободен, они растут
+  только вниз от верха. Разворот (rotate(-45deg) вместо (45deg)) и низ вместо верха — минимум
+  правок от готовой геометрии ленты режимов.</p>
+</div>
+
+<div class="col" style="width:100%;max-width:760px">
+  <p class="note">Вывод из проверки на реальном длинном имени, не на моём придуманном коротком:
+  лента снизу-справа (третья колонка) безопасна так же, как нынешняя пилюля — конфликта с текстом
+  нет ни на одном реальном имени игры. Лента сверху-справа (вторая колонка) — риск с длинными
+  именами реален, не мелочь. Подтверждено: делаем снизу-справа, туда же, куда вы изначально
+  рисовали.</p>
+</div>
+
+<div class="col" style="width:100%"><h3 style="font-size:16px;color:#eaf2ff;margin-top:10px">Жетон — звёздочка с глазами, вместо простого силуэта (1 и 2 сразу, с анимацией)</h3></div>
+
+<div class="col">
+  <span class="badge now">Один</span>
+  <h3>Одна звезда с моргающими глазами</h3>
+  <div class="phone" style="height:300px">
+    <div class="stars"></div>
+    <div class="card" style="height:150px;margin-top:20px">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon bottomBand" style="top:auto;bottom:0">
+        <div class="band" style="top:auto;bottom:8px;transform:rotate(-45deg);gap:3px">
+          <div class="starEye">
+            <svg class="starShp" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>
+            <div class="eyeDot" style="left:8px"></div>
+            <div class="eyeDot" style="left:14px"></div>
+          </div>
+          <b>1575</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="max-width:340px">Силуэт звезды — настоящий #i-star5-outline (index.html:4177, тот же путь, что уже рисует
+  звёзды на ленте Daily), не нарисован заново. Глаза — два кружка поверх, моргают тем же
+  keyframe wRibbonBlink, что и весь остальной репертуар глаз в игре.</p>
+</div>
+
+<div class="col">
+  <span class="badge now">Два</span>
+  <h3>Две звезды с моргающими глазами (тот же приём, что у остальных лент — 2 формы в ряд)</h3>
+  <div class="phone" style="height:300px">
+    <div class="stars"></div>
+    <div class="card" style="height:150px;margin-top:20px">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon bottomBand" style="top:auto;bottom:0">
+        <div class="band" style="top:auto;bottom:8px;transform:rotate(-45deg);gap:3px">
+          <div class="shapesRow2">
+            <div class="starEye">
+              <svg class="starShp" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>
+              <div class="eyeDot" style="left:8px"></div>
+              <div class="eyeDot" style="left:14px"></div>
+            </div>
+            <div class="starEye">
+              <svg class="starShp" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>
+              <div class="eyeDot" style="left:8px"></div>
+              <div class="eyeDot" style="left:14px"></div>
+            </div>
+          </div>
+          <b>1575</b>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="max-width:340px">Ровно та же структура shapesRow, что уже у карточек режимов (2 формы бок о бок над числом) —
+  не новый узор, переиспользован тот же.</p>
+</div>
+
+<div class="col" style="width:100%;max-width:760px">
+  <p class="note">Обе версии — на реальном самом длинном имени, никакого конфликта с текстом
+  (лента снизу). Какая версия ближе — одна звезда или две?</p>
+</div>
+
+<style>
+  .starEye{position:relative;width:22px;height:22px}
+  .starShp{width:100%;height:100%;fill:#2c1f08}
+  .eyeDot{position:absolute;top:10px;width:3px;height:5px;border-radius:2px;background:#fce1b6;
+    animation:wRibbonBlink 4.2s ease-in-out infinite}
+  .shapesRow2{display:flex;gap:6px}
+  @keyframes wRibbonBlink{
+    0%,90%,100%{transform:scaleY(1)}
+    93%{transform:scaleY(.12)}
+    96%{transform:scaleY(1)}
+  }
+</style>
+
+</body>
+</html>

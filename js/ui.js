@@ -3945,6 +3945,9 @@ function angarWalletTipMaybeShow(){
   if (Store.get('angarWalletTipSeen',0)) return;
   Store.set('angarWalletTipSeen',1);
   toggleCls('angarWalletTip','hidden',false);
+  // 22.09.2026 (владелец, живая проверка на телефоне: «долго висит как-то») — раньше гасла
+  // только при уходе с экрана (hangarLeave); теперь ещё и сама, через 5с, если игрок остался.
+  setTimeout(()=>{ toggleCls('angarWalletTip','hidden',true); }, 5000);
 }
 wireOn('hangarBtn', 'click', ()=>{
   renderHangar(); setScreen('hangar'); sfx.click();

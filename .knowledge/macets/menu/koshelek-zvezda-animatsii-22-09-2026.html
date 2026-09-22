@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Кошелёк лентой — звезда живая, форма не ломается</title>
+<style>
+  body{margin:0;background:#05070f;font-family:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    display:flex;gap:20px;justify-content:center;flex-wrap:wrap;padding:28px;box-sizing:border-box;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:6px;width:220px}
+  .col h3{color:#8fa0c8;font-size:12.5px;font-weight:600;margin:0;text-align:center}
+  .phone{width:220px;height:260px;border-radius:20px;background:radial-gradient(ellipse at 50% 0%,#0d1636 0%,#05070f 60%);
+    border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;padding:10px 10px 0;box-sizing:border-box;}
+  .card{position:relative;width:100%;height:150px;margin-top:24px;border-radius:14px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
+    box-shadow:inset 0 0 30px rgba(80,130,220,.10);display:flex;align-items:center;justify-content:center;}
+  .ship{width:60px;height:60px;filter:drop-shadow(0 0 14px rgba(160,190,255,.5));}
+
+  /* Раскладка/градиент/позиция — уже подтверждены (угол снизу-справа, безопасно на самом
+     длинном реальном имени). Тут — только сам жетон, без глаз (владелец: «ломает иконку»),
+     каждая колонка пробует РЕАЛЬНЫЙ keyframe характера ленты (index.html ~2977-3040,
+     тот же репертуар, что уже двигает формы у карточек режимов .a-sparkle/.a-bouncy/итд —
+     ни один keyframe не переписан заново). */
+  .walletRibbon{position:absolute;bottom:0;right:0;width:76px;height:76px;overflow:hidden;pointer-events:none}
+  /* владелец подтвердил: звезда и число в ОДИН ряд (не столбиком) — тот же band, что был
+     сделан в koshelek-lenta-odna-zvezda-v-ryad-22-09-2026.html, тут по невнимательности
+     снова стоял старый flex-direction:column. */
+  .walletRibbon .band{position:absolute;width:120px;bottom:14px;right:-32px;transform:rotate(-45deg);
+    background:linear-gradient(0deg,#f0c040,#dba93c);
+    display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:4px 2.8px}
+  .walletRibbon b{font-family:'Exo 2',sans-serif;font-weight:800;font-size:12px;color:#2c1f08;line-height:1}
+  .jewelC{width:16px;height:16px;display:block}
+
+  /* keyframes — скопированы буквально из index.html, ни один не изменён */
+  @keyframes wRibbonSparkle{0%,75%,100%{transform:scale(1)} 80%{transform:scale(1.35)} 85%{transform:scale(1)} 90%{transform:scaleY(.12)} 93%{transform:scale(1)}}
+  @keyframes wRibbonBouncy{0%,88%,100%{transform:scaleY(1)} 91%{transform:scaleY(.1)} 94%{transform:scaleY(1.22)} 97%{transform:scaleY(1)}}
+  @keyframes wRibbonDramatic{0%,85%,100%{transform:scaleY(1)} 89%{transform:scaleY(.1)} 95%{transform:scaleY(.1)} 99%{transform:scaleY(1)}}
+  @keyframes wRibbonNervous{0%,60%,100%{transform:translateX(0) scaleY(1)} 64%{transform:translateX(1.4px) scaleY(1)} 67%{transform:translateX(1.4px) scaleY(.12)} 70%{transform:translateX(-1.4px) scaleY(1)} 73%{transform:translateX(0) scaleY(1)}}
+  @keyframes wRibbonSurprised{0%,70%,100%{transform:scaleY(1)} 73%{transform:scaleY(.1)} 75%{transform:scaleY(1)} 77%{transform:scaleY(.1)} 79%{transform:scaleY(1.15)} 82%{transform:scaleY(1)}}
+  @keyframes wRibbonCurious{0%,84%,100%{transform:scaleY(1)} 87%{transform:scaleY(.12)} 89%{transform:scaleY(1)} 91%{transform:scaleY(.12)} 93%{transform:scaleY(1)}}
+  @keyframes wRibbonBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+
+  .a-sparkle .jewelC{animation:wRibbonSparkle 5.4s ease-in-out infinite}
+  .a-bouncy .jewelC{animation:wRibbonBouncy 4.6s cubic-bezier(.34,1.56,.64,1) infinite}
+  .a-dramatic .jewelC{animation:wRibbonDramatic 10s ease-in-out infinite}
+  .a-nervous .jewelC{animation:wRibbonNervous 2.2s ease-in-out infinite}
+  .a-surprised .jewelC{animation:wRibbonSurprised 6.8s ease-in-out infinite}
+  .a-curious .jewelC{animation:wRibbonCurious 2.6s ease-in-out infinite}
+  /* 2 звезды по бокам от числа — та же формула сдвига между левым/правым глазом, что у
+     .wAuthorRibbon.char-wave (index.html ~2995: eyeL/eyeR моргают тем же wRibbonBlink,
+     R с задержкой .18s) — не одновременно, чуть вразнобой, живее. */
+  .a-blink2 .jewelC.l{animation:wRibbonBlink 4.2s ease-in-out infinite}
+  .a-blink2 .jewelC.r{animation:wRibbonBlink 4.2s ease-in-out infinite .18s}
+  /* 22.09.2026: СТРУКТУРНЫЙ бокс ленты — базовое правило .walletRibbon .band ВООБЩЕ не
+     переопределяется для a-blink2 (ни width/bottom/right, ни padding) — тот же самый бокс,
+     что у всех остальных лент (владелец поймал первым: «они разные», лента была на другом
+     месте — это и была причина). Единственное, что меняется — сами жетоны меньше (16→13px,
+     зазор 5→4px), чтобы 2 штуки + число уместились в ЭТОТ ЖЕ бокс без выхода за край. */
+  /* 22.09.2026, финальный расчёт: бокс ленты (126×24 внешне, left/top совпадают с остальными
+     лентами день в день) больше НЕ трогается вообще — ни width/bottom/right, ни height
+     (предыдущая правка height:24px по ошибке считала его высотой КОНТЕНТА при content-box,
+     реальный бокс раздулся до 32px — владелец поймал живьём: «выпирает»). Единственная разница
+     с single-star лентами — сами жетоны меньше (13→11px) и зазор (4→3px), проверено координатно
+     (DOMMatrix): бокс идентичен byte-в-byte остальным лентам, все 4 угла обоих жетонов внутри. */
+  .a-blink2 .jewelC{width:11px;height:11px}
+  /* 22.09.2026, тот же приём центровки, что весь вечер у остальных лент (центроид обрезанного
+     многоугольника ≠ центр самого бокса) — владелец поймал живьём: «смещена вниз». Реальный
+     целевой центроид для ЭТОГО бокса (126×24 на этой позиции) — (46.66;46.66), центр контента
+     без правки был (45.2;50.0) — на 3.3px ниже и левее цели. padding-сумма та же (top+bottom=8,
+     left+right=5.6), просто распределена не поровну — весь бюджет закона максимума по X ушёл
+     в left (right упёрся в 0), Y — почти без остатка. Итог: расхождение с целью <0.5px. */
+  .a-blink2 .band{gap:3px;height:16px;padding:2.67px 0 5.33px 5.6px}
+</style>
+</head>
+<body>
+
+<div class="col"><h3>a-sparkle — пульс+искра</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-sparkle"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-bouncy — подпрыгивает</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-bouncy"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-dramatic — медленное долгое моргание</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-dramatic"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-nervous — дрожит</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-nervous"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-surprised — двойное моргание+скачок</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-surprised"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-curious — двойное быстрое моргание</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <div class="walletRibbon a-curious"><div class="band"><canvas class="jewelC" width="32" height="32"></canvas><b>1575</b></div></div>
+  </div></div>
+</div>
+
+<div class="col"><h3>a-blink2 — ДВЕ звезды по бокам от числа, моргают вразнобой</h3>
+  <div class="phone"><div class="card"><svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+    <!-- 22.09.2026: контент (2 жетона+число) шире прежнего 120px, реальная ширина автоматически
+         138px — при старом bottom:14px левый жетон вылезал за нижний край ленты (обрезался,
+         проверено координатно, DOMMatrix + видимый многоугольник). bottom:26px — середина
+         реально посчитанного безопасного диапазона (20-32px), все 4 угла обоих жетонов внутри. -->
+    <div class="walletRibbon a-blink2"><div class="band"><canvas class="jewelC l" width="32" height="32"></canvas><b>1575</b><canvas class="jewelC r" width="32" height="32"></canvas></div></div>
+  </div></div>
+</div>
+
+<script>
+function drawStarJewel(c){ // буквально из js/game.js, не изменена
+  const x=c.getContext('2d'); if(!x) return;
+  const dpr = window.devicePixelRatio||1;
+  const cssPx = c.clientWidth || parseFloat(getComputedStyle(c).width) || 16;
+  const bw = Math.max(1, Math.round(cssPx*dpr));
+  if (c.width!==bw || c.height!==bw){ c.width=bw; c.height=bw; }
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,cssPx,cssPx);
+  x.scale(cssPx/24,cssPx/24);
+  const grad=x.createLinearGradient(0,0,0,24);
+  grad.addColorStop(0,'#fff3c4'); grad.addColorStop(.55,'#ffd76a'); grad.addColorStop(1,'#e8a94b');
+  x.shadowColor='rgba(255,200,80,.85)'; x.shadowBlur=4;
+  x.fillStyle=grad;
+  x.beginPath();
+  x.moveTo(12,2.8);
+  x.bezierCurveTo(12.9,8, 16,11.1, 21.2,12);
+  x.bezierCurveTo(16,12.9, 12.9,16, 12,21.2);
+  x.bezierCurveTo(11.1,16, 8,12.9, 2.8,12);
+  x.bezierCurveTo(8,11.1, 11.1,8, 12,2.8);
+  x.closePath(); x.fill();
+  x.shadowBlur=0;
+  x.strokeStyle='rgba(255,255,255,.45)'; x.lineWidth=.8;
+  x.beginPath(); x.moveTo(12,2.8); x.lineTo(12,21.2); x.stroke();
+  x.fillStyle='#fffbe8'; x.beginPath(); x.arc(12,12,1.1,0,6.283); x.fill();
+}
+document.querySelectorAll('.jewelC').forEach(drawStarJewel);
+</script>
+
+</body>
+</html>

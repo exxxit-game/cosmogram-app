@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Кошелёк лентой — звезда в один ряд с числом</title>
+<style>
+  body{margin:0;background:#05070f;font-family:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+    display:flex;gap:24px;justify-content:center;flex-wrap:wrap;padding:28px;box-sizing:border-box;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .col h3{color:#8fa0c8;font-size:13px;font-weight:600;margin:0;text-align:center}
+  .phone{width:340px;height:420px;border-radius:28px;background:radial-gradient(ellipse at 50% 0%,#0d1636 0%,#05070f 60%);
+    border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;padding:14px 14px 0;box-sizing:border-box;}
+  .stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20px 30px,#fff,transparent),
+    radial-gradient(1px 1px at 90px 80px,#fff,transparent),radial-gradient(1px 1px at 160px 40px,#fff,transparent),
+    radial-gradient(1px 1px at 40px 140px,#fff,transparent),radial-gradient(1px 1px at 220px 200px,#fff,transparent),
+    radial-gradient(1px 1px at 280px 100px,#fff,transparent),radial-gradient(1px 1px at 120px 260px,#fff,transparent);
+    opacity:.5;}
+  .hdr{position:relative;height:40px;display:flex;align-items:center;justify-content:space-between;z-index:2;}
+  .back{display:flex;align-items:center;gap:6px;color:#eaf2ff;font-size:14px;font-weight:600;}
+  .back .arrow{width:26px;height:26px;border-radius:50%;background:linear-gradient(160deg,rgba(30,48,92,.82),rgba(8,14,34,.85));
+    display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .tgnav{display:flex;align-items:center;gap:10px;color:#8fa0c8;font-size:16px;opacity:.85;}
+  .title{position:relative;text-align:center;color:#f4f6fb;font-size:24px;font-weight:800;letter-spacing:.03em;
+    text-transform:uppercase;margin:4px 0 14px;z-index:2;}
+  .card{position:relative;width:100%;height:150px;border-radius:16px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,#0a1030 0%,#101a3c 58%,#12224a 100%);
+    box-shadow:inset 0 0 40px rgba(80,130,220,.10);display:flex;align-items:center;justify-content:center;}
+  .cardName{position:absolute;top:6px;left:6px;right:6px;text-align:center;font-size:13px;font-weight:600;
+    color:#eaf2ff;letter-spacing:.02em;text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 12px rgba(0,0,0,.5);}
+  .ship{width:70px;height:70px;filter:drop-shadow(0 0 18px rgba(160,190,255,.5));}
+  .tabs{display:flex;gap:8px;margin-top:12px;}
+  .tab{flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);color:#8fa0c8;font-size:11px;font-weight:700;letter-spacing:.02em;
+    text-transform:uppercase;}
+  .tab.active{background:rgba(255,215,106,.12);border-color:rgba(255,215,106,.4);color:#ffe6a0;}
+
+  /* Геометрия/позиция/градиент — уже проверены (угол снизу-справа, безопасен на самом длинном
+     реальном имени, градиент развёрнут под низ). Меняется только внутренняя раскладка band:
+     flex-direction:row вместо column — жетон и число в ОДНУ строку, не жетон над числом. */
+  .walletRibbon{position:absolute;bottom:0;right:0;width:76px;height:76px;overflow:hidden;pointer-events:none}
+  .walletRibbon .band{position:absolute;width:120px;bottom:14px;right:-32px;transform:rotate(-45deg);
+    background:linear-gradient(0deg,#f0c040,#dba93c);
+    display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:4px 2.8px}
+  .walletRibbon b{font-family:'Exo 2',sans-serif;font-weight:800;font-size:12px;color:#2c1f08;line-height:1}
+  .jewelWrap{position:relative;width:16px;height:16px;flex:none}
+  .jewelC{width:16px;height:16px;display:block}
+  .eyeDot{position:absolute;top:6px;width:2.2px;height:3.6px;border-radius:1.5px;background:#2c1f08;
+    animation:wRibbonBlink 4.2s ease-in-out infinite}
+  @keyframes wRibbonBlink{
+    0%,90%,100%{transform:scaleY(1)}
+    93%{transform:scaleY(.12)}
+    96%{transform:scaleY(1)}
+  }
+</style>
+</head>
+<body>
+
+<div class="col">
+  <h3>Одна звезда — сбоку от числа, в один ряд</h3>
+  <div class="phone">
+    <div class="stars"></div>
+    <div class="hdr"><div class="back"><div class="arrow">←</div>Назад</div><div class="tgnav">⌄ ⋮</div></div>
+    <div class="title">Коллекция</div>
+    <div class="card">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon">
+        <div class="band">
+          <div class="jewelWrap"><canvas class="jewelC one" width="32" height="32"></canvas><div class="eyeDot" style="left:5px"></div><div class="eyeDot" style="left:9px"></div></div>
+          <b>1575</b>
+        </div>
+      </div>
+    </div>
+    <div class="tabs"><div class="tab active">Все</div><div class="tab">Новое</div><div class="tab">Куплено</div></div>
+  </div>
+</div>
+
+<div class="col">
+  <h3>Звезда с каждой стороны от числа</h3>
+  <div class="phone">
+    <div class="stars"></div>
+    <div class="hdr"><div class="back"><div class="arrow">←</div>Назад</div><div class="tgnav">⌄ ⋮</div></div>
+    <div class="title">Коллекция</div>
+    <div class="card">
+      <div class="cardName">Японский знак «плата за обслуживание»</div>
+      <svg class="ship" viewBox="0 0 100 100"><polygon points="50,10 85,90 50,70 15,90" fill="#dfe8ff"/><circle cx="50" cy="52" r="4" fill="#f0c040"/></svg>
+      <div class="walletRibbon">
+        <div class="band" style="width:130px">
+          <div class="jewelWrap"><canvas class="jewelC two" width="32" height="32"></canvas><div class="eyeDot" style="left:5px"></div><div class="eyeDot" style="left:9px"></div></div>
+          <b>1575</b>
+          <div class="jewelWrap"><canvas class="jewelC two" width="32" height="32"></canvas><div class="eyeDot" style="left:5px"></div><div class="eyeDot" style="left:9px"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tabs"><div class="tab active">Все</div><div class="tab">Новое</div><div class="tab">Куплено</div></div>
+  </div>
+</div>
+
+<script>
+// drawStarJewel — буквально из js/game.js (строки 2639-2665), не изменена.
+function drawStarJewel(c){
+  const x=c.getContext('2d'); if(!x) return;
+  const dpr = window.devicePixelRatio||1;
+  const cssPx = c.clientWidth || parseFloat(getComputedStyle(c).width) || 16;
+  const bw = Math.max(1, Math.round(cssPx*dpr));
+  if (c.width!==bw || c.height!==bw){ c.width=bw; c.height=bw; }
+  x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,cssPx,cssPx);
+  x.scale(cssPx/24,cssPx/24);
+  const grad=x.createLinearGradient(0,0,0,24);
+  grad.addColorStop(0,'#fff3c4'); grad.addColorStop(.55,'#ffd76a'); grad.addColorStop(1,'#e8a94b');
+  x.shadowColor='rgba(255,200,80,.85)'; x.shadowBlur=4;
+  x.fillStyle=grad;
+  x.beginPath();
+  x.moveTo(12,2.8);
+  x.bezierCurveTo(12.9,8, 16,11.1, 21.2,12);
+  x.bezierCurveTo(16,12.9, 12.9,16, 12,21.2);
+  x.bezierCurveTo(11.1,16, 8,12.9, 2.8,12);
+  x.bezierCurveTo(8,11.1, 11.1,8, 12,2.8);
+  x.closePath(); x.fill();
+  x.shadowBlur=0;
+  x.strokeStyle='rgba(255,255,255,.45)'; x.lineWidth=.8;
+  x.beginPath(); x.moveTo(12,2.8); x.lineTo(12,21.2); x.stroke();
+  x.fillStyle='#fffbe8'; x.beginPath(); x.arc(12,12,1.1,0,6.283); x.fill();
+}
+document.querySelectorAll('.jewelC').forEach(drawStarJewel);
+</script>
+
+</body>
+</html>
