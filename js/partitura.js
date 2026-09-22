@@ -218,20 +218,23 @@ function ptPinName(p){ return p.type==='pause'?'передышку':p.type==='ma
 
 let ptToastTimer=null;
 /* 14.09.2026 (владелец, живой скрин с кружком — «эта кнопка теперь лишняя»): у Тюнинга
-   (angarUnwear, js/ui.js) «Снять» уже само по себе кнопка прямо на плитке — вернуть предмет
-   так же просто, тапнуть ту же плитку («Надеть»), кнопка «вернуть» в тосте там дублирует
-   то, что и так под рукой. В Конструкторе (список точек «Убрал · Вернуть») отмены точки на
-   самой ленте нет — там «вернуть» остаётся единственным путём, кнопка нужна по-прежнему.
-   undoFn необязателен: без него кнопка «вернуть» скрыта, с ним — работает как раньше. */
-function ptShowToast(text,undoFn){
+   (angarUnwear, js/ui.js) «Снять» уже само по себе кнопка прямо на плитке — кнопка «вернуть»
+   в тосте там дублировала то, что и так под рукой, снята тогда же.
+   22.09.2026 (владелец, живой скрин Конструктора с обводкой — «одно и то же, дублируется
+   просто функция»): та же самая причина добралась и сюда. Персистентная ptUndoBtn («4»/↺
+   наверху) с 16-17.09.2026 уже делает РОВНО то же самое, что кнопка «вернуть» в тосте —
+   обе снимают вершину ОДНОГО и того же ptUndoStack (см. комментарий у него ниже: «его revert
+   всегда совпадает с вершиной стека»). Кнопка в тосте моргает и пропадает через 3с, ptUndoBtn
+   всегда на виду — оставлена она, из тоста убрана, второй кнопки для того же действия
+   больше нет. Второй параметр (undoFn) убран из сигнатуры целиком — он был нужен ТОЛЬКО
+   кнопке, которой больше нет; вызывающий код по-прежнему сам зовёт ptSetUndo(revert)
+   отдельно, тосту эта функция больше не нужна вообще. */
+function ptShowToast(text){
   let t=document.querySelector('.ptToast');
   if(!t){ t=document.createElement('div'); t.className='ptToast';
-    t.innerHTML='<span class="ptToastTxt"></span><span class="undo">вернуть</span>';
+    t.innerHTML='<span class="ptToastTxt"></span>';
     (document.getElementById('uiScaleRoot')||document.body).appendChild(t); } // 09.09.2026 «Размер текста»: внутрь масштабируемой обёртки, не мимо неё
   t.querySelector('.ptToastTxt').textContent=text;
-  const undoEl=t.querySelector('.undo');
-  undoEl.classList.toggle('hidden', !undoFn);
-  undoEl.onclick=undoFn?(()=>{ undoFn(); const si=ptUndoStack.indexOf(undoFn); if(si>=0) ptUndoStack.splice(si,1); ptSyncUndoBtn(); t.classList.remove('show'); clearTimeout(ptToastTimer); }):null;
   // 20.09.2026 (владелец, видео с реального телефона): тост садился прямо на панель точки
   // (#ptQuickEdit) — оба position:fixed снизу экрана, тост (z-index 40) частично тонул под
   // панелью (z-index 41), «Вернуть» перекрывал число метров панели. Тост теперь встаёт НАД
@@ -257,7 +260,7 @@ function ptShowToast(text,undoFn){
 let ptUndoStack=[]; const PT_UNDO_MAX=5;
 function ptSetUndo(revertFn){ ptUndoStack.push(revertFn); if(ptUndoStack.length>PT_UNDO_MAX) ptUndoStack.shift(); ptSyncUndoBtn(); }
 function ptClearUndo(){ ptUndoStack.length=0; ptSyncUndoBtn(); }
-function ptSyncUndoBtn(){ const b=$('ptUndoBtn'); if(b) b.disabled=!ptUndoStack.length; }
+function ptSyncUndoBtn(){ const b=$('ptUndoBtn'); if(b) b.classList.toggle('lookDisabled', !ptUndoStack.length); } // 22.09.2026: класс, не .disabled — см. комментарий у .ptCornerBtn.lookDisabled в index.html
 function ptDoUndo(){
   if(!ptUndoStack.length) return;
   const fn=ptUndoStack.pop();
@@ -449,7 +452,7 @@ function ptRemovePin(i){
   pins.splice(i,1); ptSelIdx=-1;
   sfx.click(); haptic('light');
   const revert=()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); };
-  ptShowToast('Убрал '+ptPinName(p),revert);
+  ptShowToast('Убрал '+ptPinName(p));
   ptSetUndo(revert);
   ptRender();
 }
@@ -562,7 +565,7 @@ function ptWireTray(){
         sfx.click(); haptic('medium');
         ptRender(ptSelIdx);
         const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
-        ptShowToast('Поставил '+ptPinName(p),revert);
+        ptShowToast('Поставил '+ptPinName(p));
         ptSetUndo(revert);
       } else if(!moved){
         // 12.09.2026: тап без переноса на ленту (и без промаха мимо неё) — не «ничего не
@@ -584,16 +587,50 @@ function ptWireTray(){
       sfx.click(); haptic('medium');
       ptRender(ptSelIdx);
       const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
-      ptShowToast('Поставил '+ptPinName(p),revert);
+      ptShowToast('Поставил '+ptPinName(p));
       ptSetUndo(revert);
     } else if(ptSelIdx>=0){
       ptSelIdx=-1; ptRender();
     }
   });
 }
+/* 22.09.2026 (владелец, живой скрин с обводкой — «одинаковые функции дублируются...
+   достаточно одной удалить... стрелочка рядом с 4 тоже под вопросом... а если её зажать,
+   то можно будет удалить вообще всё... тогда корзина нам не будет нужна»): forgeResetBtn
+   (отдельная кнопка-корзина, js/forge.js) убрана целиком — её работу (forgeResetAll(), сброс
+   ВСЕГО forgeCfg, не только точек) теперь делает ДОЛГОЕ нажатие на эту же ptUndoBtn. Короткий
+   тап — как раньше, ptDoUndo() (один шаг назад). 2000мс — не выдумано, тот же порядок, что
+   уже применялся в проекте для похожих жестов (Сервисный центр/Eruda). forgeResetAll() сама
+   не изменилась и по-прежнему кладёт свой откат на ptUndoStack — долгое нажатие остаётся
+   тоже отменяемым коротким тапом сразу после, ничего не потеряно от старого поведения. */
+const PT_RESET_HOLD_MS=2000;
+let ptResetHoldTimer=null, ptResetHoldFired=false;
+function ptUndoBtnCancelHold(){
+  clearTimeout(ptResetHoldTimer); ptResetHoldTimer=null;
+  const b=$('ptUndoBtn'); if(b) b.classList.remove('holding');
+}
 function ptWireOnce(){
   if(ptWireOnce._done) return; ptWireOnce._done=1;
-  const undoBtn=$('ptUndoBtn'); if(undoBtn) undoBtn.addEventListener('click',ptDoUndo); // 16.09.2026 «Дальше»
+  const undoBtn=$('ptUndoBtn');
+  if(undoBtn){
+    undoBtn.addEventListener('pointerdown', ()=>{
+      ptResetHoldFired=false;
+      undoBtn.classList.add('holding');
+      ptResetHoldTimer=setTimeout(()=>{
+        ptResetHoldFired=true;
+        undoBtn.classList.remove('holding');
+        sfx.click(); haptic('heavy');
+        if(typeof forgeResetAll==='function') forgeResetAll();
+      },PT_RESET_HOLD_MS);
+    });
+    undoBtn.addEventListener('pointerup', ptUndoBtnCancelHold);
+    undoBtn.addEventListener('pointerleave', ptUndoBtnCancelHold);
+    undoBtn.addEventListener('pointercancel', ptUndoBtnCancelHold);
+    undoBtn.addEventListener('click', ()=>{
+      if(ptResetHoldFired){ ptResetHoldFired=false; return; } // клик после долгого нажатия — сброс уже сделан, второй раз (отмена) не нужен
+      ptDoUndo();
+    });
+  }
   const del=$('ptDelBtn'); if(del) del.addEventListener('click',()=>{ if(ptSelIdx>=0) ptRemovePin(ptSelIdx); });
   const m10=$('ptMinus10'); if(m10) m10.addEventListener('click',()=>ptNudge(-10));
   const m1=$('ptMinus1'); if(m1) m1.addEventListener('click',()=>ptNudge(-1));

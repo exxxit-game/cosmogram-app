@@ -21,7 +21,8 @@ function wireOnLocal(id, ev, fn){
 
 /* ---------- Схема конфига и кодек ---------- */
 const FORGE_KINDS=['rock','debris','drift','mine','sat','comet','seeker','gate']; // порядок = веса в spawnObstacle
-const FORGE_RESET_ICON='<svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg>'; // 12.09.2026: круглый значок-корзина у forgeResetBtn в покое (index.html .ptCornerBtn), текст только в состоянии «Точно?»
+// 22.09.2026: FORGE_RESET_ICON и forgeResetBtn (отдельная кнопка-корзина) убраны — см.
+// комментарий у ptWireOnce() в js/partitura.js, работа переехала на долгое нажатие ptUndoBtn.
 // 20.09.2026, лента .wAuthorRibbon (index.html) — долгий вечер поисков (текст → «Космо-звезда»
 // → 5 звёзд-рейтинга → созвездие, дважды поправленное геометрически → отказ от идеи вовсе).
 // Два моргающих «глаза» с бровками — CSS-анимация, не картинка. Разметка — простые div'ы.
@@ -655,10 +656,9 @@ function forgeFill(){ // подписи + состояние виджетов п
     ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];
-  // 12.09.2026: forgeResetBtn убрана из этого цикла — теперь круглый значок-корзина
-  // (index.html, .ptCornerBtn), не текст; textContent затирал бы иконку. aria-label
-  // остаётся на кнопке в HTML напрямую, L.forgeResetBtn по-прежнему используется как
-  // подпись состояния «Точно?»/возврата, см. wireOnLocal('forgeResetBtn',...) ниже.
+  // 22.09.2026: forgeResetBtn как отдельная кнопка убрана целиком (её работа — на долгом
+  // нажатии ptUndoBtn, js/partitura.js). L.forgeResetBtn («Сбросить всё») не мёртв — тот же
+  // текст по-прежнему подписывает НЕСВЯЗАННУЮ кнопку workshopFilterReset (см. ниже в файле).
   // 07.09.2026: «Начать по-другому»/forgeStartOverLbl снята вместе с общей рамкой — «Сбросить
   // всё» и «Небо друга» разъехались по разным местам экрана, общей подписи над ними больше нет.
     // 28.08.2026: forgeBack — круглая иконка, текст ей не пишем (см. index.html)
@@ -861,10 +861,7 @@ function forgeSubTabSet(s){
     if(typeof ptArmedType!=='undefined') ptArmedType=null;
     document.querySelectorAll('#ptTray .stickerItem').forEach(x=>x.classList.remove('armed'));
     if(typeof ptSelIdx!=='undefined' && ptSelIdx>=0){ ptSelIdx=-1; if(typeof ptRender==='function') ptRender(); }
-    if(forgeResetArmed){
-      clearTimeout(forgeResetTimer); forgeResetArmed=false;
-      const rb=$('forgeResetBtn'); if(rb){ rb.classList.remove('confirming'); rb.innerHTML=FORGE_RESET_ICON; }
-    }
+    ptUndoBtnCancelHold(); // 22.09.2026: было «недоподтверждённое Сбросить» на отдельной кнопке — тот же смысл, для долгого нажатия на ptUndoBtn
   }
   const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE()[forgeSub];
   forgeStepRetitle(); // 22.09.2026: та же живая центровка, что у всех остальных заголовков экранов — раньше «Карта»/«Небо»/«Сохранить» стояли только на CSS-формуле, «плавали»
@@ -2233,26 +2230,10 @@ wireOnLocal('workshopList','click',function(e){
 wireOnLocal('forgePlay', 'click', forgePlay);
 wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
 /* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено): «Сбросить» —
-   рядом с лентой, куда рука тянется ставить точки (RESEARCH-2026-09-CREATOR-CONTROLS.md, тап
-   безопаснее непрерывного жеста) — сбрасывает ВЕСЬ forgeCfg (не только точки), случайный тап
-   слишком дорог. Второе нажатие подряд (в течение RESET_CONFIRM_MS) подтверждает; не подтвердил
-   — гаснет само, кнопка возвращается в исходный вид без всякого действия. */
-const RESET_CONFIRM_MS=3000;
-let forgeResetArmed=false, forgeResetTimer=null;
-wireOnLocal('forgeResetBtn', 'click', function(){
-  const btn=this;
-  if(!forgeResetArmed){
-    forgeResetArmed=true; btn.classList.add('confirming'); btn.textContent='Точно?';
-    sfx.click(); haptic('light');
-    forgeResetTimer=setTimeout(function(){
-      forgeResetArmed=false; btn.classList.remove('confirming'); btn.innerHTML=FORGE_RESET_ICON;
-    },RESET_CONFIRM_MS);
-    return;
-  }
-  clearTimeout(forgeResetTimer); forgeResetArmed=false;
-  btn.classList.remove('confirming'); btn.innerHTML=FORGE_RESET_ICON;
-  forgeResetAll();
-});
+   сбрасывает ВЕСЬ forgeCfg (не только точки), случайный тап слишком дорог.
+   22.09.2026: отдельная кнопка-корзина с двойным нажатием «Точно?» убрана — то же самое
+   (forgeResetAll(), защита от случайного срабатывания) теперь на долгом нажатии ptUndoBtn,
+   см. ptWireOnce() в js/partitura.js. */
 wireOnLocal('forgeBack', 'click', function(){ sfx.click(); setScreen('menu'); }); // 08.09.2026 (владелец, живой баг): вело в 'modes' (Соревнования) — хвост с 05.09.2026, когда кнопка Конструктора переехала с modeForge (внутри Соревнований) на главное меню, а «Назад» тогда забыли поправить. Единственный реальный вход теперь — konstruktorBtn с главного меню (проверено: «Открыть в Конструкторе» из Галереи — не отдельный вход, а переключение вкладки на уже открытом экране).
 /* v1.282.13: тонкие ручки пишутся в конфиг, как «Жар» строкой выше по файлу. Раньше они
    меняли только подпись — конфиг оставался прежним, и первый же forgeSyncWidgets (любой
