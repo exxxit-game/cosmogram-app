@@ -72,11 +72,26 @@ function workshopRibbonShapeHtml(shape){
 // маленькими нарочно, поднять позже, когда игроков станет больше. НЕ считать эти числа
 // финальными при следующей правке.
 //
-// Уровень 3 (доп. цвет ленты) НАМЕРЕННО не реализован здесь — владелец явно отложил выбор
-// цвета («потом придумаем ещё цвета, космические») на отдельную сессию. Золото — потолок,
-// только метка владельца (t.featured), не награда за уровень.
+// 22.09.2026, продолжение того же вечера (владелец: «добавляй их в мастерскую... возможность
+// выбора цвета... что-то такое, надо уже сделать это») — уровни 3/4 добавлены. Цвета — из
+// палитры 10 (macet palitra-lent-10-tsvetov-22-09-2026.html): золото/серебро уже заняты
+// (метка владельца / база), рубин ушёл в кошелёк Коллекции (index.html, .angarWalletBand,
+// ОТДЕЛЬНАЯ роль, не эта лестница). Аврора НЕ включена — владелец сам засомневался, что она
+// слишком похожа на изумруд, и сам сказал, что перепроверит отдельно; не додумывать за него.
+// ВЫБОР АВТОМАТИЧЕСКИЙ, НЕ РУЧНОЙ (владелец, явный выбор из двух вариантов: «автоматически
+// (рекомендую)») — тот же приём хэша, что уже у формы/характера на уровне 2, не пишет в живую
+// базу, ноль риска. Он же сам сказал: «пока будет автоматически, а потом уже поднастроим,
+// когда живые люди будут — запиши, что это не конечное решение» — НЕ финал, пересмотреть,
+// когда наберётся реальная активность игроков.
+const WORKSHOP_RIBBON_COLORS_TIER3=['copper','steel','sapphire']; // первые 3 — открывается на уровне 3
+const WORKSHOP_RIBBON_COLORS_TIER4=[...WORKSHOP_RIBBON_COLORS_TIER3,'emerald','amethyst','nebula']; // +3 = 6 — уровень 4
+function workshopRibbonColorClass(code, pool){
+  let h=5381; const salted='c:'+code;
+  for(let i=0;i<salted.length;i++){ h=((h<<5)+h+salted.charCodeAt(i))|0; }
+  return 'tier-'+pool[Math.abs(h)%pool.length];
+}
 const WORKSHOP_TIER_THRESHOLDS=[ // [уровень, мин.запусков, мин.лайков]
-  [1,5,0], [2,10,0]
+  [1,5,0], [2,10,0], [3,15,2], [4,25,5]
 ];
 function workshopTrackLevel(t){
   const plays=t.plays||0, hearts=t.hearts||0;
@@ -1854,7 +1869,13 @@ function workshopRenderList(){
         const charCls=lvl>=2?workshopRibbonCharClass(t.code):ribbonCharsShuffled[ribbonIdx%ribbonCharsShuffled.length];
         const inner=(shape==='dot'?WORKSHOP_RIBBON_EYES:workshopRibbonShapeHtml(shape));
         const tierCls=(lvl>=1?' tier1':'');
-        return '<div class="wAuthorRibbon hidden '+charCls+tierCls+'" data-act="pickstar"><span>'+inner+'</span></div>';
+        // 22.09.2026: уровень 4 использует бОльший пул (6 цветов), уровень 3 — только первые 3 —
+        // так трек, дошедший до 4, может «сменить» цвет при пересчёте на более широкий выбор
+        // (тот же трек-код даёт другой индекс % на пуле другого размера) — это ожидаемо и честно,
+        // не баг: у трека буквально стало больше вариантов.
+        const colorCls=lvl>=4?' '+workshopRibbonColorClass(t.code,WORKSHOP_RIBBON_COLORS_TIER4)
+                      :lvl>=3?' '+workshopRibbonColorClass(t.code,WORKSHOP_RIBBON_COLORS_TIER3):'';
+        return '<div class="wAuthorRibbon hidden '+charCls+tierCls+colorCls+'" data-act="pickstar"><span>'+inner+'</span></div>';
       })()+
       // 16.09.2026 (владелец: «иконка, которая запускает небо, мне не нравится... вместо
       // иконки можно просто будет нажимать на небо, и всё, как у нас уже сделано на карточках
