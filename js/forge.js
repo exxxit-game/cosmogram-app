@@ -879,6 +879,10 @@ function forgeSubTabSet(s){
     if(typeof ptSelIdx!=='undefined' && ptSelIdx>=0){ ptSelIdx=-1; if(typeof ptRender==='function') ptRender(); }
     ptUndoBtnCancelHold(); // 22.09.2026: было «недоподтверждённое Сбросить» на отдельной кнопке — тот же смысл, для долгого нажатия на ptUndoBtn
   }
+  // 23.09.2026 «Угловые кнопки оживают»: ptIdleEyesResetTimer() сама проверяет forgeSub (только
+  // что переставлен выше) — уходя с «Карты» просто гасит глаза и ничего не планирует, заходя
+  // на «Карту» тут же ставит первый таймер (не ждёт первого касания, чтобы отсчёт начался).
+  if(typeof ptIdleEyesResetTimer==='function') ptIdleEyesResetTimer();
   const t=$('forgeStepTitle'); if(t) t.textContent=FORGE_STEP_TITLE()[forgeSub];
   forgeStepRetitle(); // 22.09.2026: та же живая центровка, что у всех остальных заголовков экранов — раньше «Карта»/«Небо»/«Сохранить» стояли только на CSS-формуле, «плавали»
   const idx=FORGE_STEP_ORDER.indexOf(forgeSub);

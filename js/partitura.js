@@ -625,6 +625,38 @@ function ptUndoBtnCancelHold(){
   clearTimeout(ptResetHoldTimer); ptResetHoldTimer=null;
   const b=$('ptUndoBtn'); if(b) b.classList.remove('holding');
 }
+/* 23.09.2026 «Угловые кнопки оживают» (владелец, макет karta-uglovye-knopki-glaza-23-09-2026.html,
+   «делай», затем: «хочу, чтобы характер менялся, не одно и то же каждый раз» — живой разговор):
+   несколько секунд бездействия на «Карте» — обе угловые кнопки (счётчик точек/«Отменить»)
+   превращаются в моргающие глаза, тот же .eye/keyframes, что уже определяют «характер» ленты
+   Мастерской/Кошелька («Семья характеров», 20.09.2026) — ни один не выдуман заново, только
+   нацелены на .cornerEye вместо .wAuthorRibbon. 11 из 12 характеров (без «Волны» — она просто
+   сдвиг .18с между глазами, а он тут уже есть у всех по умолчанию). Владелец явно попросил
+   РАЗНООБРАЗИЕ — каждое новое появление выбирает случайный характер заново, не закреплён один
+   на всегда (в отличие от ленты, где характер держится за кодом трассы — тут другой смысл:
+   переменность ради игрока, который видит это много раз за сессию). */
+const PT_IDLE_MS=8000; // середина диапазона 5-10с, который owner сам назвал
+const PT_EYE_CHARS=['calm','bouncy','sparkle','droopy','sleepy','curious','nervous','sideeye','surprised','googly','dramatic'];
+let ptIdleTimer=null;
+function ptIdleEyesShow(){
+  const track=$('ptTrack'); if(!track) return;
+  const char=PT_EYE_CHARS[Math.floor(Math.random()*PT_EYE_CHARS.length)];
+  track.querySelectorAll('.ptCornerBtn').forEach(function(b){
+    PT_EYE_CHARS.forEach(function(c){ b.classList.remove('eyeChar-'+c); });
+    b.classList.add('idleEyes','eyeChar-'+char);
+  });
+}
+function ptIdleEyesHide(){
+  const track=$('ptTrack'); if(!track) return;
+  track.querySelectorAll('.ptCornerBtn').forEach(function(b){ b.classList.remove('idleEyes'); });
+}
+function ptIdleEyesResetTimer(){
+  clearTimeout(ptIdleTimer); ptIdleTimer=null;
+  ptIdleEyesHide();
+  // 23.09.2026: живёт только пока виден шаг «Карта» (forgeSub, js/forge.js) — на остальных
+  // шагах/экранах таймер просто не перезапускается, глаза не появятся там, где их не видно.
+  if(typeof forgeSub!=='undefined' && forgeSub==='arrange') ptIdleTimer=setTimeout(ptIdleEyesShow,PT_IDLE_MS);
+}
 function ptWireOnce(){
   if(ptWireOnce._done) return; ptWireOnce._done=1;
   const undoBtn=$('ptUndoBtn');
@@ -715,6 +747,11 @@ function ptWireOnce(){
   // до конца — те же 3 ползунка «Точечной настройки» (Плотность/Скорость/Солнечный ветер,
   // js/forge.js, forgeDen/forgeSpd/forgeWind) получают то же поведение, не только «Цвет».
   ['ptHue1','ptHue2','ptDens','ptMood','forgeDen','forgeSpd','forgeWind'].forEach(ptWireValInput);
+  // 23.09.2026 «Угловые кнопки оживают» (владелец, макет karta-uglovye-knopki-glaza-23-09-2026.html,
+  // «делай»): любое касание, пока виден шаг «Карта», сбрасывает таймер бездействия. Слушатель
+  // один на весь document (не на сами кнопки) — так ловит и перетаскивание точек, и тап по
+  // трассе/лотку, всё, что значит «игрок тут, ему не нужна подсказка».
+  document.addEventListener('pointerdown', ptIdleEyesResetTimer);
 }
 /* 16.09.2026: <input type=number> рядом со слайдером — на change (блюр/Enter, не на каждый
    символ, чтобы не мешать печатать) клампит в диапазон слайдера и отдаёт значение ЕМУ, тем же
