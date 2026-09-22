@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Точечная настройка — почему список читается «по дебильному»</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:20px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:680px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:960px;margin:0 auto 46px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .diag{display:grid;gap:10px;margin-bottom:18px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0}
+  .measured{color:var(--bad);font-family:monospace;font-size:12px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:310px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:22px;padding:16px 14px;flex-shrink:0}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)} .phoneLbl.now{color:var(--ok)}
+  .phone.now{border-color:var(--ok)}
+
+  /* ---- WAS: real current CSS values, unchanged ---- */
+  .subSpoiler-was{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;
+    border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line);
+    font-size:10px;font-weight:600;color:var(--muted);margin-top:6px}
+  .subSpoiler-was::after{content:'▴';margin-left:8px;color:var(--muted);font-size:9px}
+  .subBody-was{padding:8px 2px 2px}
+  .lblBlk-was{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:8px 0 2px;text-transform:uppercase}
+  .segRow-was{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+  .segBtn-was{border:1px solid var(--stone-border);background:var(--stone-fill);color:var(--muted);
+    border-radius:10px;min-height:40px;padding:9px 14px;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .segBtn-was.sel{border-color:var(--gold-hi);color:var(--gold-hi)}
+  .hint-was{color:var(--muted);font-size:12px;text-align:center;line-height:1.5;padding:0 4px;margin:2px 0 2px}
+
+  /* ---- NOW: proposed ---- */
+  .subSpoiler-now{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    border-radius:12px 12px 0 0;background:rgba(240,192,64,.06);border:1px solid var(--line-gold);
+    border-bottom:none;font-size:10px;font-weight:700;color:var(--cream);margin-top:14px;letter-spacing:.05em}
+  .subSpoiler-now:first-child{margin-top:0}
+  .subSpoiler-now::after{content:'▴';margin-left:8px;color:var(--gold-hi);font-size:9px}
+  .subBody-now{padding:14px 12px 12px;border-radius:0 0 12px 12px;background:rgba(255,255,255,.02);
+    border:1px solid var(--line);border-top:none}
+  .cluster-now{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  .cluster-now:last-child{padding-bottom:0;margin-bottom:0;border-bottom:none}
+  .lblBlk-now{font-size:11px;letter-spacing:.1em;color:var(--gold);margin:0 0 8px;text-transform:uppercase;font-weight:700}
+  .segRow-now{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:0}
+  .segBtn-now{border:1px solid var(--stone-border);background:var(--stone-fill);color:var(--muted);
+    border-radius:10px;min-height:40px;padding:9px 14px;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .segBtn-now.sel{border-color:var(--gold-hi);color:var(--gold-hi)}
+  .hint-now{color:var(--muted);font-size:11.5px;text-align:center;line-height:1.45;padding:0 4px;margin:6px 0 0;opacity:.85}
+  .toggleGood-now{margin-top:8px;font-size:10px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--gold-hi);
+    background:rgba(240,192,64,.12);color:var(--cream);text-align:center;display:flex;align-items:center;
+    justify-content:center;gap:6px}
+  .toggleGood-now .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-hi);flex-shrink:0}
+
+  footer{max-width:960px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Точечная настройка — почему это читается «по дебильному»</h1>
+<p class="sub">20.09.2026 · продолжение прошлого макета: не отдельные значки, а сама структура списка</p>
+<div class="note">Макет. Ничего не перенесено в игру — жду «да» отдельно от прошлых трёх пунктов.</div>
+
+<section>
+<h2>Диагноз — настоящие числа из index.html, не на глаз</h2>
+<div class="diag">
+  <div class="diagItem"><b>1:</b><div>Заголовки трёх вложенных разделов (Темп неба/Старт/Преграды) —
+  <span class="measured">background:rgba(255,255,255,.025)</span>, край
+  <span class="measured">border:1px solid rgba(255,255,255,.08)</span> — на глаз это едва отличимо от
+  простого текста. Задумано было «тише главного контента» (запись 17.09.2026) — но получилось не «тише»,
+  а «почти нет контейнера вообще».</div></div>
+  <div class="diagItem"><b>2:</b><div>Открытое содержимое раздела —
+  <span class="measured">.forgeSubBody{padding:8px 2px 2px}</span> — практически без рамки/отступа,
+  контент повисает прямо на фоне страницы, ничего не говорит «ты внутри открытого блока».</div></div>
+  <div class="diagItem"><b>3:</b><div>Внутри «Старт» три РАЗНЫХ по смыслу настройки (Жизни / Стартовая
+  жара / Бонусы) идут одна за другой с ОДИНАКОВЫМ отступом <span class="measured">margin:8px 0 2px</span>
+  что между заголовком и его же кнопками, что между концом одной темы и началом следующей — нет разницы,
+  где заканчивается одна настройка и начинается другая, взгляд читает это одним сплошным потоком кнопок.</div></div>
+</div>
+</section>
+
+<section>
+<h2>Было ↔ стало — тот же реальный контент «Старт», другая структура</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — один сплошной поток</div>
+    <div class="subSpoiler-was"><span>Старт</span></div>
+    <div class="subBody-was">
+      <div class="lblBlk-was">Жизни</div>
+      <div class="segRow-was"><div class="segBtn-was">1</div><div class="segBtn-was">2</div><div class="segBtn-was sel">3</div></div>
+      <div class="lblBlk-was">Стартовая жара</div>
+      <div class="segRow-was"><div class="segBtn-was sel">1</div><div class="segBtn-was">2</div><div class="segBtn-was">3</div><div class="segBtn-was">4</div><div class="segBtn-was">5</div><div class="segBtn-was">6</div></div>
+      <div class="hint-was">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+      <div class="lblBlk-was">Бонусы</div>
+      <div class="segRow-was"><div class="segBtn-was">Выкл</div><div class="segBtn-was">Редко</div><div class="segBtn-was sel">Норма</div><div class="segBtn-was">Часто</div></div>
+    </div>
+  </div>
+  <div class="phone now"><div class="phoneLbl now">Стало — три отдельных блока с настоящей рамкой</div>
+    <div class="subSpoiler-now"><span>Старт</span></div>
+    <div class="subBody-now">
+      <div class="cluster-now">
+        <div class="lblBlk-now">Жизни</div>
+        <div class="segRow-now"><div class="segBtn-now">1</div><div class="segBtn-now">2</div><div class="segBtn-now sel">3</div></div>
+      </div>
+      <div class="cluster-now">
+        <div class="lblBlk-now">Стартовая жара</div>
+        <div class="segRow-now"><div class="segBtn-now sel">1</div><div class="segBtn-now">2</div><div class="segBtn-now">3</div><div class="segBtn-now">4</div><div class="segBtn-now">5</div><div class="segBtn-now">6</div></div>
+        <div class="hint-now">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+        <div class="toggleGood-now"><span class="dot"></span>Ровный жар — без разгона</div>
+      </div>
+      <div class="cluster-now">
+        <div class="lblBlk-now">Бонусы</div>
+        <div class="segRow-now"><div class="segBtn-now">Выкл</div><div class="segBtn-now">Редко</div><div class="segBtn-now sel">Норма</div><div class="segBtn-now">Часто</div></div>
+        <div class="toggleGood-now"><span class="dot"></span>Высокая ставка — 1 жизнь, бонусов нет, очки×4</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:720px;margin:14px auto 0;text-align:center">
+  Три правки, все — усиление уже существующего языка игры, не новый стиль: (а) заголовок раздела
+  получает золотую окантовку и тёплый фон вместо почти-невидимой рамки — та же гамма, что уже у
+  выбранного чипа <code>.sel</code>; (б) открытое тело получает настоящую рамку, визуально «приклеенную»
+  снизу к заголовку — одна цельная деталь, а не голый текст надо всем; (в) внутри раздела — тонкая линия
+  между Жизни/Стартовая жара/Бонусы плюс честный отступ 14px между темами против 8px внутри одной —
+  ровно принцип близости (Гештальт): что относится друг к другу — стоит теснее, что не относится — дальше.
+  Кнопки/подсказки/золотые тумблеры «Ровный жар»/«Высокая ставка» — те же, что в прошлом макете, просто
+  теперь видно, к какой из трёх тем они принадлежат.
+</p>
+</section>
+
+<section>
+<h2>То же самое лечит и «Темп неба», и «Преграды» — не только «Старт»</h2>
+<p style="color:var(--muted);font-size:13px;max-width:720px;margin:0 auto;text-align:center">
+  «Темп неба» (3 ползунка) и «Преграды» (8 значков) внутри себя однородны — там уже не бывает «где чья
+  тема», поэтому для них меняется только заголовок/рамка раздела (пункты «а» и «б» выше), кластеры
+  (пункт «в») им не нужны — контента внутри одного типа, делить нечего.
+</p>
+</section>
+
+<footer>Источники: index.html (реальные значения .forgeSubSpoiler/.forgeSubBody/.forgeLblBlk/.forgeChip,
+grep, не по памяти) + комментарий 17.09.2026 про «тише главного контента» — тот замысел сохранён, только
+«тише» ≠ «без контейнера».</footer>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<title>Макет: инженерия космических телескопов — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Инженерия космических телескопов — 10 тем (SPACE-TELESCOPE-ENGINEERING.md)</h1>
+<p class="sub">Тема 7 из 10. Не «где телескоп», а КАК он физически собран: 18 золотых шестиугольников JWST, щит с вакуумными зазорами, наноприводы, честная история промаха зеркала Хаббла.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function hexPath(ctx,cx,cy,r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){ const a=i/6*6.283-0.523; const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.closePath();
+}
+// 1. 18 шестиугольных сегментов зеркала JWST — золотые соты
+function drawHexMirror(ctx,now){
+  const coords=[[0,-3.5],[1.5,-2.6],[-1.5,-2.6],[3,-1.7],[-3,-1.7],[0,-1.7],[1.5,-0.8],[-1.5,-0.8],[3,0.1],[-3,0.1],[0,0.1],[1.5,1],[-1.5,1],[0,1.9],[3,-3.5],[-3,-3.5],[1.5,3],[-1.5,3]];
+  coords.forEach(([dx,dy],i)=>{
+    const p=0.5+0.5*Math.sin(now/700+i*0.4);
+    hexPath(ctx,dx*0.95,dy-2,0.85);
+    ctx.fillStyle='hsla(45,70%,'+(50+p*15)+'%,.85)'; ctx.fill();
+    ctx.strokeStyle='rgba(10,8,0,.5)'; ctx.lineWidth=0.08; ctx.stroke();
+  });
+}
+// 2. Бериллий — криогенная стабильность формы при ~40К, не деформируется от холода
+function drawBerylliumStability(ctx,now){
+  hexPath(ctx,0,-2,4);
+  ctx.fillStyle='hsla(200,20%,70%,.7)'; ctx.fill();
+  ctx.strokeStyle='hsla(200,40%,80%,.6)'; ctx.lineWidth=0.3; ctx.stroke();
+  const p=0.5+0.5*Math.sin(now/900);
+  ctx.fillStyle='hsla(200,60%,90%,'+(0.3+p*0.2)+')'; ctx.beginPath(); ctx.arc(0,-2,0.6,0,6.283); ctx.fill();
+}
+// 3. Складное зеркало — 6.5м не влезает в обтекатель 4.57м, крылья складываются и разворачиваются
+function drawFoldingMirror(ctx,now){
+  const p=(now%3000)/3000;
+  const spread=p<0.5? p*2 : (1-p)*2;
+  ctx.save(); ctx.rotate(-spread*0.9);
+  hexPath(ctx,-3,-2,1.3); ctx.fillStyle='hsla(45,70%,60%,.8)'; ctx.fill();
+  ctx.restore();
+  hexPath(ctx,0,-2,1.3); ctx.fillStyle='hsla(45,70%,60%,.8)'; ctx.fill();
+  ctx.save(); ctx.rotate(spread*0.9);
+  hexPath(ctx,3,-2,1.3); ctx.fillStyle='hsla(45,70%,60%,.8)'; ctx.fill();
+  ctx.restore();
+}
+// 4. Наноприводы — 126 приводов, точность лучше 10 нм, крошечные пульсирующие точки на сегментах
+function drawNanoActuators(ctx,now){
+  hexPath(ctx,0,-2,4.5); ctx.fillStyle='hsla(45,50%,45%,.5)'; ctx.fill();
+  for(let i=0;i<7;i++){
+    const a=i/7*6.283;
+    const p=0.5+0.5*Math.sin(now/300+i);
+    ctx.fillStyle='hsla(180,80%,'+(60+p*25)+'%,'+(0.5+p*0.3)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*2.5,-2+Math.sin(a)*2.5,0.25,0,6.283); ctx.fill();
+  }
+}
+// 5. Пятислойный щит с вакуумными зазорами — просвечивающие пластины, видимый промежуток между ними
+function drawSunshieldLayers(ctx,now){
+  for(let i=0;i<5;i++){
+    const y=-6+i*2.6;
+    const heat=i===0? 0.5+0.5*Math.sin(now/400) : 0;
+    ctx.fillStyle='hsla('+(45-i*8)+',30%,'+(70+heat*15)+'%,'+(0.12+i*0.02+heat*0.08)+')';
+    ctx.fillRect(-6,y,12,1.1);
+  }
+}
+// 6. Развёртывание щита — складывается крошечным (в обтекатель), разворачивается размером с теннисный корт
+function drawShieldDeployment(ctx,now){
+  const p=(now%3500)/3500;
+  const w=0.6+p*6.5;
+  ctx.fillStyle='hsla(45,40%,70%,.5)';
+  ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(w,0); ctx.lineTo(0,7); ctx.lineTo(-w,0); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='hsla(45,60%,80%,.4)'; ctx.lineWidth=0.25; ctx.stroke();
+}
+// 7. Критерий Рэлея — JWST различает две точки раздельно, Хаббл на том же расстоянии сливает их в одну
+function drawRayleighCriterion(ctx,now){
+  const p=0.5+0.5*Math.sin(now/700);
+  ctx.fillStyle='hsla(45,80%,'+(75+p*10)+'%,1)'; ctx.beginPath(); ctx.arc(-1.4,-4,0.6,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(45,80%,'+(75+p*10)+'%,1)'; ctx.beginPath(); ctx.arc(1.4,-4,0.6,0,6.283); ctx.fill();
+  const q=0.5+0.5*Math.sin(now/700+3.14);
+  const g=ctx.createRadialGradient(0,1,0,0,1,3);
+  g.addColorStop(0,'hsla(45,80%,'+(75+q*10)+'%,.9)'); g.addColorStop(1,'hsla(45,80%,80%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,1,3,0,6.283); ctx.fill();
+}
+// 8. Инфракрасный диапазон — свет древних галактик растянут красным смещением в ИК
+function drawInfraredRedshift(ctx,now){
+  const p=(now%2400)/2400;
+  ctx.strokeStyle='hsla('+(260-p*180)+',80%,60%,.7)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(-6,-2-2+p*6); ctx.lineTo(6,-2-2+p*6); ctx.stroke();
+}
+// 9. Дефект зеркала Хаббла (2.2 мкм) → COSTAR — размытое изображение становится резким
+function drawHubbleFlawFix(ctx,now){
+  const p=(now%3000)/3000;
+  const blur = p<0.5;
+  ctx.filter = blur? 'blur(1.2px)' : 'none';
+  ctx.fillStyle='hsla(45,80%,75%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.6,0,6.283); ctx.fill();
+  ctx.filter='none';
+}
+// 10. Roman vs JWST — широкий обзор против глубокого узкого зума, одна научная программа
+function drawRomanVsJWST(ctx,now){
+  const sweep=now/900;
+  ctx.strokeStyle='hsla(200,50%,70%,.4)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.arc(-2.5,-2,3.5,0,6.283); ctx.stroke();
+  ctx.strokeStyle='hsla(200,70%,80%,.6)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-2.5,-2); ctx.lineTo(-2.5+Math.cos(sweep)*3.5,-2+Math.sin(sweep)*3.5); ctx.stroke();
+  const p=0.5+0.5*Math.sin(now/500);
+  ctx.strokeStyle='hsla(45,70%,'+(65+p*15)+'%,.85)'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.arc(3,-2,1,0,6.283); ctx.stroke();
+}
+
+mountCards([
+  {id:'t1', name:'18 сегментов JWST', body:'#181206', drawFn:drawHexMirror, zoom:5.5, fact:'Золотые шестиугольники — стыкуются без зазоров, дают почти круглую апертуру'},
+  {id:'t2', name:'Бериллий', body:'#0c1420', drawFn:drawBerylliumStability, zoom:6, fact:'Не деформируется даже при охлаждении до ~40К в космосе'},
+  {id:'t3', name:'Складные крылья', body:'#161006', drawFn:drawFoldingMirror, zoom:6, fact:'6,5м зеркало не влезало в ракету 4,57м — крылья складывались назад'},
+  {id:'t4', name:'Наноприводы', body:'#0e1810', drawFn:drawNanoActuators, zoom:6, fact:'126 приводов точностью лучше 10 нанометров на 18 сегментах'},
+  {id:'t5', name:'5 слоёв щита', body:'#141008', drawFn:drawSunshieldLayers, zoom:6, fact:'Вакуумные ЗАЗОРЫ между слоями решают задачу, не толщина плёнки'},
+  {id:'t6', name:'Развёртывание щита', body:'#100c18', drawFn:drawShieldDeployment, zoom:6, fact:'Размером с теннисный корт — сложен в объём меньше грузовика'},
+  {id:'t7', name:'Критерий Рэлея', body:'#0e0c1c', drawFn:drawRayleighCriterion, zoom:6, fact:'θ=1.22λ/D — JWST в 2,7 раза чётче Хаббла, проверено численно'},
+  {id:'t8', name:'ИК-диапазон', body:'#100818', drawFn:drawInfraredRedshift, zoom:6, fact:'Свет древних галактик растянут в инфракрасный — Хаббл их не видит'},
+  {id:'t9', name:'Промах Хаббла → COSTAR', body:'#12100c', drawFn:drawHubbleFlawFix, zoom:6, fact:'Дефект в 2,2 мкм исправлен в 1993 экипажем «Индевор»'},
+  {id:'t10', name:'Roman vs JWST', body:'#0c1420', drawFn:drawRomanVsJWST, zoom:6, fact:'Широкий обзор против глубокого зума — одна программа, разные задачи'},
+]);
+</script>

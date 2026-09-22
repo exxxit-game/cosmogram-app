@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:520px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center}
+  h2{font-size:12px;font-weight:600;margin:0 0 8px;color:#c9a45c}
+  .phone{width:300px;height:210px;background:radial-gradient(ellipse at 50% 20%,#12224a 0%,#0a1030 65%);
+    border-radius:14px;border:1px solid #262c4a;overflow:hidden;position:relative}
+  /* тот же тёмный оверлей, что у настоящей шапки Telegram в WebApp (не наш элемент — чужой) */
+  .tgBar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 12px;box-sizing:border-box;background:rgba(10,16,32,.55);
+    font-size:13px;color:#eaf3ff;z-index:2}
+  .tgBack{display:flex;align-items:center;gap:6px;font-weight:600}
+  .tgDots{display:flex;gap:10px;font-size:15px;opacity:.85}
+  /* --- вариант A: как сейчас, отдельная карточка ниже шапки --- */
+  .nameCardBig{position:absolute;top:56px;left:16px;right:16px;background:rgba(15,31,61,.95);
+    border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 16px;text-align:center;
+    font-size:15px;font-weight:700;box-sizing:border-box}
+  /* --- вариант Б: компактно вписано в саму шапку, рядом с кнопками Telegram --- */
+  .nameInBar{position:absolute;top:0;left:78px;right:70px;height:44px;display:flex;align-items:center;
+    justify-content:center;font-size:12.5px;font-weight:700;color:#f0c040;text-align:center;
+    line-height:1.15;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.8);overflow:hidden}
+  .note{font-size:10px;color:#6b7394;margin-top:8px;max-width:290px}
+  .bad{color:#ff8a80}
+  .good{color:#8fd694}
+</style></head>
+<body>
+<h1>Окно «крупно» — заголовок явления в ряду шапки Telegram, компактный вариант</h1>
+<p class="sub">Тёмная полоса сверху — родная шапка Telegram (чужой элемент, не наш, показана для
+  масштаба). Слева — как сейчас (карточка отдельной строкой). Справа — предложенный вариант:
+  название вписано прямо в свободное место рядом с «Назад»/⌄/⋮. Проверено сразу и на коротком, и
+  на самом длинном реальном названии в игре («Фигуры Лихтенберга — позитивный», 32 символа).</p>
+<div class="row">
+  <div class="col">
+    <h2>Сейчас — короткое название</h2>
+    <div class="phone">
+      <div class="tgBar"><div class="tgBack">← Назад</div><div class="tgDots">⌄ ⋮</div></div>
+      <div class="nameCardBig">Пульсар-маяк</div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Вариант Б — короткое, в ряду шапки</h2>
+    <div class="phone">
+      <div class="tgBar"><div class="tgBack">← Назад</div><div class="tgDots">⌄ ⋮</div></div>
+      <div class="nameInBar">Пульсар-маяк</div>
+    </div>
+    <div class="note good">Помещается свободно, есть запас.</div>
+  </div>
+</div>
+<div class="row" style="margin-top:28px">
+  <div class="col">
+    <h2>Сейчас — самое длинное название (32 симв.)</h2>
+    <div class="phone">
+      <div class="tgBar"><div class="tgBack">← Назад</div><div class="tgDots">⌄ ⋮</div></div>
+      <div class="nameCardBig">Фигуры Лихтенберга — позитивный</div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Вариант Б — то же длинное название</h2>
+    <div class="phone">
+      <div class="tgBar"><div class="tgBack">← Назад</div><div class="tgDots">⌄ ⋮</div></div>
+      <div class="nameInBar">Фигуры Лихтенберга — позитивный</div>
+    </div>
+    <div class="note bad">Честно: в один ряд не влезает даже мелким шрифтом — переносится на
+      2-3 строки и упирается в высоту самой шапки (44px). Компактный вариант работает для
+      коротких/средних названий, но для самых длинных нужен отдельный запасной вид (например,
+      сокращение с многоточием, или — как сейчас — своя строка снизу, только для них).</div>
+  </div>
+</div>
+</body></html>

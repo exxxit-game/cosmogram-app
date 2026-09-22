@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:640px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:12.5px;font-weight:700;margin:0 0 4px;color:#c9a45c;text-align:center}
+  .col{width:220px}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset}
+  .wBanner{position:relative;height:110px;border-radius:inherit;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%)}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wBody{padding:10px 12px;font-size:11px;color:#8b93b8}
+  .wTitle{font-size:13px;font-weight:700;color:#dfe6ff;margin-bottom:3px}
+  .ribbonReal{position:absolute;top:0;left:0;width:76px;height:76px;overflow:hidden;pointer-events:none;z-index:3}
+  .ribbonReal span{position:absolute;width:120px;top:16px;left:-32px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:4px 0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .eye{width:13px;height:13px;border-radius:50%;background:#2c1f08;flex:none;
+    animation:blink 4.2s ease-in-out infinite}
+  .eye.e2{animation-delay:0s} /* оба глаза моргают вместе, не по очереди — настоящий блинк, не подмигивание */
+  @keyframes blink{
+    0%,90%,100%{transform:scaleY(1)}
+    93%{transform:scaleY(0.12)}
+    96%{transform:scaleY(1)}
+  }
+  /* вариант Б — глаза крупнее + тонкий силуэт "мордочки" звездолётика вокруг, чтобы лента не
+     выглядела пустой (владелец сегодня уже жаловался на пустоту) — глаза остаются главным акцентом */
+  .face{position:relative}
+  .browRow{position:absolute;top:-7px;left:0;right:0;display:flex;justify-content:center;gap:14px}
+  .brow{width:10px;height:2px;background:#2c1f08;border-radius:1px;opacity:.8}
+</style></head>
+<body>
+<h1>Лента — два моргающих «глаза»</h1>
+<p class="sub">Твоя идея: два круглых, как в самом первом варианте с точками, но теперь они моргают —
+  анимация настоящая (CSS), не картинка, посмотри вживую в браузере. Два варианта: просто глаза,
+  и глаза с бровками (чуть больше «личности», чтобы не выглядело пусто).</p>
+
+<div class="row">
+  <div class="col"><h2>А — просто два моргающих глаза</h2>
+    <div class="wRow"><div class="wBanner">
+      <div class="ribbonReal"><span>
+        <div class="eye e1"></div><div class="eye e2"></div>
+      </span></div>
+      <div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>Б — глаза + бровки (капелька характера)</h2>
+    <div class="wRow"><div class="wBanner">
+      <div class="ribbonReal"><span class="face">
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye e1"></div><div class="eye e2"></div>
+      </span></div>
+      <div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м</div>
+    </div>
+  </div>
+</div>
+
+<p class="note" style="max-width:640px;margin:26px auto 0;font-size:10.5px;color:#8b93b8;line-height:1.4">
+  Моргают оба глаза вместе, раз в ~4 секунды (быстрое «прикрыл-открыл», не подмигивание по
+  очереди). Живьём это лёгкая, ненавязчивая деталь — не мельтешит на глазах, замечается, если
+  задержаться взглядом. Вариант А или Б? И подходит ли частота моргания (можно чаще/реже)?
+</p>
+</body></html>

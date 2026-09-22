@@ -1,0 +1,147 @@
+<title>Макет: звёздные спектральные классы — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Звёздные спектральные классы — 10 тем (STAR-COLOR-PHYSICS.md)</h1>
+<p class="sub">Каждая карточка — реальный факт: закон смещения Вина (λmax=b/T), Гарвардская классификация O-B-A-F-G-K-M, реальные температуры и цвета абсолютно чёрного тела. Тема 1 из 10 партии «физика/космос».</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// Общая "звезда чёрного тела": ядро + корона, цвет и яркость по реальному приближению цвета абсолютно чёрного тела на температуру
+function star(ctx,now,hue,sat,light,coronaReach,pulseSpeed){
+  const p=0.5+0.5*Math.sin(now/pulseSpeed);
+  const r=6+coronaReach*p*0.6;
+  const g=ctx.createRadialGradient(0,0,0,0,0,r);
+  g.addColorStop(0,'hsla('+hue+','+sat+'%,'+Math.min(96,light+15)+'%,1)');
+  g.addColorStop(0.45,'hsla('+hue+','+sat+'%,'+light+'%,.75)');
+  g.addColorStop(1,'hsla('+hue+','+sat+'%,'+light+'%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,r,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla('+hue+',20%,98%,1)'; ctx.beginPath(); ctx.arc(0,0,1.6,0,6.283); ctx.fill();
+}
+// 1. Класс O — самые горячие, >20000-30000К, синий (закон Вина: пик в коротких волнах)
+function drawClassO(ctx,now){ star(ctx,now,225,100,78,7,260); }
+// 2. Класс B — 10000-30000К, бело-голубой
+function drawClassB(ctx,now){ star(ctx,now,222,90,82,6,320); }
+// 3. Класс A — 7500-10000К, чисто белый
+function drawClassA(ctx,now){ star(ctx,now,235,25,92,5,380); }
+// 4. Класс F — 6000-7500К, желтовато-белый
+function drawClassF(ctx,now){ star(ctx,now,42,55,90,5,440); }
+// 5. Класс G — 5200-6000К, жёлтый — Солнце класс G2V
+function drawClassG(ctx,now){ star(ctx,now,48,90,80,4.5,500); }
+// 6. Класс K — 3700-5200К, оранжевый
+function drawClassK(ctx,now){ star(ctx,now,30,90,70,4,560); }
+// 7. Класс M — 2400-3700К, самые холодные, красные
+function drawClassM(ctx,now){ star(ctx,now,12,85,58,3.5,620); }
+// 8. Бетельгейзе/Ригель — одно созвездие Ориона, 3650К vs 12100К, разница ×3.3
+function drawBetelgeuseRigel(ctx,now){
+  const p=(now%4000)/4000; const ang=p*2*Math.PI;
+  ctx.save(); ctx.translate(-3,0); star(ctx,now,12,85,58,3,600); ctx.restore();
+  ctx.save(); ctx.translate(3+Math.sin(ang)*0.6,0); star(ctx,now,222,90,82,4,320); ctx.restore();
+}
+// 9. H-альфа туманности Ориона — 656.3нм, дискретная линия излучения (не непрерывный спектр!), газовое облако
+function drawOrionHAlpha(ctx,now){
+  const p=(now%1800)/1800;
+  const flash=0.55+0.45*Math.sin(p*6.283*2);
+  for(let i=0;i<14;i++){
+    const a=(i/14)*6.283+now/4000;
+    const rr=3+ (i%3)*1.6;
+    ctx.fillStyle='hsla(350,90%,60%,'+(0.15+flash*0.25)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*rr,Math.sin(a)*rr*0.8,1.1,0,6.283); ctx.fill();
+  }
+  ctx.fillStyle='hsla(350,95%,'+(55+flash*20)+'%,'+(0.6+flash*0.3)+')';
+  ctx.beginPath(); ctx.arc(0,0,2.2,0,6.283); ctx.fill();
+}
+// 10. Красный гигант vs красный карлик — оба красные (закон Вина), но по разным причинам: карлик мал изначально, гигант расширился
+function drawGiantVsDwarf(ctx,now){
+  const p=(now%3600)/3600;
+  ctx.save(); ctx.translate(-3.5,1); star(ctx,now,10,80,55,6.5,540); ctx.restore();
+  ctx.save(); ctx.translate(4.5,-1); star(ctx,now,10,80,55,1.6,540); ctx.restore();
+}
+
+// 11. БОНУС (17.09.2026) — диаграмма Герцшпрунга-Рассела: температура vs светимость, три семьи звёзд
+function drawHRDiagram(ctx,now){
+  ctx.strokeStyle='hsla(45,50%,70%,.3)'; ctx.lineWidth=0.25;
+  ctx.beginPath(); ctx.moveTo(-6,6); ctx.lineTo(6,-7); ctx.stroke();
+  for(let i=0;i<7;i++){ const p=0.5+0.5*Math.sin(now/600+i); ctx.fillStyle='hsla(45,70%,'+(60+p*10)+'%,.7)'; ctx.beginPath(); ctx.arc(-6+i*2,6-i*2.15,0.28,0,6.283); ctx.fill(); }
+  const gp=0.5+0.5*Math.sin(now/700+2);
+  ctx.fillStyle='hsla(10,80%,'+(55+gp*10)+'%,.8)'; ctx.beginPath(); ctx.arc(4,-6,0.7,0,6.283); ctx.fill();
+  const wp=0.5+0.5*Math.sin(now/700+4);
+  ctx.fillStyle='hsla(210,70%,'+(75+wp*10)+'%,.8)'; ctx.beginPath(); ctx.arc(-5,3,0.35,0,6.283); ctx.fill();
+}
+// 12. БОНУС (17.09.2026) — расширенная шкала: W (Вольф-Райе, до 200000К) и L/T/Y карлики (ниже M, до <500К)
+function drawExtendedClasses(ctx,now){
+  const p=0.5+0.5*Math.sin(now/500);
+  ctx.fillStyle='hsla(255,90%,'+(75+p*10)+'%,.9)'; ctx.beginPath(); ctx.arc(-5,-4,0.9,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(10,70%,45%,.8)'; ctx.beginPath(); ctx.arc(-1,1,0.6,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(0,60%,30%,.7)'; ctx.beginPath(); ctx.arc(2,3,0.4,0,6.283); ctx.fill();
+  const yp=0.4+0.3*Math.sin(now/800);
+  ctx.fillStyle='hsla(340,40%,20%,'+(0.4+yp*0.2)+')'; ctx.beginPath(); ctx.arc(4.5,4.5,0.25,0,6.283); ctx.fill();
+}
+
+mountCards([
+  {id:'s1', name:'Класс O', body:'#0e1420', drawFn:drawClassO, zoom:6.5, fact:'>20 000–30 000К — самые горячие и синие звёзды шкалы'},
+  {id:'s2', name:'Класс B', body:'#101828', drawFn:drawClassB, zoom:6.5, fact:'10 000–30 000К — бело-голубой'},
+  {id:'s3', name:'Класс A', body:'#141828', drawFn:drawClassA, zoom:6.5, fact:'7 500–10 000К — чисто белый'},
+  {id:'s4', name:'Класс F', body:'#181608', drawFn:drawClassF, zoom:6.5, fact:'6 000–7 500К — желтовато-белый'},
+  {id:'s5', name:'Класс G — как Солнце', body:'#1a1608', drawFn:drawClassG, zoom:6.5, fact:'5 200–6 000К — жёлтый. Солнце: класс G2V'},
+  {id:'s6', name:'Класс K', body:'#1c1206', drawFn:drawClassK, zoom:6.5, fact:'3 700–5 200К — оранжевый'},
+  {id:'s7', name:'Класс M', body:'#180c08', drawFn:drawClassM, zoom:6.5, fact:'2 400–3 700К — самые холодные, красные'},
+  {id:'s8', name:'Бетельгейзе и Ригель', body:'#120e18', drawFn:drawBetelgeuseRigel, zoom:5.5, fact:'Одно созвездие Ориона: 3650К против 12100К — разница ×3.3'},
+  {id:'s9', name:'H-альфа туманности Ориона', body:'#0e0810', drawFn:drawOrionHAlpha, zoom:6.5, fact:'656.3нм — узкая линия излучения, не непрерывный спектр звезды'},
+  {id:'s10', name:'Красный гигант vs карлик', body:'#160a08', drawFn:drawGiantVsDwarf, zoom:5, fact:'Оба красные по закону Вина — но по разным причинам: масса vs старение'},
+  {id:'s11', name:'Диаграмма Герцшпрунга-Рассела', body:'#0e1420', drawFn:drawHRDiagram, zoom:5, fact:'Главная последовательность + гиганты (справа сверху) + белые карлики (слева снизу)'},
+  {id:'s12', name:'W и L/T/Y — за пределами OBAFGKM', body:'#100810', drawFn:drawExtendedClasses, zoom:5, fact:'W (Вольф-Райе) до 200 000К — L/T/Y карлики холоднее M, вплоть до <500К'},
+]);
+</script>

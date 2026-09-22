@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карта + Точечная настройка — три реальных бага, с числами</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:21px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:680px;margin:0 auto 28px;padding:14px 18px;border:1px dashed var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  section{max-width:960px;margin:0 auto 46px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{background:var(--gold-hi);color:#1c1200;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  .diag{display:grid;gap:10px;margin-bottom:18px}
+  .diagItem{display:flex;gap:10px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .diagItem b{color:var(--gold-hi);flex-shrink:0}
+  .measured{color:var(--bad);font-family:monospace;font-size:12px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:300px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:22px;padding:16px 14px;flex-shrink:0}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+  .phoneLbl.was{color:var(--bad)} .phoneLbl.now{color:var(--ok)}
+  .phone.now{border-color:var(--ok)}
+
+  /* --- tray mock --- */
+  .tray-m{display:grid;grid-template-columns:repeat(5,1fr);gap:18px 4px;margin-top:12px}
+  .stkItem{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .stkItem{position:relative}
+  .stk{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;
+    border:1.5px solid rgba(255,255,255,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+  .stk svg{width:60%;height:60%;display:block}
+  .stkCap{font-size:7px;color:var(--muted);text-align:center;line-height:1.1}
+  .pct{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--bad);font-family:monospace;white-space:nowrap;background:rgba(6,10,20,.85);padding:0 2px;border-radius:3px}
+  .pct.ok{color:var(--ok)}
+
+  /* --- chip mock --- */
+  .chipRow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{font-size:10px;padding:6px 10px;border-radius:999px;border:0.8px solid rgba(201,164,92,.35);
+    background:rgba(14,18,32,.7);color:var(--ink)}
+  .chip.sel{border-color:var(--gold-hi);color:var(--gold-hi)}
+  .sentBad{font-size:10px;padding:9px 12px;border-radius:10px;border:0.8px solid rgba(201,164,92,.35);
+    background:rgba(14,18,32,.7);color:var(--muted);text-align:center;cursor:default}
+  .hintTxt{font-size:9px;color:var(--muted);text-align:center;padding:0 6px;margin:4px 0 10px}
+  .toggleGood{font-size:10px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--gold-hi);
+    background:rgba(240,192,64,.12);color:var(--cream);text-align:center;display:flex;align-items:center;
+    justify-content:center;gap:6px;box-shadow:0 0 10px rgba(240,192,64,.18)}
+  .toggleGood .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-hi);flex-shrink:0}
+  .grpLbl{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
+  .grpLbl:first-child{margin-top:0}
+
+  /* --- ob chips (colored icon) --- */
+  .obChips{display:flex;gap:6px;flex-wrap:wrap}
+  .obChip{display:flex;align-items:center;gap:5px;padding:5px 9px 5px 5px;border-radius:999px;
+    border:1px solid var(--stone-border);background:rgba(255,255,255,.03)}
+  .obChip .ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .obChip .ic svg{width:60%;height:60%}
+  .obChip span{font-size:9.5px;color:var(--ink)}
+
+  footer{max-width:960px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Карта + Точечная настройка — три реальных проблемы</h1>
+<p class="sub">20.09.2026 · макет по живому разбору с владельцем, числа замерены на реальном коде, не выдуманы</p>
+<div class="note">Макет. Ничего не перенесено в игру — жду «да» отдельно по каждому из трёх пунктов, можно частично.</div>
+
+<section>
+<h2><span class="n">1</span>Лоток — значки разного визуального веса + два цветовых промаха</h2>
+<div class="diag">
+  <div class="diagItem"><b>Вес:</b><div>Рамка у всех 10 значков одинаковая (42×42px — проверено, тут ошибки нет),
+  но реальная «чернота» заливки внутри пляшет от <span class="measured">13.4%</span> (Комета) до
+  <span class="measured">41.2%</span> (Ловец) — в 3 раза. Та же ловушка, что была вчера с кубиком в Мастерской:
+  одинаковый бокс, разный вес значка внутри него.</div></div>
+  <div class="diagItem"><b>Цвет 1:</b><div>Заметка <span class="measured">hsl(278°)</span> и Дрейфер
+  <span class="measured">hsl(271°)</span> — разница 7° из 360, оба яркие и насыщенные. Реально почти
+  неотличимы, не показалось.</div></div>
+  <div class="diagItem"><b>Цвет 2:</b><div>Обломок (космический мусор, опасность) зелёный — зелёный в игре
+  везде читается как «безопасно/растёт» (Растёт-фильтр, Обломок сам не подходит по смыслу).</div></div>
+</div>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было</div>
+    <div class="tray-m">
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,rgba(143,217,196,.9),rgba(143,217,196,.65))"><svg viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span class="pct">22.3%</span></div><span class="stkCap">Передышка</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,rgba(217,153,255,.9),rgba(217,153,255,.65))"><svg viewBox="0 0 24 24" fill="#fff"><path d="M4 20l1-5 11-11 4 4-11 11z"/></svg><span class="pct">22.8%</span></div><span class="stkCap">Заметка</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#9c8a72,#9c8a72dd)"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,3 20,9 17,19 7,19 4,9"/></svg><span class="pct">37.1%</span></div><span class="stkCap">Астероид</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4ecf7a,#4ecf7add)"><svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="9" cy="12" rx="4" ry="2.4" transform="rotate(-25 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="2.4" transform="rotate(-25 16 12)"/></svg><span class="pct">18.4%</span></div><span class="stkCap">Обломок</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#b073ea,#b073eadd)"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg><span class="pct">36.2%</span></div><span class="stkCap">Дрейфер</span></div>
+    </div>
+    <div class="tray-m" style="margin-top:22px">
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff5f6d,#ff5f6ddd)"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke="#fff" stroke-width="1.6"/></svg><span class="pct">35.8%</span></div><span class="stkCap">Мина</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4f7fe6,#4f7fe6dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="9" y="9" width="6" height="6"/><path d="M2 12h5M17 12h5"/></svg><span class="pct">20.3%</span></div><span class="stkCap">Спутник</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff9a52,#ff9a52dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="17" cy="7" r="2"/><path d="M15 9L5 19"/></svg><span class="pct">13.4%</span></div><span class="stkCap">Комета</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ffe14a,#ffe14add)"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5" fill="#000"/></svg><span class="pct">41.2%</span></div><span class="stkCap">Ловец</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#22b8dd,#22b8dddd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="8" cy="12" r="3.4"/><circle cx="16" cy="12" r="3.4"/></svg><span class="pct">24.9%</span></div><span class="stkCap">Ворота</span></div>
+    </div>
+  </div>
+  <div class="phone now"><div class="phoneLbl now">Стало — вес выровнен, цвета разведены</div>
+    <div class="tray-m">
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4ecf7a,#4ecf7add)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.08)"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Передышка</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#f368d0,#f368d0dd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.07)"><path d="M4 20l1-5 11-11 4 4-11 11z"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Заметка</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#9c8a72,#9c8a72dd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.84)"><polygon points="12,3 20,9 17,19 7,19 4,9"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Астероид</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,rgba(143,217,196,.9),rgba(143,217,196,.65))"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.19)"><ellipse cx="9" cy="12" rx="4" ry="2.4" transform="rotate(-25 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="2.4" transform="rotate(-25 16 12)"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Обломок</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#b073ea,#b073eadd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.85)"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Дрейфер</span></div>
+    </div>
+    <div class="tray-m" style="margin-top:22px">
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff5f6d,#ff5f6ddd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.85)"><circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke="#fff" stroke-width="1.6"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Мина</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4f7fe6,#4f7fe6dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="transform:scale(1.13)"><rect x="9" y="9" width="6" height="6"/><path d="M2 12h5M17 12h5"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Спутник</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff9a52,#ff9a52dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="transform:scale(1.39)"><circle cx="17" cy="7" r="2"/><path d="M15 9L5 19"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Комета</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ffe14a,#ffe14add)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.79)"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5" fill="#000"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Ловец</span></div>
+      <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#22b8dd,#22b8dddd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" style="transform:scale(1.02)"><circle cx="8" cy="12" r="3.4"/><circle cx="16" cy="12" r="3.4"/></svg><span class="pct ok">≈26%</span></div><span class="stkCap">Ворота</span></div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:700px;margin:14px auto 0;text-align:center">
+  Своп цветов Передышка↔Обломок — по твоим словам буквально: «передышке цвет как у обломка, обломку —
+  её цвет». Оба цвета уже есть в игре, просто меняются местами, ничего не выдумано. Заметка получает новый
+  фиолетово-розовый <span class="measured">hsl(315°) / #f368d0</span> — 44° от Дрейфера, 40° от Мины, нигде
+  в палитре 10 значков больше не встречается. Проценты веса (≈26%) — не точный дизайн, ориентир; точные
+  множители масштаба считаются заново на живом коде, тем же приёмом, что вчера с кубиком.
+</p>
+</section>
+
+<section>
+<h2><span class="n">2</span>«Старт» — две настоящие кнопки выглядят как обычный серый текст</h2>
+<div class="diag">
+  <div class="diagItem"><b>Факт:</b><div>«Ровный жар — без разгона» и «Высокая ставка — 1 жизнь, бонусов нет,
+  очки×4» — проверено в консоли на живом коде: оба <span class="measured">&lt;button class="forgeChip"&gt;</span>,
+  реально нажимаются и меняют забег. Визуально — те же приглушённые серые блоки, что и настоящие
+  справочные подсказки рядом («чем больше число, тем больше раскачивает самолёт»). Человек не может на
+  глаз отличить, где реальная кнопка, а где просто текст — это не «некрасиво», это то, что ты не находишь
+  нужную кнопку, потому что она не выглядит как кнопка.</div></div>
+</div>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — 3 похожих серых блока подряд</div>
+    <div class="grpLbl">Стартовая жара</div>
+    <div class="chipRow"><span class="chip sel">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span><span class="chip">5</span><span class="chip">6</span></div>
+    <div class="hintTxt">с какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+    <div class="sentBad">Ровный жар — без разгона</div>
+    <div class="grpLbl" style="margin-top:14px">Бонусы</div>
+    <div class="chipRow"><span class="chip">Выкл</span><span class="chip">Редко</span><span class="chip sel">Норма</span><span class="chip">Часто</span></div>
+    <div class="sentBad">Высокая ставка — 1 жизнь, бонусов нет, очки×4</div>
+  </div>
+  <div class="phone now"><div class="phoneLbl now">Стало — кнопка выглядит кнопкой, подсказка — подсказкой</div>
+    <div class="grpLbl">Стартовая жара</div>
+    <div class="chipRow"><span class="chip sel">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span><span class="chip">5</span><span class="chip">6</span></div>
+    <div class="hintTxt">с какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+    <div class="toggleGood"><span class="dot"></span>Ровный жар — без разгона</div>
+    <div class="grpLbl" style="margin-top:14px">Бонусы</div>
+    <div class="chipRow"><span class="chip">Выкл</span><span class="chip">Редко</span><span class="chip sel">Норма</span><span class="chip">Часто</span></div>
+    <div class="toggleGood"><span class="dot"></span>Высокая ставка — 1 жизнь, бонусов нет, очки×4</div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:700px;margin:14px auto 0;text-align:center">
+  Тот же визуальный язык, что уже есть у выбранного чипа игры (золотая рамка+точка-маркер) — не новый
+  придуманный стиль, взят из уже одобренного «.sel». Подсказка остаётся тем же тихим серым текстом без рамки,
+  чтобы разница с кнопкой была видна сразу, без подписи «нажми меня».
+</p>
+</section>
+
+<section>
+<h2><span class="n">3</span>«Преграды» — тот же набор из 8 видов, третье визуальное оформление подряд</h2>
+<div class="diag">
+  <div class="diagItem"><b>Факт:</b><div>Один и тот же список из 8 видов препятствий на ОДНОМ экране рисуется
+  трижды по-разному: цветными кружками-значками в лотке выше (раздел 1), текстовыми пилюлями без цвета/значка
+  здесь в «Преграды», и (для сравнения) снова цветными кружками в фильтре Мастерской, который сделан
+  сегодня же вечером. Человеку приходится каждый раз заново узнавать один и тот же Дрейфер по разным
+  признакам.</div></div>
+</div>
+<div class="row">
+  <div class="phone"><div class="phoneLbl was">Было — голые текстовые пилюли</div>
+    <div class="obChips">
+      <span class="chip sel">Астероид</span><span class="chip sel">Обломок</span><span class="chip sel">Дрейфер</span>
+      <span class="chip sel">Мина</span><span class="chip sel">Спутник</span><span class="chip sel">Комета</span>
+      <span class="chip sel">Ловец</span><span class="chip sel">Ворота</span>
+    </div>
+  </div>
+  <div class="phone now"><div class="phoneLbl now">Стало — тот же язык, что в лотке/фильтре</div>
+    <div class="obChips">
+      <div class="obChip"><span class="ic" style="background:#9c8a72"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,3 20,9 17,19 7,19 4,9"/></svg></span><span>Астероид</span></div>
+      <div class="obChip"><span class="ic" style="background:#4ecf7a"><svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="9" cy="12" rx="4" ry="2.4" transform="rotate(-25 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="2.4" transform="rotate(-25 16 12)"/></svg></span><span>Обломок</span></div>
+      <div class="obChip"><span class="ic" style="background:#b073ea"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg></span><span>Дрейфер</span></div>
+      <div class="obChip"><span class="ic" style="background:#ff5f6d"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="6"/></svg></span><span>Мина</span></div>
+      <div class="obChip"><span class="ic" style="background:#4f7fe6"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="9" y="9" width="6" height="6"/></svg></span><span>Спутник</span></div>
+      <div class="obChip"><span class="ic" style="background:#ff9a52"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="17" cy="7" r="2"/><path d="M15 9L5 19"/></svg></span><span>Комета</span></div>
+      <div class="obChip"><span class="ic" style="background:#ffe14a"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/></svg></span><span>Ловец</span></div>
+      <div class="obChip"><span class="ic" style="background:#22b8dd"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="8" cy="12" r="3.4"/><circle cx="16" cy="12" r="3.4"/></svg></span><span>Ворота</span></div>
+    </div>
+  </div>
+</div>
+<p style="color:var(--muted);font-size:12px;max-width:700px;margin:14px auto 0;text-align:center">
+  Тот же приём, что уже сделан сегодня для <code>.wFilterObChip</code> в фильтре Мастерской — не новый
+  компонент, переиспользование уже одобренного сегодня же.
+</p>
+</section>
+
+<footer>Источники: index.html (grep, реальные классы .tray/.sticker/.forgeChip/.wFilterObChip) + живой замер
+в консоли (getComputedStyle, canvas ink%, getBoundingClientRect) — не по памяти и не на глаз.</footer>
+</body>
+</html>

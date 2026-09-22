@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:600px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center;width:300px}
+  h2{font-size:13px;font-weight:700;margin:0 0 8px;color:#c9a45c}
+  .phone{width:300px;background:radial-gradient(ellipse at 50% 20%,#12224a 0%,#0a1030 65%);
+    border-radius:14px;border:1px solid #262c4a;padding:16px;box-sizing:border-box}
+  /* --- ряд: язычок COSMOGRAM + кнопки поделиться (реальные размеры/цвета из index.html) --- */
+  .topRow{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:0}
+  .mark{background:#dba93c;border-radius:8px 8px 0 0;padding:3px 10px;margin-bottom:-1px;position:relative;z-index:1;
+    font-family:inherit;font-size:11px;letter-spacing:.03em;color:#2c1f08;text-transform:uppercase;font-weight:700}
+  .btnRow{display:flex;gap:6px}
+  .glassBtn{width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    display:flex;align-items:center;justify-content:center;color:#eaf3ff}
+  .glassBtn svg{width:13px;height:13px;filter:drop-shadow(0 0 6px rgba(160,210,255,.95))}
+  /* --- ВАРИАНТ: карточка факта, тот же язык, что уже одобрен у плашки имени сверху ---
+     линейный градиент (было плоское rgba), мягче рамка, тень, просторнее отступ,
+     золотой акцент — тонкая полоса ВДОЛЬ ЛЕВОГО КРАЯ (не сверху — тут сверху язычок
+     COSMOGRAM уже впритык, полоса сверху столкнулась бы с ним) */
+  .factCardNew{position:relative;width:100%;box-sizing:border-box;
+    background:linear-gradient(180deg,rgba(24,42,78,.96) 0%,rgba(15,31,61,.95) 100%);
+    border:1px solid rgba(255,255,255,.10);border-radius:0 16px 16px 16px;
+    padding:16px 20px 16px 22px;font-size:15px;line-height:1.5;color:#dfe6ff;text-align:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .factCardNew:before{content:"";position:absolute;top:8px;bottom:8px;left:0;width:2px;border-radius:2px;
+    background:linear-gradient(180deg,transparent,#dba93c 20%,#f0c040 50%,#dba93c 80%,transparent)}
+  .glassBtnNew{width:28px;height:28px;border-radius:50%;
+    background:linear-gradient(160deg, rgba(36,56,102,.9), rgba(10,16,38,.92));
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 4px 12px rgba(0,0,0,.3), inset 0 0 10px rgba(120,170,255,.18);
+    display:flex;align-items:center;justify-content:center;color:#eaf3ff}
+  .glassBtnNew svg{width:14px;height:14px;filter:drop-shadow(0 0 6px rgba(160,210,255,.95))}
+  .note{font-size:10.5px;color:#8b93b8;margin-top:8px;line-height:1.4;text-align:left}
+</style></head>
+<body>
+<h1>Окно «крупно» — нижняя карточка факта и кнопки, тот же золотой язык, что у верхней</h1>
+<p class="sub">Верхняя плашка имени (уже одобрена) получила: линейный градиент вместо плоского фона,
+  мягче рамка, тень, золотой акцент, просторнее отступ. Здесь — та же логика для нижней карточки, но
+  акцент сдвинут на ЛЕВЫЙ край (не сверху — там язычок COSMOGRAM уже впритык, сверху акцент столкнулся
+  бы с ним). Кнопки «поделиться»/«в историю» — та же стеклянная плашка, чуть крупнее и с мягкой рамкой,
+  тем же приёмом.</p>
+<div class="row">
+  <div class="col">
+    <h2>Сейчас</h2>
+    <div class="phone">
+      <div class="topRow">
+        <div class="mark">COSMOGRAM</div>
+        <div class="btnRow">
+          <div class="glassBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg></div>
+        </div>
+      </div>
+      <div style="width:100%;background:rgba(15,31,61,.95);border:1px solid rgba(219,169,60,.55);border-radius:0 16px 16px 16px;padding:14px 18px;font-size:15px;line-height:1.5;color:#dfe6ff;text-align:center;box-sizing:border-box">
+        Настоящие относительные радиусы колец NASA — щель Кассини ~4590 км, внутренние кольца честно обгоняют внешние
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Предложено</h2>
+    <div class="phone">
+      <div class="topRow">
+        <div class="mark">COSMOGRAM</div>
+        <div class="btnRow">
+          <div class="glassBtnNew"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg></div>
+        </div>
+      </div>
+      <div class="factCardNew">
+        Настоящие относительные радиусы колец NASA — щель Кассини ~4590 км, внутренние кольца честно обгоняют внешние
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note" style="max-width:640px;margin:26px auto 0">
+  Кнопка на скрине — «поделиться» (иконка узла-сети, реальная из index.html). Кнопка «✕ Закрыть»
+  (верхний угол экрана) тем же приёмом не трогается — она отдельно уже одобрена (11.09.2026, стеклянный
+  язык без изменений). Открытый вопрос: устраивает такое смещение акцента на левый край, или нужен
+  другой вариант расположения?
+</p>
+</body></html>

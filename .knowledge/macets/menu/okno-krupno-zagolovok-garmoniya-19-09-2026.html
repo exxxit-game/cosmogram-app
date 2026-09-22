@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:600px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center}
+  h2{font-size:12px;font-weight:600;margin:0 0 8px;color:#c9a45c}
+  .phone{width:300px;height:260px;position:relative;border-radius:14px;border:1px solid #262c4a;overflow:hidden}
+  /* родной хром Telegram — чужой слой, только для масштаба; в реальной игре мы его не рисуем */
+  .tgNative{position:absolute;top:0;left:0;right:0;height:46px;z-index:5;display:flex;
+    align-items:center;justify-content:space-between;padding:0 12px;box-sizing:border-box;
+    background:rgba(8,12,24,.92);font-size:13px;color:#fff}
+  /* наша карточка: padding-top = --sat-menu (28px на этом устройстве) + 6px — реальная,
+     уже стоящая в игре формула, без придуманных чисел */
+  .ourCard{position:absolute;inset:0;padding-top:34px;box-sizing:border-box;
+    background:radial-gradient(ellipse at 50% 35%,#12224a 0%,#0a1030 65%);
+    display:flex;flex-direction:column;align-items:center}
+  /* ГАРМОНИЯ: тонкая золотая черта сверху — тот же язык, что у плашки COSMOGRAM на этом же
+     экране (не новый цвет, свой уже принятый в игре акцент) — маркирует «это заголовок»,
+     не выдумывая отдельный ярлык/подпись. Мягче рамка, просторнее внутренний отступ (было
+     10px 18px → 14px 22px), поэтому не читается как «втиснутая» типовая плашка-чип. */
+  .nameCard{position:relative;margin:6px 54px 0;max-width:calc(100% - 108px);
+    background:linear-gradient(180deg,rgba(24,42,78,.96) 0%,rgba(15,31,61,.95) 100%);
+    border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px 22px 13px;
+    text-align:center;font-size:18px;font-weight:700;letter-spacing:.015em;color:#fff;
+    box-sizing:border-box;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .nameCard:before{content:"";position:absolute;top:0;left:18px;right:18px;height:2px;
+    border-radius:2px;background:linear-gradient(90deg,transparent,#dba93c 20%,#f0c040 50%,#dba93c 80%,transparent)}
+  .ourClose{position:absolute;top:22px;right:16px;width:32px;height:32px;border-radius:50%;
+    background:rgba(20,32,58,.5);z-index:4;opacity:.35}
+  .note{font-size:11px;color:#8b93b8;max-width:340px;margin-top:10px;text-align:left}
+  .note b{color:#dfe6ff}
+</style></head>
+<body>
+<h1>Заголовок явления — гармоничный вид (три реальных длины подряд)</h1>
+<p class="sub">Та же структура, что уже проверена живьём (наш блок начинается сразу после
+  резерва Telegram, без пустого зазора) — новое здесь только сама плашка: тонкая золотая
+  черта сверху (тот же акцент, что у плашки COSMOGRAM на этом экране, не новый цвет),
+  мягче рамка, просторнее внутренний отступ. Три РЕАЛЬНЫХ названия подряд — короткое,
+  среднее, самое длинное из категории «cosmos» — чтобы увидеть гармонию на всём диапазоне,
+  не на одном примере.</p>
+<div class="row">
+  <div class="col">
+    <h2>Короткое — «Кольца Сатурна»</h2>
+    <div class="phone">
+      <div class="tgNative"><span>✕ Закрыть</span><span>⌄ ⋮</span></div>
+      <div class="ourCard">
+        <div class="nameCard">Кольца Сатурна</div>
+        <div class="ourClose"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Среднее — «Биполярная туманность»</h2>
+    <div class="phone">
+      <div class="tgNative"><span>✕ Закрыть</span><span>⌄ ⋮</span></div>
+      <div class="ourCard">
+        <div class="nameCard">Биполярная туманность</div>
+        <div class="ourClose"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Самое длинное — «Спиральная галактика — Grand-design»</h2>
+    <div class="phone">
+      <div class="tgNative"><span>✕ Закрыть</span><span>⌄ ⋮</span></div>
+      <div class="ourCard">
+        <div class="nameCard">Спиральная галактика — Grand-design</div>
+        <div class="ourClose"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note" style="max-width:700px;margin:26px auto 0">
+  <b>Что изменилось против «как сейчас»:</b> золотая черта сверху делает плашку узнаваемым
+  заголовком, а не безликим чипом; отступ внутри плашки увеличен — тексту есть куда дышать;
+  собственная кнопка «✕» (полупрозрачный кружок на макете, в реальности либо совсем скрыта,
+  либо видна слабее — см. предыдущий разбор) держит те же реальные 54px справа, зазор
+  измерен живьём и подтверждён на телефоне. Само место (впритык к резерву Telegram, без
+  пустоты сверху) не меняется — оно уже проверено и одобрено.
+</p>
+</body></html>

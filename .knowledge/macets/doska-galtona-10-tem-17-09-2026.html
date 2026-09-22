@@ -1,0 +1,183 @@
+<title>Макет: доска Гальтона — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Доска Гальтона — 10 тем (GENERATIVE-GEOMETRY.md, находка 17.09.2026)</h1>
+<p class="sub">Тема 10 из 10 — последняя в этой партии. Francis Galton, 1873: шарик падает сквозь решётку колышков, 50/50 на каждом ряду — итог сходится к нормальному распределению (колокол Гаусса). Классическая статистика, не квантовая физика, вопреки подписи в исходном видео.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function pegRows(ctx,rows,spacing){
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  for(let r=0;r<rows;r++){
+    const n=r+2, y=-6+r*(11/rows);
+    for(let i=0;i<n;i++){ const x=(i-(n-1)/2)*spacing; ctx.beginPath(); ctx.arc(x,y,0.12,0,6.283); ctx.fill(); }
+  }
+}
+// 1. Механизм — шарик падает, на каждом колышке 50/50 влево-вправо
+function drawGaltonMechanism(ctx,now){
+  pegRows(ctx,5,1.3);
+  const p=(now%2000)/2000; let x=0;
+  for(let r=0;r<5;r++){ const t=(p*5-r); if(t>0&&t<1){ x += (((r*3+1)%2)?1:-1)*0.65*Math.min(t,1); } }
+  const y=-6+p*11;
+  ctx.fillStyle='hsla(45,90%,70%,1)'; ctx.beginPath(); ctx.arc(x,Math.min(y,5),0.35,0,6.283); ctx.fill();
+}
+// 2. Колокол Гаусса — итог: шарики копятся столбиками, складываясь в колокол
+function drawBellCurve(ctx,now){
+  const heights=[1,2,4,6,7,6,4,2,1];
+  const cycle=(now%4500)/4500;
+  const grown=Math.min(1,cycle*1.4);
+  heights.forEach((h,i)=>{
+    const x=(i-4)*0.85;
+    const hh=Math.round(h*grown);
+    for(let j=0;j<hh;j++){ ctx.fillStyle='hsla(45,80%,'+(60+j*3)+'%,.8)'; ctx.beginPath(); ctx.arc(x,5-j*0.9,0.32,0,6.283); ctx.fill(); }
+  });
+}
+// 3. История — Фрэнсис Гальтон, 1873, первый экземпляр — 23 ряда колышков
+function drawGaltonHistory(ctx,now){
+  pegRows(ctx,7,1.1);
+  const p=0.5+0.5*Math.sin(now/1200);
+  ctx.strokeStyle='rgba(200,180,140,'+(0.2+p*0.2)+')'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.rect(-4.5,-7,9,13); ctx.stroke();
+}
+// 4. Биномиальное → нормальное — центральная предельная теорема
+function drawBinomialToNormal(ctx,now){
+  const p=0.5+0.5*Math.sin(now/1500);
+  const heights=[1,3,6,8,6,3,1];
+  heights.forEach((h,i)=>{
+    const x=(i-3)*0.95;
+    const smooth = 1-p;
+    const barH = h*(0.4+smooth*0.6);
+    ctx.fillStyle='hsla(200,60%,65%,.7)';
+    ctx.fillRect(x-0.35,5-barH,0.7,barH);
+  });
+}
+// 5. Регрессия к среднему — исходная цель Гальтона: экстремальные значения тянутся к центру
+function drawRegressionToMean(ctx,now){
+  const p=(now%2500)/2500;
+  const seeds=[-3,-2,2,3];
+  seeds.forEach((sx,i)=>{
+    const x=sx*(1-p*0.7);
+    ctx.fillStyle='hsla(45,80%,70%,.7)'; ctx.beginPath(); ctx.arc(x,0,0.3,0,6.283); ctx.fill();
+  });
+}
+// 6. Формула нормального распределения — колокол, построенный из реальной функции f(x)
+function drawNormalFormula(ctx,now){
+  const p=0.5+0.5*Math.sin(now/900);
+  ctx.strokeStyle='hsla(45,85%,'+(70+p*10)+'%,.85)'; ctx.lineWidth=0.6;
+  ctx.beginPath();
+  for(let x=-5;x<=5;x+=0.2){
+    const y = -5.5*Math.exp(-(x*x)/4.5);
+    x===-5? ctx.moveTo(x,4+y) : ctx.lineTo(x,4+y);
+  }
+  ctx.stroke();
+  const mx=(((now/900)%10)-5);
+  const my=4-5.5*Math.exp(-(mx*mx)/4.5);
+  ctx.fillStyle='hsla(45,95%,85%,1)'; ctx.beginPath(); ctx.arc(mx,my,0.35,0,6.283); ctx.fill();
+}
+// 7. Радужная раскраска по столбцам — как в присланном видео
+function drawRainbowColumns(ctx,now){
+  const heights=[1,2,4,6,7,6,4,2,1];
+  heights.forEach((h,i)=>{
+    const x=(i-4)*0.85;
+    const hue=(i/8)*300;
+    const p=0.5+0.5*Math.sin(now/500+i*0.7);
+    for(let j=0;j<h;j++){ ctx.fillStyle='hsla('+hue+',75%,'+(55+p*10)+'%,.85)'; ctx.beginPath(); ctx.arc(x,5-j*0.9,0.32,0,6.283); ctx.fill(); }
+  });
+}
+// 8. Треугольник Паскаля — каждый ряд колышков = ряд биномиальных коэффициентов
+function drawPascalTriangle(ctx,now){
+  const rows=[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]];
+  rows.forEach((row,r)=>{
+    row.forEach((v,i)=>{
+      const x=(i-(row.length-1)/2)*1.1, y=-5+r*2.3;
+      const p=0.5+0.5*Math.sin(now/500+r+i);
+      ctx.fillStyle='hsla(45,70%,'+(55+p*15)+'%,.75)'; ctx.beginPath(); ctx.arc(x,y,0.15+v*0.06,0,6.283); ctx.fill();
+    });
+  });
+}
+// 9. Сигма растёт с числом рядов — σ=√(N/4), колокол шире при большем N
+function drawSigmaGrowth(ctx,now){
+  const p=(now%3000)/3000;
+  const width=1.5+p*3;
+  ctx.strokeStyle='hsla(45,80%,70%,.7)'; ctx.lineWidth=0.5;
+  ctx.beginPath();
+  for(let x=-5;x<=5;x+=0.2){
+    const y = -5*Math.exp(-(x*x)/(2*width*width));
+    x===-5? ctx.moveTo(x,4+y) : ctx.lineTo(x,4+y);
+  }
+  ctx.stroke();
+}
+// 10. Мало рядов vs много рядов — неровно/гладко, наглядная сходимость ЦПТ
+function drawFewVsManyRows(ctx,now){
+  const few=[2,1,3];
+  few.forEach((h,i)=>{ const x=-3+i*1.4; for(let j=0;j<h;j++){ const p=0.5+0.5*Math.sin(now/300+i+j); ctx.fillStyle='hsla(0,60%,'+(60+p*10)+'%,.6)'; ctx.beginPath(); ctx.arc(x,5-j*0.9,0.28,0,6.283); ctx.fill(); } });
+  const many=[1,2,4,6,7,6,4,2,1];
+  many.forEach((h,i)=>{ const x=(i-4)*0.5+3.2; for(let j=0;j<h;j++){ const p=0.5+0.5*Math.sin(now/500+i*0.5); ctx.fillStyle='hsla(140,60%,'+(56+p*8)+'%,.55)'; ctx.beginPath(); ctx.arc(x,5-j*0.55,0.16,0,6.283); ctx.fill(); } });
+}
+
+mountCards([
+  {id:'g1', name:'Механизм: 50/50', body:'#141008', drawFn:drawGaltonMechanism, zoom:6, fact:'Шарик на каждом колышке падает влево/вправо с равной вероятностью'},
+  {id:'g2', name:'Колокол Гаусса', body:'#0e1420', drawFn:drawBellCurve, zoom:6, fact:'Итог тысяч падений — нормальное распределение, не на глаз слепленное'},
+  {id:'g3', name:'Фрэнсис Гальтон, 1873', body:'#1a1608', drawFn:drawGaltonHistory, zoom:6, fact:'Первый экземпляр — 23 ряда колышков, собран Tisley & Spiller'},
+  {id:'g4', name:'Центральная предельная теорема', body:'#0c1420', drawFn:drawBinomialToNormal, zoom:6, fact:'Биномиальное распределение сходится к нормальному'},
+  {id:'g5', name:'Регрессия к среднему', body:'#141008', drawFn:drawRegressionToMean, zoom:6, fact:'Ради этой идеи Гальтон и построил доску изначально'},
+  {id:'g6', name:'Формула f(x)', body:'#0e1420', drawFn:drawNormalFormula, zoom:6, fact:'f(x)=(1/σ√2π)·e^(-(x-μ)²/2σ²) — не выдумано, реальная функция'},
+  {id:'g7', name:'Радужная раскраска', body:'#100c18', drawFn:drawRainbowColumns, zoom:6, fact:'Как в присланном видео — цвет по столбцу, не по значению'},
+  {id:'g8', name:'Треугольник Паскаля', body:'#141008', drawFn:drawPascalTriangle, zoom:6, fact:'Каждый ряд колышков — ряд биномиальных коэффициентов'},
+  {id:'g9', name:'Сигма растёт с рядами', body:'#0c1420', drawFn:drawSigmaGrowth, zoom:6, fact:'σ=√(N/4) — больше рядов, шире колокол'},
+  {id:'g10', name:'Мало рядов vs много', body:'#100c14', drawFn:drawFewVsManyRows, zoom:5.5, fact:'Неровно на малом N — гладкий колокол, когда рядов много'},
+]);
+</script>

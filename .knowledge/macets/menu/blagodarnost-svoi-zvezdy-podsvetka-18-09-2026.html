@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: свои звёзды чуть выделяются на общем небе</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb; --line-gold:rgba(201,164,92,.35);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; --muted:#8892b0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px 16px 60px;background:#05070f;color:var(--ink);font-family:var(--font-ui);
+    display:flex;flex-direction:column;align-items:center;gap:22px;}
+  h1{font-size:17px;font-weight:600;margin:0;text-align:center;max-width:560px;}
+  .sub{color:rgba(244,246,251,.65);font-size:12.5px;text-align:center;max-width:520px;line-height:1.6;margin:0;}
+  .sub b{color:var(--gold-hi);}
+  .row{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .colTitle{font-size:13px;font-weight:700;}
+  .stage{position:relative;width:300px;height:210px;border-radius:14px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);border:1px solid rgba(255,255,255,.08);}
+  canvas{display:block;width:100%;height:100%;}
+  .legend{display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--muted);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot.mine{background:var(--gold-hi);box-shadow:0 0 6px rgba(240,192,64,.8);}
+  .dot.other{background:#dfe8ff;}
+</style>
+</head>
+<body>
+
+<h1>Свои отправленные звёзды — чуть выделяются, только для себя</h1>
+<p class="sub">Все звёзды рисуются тем же способом, что и сейчас (мерцающая точка). У своих —
+тёплый золотой тон вместо белого, с лёгким свечением — тот же цвет, что уже держат числа
+рекордов и акценты игры (<b>--gold-hi</b>). Никакой рамки/подписи прямо на небе — свечение
+само по себе достаточно заметно, не превращает небо в список. Чужие видят твою звезду как
+обычную белую — подсветка существует только в твоём собственном небе.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="colTitle" style="color:var(--muted)">Сейчас — все одинаковые</div>
+    <div class="stage"><canvas id="skyPlain" width="300" height="210"></canvas></div>
+  </div>
+  <div class="col">
+    <div class="colTitle" style="color:var(--gold-hi)">Предложение — свои чуть тёплые</div>
+    <div class="stage"><canvas id="skyMine" width="300" height="210"></canvas></div>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="dot mine"></i>твои звёзды</span>
+  <span><i class="dot other"></i>чужие звёзды</span>
+</div>
+
+<script>
+// та же генерация, что в grStarPos()/grDraw() игры — реальные формулы, не выдуманные
+function seeded(id){ let a=id>>>0; return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function starPos(id){ const rnd=seeded(id); return { x:20+rnd()*360, y:20+rnd()*190, r:0.7+rnd()*1.6, ph:rnd()*6.28, sp:0.6+rnd()*1.2 }; }
+const N=26, mineIds=new Set([3,9,14,20]); // несколько «своих» вперемешку с чужими — реалистичная плотность
+const stars=[]; for(let i=1;i<=N;i++) stars.push(Object.assign({id:i}, starPos(i*7)));
+
+function draw(canvas, highlightMine){
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height;
+  function frame(t){
+    ctx.clearRect(0,0,w,h);
+    for(const s of stars){
+      const tw=0.5+0.5*Math.sin(t*0.0009*s.sp+s.ph);
+      const mine = highlightMine && mineIds.has(s.id);
+      ctx.globalAlpha=tw;
+      if(mine){
+        ctx.shadowColor='rgba(240,192,64,.9)'; ctx.shadowBlur=6*(w/380);
+        ctx.fillStyle='#f0c040';
+      } else {
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#dfe8ff';
+      }
+      ctx.beginPath(); ctx.arc(s.x/380*w, s.y/230*h, s.r*(w/380)*(mine?1.3:1), 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+draw(document.getElementById('skyPlain'), false);
+draw(document.getElementById('skyMine'), true);
+</script>
+
+</body>
+</html>

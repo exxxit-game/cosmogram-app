@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: зеркальное кольцо у кнопки «Закрыть»</title>
+<style>
+  :root{ --ink:#f4f6fb; }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px 16px 60px;background:#05070f;color:var(--ink);
+    font-family:-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;gap:30px;}
+  h1{font-size:17px;font-weight:600;margin:0;text-align:center;max-width:480px;}
+  .sub{color:rgba(244,246,251,.65);font-size:12.5px;text-align:center;max-width:460px;line-height:1.6;margin:0;}
+  .sub b{color:#f0c040;}
+
+  /* точная копия .menuBack/::before из index.html */
+  .row{position:relative;width:340px;height:90px;border-radius:16px;
+    background:radial-gradient(ellipse at 50% 35%,#12224a 0%,#0a1030 65%);overflow:hidden;}
+  .menuBack{ position:absolute; top:20px; width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    backdrop-filter:blur(8px);
+    border:1.5px solid rgba(150,205,255,.55);
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#eaf3ff; display:flex; align-items:center; justify-content:center; }
+  .menuBack .ic{ width:13px; height:13px; stroke-width:2.6; filter:drop-shadow(0 0 6px rgba(160,210,255,.95)); position:relative; z-index:1; }
+  .menuBack.left{ left:20px; }
+  .menuBack.right{ left:auto; right:20px; border-color:rgba(255,150,160,.4); color:#ff9fb0; }
+  .menuBack::before{ content:''; position:absolute; top:50%; left:50%;
+    width:47px; height:17px; border:1.5px solid rgba(200,225,255,.55); border-radius:50%;
+    transform:translate(-50%,-50%) rotate(-20deg); pointer-events:none; }
+  .menuBack.mirrored::before{ transform:translate(-50%,-50%) rotate(20deg); }
+  .menuBack.right::before{ border-color:rgba(255,180,190,.5); }
+
+  .block{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;}
+  .lbl.bad{color:#e0533d;}
+  .lbl.good{color:#5ec95e;}
+</style>
+</head>
+<body>
+
+<h1>Кольцо «Удалить» на экране видео — развёрнуто, «Закрыть» = «Назад»</h1>
+<p class="sub">Уточнили точно: «Закрыть» остаётся с тем же углом кольца, что и «Назад» везде в
+игре (<b>.menuBack::before</b>, rotate(-20deg)) — единый язык у всех «выходных» действий.
+«Удалить» — единственная с другим направлением (опасное действие, и так уже отдельного
+розового цвета), её кольцо зеркальное. «Назад» в остальной игре не трогаю.</p>
+
+<div class="block">
+  <div class="lbl bad">Было — оба кольца смотрят в одну сторону</div>
+  <div class="row">
+    <div class="menuBack left"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></div>
+    <div class="menuBack right"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg></div>
+  </div>
+</div>
+
+<div class="block">
+  <div class="lbl good">Стало — «Закрыть» как «Назад», «Удалить» развёрнута</div>
+  <div class="row">
+    <div class="menuBack left"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></div>
+    <div class="menuBack right mirrored"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg></div>
+  </div>
+</div>
+
+</body>
+</html>

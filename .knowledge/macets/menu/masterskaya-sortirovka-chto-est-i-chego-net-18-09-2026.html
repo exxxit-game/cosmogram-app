@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: сортировка Мастерской — что уже есть, чего не хватает</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb; --muted:#8892b0;
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35);
+    --stone-border-sel:rgba(201,164,92,.6); --stone-shadow-sel:0 0 0 1px rgba(201,164,92,.5);
+    --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif; --ok:#5ec95e; --gap:#ff9fb0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px 16px 70px;background:#05070f;color:var(--ink);font-family:var(--font-ui);
+    display:flex;flex-direction:column;align-items:center;gap:32px;}
+  h1{font-size:17px;font-weight:600;margin:0;text-align:center;max-width:600px;}
+  .sub{color:rgba(244,246,251,.65);font-size:12.5px;text-align:center;max-width:600px;line-height:1.65;margin:0;}
+  .sub b{color:var(--gold-hi);}
+  .card{width:100%;max-width:620px;background:rgba(14,18,32,.5);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:20px;}
+  .cardTitle{font-size:14px;font-weight:700;color:var(--gold-hi);margin-bottom:14px;}
+
+  .chip{border:1px solid var(--stone-border);background:var(--stone-fill);color:var(--muted);
+    border-radius:10px;min-height:40px;box-sizing:border-box;padding:9px 12px;font-size:12.5px;
+    font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .chip.iconOnly{width:40px;padding:9px;flex:none;}
+  .chip .ic{width:17px;height:17px;flex:none;}
+
+  .liveRow{display:flex;gap:8px;padding:14px;background:radial-gradient(ellipse at 50% -20%,#141c3a 0%,#070b18 70%);
+    border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  td,th{padding:9px 8px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.06);}
+  th{color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;}
+  td.chipCell{width:44px;}
+  .status{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:11px;}
+  .status.done{color:var(--ok);}
+  .status.gap{color:var(--gap);}
+  .note{color:rgba(244,246,251,.55);font-size:11px;line-height:1.5;}
+
+  .refRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+  .refTab{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;
+    padding:10px 14px;font-size:11.5px;text-align:center;min-width:100px;}
+  .refTab b{display:block;color:var(--gold-hi);font-size:12px;margin-bottom:3px;}
+
+  .qBox{background:rgba(255,159,214,.08);border:1px solid rgba(255,159,214,.3);border-radius:12px;padding:16px;
+    font-size:12.5px;line-height:1.6;}
+  .qBox b{color:var(--gap);}
+</style>
+</head>
+<body>
+
+<h1>Сортировка Мастерской — что уже собрано, чего честно не хватает</h1>
+<p class="sub">Разобрал историю коммитов + твоё исследование (<b>RESEARCH-2026-09-WORKSHOP-DISCOVERY.md</b>,
+11.09.2026). Значки по твоему выбору сегодня: «Новые» → плюс, «Вау» → искра, «Растёт» уже
+была стрелкой. Ничего в код ещё не внесено — сперва смотрим картину целиком.</p>
+
+<div class="card">
+  <div class="cardTitle">Ряд сейчас (с новыми значками, но той же логикой)</div>
+  <div class="liveRow">
+    <div class="chip iconOnly"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffd76a" stroke-width="2.4" stroke-linecap="round"><path d="M12 7.5v9M7.5 12h9"></path></svg></div>
+    <div class="chip iconOnly"><svg class="ic" viewBox="0 0 24 24" fill="#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path></svg></div>
+    <div class="chip iconOnly"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg></div>
+    <div class="chip iconOnly"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></div>
+    <div class="chip iconOnly"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#b39dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"></rect><circle cx="8.5" cy="8.5" r="1.3" fill="#b39dff" stroke="none"></circle><circle cx="15.5" cy="8.5" r="1.3" fill="#b39dff" stroke="none"></circle><circle cx="8.5" cy="15.5" r="1.3" fill="#b39dff" stroke="none"></circle><circle cx="15.5" cy="15.5" r="1.3" fill="#b39dff" stroke="none"></circle><circle cx="12" cy="12" r="1.3" fill="#b39dff" stroke="none"></circle></svg></div>
+  </div>
+  <table>
+    <tr><th></th><th>Значок</th><th>Что реально делает</th><th>Против исследования</th></tr>
+    <tr>
+      <td class="chipCell"><div class="chip iconOnly" style="width:32px;height:32px;padding:6px;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#ffd76a" stroke-width="2.4" stroke-linecap="round"><path d="M12 7.5v9M7.5 12h9"></path></svg></div></td>
+      <td>Новые</td>
+      <td>Сортировка по дате добавления.</td>
+      <td><span class="status done">✓ есть</span></td>
+    </tr>
+    <tr>
+      <td class="chipCell"><div class="chip iconOnly" style="width:32px;height:32px;padding:6px;"><svg class="ic" viewBox="0 0 24 24" fill="#ffd76a" stroke="none"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path></svg></div></td>
+      <td>Вау (было «Топ»)</td>
+      <td>Сортировка по числу лайков.</td>
+      <td><span class="status gap">? не проверено</span> — сырая сумма лайков или уже формула
+        IMDb/Wilson (5 из 5 не обгоняет 400 из 500)? Нужно свериться с живым кодом
+        cosmogram-workshop, не догадываться.</td>
+    </tr>
+    <tr>
+      <td class="chipCell"><div class="chip iconOnly" style="width:32px;height:32px;padding:6px;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg></div></td>
+      <td>Растёт</td>
+      <td>Формула <b style="color:#f0c040">Royal Road</b> (по комментарию в коде) — реальный
+        алгоритм роста, не сырое число.</td>
+      <td><span class="status done">✓ есть</span> — это и есть «набирает популярность» из
+        Mario Maker 2 / Reddit Hot, уже реализовано.</td>
+    </tr>
+    <tr>
+      <td class="chipCell"><div class="chip iconOnly" style="width:32px;height:32px;padding:6px;"><svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0;width:32px;height:32px;padding:6px;"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></div></td>
+      <td>♥ Твои лайки</td>
+      <td>«Вау», отфильтрованный только твоими лайками.</td>
+      <td><span class="status done">✓ есть</span> — то самое разделение «публичное/личное»
+        из AO3/Scratch, уже видимое, не спрятанное вторым тапом.</td>
+    </tr>
+    <tr>
+      <td class="chipCell"><div class="chip iconOnly" style="width:32px;height:32px;padding:6px;"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#b39dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"></rect></svg></div></td>
+      <td>🎲 Случайные</td>
+      <td>Случайный трек из общего каталога.</td>
+      <td><span class="status gap">частично</span> — исследование предлагало брать случайное
+        из курированного набора, не вслепую из всех.</td>
+    </tr>
+    <tr>
+      <td class="chipCell">—</td>
+      <td><b style="color:var(--gap)">«По запускам» отдельно</b></td>
+      <td>Была своим чипом до 12.09.2026, убрана тем же вечером.</td>
+      <td><span class="status gap">убрано намеренно</span> — само исследование считает
+        голые «Запуски» слабым критерием (itch.io тоже так и не завела эту сортировку
+        отдельно) — заменена на «Растёт», где рост учитывает и лайки, и активность вместе.</td>
+    </tr>
+  </table>
+</div>
+
+<div class="card">
+  <div class="cardTitle">Для сравнения — модель Mario Maker 2 (реальный прецедент из исследования)</div>
+  <div class="refRow">
+    <div class="refTab"><b>Popular</b>больше всего<br>лайков — сырое число</div>
+    <div class="refTab"><b>Trending</b>алгоритм<br>«вот-вот станет<br>популярным»</div>
+    <div class="refTab"><b>Newest</b>только что<br>залито</div>
+    <div class="refTab"><b>Hot</b>мало лайков,<br>но быстро растёт</div>
+  </div>
+  <p class="note" style="margin-top:14px;text-align:center;">У нас это почти один в один:
+  Вау=Popular, Растёт=Trending, Новые=Newest. «Hot» (мало лайков, но растёт) отдельно не
+  выделен — по сути частный случай «Растёт» с низким стартом, не отдельная категория.</p>
+</div>
+
+<div class="qBox">
+  <b>Открытый вопрос, без которого дальше двигаться нельзя:</b> «по запускам» вернуть как
+  отдельный явный раздел (несмотря на то, что исследование его не советует сырым), или
+  «Растёт»/«Вау» уже закрывают эту мысль для тебя? И отдельно: смотреть ли прямо сейчас в
+  живой код cosmogram-workshop, точно ли «Вау» уже честная формула, а не сырые лайки — или
+  это отдельным заходом?
+</div>
+
+</body>
+</html>

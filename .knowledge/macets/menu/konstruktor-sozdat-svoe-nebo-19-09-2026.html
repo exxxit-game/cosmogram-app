@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:560px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center}
+  h2{font-size:12px;font-weight:600;margin:0 0 8px;color:#c9a45c}
+  .phone{width:280px;background:#0a1030;border-radius:14px;border:1px solid #262c4a;padding:14px;box-sizing:border-box}
+  /* --- реальный ряд чипов Мастерской (js/forge.js WORKSHOP_SORTS), + новый 6-й --- */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:14px}
+  .chip{width:34px;height:34px;border-radius:10px;border:1px solid rgba(120,140,180,.25);
+    background:rgba(20,30,55,.6);display:flex;align-items:center;justify-content:center}
+  .chip svg{width:15px;height:15px}
+  .chipNew{border-color:rgba(240,192,64,.55);box-shadow:0 0 0 1px rgba(240,192,64,.25) inset}
+  /* --- карточка-мотиватор (тот же материал .wRow, что у остальных карточек неба) --- */
+  .motCard{position:relative;border:1px solid rgba(255,138,92,.4);border-radius:14px;
+    background:radial-gradient(ellipse at 50% 20%,rgba(255,138,92,.10) 0%,rgba(15,31,61,.95) 65%);
+    padding:22px 16px;text-align:center;box-sizing:border-box}
+  .motIcon{width:44px;height:44px;margin:0 auto 12px;border-radius:50%;
+    background:rgba(255,138,92,.14);border:1px solid rgba(255,138,92,.4);
+    display:flex;align-items:center;justify-content:center}
+  .motIcon svg{width:22px;height:22px;color:#ff8a5c}
+  .motTitle{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+  .motText{font-size:12px;color:#a9b3d0;line-height:1.4;margin-bottom:16px;max-width:220px;margin-left:auto;margin-right:auto}
+  .motBtn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:999px;
+    border:1px solid rgba(240,192,64,.55);background:rgba(20,30,55,.6);color:#f0c040;
+    font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+  .note{font-size:11px;color:#8b93b8;max-width:640px;margin:26px auto 0;text-align:left}
+  .note b{color:#dfe6ff}
+</style></head>
+<body>
+<h1>Конструктор — «создай своё первое небо», новый 6-й значок в ряду</h1>
+<p class="sub">Слева — реальный ряд фильтров Мастерской (колокольчик/искра/рост/сердце/кубик,
+  цвета и форма — из живого кода js/forge.js) плюс новый 6-й значок «Мои небеса» (коралловый,
+  не занятый соседями цвет). Справа — что игрок видит, если нажать этот значок, когда своих
+  небес ещё нет: мотивационная карточка вместо пустого списка.</p>
+<div class="row">
+  <div class="col">
+    <h2>Ряд фильтров, с новым 6-м значком</h2>
+    <div class="phone">
+      <div class="chips">
+        <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#6cc3ff"><path d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Z"></path></svg></div>
+        <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path></svg></div>
+        <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#5ec95e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg></div>
+        <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></div>
+        <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#b39dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="8" cy="8" r="1.2" fill="#b39dff"></circle><circle cx="16" cy="16" r="1.2" fill="#b39dff"></circle><circle cx="12" cy="12" r="1.2" fill="#b39dff"></circle></svg></div>
+        <div class="chip chipNew"><svg viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+      </div>
+      <div style="text-align:center;font-size:10px;color:#8b93b8">← новый значок «Мои небеса» (плюсик, попроще)</div>
+    </div>
+  </div>
+  <div class="col">
+    <h2>Что видит игрок без своих небес</h2>
+    <div class="phone">
+      <div class="motCard">
+        <div class="motIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+        <div class="motTitle">У тебя ещё нет своих небес</div>
+        <div class="motText">Собери своё первое небо в Конструкторе — это займёт пару минут</div>
+        <div class="motBtn">Создать</div>
+      </div>
+    </div>
+  </div>
+</div>
+<h1 style="margin-top:34px">Весь ряд вместе, как он реально будет выглядеть</h1>
+<p class="sub">Росток теперь зелёный (#5ec95e — тот же зелёный, что раньше был у стрелочки).
+  Стрелочка «Растёт» отдала зелёный ростку, забрала себе свободный синий (#6cc3ff — тот, что
+  раньше был у колокольчика) и развёрнута влево, как просил. Цвета просто поменялись местами
+  между двумя значками — новый цвет никто не выдумывает.</p>
+<div class="row">
+  <div class="col">
+    <div class="chips" style="margin:0 auto">
+      <div class="chip"><svg viewBox="0 0 24 24">
+        <path d="M12 20 V12.5" stroke="#5ec95e" stroke-width="1.7" stroke-linecap="round" fill="none"></path>
+        <ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)" fill="#5ec95e"></ellipse>
+        <ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)" fill="#5ec95e"></ellipse>
+      </svg></div>
+      <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path></svg></div>
+      <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#6cc3ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="21,17 15,11 11,15 3,6"></polyline><polyline points="9,6 3,6 3,12"></polyline></svg></div>
+      <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></div>
+      <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#b39dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="8" cy="8" r="1.2" fill="#b39dff"></circle><circle cx="16" cy="16" r="1.2" fill="#b39dff"></circle><circle cx="12" cy="12" r="1.2" fill="#b39dff"></circle></svg></div>
+      <div class="chip chipNew"><svg viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:#8b93b8;margin-top:6px">росток · вау · растёт (влево, синяя) · избранное · сюрприз · мои небеса</div>
+  </div>
+</div>
+<h1 style="margin-top:34px">Отдельный вопрос: значок «Новые» (колокольчик) слишком заметный</h1>
+<p class="sub">Три варианта одного размера/цвета (та же синяя #6cc3ff, что уже в игре) — меняется
+  только форма, чтобы сравнение было честным. Средний и правый — готовые простые формы
+  (посчитанная геометрия, не нарисовано на глаз).</p>
+<div class="row">
+  <div class="col">
+    <h2>Сейчас — колокольчик</h2>
+    <div class="chip" style="margin:0 auto"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#6cc3ff"><g transform="translate(12,12) scale(.84) translate(-12,-12)"><path fill-rule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z" clip-rule="evenodd"></path></g></svg></div>
+  </div>
+  <div class="col">
+    <h2>Вариант А — тонкая контурная звезда</h2>
+    <div class="chip" style="margin:0 auto"><svg viewBox="0 0 24 24" fill="none" stroke="#6cc3ff" stroke-width="1.6" stroke-linejoin="round"><polygon points="12,3 14.12,9.09 20.56,9.22 15.42,13.11 17.29,19.28 12,15.6 6.71,19.28 8.58,13.11 3.44,9.22 9.88,9.09"></polygon></svg></div>
+  </div>
+  <div class="col">
+    <h2>Вариант Б (снято) — точка в кольце</h2>
+    <div class="chip" style="margin:0 auto;opacity:.35"><svg viewBox="0 0 24 24" fill="none" stroke="#6cc3ff" stroke-width="1.8"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.6" fill="#6cc3ff" stroke="none"></circle></svg></div>
+    <div class="note" style="max-width:120px;margin:6px auto 0">не читается как «новое»</div>
+  </div>
+  <div class="col">
+    <h2>Вариант В — росток (твоя идея, уточнённая)</h2>
+    <div class="chip" style="margin:0 auto"><svg viewBox="0 0 24 24">
+      <path d="M12 20 V12.5" stroke="#6cc3ff" stroke-width="1.7" stroke-linecap="round" fill="none"></path>
+      <ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)" fill="#6cc3ff"></ellipse>
+      <ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)" fill="#6cc3ff"></ellipse>
+    </svg></div>
+    <div class="note" style="max-width:140px;margin:6px auto 0">два листка + стебель — «только что проросло», синий, как сейчас в игре</div>
+  </div>
+</div>
+<p class="note">
+  <b>Как это работает технически (уже готово в коде, не выдумано):</b>
+  <code>workshopSortMode==='mine'</code> — логика уже существует в <code>workshopRenderList()</code>
+  (js/forge.js), просто ни одна кнопка её ещё не включает — сейчас нажимать некуда. Новый 6-й
+  чип — единственное недостающее звено: ставит <code>workshopSortMode='mine'</code>, дальше всё
+  уже само работает. Кнопка «Создать» — тот же переход, что у вкладки «Создать» вверху экрана
+  (<code>forgeTabSet('create')</code>), ничего нового не изобретается.
+</p>
+</body></html>

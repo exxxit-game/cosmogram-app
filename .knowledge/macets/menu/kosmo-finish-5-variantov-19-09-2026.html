@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:640px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center;width:280px}
+  h2{font-size:13px;font-weight:700;margin:0 0 4px;color:#c9a45c}
+  .why{font-size:10.5px;color:#6b7394;margin:0 0 10px;line-height:1.35}
+  .stage{width:280px;height:280px;position:relative;border-radius:14px;border:1px solid #262c4a;
+    overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#12224a 0%,#0a1030 65%)}
+  .stage:before{content:"";position:absolute;inset:0;background-image:
+    radial-gradient(1.5px 1.5px at 15% 20%,#fff,transparent),
+    radial-gradient(1px 1px at 70% 15%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 85% 60%,#fff,transparent),
+    radial-gradient(1px 1px at 30% 75%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 55% 85%,#fff,transparent),
+    radial-gradient(1px 1px at 10% 55%,#fff,transparent);opacity:.5}
+  .ship{position:absolute;left:50%;top:62%;width:0;height:0;
+    border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:22px solid #e8ecf5;
+    transform:translate(-50%,-50%) rotate(0deg);filter:drop-shadow(0 0 8px rgba(255,255,255,.7));z-index:5}
+  .txt{position:absolute;left:50%;font-weight:800;letter-spacing:.05em;color:#ffd76a;
+    text-shadow:0 0 10px rgba(255,215,106,.8),0 2px 0 rgba(10,14,28,.6);white-space:nowrap;z-index:6}
+  .note{font-size:10.5px;color:#8b93b8;margin-top:8px;line-height:1.4;text-align:left}
+  /* 1. Супернова */
+  .novaStar{position:absolute;left:50%;top:62%;width:140px;height:140px;transform:translate(-50%,-50%);
+    background:conic-gradient(from 0deg,#ffd76a,#fff6d8,#ffd76a,#fff6d8,#ffd76a,#fff6d8,#ffd76a,#fff6d8,#ffd76a);
+    clip-path:polygon(50% 0%,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0% 50%,42% 42%);
+    opacity:.85;animation:novaPulse 1.8s ease-in-out infinite,novaSpin 6s linear infinite;filter:blur(.3px) drop-shadow(0 0 18px #ffd76a)}
+  @keyframes novaPulse{0%,100%{transform:translate(-50%,-50%) scale(.85)}50%{transform:translate(-50%,-50%) scale(1.05)}}
+  @keyframes novaSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .col1 .txt{top:62%;transform:translate(-50%,-50%);font-size:15px}
+  /* 2. Кольца Сатурна */
+  .ring{position:absolute;left:50%;top:62%;border:2px solid rgba(255,215,106,.55);border-radius:50%;
+    transform:translate(-50%,-50%) scaleY(.4);animation:ringGrow 2.2s ease-out infinite}
+  .ring2{animation-delay:.7s} .ring3{animation-delay:1.4s}
+  @keyframes ringGrow{0%{width:20px;height:20px;opacity:1}100%{width:220px;height:220px;opacity:0}}
+  .col2 .txt{top:24%;transform:translate(-50%,0);font-size:14px}
+  /* 3. Пульсар-маяк */
+  .pulseRing{position:absolute;left:50%;top:62%;border:1.6px solid rgba(180,160,255,.6);border-radius:50%;
+    transform:translate(-50%,-50%);animation:pulseGrow 1.6s ease-out infinite}
+  .pulseRing2{animation-delay:.53s} .pulseRing3{animation-delay:1.06s}
+  @keyframes pulseGrow{0%{width:10px;height:10px;opacity:.9}100%{width:180px;height:180px;opacity:0}}
+  .col3 .txt{top:62%;transform:translate(-50%,-50%);font-size:14px;animation:txtPulse 1.6s ease-in-out infinite}
+  @keyframes txtPulse{0%,100%{opacity:.6}50%{opacity:1}}
+  /* 4. Созвездие */
+  .star4{position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;box-shadow:0 0 6px #fff;
+    animation:starBlink 2s ease-in-out infinite}
+  .line4{position:absolute;background:rgba(255,215,106,.5);height:1px;transform-origin:0 0}
+  @keyframes starBlink{0%,100%{opacity:.3}50%{opacity:1}}
+  .col4 .txt{top:62%;transform:translate(-50%,-50%);font-size:14px;opacity:.92}
+  /* 5. Хвост кометы */
+  .comet{position:absolute;width:8px;height:8px;background:#fff;border-radius:50%;
+    box-shadow:0 0 14px 4px rgba(255,215,106,.8);top:20%;left:8%;animation:cometFly 2.4s ease-in-out infinite}
+  .cometTail{position:absolute;top:20%;left:8%;width:120px;height:3px;
+    background:linear-gradient(90deg,rgba(255,215,106,.9),transparent);transform-origin:0 50%;
+    animation:cometFly 2.4s ease-in-out infinite}
+  @keyframes cometFly{0%{top:14%;left:4%;transform:rotate(35deg) translateX(0)}55%{top:60%;left:78%;transform:rotate(35deg) translateX(0)}100%{top:60%;left:78%;transform:rotate(35deg) translateX(0);opacity:0}}
+  .col5 .txt{top:70%;transform:translate(-50%,0);font-size:14px}
+</style></head>
+<body>
+<h1>«Космо финиш» — пять разных структур, не один и тот же вариант перекрашенный</h1>
+<p class="sub">Каждый — своё явление из уже существующих в игре (Сверхновая/Кольца/Пульсар — реальные
+  премиум-эффекты Ангара, не выдуманы), и своя логика, КАК надпись связана с явлением: внутри вспышки,
+  в центре колец, в такт пульсу, складывается из точек, или подписью под пролётом кометы. Открой файл
+  в браузере — все анимированы, крутятся в цикле, не статичные картинки.</p>
+<div class="row">
+  <div class="col col1">
+    <h2>1. Супернова</h2>
+    <p class="why">Восьмилучевая звезда — тот же символ, что бонус «Сверхновая» в полёте. Текст —
+      прямо В ЦЕНТРЕ вспышки, одно целое, не отдельно.</p>
+    <div class="stage">
+      <div class="novaStar"></div>
+      <div class="ship"></div>
+      <div class="txt" style="top:62%">КОСМО ФИНИШ</div>
+    </div>
+  </div>
+  <div class="col col2">
+    <h2>2. Кольца Сатурна</h2>
+    <p class="why">Спокойные расходящиеся кольца (как явление «Кольца Сатурна» в Коллекции) вместо
+      резкого взрыва. Текст — НАД кораблём, кольца расходятся под ним волнами.</p>
+    <div class="stage">
+      <div class="ring ring1"></div><div class="ring ring2"></div><div class="ring ring3"></div>
+      <div class="ship"></div>
+      <div class="txt" style="top:24%">КОСМО ФИНИШ</div>
+    </div>
+  </div>
+  <div class="col col3">
+    <h2>3. Пульсар-маяк</h2>
+    <p class="why">Кольца света пульсируют равномерно (как явление «Пульсар-маяк»), надпись мигает
+      В ТАКТ тому же ритму — единая пульсация, не два независимых эффекта.</p>
+    <div class="stage">
+      <div class="pulseRing pulseRing1"></div><div class="pulseRing pulseRing2"></div><div class="pulseRing pulseRing3"></div>
+      <div class="ship"></div>
+      <div class="txt">КОСМО ФИНИШ</div>
+    </div>
+  </div>
+  <div class="col col4">
+    <h2>4. Созвездие</h2>
+    <p class="why">Точки-звёзды вспыхивают по очереди и соединяются линиями — буквально «звёздная
+      карта» победы. Самый небуквальный вариант, требует больше нового кода.</p>
+    <div class="stage" id="constStage">
+      <div class="ship"></div>
+      <div class="txt">КОСМО ФИНИШ</div>
+    </div>
+  </div>
+  <div class="col col5">
+    <h2>5. Хвост кометы</h2>
+    <p class="why">Комета пролетает по дуге через весь экран и гаснет у корабля — надпись появляется
+      следом, как подпись под пролётом, не одновременно с ним.</p>
+    <div class="stage">
+      <div class="cometTail"></div><div class="comet"></div>
+      <div class="ship"></div>
+      <div class="txt">КОСМО ФИНИШ</div>
+    </div>
+  </div>
+</div>
+<p class="note" style="max-width:700px;margin:26px auto 0">
+  1/2/3 — реальные явления, уже нарисованные в игре (Ангар → Коллекция), минимум нового кода,
+  надёжно по производительности. 4/5 — красивее по замыслу, но полностью новая анимация, больше
+  риска и времени. Какой номер (или смесь каких) откликается?
+</p>
+<script>
+const stage=document.getElementById('constStage');
+const pts=[[30,25],[70,20],[85,50],[60,75],[25,65],[15,40]];
+pts.forEach((p,i)=>{
+  const s=document.createElement('div'); s.className='star4';
+  s.style.left=p[0]+'%'; s.style.top=p[1]+'%'; s.style.animationDelay=(i*.25)+'s';
+  stage.appendChild(s);
+});
+for(let i=0;i<pts.length;i++){
+  const a=pts[i], b=pts[(i+1)%pts.length];
+  const dx=(b[0]-a[0])*2.8, dy=(b[1]-a[1])*2.8, len=Math.hypot(dx,dy), ang=Math.atan2(dy,dx)*180/Math.PI;
+  const l=document.createElement('div'); l.className='line4';
+  l.style.left=a[0]+'%'; l.style.top=a[1]+'%'; l.style.width=len+'px';
+  l.style.transform='rotate('+ang+'deg)'; l.style.animation='starBlink 2s ease-in-out infinite';
+  l.style.animationDelay=(i*.25)+'s';
+  stage.appendChild(l);
+}
+</script>
+</body></html>

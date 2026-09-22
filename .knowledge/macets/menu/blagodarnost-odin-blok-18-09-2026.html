@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: «Спасибо» — небо/карточка/кнопка одним блоком, без зазоров</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35);
+    --stone-fill-gold:linear-gradient(160deg, rgba(40,32,14,.85), rgba(20,16,8,.85));
+    --stone-border-gold:rgba(240,192,64,.6); --stone-shadow-gold:0 0 0 1px rgba(240,192,64,.6);
+    --r-card:16px; --font-ui:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px 16px 60px;background:#05070f;color:var(--ink);font-family:var(--font-ui);
+    display:flex;flex-direction:column;align-items:center;gap:36px;}
+  h1{font-size:17px;font-weight:600;margin:0;text-align:center;max-width:520px;}
+  .sub{color:rgba(244,246,251,.65);font-size:12.5px;text-align:center;max-width:420px;line-height:1.6;margin:0;}
+  .sub b{color:var(--gold-hi);}
+  .colWrap{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px;width:320px;}
+  .colLbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;}
+  .colLbl.bad{color:#e0533d;}
+  .colLbl.good{color:#5ec95e;}
+  .phone{width:320px;background:radial-gradient(ellipse at 50% -10%, #1a2550 0%, #05070f 60%);
+    border-radius:20px;padding:12px;border:1px solid rgba(255,255,255,.06);}
+
+  /* точная копия live-стилей index.html */
+  .grSkyWrap{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);
+    background:radial-gradient(ellipse at 50% -10%,#141c3a 0%,#070b18 65%);height:190px;margin-bottom:10px}
+  .grCaption{position:absolute;left:12px;right:12px;bottom:8px;font-size:9.5px;color:var(--muted);
+    background:rgba(4,7,16,.55);padding:5px 10px;border-radius:14px;text-align:center;line-height:1.4}
+  .grStarCount{position:absolute;right:10px;top:8px;font-size:10px;color:var(--gold-hi);font-weight:700;
+    background:rgba(4,7,16,.55);padding:3px 8px;border-radius:999px}
+  .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#dfe8ff}
+
+  .grCard{background:var(--stone-fill);border:1px solid var(--stone-border);border-radius:var(--r-card);
+    padding:16px 14px;margin-bottom:12px}
+  .grCardT{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    font-weight:700;margin:0 0 10px;text-align:center}
+  .grNameRow{font-size:11.5px;color:#c6d0ec;margin-bottom:12px;text-align:center;min-height:1px}
+  .grNameRow b{color:var(--ink)}
+  .grField{margin-bottom:10px}
+  .grField:last-child{margin-bottom:0}
+  .grFieldLbl{font-size:10.5px;color:var(--muted);margin-bottom:4px;display:block;text-align:center}
+  .grInput{width:100%;box-sizing:border-box;background:var(--stone-fill);border:1px solid var(--stone-border);
+    border-radius:10px;padding:9px 11px;color:var(--ink);font-family:var(--font-ui);font-size:12px;
+    line-height:1.4;resize:none;height:54px}
+  .grAmountRow{display:flex;align-items:center;justify-content:center;gap:12px;padding:2px 0}
+  .grAmtBtn{width:32px;height:32px;border-radius:7px;background:transparent;border:1px solid var(--line);
+    color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .grAmtInputWrap{display:flex;align-items:center;gap:4px}
+  .grAmtInputWrap .dot{width:11px;height:11px;border-radius:50%;background:var(--gold-hi)}
+  .grAmtInput{width:44px;text-align:center;font-size:14px;font-weight:700;color:var(--gold-hi);
+    border-bottom:1.5px solid var(--line-gold);padding-bottom:1px}
+  .grAnonRow{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:center}
+  .grAnonBox{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--line-gold);flex:none}
+  .grAnonBox.on{background:rgba(240,192,64,.16)}
+  .grAnonLbl{font-size:11px;color:#c6d0ec}
+
+  .grSendBtn{width:100%;box-sizing:border-box;padding:12px;border-radius:999px;
+    background:var(--stone-fill-gold);border:1px solid var(--stone-border-gold);box-shadow:var(--stone-shadow-gold);color:var(--gold-hi);
+    font-family:var(--font-ui);font-weight:800;font-size:12.5px;letter-spacing:.02em;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .grSendBtn .dot{width:13px;height:13px;border-radius:50%;background:var(--gold-hi)}
+
+  /* «СТАЛО» — единый блок */
+  .grUnified{border-radius:var(--r-card);border:1px solid var(--stone-border);overflow:hidden;
+    background:var(--stone-fill);}
+  .grUnified .grSkyWrap{border-radius:0;border:none;margin-bottom:0;height:170px}
+  .grUnified .grCard{border-radius:0;border:none;background:transparent;margin-bottom:0;padding:16px 14px 14px}
+  .grUnified .grSendBtn{border-radius:0;border:none;border-top:1px solid var(--stone-border-gold);
+    box-shadow:none;padding:14px}
+  .note{font-size:10.5px;color:var(--muted);text-align:center;max-width:300px;line-height:1.5;margin-top:2px}
+</style>
+</head>
+<body>
+
+<h1>«Спасибо» — небо, карточка и кнопка одним блоком</h1>
+<p class="sub">Три ваши правки разом: <b>убрана</b> подсказка «Имя скрыто — отправите
+анонимно» (когда «Анонимно» и так отмечено — она лишняя), <b>убраны зазоры</b> между небом и
+карточкой, <b>кнопка внутри</b> того же блока, не отдельным элементом снаружи. Цвета/шрифты —
+точная копия живого CSS index.html.</p>
+
+<div class="colWrap">
+  <div class="col">
+    <div class="colLbl bad">Было (3 отдельных блока)</div>
+    <div class="phone">
+      <div class="grSkyWrap">
+        <div class="grStarCount">★ 5</div>
+        <div class="star" style="left:40px;top:60px"></div>
+        <div class="star" style="left:230px;top:100px"></div>
+        <div class="grCaption">Каждое спасибо в Stars зажигает звезду в общем небе для всех.</div>
+      </div>
+      <div class="grCard">
+        <p class="grCardT">Ваша звезда</p>
+        <div class="grNameRow">Имя скрыто — отправите анонимно</div>
+        <div class="grField">
+          <span class="grFieldLbl">Комментарий</span>
+          <textarea class="grInput" placeholder="Космическое спасибо"></textarea>
+        </div>
+        <div class="grField">
+          <span class="grFieldLbl">Сколько Stars — решаете сами</span>
+          <div class="grAmountRow">
+            <div class="grAmtBtn">–</div>
+            <div class="grAmtInputWrap"><div class="dot"></div><span class="grAmtInput">28</span></div>
+            <div class="grAmtBtn">+</div>
+          </div>
+        </div>
+        <div class="grAnonRow"><div class="grAnonBox on"></div><span class="grAnonLbl">Анонимно</span></div>
+      </div>
+      <div class="grSendBtn"><div class="dot"></div>Отправить через Stars</div>
+    </div>
+    <div class="note">3 зазора (10px + 14px + margin кнопки), подсказка повторяет то, что уже сказано галочкой ниже.</div>
+  </div>
+
+  <div class="col">
+    <div class="colLbl good">Стало (один блок)</div>
+    <div class="phone">
+      <div class="grUnified">
+        <div class="grSkyWrap">
+          <div class="grStarCount">★ 5</div>
+          <div class="star" style="left:40px;top:60px"></div>
+          <div class="star" style="left:230px;top:100px"></div>
+          <div class="grCaption">Каждое спасибо в Stars зажигает звезду в общем небе для всех.</div>
+        </div>
+        <div class="grCard">
+          <p class="grCardT">Ваша звезда</p>
+          <!-- 18.09.2026: grNameRow пуст, когда «Анонимно» включено — вместо повторяющего
+               галочку текста ничего не показывается, строка схлопывается (min-height:1px). -->
+          <div class="grNameRow"></div>
+          <div class="grField">
+            <span class="grFieldLbl">Комментарий</span>
+            <textarea class="grInput" placeholder="Космическое спасибо"></textarea>
+          </div>
+          <div class="grField">
+            <span class="grFieldLbl">Сколько Stars — решаете сами</span>
+            <div class="grAmountRow">
+              <div class="grAmtBtn">–</div>
+              <div class="grAmtInputWrap"><div class="dot"></div><span class="grAmtInput">28</span></div>
+              <div class="grAmtBtn">+</div>
+            </div>
+          </div>
+          <div class="grAnonRow"><div class="grAnonBox on"></div><span class="grAnonLbl">Анонимно</span></div>
+        </div>
+        <div class="grSendBtn"><div class="dot"></div>Отправить через Stars</div>
+      </div>
+    </div>
+    <div class="note">Одна рамка, ноль зазоров. Кнопка — нижний край того же блока (квадратные углы снизу,
+    не отдельная золотая пилюля) — той же ширины, что и карточка, физически не может вылезти за её край.</div>
+  </div>
+</div>
+
+<div class="colWrap" style="margin-top:-10px">
+  <div class="col" style="width:320px">
+    <div class="colLbl good">Когда «Анонимно» выключено — имя всё ещё показывается</div>
+    <div class="phone" style="width:320px">
+      <div class="grUnified">
+        <div class="grCard" style="padding-top:14px">
+          <p class="grCardT">Ваша звезда</p>
+          <div class="grNameRow">Покажется как: <b>Mr. V</b></div>
+          <div class="grField">
+            <span class="grFieldLbl">Комментарий</span>
+            <textarea class="grInput" placeholder="Космическое спасибо"></textarea>
+          </div>
+          <div class="grAnonRow"><div class="grAnonBox"></div><span class="grAnonLbl">Анонимно</span></div>
+        </div>
+        <div class="grSendBtn"><div class="dot"></div>Отправить через Stars</div>
+      </div>
+    </div>
+    <div class="note">Строка «Покажется как: имя» остаётся — она полезна (превью того, что увидят
+    другие), не текст-предупреждение. Убирается только предупреждение при уже включённой галочке.</div>
+  </div>
+</div>
+
+</body>
+</html>

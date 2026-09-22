@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Карта — итог, всё вместе</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --stone-fill:radial-gradient(circle at 32% 26%, rgba(255,255,255,.16) 0%, rgba(20,24,42,.55) 55%, rgba(6,8,16,.6) 100%);
+    --stone-border:rgba(255,255,255,.22);
+    --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:20px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 24px}
+  .note{max-width:640px;margin:0 auto 28px;padding:14px 18px;border:1px solid var(--ok);border-radius:12px;
+    background:rgba(143,255,159,.06);font-size:13px;color:var(--ok);text-align:center}
+
+  .phoneWrap{display:flex;justify-content:center}
+  .phone{width:340px;background:linear-gradient(180deg,#0d1730,#070c18);border:1px solid var(--line);
+    border-radius:26px;padding:18px 14px 24px}
+
+  .stepHead{text-align:center;color:var(--gold-hi);font-weight:800;font-size:13px;letter-spacing:.1em;margin-bottom:4px}
+  .dots{display:flex;justify-content:center;gap:5px;margin-bottom:16px}
+  .dots span{width:16px;height:4px;border-radius:2px;background:var(--line)}
+  .dots span:first-child{background:var(--gold-hi)}
+
+  .track{position:relative;height:80px;border-radius:14px;background:linear-gradient(180deg,#1a2b4a,#0a1120);
+    margin-bottom:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;
+    border:1px solid var(--line)}
+  .track .plus{width:22px;height:22px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.3);display:flex;
+    align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.3)}
+  .track .txt{font-size:9px;color:rgba(255,255,255,.3)}
+
+  .lenRow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .lenLbl{font-size:9.5px;font-weight:700;color:var(--cream);letter-spacing:.08em;text-transform:uppercase}
+  .lenBar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.15);position:relative}
+  .lenBar::after{content:'';position:absolute;left:0;top:-6px;width:14px;height:14px;border-radius:50%;background:var(--gold-hi)}
+  .lenVal{font-size:13px;font-weight:700;color:var(--gold-hi)}
+  .ruler{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-bottom:14px}
+
+  .tray{display:grid;grid-template-columns:repeat(5,1fr);gap:16px 4px;margin-bottom:18px}
+  .stkItem{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .stk{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid rgba(255,255,255,.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+  .stk svg{width:60%;height:60%;display:block}
+  .stkCap{font-size:7px;color:var(--muted);text-align:center;line-height:1.1}
+
+  .spoiler{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;
+    background:rgba(255,255,255,.025);border:1px solid var(--line);font-size:10px;font-weight:600;color:var(--muted)}
+  .spoiler::after{content:'▴';color:var(--gold-hi);font-size:9px}
+
+  .subSpoiler{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    border-radius:12px 12px 0 0;background:rgba(240,192,64,.06);border:1px solid var(--line-gold);
+    border-bottom:none;font-size:10px;font-weight:700;color:var(--cream);margin-top:16px;letter-spacing:.05em}
+  .subSpoiler:first-child{margin-top:10px}
+  .subSpoiler .cnt{font-size:10px;color:var(--muted);font-weight:500;opacity:.8}
+  .subSpoiler::after{content:'▴';margin-left:8px;color:var(--gold-hi);font-size:9px}
+  .subBody{padding:14px 12px 12px;border-radius:0 0 12px 12px;background:rgba(255,255,255,.02);
+    border:1px solid var(--line);border-top:none}
+
+  .cluster{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  .cluster:last-child{padding-bottom:0;margin-bottom:0;border-bottom:none}
+  .lblBlk{font-size:11px;letter-spacing:.1em;color:var(--gold);margin:0 0 8px;text-transform:uppercase;font-weight:700}
+
+  .segRow{display:flex;gap:6px;flex-wrap:wrap}
+  .segBtn{border:1px solid var(--stone-border);background:var(--stone-fill);color:var(--muted);border-radius:10px;
+    min-height:38px;padding:8px 13px;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+  .segBtn.sel{border-color:var(--gold-hi);color:var(--gold-hi)}
+  .hint{color:var(--muted);font-size:11px;text-align:center;line-height:1.4;padding:0 4px;margin:6px 0 0;opacity:.85}
+  .toggleGood{margin-top:8px;font-size:10px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--gold-hi);
+    background:rgba(240,192,64,.12);color:var(--cream);text-align:center;display:flex;align-items:center;
+    justify-content:center;gap:6px}
+  .toggleGood .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-hi);flex-shrink:0}
+
+  .rowSlider{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:10px;color:var(--muted)}
+  .rowSlider .lbl{width:78px;flex-shrink:0}
+  .rowSlider .bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.15);position:relative}
+  .rowSlider .bar::after{content:'';position:absolute;left:0;top:-6px;width:14px;height:14px;border-radius:50%;background:#8ab4ff}
+  .rowSlider .val{width:24px;text-align:right;color:var(--cream)}
+
+  .obChips{display:flex;gap:6px;flex-wrap:wrap}
+  .obChip{display:flex;align-items:center;gap:5px;padding:5px 9px 5px 5px;border-radius:999px;
+    border:1px solid var(--stone-border);background:rgba(255,255,255,.03)}
+  .obChip .ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .obChip .ic svg{width:60%;height:60%}
+  .obChip span{font-size:9.5px;color:var(--ink)}
+
+  .cta{margin-top:18px;text-align:center;padding:13px;border-radius:999px;font-weight:800;font-size:13px;
+    background:radial-gradient(circle at 32% 26%, #fff0c8 0%, rgba(240,192,64,.97) 45%, rgba(178,136,56,.97) 100%);
+    color:#1c1200}
+
+  footer{max-width:700px;margin:36px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Карта — итог, оба захода вместе</h1>
+<p class="sub">20.09.2026 · сборка прошлых двух макетов в одном экране, как ты попросил показать</p>
+<div class="note">Ничего не перенесено в игру — это финальная сверка «как будет выглядеть», жду «да» на весь пакет разом.</div>
+
+<div class="phoneWrap">
+<div class="phone">
+  <div class="stepHead">КАРТА</div>
+  <div class="dots"><span></span><span></span><span></span></div>
+
+  <div class="track"><span class="plus">+</span><span class="txt">поставь первую точку</span></div>
+
+  <div class="lenRow"><span class="lenLbl">Длина</span><div class="lenBar"></div><span class="lenVal">1500м</span></div>
+  <div class="ruler"><span>0м</span><span>375м</span><span>750м</span><span>1125м</span><span>1500м</span></div>
+
+  <!-- ТРЕЙ: вес выровнен, Передышка/Обломок свопнуты, Заметка перекрашена -->
+  <div class="tray">
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4ecf7a,#4ecf7add)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.08)"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></div><span class="stkCap">Передышка</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#f368d0,#f368d0dd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.07)"><path d="M4 20l1-5 11-11 4 4-11 11z"/></svg></div><span class="stkCap">Заметка</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#9c8a72,#9c8a72dd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.84)"><polygon points="12,3 20,9 17,19 7,19 4,9"/></svg></div><span class="stkCap">Астероид</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,rgba(143,217,196,.9),rgba(143,217,196,.65))"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(1.19)"><ellipse cx="9" cy="12" rx="4" ry="2.4" transform="rotate(-25 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="2.4" transform="rotate(-25 16 12)"/></svg></div><span class="stkCap">Обломок</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#b073ea,#b073eadd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.85)"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg></div><span class="stkCap">Дрейфер</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff5f6d,#ff5f6ddd)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.85)"><circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke="#fff" stroke-width="1.6"/></svg></div><span class="stkCap">Мина</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#4f7fe6,#4f7fe6dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="transform:scale(1.13)"><rect x="9" y="9" width="6" height="6"/><path d="M2 12h5M17 12h5"/></svg></div><span class="stkCap">Спутник</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ff9a52,#ff9a52dd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" style="transform:scale(1.39)"><circle cx="17" cy="7" r="2"/><path d="M15 9L5 19"/></svg></div><span class="stkCap">Комета</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#ffe14a,#ffe14add)"><svg viewBox="0 0 24 24" fill="#fff" style="transform:scale(.79)"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5" fill="#000"/></svg></div><span class="stkCap">Ловец</span></div>
+    <div class="stkItem"><div class="stk" style="background:linear-gradient(180deg,#22b8dd,#22b8dddd)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" style="transform:scale(1.02)"><circle cx="8" cy="12" r="3.4"/><circle cx="16" cy="12" r="3.4"/></svg></div><span class="stkCap">Ворота</span></div>
+  </div>
+
+  <div class="spoiler"><span>Точечная настройка</span></div>
+
+  <!-- ТЕМП НЕБА -->
+  <div class="subSpoiler"><span>Темп неба</span><span class="cnt">3 ручки</span></div>
+  <div class="subBody">
+    <div class="rowSlider"><span class="lbl">Плотность</span><span class="bar"></span><span class="val">50</span></div>
+    <div class="rowSlider"><span class="lbl">Скорость</span><span class="bar"></span><span class="val">50</span></div>
+    <div class="rowSlider" style="margin-bottom:0"><span class="lbl">Солнечный ветер</span><span class="bar"></span><span class="val">0</span></div>
+    <div class="hint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
+  </div>
+
+  <!-- СТАРТ -->
+  <div class="subSpoiler"><span>Старт</span></div>
+  <div class="subBody">
+    <div class="cluster">
+      <div class="lblBlk">Жизни</div>
+      <div class="segRow"><div class="segBtn">1</div><div class="segBtn">2</div><div class="segBtn sel">3</div></div>
+    </div>
+    <div class="cluster">
+      <div class="lblBlk">Стартовая жара</div>
+      <div class="segRow"><div class="segBtn sel">1</div><div class="segBtn">2</div><div class="segBtn">3</div><div class="segBtn">4</div><div class="segBtn">5</div><div class="segBtn">6</div></div>
+      <div class="hint">С какой волны начинаешь — выше значит больше видов препятствий сразу</div>
+      <div class="toggleGood"><span class="dot"></span>Ровный жар — без разгона</div>
+    </div>
+    <div class="cluster">
+      <div class="lblBlk">Бонусы</div>
+      <div class="segRow"><div class="segBtn">Выкл</div><div class="segBtn">Редко</div><div class="segBtn sel">Норма</div><div class="segBtn">Часто</div></div>
+      <div class="toggleGood"><span class="dot"></span>Высокая ставка — 1 жизнь, бонусов нет, очки×4</div>
+    </div>
+  </div>
+
+  <!-- ПРЕГРАДЫ: теперь цветные значки, тот же язык, что в трее -->
+  <div class="subSpoiler"><span>Преграды</span><span class="cnt">8 видов</span></div>
+  <div class="subBody">
+    <div class="obChips">
+      <div class="obChip"><span class="ic" style="background:#9c8a72"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,3 20,9 17,19 7,19 4,9"/></svg></span><span>Астероид</span></div>
+      <div class="obChip"><span class="ic" style="background:rgba(143,217,196,.85)"><svg viewBox="0 0 24 24" fill="#fff"><ellipse cx="9" cy="12" rx="4" ry="2.4" transform="rotate(-25 9 12)"/><ellipse cx="16" cy="12" rx="4" ry="2.4" transform="rotate(-25 16 12)"/></svg></span><span>Обломок</span></div>
+      <div class="obChip"><span class="ic" style="background:#b073ea"><svg viewBox="0 0 24 24" fill="#fff"><polygon points="12,2 20,7 20,17 12,22 4,17 4,7"/></svg></span><span>Дрейфер</span></div>
+      <div class="obChip"><span class="ic" style="background:#ff5f6d"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="6"/></svg></span><span>Мина</span></div>
+      <div class="obChip"><span class="ic" style="background:#4f7fe6"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><rect x="9" y="9" width="6" height="6"/></svg></span><span>Спутник</span></div>
+      <div class="obChip"><span class="ic" style="background:#ff9a52"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="17" cy="7" r="2"/><path d="M15 9L5 19"/></svg></span><span>Комета</span></div>
+      <div class="obChip"><span class="ic" style="background:#ffe14a"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/></svg></span><span>Ловец</span></div>
+      <div class="obChip"><span class="ic" style="background:#22b8dd"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="8" cy="12" r="3.4"/><circle cx="16" cy="12" r="3.4"/></svg></span><span>Ворота</span></div>
+    </div>
+  </div>
+
+  <div class="cta">Подтвердить карту ✓</div>
+</div>
+</div>
+
+<footer>Сборка макетов konstruktor-karta-tochechnaya-komfort-20-09-2026.html +
+konstruktor-tochechnaya-struktura-spiska-20-09-2026.html — ничего нового не добавлено, только собрано в
+одном экране, как выглядит вместе.</footer>
+</body>
+</html>

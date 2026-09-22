@@ -1,0 +1,109 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:640px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:12.5px;font-weight:700;margin:0 0 2px;color:#c9a45c;text-align:center}
+  p.desc{font-size:10px;color:#8b93b8;text-align:center;margin:0 0 8px;max-width:200px}
+  .col{width:210px}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset}
+  .wBanner{position:relative;height:100px;border-radius:inherit;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%)}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wBody{padding:10px 12px;font-size:11px;color:#8b93b8}
+  .wTitle{font-size:13px;font-weight:700;color:#dfe6ff;margin-bottom:3px}
+  .wAuthorRibbon{position:absolute;top:0;left:0;width:76px;height:76px;overflow:hidden;pointer-events:none;z-index:3}
+  .wAuthorRibbon span{position:absolute;width:120px;top:16px;left:-32px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:4px 0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .eye{width:13px;height:13px;border-radius:50%;background:#2c1f08;flex:none}
+  .browRow{position:absolute;top:-7px;left:0;right:0;display:flex;justify-content:center;gap:14px}
+  .brow{width:10px;height:2px;background:#2c1f08;border-radius:1px;opacity:.8}
+
+  /* А — СПОКОЙНЫЙ: то, что уже в игре сейчас — синхронное моргание, ровный ритм */
+  .calm .eye{animation:calmBlink 4.2s ease-in-out infinite}
+  @keyframes calmBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+
+  /* Б — ИГРИВЫЙ: обычные синхронные моргания + редкое соло-подмигивание правым */
+  .playful .eyeL{animation:calmBlink 4.2s ease-in-out infinite}
+  .playful .eyeR{animation:playfulR 12.6s ease-in-out infinite}
+  @keyframes playfulR{
+    0%,30%,100%{transform:scaleY(1)} 31%{transform:scaleY(.12)} 32%{transform:scaleY(1)}
+    64%{transform:scaleY(1)} 65%{transform:scaleY(.12)} 66%{transform:scaleY(1)}
+    78%{transform:scaleY(1)} 80%{transform:scaleY(.1)} 83%{transform:scaleY(1)}
+    98%{transform:scaleY(.12)} 99.5%{transform:scaleY(1)}
+  }
+
+  /* В — СОННЫЙ: редкие, медленные, чуть более долгие моргания — «зевает», не мельтешит */
+  .sleepy .eye{animation:sleepyBlink 7s ease-in-out infinite}
+  @keyframes sleepyBlink{0%,80%,100%{transform:scaleY(1)} 85%{transform:scaleY(.15)} 92%{transform:scaleY(.15)} 97%{transform:scaleY(1)}}
+
+  /* Г — ЛЮБОПЫТНЫЙ: быстрый двойной блинк-вспышка почаще — энергичнее, чем «спокойный» */
+  .curious .eye{animation:curiousBlink 2.6s ease-in-out infinite}
+  @keyframes curiousBlink{
+    0%,84%,100%{transform:scaleY(1)} 87%{transform:scaleY(.12)} 89%{transform:scaleY(1)}
+    91%{transform:scaleY(.12)} 93%{transform:scaleY(1)}
+  }
+</style></head>
+<body>
+<h1>Семья характеров ленты — разные небеса, разное «поведение»</h1>
+<p class="sub">Твоя мысль: не один вариант на всех, а несколько РАЗНЫХ характеров — у каждого
+  неба свой, закреплённый навсегда за его кодом (не рандом при каждом показе). Четыре черновых
+  характера ниже — реально разные ритмы, не вариации одного и того же. Открой в браузере,
+  посмотри минуту — разница в ритме должна читаться сразу.</p>
+
+<div class="row">
+  <div class="col"><h2>А — Спокойный</h2>
+    <p class="desc">То, что уже в игре. Ровное моргание раз в ~4с.</p>
+    <div class="wRow calm"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>Б — Игривый</h2>
+    <p class="desc">Обычное моргание + редкое соло-подмигивание правым, раз в ~13с.</p>
+    <div class="wRow playful"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye eyeL"></div><div class="eye eyeR"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Метеоритный дождь</div>4000 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>В — Сонный</h2>
+    <p class="desc">Редкие, медленные моргания раз в ~7с, глаза чуть дольше закрыты — «зевает».</p>
+    <div class="wRow sleepy"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Туманная ночь</div>2500 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>Г — Любопытный</h2>
+    <p class="desc">Частые двойные моргания-вспышки раз в ~2.6с — энергичнее, живее.</p>
+    <div class="wRow curious"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Пульсар</div>2000 м</div>
+    </div>
+  </div>
+</div>
+
+<p class="note" style="max-width:700px;margin:26px auto 0;font-size:10.5px;color:#8b93b8;line-height:1.4">
+  Механизм закрепления (следующим заходом, не здесь): по коду трассы считается простое число
+  (хэш) → остаток от деления на количество характеров → тот же результат всегда для того же
+  кода, никогда не меняется при повторном показе. Сколько характеров оставляем — эти 4, больше,
+  меньше? Какие нравятся, какие убрать/добавить?
+</p>
+</body></html>

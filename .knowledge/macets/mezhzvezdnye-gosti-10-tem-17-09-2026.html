@@ -1,0 +1,236 @@
+<title>Макет: межзвёздные гости — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Межзвёздные гости — 10 тем (INTERSTELLAR-OBJECTS.md)</h1>
+<p class="sub">Тема 4 из 10. Три реально подтверждённых гостя (1I 'Оумуамуа 2017, 2I Борисов 2019, 3I ATLAS 2025) + точная математика, которой их отличают от местных тел. Ничего не выдумано — редкая тема, где сама физика уже написала сюжет «гость пролетел мимо и не вернулся».</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// 1. 'Оумуамуа — экстремально вытянутая форма (~10:1), кувыркается, без видимой комы
+function drawOumuamuaShape(ctx,now){
+  const rot=now/900;
+  ctx.save(); ctx.rotate(rot);
+  const g=ctx.createLinearGradient(-6,0,6,0);
+  g.addColorStop(0,'hsla(25,20%,45%,1)'); g.addColorStop(0.5,'hsla(25,25%,65%,1)'); g.addColorStop(1,'hsla(25,20%,40%,1)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(0,-2,6,0.7,0,0,6.283); ctx.fill();
+  ctx.restore();
+}
+// 2. Гиперболическая траектория e≈1.20 — пролетает мимо Солнца и улетает навсегда, не по кругу
+function drawHyperbolicPath(ctx,now){
+  ctx.fillStyle='hsla(48,90%,75%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.3,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(210,70%,70%,.6)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(-8,-9); ctx.quadraticCurveTo(-1,-2,8,3); ctx.stroke();
+  const p=(now%3000)/3000;
+  const t=p; const x=-8+t*16, y=-9+t*(3-(-9)) + Math.sin(t*3.14)*(-4);
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,0.55,0,6.283); ctx.fill();
+}
+// 3. Необъяснённое ускорение — слабый выброс газа (H2) без видимой комы, "тёмная комета"
+function drawDarkAcceleration(ctx,now){
+  const rot=now/900;
+  ctx.save(); ctx.rotate(rot);
+  ctx.fillStyle='hsla(25,20%,55%,1)'; ctx.beginPath(); ctx.ellipse(0,-2,5.5,0.65,0,0,6.283); ctx.fill();
+  ctx.restore();
+  const p=0.5+0.5*Math.sin(now/300);
+  for(let i=0;i<4;i++){
+    ctx.fillStyle='hsla(200,60%,80%,'+(0.15+p*0.15)+')';
+    ctx.beginPath(); ctx.arc(-4-i*1.2,-2+Math.sin(now/400+i)*0.4,0.35,0,6.283); ctx.fill();
+  }
+}
+// 4. 2I/Борисов — обычная на вид комета (кома+хвост), но орбита e≈3.36 выдаёт чужое происхождение
+function drawBorisovComet(ctx,now){
+  const p=0.5+0.5*Math.sin(now/700);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,2);
+  g.addColorStop(0,'hsla(200,50%,'+(80+p*10)+'%,1)'); g.addColorStop(1,'hsla(200,60%,60%,.3)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,2,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(210,80%,75%,.5)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(0,-2); ctx.lineTo(5.5,-6); ctx.stroke();
+  ctx.strokeStyle='hsla(45,50%,80%,.4)'; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.moveTo(0,-2); ctx.quadraticCurveTo(3,1,6,3); ctx.stroke();
+}
+// 5. Открытие Борисова — самодельный телескоп МАРГО, астроном-любитель, Крым
+function drawBorisovDiscovery(ctx,now){
+  ctx.strokeStyle='hsla(40,60%,70%,.8)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-2,4); ctx.lineTo(1,-5); ctx.lineTo(2.5,-4.6); ctx.lineTo(-0.5,4.4); ctx.closePath(); ctx.stroke();
+  const p=0.5+0.5*Math.sin(now/500);
+  ctx.fillStyle='hsla(50,90%,'+(70+p*20)+'%,1)'; ctx.beginPath(); ctx.arc(1,-5.3,0.4,0,6.283); ctx.fill();
+  for(let i=0;i<6;i++){ ctx.fillStyle='hsla(50,20%,90%,.5)'; ctx.beginPath(); ctx.arc(-6+i*2.2,-7+((i*37)%5),0.15,0,6.283); ctx.fill(); }
+}
+// 6. 3I/ATLAS — третий гость, самый быстрый (58 км/с), компактная кома
+function drawAtlas3I(ctx,now){
+  const p=0.5+0.5*Math.sin(now/250);
+  ctx.fillStyle='hsla(30,60%,'+(65+p*15)+'%,.9)'; ctx.beginPath(); ctx.arc(0,-2,1.3,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(30,70%,70%,'+(0.35+p*0.25)+')'; ctx.lineWidth=1;
+  for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-i*0.5,-2); ctx.lineTo(-6-i*1.5-p*0.8,-2+i*0.6); ctx.stroke(); }
+}
+// 7. Тест по эксцентриситету — эллипс (свой) против гиперболы (чужой), два честных пути рядом
+function drawEccentricityTest(ctx,now){
+  ctx.fillStyle='hsla(48,90%,75%,1)'; ctx.beginPath(); ctx.arc(-2,-2,1,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(140,60%,65%,.6)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.ellipse(-2,-2,4,1.6,0,0,6.283); ctx.stroke();
+  ctx.strokeStyle='hsla(0,70%,65%,.6)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(4,-7); ctx.quadraticCurveTo(6,-2,4,4); ctx.stroke();
+  const ea=now/1200;
+  ctx.fillStyle='hsla(140,80%,80%,.95)';
+  ctx.beginPath(); ctx.arc(-2+Math.cos(ea)*4,-2+Math.sin(ea)*1.6,0.32,0,6.283); ctx.fill();
+  const t=(now%2200)/2200;
+  const hx=4+(6-4)*Math.sin(t*3.14159), hy=-7+t*11;
+  ctx.fillStyle='hsla(0,80%,80%,.95)';
+  ctx.beginPath(); ctx.arc(hx,hy,0.32,0,6.283); ctx.fill();
+}
+// 8. Скорость убегания — v_escape = v_circular×√2, частица пересекает порог и не возвращается
+function drawEscapeVelocity(ctx,now){
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.setLineDash([0.5,1]); ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.arc(0,-2,4,0,6.283); ctx.stroke(); ctx.setLineDash([]);
+  const p=(now%2500)/2500;
+  const r=1+p*7;
+  const escaped = r>4;
+  ctx.fillStyle=escaped?'hsla(0,70%,65%,.9)':'hsla(140,60%,65%,.9)';
+  ctx.beginPath(); ctx.arc(Math.cos(1.2)*r,-2+Math.sin(1.2)*r,0.5,0,6.283); ctx.fill();
+}
+// 9. Спор Лёба — естественная скала vs гипотеза светового паруса, честно поровну, без вердикта
+function drawLoebDebate(ctx,now){
+  ctx.save(); ctx.translate(-2.5,-2); ctx.rotate(now/1200);
+  ctx.fillStyle='hsla(25,20%,55%,1)'; ctx.beginPath(); ctx.ellipse(0,0,3,0.5,0,0,6.283); ctx.fill();
+  ctx.restore();
+  ctx.save(); ctx.translate(3,-2); ctx.rotate(now/1200);
+  ctx.strokeStyle='hsla(200,60%,75%,.6)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.rect(-2,-2.6,4,5.2); ctx.stroke();
+  ctx.restore();
+}
+// 10. Обсерватория Веры Рубин — широкий обзор неба, скоро найдёт десятки таких гостей
+function drawRubinObservatory(ctx,now){
+  const p=(now%4000)/4000;
+  for(let i=0;i<7;i++){
+    const a=-1.2+i*0.4;
+    ctx.strokeStyle='hsla(210,60%,70%,'+(0.1+0.1*Math.sin(now/500+i))+')'; ctx.lineWidth=0.3;
+    ctx.beginPath(); ctx.moveTo(0,4); ctx.lineTo(Math.sin(a)*8,-9); ctx.stroke();
+  }
+  const blink=(p<0.1);
+  ctx.fillStyle='hsla(45,90%,80%,'+(blink?1:0.3)+')'; ctx.beginPath(); ctx.arc(Math.sin(-0.4)*6,-6,0.3,0,6.283); ctx.fill();
+}
+
+// 11. БОНУС (17.09.2026) — 3I/ATLAS старше Солнца на 7+ млрд лет, выброшен звездой толстого диска
+function drawAtlasAge(ctx,now){
+  const p=0.5+0.5*Math.sin(now/800);
+  ctx.fillStyle='hsla(35,50%,'+(55+p*10)+'%,.9)'; ctx.beginPath(); ctx.arc(-2,1,1.1,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(45,90%,'+(70+p*15)+'%,.8)'; ctx.beginPath(); ctx.arc(3,-5,0.4,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(0,0%,80%,.3)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(-5,5); ctx.lineTo(5,5); ctx.stroke();
+  ctx.fillStyle='hsla(0,70%,70%,.9)'; ctx.beginPath(); ctx.arc(-4.6,5,0.2,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(45,90%,80%,.9)'; ctx.beginPath(); ctx.arc(4.6*((11.5-4.5)/11.5-1)+4.6,5,0.2,0,6.283); ctx.fill();
+}
+// 12. БОНУС (17.09.2026) — гости не редкость, просто почти всегда слишком малы, чтобы их увидеть
+function drawPopulationDensity(ctx,now){
+  const seeds=[[-3,-5],[2,-6],[-4,2],[4,3],[0,4],[-1,-2],[3,-2],[-3,4]];
+  seeds.forEach(([dx,dy],i)=>{
+    const p=0.4+0.3*Math.sin(now/600+i*1.7);
+    ctx.fillStyle='hsla(210,40%,70%,'+(0.08+p*0.06)+')';
+    ctx.beginPath(); ctx.arc(dx,dy-2,0.15,0,6.283); ctx.fill();
+  });
+  const p=0.5+0.5*Math.sin(now/500);
+  ctx.fillStyle='hsla(45,90%,'+(70+p*15)+'%,1)'; ctx.beginPath(); ctx.arc(1,0,0.4,0,6.283); ctx.fill();
+}
+
+// 13. БОНУС (17.09.2026) — семья Крейца: e≈1.0 в каталогах SOHO — но это артефакт короткой дуги наблюдений, на деле родные фрагменты одной кометы 1106 года
+function drawKreutzFamily(ctx,now){
+  ctx.fillStyle='hsla(48,90%,75%,1)'; ctx.beginPath(); ctx.arc(0,-2,1,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(35,50%,60%,.35)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-1,-8); ctx.quadraticCurveTo(6,-2,-1,6); ctx.stroke();
+  const offsets=[0,0.15,0.3,0.45];
+  offsets.forEach((off,i)=>{
+    const t=((now/2600)+off)%1;
+    const x=-1+7*Math.sin(t*3.14159), y=-8+t*14;
+    const p=0.5+0.5*Math.sin(now/300+i*2);
+    ctx.fillStyle='hsla(30,70%,'+(60+p*15)+'%,.85)';
+    ctx.beginPath(); ctx.arc(x,y,0.28,0,6.283); ctx.fill();
+  });
+}
+// 14. БОНУС (17.09.2026) — настоящая форма Облака Оорта: не одна сфера, а диск внутри + сфера снаружи
+function drawOortCloudShape(ctx,now){
+  ctx.fillStyle='hsla(48,90%,80%,1)'; ctx.beginPath(); ctx.arc(0,2,0.6,0,6.283); ctx.fill();
+  for(let i=0;i<10;i++){
+    const a=i/10*6.283+now/6000;
+    const r=2.2+((i*37)%3)*0.3;
+    const x=Math.cos(a)*r, y=2+Math.sin(a)*r*0.28;
+    const p=0.4+0.3*Math.sin(now/700+i);
+    ctx.fillStyle='hsla(210,30%,65%,'+(0.25+p*0.2)+')';
+    ctx.beginPath(); ctx.arc(x,y,0.12,0,6.283); ctx.fill();
+  }
+  const seeds=[[-5,-6],[4,-7],[-6,1],[6,0],[-3,-8],[3,7],[-6,5],[6,-4],[0,-9],[1,7.5]];
+  seeds.forEach(([dx,dy],i)=>{
+    const p=0.35+0.3*Math.sin(now/900+i*1.3);
+    ctx.fillStyle='hsla(230,25%,70%,'+(0.12+p*0.12)+')';
+    ctx.beginPath(); ctx.arc(dx,dy,0.14,0,6.283); ctx.fill();
+  });
+}
+
+mountCards([
+  {id:'i1', name:"'Оумуамуа — форма", body:'#181410', drawFn:drawOumuamuaShape, zoom:6, fact:'≈10:1 — самое вытянутое тело из всех известных астероидов/комет'},
+  {id:'i2', name:"Гиперболический пролёт", body:'#0c1220', drawFn:drawHyperbolicPath, zoom:6, fact:'e≈1.20 — залетел, развернулся Солнцем и улетел навсегда'},
+  {id:'i3', name:"Загадочное ускорение", body:'#141210', drawFn:drawDarkAcceleration, zoom:6, fact:"Ускорялся без видимой комы — гипотеза «тёмной кометы» (H₂)"},
+  {id:'i4', name:'2I/Борисов', body:'#0e1420', drawFn:drawBorisovComet, zoom:6, fact:'Выглядит как обычная комета — но орбита e≈3.36 выдаёт чужака'},
+  {id:'i5', name:'Открытие Борисова', body:'#0e0c18', drawFn:drawBorisovDiscovery, zoom:6, fact:'Самодельный телескоп, астроном-любитель, Крым — 2019'},
+  {id:'i6', name:'3I/ATLAS', body:'#161006', drawFn:drawAtlas3I, zoom:6, fact:'Третий гость, 2025 — самый быстрый: e≈6.1, 58 км/с'},
+  {id:'i7', name:'Тест по эксцентриситету', body:'#0c1810', drawFn:drawEccentricityTest, zoom:6, fact:'e<1 — свой, вернётся. e≥1 — гость, не вернётся никогда'},
+  {id:'i8', name:'Скорость убегания', body:'#0c1220', drawFn:drawEscapeVelocity, zoom:6, fact:'v_убег = v_круг×√2 — перепроверено численно для Земли'},
+  {id:'i9', name:'Спор о природе', body:'#100c14', drawFn:drawLoebDebate, zoom:6, fact:'Скала или парус? Реальный, ещё не закрытый научный спор'},
+  {id:'i10', name:'Обсерватория Веры Рубин', body:'#0a1220', drawFn:drawRubinObservatory, zoom:6, fact:'Скоро таких гостей будут находить десятками в год'},
+  {id:'i11', name:'3I/ATLAS старше Солнца', body:'#100c08', drawFn:drawAtlasAge, zoom:5.5, fact:'~11-12 млрд лет — выброшен звездой толстого диска Галактики за 7+ млрд лет до Солнца'},
+  {id:'i12', name:'Почти всегда есть один рядом', body:'#0a0e18', drawFn:drawPopulationDensity, zoom:6, fact:'~10 000 тел внутри орбиты Нептуна — но почти все слишком малы, чтобы их увидеть'},
+  {id:'i13', name:'Семья Крейца — свои, не гости', body:'#100a06', drawFn:drawKreutzFamily, zoom:5.5, fact:'e≈1.0 в каталогах SOHO — но это обломки одной родной кометы 1106 года, период ≈750 лет'},
+  {id:'i14', name:'Настоящая форма Облака Оорта', body:'#0a0e1a', drawFn:drawOortCloudShape, zoom:5.5, fact:'Не одна сфера: диск (облако Хиллса) внутри + сферическая оболочка снаружи'},
+]);
+</script>

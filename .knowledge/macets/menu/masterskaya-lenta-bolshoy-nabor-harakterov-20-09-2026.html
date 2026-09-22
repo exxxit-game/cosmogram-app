@@ -1,0 +1,145 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 20px;max-width:660px;margin-left:auto;margin-right:auto}
+  h3.group{text-align:center;font-size:11px;color:#6b7394;text-transform:uppercase;letter-spacing:.1em;
+    margin:34px 0 14px;border-top:1px solid rgba(120,140,180,.2);padding-top:20px}
+  .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:12px;font-weight:700;margin:0 0 2px;color:#c9a45c;text-align:center}
+  p.desc{font-size:9.5px;color:#8b93b8;text-align:center;margin:0 0 8px;max-width:180px}
+  .col{width:190px}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:14px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 6px 16px rgba(0,0,0,.35), 0 0 18px rgba(201,164,92,.14) inset}
+  .wBanner{position:relative;height:88px;border-radius:inherit;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%)}
+  .wBody{padding:8px 10px;font-size:10px;color:#8b93b8}
+  .wTitle{font-size:12px;font-weight:700;color:#dfe6ff}
+  .wAuthorRibbon{position:absolute;top:0;left:0;width:70px;height:70px;overflow:hidden;pointer-events:none;z-index:3}
+  .wAuthorRibbon span{position:absolute;width:112px;top:14px;left:-30px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:4px 0;display:flex;align-items:center;justify-content:center;gap:9px}
+  .eye{width:12px;height:12px;border-radius:50%;background:#2c1f08;flex:none}
+  .browRow{position:absolute;top:-6px;left:0;right:0;display:flex;justify-content:center;gap:13px}
+  .brow{width:9px;height:2px;background:#2c1f08;border-radius:1px;opacity:.8}
+
+  /* --- группа 1: уже показанные раньше (ритм) --- */
+  .calm .eye{animation:calmBlink 4.2s ease-in-out infinite}
+  @keyframes calmBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+  .sleepy .eye{animation:sleepyBlink 7s ease-in-out infinite}
+  @keyframes sleepyBlink{0%,80%,100%{transform:scaleY(1)} 85%{transform:scaleY(.15)} 92%{transform:scaleY(.15)} 97%{transform:scaleY(1)}}
+  .curious .eye{animation:curiousBlink 2.6s ease-in-out infinite}
+  @keyframes curiousBlink{0%,84%,100%{transform:scaleY(1)} 87%{transform:scaleY(.12)} 89%{transform:scaleY(1)} 91%{transform:scaleY(.12)} 93%{transform:scaleY(1)}}
+
+  /* --- группа 2: приёмы мультипликации (уже показанные) --- */
+  .bouncy .eye{animation:bouncyBlink 4.6s cubic-bezier(.34,1.56,.64,1) infinite}
+  @keyframes bouncyBlink{0%,88%,100%{transform:scaleY(1)} 91%{transform:scaleY(.1)} 94%{transform:scaleY(1.22)} 97%{transform:scaleY(1)}}
+  .droopy .eye{animation:droopyBlink 8s ease-in-out infinite; transform:scaleY(.62)}
+  @keyframes droopyBlink{0%,70%,100%{transform:scaleY(.62)} 75%{transform:scaleY(1)} 80%{transform:scaleY(.62)}}
+
+  /* --- группа 3: НОВОЕ — эмоции и повадки --- */
+  /* Нервный: сдвигается КАЖДЫЙ раз перед морганием, чаще, чуть дёргано */
+  .nervous .eye{animation:nervousBlink 2.2s ease-in-out infinite}
+  @keyframes nervousBlink{
+    0%,60%,100%{transform:translateX(0) scaleY(1)}
+    64%{transform:translateX(1.4px) scaleY(1)}
+    67%{transform:translateX(1.4px) scaleY(.12)}
+    70%{transform:translateX(-1.4px) scaleY(1)}
+    73%{transform:translateX(0) scaleY(1)}
+  }
+  /* Взгляд искоса: глаза ПОЧТИ ВСЕГДА смещены вбок, изредка на миг смотрят прямо */
+  .sideeye .eye{animation:sideeyeBlink 6.4s ease-in-out infinite; transform:translateX(1.8px)}
+  @keyframes sideeyeBlink{
+    0%,55%,100%{transform:translateX(1.8px) scaleY(1)}
+    58%{transform:translateX(1.8px) scaleY(.12)} 61%{transform:translateX(1.8px) scaleY(1)}
+    80%{transform:translateX(0) scaleY(1)} 88%{transform:translateX(1.8px) scaleY(1)}
+  }
+  /* Удивление: спокоен, но раз в цикл — быстрая ДВОЙНАЯ вспышка (дубль-тейк) */
+  .surprised .eye{animation:surprisedBlink 6.8s ease-in-out infinite}
+  @keyframes surprisedBlink{
+    0%,70%,100%{transform:scaleY(1)}
+    73%{transform:scaleY(.1)} 75%{transform:scaleY(1)}
+    77%{transform:scaleY(.1)} 79%{transform:scaleY(1.15)} 82%{transform:scaleY(1)}
+  }
+  /* Сверкающие: изредка чуть УВЕЛИЧИВАЮТСЯ (восторг), не моргание вовсе */
+  .sparkle .eye{animation:sparkleBlink 5.4s ease-in-out infinite}
+  @keyframes sparkleBlink{
+    0%,75%,100%{transform:scale(1)}
+    80%{transform:scale(1.35)} 85%{transform:scale(1)}
+    90%{transform:scaleY(.12)} 93%{transform:scale(1)}
+  }
+  /* Гугли: лёгкое покачивание вверх-вниз ПОСТОЯННО, моргание отдельно и редко */
+  .googly .eye{animation:googlyBob 2.4s ease-in-out infinite, googlyBlink 9s ease-in-out infinite}
+  @keyframes googlyBob{0%,100%{margin-top:0} 50%{margin-top:1.5px}}
+  @keyframes googlyBlink{0%,92%,100%{opacity:1} 95%{opacity:1} 96%{transform:scaleY(.12)} 97%{opacity:1}}
+  /* Волна: левый и правый моргают ПО ОЧЕРЕДИ с небольшой задержкой — не синхронно, не соло */
+  .wave .eyeL{animation:waveBlink 5.5s ease-in-out infinite}
+  .wave .eyeR{animation:waveBlink 5.5s ease-in-out infinite .18s}
+  @keyframes waveBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+  /* Драматичная пауза: очень редко, но глаза остаются закрытыми заметно дольше — медитативно */
+  .dramatic .eye{animation:dramaticBlink 10s ease-in-out infinite}
+  @keyframes dramaticBlink{0%,85%,100%{transform:scaleY(1)} 89%{transform:scaleY(.1)} 95%{transform:scaleY(.1)} 99%{transform:scaleY(1)}}
+</style></head>
+<body>
+<h1>Большой набор характеров ленты</h1>
+<p class="sub">Технического потолка в 4 или 8 нет — это просто CSS-анимации, можно сколько угодно.
+  Ниже 11 характеров: 3 уже показанных (ритм), 2 уже показанных (приёмы мультипликации) + 6
+  совсем новых (эмоции/повадки, тоже из реальных референсов — идея «дубль-тейк», «взгляд искоса»,
+  googly eyes). Открой в браузере, посмотри минуту-две.</p>
+
+<h3 class="group">Ритм (показано раньше)</h3>
+<div class="row">
+  <div class="col"><h2>Спокойный</h2><p class="desc">Ровно, раз в ~4с.</p>
+    <div class="wRow calm"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м</div></div>
+  </div>
+  <div class="col"><h2>Сонный</h2><p class="desc">Медленно, ~7с, дольше закрыт.</p>
+    <div class="wRow sleepy"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Туманная ночь</div>2500 м</div></div>
+  </div>
+  <div class="col"><h2>Любопытный</h2><p class="desc">Часто, двойная вспышка, ~2.6с.</p>
+    <div class="wRow curious"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Пульсар</div>2000 м</div></div>
+  </div>
+</div>
+
+<h3 class="group">Приёмы мультипликации (показано раньше)</h3>
+<div class="row">
+  <div class="col"><h2>Пружинка</h2><p class="desc">Перелёт при открытии.</p>
+    <div class="wRow bouncy"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Минное поле</div>3500 м</div></div>
+  </div>
+  <div class="col"><h2>Сонный прищур</h2><p class="desc">Обычно полуприкрыты (Baymax).</p>
+    <div class="wRow droopy"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Дрейф</div>4000 м</div></div>
+  </div>
+</div>
+
+<h3 class="group">Новое — эмоции и повадки</h3>
+<div class="row">
+  <div class="col"><h2>Нервный</h2><p class="desc">Дёргается каждый раз перед морганием.</p>
+    <div class="wRow nervous"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Коридор ворот</div>4500 м</div></div>
+  </div>
+  <div class="col"><h2>Взгляд искоса</h2><p class="desc">Почти всегда смотрит вбок, редко прямо.</p>
+    <div class="wRow sideeye"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Сафари с искателями</div>3500 м</div></div>
+  </div>
+  <div class="col"><h2>Удивление</h2><p class="desc">Спокоен, потом резкий дубль-тейк.</p>
+    <div class="wRow surprised"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Разминка</div>1500 м</div></div>
+  </div>
+  <div class="col"><h2>Сверкающие</h2><p class="desc">Изредка увеличиваются (восторг), не моргают.</p>
+    <div class="wRow sparkle"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Звёздный путь</div>5000 м</div></div>
+  </div>
+  <div class="col"><h2>Гугли</h2><p class="desc">Лёгкое покачивание всё время, моргает редко.</p>
+    <div class="wRow googly"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Кометная тропа</div>2800 м</div></div>
+  </div>
+  <div class="col"><h2>Волна</h2><p class="desc">Моргают по очереди, не синхронно и не соло.</p>
+    <div class="wRow wave"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye eyeL"></div><div class="eye eyeR"></div></span></div></div><div class="wBody"><div class="wTitle">Звёздный прибой</div>3100 м</div></div>
+  </div>
+  <div class="col"><h2>Драматичная пауза</h2><p class="desc">Редко, но глаза заметно дольше закрыты.</p>
+    <div class="wRow dramatic"><div class="wBanner"><div class="wAuthorRibbon"><span><div class="browRow"><div class="brow"></div><div class="brow"></div></div><div class="eye"></div><div class="eye"></div></span></div></div><div class="wBody"><div class="wTitle">Тихая орбита</div>6000 м</div></div>
+  </div>
+</div>
+
+<p class="note" style="max-width:700px;margin:30px auto 0;font-size:10.5px;color:#8b93b8;line-height:1.4">
+  11 характеров сразу — можно ещё, если этого мало. Отметь, какие реально нравятся (можно
+  несколько), какие явно не подходят — соберу финальный список именно из отмеченных, не буду
+  тащить в код все подряд.
+</p>
+</body></html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: кнопка «Показать в Случайных» на своей карточке</title>
+<style>
+  :root{
+    --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb; --muted:#8892b0;
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35); --stone-shadow:0 2px 6px rgba(0,0,0,.35);
+    --r-card:16px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:24px 16px 60px;background:#05070f;color:var(--ink);
+    font-family:-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;gap:28px;}
+  h1{font-size:17px;font-weight:600;margin:0;text-align:center;max-width:480px;}
+  .sub{color:rgba(244,246,251,.65);font-size:12.5px;text-align:center;max-width:460px;line-height:1.6;margin:0;}
+  .sub b{color:var(--gold-hi);}
+
+  /* точная копия .wRow/.wBanner/.wInfoOverlay/.wCorner из живой игры (index.html) */
+  .cardWrap{width:220px;}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:var(--r-card);background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset}
+  .wBanner{position:relative;height:130px;border-radius:inherit;background:radial-gradient(ellipse at 30% 20%,#2a3a6a 0%,#0b1424 70%)}
+  .wInfoOverlay{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;
+    justify-content:center;gap:8px;padding:10px;border-radius:inherit;
+    background:linear-gradient(180deg, rgba(6,10,20,.94) 0%, rgba(6,10,20,1) 30%, rgba(6,10,20,1) 100%)}
+  .wInfoOverlay .wInfoLine{color:#eaf2ff;font-size:12px;text-align:center;font-weight:600;
+    text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .wInfoOverlay .wInfoActions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .wCorner{width:26px;height:26px;border-radius:50%;
+    background:var(--stone-fill);box-shadow:var(--stone-shadow);border:1px solid var(--stone-border);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .wCorner .ic{width:14px;height:14px;fill:currentColor}
+  .wCorner.notice{color:var(--gold-hi);border-color:rgba(240,192,64,.5)}
+  .wCorner.notice:disabled, .wCorner.notice.used{opacity:.4;color:#8892b0;border-color:rgba(136,146,176,.35)}
+  .capt{margin-top:10px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.4;}
+  .capt b{color:var(--gold-hi);}
+
+  .candRow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;}
+  .cand{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .cand .wCorner{width:34px;height:34px;}
+  .cand .wCorner .ic{width:18px;height:18px;}
+  .lbl{font-size:10.5px;color:var(--muted);text-align:center;max-width:110px;}
+</style>
+</head>
+<body>
+
+<h1>Кнопка «Показать в Случайных» — своя карточка, вкладка 🔀</h1>
+<p class="sub">Решено раньше: живёт <b>внутри вкладки «Случайные»</b>, только на своих же
+треках (<code>is_mine</code> с сервера), кулдаун 7 дней, серверный notice-флаг уже готов и
+проверен. Осталась одна вещь без макета — сама иконка кнопки и её место на карточке. Ниже —
+предложение: третья кнопка в той же панели «Подробнее» (i), где уже живут «Скопировать
+палитру» и «Пожаловаться» — тот же приём, не новое место на карточке.</p>
+
+<div class="block">
+  <div class="candRow">
+    <div class="cand">
+      <div class="wCorner notice"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h3l5 4V6l-5 4H3z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"></path><path d="M18 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"></path></svg></div>
+      <div class="lbl">А. Рупор — «объявить о себе»</div>
+    </div>
+    <div class="cand">
+      <div class="wCorner notice"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="6.5" opacity=".7"></circle><circle cx="12" cy="12" r="10.5" opacity=".35"></circle></svg></div>
+      <div class="lbl">Б. Маяк/пинг — «сигнал наружу»</div>
+    </div>
+    <div class="cand">
+      <div class="wCorner notice"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4a1 1 0 0 1 1-1h1"></path><path d="M6 3h11.5a1 1 0 0 1 .8 1.6L15.5 8l2.8 3.4a1 1 0 0 1-.8 1.6H6V3z"></path></svg></div>
+      <div class="lbl">В. Флажок — «отметить себя»</div>
+    </div>
+  </div>
+</div>
+
+<div class="block">
+  <div class="capt" style="margin-top:0;font-weight:700;color:var(--gold-hi);">Как это будет смотреться на своей карточке (вариант А — рупор)</div>
+  <div class="cardWrap">
+    <div class="wRow">
+      <div class="wBanner">
+        <div class="wInfoOverlay">
+          <div class="wInfoLine">Автор: Игрок</div>
+          <div class="wInfoLine">Запуски: 3</div>
+          <div class="wInfoActions">
+            <div class="wCorner" title="Скопировать палитру"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle></svg></div>
+            <div class="wCorner" style="color:#e0533d;border-color:rgba(224,83,61,.55)" title="Пожаловаться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2.5 22.5 20.5H1.5Z"></path></svg></div>
+            <div class="wCorner notice" title="Показать в Случайных"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h3l5 4V6l-5 4H3z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"></path><path d="M18 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"></path></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="capt">Золотой значок = можно нажать сейчас. Серый/потушенный (см. CSS <code>.notice.used</code>) — на кулдауне, 7 дней с прошлого раза, дата берётся с сервера (<code>noticed_at</code>).</div>
+</div>
+
+</body>
+</html>

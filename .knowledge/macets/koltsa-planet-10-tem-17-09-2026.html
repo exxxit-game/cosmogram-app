@@ -1,0 +1,187 @@
+<title>Макет: кольца планет — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Кольца планет — 10 тем (PLANETARY-RINGS.md)</h1>
+<p class="sub">Тема 3 из 10. Концентрические эллипсы = кольцо, наклонённое к зрителю (как реально видно Сатурн). Каждая карточка — отдельный, задокументированный механизм щели/эффекта, не просто «ещё одно кольцо».</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// Общий рисователь наклонного кольца: список полос {r0,r1,hue,alpha} + необязательные щели
+function ringDisk(ctx,bands,planetHue,now){
+  const p=now!==undefined? 0.5+0.5*Math.sin(now/1000) : 1;
+  ctx.fillStyle='hsla('+planetHue+',40%,'+(68+p*10)+'%,1)'; ctx.beginPath(); ctx.arc(0,-2,2.4,0,6.283); ctx.fill();
+  bands.forEach(({r0,r1,hue,a})=>{
+    for(let rr=r0;rr<r1;rr+=0.35){
+      ctx.strokeStyle='hsla('+hue+',60%,75%,'+a+')'; ctx.lineWidth=0.32;
+      ctx.beginPath(); ctx.ellipse(0,-2,rr,rr*0.32,0,0,6.283); ctx.stroke();
+    }
+  });
+}
+// 1. Кассиниева щель — резонанс 2:1 с Мимасом, реальный разрыв между кольцами A и B
+function drawCassiniDivision(ctx,now){
+  const flash=0.5+0.5*Math.sin(now/700);
+  ringDisk(ctx,[{r0:3,r1:5.2,hue:42,a:.55},{r0:6.4,r1:8.6,hue:42,a:.55}],45);
+  ctx.strokeStyle='hsla(0,80%,60%,'+(0.15+flash*0.15)+')'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.ellipse(0,-2,5.8,1.86,0,0,6.283); ctx.stroke();
+}
+// 2. Щель Энке — луна Пан расчищает щель напрямую изнутри
+function drawEnckeGap(ctx,now){
+  ringDisk(ctx,[{r0:3,r1:8.6,hue:40,a:.5}],45);
+  ctx.fillStyle='#0e1018'; ctx.beginPath(); ctx.ellipse(0,-2,7.4,2.37,0,0,6.283); ctx.fill();
+  ringDisk(ctx,[{r0:3,r1:8.6,hue:40,a:.5}],45);
+  const p=(now%3000)/3000, a=p*6.283;
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(Math.cos(a)*7.4,-2+Math.sin(a)*2.37,0.35,0,6.283); ctx.fill();
+}
+// 3. Предел Роша — обломок разваливается в кольцо ближе критической черты, дальше остаётся целой луной
+function drawRocheLimit(ctx,now){
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.setLineDash([1,1.2]); ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(0,7); ctx.stroke(); ctx.setLineDash([]);
+  // слева от черты — рассыпано в кольцо, обломки продолжают вращаться, не слипаясь
+  for(let i=0;i<10;i++){ const a=i/10*6.283+now/1200; ctx.fillStyle='hsla(200,50%,80%,.6)'; ctx.beginPath(); ctx.arc(-4+Math.cos(a)*1.6,-2+Math.sin(a)*1.6,0.3,0,6.283); ctx.fill(); }
+  // справа — целая луна, спокойно светится
+  const p=0.5+0.5*Math.sin(now/900);
+  ctx.fillStyle='hsla(200,40%,'+(76+p*8)+'%,.9)'; ctx.beginPath(); ctx.arc(4,-2,1.7,0,6.283); ctx.fill();
+}
+// 4. Пастушьи луны Прометей/Пандора — кольцо F держится между двумя лунами с противоположным эффектом
+function drawShepherdMoons(ctx,now){
+  ringDisk(ctx,[{r0:5,r1:5.6,hue:40,a:.7}],45);
+  const p=(now%4000)/4000;
+  ctx.fillStyle='hsla(210,40%,85%,1)'; ctx.beginPath(); ctx.arc(Math.cos(p*6.283)*4.6,-2+Math.sin(p*6.283)*1.5,0.5,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(30,40%,85%,1)'; ctx.beginPath(); ctx.arc(Math.cos(p*6.283+3.14)*6.1,-2+Math.sin(p*6.283+3.14)*1.95,0.5,0,6.283); ctx.fill();
+}
+// 5. Состав колец — от пылинки до дома, разброс размера частиц льда
+function drawRingComposition(ctx,now){
+  const seeds=[[3,0.15],[3.6,0.35],[4.2,0.12],[4.8,0.5],[5.4,0.18],[6,0.28],[6.6,0.6],[7.2,0.14],[7.8,0.3]];
+  seeds.forEach(([rr,size],i)=>{
+    const a=(i*1.7+now/3000)%6.283;
+    ctx.fillStyle='hsla(200,20%,'+(80+size*10)+'%,.75)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*rr,-2+Math.sin(a)*rr*0.32,size,0,6.283); ctx.fill();
+  });
+}
+// 6. Кольца Юпитера — тусклая тёмная пыль, почти незаметная (открыты только в 1979)
+function drawJupiterRings(ctx,now){
+  ringDisk(ctx,[{r0:3,r1:5,hue:25,a:.18}],35,now);
+}
+// 7. Кольца Урана — открыты по мерцанию звезды при покрытии (тёмные, 11 колец)
+function drawUranusRings(ctx,now){
+  ringDisk(ctx,[{r0:3.2,r1:7.6,hue:200,a:.28}],195);
+  const p=(now%1400)/1400;
+  const blink = p<0.08 || (p>0.3&&p<0.35) || (p>0.6&&p<0.63);
+  ctx.fillStyle='hsla(50,90%,90%,'+(blink?0.15:0.9)+')'; ctx.beginPath(); ctx.arc(-8,-2,0.4,0,6.283); ctx.fill();
+}
+// 8. Кольца Нептуна — тёмный органический материал, открыты в 1989
+function drawNeptuneRings(ctx,now){
+  ringDisk(ctx,[{r0:3.4,r1:6.4,hue:225,a:.32}],220,now);
+}
+// 9. Спицы кольца B — наэлектризованная пыль, радиальные полосы, феномен то есть, то нет (наука не закрыла вопрос)
+function drawRingSpokes(ctx,now){
+  ringDisk(ctx,[{r0:3,r1:8,hue:42,a:.55}],45);
+  const p=(now%5000)/5000;
+  const visible = p<0.6;
+  if(visible){
+    for(let i=0;i<5;i++){
+      const a=i/5*6.283+p*2;
+      ctx.strokeStyle='hsla(0,0%,20%,.5)'; ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a)*3,-2+Math.sin(a)*3*0.32); ctx.lineTo(Math.cos(a)*7.8,-2+Math.sin(a)*7.8*0.32); ctx.stroke();
+    }
+  }
+}
+// 10. Полная структура диска — D-C-B-Кассини-A-F, названные концентрические зоны
+function drawFullRingStructure(ctx,now){
+  ringDisk(ctx,[
+    {r0:2.6,r1:3.4,hue:40,a:.25},
+    {r0:3.6,r1:5.2,hue:42,a:.65},
+    {r0:6.3,r1:8.4,hue:44,a:.65},
+    {r0:8.8,r1:9.4,hue:38,a:.4},
+  ],45,now);
+}
+
+// 11. БОНУС (17.09.2026) — кольцо Фебы: крупнейшее в Солнечной системе, наклонено 27°, открыто в 2009 (Spitzer)
+function drawPhoebeRing(ctx,now){
+  ctx.fillStyle='hsla(45,40%,70%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.4,0,6.283); ctx.fill();
+  ctx.save(); ctx.translate(0,-2); ctx.rotate(0.47);
+  for(let rr=6;rr<9;rr+=0.35){
+    ctx.strokeStyle='hsla(20,20%,55%,.1)'; ctx.lineWidth=0.3;
+    ctx.beginPath(); ctx.ellipse(0,0,rr,rr*0.32,0,0,6.283); ctx.stroke();
+  }
+  const p=(now%3000)/3000;
+  ctx.fillStyle='hsla(20,20%,70%,.7)'; ctx.beginPath(); ctx.arc(Math.cos(p*6.283)*8,Math.sin(p*6.283)*8*0.32,0.25,0,6.283); ctx.fill();
+  ctx.restore();
+}
+// 12. БОНУС (17.09.2026) — кольца ребром: раз в ~14.7 года Земля проходит плоскость колец, они почти исчезают
+function drawRingPlaneCrossing(ctx,now){
+  const p=0.5+0.5*Math.sin(now/1400);
+  ctx.fillStyle='hsla(45,40%,70%,1)'; ctx.beginPath(); ctx.arc(0,-2,2.4,0,6.283); ctx.fill();
+  const squash=0.32*(1-p*0.9);
+  ctx.strokeStyle='hsla(42,60%,75%,'+(0.65-p*0.5)+')'; ctx.lineWidth=0.9;
+  ctx.beginPath(); ctx.ellipse(0,-2,6.5,6.5*squash,0,0,6.283); ctx.stroke();
+}
+
+mountCards([
+  {id:'r1', name:'Щель Кассини', body:'#181206', drawFn:drawCassiniDivision, zoom:6, fact:'Резонанс 2:1 с Мимасом — регулярные толчки выметают частицы'},
+  {id:'r2', name:'Щель Энке', body:'#161006', drawFn:drawEnckeGap, zoom:6, fact:'Луна Пан обращается прямо внутри щели, расчищая её'},
+  {id:'r3', name:'Предел Роша', body:'#0c1420', drawFn:drawRocheLimit, zoom:6, fact:'Ближе черты — рвёт на кольцо; дальше — слипается в луну'},
+  {id:'r4', name:'Пастушьи луны', body:'#141008', drawFn:drawShepherdMoons, zoom:6, fact:'Прометей и Пандора держат кольцо F с двух сторон'},
+  {id:'r5', name:'Состав колец', body:'#0e1420', drawFn:drawRingComposition, zoom:6, fact:'От пылинки до дома — разброс размера в миллионы раз'},
+  {id:'r6', name:'Кольца Юпитера', body:'#160e08', drawFn:drawJupiterRings, zoom:6, fact:'Открыты только в 1979 — тёмная пыль, почти не видна'},
+  {id:'r7', name:'Кольца Урана', body:'#0a1420', drawFn:drawUranusRings, zoom:6, fact:'Найдены по мерцанию звезды, а не напрямую — 1977'},
+  {id:'r8', name:'Кольца Нептуна', body:'#0a0e22', drawFn:drawNeptuneRings, zoom:6, fact:'Тёмный органический материал — открыты в 1989'},
+  {id:'r9', name:'Спицы кольца B', body:'#161206', drawFn:drawRingSpokes, zoom:6, fact:'Заряженная пыль то появляется, то исчезает — наука пока не разгадала'},
+  {id:'r10', name:'Полная структура диска', body:'#181206', drawFn:drawFullRingStructure, zoom:5.5, fact:'D-C-B-Кассини-A-F — не одна лента, а много концентрических зон'},
+  {id:'r11', name:'Кольцо Фебы', body:'#100e0a', drawFn:drawPhoebeRing, zoom:4.5, fact:'Крупнейшее кольцо Солнечной системы — наклонено на 27°, открыто в 2009'},
+  {id:'r12', name:'Кольца ребром', body:'#0c1420', drawFn:drawRingPlaneCrossing, zoom:6, fact:'Раз в ~14.7 года Земля проходит плоскость колец — они почти пропадают'},
+]);
+</script>

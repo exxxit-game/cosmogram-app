@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Плашка явления — реалистично, вплотную к родной шапке</title>
+<style>
+  :root{
+    --bg-0:#0b1626; --gold:#c9a45c; --gold-hi:#f0c040; --cream:#fce1b6; --ink:#f4f6fb; --muted:#7d8aa8;
+    --line:rgba(255,255,255,.08); --line-gold:rgba(201,164,92,.45);
+    --bad:#ff9a86; --ok:#8fff9f; --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% -10%, #16233f 0%, var(--bg-0) 55%, #060a14 100%);
+    color:var(--ink);font-family:var(--font-disp);padding:24px 16px 80px;line-height:1.5}
+  h1{font-size:20px;color:var(--gold-hi);text-align:center;margin:0 0 4px}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 20px}
+  .note{max-width:680px;margin:0 auto 28px;padding:14px 18px;border:1px solid var(--bad);border-radius:12px;
+    background:rgba(224,83,61,.08);font-size:13px;color:#ffc9bd}
+  .note b{color:var(--bad)}
+  section{max-width:960px;margin:0 auto 46px}
+  h2{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line-gold);
+    padding-bottom:8px;margin:0 0 14px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+  .phone{width:280px;background:#000;border:1px solid var(--line);border-radius:26px;padding:0;flex-shrink:0;overflow:hidden}
+  .phoneLbl{text-align:center;font-size:11px;letter-spacing:.07em;text-transform:uppercase;padding:10px 0 8px;color:var(--muted)}
+  .phoneLbl.ok{color:var(--ok)}
+  .screen{position:relative;background:linear-gradient(180deg,#16233f,#0b1626 60%,#060a14);height:420px}
+  /* родная полоса Telegram — 46px, ТОТ ЖЕ факт, что уже подтверждён в project_zagolovki_menu_buf_neg15
+     (contentSafeAreaInset.top ≈46px, флот по всем проверенным устройствам, не выдумано) */
+  .tgBar{position:absolute;top:0;left:0;right:0;height:46px;background:#17212b;display:flex;
+    align-items:center;justify-content:space-between;padding:0 12px;z-index:5;border-bottom:1px solid rgba(255,255,255,.06)}
+  .tgBack{color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .tgBack:before{content:'←'}
+  .tgDots{color:#8fa3c8;font-size:16px;letter-spacing:2px}
+  .fakeBox{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;justify-content:center;
+    z-index:10;pointer-events:none}
+  .fakeBox span{background:rgba(6,10,20,.0);color:#c9a45c;font-weight:700;font-size:13px}
+
+  /* Вариант А — реальный, рекомендуемый: НАШ блок начинается ровно со следующего пикселя после
+     родной полосы (46px + notch), тем же тёмным цветом #17212b — швов не видно, читается как
+     продолжение одной поверхности, хотя формально это два разных слоя (родной чат Telegram
+     физически рисуется НАД страницей, мы просто ни на пиксель не отступаем и совпадаем по цвету). */
+  .plateA{position:absolute;top:46px;left:0;right:0;background:#17212b;padding:12px 54px 14px;
+    text-align:center;border-bottom:1px solid rgba(255,255,255,.06)}
+  .plateA .t{font-size:15px;font-weight:700;color:var(--cream)}
+  .plateA .gold{height:2px;background:linear-gradient(90deg,transparent,#f0c040 30%,#f0c040 70%,transparent);
+    margin:0 30px 8px;border-radius:2px}
+
+  /* Вариант Б — капсула-«таб», касается низа родной полосы, но остаётся своей формой (золотая
+     рамка) — не притворяется одним целым с Telegram, честно подвешена ПОД ним */
+  .plateB{position:absolute;top:46px;left:16px;right:16px;background:linear-gradient(180deg,rgba(24,42,78,.96),rgba(15,31,61,.95));
+    border:1px solid rgba(255,255,255,.10);border-top:none;border-radius:0 0 14px 14px;
+    padding:10px 16px 11px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .plateB:before{content:'';position:absolute;top:0;left:14px;right:14px;height:2px;
+    background:linear-gradient(90deg,transparent,#f0c040 30%,#f0c040 70%,transparent)}
+  .plateB .t{font-size:15px;font-weight:700;color:var(--cream)}
+
+  /* невозможный вариант — для сравнения, помечен явно */
+  .fakeRow{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;
+    justify-content:center;z-index:20}
+  .fakeRow .t{color:#c9a45c;font-weight:700;font-size:12px;text-shadow:0 0 6px #000}
+  .xmark{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+    background:rgba(224,83,61,.12)}
+  .xmark span{font-size:38px;color:var(--bad)}
+
+  .cap{color:var(--muted);font-size:12px;max-width:640px;margin:12px auto 0;text-align:center}
+  footer{max-width:960px;margin:40px auto 0;text-align:center;color:var(--muted);font-size:11px}
+</style>
+</head>
+<body>
+<h1>Плашка явления — вплотную к родной шапке, честно про то, что реально возможно</h1>
+<p class="sub">20.09.2026 · продолжение «Вариант Б» от 19.09 — тот макет был физически недостижим, этот — из реальных чисел</p>
+
+<div class="note">
+  <b>Напоминание того, что уже выяснили 19.09.2026:</b> родной хром Telegram («← Назад», ⌄, ⋮)
+  рисуется Telegram'ом ПОВЕРХ нашей страницы, отдельным слоем — мы физически не можем положить
+  свой текст «в ту же полосу», буквально между или вместо родных элементов. Макет с текстом внутри
+  той самой строки (который тебе понравился) был красивым обманом, не тем, что появится в игре.
+  Ниже — 2 честных способа подобраться к тому же ОЩУЩЕНИЮ «единого целого» без обмана.
+</div>
+
+<section>
+<h2>Для сравнения — тот самый недостижимый вид</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl" style="color:var(--bad)">невозможно — только иллюстрация</div>
+    <div class="screen">
+      <div class="tgBar"><span class="tgBack">Назад</span><span class="tgDots">⌄ ⋮</span></div>
+      <div class="fakeRow"><span class="t">Фигуры Лихтенберга — позитивный</span></div>
+      <div class="xmark"><span>✕</span></div>
+    </div>
+  </div>
+</div>
+<p class="cap">Крестом отмечено то место, где наш текст ФИЗИЧЕСКИ не может оказаться — та строка
+целиком принадлежит Telegram, не странице игры.</p>
+</section>
+
+<section>
+<h2>Вариант А — тот же цвет, шов на нуле (рекомендую)</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl ok">реально достижимо</div>
+    <div class="screen">
+      <div class="tgBar"><span class="tgBack">Назад</span><span class="tgDots">⌄ ⋮</span></div>
+      <div class="plateA"><div class="gold"></div><div class="t">Фигуры Лихтенберга — позитивный</div></div>
+    </div>
+  </div>
+</div>
+<p class="cap">Наш блок начинается СРАЗУ под родной полосой (0px зазора — та же формула, что уже
+держит кнопку «✕ Закрыть»), тем же тёмным цветом, что реальный Telegram (#17212b, замерено с его
+собственного фона). Шва не видно — глаз читает это одной поверхностью, хотя формально два слоя.
+Золотая черта вместо рамки-карточки — тот же акцент, что уже одобрен, просто без «коробки».</p>
+</section>
+
+<section>
+<h2>Вариант Б — капсула вплотную, честно своя форма</h2>
+<div class="row">
+  <div class="phone"><div class="phoneLbl ok">реально достижимо</div>
+    <div class="screen">
+      <div class="tgBar"><span class="tgBack">Назад</span><span class="tgDots">⌄ ⋮</span></div>
+      <div class="plateB"><div class="t">Фигуры Лихтенберга — позитивный</div></div>
+    </div>
+  </div>
+</div>
+<p class="cap">Тот же вид плашки, что уже в игре сейчас (золотая рамка+градиент), просто без зазора
+и без «плавающего» позиционирования — «подвешена» прямо под родной полосой, закруглена только
+снизу (сверху срослась с ней). Не притворяется одним целым с Telegram, но заметно ближе, чем
+нынешний плавающий вид, и никогда не «улетает» — тот же расчёт позиции, что у кнопки «✕».</p>
+</section>
+
+<footer>Родная высота 46px — тот же факт, что уже подтверждён и используется в игре
+(project_zagolovki_menu_buf_neg15, contentSafeAreaInset.top). Цвет #17212b — фон официального
+Telegram-клиента (тёмная тема), не придуман. Оба варианта — точный формат уже одобренной плашки
+(golden accent line), просто позиция и зазор реальные, не плавающие.</footer>
+</body>
+</html>

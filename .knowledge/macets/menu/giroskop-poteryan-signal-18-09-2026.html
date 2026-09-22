@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Макет: гироскоп потерял сигнал в полёте</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c9a45c; --gold-hi:#f0c040; --ink:#f4f6fb; --line-gold:rgba(201,164,92,.45);
+    --pink:#ff9fb0; --sky-top:#12224a; --sky-bot:#0a1030;
+    --font-disp:'Exo 2',-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:32px 16px;background:#05070f;color:var(--ink);font-family:var(--font-disp);
+    display:flex;flex-direction:column;align-items:center;gap:28px;}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px;text-align:center;}
+  .sub{color:rgba(244,246,251,.6);font-size:13px;text-align:center;max-width:640px;line-height:1.5;margin:0 0 12px;}
+  .row{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;}
+  .card{width:300px;}
+  .cardTitle{font-size:14px;font-weight:700;color:var(--gold-hi);margin:0 0 4px;text-align:center;}
+  .cardDesc{font-size:12px;color:rgba(244,246,251,.65);text-align:center;margin:0 0 12px;line-height:1.45;min-height:52px;}
+  .phone{width:300px;height:560px;border-radius:36px;background:radial-gradient(ellipse at 50% 35%,var(--sky-top),var(--sky-bot) 70%);
+    position:relative;overflow:hidden;border:6px solid #1a2033;box-shadow:0 20px 40px rgba(0,0,0,.5);}
+  .star{position:absolute;border-radius:50%;background:#fff;opacity:.5;}
+  .hud{position:absolute;top:18px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3;}
+  .scoreLbl{font-size:9px;letter-spacing:.24em;color:rgba(244,246,251,.55);}
+  .score{font-size:32px;font-weight:400;color:var(--ink);text-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .lives{display:flex;gap:4px;margin-top:2px;}
+  .life{width:14px;height:14px;background:var(--gold-hi);clip-path:polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%);opacity:.9;}
+  .plane{position:absolute;left:50%;top:56%;width:34px;height:34px;transform:translate(-50%,-50%) rotate(-8deg);z-index:2;}
+  .plane svg{width:100%;height:100%;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));}
+  .rock{position:absolute;background:#5a6478;border-radius:40% 60% 55% 45%;box-shadow:inset -4px -4px 8px rgba(0,0,0,.3);}
+
+  /* --- Pill (тот же .pill из index.html: rgba(16,24,54,.5), blur, border) --- */
+  .pill{background:rgba(16,24,54,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(140,170,255,.18);border-radius:12px;padding:5px 10px;
+    font-size:10.5px;color:#bcd2ff;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+
+  /* Вариант 1: тихая иконка в углу HUD, всегда на месте, просто гаснет/загорается */
+  .quietIcon{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;
+    background:rgba(16,24,54,.55);backdrop-filter:blur(8px);border:1px solid rgba(255,159,176,.4);
+    display:flex;align-items:center;justify-content:center;z-index:4;}
+  .quietIcon svg{width:16px;height:16px;stroke:var(--pink);}
+
+  /* Вариант 2: короткий тост снизу — тот же #toast из index.html */
+  .toastV{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+    background:rgba(15,31,61,.92);border:1px solid var(--line-gold);border-radius:14px;
+    padding:10px 18px;font-size:12.5px;color:var(--ink);white-space:nowrap;z-index:4;
+    box-shadow:0 6px 20px rgba(0,0,0,.35);}
+
+  /* Вариант 3: короткая вспышка-пилюля в момент потери, затем сама гаснет в тихую иконку */
+  .flashPill{position:absolute;top:16px;right:16px;z-index:4;animation:flashIn 2.6s ease forwards;}
+  @keyframes flashIn{
+    0%{opacity:0; transform:translateX(6px) scale(.9);}
+    12%{opacity:1; transform:translateX(0) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:1;}
+  }
+  .flashPill .pill{border-color:rgba(255,159,176,.5);}
+  .flashPill svg{width:13px;height:13px;stroke:var(--pink);flex:none;}
+
+  .caption{margin-top:12px;font-size:11px;color:rgba(244,246,251,.55);text-align:center;line-height:1.5;padding:0 6px;}
+  .caption b{color:var(--gold-hi);font-weight:600;}
+</style>
+</head>
+<body>
+
+<h1>Гироскоп замолчал в полёте — три варианта, как сказать об этом игроку</h1>
+<p class="sub">Всё внутри рамки — реальные цвета/шрифт/стили игры (та же .pill, тот же #toast, тот же Exo 2). Иконка — предупреждение о разрыве связи. Показано на условном полёте, гироскоп «Без рук» только что замолчал.</p>
+
+<div class="row">
+
+  <div class="card">
+    <div class="cardTitle">1 · Тихая иконка</div>
+    <div class="cardDesc">Маленький значок в углу HUD появляется молча, без анимации. Пока сигнал жив — его вообще нет. Пропал сигнал — иконка появилась, вернулся — исчезла сама. Игрок ничего не обязан заметить прямо сейчас — но если посмотрит наверх, поймёт, почему руль не слушается.</div>
+    <div class="phone">
+      <div class="star" style="width:2px;height:2px;top:12%;left:20%;"></div>
+      <div class="star" style="width:3px;height:3px;top:22%;left:70%;"></div>
+      <div class="star" style="width:2px;height:2px;top:40%;left:12%;"></div>
+      <div class="star" style="width:2px;height:2px;top:65%;left:85%;"></div>
+      <div class="star" style="width:3px;height:3px;top:78%;left:30%;"></div>
+      <div class="hud">
+        <div class="scoreLbl">СЧЁТ</div>
+        <div class="score">1 240</div>
+        <div class="lives"><div class="life"></div><div class="life"></div><div class="life"></div></div>
+      </div>
+      <div class="quietIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M21 3.5V8h-4.5"/><line x1="4" y1="4" x2="20" y2="20" stroke-width="2.2"/></svg>
+      </div>
+      <div class="rock" style="width:26px;height:22px;top:30%;left:65%;"></div>
+      <div class="rock" style="width:18px;height:16px;top:48%;left:22%;"></div>
+      <div class="plane"><svg viewBox="0 0 24 24" fill="var(--gold-hi)"><path d="M2 12l19-8-6 8 6 8z"/></svg></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardTitle">2 · Короткий тост</div>
+    <div class="cardDesc">В момент потери сигнала — обычный тост снизу экрана (тот же, что «Не хватило очков» и другие короткие сообщения), 1.5 секунды и сам гаснет. Заметнее, но на пару секунд перетягивает взгляд с неба вниз — во время уклонения от препятствий это риск.</div>
+    <div class="phone">
+      <div class="star" style="width:2px;height:2px;top:12%;left:20%;"></div>
+      <div class="star" style="width:3px;height:3px;top:22%;left:70%;"></div>
+      <div class="star" style="width:2px;height:2px;top:40%;left:12%;"></div>
+      <div class="star" style="width:2px;height:2px;top:65%;left:85%;"></div>
+      <div class="star" style="width:3px;height:3px;top:78%;left:30%;"></div>
+      <div class="hud">
+        <div class="scoreLbl">СЧЁТ</div>
+        <div class="score">1 240</div>
+        <div class="lives"><div class="life"></div><div class="life"></div><div class="life"></div></div>
+      </div>
+      <div class="rock" style="width:26px;height:22px;top:30%;left:65%;"></div>
+      <div class="rock" style="width:18px;height:16px;top:48%;left:22%;"></div>
+      <div class="plane"><svg viewBox="0 0 24 24" fill="var(--gold-hi)"><path d="M2 12l19-8-6 8 6 8z"/></svg></div>
+      <div class="toastV">Гироскоп молчит — держи пальцем</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardTitle">3 · Вспышка → тихая иконка</div>
+    <div class="cardDesc">Сочетание первых двух: в момент потери — короткая подпись рядом со значком (2–3 секунды, не мешает небу), дальше остаётся только маленькая иконка, как в варианте 1. Заметил сразу — понял, что случилось; не заметил — иконка всё равно на месте.</div>
+    <div class="phone">
+      <div class="star" style="width:2px;height:2px;top:12%;left:20%;"></div>
+      <div class="star" style="width:3px;height:3px;top:22%;left:70%;"></div>
+      <div class="star" style="width:2px;height:2px;top:40%;left:12%;"></div>
+      <div class="star" style="width:2px;height:2px;top:65%;left:85%;"></div>
+      <div class="star" style="width:3px;height:3px;top:78%;left:30%;"></div>
+      <div class="hud">
+        <div class="scoreLbl">СЧЁТ</div>
+        <div class="score">1 240</div>
+        <div class="lives"><div class="life"></div><div class="life"></div><div class="life"></div></div>
+      </div>
+      <div class="flashPill">
+        <div class="pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M21 3.5V8h-4.5"/><line x1="4" y1="4" x2="20" y2="20" stroke-width="2.2"/></svg>
+          Сигнал потерян
+        </div>
+      </div>
+      <div class="rock" style="width:26px;height:22px;top:30%;left:65%;"></div>
+      <div class="rock" style="width:18px;height:16px;top:48%;left:22%;"></div>
+      <div class="plane"><svg viewBox="0 0 24 24" fill="var(--gold-hi)"><path d="M2 12l19-8-6 8 6 8z"/></svg></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="caption">Для справки: в игре уже есть правило «в полёте — тихо» (svcToast, калибровка гироскопа
+специально не всплывает тостом посреди неба, чтобы не мешать). Варианты <b>1</b> и <b>3</b> этому правилу
+следуют, вариант <b>2</b> — нарушает его, как обычный тост-предупреждение.</p>
+
+</body>
+</html>

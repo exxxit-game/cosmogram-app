@@ -1,0 +1,138 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:660px;margin-left:auto;margin-right:auto}
+  .src{font-size:10px;color:#6b7394;text-align:center;margin:0 0 26px}
+  .src a{color:#8b93b8}
+  .row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:12.5px;font-weight:700;margin:0 0 2px;color:#c9a45c;text-align:center}
+  p.desc{font-size:10px;color:#8b93b8;text-align:center;margin:0 0 8px;max-width:200px}
+  .col{width:210px}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.5);
+    border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35), 0 0 22px rgba(201,164,92,.16) inset}
+  .wBanner{position:relative;height:100px;border-radius:inherit;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%)}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wBody{padding:10px 12px;font-size:11px;color:#8b93b8}
+  .wTitle{font-size:13px;font-weight:700;color:#dfe6ff;margin-bottom:3px}
+  .wAuthorRibbon{position:absolute;top:0;left:0;width:76px;height:76px;overflow:hidden;pointer-events:none;z-index:3}
+  .wAuthorRibbon span{position:absolute;width:120px;top:16px;left:-32px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:4px 0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .eye{width:13px;height:13px;border-radius:50%;background:#2c1f08;flex:none}
+  .browRow{position:absolute;top:-7px;left:0;right:0;display:flex;justify-content:center;gap:14px}
+  .brow{width:10px;height:2px;background:#2c1f08;border-radius:1px;opacity:.8}
+
+  /* А — ПРУЖИНКА (squash & stretch): закрытие плавное, а ОТКРЫТИЕ — с лёгким перелётом
+     (глаз чуть «перерастягивается» сверх нормы, потом оседает) — тот самый принцип
+     мультипликации, не линейное scaleY туда-обратно. */
+  .bouncy .eye{animation:bouncyBlink 4.6s cubic-bezier(.34,1.56,.64,1) infinite}
+  @keyframes bouncyBlink{
+    0%,88%,100%{transform:scaleY(1)}
+    91%{transform:scaleY(.1)}
+    94%{transform:scaleY(1.22)}   /* перелёт — «пружинка» */
+    97%{transform:scaleY(1)}
+  }
+
+  /* Б — БЛУЖДАЮЩИЙ ВЗГЛЯД: глаза не просто моргают, а ещё и чуть смещаются в сторону
+     перед морганием — «осматривается», не смотрит в одну точку всегда. */
+  .wander .eye{animation:wanderBlink 6s ease-in-out infinite}
+  @keyframes wanderBlink{
+    0%,100%{transform:translateX(0) scaleY(1)}
+    15%{transform:translateX(1.5px) scaleY(1)}
+    30%{transform:translateX(1.5px) scaleY(1)}
+    33%{transform:translateX(1.5px) scaleY(.12)}
+    36%{transform:translateX(1.5px) scaleY(1)}
+    55%{transform:translateX(-1.5px) scaleY(1)}
+    70%{transform:translateX(-1.5px) scaleY(1)}
+    73%{transform:translateX(-1.5px) scaleY(.12)}
+    76%{transform:translateX(0) scaleY(1)}
+  }
+
+  /* В — СОННЫЙ ПРИЩУР (приём Baymax): по умолчанию глаза НЕ полностью открыты (лёгкий
+     прищур ~60% высоты, «спокойный взгляд»), и лишь ИЗРЕДКА широко распахиваются на
+     мгновение — переворот обычной логики (не «открыт → редко закрыт», а наоборот). */
+  .droopy .eye{animation:droopyBlink 8s ease-in-out infinite; transform:scaleY(.62)}
+  @keyframes droopyBlink{
+    0%,70%,100%{transform:scaleY(.62)}
+    75%{transform:scaleY(1)}      /* широко распахнул на миг */
+    80%{transform:scaleY(.62)}
+  }
+
+  /* Г — ПОДМИГИВАНИЕ СО ВЗГЛЯДОМ: перед соло-подмигиванием правый глаз чуть косит в его
+     сторону (голова будто поворачивается к тому, кому подмигивает) — комбинация приёмов
+     «взгляд» + «вин», не голое подмигивание на месте. */
+  .lookwink .eyeL{animation:calmBlink 4.6s ease-in-out infinite}
+  .lookwink .eyeR{animation:lookWinkR 11s ease-in-out infinite}
+  @keyframes calmBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+  @keyframes lookWinkR{
+    0%,60%,100%{transform:translateX(0) scaleY(1)}
+    64%{transform:translateX(0) scaleY(.12)} 67%{transform:translateX(0) scaleY(1)}
+    82%{transform:translateX(1.2px) scaleY(1)}
+    85%{transform:translateX(1.2px) scaleY(.1)}
+    89%{transform:translateX(1.2px) scaleY(.1)}
+    93%{transform:translateX(0) scaleY(1)}
+  }
+</style></head>
+<body>
+<h1>Характеры ленты — на реальных приёмах мультипликации</h1>
+<p class="sub">По твоей просьбе — не ещё вариации того же самого, а поискал, какие приёмы
+  реально используют в анимации персонажей/маскотов (Duolingo, Baymax и др.), и построил
+  характеры НА них, не на своих придумках с нуля. Открой в браузере, посмотри минуту.</p>
+<p class="src">Приёмы: squash-and-stretch (12 принципов анимации Диснея), «блуждающий взгляд»
+  у маскотов (cartoon-eyes, идея «wander» вместо взгляда в одну точку), сонные полуприкрытые
+  веки — приём CSS-маскота Baymax (cssanimation.rocks/baymax).</p>
+
+<div class="row">
+  <div class="col"><h2>А — Пружинка (squash&stretch)</h2>
+    <p class="desc">Закрывается плавно, открывается с лёгким перелётом — «живая», не механическая.</p>
+    <div class="wRow bouncy"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>Б — Блуждающий взгляд</h2>
+    <p class="desc">Глаза чуть смещаются вбок перед морганием — «осматривается», не смотрит в одну точку.</p>
+    <div class="wRow wander"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Метеоритный дождь</div>4000 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>В — Сонный прищур (Baymax)</h2>
+    <p class="desc">По умолчанию глаза чуть прикрыты, лишь изредка широко распахиваются на миг.</p>
+    <div class="wRow droopy"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Туманная ночь</div>2500 м</div>
+    </div>
+  </div>
+  <div class="col"><h2>Г — Взгляд + подмигивание</h2>
+    <p class="desc">Перед соло-подмигиванием правый глаз чуть косит в его сторону — комбо приёмов.</p>
+    <div class="wRow lookwink"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye eyeL"></div><div class="eye eyeR"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Пульсар</div>2000 м</div>
+    </div>
+  </div>
+</div>
+
+<p class="note" style="max-width:700px;margin:26px auto 0;font-size:10.5px;color:#8b93b8;line-height:1.4">
+  Это уже настоящее разнообразие приёмов, не просто разная скорость одного и того же. Какие
+  нравятся? Можно смешивать с предыдущими четырьмя (спокойный/игривый/сонный/любопытный) —
+  вместе выйдет до 8 характеров на выбор для будущей системы «своё поведение на каждое небо».
+</p>
+</body></html>

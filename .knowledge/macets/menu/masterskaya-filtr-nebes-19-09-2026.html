@@ -1,0 +1,128 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:640px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:13px;font-weight:700;margin:22px 0 10px;color:#c9a45c;text-align:center}
+  .phone{width:320px;background:#0a1030;border-radius:14px;border:1px solid #262c4a;padding:14px;box-sizing:border-box;margin:0 auto}
+  /* та же строка чипов сортировки, что уже в игре — сверху, фильтр рядом с ней, не вместо */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:12px}
+  .chip{width:34px;height:34px;border-radius:10px;border:1px solid rgba(120,140,180,.25);
+    background:rgba(20,30,55,.6);display:flex;align-items:center;justify-content:center;flex:none}
+  .chip svg{width:15px;height:15px}
+  .filterBtn{width:34px;height:34px;border-radius:10px;border:1px solid rgba(240,192,64,.5);
+    background:rgba(240,192,64,.12);display:flex;align-items:center;justify-content:center;flex:none;color:#f0c040}
+  .filterBtn svg{width:16px;height:16px}
+  .badge{position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;
+    background:#f0c040;color:#2c1f08;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .panel{background:rgba(15,31,61,.97);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px}
+  .secTitle{font-size:11px;font-weight:700;color:#8b93b8;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+  .secTitle:not(:first-child){margin-top:16px}
+  .lenRow{display:flex;gap:6px;flex-wrap:wrap}
+  .lenChip{padding:6px 11px;border-radius:999px;border:1px solid rgba(120,140,180,.3);
+    background:rgba(20,30,55,.5);font-size:11px;color:#bcd2ff}
+  .lenChip.sel{border-color:#f0c040;color:#f0c040;background:rgba(240,192,64,.12)}
+  .sliderTrack{position:relative;height:4px;background:rgba(120,140,180,.25);border-radius:2px;margin:18px 4px 8px}
+  .sliderFill{position:absolute;left:22%;right:35%;height:4px;background:#f0c040;border-radius:2px}
+  .sliderHandle{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#f0c040;
+    border:2px solid #1a2440;transform:translate(-50%,-50%)}
+  .sliderLabels{display:flex;justify-content:space-between;font-size:10px;color:#6b7394;margin-top:2px}
+  .lvRow{display:flex;gap:6px}
+  .lvChip{flex:1;padding:7px 0;border-radius:8px;border:1px solid rgba(120,140,180,.3);
+    background:rgba(20,30,55,.5);font-size:11px;color:#bcd2ff;text-align:center}
+  .lvChip.sel{border-color:#f0c040;color:#f0c040;background:rgba(240,192,64,.12)}
+  .obRow{display:flex;gap:6px;flex-wrap:wrap}
+  .obChip{width:32px;height:32px;border-radius:8px;border:1px solid rgba(120,140,180,.3);
+    background:rgba(20,30,55,.5);display:flex;align-items:center;justify-content:center;position:relative}
+  .obChip.off{opacity:.3}
+  .obChip svg{width:16px;height:16px}
+  .applyBtn{margin-top:16px;width:100%;padding:10px;border-radius:10px;border:1px solid rgba(240,192,64,.55);
+    background:rgba(240,192,64,.14);color:#f0c040;font-size:12px;font-weight:700;text-align:center;letter-spacing:.03em}
+  .note{font-size:10.5px;color:#8b93b8;margin-top:6px;line-height:1.4}
+</style></head>
+<body>
+<h1>Мастерская — панель фильтра (три измерения сразу, как просил владелец)</h1>
+<p class="sub">Значок фильтра — отдельная кнопка РЯДОМ с рядом сортировки (не вместо, не путать: сортировка
+  меняет порядок, фильтр сужает список), с золотой точкой-бейджем, когда фильтр активен. Все числа —
+  реальные границы из кода (js/forge.js forgeSanitize): длина 1000-25000м непрерывно + отдельно
+  «бесконечная», сложность честно 1-3 (не 1-4, как я сперва по ошибке сказал), препятствия — те же 8
+  видов и цвета, что уже на карточке трассы (js/partitura.js).</p>
+
+<h2>1. Ряд сортировки + новая кнопка фильтра</h2>
+<div class="phone" style="padding:14px">
+  <div class="chips">
+    <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#5ec95e"><ellipse cx="8.7" cy="10.3" rx="3.8" ry="2.1" transform="rotate(-32 8.7 10.3)"></ellipse><ellipse cx="15.3" cy="10.3" rx="3.8" ry="2.1" transform="rotate(32 15.3 10.3)"></ellipse></svg></div>
+    <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ffd76a"><path d="M12 2.5c.4 3.2 1 4.8 2.2 6C15.4 9.7 17 10.3 20.2 10.7c-3.2.4-4.8 1-6 2.2-1.2 1.2-1.8 2.8-2.2 6-.4-3.2-1-4.8-2.2-6C8.6 11.7 7 11.1 3.8 10.7 7 10.3 8.6 9.7 9.8 8.5 11 7.3 11.6 5.7 12 2.5z"></path></svg></div>
+    <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#6cc3ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"></polyline><polyline points="15 6 21 6 21 12"></polyline></svg></div>
+    <div class="chip"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#ff9fb0"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></div>
+    <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#b39dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="8" cy="8" r="1.2" fill="#b39dff"></circle><circle cx="16" cy="16" r="1.2" fill="#b39dff"></circle><circle cx="12" cy="12" r="1.2" fill="#b39dff"></circle></svg></div>
+    <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="#ff8a5c" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+    <div style="position:relative"><div class="filterBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg></div><div class="badge">2</div></div>
+  </div>
+  <div class="note">← 7-й, отдельный от сортировки значок. Бейдж «2» — активны 2 измерения фильтра.</div>
+</div>
+
+<h2>2. Сама панель фильтра (открывается по тому значку)</h2>
+<div class="phone">
+  <div class="panel">
+    <div class="secTitle">Длина</div>
+    <div class="lenRow">
+      <div class="lenChip">Любая</div>
+      <div class="lenChip sel">До 3000 м</div>
+      <div class="lenChip">3000–10000 м</div>
+      <div class="lenChip">Больше 10000 м</div>
+      <div class="lenChip">Бесконечная</div>
+    </div>
+    <div class="note">Вариант А (на макете): готовые корзины. Реальный диапазон в коде — 1000-25000м
+      непрерывно, границы корзин («3000», «10000») — не из кода, я их придумал для примера, нужно
+      твоё решение, какие именно.</div>
+
+    <div class="secTitle">Сложность</div>
+    <div class="lvRow">
+      <div class="lvChip">Любая</div>
+      <div class="lvChip sel">1 — Просто</div>
+      <div class="lvChip">2 — Средне</div>
+      <div class="lvChip">3 — Сложно</div>
+    </div>
+
+    <div class="secTitle">Без этих препятствий (тапнуть — исключить)</div>
+    <div class="obRow">
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="#9c8a72"><polygon points="12,2.5 18,6.5 20.5,13 16,20 8,19.5 3.5,13.5 5.5,6"></polygon></svg></div>
+      <div class="obChip off"><svg viewBox="0 0 24 24" fill="#4ecf7a"><g transform="rotate(-18 12 12)"><rect x="3" y="9" width="18" height="6" rx="3"></rect></g></svg></div>
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="#b073ea"><polygon points="2,12 7,5.5 17,5 22,12 16,19 6,18.5"></polygon></svg></div>
+      <div class="obChip off"><svg viewBox="0 0 24 24" fill="#ff5f6d"><circle cx="12" cy="12" r="6"></circle></svg></div>
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="#4f7fe6"><rect x="10" y="9.5" width="4" height="5" rx="1"></rect><rect x="1.5" y="8.5" width="6" height="7" rx="1.3" opacity=".85"></rect><rect x="16.5" y="8.5" width="6" height="7" rx="1.3" opacity=".85"></rect></svg></div>
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="#ff9a52"><circle cx="16" cy="8" r="3.4"></circle><path d="M14 10.2C10 12 5.5 15 2 21c5.5-2.6 9.5-5.3 12.6-9.4z" opacity=".55"></path></svg></div>
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="#ffe14a"><circle cx="12" cy="12" r="6.3"></circle></svg></div>
+      <div class="obChip"><svg viewBox="0 0 24 24" fill="none" stroke="#22b8dd" stroke-width="3" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"></line></svg></div>
+    </div>
+    <div class="note">Приглушённые (обломок, мина) — исключены игроком. Те же цвета/формы, что уже
+      на карточке трассы — ничего нового не нарисовано.</div>
+    <div class="applyBtn">Показать 14 небес</div>
+  </div>
+</div>
+
+<h2>3. Альтернатива длине — ползунок-диапазон вместо корзин</h2>
+<div class="phone">
+  <div class="panel">
+    <div class="secTitle">Длина, м</div>
+    <div class="sliderTrack">
+      <div class="sliderFill"></div>
+      <div class="sliderHandle" style="left:22%"></div>
+      <div class="sliderHandle" style="left:65%"></div>
+    </div>
+    <div class="sliderLabels"><span>1000</span><span>25000+</span></div>
+    <div class="note">Честнее по отношению к реальным данным (длина непрерывная, не 5 значений) —
+      но менее «на один тап», чем готовые корзины выше. Компромисс: точнее vs быстрее.</div>
+  </div>
+</div>
+
+<p class="note" style="max-width:700px;margin:26px auto 0;text-align:left">
+  <b>Вопросы владельцу:</b> (1) корзины длины (вариант 2, быстрый тап) или ползунок-диапазон
+  (вариант 3, точнее)? (2) если корзины — какие именно границы? (3) достаточно ли галочки
+  «есть/нет» на препятствие, или нужнее «не более N видов сразу»? Дальше — реализация одним
+  заходом, все три измерения вместе, как просил.
+</p>
+</body></html>

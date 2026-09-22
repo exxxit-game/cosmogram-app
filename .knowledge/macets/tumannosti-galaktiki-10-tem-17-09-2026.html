@@ -1,0 +1,183 @@
+<title>Макет: морфология туманностей и галактик — 10 тем</title>
+<style>
+:root{ --bg:#0b0e1a; --panel:#12172a; --panel-edge:#232c4a; --text:#e8ecf7; --text-dim:#8b93b3; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px}
+h1{font-size:18px;margin:0 0 4px}
+p.sub{color:var(--text-dim);font-size:12px;max-width:900px;margin:0 0 20px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;max-width:1100px}
+.card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:14px;padding:12px;text-align:center}
+.card canvas{width:100%;aspect-ratio:1;border-radius:10px;background:linear-gradient(180deg,#0a0e29 0%,#0e1a2a 55%,#0a1420 100%)}
+.name{font-size:12px;font-weight:700;margin-top:8px}
+.fact{font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+</style>
+<h1>Морфология туманностей и галактик — 10 тем (NEBULA-GALAXY-MORPHOLOGY.md)</h1>
+<p class="sub">Тема 2 из 10. Каждая карточка — реальный тип по МЕХАНИЗМУ, не по оттенку (5 туманностей + 5 форм галактик, диаграмма Хаббла 1926). В этот заход добавлены приёмы глубины из твоей правки про стиль: тёплый центр/холодный край, цвет вдоль кривой, размер+температура вместе.</p>
+<div class="grid" id="grid"></div>
+<script>
+const BODY_PTS=[[0,-22],[-16,14],[0,6],[16,14]];
+function clipBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.clip(); }
+function fillBody(ctx){ ctx.beginPath(); BODY_PTS.forEach(([x,y],i)=>i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath(); ctx.fill(); }
+function edgeStroke(ctx){
+  ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=1.1;
+  ctx.beginPath();
+  ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.moveTo(0,-22); ctx.lineTo(16,14);
+  ctx.moveTo(-16,14); ctx.lineTo(0,6); ctx.moveTo(0,6); ctx.lineTo(16,14);
+  ctx.stroke();
+}
+function mountCards(items){
+  const grid=document.getElementById('grid');
+  items.forEach(({id,name,body,drawFn,zoom,fact})=>{
+    const card=document.createElement('div'); card.className='card';
+    const cv=document.createElement('canvas'); cv.id=id;
+    const nm=document.createElement('div'); nm.className='name'; nm.textContent=name;
+    const ft=document.createElement('div'); ft.className='fact'; ft.textContent=fact;
+    card.appendChild(cv); card.appendChild(nm); card.appendChild(ft);
+    grid.appendChild(card);
+    loopFlash(cv,body,drawFn,zoom);
+  });
+}
+function loopFlash(cv,bodyColor,drawFn,zoom){
+  const ctx=cv.getContext('2d');
+  function frame(now){
+    const w=cv.clientWidth||160, h=cv.clientHeight||160;
+    const dpr=Math.min(devicePixelRatio||1,2);
+    if(cv._lw!==w||cv._lh!==h||cv._ld!==dpr){ cv.width=w*dpr; cv.height=h*dpr; cv._lw=w; cv._lh=h; cv._ld=dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.save(); ctx.translate(w/2,h/2); ctx.scale(zoom,zoom);
+    ctx.save(); clipBody(ctx);
+    const g=ctx.createLinearGradient(0,-22,0,16);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(.45,bodyColor); g.addColorStop(1,'#0e1018');
+    ctx.fillStyle=g; fillBody(ctx);
+    ctx.restore();
+    ctx.save(); clipBody(ctx); ctx.translate(0,-4);
+    drawFn(ctx,now);
+    ctx.restore();
+    edgeStroke(ctx);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// 1. Эмиссионная туманность (Орион, M42) — ионизированный газ светится сам, тёплое H-альфа ядро + зернистое облако вокруг (приём: размер частиц растёт к центру, как у Вазарели)
+function drawEmissionNebula(ctx,now){
+  for(let i=0;i<16;i++){
+    const a=(i*2.4)%6.283, r=1+((i*7)%9);
+    const size=0.4+(9-r)*0.22;
+    ctx.fillStyle='hsla('+(350-r*3)+',85%,'+(50+ (9-r)*3)+'%,'+(0.35+(9-r)*0.05)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.9,Math.sin(a)*r*0.7-2,size,0,6.283); ctx.fill();
+  }
+  const p=0.5+0.5*Math.sin(now/500);
+  ctx.fillStyle='hsla(350,90%,'+(60+p*15)+'%,.9)'; ctx.beginPath(); ctx.arc(0,-2,1.8,0,6.283); ctx.fill();
+}
+// 2. Отражательная туманность (Плеяды) — не светится сама, отражает: холодная голубая дымка вокруг яркой белой звезды
+function drawReflectionNebula(ctx,now){
+  const p=0.5+0.5*Math.sin(now/700);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,8);
+  g.addColorStop(0,'hsla(210,20%,95%,1)'); g.addColorStop(0.3,'hsla(215,80%,'+(70+p*10)+'%,.55)'); g.addColorStop(1,'hsla(220,80%,50%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,8,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,-2,1.4,0,6.283); ctx.fill();
+}
+// 3. Планетарная туманность (Кольцо/Улитка) — оболочка вокруг ядра, кольца сжимаются к центру (приём тоннеля), тёплое ядро/холодная оболочка
+function drawPlanetaryNebula(ctx,now){
+  const p=(now%3000)/3000;
+  for(let ring=4;ring>=1;ring--){
+    const rr=ring*2.1+p*0.6;
+    const hue = 200-ring*15;
+    ctx.strokeStyle='hsla('+hue+',85%,'+(55+ring*6)+'%,'+(0.55-ring*0.08)+')';
+    ctx.lineWidth=0.9; ctx.beginPath(); ctx.arc(0,-2,rr,0,6.283); ctx.stroke();
+  }
+  ctx.fillStyle='hsla(40,90%,85%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.1,0,6.283); ctx.fill();
+}
+// 4. Остаток сверхновой (Крабовидная) — взрывные нити с цветом ВДОЛЬ каждой нити (приём радужной спирали), пульсар-искра в центре
+function drawSupernovaRemnant(ctx,now){
+  for(let i=0;i<10;i++){
+    const a=i/10*6.283+now/6000;
+    for(let t=0;t<5;t++){
+      const rr=1.5+t*1.4;
+      ctx.fillStyle='hsla('+(20+t*35)+',85%,60%,'+(0.6-t*0.08)+')';
+      ctx.beginPath(); ctx.arc(Math.cos(a)*rr,Math.sin(a)*rr*0.85-2,0.5,0,6.283); ctx.fill();
+    }
+  }
+  const flash=0.5+0.5*Math.sin(now/180);
+  ctx.fillStyle='hsla(200,80%,'+(70+flash*25)+'%,1)'; ctx.beginPath(); ctx.arc(0,-2,0.9,0,6.283); ctx.fill();
+}
+// 5. Тёмная туманность (Конская Голова) — силуэт-контррельеф: тёмная форма на ярком фоне IC 434
+function drawDarkNebula(ctx,now){
+  const p=0.5+0.5*Math.sin(now/900);
+  const g=ctx.createRadialGradient(0,-2,2,0,-2,9);
+  g.addColorStop(0,'hsla(350,90%,'+(45+p*10)+'%,.85)'); g.addColorStop(1,'hsla(350,80%,30%,.15)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,9,0,6.283); ctx.fill();
+  ctx.fillStyle='#05060a';
+  ctx.beginPath(); ctx.ellipse(0,-3,2.6,3.6,0,0,6.283); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(1.6,-5.4,1.3,1.7,0.4,0,6.283); ctx.fill();
+}
+// 6. Эллиптическая галактика E0-E7 — гладкий эллипсоид, меняющий сплюснутость
+function drawEllipticalGalaxy(ctx,now){
+  const p=(now%4000)/4000;
+  const squash=0.4+0.5*(0.5+0.5*Math.sin(p*6.283));
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,7);
+  g.addColorStop(0,'hsla(45,60%,88%,1)'); g.addColorStop(0.5,'hsla(40,50%,65%,.6)'); g.addColorStop(1,'hsla(35,40%,40%,0)');
+  ctx.save(); ctx.translate(0,-2); ctx.scale(1,squash); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,7,0,6.283); ctx.fill(); ctx.restore();
+}
+// 7. Пересечённая спираль (баррéдная, как Млечный Путь) — рукава от концов перемычки, цвет ВДОЛЬ рукава (приём радужной спирали)
+function drawBarredSpiral(ctx,now){
+  const rot=now/5000;
+  ctx.fillStyle='hsla(45,70%,88%,.9)'; ctx.beginPath(); ctx.ellipse(0,-2,3.2,0.9,rot*0.3,0,6.283); ctx.fill();
+  for(let arm=0;arm<2;arm++){
+    for(let t=0;t<14;t++){
+      const th=t/14*3.2;
+      const r=3.2+th*2.1;
+      const a=rot+arm*Math.PI+th*1.7;
+      ctx.fillStyle='hsla('+(220-t*10)+',80%,'+(60+t*2)+'%,'+(0.5-t*0.02)+')';
+      ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.5,Math.sin(a)*r*0.4-2,0.6,0,6.283); ctx.fill();
+    }
+  }
+}
+// 8. Неправильная галактика — без симметрии, разбросанные очаги звездообразования
+function drawIrregularGalaxy(ctx,now){
+  const seeds=[[1,3,60],[-2,1,25],[0,-1,340],[3,-2,200],[-3,-2,100],[1.5,-3.5,280]];
+  seeds.forEach(([dx,dy,hue],i)=>{
+    const p=0.5+0.5*Math.sin(now/(400+i*70));
+    ctx.fillStyle='hsla('+hue+',70%,'+(60+p*15)+'%,.55)';
+    ctx.beginPath(); ctx.arc(dx,dy-2,1.3+p*0.5,0,6.283); ctx.fill();
+  });
+}
+// 9. Галактика Сомбреро — диск ребром + тёмное кольцо пыли вокруг яркого балджа
+function drawSombreroGalaxy(ctx,now){
+  const p=0.5+0.5*Math.sin(now/900);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,4);
+  g.addColorStop(0,'hsla(42,70%,'+(86+p*6)+'%,1)'); g.addColorStop(1,'hsla(38,50%,60%,.3)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,4,0,6.283); ctx.fill();
+  ctx.save(); ctx.translate(0,-2); ctx.rotate(now/9000); ctx.scale(1,0.28);
+  ctx.strokeStyle='rgba(10,8,6,.88)'; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.arc(0,0,7.5,0,6.283); ctx.stroke();
+  ctx.restore();
+}
+// 10. Галактики-Антенны — два сталкивающихся диска с изогнутыми приливными хвостами
+function drawAntennaeGalaxies(ctx,now){
+  const p=(now%5000)/5000; const drift=Math.sin(p*6.283)*0.4;
+  [-2,2].forEach((side,i)=>{
+    ctx.fillStyle='hsla('+(i===0?200:30)+',70%,75%,.7)';
+    ctx.beginPath(); ctx.arc(side*1.3+drift*(i===0?1:-1),-2,2.1,0,6.283); ctx.fill();
+    ctx.strokeStyle='hsla('+(i===0?200:30)+',70%,65%,.4)'; ctx.lineWidth=0.7;
+    ctx.beginPath();
+    ctx.moveTo(side*1.3,-2);
+    ctx.quadraticCurveTo(side*6,-2+ (i===0?-5:5), side*7.5, -2+(i===0?-2:2));
+    ctx.stroke();
+  });
+}
+
+mountCards([
+  {id:'n1', name:'Эмиссионная (Орион)', body:'#160a0c', drawFn:drawEmissionNebula, zoom:6.5, fact:'Ионизированный газ светится сам — звёздные ясли, ~1300 св. лет'},
+  {id:'n2', name:'Отражательная (Плеяды)', body:'#0c1220', drawFn:drawReflectionNebula, zoom:6.5, fact:'Пыль отражает свет соседних звёзд — то же рэлеевское рассеяние, что у синего неба'},
+  {id:'n3', name:'Планетарная (Кольцо/Улитка)', body:'#0e1420', drawFn:drawPlanetaryNebula, zoom:6.5, fact:'Историческая ошибка в названии — к планетам отношения не имеет. Живёт 10-50 тыс. лет'},
+  {id:'n4', name:'Остаток сверхновой (Краб)', body:'#140e08', drawFn:drawSupernovaRemnant, zoom:6.5, fact:'Взрыв, замеченный в 1054 году — виден был днём 23 дня'},
+  {id:'n5', name:'Тёмная (Конская Голова)', body:'#0a0608', drawFn:drawDarkNebula, zoom:6.5, fact:'Не светится, а заслоняет — силуэт на фоне яркой туманности IC 434'},
+  {id:'n6', name:'Эллиптическая E0-E7', body:'#181206', drawFn:drawEllipticalGalaxy, zoom:6.5, fact:'Шкала Хаббла 1926: от почти круглой до вытянутой'},
+  {id:'n7', name:'Баррéдная спираль', body:'#0c1220', drawFn:drawBarredSpiral, zoom:6, fact:'Млечный Путь — именно такая. Подтверждено Spitzer лишь в 2005'},
+  {id:'n8', name:'Неправильная галактика', body:'#100c18', drawFn:drawIrregularGalaxy, zoom:6.5, fact:'Без устойчивой формы — обычно след столкновения с соседкой'},
+  {id:'n9', name:'Сомбреро (M104)', body:'#120e08', drawFn:drawSombreroGalaxy, zoom:6, fact:'Диск ребром + тёмное кольцо пыли — 50 000 св. лет в поперечнике'},
+  {id:'n10', name:'Галактики-Антенны', body:'#0e1018', drawFn:drawAntennaeGalaxies, zoom:5.5, fact:'Два сталкивающихся диска, приливные хвосты — столкновение идёт прямо сейчас'},
+]);
+</script>

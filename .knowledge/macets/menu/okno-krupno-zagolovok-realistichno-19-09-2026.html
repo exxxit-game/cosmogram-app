@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 26px;max-width:560px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{text-align:center}
+  h2{font-size:12px;font-weight:600;margin:0 0 8px;color:#c9a45c}
+  /* --- телефон: две отдельные СЛОИ-полосы, как в реальном Telegram WebView --- */
+  .phone{width:360px;height:300px;position:relative;border-radius:14px;border:1px solid #262c4a;overflow:hidden}
+  /* СЛОЙ 1 (чужой): родной хром Telegram — рисуется НАД нашей страницей нативно,
+     мы НЕ управляем этим пикселем. Показан тут только для масштаба/понимания. */
+  .tgNative{position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;
+    align-items:center;justify-content:space-between;padding:0 12px;box-sizing:border-box;
+    background:rgba(8,12,24,.92);font-size:14px;color:#fff;border-bottom:1px solid rgba(255,255,255,.06)}
+  .tgLbl{position:absolute;top:2px;left:4px;font-size:8px;color:#ff6d6d;font-weight:800;
+    background:#1a0000;padding:1px 5px;border-radius:3px;letter-spacing:.02em;z-index:6}
+  /* СЛОЙ 2 (наше): #angarPvZoomCard — реальные значения из index.html сегодняшней ночи:
+     padding-top: calc(var(--sat-menu) + 6px); на этом устройстве --sat-menu=28px → 34px. */
+  .ourCard{position:absolute;inset:0;padding-top:34px;
+    background:radial-gradient(ellipse at 50% 35%,#12224a 0%,#0a1030 65%);box-sizing:border-box}
+  .ourLbl{position:absolute;top:38px;left:4px;font-size:8px;color:#8fd694;font-weight:800;
+    background:#001a05;padding:1px 5px;border-radius:3px;letter-spacing:.02em;z-index:6}
+  /* #angarPvZoomName — реальные значения: margin:6px 54px 0; max-width:calc(100% - 108px);
+     padding:10px 18px; border-radius:14px; border:1px solid rgba(255,255,255,.16) */
+  .nameCard{margin:6px 54px 0;max-width:calc(100% - 108px);background:rgba(15,31,61,.95);
+    border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:10px 18px;
+    text-align:center;font-size:19px;font-weight:700;letter-spacing:.01em;color:#fff;
+    box-sizing:border-box}
+  /* #angarPvZoomClose — реальные значения: top:calc(10px + var(--sat-menu) + var(--menu-buf))
+     на этом устройстве = 10+28+12 = 50px; right:16px; width/height:32px */
+  .ourClose{position:absolute;top:50px;right:16px;width:32px;height:32px;border-radius:50%;
+    background:rgba(20,32,58,.9);border:1px solid rgba(120,170,255,.4);z-index:4;
+    display:flex;align-items:center;justify-content:center;color:#a0d2ff;font-size:13px}
+  .gap6{position:absolute;top:76px;right:16px;width:1px;height:1px}
+  .measure{position:absolute;font-size:9px;color:#00e5ff;font-weight:700;background:#001622;
+    padding:1px 4px;border-radius:2px;z-index:7}
+  .note{font-size:11px;color:#8b93b8;max-width:360px;margin-top:10px;text-align:left}
+  .note b{color:#dfe6ff}
+  .good{color:#8fd694}
+  .bad{color:#ff8a80}
+</style></head>
+<body>
+<h1>Окно «крупно» — заголовок явления, РЕАЛИСТИЧНЫЙ макет (два разных слоя)</h1>
+<p class="sub">Красная полоса — родной хром Telegram: рисуется своим, отдельным слоем ПОВЕРХ нашей
+  страницы, мы не можем положить туда свой текст физически. Зелёная область — наша страница,
+  начинается СРАЗУ после резерва (<code>--sat-menu</code>, честно измеренный отступ). Все числа —
+  реальные значения из <code>index.html</code> на сегодня (19.09.2026), не выдуманы: на этом
+  устройстве <code>--sat-menu=28px</code>, кнопка «✕» резервирует 48px справа, плашка имени —
+  <code>margin:6px 54px 0</code>.</p>
+<div class="row">
+  <div class="col">
+    <h2>Короткое название</h2>
+    <div class="phone">
+      <div class="tgNative"><span class="tgLbl">СЛОЙ 1 — ЧУЖОЙ (Telegram)</span>
+        <span>✕ Закрыть</span><span>⌄ ⋮</span></div>
+      <div class="ourCard">
+        <span class="ourLbl">СЛОЙ 2 — НАШ (34px = --sat-menu 28 + 6)</span>
+        <div class="nameCard" style="margin-top:26px">Пульсар-маяк</div>
+        <div class="ourClose">✕</div>
+      </div>
+    </div>
+    <div class="note good">Короткое название и своя плашка спокойно умещаются сразу под резервом,
+      не задевая кнопку.</div>
+  </div>
+  <div class="col">
+    <h2>Самое длинное название в игре</h2>
+    <div class="phone">
+      <div class="tgNative"><span class="tgLbl">СЛОЙ 1 — ЧУЖОЙ (Telegram)</span>
+        <span>✕ Закрыть</span><span>⌄ ⋮</span></div>
+      <div class="ourCard">
+        <span class="ourLbl">СЛОЙ 2 — НАШ (34px = --sat-menu 28 + 6)</span>
+        <div class="nameCard" style="margin-top:26px">Фигуры Лихтенберга —<br>позитивный</div>
+        <div class="ourClose">✕</div>
+      </div>
+    </div>
+    <div class="note good">Живой замер (adb+CDP, 19.09.2026): зазор между плашкой и кнопкой
+      «✕» — <b>+6px</b> (было −2px до фикса margin 46→54px). Подтверждено дважды на реальном
+      телефоне владельца, скриншот отправлен.</div>
+  </div>
+</div>
+<p class="note" style="max-width:760px;margin:26px auto 0">
+  <b>Что здесь НЕ иллюзия, в отличие от прошлого макета:</b> текст никогда не рисуется «в одной
+  полосе» с «✕ Закрыть»/⌄/⋮ — это чужой слой, мы физически не можем положить туда пиксель. Вместо
+  этого наш блок начинается сразу за резервом (без лишнего зазора — то и есть «Вариант Б» в
+  реально достижимом виде), а собственная кнопка «✕» либо гасится, когда у Telegram есть родная
+  «Назад» (<code>pauseGhostSync()</code>, боевой запуск), либо остаётся видимой и не залезает на
+  плашку (проверено измерением, не на глаз).
+</p>
+</body></html>
