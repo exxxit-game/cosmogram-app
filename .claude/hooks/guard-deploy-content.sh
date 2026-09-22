@@ -15,6 +15,10 @@ process.stdin.on('end',()=>{
   try{
     const j=JSON.parse(d);
     const ti=j.tool_input||{};
+    if(ti.verify_jwt===undefined){
+      process.stdout.write('BLOCK\nПараметр verify_jwt не передан вообще — инструмент тихо подставит своё умолчание (true), что 18.09.2026 уронило живую Мастерскую на ~3 минуты (UNAUTHORIZED_NO_AUTH_HEADER), потому что функция использует свою авторизацию (initData/webAuth/dcAuth/gAuth), не Supabase JWT. Реши явно и передай verify_jwt:true или verify_jwt:false — не полагайся на умолчание инструмента.\\n');
+      return;
+    }
     const files=Array.isArray(ti.files)?ti.files:[];
     let minLen=Infinity, hasPlaceholder=false, sample='';
     for(const f of files){

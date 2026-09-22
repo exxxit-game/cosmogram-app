@@ -52,6 +52,12 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/guard-deploy-content.sh" }
         ]
+      },
+      {
+        "matcher": "mcp__.*__(execute_sql|apply_migration)",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/guard-supabase-write.sh" }
+        ]
       }
     ],
     "PostToolUse": [
