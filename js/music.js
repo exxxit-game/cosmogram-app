@@ -11,14 +11,16 @@ let MUSIC_ON = true; // boot: Store 'music'
 const music = (()=>{
   let mg=null, conv=null, wet=null;      // master gain + реверб-ветка
   let theme=null, ducked=false, pendingTheme=null;          // 'menu' | 'game' | null; pendingTheme — ждёт границы такта (22.08.2026)
-  let timer=null, nextBar=0, chordIx=0, walk=76;
+  let timer=null, nextBar=0, chordIx=0, walk=67, menuBarCount=0; // menuBarCount: 23.09.2026, см. MENU_PHRASE_BARS ниже
   let layerState={pulse:false, arp:false, tension:false};
   /* v1.282.26 (партия 24): «плывущий центр» — корень дрона медленно ходит по соседним ступеням
-     минорной пентатоники (A3,C4,D4,E4,G4), вместо того чтобы стоять на A3 всю игру. Старт —
-     всегда индекс 0 (ровно прежний звук A3), дрейф включается только со временем — не чинит то,
+     минорной пентатоники, вместо того чтобы стоять на одной ноте всю игру. Старт —
+     всегда индекс 0, дрейф включается только со временем — не чинит то,
      что не сломано, только не даёт застыть надолго. Квинта/тревога считаются ОТ корня (+7/+13
-     полутонов), а не абсолютными нотами — интервалы сохраняются при любом сдвиге корня. */
-  const DRONE_ROOTS=[57,60,62,64,67]; // A3,C4,D4,E4,G4
+     полутонов), а не абсолютными нотами — интервалы сохраняются при любом сдвиге корня.
+     23.09.2026: было A3,C4,D4,E4,G4 (ля минор) — теперь C3,Eb3,F3,G3,Bb3 (до минор), см.
+     комментарий у MENU_CHORDS про смену тонального центра по образцу Worakls — Salzburg. */
+  const DRONE_ROOTS=[48,51,53,55,58]; // C3,Eb3,F3,G3,Bb3
   let droneRootIx=0;
   const stats={pads:0, notes:0, stings:0, kicks:0}; // счётчики для тестового стенда
 
@@ -80,8 +82,13 @@ const music = (()=>{
     }
     if(!mg){
       mg=ac.createGain(); mg.gain.value=0;
-      conv=ac.createConvolver(); conv.buffer=impulse(ac,2.8,2.2);
-      wet=ac.createGain(); wet.gain.value=.55;
+      /* 23.09.2026 (владелец: «затяжной, та же музыка, что заебала, просто в другом
+         звучании»): 2.8с хвост + wet=.55 — это и есть звуковая ДНК старого эмбиента (собор,
+         не студия). Смена тональности/ритма сверху этого не убирала — сама текстура осталась
+         прежней. Короче хвост (2.8→1.0с), меньше влажности (.55→.3) — ближе к тому, как
+         реально сведён мелодик-техно (реверб даёт объём, не растворяет атаку). */
+      conv=ac.createConvolver(); conv.buffer=impulse(ac,1.0,3.0);
+      wet=ac.createGain(); wet.gain.value=.3;
       const dry=ac.createGain(); dry.gain.value=.85;
       mg.connect(dry); dry.connect(ac.destination);
       // 27.08.2026: было mg.connect(conv) — реверб слался ОДНИМ куском на весь микс сразу,
@@ -107,9 +114,18 @@ const music = (()=>{
   }
   function kickDrum(ac,t,vol){ // 22.08.2026: барабанный кик (не путать с music.kick() — тот сайдчейн-дак от удара)
     // синтез 808-стиль: синус с падающим питчем + жёсткое искажение — центр, без панорамы (моно-динамик телефона)
+    /* 23.09.2026 (владелец, живой Oppo, запись: «репит, шумит, будто порванная колонка»):
+       падение до 45 Гц было НИЖЕ порога, который этот же файл уже документирует строкой
+       выше («динамики телефонов не воспроизводят 110–160 Гц») — маленький динамик не
+       воспроизводит такой низкий провал чисто, а дребезжит/искажает. Раньше это било
+       только по игровому кику (МЕНЬШЕ слышно за счёт визуального действия во время
+       полёта), теперь кик добавлен и в меню (спокойный экран, слышно отчётливее) — тот же
+       физический предел, что уже раз ловили, просто стал заметнее в новом контексте.
+       Поднято дно до 95 Гц — тот же панч по форме огибающей, без ухода в зону, которую
+       телефонный динамик не может отдать чисто. */
     const osc=ac.createOscillator(); osc.type='sine';
-    osc.frequency.setValueAtTime(150,t);
-    osc.frequency.exponentialRampToValueAtTime(45,t+.09);
+    osc.frequency.setValueAtTime(180,t);
+    osc.frequency.exponentialRampToValueAtTime(95,t+.09);
     const g=ac.createGain();
     g.gain.setValueAtTime(0,t);
     g.gain.linearRampToValueAtTime(vol,t+.006);
@@ -132,6 +148,29 @@ const music = (()=>{
     }
     flt.connect(g); toMix(g,ac); stats.pads++;
   }
+  /* 23.09.2026 (владелец: «не подстраивай эмбиент, это вообще не эмбиент должно быть»):
+     padVoice() — медленный наплыв (35% времени только на атаку), рассчитан на подложку,
+     которая ВСЕГДА звучит фоном — сама конструкция голоса эмбиентная, вне зависимости от
+     того, какие ноты в неё подставить. Новый голос — «стаб» аккорда: короткий ритмичный
+     удар (атака 12мс, не наплыв), с движением фильтра (открыт на атаке → закрывается к
+     хвосту — классический приём хаус/техно-стабов, даёт «дых» без сустейна). Заменяет
+     padVoice() везде, где раньше держалась ПОСТОЯННАЯ подложка (аккорд меню, дрон полёта) —
+     гармония теперь звучит УДАРАМИ на долю, а не вечным фоновым облаком. */
+  function stabVoice(ac,t,f,dur,vol){
+    const g=ac.createGain();
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+.012);
+    g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    const flt=ac.createBiquadFilter(); flt.type='lowpass'; flt.Q.value=1.1;
+    flt.frequency.setValueAtTime(Math.min(f*7,7000),t);
+    flt.frequency.exponentialRampToValueAtTime(Math.max(f*1.3,280),t+dur*.65);
+    for(const det of [-6,6]){
+      const o=ac.createOscillator(); o.type='sawtooth';
+      o.frequency.value=jitterFreq(f); o.detune.value=det;
+      o.connect(flt); o.start(t); o.stop(t+dur+.05);
+    }
+    flt.connect(g); toMix(g,ac); stats.pads++;
+  }
   function note(ac,t,f,dur,vol,type,distort){ // колокольчик/пульс/арпеджио; distort — только риф (22.08.2026, стиль Daft Punk)
     const o=ac.createOscillator(); o.type=type||'sine'; o.frequency.value=jitterFreq(f);
     const g=ac.createGain();
@@ -144,13 +183,34 @@ const music = (()=>{
     o.start(t); o.stop(t+dur+.05); stats.notes++;
   }
 
-  /* Темы: меню — медленные аккорды Am→F→G→Em с редкими колокольчиками;
-     полёт — дрон A всегда, пульс с 3-й волны, арпеджио с 5-й, тревога на последней жизни.
+  /* Темы: меню — аккорды, полёт — дрон+слои, тревога на последней жизни.
      Регистр поднят на октаву: динамики телефонов не воспроизводят 110–160 Гц —
-     музыка должна звучать именно на телефоне, а не в наушниках студии. */
-  const MENU_CHORDS=[[57,64,69,72,76],[53,60,65,69,72],[55,62,67,71,74],[52,59,64,67,71]];
-  const MENU_BAR=7, BEAT=60/124, GAME_BAR=BEAT*4; // 22.08.2026: 124 BPM (владелец, стиль Daft Punk) — такт честные 4 доли, не произвольные 3с
-  const PENTA=[69,72,74,76,79,81,84];
+     музыка должна звучать именно на телефоне, а не в наушниках студии.
+     23.09.2026 (владелец, ПОЛНАЯ смена тонального центра, не правка): было Am→F→G→Em
+     (ля минор) — выдумано, не из образца. Владелец прислал настоящий файл (Worakls —
+     Salzburg) и потребовал реальной работы с ним, не косметики. `tools/chroma-detect.mjs`
+     (алгоритм Гёрцеля, 12 хроматических ступеней по окнам всего трека) дал: тональность
+     **до минор** (уверенность 0.72 по корреляции Крумханслa-Шмуклера), доминирующие ноты
+     G, D#(=Eb), C, G#(=Ab), D, F — это ровно натуральный до минор (C-D-Eb-F-G-Ab-Bb). По 8
+     отрезкам видно реальное движение: тоника C то отступает, то возвращается (сегменты
+     3,6 — C доминирует), G/D заметны почти everywhere (v ступень). Новая прогрессия —
+     Cm→Gm→Ab→Bb (i→v→VI→VII, натуральный минор) — та же форма голосоведения (корень,
+     квинта, корень, терция, квинта), что была у старой, просто в правильной тональности,
+     не выдуманной. */
+  const MENU_CHORDS=[[60,67,72,75,79],[55,62,67,70,74],[56,63,68,72,75],[58,65,70,74,77]]; // Cm, Gm, Ab, Bb
+  const BEAT=60/126, GAME_BAR=BEAT*4; // 22.08.2026: было 124 (владелец, стиль Daft Punk); 23.09.2026: 126 — ближе к измеренному темпу
+    // реального ориентира (Worakls — Salzburg, автокорреляция по огибающей атак файла: ≈128 BPM,
+    // см. tools/bpm-detect.mjs) — такт честные 4 доли, не произвольные 3с
+  /* 23.09.2026 «Ориентир Worakls — Salzburg» (владелец: «музыка мерзкая, остопиздела, мама
+     сказала поменять... мы весёлая бодрая игра, не Лимбо»): раньше MENU_BAR=7 — меню жило на
+     СОБСТВЕННОЙ медленной сетке (7 секунд на аккорд, редкий колокольчик), без единой доли
+     ритма — чистый статичный пэд-эмбиент, никакого движения. Теперь меню на ТОЙ ЖЕ сетке
+     4/4, что и полёт (GAME_BAR) — тот же приём, что делает мелодик-техно живым: бас+кик на
+     каждую долю, аккорд меняется раз в 4 такта (фраза), а не раз в такт — гармония по-прежнему
+     движется спокойно, но под ней всегда есть пульс. Принцип «никогда не надоедает»
+     (риффотека/дрейф корня/джиттер) не убран, просто применён к другому характеру. */
+  const MENU_BAR=GAME_BAR, MENU_PHRASE_BARS=4;
+  const PENTA=[60,63,65,67,70,72,75]; // 23.09.2026: до-минорная пентатоника (C,Eb,F,G,Bb) — было ля-минорная, см. комментарий у MENU_CHORDS
   /* 22.08.2026 «Риффотека» (приём Ballblazer «Riffology», 1984, Питер Лэнгстон): арпеджио
      раньше было чистым случайным блужданием по ступеням на каждую долю — ни одной узнаваемой
      формы, только шум по гамме. Riffology не импровизирует с нуля каждую ноту — она «делает
@@ -167,7 +227,8 @@ const music = (()=>{
   /* Микс-стол голосов (v1.48.0): прежняя кровать (~.05 на выходе) тонула под пиками эффектов (.15–.3) —
      поднято ~×2.5, чтобы музыку было слышно всегда, а эффекты больше не кричат */
   const MIX={menuPad:.075, menuBell:.12, drone:.07, quint:.05, tension:.04,
-             pulse:.085, pulseT:.105, arp:.07, stingD:.12, stingR:.11, stingPad:.06, kick:.13}; // kick — якорь ритма, заметнее пульса (22.08.2026)
+             pulse:.085, pulseT:.105, arp:.07, stingD:.12, stingR:.11, stingPad:.06, kick:.13, // kick — якорь ритма, заметнее пульса (22.08.2026)
+             menuKick:.09, menuBass:.075, menuArp:.06, menuStab:.08, gameStab:.075}; // 23.09.2026: новый ритмический слой меню — см. MENU_PHRASE_BARS выше; stab — см. stabVoice()
 
   /* 22.08.2026 «Слои прорастают, а не переключаются»: пульс и арпеджио включались жёстким
      порогом волны (wave>=3, wave>=5) — щелчок, не нарастание, и для среднего забега (34.4с
@@ -195,14 +256,47 @@ const music = (()=>{
     const lives=(typeof S!=='undefined')?(S.lives==null?3:S.lives):3;
     const dist=(typeof S!=='undefined')?(S.dist||0):0;
     kickAmtSmooth = lerp(kickAmtSmooth, kickTideTarget(dist,wave), .12); // сглаживание — цель может скакнуть на границе волны 7, факт не должен
-    // пульс прорастает волны 1→3, арпеджио — волны 1→4 (было жёстко на wave>=5, среднему забегу не хватало времени)
-    return {pulseAmt:waveRamp(wave,1,3), arpAmt:waveRamp(wave,1,4), tension:lives===1, kickAmt:kickAmtSmooth};
+    /* 23.09.2026 (ориентир Worakls — Salzburg, владелец: «весёлая бодрая игра, не Лимбо»):
+       было waveRamp(wave,1,3)/waveRamp(wave,1,4) — на волне 1 пульс/арпеджио звучали НОЛЬ,
+       игрок первые секунды каждого полёта слышал только голый дрон. Измеренный энергопрофиль
+       реального трека (tools/bpm-detect.mjs) даже в САМОЙ тихой из 10 долей не давал полной
+       тишины ритма, только меньшую громкость того же материала — старт от 0 (не от 1) даёт
+       тот же эффект: слой уже слышен на первой волне, просто тише, и дорастает быстрее (до
+       волны 2 у пульса, до волны 3 у арпеджио — было 3/4). */
+    return {pulseAmt:waveRamp(wave,0,2), arpAmt:waveRamp(wave,0,3), tension:lives===1, kickAmt:kickAmtSmooth};
   }
   function scheduleBar(ac,t){
     if(theme==='menu'){
-      const ch=MENU_CHORDS[chordIx%MENU_CHORDS.length]; chordIx++;
-      for(const m of ch) padVoice(ac,t,midi(m),MENU_BAR+1.2,MIX.menuPad);
-      if(Math.random()<.7) note(ac,t+2+Math.random()*3,midi(PENTA[(Math.random()*PENTA.length)|0]),1.8,MIX.menuBell);
+      /* 23.09.2026 «Ориентир Worakls — Salzburg» (владелец, см. комментарий у MENU_BAR выше):
+         раньше — только пэд-аккорд раз в 7с и редкий колокольчик, ни одной доли ритма. Теперь
+         аккорд (гармония) меняется раз в фразу (MENU_PHRASE_BARS тактов), а бас+кик+риф —
+         КАЖДЫЙ такт, тем же приёмом «риффотека», что уже был в полёте (один мотив на такт,
+         не блуждание нота за нотой) — переиспользован тот же ARP_MOTIFS/walk. */
+      const phraseBeat = menuBarCount % MENU_PHRASE_BARS === 0;
+      if(phraseBeat){ chordIx++; }
+      const ch=MENU_CHORDS[chordIx%MENU_CHORDS.length];
+      const root=ch[0];
+      /* 23.09.2026 (владелец: «набор хаотичных звуков, не музыка») — СИЛЬНОЕ упрощение.
+         Было 6 одновременных слоёв (пэд+стаб+бас+кик+арп+колокольчик) — реальная причина
+         каши, не тональность и не темп. Оставлено только необходимое: тихий пэд ТОЛЬКО на
+         смену гармонии (не каждый такт), бас, кик, и ОДИН мелодический голос (арп) — не
+         два одновременно борющихся за одно и то же ритмическое место (риф и стаб играли
+         почти на одних и тех же долях). Колокольчик убран целиком — риф уже несёт мелодию. */
+      if(phraseBeat) for(const m of ch) padVoice(ac,t,midi(m),GAME_BAR*MENU_PHRASE_BARS+1.2,MIX.menuPad);
+      for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root-12),.22,MIX.menuBass,'triangle');
+      if(Math.random()<.85) kickDrum(ac,t,MIX.menuKick);
+      {
+        const motif=ARP_MOTIFS[(Math.random()*ARP_MOTIFS.length)|0];
+        const baseIx=Math.max(0,PENTA.indexOf(walk));
+        let lastPitch=walk;
+        for(let b=0;b<8;b++){
+          const ix=Math.max(0,Math.min(PENTA.length-1,baseIx+motif[b]));
+          lastPitch=PENTA[ix];
+          note(ac,t+b*BEAT/2,midi(lastPitch),.4,MIX.menuArp,'triangle');
+        }
+        walk=lastPitch;
+      }
+      menuBarCount++;
       return MENU_BAR;
     }
     if(theme==='game'){
@@ -213,6 +307,8 @@ const music = (()=>{
       padVoice(ac,t,midi(root),GAME_BAR+1.5,MIX.drone); // дрон — слышен на телефоне
       padVoice(ac,t,midi(root+7),GAME_BAR+1.5,MIX.quint); // квинта — шире пространство
       if(ly.tension) padVoice(ac,t,midi(root+13),GAME_BAR+1.5,MIX.tension); // тревожный полутон над корнем
+      // 23.09.2026: пробовал добавить ещё и stabVoice() здесь — убрано обратно вместе с
+      // упрощением меню (см. комментарий там же) — слишком много одновременных слоёв.
       if(ly.pulseAmt>0) for(let b=0;b<4;b++) note(ac,t+b*BEAT,midi(root),.16,(ly.tension?MIX.pulseT:MIX.pulse)*ly.pulseAmt); // громкость сама прорастает — не щелчок вкл/выкл
       if(ly.kickAmt>0.02) for(let b=0;b<4;b++) kickDrum(ac,t+b*BEAT,MIX.kick*ly.kickAmt); // 22.08.2026: four-on-the-floor — приливная интенсивность (0.02 порог — не тратить голоса на почти неслышимое)
       if(ly.arpAmt>0 && !ly.tension){ // риффотека: один мотив на весь такт (v1.415.2, приём Riffology), не блуждание нота за нотой; громкость прорастает вместе с волной (v1.456.1)
@@ -249,7 +345,7 @@ const music = (()=>{
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой, начинаем с чистого такта (v1.20.0)
     while(nextBar < ac.currentTime + .9){
       if(pendingTheme){ // граница такта — самый момент переключиться, не обрывая уже идущий
-        theme=pendingTheme; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0;
+        theme=pendingTheme; pendingTheme=null; chordIx=0; walk=67; droneRootIx=0; menuBarCount=0;
         fadeTo(MG[theme]||MG_GAME,1.0);
         layerState = theme==='game' ? gameLayers() : {pulseAmt:0,arpAmt:0,tension:false,kickAmt:0};
       }
@@ -276,7 +372,7 @@ const music = (()=>{
       ducked=false;
       if(theme===th){ pendingTheme=null; if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
       if(!theme){ // ничего не играло — начинать сразу, ждать нечего, приём такта не нужен
-        theme=th; pendingTheme=null; chordIx=0; walk=76; droneRootIx=0; nextBar=ac.currentTime+.08;
+        theme=th; pendingTheme=null; chordIx=0; walk=67; droneRootIx=0; menuBarCount=0; nextBar=ac.currentTime+.08;
         fadeTo(MG[th]||MG_GAME,1.6);
         if(!timer) timer=setInterval(tick,200);
         tick();
@@ -316,22 +412,33 @@ const music = (()=>{
       const ac=ensureChain();
       if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
       if(!ac||!mg||!theme) return;
+      /* 23.09.2026 (владелец, живой Oppo И живой Telegram, три независимых замера: провал
+         0.9→0.31 стабильно на ~3.4-3.5с первой волны — «музыка вообще пропадает»): было
+         base*.34→base*.32 — почти 70% громкости срезалось на удар. Раньше это терялось в
+         тихом эмбиенте, теперь на богатой ритмом музыке такой провал звучит как «музыка
+         умерла», не как сайдчейн-приём. Глубина смягчена (не убрана — эффект остаётся,
+         просто не такой драматичный), длительность/форма огибающей не менялись. */
       const base=MG[theme]||MG_GAME, now=ac.currentTime;
       mg.gain.cancelScheduledValues(now);
-      mg.gain.setValueAtTime(Math.max(mg.gain.value,base*.34),now);
-      mg.gain.linearRampToValueAtTime(base*.32,now+.05);
+      mg.gain.setValueAtTime(Math.max(mg.gain.value,base*.6),now);
+      mg.gain.linearRampToValueAtTime(base*.55,now+.05);
       mg.gain.linearRampToValueAtTime(base*(ducked?.3:1),now+.8);
       stats.kicks++;
     },
     sting(kind){ // кода: смерть — три ноты вниз; рекорд — фанфарный подъём + аккорд
+      /* 23.09.2026: было в ля миноре (69,72,76,81 / 57,61,64,69 / 64,60,57) — перенесено в
+         до минор вслед за всей остальной тональностью (см. MENU_CHORDS). Рекорд сохраняет
+         приём «пикардийская терция» (мажорное трезвучие C-E-G на фоне минорной пьесы —
+         триумфальный эффект), который уже был в оригинале (61=C#, мажорная терция от A) —
+         просто транспонирован, не выдуман заново: E natural — мажорная терция от C. */
       if(MUTED||!MUSIC_ON) return;
       const ac=ensureChain(); if(!ac) return;
       const t=ac.currentTime+.05;
       if(kind==='record'){
-        [69,72,76,81].forEach((m,i)=>note(ac,t+i*.09,midi(m),.4,MIX.stingR,'triangle'));
-        [57,61,64,69].forEach(m=>padVoice(ac,t+.4,midi(m),1.6,MIX.stingPad));
+        [72,76,79,84].forEach((m,i)=>note(ac,t+i*.09,midi(m),.4,MIX.stingR,'triangle')); // C5,E5,G5,C6 — пикардийская терция
+        [60,64,67,72].forEach(m=>padVoice(ac,t+.4,midi(m),1.6,MIX.stingPad));
       } else {
-        [64,60,57].forEach((m,i)=>note(ac,t+i*.3,midi(m),.55,MIX.stingD,'triangle'));
+        [67,63,60].forEach((m,i)=>note(ac,t+i*.3,midi(m),.55,MIX.stingD,'triangle')); // G4,Eb4,C4 — 5th,b3,root вниз
       }
       stats.stings++;
     },
