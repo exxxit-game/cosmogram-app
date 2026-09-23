@@ -339,6 +339,14 @@
 
 ### Открыто — найдено 23.09.2026, живая проверка «всё, что нужно перепроверить» на двух телефонах
 
+- **Сквозная проверка всех онлайн-функций живьём (Oppo CPH2631, `tools/live-device.mjs`,
+  только чтение, без записи) — 13 из 13 работают.** `syncTop` (touch/dist), `syncDailyTop`,
+  `syncSpeedrunTop`, `syncSlalomTop`, `syncBiathlonTop`, `syncRelayGetOpen`,
+  `syncRelayMyChains`, `workshopList` (new/top/trending), `charterStatus` — все вернули честный
+  `{ok:true,...}`. Единственный «отказ» — `syncDailyChampion` → `{ok:false,reason:'fly_first'}` —
+  подтверждён НЕ багом: осознанная защита от спойлера (`cosmogram-daily/index.ts:307,341`,
+  чемпион дня виден только тому, кто сам уже слетал сегодня) — на этом устройстве в «Небо
+  месяца» сегодня ещё не летали, отказ честный и ожидаемый.
 - **«Эстафета» (`cosmogram-relay`) молча ломается для ЛЮБОЙ сессии старше 5 минут — реальный,
   root-caused баг, не гипотеза.** Найдено живьём (Samsung SM-A032F, `tools/live-device.mjs`):
   `relay_get_open` — реальный `401 {"error":"auth"}` на КАЖДОМ обращении с той же самой живой
