@@ -390,6 +390,30 @@
   подтверждён НЕ багом: осознанная защита от спойлера (`cosmogram-daily/index.ts:307,341`,
   чемпион дня виден только тому, кто сам уже слетал сегодня) — на этом устройстве в «Небо
   месяца» сегодня ещё не летали, отказ честный и ожидаемый.
+- **Сквозная проверка ВСЕХ используемых игрой методов моста Telegram WebApp живьём на редком
+  старом клиенте (Ваня, iPhone 16 Pro, iOS 18.7, Telegram-версия «7.10», 23.09.2026) — все
+  методы, что реально зовёт игровой код, СУЩЕСТВУЮТ и работают.** Собран список прямо из
+  `js/core.js` (`grep 't\.'/'tg\.'`, не по памяти) и проверен живым `typeof`/вызовом на этом
+  мосте: `onEvent`/`offEvent`/`isVersionAtLeast`/`ready`/`expand`/`setHeaderColor`/
+  `setBackgroundColor`/`disableVerticalSwipes`/`enableClosingConfirmation`/
+  `disableClosingConfirmation`/`requestFullscreen`/`exitFullscreen`/`lockOrientation`/
+  `sendData`/`openLink`/`openTelegramLink`/`showPopup`/`shareToStory` — все `typeof==='function'`;
+  `CloudStorage`/`HapticFeedback`/`BackButton`/`MainButton`/`SettingsButton` — все `typeof==='object'`
+  (не `undefined`). `CloudStorage` проверен НЕ только на присутствие, а реальным
+  `setItem→getItem→removeItem` round-trip'ом (записал `cosmo_probe`, прочитал то же значение
+  обратно, удалил за собой, чтобы не мусорить в настоящем аккаунте владельца/Вани) —
+  `{err:null,ok:true}` на каждом шаге. `HapticFeedback.impactOccurred('light')` вызван без
+  исключения. `contentSafeAreaInset`/`safeAreaInset` = `{top:0,bottom:0,left:0,right:0}` на
+  устройстве с реальной чёлкой/Dynamic Island — это ОЖИДАЕМО, не баг: без fullscreen (версия
+  блокирует, см. запись про `vh_underreport` выше) контент живёт внутри чужого модального
+  окна Telegram, вырез экрана вне нашей зоны ответственности, инсеты честно нулевые.
+  **Живой прогон реальной игры** (клик по настоящему `#startBtn`, не внутренний вызов функции)
+  — canvas отрисовал реальный неоднородный контент (`1005×1885` физических пикселей, dpr
+  учтён верно), поставленный заранее сборщик `window.onerror`/`unhandledrejection` не поймал
+  НИ ОДНОЙ ошибки за ~10 секунд реального полёта. Итог: на этом самом старом из доступных
+  клиентов игра работает полностью штатно везде, где мост вообще предоставляет функцию —
+  единственные два места, где что-то ограничено (`requestFullscreen`, `lockOrientation`),
+  ограничены версией мостом ОСОЗНАННО нашим же кодом, уже разобраны отдельными записями выше.
 - **«Эстафета» (`cosmogram-relay`) молча ломается для ЛЮБОЙ сессии старше 5 минут — реальный,
   root-caused баг, не гипотеза.** Найдено живьём (Samsung SM-A032F, `tools/live-device.mjs`):
   `relay_get_open` — реальный `401 {"error":"auth"}` на КАЖДОМ обращении с той же самой живой
