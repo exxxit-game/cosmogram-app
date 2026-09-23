@@ -242,6 +242,22 @@ function ptShowToast(text){
   const qe=document.getElementById('ptQuickEdit');
   const qeVisible=qe && qe.classList.contains('show');
   t.style.bottom = qeVisible ? (qe.getBoundingClientRect().height+12)+'px' : '';
+  /* 23.09.2026 (живой Samsung, страж 324 красный в CI трижды подряд, не флейк — тот же провал
+     воспроизведён и на реальном телефоне через tools/live-device.mjs). Первая попытка чинить —
+     принудительный reflow (t.offsetHeight) перед classList.add — НЕ помогла: живое измерение
+     computedStyle(transform) на Samsung показало translateY застрявшим на ~18.6px из 20px даже
+     спустя 250мс — не «браузер не заметил переключение класса», а честно медленный кадр
+     (та же самая слабая машина, что раньше в этот же вечер показала реальные провалы кадра
+     330-1077мс при взлёте, live-device.mjs). Reflow тут ни при чём — 200мс transition просто не
+     успевает доиграть в реальном времени под нагрузкой на слабом устройстве. Значит правильность
+     конечной позиции тоста НЕ должна зависеть от того, успела ли анимация доиграть. Решение —
+     не анимировать въезд СНИЗУ (translateY), когда панель открыта: 20px пробега въезда больше,
+     чем 12px запаса над панелью (qe.height+12) — на любом кадре внутри этих 200мс, где translateY
+     ещё не дошёл до нуля, тост физически ниже своей чистовой позиции, то есть глубже в зоне
+     панели. Слайд убран ТОЛЬКО в этом случае (опасная зона), плавность (opacity) остаётся. */
+  if(qeVisible){ t.style.transition='opacity .2s'; t.style.transform='translateX(-50%) translateY(0)'; }
+  else { t.style.transition=''; t.style.transform=''; }
+  void t.offsetHeight;
   t.classList.add('show');
   clearTimeout(ptToastTimer);
   ptToastTimer=setTimeout(()=>t.classList.remove('show'),3000);
