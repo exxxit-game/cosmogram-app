@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 10px;max-width:680px;margin-left:auto;margin-right:auto}
+  p.numbers{text-align:center;font-size:11px;color:#c9a45c;margin:0 0 28px}
+  .row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  h2{font-size:12.5px;font-weight:700;margin:0 0 1px;color:#c9a45c;text-align:center}
+  p.thresh{font-size:10px;color:#5c6690;text-align:center;margin:0 0 6px;font-weight:600}
+  p.desc{font-size:10px;color:#8b93b8;text-align:center;margin:0 0 8px;max-width:210px;line-height:1.4}
+  .col{width:210px}
+  .wRow{position:relative;display:flex;flex-direction:column;border:1px solid rgba(201,164,92,.35);
+    border-radius:16px;background:rgba(22,38,56,.45);overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .wBanner{position:relative;height:100px;border-radius:inherit;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%)}
+  .wScrim{position:absolute;left:0;right:0;bottom:0;top:40%;pointer-events:none;
+    background:linear-gradient(180deg,rgba(11,22,38,0) 0%,rgba(11,22,38,.55) 55%,rgba(11,22,38,.92) 100%)}
+  .wBody{padding:10px 12px;font-size:11px;color:#8b93b8}
+  .wTitle{font-size:13px;font-weight:700;color:#dfe6ff;margin-bottom:3px}
+
+  /* геометрия ленты — verbatim из index.html .wAuthorRibbon/.wAuthorRibbon span, не придумана заново */
+  .wAuthorRibbon{position:absolute;top:0;left:0;width:76px;height:76px;overflow:hidden;pointer-events:none;z-index:3}
+  .wAuthorRibbon span{position:absolute;width:120px;top:16px;left:-32px;transform:rotate(-45deg);
+    background:linear-gradient(180deg,#f0c040,#dba93c);box-shadow:0 2px 6px rgba(0,0,0,.35);
+    padding:5px 2.1px 3px 0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .wAuthorRibbon.silver span{background:linear-gradient(180deg,#e6eaf0,#9aa4b3)}
+  .eye{width:13px;height:13px;border-radius:50%;background:#2c1f08;flex:none}
+  .browRow{position:absolute;top:-7px;left:0;right:0;display:flex;justify-content:center;gap:14px}
+  .brow{width:10px;height:2px;background:#2c1f08;border-radius:1px;opacity:.8}
+
+  /* уровень 0/везде: характер «спокойный» — verbatim wRibbonBlink из index.html */
+  .eye{animation:wRibbonBlink 4.2s ease-in-out infinite}
+  @keyframes wRibbonBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+
+  /* уровень 2: характер «сверкающие» на закреплённой форме-звезде — verbatim wRibbonSparkle */
+  .sparkle .eye{animation:wRibbonSparkle 5.4s ease-in-out infinite}
+  @keyframes wRibbonSparkle{0%,75%,100%{transform:scale(1)} 80%{transform:scale(1.35)} 85%{transform:scale(1)} 90%{transform:scaleY(.12)} 93%{transform:scale(1)}}
+  .starEye{width:13px;height:13px;flex:none;fill:#2c1f08}
+
+  /* НОВОЕ — брови синхронно с морганием: та же тайминг-сетка 0/93/96%, что у wRibbonBlink,
+     сознательно привязана к тем же процентам, а не к отдельной анимации "на глаз" — это и
+     есть "синхронизация", не два независимых цикла, которые случайно совпадают по длительности */
+  .browSynced{animation:wRibbonBrowSync 4.2s ease-in-out infinite}
+  @keyframes wRibbonBrowSync{0%,90%,100%{transform:translateY(0)} 93%{transform:translateY(-1.5px)} 96%{transform:translateY(0)}}
+
+  .pinBadge{position:absolute;left:6px;bottom:6px;font-size:8px;font-weight:700;color:#8b93b8;
+    background:rgba(7,11,24,.72);border:1px solid rgba(201,164,92,.4);border-radius:5px;padding:2px 5px}
+  .arrow{align-self:center;font-size:20px;color:#3a4470;margin-top:44px}
+  .note{max-width:680px;margin:34px auto 0;font-size:11px;color:#8b93b8;line-height:1.6;
+    border-top:1px solid rgba(201,164,92,.25);padding-top:16px}
+  .note b{color:#c9a45c}
+</style></head>
+<body>
+<svg style="display:none"><symbol id="i-star5-outline" viewBox="0 0 24 24"><path d="M12 3.5 14.4 9.3 20.7 9.8 15.9 13.9 17.4 20.1 12 16.7 6.6 20.1 8.1 13.9 3.3 9.8 9.6 9.3z"></path></symbol></svg>
+<h1>Лестница уровней неба — награда за запуски и лайки</h1>
+<p class="sub">Комбинация того, что уже есть в игре (лента, глаза, брови, случайные форма/характер —
+  всё из реального index.html/forge.js), плюс новое: анимированные брови и возможность закрепить
+  форму вместо случайной тасовки. Пороги — маленькие стартовые числа, поднимаем позже, когда
+  игроков станет больше.</p>
+<p class="numbers">0 → 5 запусков → 10 запусков → 15 запусков + 2 лайка</p>
+
+<div class="row">
+  <div class="col"><h2>Уровень 0 — по умолчанию</h2>
+    <p class="thresh">с первого трека, без условий</p>
+    <p class="desc">Как сейчас: форма и характер выпадают случайно при каждом показе списка.
+      Брови есть (только у формы «глаза»), но неподвижны.</p>
+    <div class="wRow"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow"></div><div class="brow"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Спиральный путь</div>3200 м · 2 запуска</div>
+    </div>
+  </div>
+
+  <div class="col"><h2>Уровень 1 — замечено</h2>
+    <p class="thresh">от 5 запусков</p>
+    <p class="desc">Новое: брови двигаются вместе с морганием (та же тайминг-сетка, не отдельная
+      анимация «на глаз»). Форма/характер пока ещё случайные, как в 0.</p>
+    <div class="wRow"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <div class="browRow"><div class="brow browSynced"></div><div class="brow browSynced"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Метеоритный дождь</div>4000 м · 6 запусков</div>
+    </div>
+  </div>
+
+  <div class="col"><h2>Уровень 2 — обжилось</h2>
+    <p class="thresh">от 10 запусков</p>
+    <p class="desc">Новое: игрок один раз ЗАКРЕПЛЯЕТ понравившиеся форму+характер (из уже
+      существующих 7 форм × 12 характеров) — трек больше не тасуется при каждом показе.</p>
+    <div class="wRow sparkle"><div class="wBanner">
+      <div class="wAuthorRibbon"><span>
+        <svg class="starEye eyeL" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>
+        <svg class="starEye eyeR" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg>
+      </span></div><div class="wScrim"></div>
+      <div class="pinBadge">закреплено ★ сверкающие</div>
+    </div>
+      <div class="wBody"><div class="wTitle">Кольца Сатурна</div>5100 м · 11 запусков</div>
+    </div>
+  </div>
+
+  <div class="col"><h2>Уровень 3 — любимец неба</h2>
+    <p class="thresh">от 15 запусков + 2 лайков</p>
+    <p class="desc">Новое: доп. цвет ленты на выбор — первый в палитре серебро (дальше можно
+      добавить ещё 2-3, когда будет видно, что тир достижим и нужен рост).</p>
+    <div class="wRow"><div class="wBanner">
+      <div class="wAuthorRibbon silver"><span>
+        <div class="browRow"><div class="brow browSynced"></div><div class="brow browSynced"></div></div>
+        <div class="eye"></div><div class="eye"></div>
+      </span></div><div class="wScrim"></div></div>
+      <div class="wBody"><div class="wTitle">Полярное сияние</div>6400 м · 19 запусков · 2 лайка</div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <b>Отдельно, не часть этой лестницы:</b> золотая лента («Звезда автора») и подпись текстом
+  в ленте — обе остаются ТОЛЬКО у вас как у создателя игры, инструмент модерации/пометки, не
+  награда за игру. Даже ваши собственные небеса в вышеописанной лестнице растут по тем же
+  запускам/лайкам, что и у всех — без обхода.
+</div>
+</body></html>

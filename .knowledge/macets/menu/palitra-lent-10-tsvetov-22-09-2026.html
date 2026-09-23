@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:32px 20px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 6px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 0 28px;max-width:680px;margin-left:auto;margin-right:auto}
+  .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px}
+  .row.ref{margin-bottom:30px;padding-bottom:26px;border-bottom:1px solid rgba(201,164,92,.25)}
+  h2{font-size:12px;font-weight:700;margin:0 0 1px;text-align:center}
+  p.desc{font-size:10px;color:#8b93b8;text-align:center;margin:0 0 8px;max-width:150px;line-height:1.35}
+  .col{width:150px}
+  .card{position:relative;width:150px;height:100px;border-radius:14px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 30%,#152a52 0%,#0a1030 70%);
+    box-shadow:0 8px 18px rgba(0,0,0,.35)}
+  .ribbon{position:absolute;width:210px;height:24px;bottom:20px;right:-42px;transform:rotate(-45deg);
+    box-shadow:0 2px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;gap:5px;
+    padding:2.5px 0 5.5px 5.6px}
+  .ribbon b{font-family:-apple-system,sans-serif;font-weight:800;font-size:12px;letter-spacing:.02em}
+  canvas{width:14px;height:14px}
+</style></head>
+<body>
+<h1>Палитра лент — 10 цветов, ни один не повторяет другой</h1>
+<p class="sub">Жёлтая звезда — фиксированная валютная иконка (drawStarJewel, настоящая функция
+  из js/game.js, не нарисована на глаз) — её цвет не меняется никогда. Проблема с кошельком —
+  золото на золоте, звезда тонет. Первые два — уже занятые (золото = ваша метка, серебро —
+  база Мастерской). Остальные восемь — новые кандидаты, не рядом по тону, чтобы звезда была
+  видна на любом.</p>
+
+<div class="row ref" id="refRow"></div>
+<div class="row" id="newRow"></div>
+
+<script>
+// Настоящая функция звезды — verbatim из js/game.js, не приближение.
+function drawStarJewel(c){
+  const ctx=c.getContext('2d'); const w=c.width,h=c.height; ctx.clearRect(0,0,w,h);
+  const cx=w/2, cy=h/2, R=w*0.46;
+  ctx.save(); ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=w*0.08; ctx.shadowOffsetY=h*0.03;
+  const g=ctx.createRadialGradient(cx,cy-R*0.3,R*0.1,cx,cy,R);
+  g.addColorStop(0,'#fff3c4'); g.addColorStop(.55,'#ffd76a'); g.addColorStop(1,'#e8a94b');
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  const spikes=4, outerR=R, innerR=R*0.42;
+  for(let i=0;i<spikes*2;i++){
+    const r=(i%2===0)?outerR:innerR;
+    const a=(Math.PI/spikes)*i - Math.PI/2;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(cx,cy,R*0.12,0,7); ctx.fill();
+}
+
+const PALETTE = [
+  // [класс, название, top, bottom, textColor, occupied?]
+  {cls:'gold',   name:'Золото — метка владельца',      top:'#f0c040', bot:'#dba93c', text:'#2c1f08', ref:true},
+  {cls:'silver', name:'Серебро — база Мастерской',       top:'#e6eaf0', bot:'#9aa4b3', text:'#2c1f08', ref:true},
+  {cls:'copper', name:'Медь',    desc:'следующая ступень после серебра — серебро→медь→золото, привычная лесенка металлов', top:'#d68a4a', bot:'#a35a26', text:'#2c1509'},
+  {cls:'steel',  name:'Сталь',   desc:'холодная, максимальный контраст с тёплой звездой — первый кандидат для кошелька', top:'#7b93b3', bot:'#485e79', text:'#0c1520'},
+  {cls:'emerald',name:'Изумруд', desc:'глубокий зелёный, ни с чем не путается', top:'#3ec488', bot:'#1f8a5c', text:'#06251a'},
+  {cls:'amethyst',name:'Аметист',desc:'фиолетовый — в играх обычно «редкий» уровень, знакомый язык', top:'#a875e0', bot:'#6f45a8', text:'#1c0d2e'},
+  {cls:'sapphire',name:'Сапфир', desc:'глубокий синий, тоже сильный контраст со звездой', top:'#4f7fe0', bot:'#2c4fa8', text:'#0a1330'},
+  {cls:'ruby',   name:'Рубин',   desc:'тёплый, но красный — не путается с золотом/оранжевым', top:'#e14d5f', bot:'#a02836', text:'#2e0a0e'},
+  {cls:'nebula', name:'Туманность',desc:'розово-пурпурный — настоящий цвет космических туманностей на снимках', top:'#e85fac', bot:'#a83572', text:'#2a0a1c'},
+  {cls:'aurora', name:'Аврора',  desc:'бирюзово-тёплый — полярное сияние, свежий и редкий тон в игре', top:'#3ddbc4', bot:'#1f9e8f', text:'#052420'},
+];
+
+function buildCard(p){
+  const col=document.createElement('div'); col.className='col';
+  const h2=document.createElement('h2'); h2.textContent=p.name; h2.style.color=p.top; col.appendChild(h2);
+  if(p.desc){ const d=document.createElement('p'); d.className='desc'; d.textContent=p.desc; col.appendChild(d); }
+  else { const d=document.createElement('p'); d.className='desc'; d.textContent='уже используется в игре сейчас'; col.appendChild(d); }
+  const card=document.createElement('div'); card.className='card';
+  const ribbon=document.createElement('div'); ribbon.className='ribbon';
+  ribbon.style.background=`linear-gradient(180deg,${p.top},${p.bot})`;
+  const c1=document.createElement('canvas'); c1.width=32; c1.height=32;
+  const b=document.createElement('b'); b.textContent='11 575'; b.style.color=p.text;
+  const c2=document.createElement('canvas'); c2.width=32; c2.height=32;
+  ribbon.appendChild(c1); ribbon.appendChild(b); ribbon.appendChild(c2);
+  card.appendChild(ribbon); col.appendChild(card);
+  document.getElementById(p.ref?'refRow':'newRow').appendChild(col);
+  requestAnimationFrame(()=>{ drawStarJewel(c1); drawStarJewel(c2); });
+}
+PALETTE.forEach(buildCard);
+</script>
+</body></html>

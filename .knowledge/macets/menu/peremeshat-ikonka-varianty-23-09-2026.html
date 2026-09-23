@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body{background:#070b18;margin:0;padding:28px 18px;font-family:-apple-system,sans-serif;color:#dfe6ff}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 4px;color:#fff}
+  p.sub{text-align:center;font-size:12px;color:#8b93b8;margin:0 auto 20px;max-width:640px;line-height:1.6}
+  p.sub b{color:#dfe6ff}
+  .row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:760px;margin:0 auto}
+  .col{text-align:center;width:150px}
+  .colLbl{font-size:11px;color:#dfe6ff;margin-top:10px;font-weight:600}
+  .colNote{font-size:10px;color:#8b93b8;margin-top:2px;line-height:1.4}
+  .cardMock{position:relative;width:150px;height:90px;border-radius:14px;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 0%,#3a2a4c,#150c2a 70%);border:1px solid rgba(120,150,200,.25)}
+  .pvBtn{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;border:none;
+    background:linear-gradient(160deg, rgba(30,48,92,.82), rgba(8,14,34,.85));
+    box-shadow:0 0 14px rgba(110,170,255,.38), inset 0 0 10px rgba(120,170,255,.14);
+    color:#bcd2ff; display:flex; align-items:center; justify-content:center}
+  .pvBtn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;filter:drop-shadow(0 0 6px rgba(160,210,255,.65))}
+  .old{opacity:.55}
+  .note{max-width:680px;margin:20px auto 0;font-size:11px;color:#8b93b8;line-height:1.6;
+    background:rgba(255,255,255,.04);border-radius:10px;padding:10px 14px}
+</style></head>
+<body>
+<h1>«Перемешать» (ptRandomSkyBtn) — новый значок вместо «?»</h1>
+<p class="sub">«?» освобождается под будущую глобальную подсказку — этой кнопке (случайные Цвет неба/
+  Второй цвет/Настроение) нужен СВОЙ, третий значок: не «?» (займёт подсказка) и не <b>#i-shuffle</b>
+  (уже занят парой «Повтор/Перемешать» в Спидране SSG/RSG — было осознанно разведено 19.09.2026,
+  снова делить нельзя). Все варианты — тот же линейный язык игры (fill:none, stroke:currentColor,
+  round), тот же стеклянный кружок 34px, что уже на карточке превью.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="cardMock old"><div class="pvBtn"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17v.01" stroke-width="2.6"/>
+    </svg></div></div>
+    <div class="colLbl">Было (#i-question)</div>
+    <div class="colNote">освобождается под подсказку</div>
+  </div>
+  <div class="col">
+    <div class="cardMock"><div class="pvBtn"><svg viewBox="0 0 24 24" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="3.5"/>
+      <circle cx="8.3" cy="8.3" r="1.3" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>
+      <circle cx="15.7" cy="15.7" r="1.3" fill="currentColor" stroke="none"/>
+    </svg></div></div>
+    <div class="colLbl">Кубик (3 очка)</div>
+    <div class="colNote">классика «случайно», однозначно читается</div>
+  </div>
+  <div class="col">
+    <div class="cardMock"><div class="pvBtn"><svg viewBox="0 0 24 24" stroke-linejoin="round">
+      <rect x="3" y="9" width="12" height="12" rx="3" transform="rotate(-12 9 15)"/>
+      <rect x="9" y="3" width="12" height="12" rx="3" transform="rotate(12 15 9)"/>
+      <circle cx="13.5" cy="7.5" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="19.5" cy="7.5" r="1" fill="currentColor" stroke="none"/>
+    </svg></div></div>
+    <div class="colLbl">Два кубика</div>
+    <div class="colNote">чуть заметнее «случайности», сложнее в 16px</div>
+  </div>
+  <div class="col">
+    <div class="cardMock"><div class="pvBtn"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="6" width="12" height="15" rx="2.5" transform="rotate(8 13 13.5)"/>
+      <rect x="5" y="4" width="12" height="15" rx="2.5"/>
+      <path d="M9.3 9.3a2.4 2.4 0 0 1 4.6.8c0 1.6-2.4 2.2-2.4 2.2" stroke-width="1.6"/>
+      <path d="M11.5 15.8v.01" stroke-width="2.2"/>
+    </svg></div></div>
+    <div class="colLbl">Карты со знаком «?»</div>
+    <div class="colNote">по вашей ссылке-референсу, гуще в 16px</div>
+  </div>
+  <div class="col">
+    <div class="cardMock"><div class="pvBtn"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v3.2M12 17.8V21M3 12h3.2M17.8 12H21M5.6 5.6l2.3 2.3M16.1 16.1l2.3 2.3M18.4 5.6l-2.3 2.3M7.9 16.1l-2.3 2.3"/>
+      <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/>
+    </svg></div></div>
+    <div class="colLbl">Искра / вихрь</div>
+    <div class="colNote">«перемешать как магией» — менее однозначно</div>
+  </div>
+</div>
+
+<div class="note"><b>Моя рекомендация:</b> обычный кубик (3 очка) — самый узнаваемый символ
+  «случайно» в любой культуре, честно проверяется на 16px (крупные простые формы), не спорит
+  ни с shuffle, ни с будущим «?». «Карты со знаком ?» ближе к вашему референсу, но на реальном
+  маленьком значке (16px) полупрозрачная «?» внутри карты рискует читаться нечётко — крупный
+  рендер (сверху) это уже показывает.</div>
+</body></html>

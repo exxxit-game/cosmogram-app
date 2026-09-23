@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  :root{
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35); --stone-shadow:none;
+    --stone-border-sel:rgba(201,164,92,.6); --stone-shadow-sel:0 0 0 1px rgba(201,164,92,.5);
+    --muted:#8b93b8; --gold-hi:#f0c040; --ink:#dfe6ff;
+  }
+  body{background:#070b18;margin:0;padding:28px 18px;font-family:-apple-system,sans-serif;color:var(--ink)}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 4px;color:#fff}
+  h2{font-size:12px;font-weight:600;text-align:center;margin:26px 0 4px;color:var(--gold-hi);text-transform:uppercase;letter-spacing:.04em}
+  p.sub{text-align:center;font-size:12px;color:var(--muted);margin:0 auto 10px;max-width:640px;line-height:1.5}
+  .row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;max-width:720px;margin:0 auto}
+  .col{flex:1 1 300px;max-width:340px}
+  .colLbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:center;margin-bottom:6px}
+  .panel{background:rgba(15,25,50,.6);border:1px solid rgba(120,150,200,.25);border-radius:14px;padding:14px}
+  .forgeSeg{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+  .forgeSegBtn{border:1px solid var(--stone-border);background:var(--stone-fill);box-shadow:var(--stone-shadow);color:var(--muted);
+    border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer;transition:all .15s}
+  .forgeSegBtn.sel{border-color:var(--stone-border-sel);box-shadow:var(--stone-shadow-sel);color:var(--gold-hi)}
+  .forgeSegBtn.hs{font-weight:600}
+  .hsNote{font-size:11px;color:var(--gold-hi);text-align:center;margin-top:8px;opacity:.9}
+  .hint{color:var(--muted);font-size:11px;text-align:center;line-height:1.6;padding:0 6px;margin-top:8px}
+  .oldCard{margin-top:10px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
+  .forgeRow{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px}
+  .forgeLbl{flex:0 0 90px;color:var(--muted)}
+  .fakeSlider{flex:1;height:4px;background:rgba(255,255,255,.12);border-radius:2px;position:relative}
+  .fakeSlider::after{content:'';position:absolute;left:0;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--gold-hi)}
+  .fakeSlider.s1::after{left:45%} .fakeSlider.s2::after{left:60%} .fakeSlider.s3::after{left:30%}
+  .heightTag{position:absolute;top:6px;right:10px;font-size:9px;color:#7fe3c0;background:rgba(127,227,192,.12);padding:2px 6px;border-radius:6px}
+  .panel{position:relative}
+</style></head>
+<body>
+<h1>Бонусы — компактнее, Темп неба — подсказка ветра одноразовая</h1>
+<p class="sub">«Высокая ставка» стала 5-й кнопкой в том же ряду вместо отдельной карточки-предложения
+  под ним — при выборе снизу короткая строка-напоминание, что это ещё и форсирует 1 жизнь (это
+  настройка в другом месте, на шаге «Старт», чтобы не потерялась). Подсказка ветра теперь
+  появляется только один раз (как у других подсказок игры), при следующих открытиях — не занимает
+  место.</p>
+
+<h2>Бонусы</h2>
+<div class="row">
+  <div class="col">
+    <div class="colLbl">Было</div>
+    <div class="panel">
+      <div class="heightTag">~112px</div>
+      <div class="forgeSeg">
+        <button class="forgeSegBtn">Выкл</button>
+        <button class="forgeSegBtn sel">Редко</button>
+        <button class="forgeSegBtn">Норма</button>
+        <button class="forgeSegBtn">Часто</button>
+      </div>
+      <div class="oldCard">● Высокая ставка — 1 жизнь, бонусов нет, очки ×4</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="colLbl">Стало — обычный выбор</div>
+    <div class="panel">
+      <div class="heightTag">~40px</div>
+      <div class="forgeSeg">
+        <button class="forgeSegBtn">Выкл</button>
+        <button class="forgeSegBtn sel">Редко</button>
+        <button class="forgeSegBtn">Норма</button>
+        <button class="forgeSegBtn">Часто</button>
+        <button class="forgeSegBtn hs">Ставка ×4</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row" style="margin-top:14px">
+  <div class="col" style="flex-basis:100%;max-width:340px;margin:0 auto">
+    <div class="colLbl">Стало — выбрана «Ставка ×4»</div>
+    <div class="panel">
+      <div class="forgeSeg">
+        <button class="forgeSegBtn">Выкл</button>
+        <button class="forgeSegBtn">Редко</button>
+        <button class="forgeSegBtn">Норма</button>
+        <button class="forgeSegBtn">Часто</button>
+        <button class="forgeSegBtn hs sel">Ставка ×4</button>
+      </div>
+      <div class="hsNote">1 жизнь, бонусов нет — форсирует «Старт»</div>
+    </div>
+  </div>
+</div>
+
+<h2>Темп неба</h2>
+<div class="row">
+  <div class="col">
+    <div class="colLbl">Первое открытие — подсказка видна</div>
+    <div class="panel">
+      <div class="forgeRow"><span class="forgeLbl">Плотность</span><div class="fakeSlider s1"></div></div>
+      <div class="forgeRow"><span class="forgeLbl">Скорость</span><div class="fakeSlider s2"></div></div>
+      <div class="forgeRow"><span class="forgeLbl">Солнечный ветер</span><div class="fakeSlider s3"></div></div>
+      <div class="hint">Чем больше число, тем больше раскачивает самолёт в стороны</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="colLbl">Уже видели — подсказка скрыта</div>
+    <div class="panel">
+      <div class="heightTag">−28px</div>
+      <div class="forgeRow"><span class="forgeLbl">Плотность</span><div class="fakeSlider s1"></div></div>
+      <div class="forgeRow"><span class="forgeLbl">Скорость</span><div class="fakeSlider s2"></div></div>
+      <div class="forgeRow"><span class="forgeLbl">Солнечный ветер</span><div class="fakeSlider s3"></div></div>
+    </div>
+  </div>
+</div>
+</body></html>

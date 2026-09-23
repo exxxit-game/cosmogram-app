@@ -1,0 +1,165 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  :root{
+    --stone-fill:rgba(14,18,32,.7); --stone-border:rgba(201,164,92,.35);
+    --stone-border-sel:rgba(201,164,92,.6); --gold-hi:#f0c040; --muted:#8b93b8; --ink:#dfe6ff;
+  }
+  body{background:#070b18;margin:0;padding:28px 18px;font-family:-apple-system,sans-serif;color:var(--ink)}
+  h1{font-size:16px;font-weight:600;text-align:center;margin:0 0 4px;color:#fff}
+  h2{font-size:12px;font-weight:600;text-align:center;margin:26px 0 10px;color:var(--gold-hi);text-transform:uppercase;letter-spacing:.04em}
+  p.sub{text-align:center;font-size:12px;color:var(--muted);margin:0 auto 10px;max-width:640px;line-height:1.5}
+  .row{display:flex;gap:18px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:720px;margin:0 auto}
+  .col{text-align:center}
+  .colLbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px}
+  .trackMock{position:relative;width:280px;height:70px;background:radial-gradient(ellipse at 50% 0%,#3a2a4c,#150c2a 70%);
+    border:1px solid rgba(120,150,200,.25);border-radius:14px;overflow:hidden}
+
+  .ptCornerBtn{position:absolute;top:17px;width:36px;height:36px;border-radius:50%;
+    display:grid;place-items:center;font-family:inherit;font-size:12px}
+  .ptCornerLeft{left:10px} .ptCornerRight{right:10px}
+  .ptCornerLeft b{color:var(--gold-hi);font-size:12px}
+  .ic{width:16px;height:16px}
+
+  /* Было — плоский materal, сливается с тёплым небом */
+  .old .ptCornerBtn{background:var(--stone-fill);border:1px solid var(--stone-border);color:var(--muted)}
+
+  /* Стало (обычное состояние) — тот же материал игры, но с мягкой подсветкой по центру + чуть
+     ярче кайма, чтобы не терялось на любом цвете неба, не выдумывая новый материал с нуля. */
+  .pretty .ptCornerBtn{background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.14),transparent 60%),var(--stone-fill);
+    border:1.5px solid var(--stone-border-sel);color:var(--muted);box-shadow:0 0 10px rgba(240,192,64,.18),inset 0 0 0 1px rgba(255,255,255,.06)}
+  .pretty .ptCornerLeft b{color:var(--gold-hi)}
+
+  /* Стало (простой 5-10с) — то же оформление, но содержимое сменилось на пару «глаз»: тот же
+     компонент .eye/wRibbonBlink, что уже моргает у лент Мастерской/Кошелька (index.html), не
+     выдуман заново под эту задачу. */
+  .idle .ptCornerBtn{background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.14),transparent 60%),var(--stone-fill);
+    border:1.5px solid var(--stone-border-sel);box-shadow:0 0 10px rgba(240,192,64,.18),inset 0 0 0 1px rgba(255,255,255,.06)}
+  .idle .ptCornerBtn b, .idle .ptCornerBtn .ic{display:none}
+  .eyeWrap{width:20px;height:20px;border-radius:50%;background:#e8e2d4;display:grid;place-items:center}
+  .eye{width:9px;height:9px;border-radius:50%;background:#2c1f08;animation:wRibbonBlink 4.2s ease-in-out infinite}
+  .idle .ptCornerRight .eye{animation-delay:.18s}
+  @keyframes wRibbonBlink{0%,90%,100%{transform:scaleY(1)} 93%{transform:scaleY(.12)} 96%{transform:scaleY(1)}}
+
+  .note{max-width:640px;margin:18px auto 0;font-size:11px;color:var(--muted);line-height:1.6;
+    background:rgba(255,255,255,.04);border-radius:10px;padding:10px 14px}
+
+  /* Варианты характера — те же 12 keyframes, что уже определяют «характер» ленты Мастерской/
+     Кошелька (index.html, wRibbon*), просто нацелены на .vEye вместо .eye. Ни один не выдуман
+     заново под эту задачу — только подключены к маленькому кружку вместо ленты. */
+  .vGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;max-width:720px;margin:0 auto}
+  .vCard{background:rgba(15,25,50,.6);border:1px solid rgba(120,150,200,.25);border-radius:12px;padding:12px 8px;text-align:center}
+  .vCard .vLbl{font-size:10.5px;color:var(--ink);margin-top:8px}
+  .vPair{display:flex;justify-content:center;gap:14px}
+  .vDot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.14),transparent 60%),var(--stone-fill);
+    border:1.5px solid var(--stone-border-sel);display:grid;place-items:center;box-shadow:0 0 8px rgba(240,192,64,.16)}
+  .vEyeWrap{width:19px;height:19px;border-radius:50%;background:#e8e2d4;display:grid;place-items:center;overflow:hidden}
+  .vEye{width:8px;height:8px;border-radius:50%;background:#2c1f08}
+  .vPair .vDot:last-child .vEye{animation-delay:.18s}
+
+  .v-calm .vEye{animation:wRibbonBlink 4.2s ease-in-out infinite}
+  .v-bouncy .vEye{animation:wRibbonBouncy 4.6s cubic-bezier(.34,1.56,.64,1) infinite}
+  @keyframes wRibbonBouncy{0%,88%,100%{transform:scaleY(1)} 91%{transform:scaleY(.1)} 94%{transform:scaleY(1.22)} 97%{transform:scaleY(1)}}
+  .v-sparkle .vEye{animation:wRibbonSparkle 5.4s ease-in-out infinite}
+  @keyframes wRibbonSparkle{0%,75%,100%{transform:scale(1)} 80%{transform:scale(1.35)} 85%{transform:scale(1)} 90%{transform:scaleY(.12)} 93%{transform:scale(1)}}
+  .v-droopy .vEye{animation:wRibbonDroopy 8s ease-in-out infinite; transform:scaleY(.62)}
+  @keyframes wRibbonDroopy{0%,70%,100%{transform:scaleY(.62)} 75%{transform:scaleY(1)} 80%{transform:scaleY(.62)}}
+  .v-curious .vEye{animation:wRibbonCurious 2.6s ease-in-out infinite}
+  @keyframes wRibbonCurious{0%,84%,100%{transform:scaleY(1)} 87%{transform:scaleY(.12)} 89%{transform:scaleY(1)} 91%{transform:scaleY(.12)} 93%{transform:scaleY(1)}}
+  .v-nervous .vEye{animation:wRibbonNervous 2.2s ease-in-out infinite}
+  @keyframes wRibbonNervous{0%,60%,100%{transform:translateX(0) scaleY(1)} 64%{transform:translateX(1.4px) scaleY(1)} 67%{transform:translateX(1.4px) scaleY(.12)} 70%{transform:translateX(-1.4px) scaleY(1)} 73%{transform:translateX(0) scaleY(1)}}
+  .v-sideeye .vEye{animation:wRibbonSideeye 6.4s ease-in-out infinite; transform:translateX(1.8px)}
+  @keyframes wRibbonSideeye{0%,55%,100%{transform:translateX(1.8px) scaleY(1)} 58%{transform:translateX(1.8px) scaleY(.12)} 61%{transform:translateX(1.8px) scaleY(1)} 80%{transform:translateX(0) scaleY(1)} 88%{transform:translateX(1.8px) scaleY(1)}}
+  .v-surprised .vEye{animation:wRibbonSurprised 6.8s ease-in-out infinite}
+  @keyframes wRibbonSurprised{0%,70%,100%{transform:scaleY(1)} 73%{transform:scaleY(.1)} 75%{transform:scaleY(1)} 77%{transform:scaleY(.1)} 79%{transform:scaleY(1.15)} 82%{transform:scaleY(1)}}
+  .v-googly .vEye{animation:wRibbonGooglyBob 2.4s ease-in-out infinite, wRibbonGooglyBlink 9s ease-in-out infinite}
+  @keyframes wRibbonGooglyBob{0%,100%{margin-top:0} 50%{margin-top:1.5px}}
+  @keyframes wRibbonGooglyBlink{0%,92%,100%{opacity:1} 95%{opacity:1} 96%{transform:scaleY(.12)} 97%{opacity:1}}
+  .v-dramatic .vEye{animation:wRibbonDramatic 10s ease-in-out infinite}
+  @keyframes wRibbonDramatic{0%,85%,100%{transform:scaleY(1)} 89%{transform:scaleY(.1)} 95%{transform:scaleY(.1)} 99%{transform:scaleY(1)}}
+  .v-sleepy .vEye{animation:wRibbonSleepy 7s ease-in-out infinite}
+  @keyframes wRibbonSleepy{0%,80%,100%{transform:scaleY(1)} 85%{transform:scaleY(.15)} 92%{transform:scaleY(.15)} 97%{transform:scaleY(1)}}
+</style></head>
+<body>
+<h1>Угловые кнопки «Карты»: красивее + оживают при бездействии</h1>
+<p class="sub">Слева — счётчик точек, справа — «Отменить». Два изменения сразу: (1) материал кнопок
+  получил мягкую подсветку и более яркую кайму — не выдуман заново, тот же камень игры, просто
+  контрастнее на любом цвете неба; (2) если 5-10 секунд ничего не происходит на «Карте» — обе
+  кнопки на пару секунд превращаются в глаза (тот же .eye/wRibbonBlink, что уже моргает у лент
+  Мастерской/Кошелька), моргают синхронно с тем же сдвигом .18с, что и там же, потом возвращаются
+  к цифре/стрелке.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="colLbl">Было</div>
+    <div class="trackMock old">
+      <button class="ptCornerBtn ptCornerLeft"><b>0</b></button>
+      <button class="ptCornerBtn ptCornerRight"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15 4 10l5-5"/><path d="M4 10h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    </div>
+  </div>
+  <div class="col">
+    <div class="colLbl">Стало — обычное состояние</div>
+    <div class="trackMock pretty">
+      <button class="ptCornerBtn ptCornerLeft"><b>0</b></button>
+      <button class="ptCornerBtn ptCornerRight"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15 4 10l5-5"/><path d="M4 10h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    </div>
+  </div>
+  <div class="col">
+    <div class="colLbl">Стало — 5-10с бездействия</div>
+    <div class="trackMock idle">
+      <button class="ptCornerBtn ptCornerLeft"><b>0</b><span class="eyeWrap"><span class="eye"></span></span></button>
+      <button class="ptCornerBtn ptCornerRight"><span class="eyeWrap"><span class="eye"></span></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="note">Живая анимация: подождите пару секунд — правый и левый «глаз» моргают не
+  одновременно (задержка .18с), ровно как уже сделано у ленты Кошелька. Числа не выдуманы — тот же
+  keyframe wRibbonBlink, что уже в живом коде.</div>
+
+<h2>11 готовых характеров (из 12, что уже есть у лент Мастерской)</h2>
+<p class="sub">Ничего не придумано заново — те же keyframes, что уже определяют характер ленты
+  («Семья характеров», 20.09.2026), просто нацелены на маленький кружок вместо ленты. «Волна»
+  (char-wave) не включена — она и есть просто сдвиг .18с между глазами, а он здесь уже у всех
+  11 по умолчанию (тот же приём, что справа/слева на кошельке). Смотрите вживую подольше — циклы
+  разной длины (2.2с у «Нервного» до 10с у «Драматичного»).</p>
+<div class="vGrid">
+  <div class="vCard"><div class="vPair v-calm"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Спокойный (умолч.)</div></div>
+  <div class="vCard"><div class="vPair v-bouncy"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Пружинка</div></div>
+  <div class="vCard"><div class="vPair v-sparkle"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Сверкающие</div></div>
+  <div class="vCard"><div class="vPair v-droopy"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Ленивый прищур</div></div>
+  <div class="vCard"><div class="vPair v-sleepy"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Сонный</div></div>
+  <div class="vCard"><div class="vPair v-curious"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Любопытный</div></div>
+  <div class="vCard"><div class="vPair v-nervous"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Нервный</div></div>
+  <div class="vCard"><div class="vPair v-sideeye"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Косой взгляд</div></div>
+  <div class="vCard"><div class="vPair v-surprised"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Удивлённый</div></div>
+  <div class="vCard"><div class="vPair v-googly"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Глазки-пружинки</div></div>
+  <div class="vCard"><div class="vPair v-dramatic"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Драматичный</div></div>
+</div>
+
+<h2>Новое: зрачок реально двигается (владелец, живой разговор — «как часовая стрелка, туда-сюда»)</h2>
+<p class="sub">Всё выше — глаз целиком моргает (scaleY), зрачок стоит на месте. Тут другое: сам тёмный
+  зрачок смещается внутри белого «яблока» — глаз буквально смотрит по сторонам, не только
+  моргает. Новый приём, ничего похожего в игре ещё не было. Первые два — моя первая прикидка на
+  глаз. Владелец попросил изучить подробно — исследование (RESEARCH-2026-09-EYE-DART-ANIMATION.md)
+  нашло реальную технику аниматоров («саккада»): настоящий взгляд не скользит плавно, он ЩЁЛКАЕТ —
+  резкий скачок (2-3 кадра, ~80% движения за один кадр), потом пауза-фиксация. «Маятник» технически
+  неверен (глаза не ездят плавно туда-сюда), третий вариант — по-настоящему, как это делают.</p>
+<div class="vGrid">
+  <div class="vCard"><div class="vPair v-pendulum"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Маятник (первая прикидка — технически неверно)</div></div>
+  <div class="vCard"><div class="vPair v-lookaround"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Осматривается (первая прикидка — ближе, но тоже плавно)</div></div>
+  <div class="vCard"><div class="vPair v-dart"><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div><div class="vDot"><span class="vEyeWrap"><span class="vEye"></span></span></div></div><div class="vLbl">Настоящий eye dart (по исследованию, рекомендую)</div></div>
+</div>
+<style>
+  .v-pendulum .vEye{animation:vPendulum 3.6s ease-in-out infinite, wRibbonBlink 4.2s ease-in-out infinite}
+  @keyframes vPendulum{0%,100%{transform:translateX(-4px)} 50%{transform:translateX(4px)}}
+  .v-lookaround .vEye{animation:vLookaround 5s ease-in-out infinite, wRibbonBlink 4.2s ease-in-out infinite}
+  @keyframes vLookaround{0%,15%{transform:translateX(0)} 25%,40%{transform:translateX(-4px)} 50%,70%{transform:translateX(0)} 80%,95%{transform:translateX(4px)} 100%{transform:translateX(0)}}
+  /* 23.09.2026, по исследованию: steps(1,end) — каждый сегмент держит значение СТАРТА до
+     следующей точки, потом мгновенно прыгает. Долгая пауза (0-55%), резкий скачок влево,
+     короткая фиксация, резкий скачок вправо, фиксация, резкий возврат в центр — ровно как
+     описывает техника «eye dart» (щелчок + settle), не плавное скольжение. */
+  .v-dart .vEye{animation:vDart 6s steps(1,end) infinite, wRibbonBlink 4.2s ease-in-out infinite}
+  @keyframes vDart{0%,55%{transform:translateX(0)} 56%,75%{transform:translateX(-4px)} 76%,95%{transform:translateX(4px)} 96%,100%{transform:translateX(0)}}
+</style>
+</body></html>
