@@ -1381,7 +1381,12 @@ function forgeBoot(){ // true = есть трасса друга: этот за�
     else if(location.hash&&location.hash.indexOf('#map=')===0) raw='map_'+location.hash.slice(5);
     if(!raw) return false;
     const cfg=forgeDecode(raw);
-    if(!cfg) return false;
+    // 23.09.2026 (аудит видимости ошибок): раньше битая ссылка (обрезанная Telegram, неверный
+    // base64, рассинхрон версии в forgeBitsUnpack) была неотличима от «ссылки вообще не было» —
+    // forgeDecode() тихо возвращала null в обоих случаях, никто не узнавал, что чужое небо не
+    // открылось. raw здесь уже гарантированно непустой (проверено строкой выше) — значит cfg=null
+    // именно означает «была настоящая ссылка, разбор не удался», не «ссылки не было».
+    if(!cfg){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('map_decode_fail', raw.slice(0,40)); return false; }
     forgeCfg=cfg; Store.set('forgeLast',cfg); // «трасса друга» становится последней — «Ещё раз» играет её же
     return true;
   }catch(e){ return false; }

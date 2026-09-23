@@ -1247,6 +1247,17 @@ function ghostUpload(category, track, skin, best, seed){
     if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('ghost_fail', category);
   });
 }
+/* 23.09.2026 (аудит видимости ошибок, владелец: «нужно это всё исправлять»): тот же приём,
+   что уже 12.08.2026 вылечил молчаливую потерю призрачного следа (ghostUpload выше, «30 из 35
+   рекордов без ленты») — syncDailySubmit/syncSpeedrunSubmit/syncSlalomSubmit/syncBiathlonSubmit
+   честно возвращают true/false (sync.js), но вызывались голыми выражениями ниже, без единого
+   .then — неудачная отправка означала, что реально пройденный забег просто не появлялся в
+   таблице, без единого сигнала кому бы то ни было. Один маленький хелпер вместо четырёх копий
+   одного и того же .then(ok=>{...}). */
+function submitFailSignal(kind, ok){
+  if (ok) return;
+  if (typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal(kind+'_fail');
+}
   /* 10.09.2026 (владелец: «так у всех почти» — большинство рекордов, включая давние
      собственные владельца, без ленты вообще). Найдено живой проверкой базы: cosmogram-sync
      после upsert честно перечитывает scores и возвращает accepted[cat]/accepted.dist —
@@ -1274,23 +1285,23 @@ function ghostUpload(category, track, skin, best, seed){
       dist:distM, // 14.09.2026 (находка 1.3): звезда дня стоит на фиксированной метке GOLD_DIST=1800м
       // (js/goldstar.js) — заявка star:true при малой пройденной дистанции физически невозможна,
       // сервер теперь может её отбить, не веря голому булеву флагу
-      track: ghostPackDaily() });
+      track: ghostPackDaily() }).then(ok=>submitFailSignal('daily',ok)); // 23.09.2026: было голым вызовом без .then — см. комментарий у submitFailSignal
   // 03.09.2026 «Спидран получает свою таблицу»: тот же приём, что у Трассы дня — только
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
     syncSpeedrunSubmit({ day:(S.speedrunRSG?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY), time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed» / 11.09.2026 «RSG»: свой постоянный ключ на каждый вариант, одна и та же таблица
-      track: ghostPackDaily() });
+      track: ghostPackDaily() }).then(ok=>submitFailSignal('speedrun',ok));
   // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — только настоящая победа (slalomWin), не срыв
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSlalomSubmit==='function' && typeof ghostPackDaily==='function')
     syncSlalomSubmit({ day:SLALOM_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
-      track: ghostPackDaily() });
+      track: ghostPackDaily() }).then(ok=>submitFailSignal('slalom',ok));
   // 06.09.2026 «Биатлон»: тот же приём — S.time на этот момент уже несёт штрафы за промахи
   if (S.mode==='biathlon' && S.biathlonWin && !S.wasRestored && rec.length>=20 &&
     typeof syncBiathlonSubmit==='function' && typeof ghostPackDaily==='function')
     syncBiathlonSubmit({ day:BIATHLON_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
-      track: ghostPackDaily() });
+      track: ghostPackDaily() }).then(ok=>submitFailSignal('biathlon',ok));
   /* 06.09.2026 «Эстафета»: сдача этапа — только настоящая (relayLegDone), сорванный этап
      на сервер вообще не идёт (владелец: «цепочка остаётся открытой на том же этапе, ничего
      не пишем») — relayLegDone уже гарантирует это условие, отдельная проверка тут не нужна.

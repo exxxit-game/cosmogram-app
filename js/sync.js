@@ -245,13 +245,37 @@ function syncCaptureTgSess(r){
   if(!r || typeof r.clone!=='function') return;
   try{ r.clone().json().then(d=>{ if(d && d.tgSess) Store.set('tgAuthSess',{sess:d.tgSess}); }).catch(()=>{}); }catch(e){}
 }
+/* 23.09.2026 (аудит видимости ошибок, владелец: «нужно это всё исправлять» — найдено: ~25+
+   мест в этом файле заканчиваются на .catch(()=>null)/.catch(()=>({...); return null;}) без
+   единого сигнала, сбой Edge Function был виден только игроку тостом, владельцу — никогда).
+   syncFetch() — ЕДИНЫЙ низкоуровневый выход для всех этих мест (syncPost/syncDailyPost/
+   relayPost и другие router через него) — чинить в каждом из 25+ вызовов по отдельности
+   значило бы 25 одинаковых правок вместо одной, тот же класс ошибки, что уже не раз ловили
+   в этом же проекте («не гадать число, чинить общий механизм, не по одному»). Два honest
+   случая: (а) сам fetch() отклонился (сеть/таймаут/CORS) — раньше это тонуло МОЛЧА в
+   персональном .catch(()=>null) каждого вызывающего; (b) сервер ответил 5xx — это ВСЕГДА
+   его беда, не ожидаемый код вроде 401/403/429, которые отдельные места уже разбирают
+   осмысленно. Оба сигнала — короткая пара «какая функция + что случилось», дедуп уже
+   встроен в drop() (kind+первые 60 символов сообщения) — повтор той же беды на том же
+   endpoint за сессию не спамит дважды. Поведение для вызывающих НЕ меняется — resolve/reject
+   те же самые, сигнал просто добавлен рядом, не вместо. */
+function syncEndpointName(url){ return String(url||'').split('/').pop()||url; }
 function syncFetch(url, body){
   const ctl=(typeof AbortController==='function')?new AbortController():null;
   const t=ctl?setTimeout(()=>{ try{ctl.abort();}catch(e){} },POST_TIMEOUT):0;
+  const who=syncEndpointName(url)+(body&&body.action?('/'+body.action):'');
   return fetch(url,{method:'POST',
     headers:{'Content-Type':'application/json','apikey':SYNC_KEY},
     body:JSON.stringify(body), signal:ctl?ctl.signal:undefined})
-    .then(r=>{ syncCaptureTgSess(r); return r; })
+    .then(r=>{
+      syncCaptureTgSess(r);
+      if(r.status>=500 && typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('http_5xx', who+': '+r.status);
+      return r;
+    })
+    .catch(e=>{
+      if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('net_fail', who+': '+String((e&&e.name)||e||'?').slice(0,40));
+      throw e; // поведение для вызывающих не меняется — они сами решают, ловить или нет
+    })
     .finally(()=>{ if(t) clearTimeout(t); });
 }
 function syncPost(payload){
