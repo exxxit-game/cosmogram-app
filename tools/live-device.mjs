@@ -222,8 +222,13 @@ async function cmdConsole(pageId, duration, port){
         logs.push(`[console.${msg.params.type}] ${argsTxt}`);
       }
       if (msg.method === 'Runtime.exceptionThrown') {
+        // 23.09.2026: url/lineNumber добавлены — раньше видели ТЕКСТ ошибки без места, гадать
+        // откуда она вообще было нечем (живой Oppo-specific exception, точку никак не найти
+        // без source location).
         const d = msg.params.exceptionDetails;
-        logs.push(`[EXCEPTION] ${d.text} ${d.exception ? (d.exception.description || d.exception.value || '') : ''}`);
+        const loc = d.url ? ` @ ${d.url}:${d.lineNumber}:${d.columnNumber}` : '';
+        const stack = d.stackTrace && d.stackTrace.callFrames ? ' | stack: ' + d.stackTrace.callFrames.map(f=>`${f.functionName||'<anon>'}@${f.url}:${f.lineNumber}`).join(' < ') : '';
+        logs.push(`[EXCEPTION] ${d.text} ${d.exception ? (d.exception.description || d.exception.value || '') : ''}${loc}${stack}`);
       }
       if (msg.method === 'Log.entryAdded') {
         logs.push(`[log.${msg.params.entry.level}] ${msg.params.entry.text}`);
