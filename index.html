@@ -3517,10 +3517,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    .eye выше в этом файле) — не новый рисунок, тот же keyframe, только цель другая. 11 из 12
    характеров ленты подключены как .eyeChar-* (владелец explicitly попросил разнообразие,
    не один и тот же характер всегда — выбор случайный при каждом новом появлении, см. JS). */
-.ptCornerBtn .cornerEye{display:none}
-.ptCornerBtn.idleEyes b, .ptCornerBtn.idleEyes .ic{display:none}
-.ptCornerBtn.idleEyes .cornerEye{display:grid}
-.ptCornerBtn .eyeWrap{width:20px;height:20px;border-radius:50%;background:#e8e2d4;display:grid;place-items:center}
+/* 23.09.2026, тем же вечером (владелец: «тоже глаза сделать» — «Перемешать»/«Сохранить в
+   избранное» на превью «Небо», .pvBtn, «макет не нужен, будет ровно одинаково» — макет
+   пропущен явным словом владельца). Тот же компонент, просто добавлен вторым селектором
+   везде ниже — ни одно правило не переопределено, не задвоено под другим именем. */
+.ptCornerBtn .cornerEye, .pvBtn .cornerEye{display:none}
+.ptCornerBtn.idleEyes b, .ptCornerBtn.idleEyes .ic, .pvBtn.idleEyes .ic{display:none}
+.ptCornerBtn.idleEyes .cornerEye, .pvBtn.idleEyes .cornerEye{display:grid}
+.ptCornerBtn .eyeWrap, .pvBtn .eyeWrap{width:20px;height:20px;border-radius:50%;background:#e8e2d4;display:grid;place-items:center}
 /* 23.09.2026 «Настоящий eye dart» (владелец, «изучи подробно», см. RESEARCH-2026-09-EYE-DART-
    ANIMATION.md): зрачок реально смотрит по сторонам, не только моргает. Живёт на ОТДЕЛЬНОМ
    вложенном .eyeDart, не на .eye — на одном элементе два независимых transform-анимации (эта,
@@ -3530,7 +3534,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    ~80% движения за один кадр, дальше пауза-фиксация — не «часы-маятник», реальные глаза не
    ездят плавно). Оба глаза смотрят СИНХРОННО в одну сторону (без сдвига л/п, в отличие от
    моргания) — иначе выглядело бы как косоглазие, не как взгляд. */
-.ptCornerBtn .eyeDart{animation:vDart 6s steps(1,end) infinite}
+.ptCornerBtn .eyeDart, .pvBtn .eyeDart{animation:vDart 6s steps(1,end) infinite}
 @keyframes vDart{0%,55%{transform:translateX(0)} 56%,75%{transform:translateX(-4px)} 76%,95%{transform:translateX(4px)} 96%,100%{transform:translateX(0)}}
 /* 23.09.2026 (владелец, живой скрин: «просто белые круги, нет глаз») — .eye/.eyeDart здесь оба
    <span> (inline по умолчанию). У ленты (.wAuthorRibbon .eye выше) это не мешало — там .eye прямой
@@ -3539,18 +3543,18 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    его собственный ребёнок .eye — тот остаётся inline, где width/height не действуют: зрачок реально
    схлопывался в 0×0, а .eyeDart вслед за ним (тоже auto-размер без контента). Живьём измерено
    (getComputedStyle): .eye было 9×9 «на бумаге», но .eyeDart — 0×0. display:block чинит оба сразу. */
-.ptCornerBtn .eye{display:block;width:9px;height:9px;border-radius:50%;background:#2c1f08;animation:wRibbonBlink 4.2s ease-in-out infinite}
-.ptCornerBtn.ptCornerRight .eye{animation-delay:.18s} /* тот же сдвиг л/п, что уже у ленты Кошелька/Мастерской */
-.ptCornerBtn.eyeChar-bouncy .eye{animation-name:wRibbonBouncy;animation-duration:4.6s;animation-timing-function:cubic-bezier(.34,1.56,.64,1)}
-.ptCornerBtn.eyeChar-sparkle .eye{animation-name:wRibbonSparkle;animation-duration:5.4s}
-.ptCornerBtn.eyeChar-droopy .eye{animation-name:wRibbonDroopy;animation-duration:8s;transform:scaleY(.62)}
-.ptCornerBtn.eyeChar-sleepy .eye{animation-name:wRibbonSleepy;animation-duration:7s}
-.ptCornerBtn.eyeChar-curious .eye{animation-name:wRibbonCurious;animation-duration:2.6s}
-.ptCornerBtn.eyeChar-nervous .eye{animation-name:wRibbonNervous;animation-duration:2.2s}
-.ptCornerBtn.eyeChar-sideeye .eye{animation-name:wRibbonSideeye;animation-duration:6.4s;transform:translateX(1.8px)}
-.ptCornerBtn.eyeChar-surprised .eye{animation-name:wRibbonSurprised;animation-duration:6.8s}
-.ptCornerBtn.eyeChar-googly .eye{animation-name:wRibbonGooglyBob,wRibbonGooglyBlink;animation-duration:2.4s,9s;animation-timing-function:ease-in-out,ease-in-out}
-.ptCornerBtn.eyeChar-dramatic .eye{animation-name:wRibbonDramatic;animation-duration:10s}
+.ptCornerBtn .eye, .pvBtn .eye{display:block;width:9px;height:9px;border-radius:50%;background:#2c1f08;animation:wRibbonBlink 4.2s ease-in-out infinite}
+.ptCornerBtn.ptCornerRight .eye, .pvBtn.pvBtnR .eye{animation-delay:.18s} /* тот же сдвиг л/п, что уже у ленты Кошелька/Мастерской */
+.ptCornerBtn.eyeChar-bouncy .eye, .pvBtn.eyeChar-bouncy .eye{animation-name:wRibbonBouncy;animation-duration:4.6s;animation-timing-function:cubic-bezier(.34,1.56,.64,1)}
+.ptCornerBtn.eyeChar-sparkle .eye, .pvBtn.eyeChar-sparkle .eye{animation-name:wRibbonSparkle;animation-duration:5.4s}
+.ptCornerBtn.eyeChar-droopy .eye, .pvBtn.eyeChar-droopy .eye{animation-name:wRibbonDroopy;animation-duration:8s;transform:scaleY(.62)}
+.ptCornerBtn.eyeChar-sleepy .eye, .pvBtn.eyeChar-sleepy .eye{animation-name:wRibbonSleepy;animation-duration:7s}
+.ptCornerBtn.eyeChar-curious .eye, .pvBtn.eyeChar-curious .eye{animation-name:wRibbonCurious;animation-duration:2.6s}
+.ptCornerBtn.eyeChar-nervous .eye, .pvBtn.eyeChar-nervous .eye{animation-name:wRibbonNervous;animation-duration:2.2s}
+.ptCornerBtn.eyeChar-sideeye .eye, .pvBtn.eyeChar-sideeye .eye{animation-name:wRibbonSideeye;animation-duration:6.4s;transform:translateX(1.8px)}
+.ptCornerBtn.eyeChar-surprised .eye, .pvBtn.eyeChar-surprised .eye{animation-name:wRibbonSurprised;animation-duration:6.8s}
+.ptCornerBtn.eyeChar-googly .eye, .pvBtn.eyeChar-googly .eye{animation-name:wRibbonGooglyBob,wRibbonGooglyBlink;animation-duration:2.4s,9s;animation-timing-function:ease-in-out,ease-in-out}
+.ptCornerBtn.eyeChar-dramatic .eye, .pvBtn.eyeChar-dramatic .eye{animation-name:wRibbonDramatic;animation-duration:10s}
 .ptCornerLeft{left:6px}
 .ptCornerLeft b{color:var(--gold-hi);font-size:12px}
 /* 16.09.2026 (владелец, макет konstruktor-sozdat-redizayn-16-09-2026.html, «Дальше», диагноз §7):
@@ -4459,9 +4463,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.523"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.523"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.523"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.524"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.524"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.524"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -5388,13 +5392,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
         <canvas id="forgePreview"></canvas>
         <div id="forgePreviewName"></div>
         <div id="forgePreviewStickers" class="wStickerRow"></div>
-        <button class="pvBtn" id="ptRandomSkyBtn" type="button" aria-label="Перемешать"><svg class="ic" aria-hidden="true"><use href="#i-random-cards"></use></svg></button>
+        <button class="pvBtn" id="ptRandomSkyBtn" type="button" aria-label="Перемешать"><svg class="ic" aria-hidden="true"><use href="#i-random-cards"></use></svg><span class="cornerEye"><span class="eyeWrap"><span class="eyeDart"><span class="eye"></span></span></span></span></button>
         <!-- значок — тот же #i-color-fan, что уже значит «в избранное» у карточек Мастерской
              (index.html/forge.js, 09.09.2026), не новый рисунок под то же самое действие.
              17.09.2026 (владелец, прямо поправил): НЕ менять на сердце — «избранное» (сохранить
              свою палитру себе) и «лайк» (оценка чужого неба) разные по смыслу действия, даже
              если макет это предлагал — веер остаётся, откачено. -->
-        <button class="pvBtn pvBtnR" id="forgeSaveFavBtn" type="button" aria-label="Сохранить в избранное"><svg class="ic" aria-hidden="true"><use href="#i-color-fan"></use></svg></button>
+        <button class="pvBtn pvBtnR" id="forgeSaveFavBtn" type="button" aria-label="Сохранить в избранное"><svg class="ic" aria-hidden="true"><use href="#i-color-fan"></use></svg><span class="cornerEye"><span class="eyeWrap"><span class="eyeDart"><span class="eye"></span></span></span></span></button>
       </div>
       <!-- 01.09.2026 «Свой фон»: свободный цвет неба — h1/h2/густота, формат уже поддерживает
            (extFlags бит1). Лента выше красится в эти же цвета живьём (ptPaintTrackBg).
@@ -5831,26 +5835,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.523" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.523"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.523"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.523"></script>
-<script defer src="js/game.js?v=1.478.523" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.523"></script>
-<script defer src="js/sync.js?v=1.478.523"></script>
-<script defer src="js/render.js?v=1.478.523"></script>
-<script defer src="js/planetarium.js?v=1.478.523"></script>
-<script defer src="js/goldstar.js?v=1.478.523"></script>
-<script defer src="js/finish.js?v=1.478.523"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.523"></script>
-<script defer src="js/gyro.js?v=1.478.523"></script>
-<script defer src="js/forge.js?v=1.478.523"></script>
-<script defer src="js/partitura.js?v=1.478.523"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.523"></script>
-<script defer src="js/card.js?v=1.478.523"></script>
-<script defer src="js/star.js?v=1.478.523"></script>
-<script defer src="js/cinema.js?v=1.478.523"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.523"></script>
+<script defer src="js/core.js?v=1.478.524" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.524"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.524"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.524"></script>
+<script defer src="js/game.js?v=1.478.524" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.524"></script>
+<script defer src="js/sync.js?v=1.478.524"></script>
+<script defer src="js/render.js?v=1.478.524"></script>
+<script defer src="js/planetarium.js?v=1.478.524"></script>
+<script defer src="js/goldstar.js?v=1.478.524"></script>
+<script defer src="js/finish.js?v=1.478.524"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.524"></script>
+<script defer src="js/gyro.js?v=1.478.524"></script>
+<script defer src="js/forge.js?v=1.478.524"></script>
+<script defer src="js/partitura.js?v=1.478.524"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.524"></script>
+<script defer src="js/card.js?v=1.478.524"></script>
+<script defer src="js/star.js?v=1.478.524"></script>
+<script defer src="js/cinema.js?v=1.478.524"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.524"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

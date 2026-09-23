@@ -638,24 +638,36 @@ function ptUndoBtnCancelHold(){
 const PT_IDLE_MS=8000; // середина диапазона 5-10с, который owner сам назвал
 const PT_EYE_CHARS=['calm','bouncy','sparkle','droopy','sleepy','curious','nervous','sideeye','surprised','googly','dramatic'];
 let ptIdleTimer=null;
+/* 23.09.2026, тем же вечером (владелец: «тоже глаза сделать» — «Перемешать»/«Сохранить в
+   избранное» на превью «Небо», .pvBtn, «будет ровно одинаково», макет пропущен явным словом
+   владельца) — тот же таймер/паттерн, второй экран. Пара кнопок зависит от того, какой шаг
+   сейчас виден (forgeSub, js/forge.js): «Карта» → .ptCornerBtn внутри #ptTrack, «Небо» →
+   .pvBtn внутри #forgePreviewWrap — никогда не оба сразу, ровно один активный список целей. */
+function ptIdleEyesTargets(){
+  if(typeof forgeSub==='undefined') return [];
+  if(forgeSub==='arrange'){ const track=$('ptTrack'); return track ? Array.from(track.querySelectorAll('.ptCornerBtn')) : []; }
+  if(forgeSub==='sky'){ const wrap=$('forgePreviewWrap'); return wrap ? Array.from(wrap.querySelectorAll('.pvBtn')) : []; }
+  return [];
+}
 function ptIdleEyesShow(){
-  const track=$('ptTrack'); if(!track) return;
+  const targets=ptIdleEyesTargets(); if(!targets.length) return;
   const char=PT_EYE_CHARS[Math.floor(Math.random()*PT_EYE_CHARS.length)];
-  track.querySelectorAll('.ptCornerBtn').forEach(function(b){
+  targets.forEach(function(b){
     PT_EYE_CHARS.forEach(function(c){ b.classList.remove('eyeChar-'+c); });
     b.classList.add('idleEyes','eyeChar-'+char);
   });
 }
 function ptIdleEyesHide(){
-  const track=$('ptTrack'); if(!track) return;
-  track.querySelectorAll('.ptCornerBtn').forEach(function(b){ b.classList.remove('idleEyes'); });
+  // document-wide, не только текущий шаг — уход С шага (forgeSubTabSet) должен погасить глаза,
+  // которые показывались на ПРЕДЫДУЩЕМ шаге, а на нём ptIdleEyesTargets() уже не найдёт их.
+  document.querySelectorAll('.ptCornerBtn.idleEyes,.pvBtn.idleEyes').forEach(function(b){ b.classList.remove('idleEyes'); });
 }
 function ptIdleEyesResetTimer(){
   clearTimeout(ptIdleTimer); ptIdleTimer=null;
   ptIdleEyesHide();
-  // 23.09.2026: живёт только пока виден шаг «Карта» (forgeSub, js/forge.js) — на остальных
-  // шагах/экранах таймер просто не перезапускается, глаза не появятся там, где их не видно.
-  if(typeof forgeSub!=='undefined' && forgeSub==='arrange') ptIdleTimer=setTimeout(ptIdleEyesShow,PT_IDLE_MS);
+  // 23.09.2026: живёт только пока виден шаг «Карта» или «Небо» (forgeSub, js/forge.js) — на
+  // остальных шагах/экранах таймер просто не перезапускается, глаза не появятся там, где их не видно.
+  if(typeof forgeSub!=='undefined' && (forgeSub==='arrange'||forgeSub==='sky')) ptIdleTimer=setTimeout(ptIdleEyesShow,PT_IDLE_MS);
 }
 function ptWireOnce(){
   if(ptWireOnce._done) return; ptWireOnce._done=1;
