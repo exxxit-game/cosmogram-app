@@ -15,8 +15,17 @@
 // по времени» (convergence) — сигнал сильнее любого одного хука поодиночке, без того чтобы
 // хуки знали друг про друга напрямую.
 //
-// Используется как CLI: node signal-trail.mjs record <category> <severity 1-5> <message>
-//                        node signal-trail.mjs heat [--window-hours=N]
+// 25.09.2026: параметризовано под ВТОРОЕ применение — та же математика (затухающий
+// вес + схождение), но для совсем другой временной шкалы. Хуки сигналят «прямо сейчас
+// в этой сессии» (часы), а живая версия таблицы «симптом → частота бага»
+// (RESEARCH-2026-09-SYMPTOM-FREQUENCY-DIAGNOSIS.md) должна жить неделями разработки —
+// один и тот же 6-часовой период полураспада для обоих был бы математически неверен
+// (комбинация из четырёх методов: дифдиагностика+Парето+Бернулли+этот след — владелец
+// прямо попросил тестировать многоходовые комбинации методов учёных). Трейл по
+// умолчанию (хуки) не сдвинут — обратная совместимость с уже подключёнными хуками.
+//
+// Используется как CLI: node signal-trail.mjs record <category> <severity 1-5> <message> [--trail=NAME] [--half-life-hours=N]
+//                        node signal-trail.mjs heat [--trail=NAME] [--half-life-hours=N]
 // И как модуль: import {recordSignal, computeHeat, checkConvergence} from './signal-trail.mjs'
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -24,27 +33,32 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// .claude/hooks/lib/ -> .claude/state/signal-trail.jsonl
+// .claude/hooks/lib/ -> .claude/state/
 const STATE_DIR = join(__dirname, '..', '..', 'state');
-const TRAIL_FILE = join(STATE_DIR, 'signal-trail.jsonl');
-const HALF_LIFE_HOURS = 6; // след теряет половину «яркости» за 6 часов — подобрано так,
-// чтобы событие внутри одной рабочей сессии оставалось горячим, а вчерашнее — почти не влияло
+const DEFAULT_HALF_LIFE_HOURS = 6; // след хуков теряет половину «яркости» за 6 часов —
+// подобрано так, чтобы событие внутри одной рабочей сессии оставалось горячим
+
+function trailPath(trail) {
+  const name = trail && trail !== 'default' ? `signal-trail-${trail}.jsonl` : 'signal-trail.jsonl';
+  return join(STATE_DIR, name);
+}
 
 function ensureDir() {
   if (!existsSync(STATE_DIR)) mkdirSync(STATE_DIR, { recursive: true });
 }
 
-export function recordSignal(category, severity, message) {
+export function recordSignal(category, severity, message, { trail = 'default' } = {}) {
   ensureDir();
   const sev = Math.max(1, Math.min(5, Number(severity) || 1));
   const entry = { ts: Date.now(), category: String(category), severity: sev, message: String(message || '') };
-  appendFileSync(TRAIL_FILE, JSON.stringify(entry) + '\n', 'utf8');
+  appendFileSync(trailPath(trail), JSON.stringify(entry) + '\n', 'utf8');
   return entry;
 }
 
-function readEntries() {
-  if (!existsSync(TRAIL_FILE)) return [];
-  const lines = readFileSync(TRAIL_FILE, 'utf8').split('\n').filter(Boolean);
+function readEntries(trail) {
+  const file = trailPath(trail);
+  if (!existsSync(file)) return [];
+  const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
   const out = [];
   for (const line of lines) {
     try { out.push(JSON.parse(line)); } catch { /* повреждённая строка — пропускаем, не роняем весь файл */ }
@@ -52,19 +66,19 @@ function readEntries() {
   return out;
 }
 
-function decayWeight(entry, nowMs) {
+function decayWeight(entry, nowMs, halfLifeHours) {
   const ageHours = (nowMs - entry.ts) / 3_600_000;
   if (ageHours < 0) return 0; // часы съехали/тест с будущей меткой — не даём отрицательный вес
-  return entry.severity * Math.pow(0.5, ageHours / HALF_LIFE_HOURS);
+  return entry.severity * Math.pow(0.5, ageHours / halfLifeHours);
 }
 
 // «Насколько горячо» по каждой категории и в целом — сумма затухающих весов, не просто счётчик
-export function computeHeat({ now = Date.now() } = {}) {
-  const entries = readEntries();
+export function computeHeat({ now = Date.now(), trail = 'default', halfLifeHours = DEFAULT_HALF_LIFE_HOURS } = {}) {
+  const entries = readEntries(trail);
   const byCategory = {};
   let total = 0;
   for (const e of entries) {
-    const w = decayWeight(e, now);
+    const w = decayWeight(e, now, halfLifeHours);
     byCategory[e.category] = (byCategory[e.category] || 0) + w;
     total += w;
   }
@@ -73,8 +87,8 @@ export function computeHeat({ now = Date.now() } = {}) {
 
 // «Сошлось ли несколько РАЗНЫХ категорий рядом по времени» — сила боидов не в одном,
 // а в том, что несколько независимых сработали в одном окне
-export function checkConvergence({ windowHours = 2, minDistinctCategories = 2, now = Date.now() } = {}) {
-  const entries = readEntries();
+export function checkConvergence({ windowHours = 2, minDistinctCategories = 2, now = Date.now(), trail = 'default' } = {}) {
+  const entries = readEntries(trail);
   const windowMs = windowHours * 3_600_000;
   const recent = entries.filter(e => (now - e.ts) <= windowMs && (now - e.ts) >= 0);
   const categories = new Set(recent.map(e => e.category));
@@ -82,20 +96,40 @@ export function checkConvergence({ windowHours = 2, minDistinctCategories = 2, n
   return { converged, distinctCategories: [...categories], windowHours, recentCount: recent.length };
 }
 
+// Топ категорий по затухающему весу, убывание — для живого рейтинга «что сейчас горячее всего»
+export function rankCategories({ now = Date.now(), trail = 'default', halfLifeHours = DEFAULT_HALF_LIFE_HOURS } = {}) {
+  const { byCategory } = computeHeat({ now, trail, halfLifeHours });
+  return Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([category, heat]) => ({ category, heat }));
+}
+
+function parseFlags(args) {
+  const flags = {};
+  const rest = [];
+  for (const a of args) {
+    const m = a.match(/^--([a-z-]+)=(.*)$/);
+    if (m) flags[m[1]] = m[2]; else rest.push(a);
+  }
+  return { flags, rest };
+}
+
 // CLI-обвязка
 if (process.argv[1] && process.argv[1].endsWith('signal-trail.mjs')) {
-  const [, , cmd, ...rest] = process.argv;
+  const [, , cmd, ...rawArgs] = process.argv;
+  const { flags, rest } = parseFlags(rawArgs);
+  const trail = flags.trail || 'default';
+  const halfLifeHours = flags['half-life-hours'] ? Number(flags['half-life-hours']) : DEFAULT_HALF_LIFE_HOURS;
   if (cmd === 'record') {
     const [category, severity, ...msgParts] = rest;
-    if (!category) { console.error('usage: signal-trail.mjs record <category> <severity 1-5> <message>'); process.exit(1); }
-    const entry = recordSignal(category, severity, msgParts.join(' '));
+    if (!category) { console.error('usage: signal-trail.mjs record <category> <severity 1-5> <message> [--trail=NAME]'); process.exit(1); }
+    const entry = recordSignal(category, severity, msgParts.join(' '), { trail });
     console.log(JSON.stringify(entry));
   } else if (cmd === 'heat') {
-    const heat = computeHeat({});
-    const conv = checkConvergence({});
-    console.log(JSON.stringify({ heat, convergence: conv }, null, 2));
+    const heat = computeHeat({ trail, halfLifeHours });
+    const conv = checkConvergence({ trail });
+    const ranked = rankCategories({ trail, halfLifeHours });
+    console.log(JSON.stringify({ heat, convergence: conv, ranked }, null, 2));
   } else {
-    console.error('usage: signal-trail.mjs record|heat ...');
+    console.error('usage: signal-trail.mjs record|heat ... [--trail=NAME] [--half-life-hours=N]');
     process.exit(1);
   }
 }
