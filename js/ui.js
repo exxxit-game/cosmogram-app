@@ -4507,7 +4507,11 @@ function gratitudeSkyFill(){
     grStars = (r && r.ok && Array.isArray(r.stars)) ? r.stars.map(function(row){ return Object.assign({id:row.id}, grStarPos(row.id)); }) : [];
     const cnt=$('grStarCount'), empty=$('grEmpty');
     if(grStars.length>0){
-      if(cnt){ cnt.textContent='★ '+grStars.length; cnt.classList.remove('hidden'); }
+      // 24.09.2026 (владелец, живой скрин с обводкой: «три места, разные звёзды») — было
+      // textContent='★ '+N (обычный текстовый глиф, плоский, без градиента) — расходился с
+      // suma/кнопкой отправки ниже, у которых #i-gr-star (объёмный золотой SVG). Теперь везде
+      // одна и та же иконка.
+      if(cnt){ cnt.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-gr-star"></use></svg>'+grStars.length; cnt.classList.remove('hidden'); }
       if(empty) empty.classList.add('hidden');
     } else {
       if(cnt) cnt.classList.add('hidden');
