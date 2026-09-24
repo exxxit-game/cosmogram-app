@@ -255,7 +255,7 @@ const I18N = {
     grAnonLabel:'Аноним', grReported:'Спасибо, мы посмотрим', grSendFail:'Не получилось — попробуйте ещё раз',
     grSent:'Звезда зажглась. Спасибо!',
     grNameShownLbl:'Покажется как: ', grNameFallback:'Пилот',
-    feedbackHint:'Идея или ошибка? Каждое сообщение помогает не только вам — оно делает небо чуть лучше для всех. Спасибо! — EXXXIT', // 08.09.2026, владелец: «создатель игры» → подпись студии; 16.09.2026: убрал «вопрос»; 20.09.2026, владелец, дословно (текст присланный им же, не мой черновик): текст был «сырой, нету в нём дружелюбия» — новый смысл «мы одной крови»: сообщив об ошибке, ты чинишь её не только себе, а сразу всем игрокам, кто с ней столкнётся
+    feedbackHint:'Идея или ошибка? Каждое сообщение помогает не только вам — оно делает Cosmogram чуть лучше для всех. Спасибо! — EXXXIT', // 08.09.2026, владелец: «создатель игры» → подпись студии; 16.09.2026: убрал «вопрос»; 20.09.2026, владелец, дословно (текст присланный им же, не мой черновик): текст был «сырой, нету в нём дружелюбия» — новый смысл «мы одной крови»: сообщив об ошибке, ты чинишь её не только себе, а сразу всем игрокам, кто с ней столкнётся; 24.09.2026, владелец, живой скрин: «небо» → «Cosmogram»
     forgeFavHint:'Нажми значок над превью — сохранишь это небо сюда, до 20 штук', // 17.09.2026, «Делай»: разовая подсказка у пустого ряда «Избранное», тот же приём, что у кошелька — не постоянный текст; число поднято вместе с FORGE_FAV_MAX 7→20 в тот же вечер
     forgeRecapLen:'Длина', forgeRecapPts:'Точек', ptEmptyHint:'добавьте сюда первую точку', // 20.09.2026: владелец — отдельная подпись лотка убрана, смысл слит сюда; формальное «Вы», не «ты» (владелец поймал живьём, см. feedback_formalnoe_obraschenie_vy_ne_ty — этот экран тоже не был в развёрнутом ранее списке)
     feedbackPlaceholder:'Опишите, что случилось или добавьте автодиагностику и скриншот.', feedbackSend:'Отправить', // 08.09.2026, владелец: подсказка теперь явно называет обе кнопки ниже — не обязательно писать текст, если приложить диагностику/снимок; 13.09.2026, владелец: точка в конце фразы
@@ -495,7 +495,7 @@ const I18N = {
     grAnonLabel:'Anonymous', grReported:'Thanks, we\'ll take a look', grSendFail:'Didn\'t go through — try again',
     grSent:'Your star is lit. Thank you!',
     grNameShownLbl:'Will show as: ', grNameFallback:'Pilot',
-    feedbackHint:'Got a bug or an idea? Every message helps — not just you, it makes the sky a little better for everyone. Thank you! — EXXXIT', // 20.09.2026: same warmer text as ru, see comment there
+    feedbackHint:'Got a bug or an idea? Every message helps — not just you, it makes Cosmogram a little better for everyone. Thank you! — EXXXIT', // 20.09.2026: same warmer text as ru, see comment there; 24.09.2026: "sky" → "Cosmogram"
     forgeFavHint:'Tap the icon above the preview to save this sky here — up to 20',
     forgeRecapLen:'Length', forgeRecapPts:'Points', ptEmptyHint:'drag your first point here',
     feedbackPlaceholder:'Describe what happened', feedbackSend:'Send',
@@ -714,7 +714,7 @@ const I18N = {
     grAnonLabel:'Anónimo', grReported:'Gracias, lo revisaremos', grSendFail:'No se pudo enviar — inténtalo de nuevo',
     grSent:'Tu estrella se encendió. ¡Gracias!',
     grNameShownLbl:'Se mostrará como: ', grNameFallback:'Piloto',
-    feedbackHint:'¿Una idea o un error? Cada mensaje ayuda — no solo a ti, hace el cielo un poco mejor para todos. ¡Gracias! — EXXXIT', // 20.09.2026: mismo texto más cálido que ru, ver comentario ahí
+    feedbackHint:'¿Una idea o un error? Cada mensaje ayuda — no solo a ti, hace Cosmogram un poco mejor para todos. ¡Gracias! — EXXXIT', // 20.09.2026: mismo texto más cálido que ru, ver comentario ahí; 24.09.2026: "cielo" → "Cosmogram"
     forgeFavHint:'Toca el icono sobre la vista previa para guardar este cielo aquí — hasta 20',
     forgeRecapLen:'Longitud', forgeRecapPts:'Puntos', ptEmptyHint:'arrastra aquí tu primer punto',
     feedbackPlaceholder:'Describe qué pasó', feedbackSend:'Enviar',
@@ -952,7 +952,7 @@ const I18N = {
     grAnonLabel:'Anónimo', grReported:'Obrigado, vamos verificar', grSendFail:'Não foi possível enviar — tenta de novo',
     grSent:'A tua estrela acendeu. Obrigado!',
     grNameShownLbl:'Vai aparecer como: ', grNameFallback:'Piloto',
-    feedbackHint:'Uma ideia ou um erro? Cada mensagem ajuda — não só você, torna o céu um pouco melhor para todos. Obrigado! — EXXXIT', // 20.09.2026: mesmo texto mais caloroso que ru, ver comentário lá
+    feedbackHint:'Uma ideia ou um erro? Cada mensagem ajuda — não só você, torna o Cosmogram um pouco melhor para todos. Obrigado! — EXXXIT', // 20.09.2026: mesmo texto mais caloroso que ru, ver comentário lá; 24.09.2026: "céu" → "Cosmogram"
     forgeFavHint:'Toque no ícone acima da prévia para salvar este céu aqui — até 20',
     forgeRecapLen:'Comprimento', forgeRecapPts:'Pontos', ptEmptyHint:'arraste aqui seu primeiro ponto',
     feedbackPlaceholder:'Descreva o que aconteceu', feedbackSend:'Enviar',
@@ -1190,7 +1190,7 @@ const I18N = {
     grAnonLabel:'Anonyme', grReported:'Merci, on va vérifier', grSendFail:'Ça n’a pas marché — réessaie',
     grSent:'Ton étoile s’est allumée. Merci !',
     grNameShownLbl:'Affiché comme : ', grNameFallback:'Pilote',
-    feedbackHint:'Une idée ou un bug ? Chaque message aide — pas seulement toi, il rend le ciel un peu meilleur pour tout le monde. Merci ! — EXXXIT', // 20.09.2026: même texte plus chaleureux que ru, voir commentaire là-bas
+    feedbackHint:'Une idée ou un bug ? Chaque message aide — pas seulement toi, il rend Cosmogram un peu meilleur pour tout le monde. Merci ! — EXXXIT', // 20.09.2026: même texte plus chaleureux que ru, voir commentaire là-bas; 24.09.2026: "ciel" → "Cosmogram"
     forgeFavHint:'Appuie sur l’icône au-dessus de l’aperçu pour enregistrer ce ciel ici — jusqu’à 20',
     forgeRecapLen:'Longueur', forgeRecapPts:'Points', ptEmptyHint:'glisse ton premier point ici',
     feedbackPlaceholder:'Décris ce qui s\'est passé', feedbackSend:'Envoyer',
