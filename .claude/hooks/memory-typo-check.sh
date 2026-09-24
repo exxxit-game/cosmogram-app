@@ -32,4 +32,26 @@ if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *"\\memory\\"*.md 
     fi
   fi
 fi
+
+# 24.09.2026 (владелец: «доработай старые правила, проявляй смекалочку») — audit-memory-
+# index.sh существовал с 23.09.2026 и ни разу не запускался с тех пор: тот же класс дыры,
+# что уже чинил выше для опечаток — инструмент, который нужно ПОМНИТЬ запускать руками,
+# не лучше «буду внимательнее». Именно этот инструмент поймал бы сегодняшний кризис (247
+# потерянных файлов из 387) сразу, а не после того, как владелец сам заметил. Теперь —
+# каждая правка MEMORY.md сама зовёт аудит.
+if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *"\\memory\\MEMORY.md" ]]; then
+  memdir=$(dirname "$file")
+  auditor="$memdir/audit-memory-index.sh"
+  if [[ -f "$auditor" ]]; then
+    out=$(bash "$auditor" "$memdir" 2>&1)
+    dead=$(printf '%s' "$out" | grep -c "^МЁРТВАЯ:")
+    orphans=$(printf '%s' "$out" | grep -oE "Всего сирот-правил: [0-9]+" | grep -oE "[0-9]+")
+    size=$(printf '%s' "$out" | grep -oE "^[0-9]+ MEMORY.md" | grep -oE "^[0-9]+")
+    if [[ "$dead" -gt 0 || "${orphans:-0}" -gt 0 || "${size:-0}" -gt 17510 ]]; then
+      echo "audit-memory-index.sh поймал проблему после правки MEMORY.md:" >&2
+      echo "$out" >&2
+      exit 2
+    fi
+  fi
+fi
 exit 0
