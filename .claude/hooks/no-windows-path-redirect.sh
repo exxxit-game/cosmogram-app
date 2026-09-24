@@ -17,7 +17,9 @@ process.stdin.on('end',()=>{
 ")
 tool=$(printf '%s' "$out" | sed -n '1p')
 cmd=$(printf '%s' "$out" | sed -n '2p')
-pat='>[[:space:]]*"?[A-Za-z]:\\'
+# 25.09.2026, adversarial-тестом найдено: одинарные кавычки (> 'C:\...') не ловились
+# (регэксп разрешал только "?). Добавлена '?.
+pat='>[[:space:]]*["'"'"']?[A-Za-z]:\\'
 
 if [[ "$tool" == "Bash" && "$cmd" =~ $pat ]]; then
   echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Redirect (>/>>) целится в путь вида C:\\... — в Git Bash это дважды (14.09.2026) тихо создавало мусорный файл C:tmpXXX прямо в текущей папке вместо реального пути, без единой ошибки. Используй прямые слэши: /c/tmp/... вместо C:\\tmp\\..."}}'
