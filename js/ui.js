@@ -3401,6 +3401,83 @@ let heroCarouselAutoT=setInterval(function(){
   car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
+/* 24.09.2026 «Подсказка при бездействии на главной»: владелец — после ~15с ничего-не-делаю
+   на главном экране (не в полёте) на карточке карусели, на которую сейчас смотрит игрок,
+   появляется красный «?» с золотой ленты, сам не гаснет; ещё +5с без тапа — рядом всплывает
+   «Нажми на меня». Тап — общее окно-объяснение экрана. До 5 показов, дальше тихо навсегда,
+   интервал перед каждым следующим показом растёт (числа ниже — рабочая прикидка, не
+   финальные — можно поправить). idleHintTick() дёргается из render.js loop() каждый кадр,
+   idleHintNoteActivity() — из input.js на любую реальную активность. */
+const IDLE_HINT_DELAYS=[15,25,40,60,90]; // секунд бездействия перед показом №1..5
+const IDLE_HINT_CALLOUT_DELAY=5; // секунд после появления «?» до таблички «Нажми на меня»
+let idleHintElapsed=0, idleHintShowing=false, idleHintCalloutShown=false, idleHintShownAtElapsed=0;
+
+function idleHintCentredCard(){
+  const car=$('heroCarousel'); if(!car||!car.children.length) return null;
+  const w=car.children[0].getBoundingClientRect().width; if(!w) return null;
+  const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
+  return car.children[idx];
+}
+function idleHintHide(){
+  const svg=document.getElementById('idleHintTongue'); if(svg) svg.remove();
+  const callout=document.getElementById('idleHintCallout'); if(callout) callout.remove();
+  idleHintShowing=false; idleHintCalloutShown=false;
+}
+function idleHintOpenExplain(){
+  idleHintHide();
+  const card=idleHintCentredCard();
+  const title=card ? (card.querySelector('.modeName,.cardFlyBtn') ? (card.querySelector('.modeName')?card.querySelector('.modeName').textContent:'') : '') : '';
+  const t=$('idleHintExplainText');
+  if(t) t.textContent='Здесь будет общее объяснение экрана'+(title?(' «'+title+'»'):'')+': что показывает лента, для чего кнопка полёта, как читать счёт. (демо-текст, содержание для каждого экрана ещё не написано)';
+  toggleCls('idleHintExplain','hidden', false);
+}
+wireOn('idleHintExplainClose','click', ()=>{ sfx.click(); haptic('light'); toggleCls('idleHintExplain','hidden', true); });
+function idleHintShow(){
+  const card=idleHintCentredCard(); const badge=card && card.querySelector('.recordBadge');
+  if(!badge || badge.classList.contains('hidden')) return; // нет ленты (рекорда) сейчас — не на чем показать
+  if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } // не уезжать со значком под пальцем
+  const svgNS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(svgNS,'svg');
+  svg.id='idleHintTongue';
+  svg.setAttribute('viewBox','0 0 76 76');
+  svg.innerHTML='<g class="idleHintBody">'+
+    '<path d="M 37.07,4.79 C 48.38,21.76 54.04,41.56 58.28,54.28 C 45.56,50.04 25.76,44.38 13.03,28.83 Z" fill="#d32f2f"/>'+
+    '<text x="48" y="42" transform="rotate(-45 48 42)" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="middle">?</text>'+
+    '</g>';
+  svg.addEventListener('click', e=>{ e.stopPropagation(); sfx.click(); haptic('light'); idleHintOpenExplain(); });
+  badge.insertBefore(svg, badge.firstChild);
+  idleHintShowing=true; idleHintCalloutShown=false; idleHintShownAtElapsed=idleHintElapsed;
+  Store.set('idleHintShown', Store.get('idleHintShown',0)+1);
+}
+function idleHintShowCallout(){
+  const card=idleHintCentredCard(); if(!card) return;
+  const badge=card.querySelector('.recordBadge'); if(!badge) return;
+  if(getComputedStyle(card).position==='static') card.style.position='relative';
+  const cardRect=card.getBoundingClientRect(), badgeRect=badge.getBoundingClientRect();
+  const qCardX=(badgeRect.left-cardRect.left)+48, qCardY=(badgeRect.top-cardRect.top)+42;
+  const callout=document.createElement('div');
+  callout.id='idleHintCallout';
+  callout.textContent='Нажми на меня';
+  callout.style.left=(qCardX+14)+'px'; callout.style.top=(qCardY-11)+'px';
+  card.appendChild(callout);
+  requestAnimationFrame(()=>{ callout.classList.add('show'); });
+  idleHintCalloutShown=true;
+}
+function idleHintNoteActivity(){
+  idleHintElapsed=0;
+  if(idleHintShowing) idleHintHide();
+}
+function idleHintTick(dt){
+  if(screenName!=='menu') return;
+  const shown=Store.get('idleHintShown',0);
+  if(shown>=IDLE_HINT_DELAYS.length) return; // все 5 показов исчерпаны — тихо навсегда
+  idleHintElapsed+=dt;
+  if(!idleHintShowing){
+    if(idleHintElapsed>=IDLE_HINT_DELAYS[shown]) idleHintShow();
+  } else if(!idleHintCalloutShown){
+    if((idleHintElapsed-idleHintShownAtElapsed)>=IDLE_HINT_CALLOUT_DELAY) idleHintShowCallout();
+  }
+}
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
