@@ -512,34 +512,6 @@ function heroRecordFor(cat){
   if(cat==='biathlon') return { val:saneNumber(Store.get('biathlonBest',0),0), isTime:true };
   return { val:0, isTime:false };
 }
-/* 24.09.2026 «Лента растёт от рекорда к рекорду» (владелец, архитектура согласована ещё
-   21.09.2026 — см. project_forma_lenty_rastet_ot_pobitiya_rekorda.md, реализация сегодня):
-   форма (shape-*) закреплена за режимом и не меняется. «Характер» (какая из 6 готовых
-   анимаций-личностей ленты) раньше был зашит в HTML статично — теперь растёт по мере личных
-   рекордов в этом режиме, от тихого моргания к самой яркой (sparkle). Переход на ступень:
-   новый личный рекорд → +1 сразу; рекорд не побит — раз в 13 забегов (число владельца,
-   21.09.2026) тоже +1, чтобы упёршийся в потолок скилла игрок не застревал навсегда.
-   Хранится ЛОКАЛЬНО (Store, не в CLOUD_KEYS) — тот же прецедент, что у bestCaravan15/180
-   (see js/core.js CLOUD_KEYS comment), это декоративный прогресс, не игровые данные. */
-const RIBBON_STAGES=['','a-sideeye','a-wave','a-nervous','a-bouncy','a-dramatic','a-sparkle'];
-const RIBBON_STAGE_RUNS_FALLBACK=13;
-function ribbonStageData(cat){
-  const all=Store.get('ribbonStages',{})||{};
-  const cur=all[cat];
-  return (cur && typeof cur==='object') ? {stage:saneNumber(cur.stage,0), runs:saneNumber(cur.runs,0)} : {stage:0, runs:0};
-}
-function ribbonStageOnRunEnd(cat, gotNewBest){
-  if(!cat) return;
-  const all=Store.get('ribbonStages',{})||{};
-  const cur=ribbonStageData(cat);
-  if(gotNewBest){ cur.stage=Math.min(RIBBON_STAGES.length-1, cur.stage+1); cur.runs=0; }
-  else {
-    cur.runs++;
-    if(cur.runs>=RIBBON_STAGE_RUNS_FALLBACK){ cur.stage=Math.min(RIBBON_STAGES.length-1, cur.stage+1); cur.runs=0; }
-  }
-  all[cat]=cur;
-  Store.set('ribbonStages', all);
-}
 function heroRecordBadgesFill(){
   // 21.09.2026 (владелец: «пока рекорда нет, там просто глаза отображаются») — лента теперь
   // видна ВСЕГДА (форма+характер — живая декорация режима, не привязана к наличию рекорда).
@@ -559,9 +531,6 @@ function heroRecordBadgesFill(){
       // чтобы реально помещаться на видимой части ленты с запасом, не впритык.
       numEl.classList.toggle('txt', r.val<=0);
     }
-    RIBBON_STAGES.forEach(function(c){ if(c) el.classList.remove(c); }); // старую ступень долой перед новой
-    const aClass=RIBBON_STAGES[ribbonStageData(pair[1]).stage];
-    if(aClass) el.classList.add(aClass);
   });
 }
 /* 16.09.2026 (владелец, третий заход того же вечера): круглая иконка-самолётик заменена текстовой
@@ -1092,15 +1061,6 @@ function gameOver(){
       if (typeof ghostSave==='function') ghostSave('biathlon'); } // 15.09.2026: та же дыра — своя ветка победы
     else ghostSaveIfFirstEver('biathlon'); // 18.09.2026: та же добавка, что у Спидрана/Слалома
   }
-  // 24.09.2026 «Лента растёт»: один режим — один вызов на конец забега (relay и прочие
-  // тиры caravan сюда сознательно не входят — у них нет собственной ленты в карусели).
-  if (typeof ribbonStageOnRunEnd==='function'){
-    if (S.mode==='classic') ribbonStageOnRunEnd('touch', isRecord);
-    else if (S.mode==='caravan' && !caravanOtherTier) ribbonStageOnRunEnd('caravan', isRecord);
-    else if (S.mode==='speedrun') ribbonStageOnRunEnd('speedrun', srNewBest);
-    else if (S.mode==='slalom') ribbonStageOnRunEnd('slalom', slalomNewBest);
-    else if (S.mode==='biathlon') ribbonStageOnRunEnd('biathlon', biathlonNewBest);
-  }
   S.wallet += S.starsCollected;
   Store.set('wallet', S.wallet);
   if (ghostBeatNow) Stats.ghostBeats=(Stats.ghostBeats||0)+1; // сколько чужих призраков повержено (ачивка gv1)
@@ -1180,12 +1140,10 @@ function gameOver(){
   if (S.mode==='daily' && sc>0){ // рекорд трассы дня (v1.47.0): свой день — свой рекорд; v1.93: зачёт — в день взлёта, даже через полночь
     const dd=S.dailyDay||trackDayKey();
     const prevDl=Store.get('dailyBest',null), prevDlSc=(prevDl && prevDl.d===dd)?prevDl.s:0;
-    const dailyIsNewBest = sc>prevDlSc;
-    if (dailyIsNewBest){ Store.set('dailyBest',{d:dd,s:sc});
+    if (sc>prevDlSc){ Store.set('dailyBest',{d:dd,s:sc});
       if (rec.length>=20 && typeof ghostSave==='function') ghostSave('daily'); // 17.09.2026: своей ветки не было вообще — карточка дня не могла нарисовать след ни разу, тем же приёмом, что и у Спидрана/Слалома/Биатлона 15.09.2026
       recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('plane')+L.dlNewBest+'</span>'); }
     else if (rec.length>=20) ghostSaveIfFirstEver('daily'); // 18.09.2026: та же добавка — сегодняшнее число не рекорд дня, но линия для «Неба месяца» может быть ещё пустой
-    if (typeof ribbonStageOnRunEnd==='function') ribbonStageOnRunEnd('daily', dailyIsNewBest); // 24.09.2026 «Лента растёт»
   }
   // 07.09.2026: 1CC убран из игры (владелец: 2 попытки в реальный день на общий месячный сид
   // убивали саму идею «одного шанса», ради которой аркадный 1CC существует) — daily1ccBest
@@ -1474,9 +1432,7 @@ function toMenu(){
     if (S.mode==='daily'){ // 23.08.2026 «5 попыток»: сошёл с трамплина — прыжок засчитан как есть, тихо, без экрана итогов
       const sc=Math.floor(S.score*(0.5+S.smooth*0.5)), dd=S.dailyDay||trackDayKey();
       const prevDl=Store.get('dailyBest',null);
-      const dailyIsNewBest = sc>0 && sc>((prevDl&&prevDl.d===dd)?prevDl.s:0);
-      if (dailyIsNewBest) Store.set('dailyBest',{d:dd,s:sc});
-      if (sc>0 && typeof ribbonStageOnRunEnd==='function') ribbonStageOnRunEnd('daily', dailyIsNewBest); // 24.09.2026 «Лента растёт» — тот же путь, что и gameOver(), эта попытка туда не заходит
+      if (sc>0 && sc>((prevDl&&prevDl.d===dd)?prevDl.s:0)) Store.set('dailyBest',{d:dd,s:sc});
       runMode='classic'; // счётчик попыток уже увеличен на взлёте — здесь только режим и лучший счёт
       /* v1.282.13: и автосейв дня сгорает вместе с попыткой. Дверь в меню запирается
          счётчиком n>=5 (heroCarouselFill), но bootFly() эту дверь обходил: при следующем
