@@ -30,7 +30,10 @@ process.stdin.on('end',()=>{
     [/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,'похоже на JWT (service_role/anon ключ Supabase?)'],
     [/sk-(live|proj)-[A-Za-z0-9]{20,}/,'ключ вида sk-live-/sk-proj- (Stripe/OpenAI-подобный)'],
     [/xox[baprs]-[A-Za-z0-9-]{10,}/,'Slack token'],
-    [/ghp_[A-Za-z0-9]{36}/,'GitHub personal access token']
+    [/ghp_[A-Za-z0-9]{36}/,'GitHub personal access token (classic)'],
+    [/github_pat_[A-Za-z0-9_]{60,}/,'GitHub fine-grained personal access token'],
+    [/sk-ant-[A-Za-z0-9-]{20,}/,'ключ вида sk-ant- (Anthropic)'],
+    [/AIza[A-Za-z0-9_-]{35}/,'ключ вида AIza (Google API)']
   ];
   for(const [re,label] of pats){ if(re.test(added)){ console.log(label); process.exit(0); } }
 });
