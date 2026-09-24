@@ -3410,7 +3410,13 @@ wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(h
    idleHintNoteActivity() — из input.js на любую реальную активность. */
 const IDLE_HINT_DELAYS=[15,25,40,60,90]; // секунд бездействия перед показом №1..5
 const IDLE_HINT_CALLOUT_DELAY=5; // секунд после появления «?» до таблички «Нажми на меня»
-let idleHintElapsed=0, idleHintShowing=false, idleHintCalloutShown=false, idleHintShownAtElapsed=0;
+/* 24.09.2026 «Часы, не кадры»: живая проверка (Browser pane, реальные 15+ секунд простоя)
+   поймала 0 кадров requestAnimationFrame за 5 реальных секунд — браузер придерживает rAF
+   именно тогда, когда нет активности, то есть ровно в сценарии, который этот таймер должен
+   ловить. Копить через dt игрового цикла в такой ситуации ненадёжно: кадров может не быть
+   вообще. Считаем по настоящим часам (Date.now()) — сколько бы кадров ни пропустил rAF,
+   при следующем реальном тике время досчитывается верно, не теряется. */
+let idleHintLastActivityAt=Date.now(), idleHintShowing=false, idleHintCalloutShown=false, idleHintShownAt=0;
 
 function idleHintCentredCard(){
   const car=$('heroCarousel'); if(!car||!car.children.length) return null;
@@ -3446,7 +3452,7 @@ function idleHintShow(){
     '</g>';
   svg.addEventListener('click', e=>{ e.stopPropagation(); sfx.click(); haptic('light'); idleHintOpenExplain(); });
   badge.insertBefore(svg, badge.firstChild);
-  idleHintShowing=true; idleHintCalloutShown=false; idleHintShownAtElapsed=idleHintElapsed;
+  idleHintShowing=true; idleHintCalloutShown=false; idleHintShownAt=Date.now();
   Store.set('idleHintShown', Store.get('idleHintShown',0)+1);
 }
 function idleHintShowCallout(){
@@ -3464,18 +3470,18 @@ function idleHintShowCallout(){
   idleHintCalloutShown=true;
 }
 function idleHintNoteActivity(){
-  idleHintElapsed=0;
+  idleHintLastActivityAt=Date.now();
   if(idleHintShowing) idleHintHide();
 }
-function idleHintTick(dt){
+function idleHintTick(){
   if(screenName!=='menu') return;
   const shown=Store.get('idleHintShown',0);
   if(shown>=IDLE_HINT_DELAYS.length) return; // все 5 показов исчерпаны — тихо навсегда
-  idleHintElapsed+=dt;
+  const idleMs=Date.now()-idleHintLastActivityAt;
   if(!idleHintShowing){
-    if(idleHintElapsed>=IDLE_HINT_DELAYS[shown]) idleHintShow();
+    if(idleMs>=IDLE_HINT_DELAYS[shown]*1000) idleHintShow();
   } else if(!idleHintCalloutShown){
-    if((idleHintElapsed-idleHintShownAtElapsed)>=IDLE_HINT_CALLOUT_DELAY) idleHintShowCallout();
+    if((Date.now()-idleHintShownAt)>=IDLE_HINT_CALLOUT_DELAY*1000) idleHintShowCallout();
   }
 }
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
