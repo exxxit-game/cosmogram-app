@@ -5,6 +5,16 @@
 # в спешке. Покрывает execute_sql (только явно деструктивные запросы) и apply_migration
 # (только пустой/заглушечный SQL — реальные миграции проходят, как обычно, только
 # пустышки блокируются).
+#
+# 25.09.2026, честно задокументированный предел (найдено живым тестом, не в теории):
+# проверка текстовая (regex), не настоящий SQL-парсер. Подтверждённый живьём обход:
+# `UPDATE t SET x=(SELECT ... FROM t2 WHERE ...)` — WHERE есть в подзапросе, но НЕ у
+# самого UPDATE/DELETE — хук пропускает молча, хотя внешний запрос трогает всю
+# таблицу. Починить это правильно значит писать настоящий SQL-парсер — отдельная
+# большая задача, не один хук; сознательно НЕ делаю наспех регэкспом, который дал бы
+# ложное чувство защиты. `WHERE 1=1` (тавтология) — закрыто ниже, это дёшево и не
+# требует парсера. Основная защита по-прежнему — правило «Supabase только для
+# чтения, если явно не попросили писать»; этот хук — дополнительный слой, не единственный.
 input=$(cat)
 out=$(printf '%s' "$input" | node -e "
 let d='';process.stdin.on('data',c=>d+=c);
@@ -16,6 +26,12 @@ process.stdin.on('end',()=>{
     if(/execute_sql/i.test(toolName)){
       const q=String(ti.query||ti.sql||'');
       const noComments=q.replace(/--[^\n]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'');
+      const isTautology=(text)=>{
+        const m=text.match(/\bWHERE\b([\s\S]*)/i);
+        if(!m) return false;
+        const cond=m[1].split(/\b(RETURNING|GROUP\s+BY|ORDER\s+BY|LIMIT)\b/i)[0];
+        return /^\s*(1\s*=\s*1|'[^']*'\s*=\s*'[^']*'|true)\s*;?\s*$/i.test(cond.trim());
+      };
       if(/\bDROP\s+(TABLE|SCHEMA|DATABASE|FUNCTION|VIEW)\b/i.test(noComments)){
         process.stdout.write('BLOCK\nЗапрос содержит DROP — необратимая операция на живой базе. Это не read-only (CLAUDE.md: «Supabase — через MCP, только для чтения, если явно не попросили писать»). Останови и явно спроси владельца, прежде чем выполнять.\\n');
         return;
@@ -24,12 +40,12 @@ process.stdin.on('end',()=>{
         process.stdout.write('BLOCK\nЗапрос содержит TRUNCATE — необратимо очищает таблицу целиком. Останови и явно спроси владельца.\\n');
         return;
       }
-      if(/\bDELETE\s+FROM\b/i.test(noComments) && !/\bWHERE\b/i.test(noComments)){
-        process.stdout.write('BLOCK\nDELETE без WHERE — удалит ВСЕ строки таблицы. Если это правда нужно — добавь явное условие или подтверди с владельцем отдельно.\\n');
+      if(/\bDELETE\s+FROM\b/i.test(noComments) && (!/\bWHERE\b/i.test(noComments) || isTautology(noComments))){
+        process.stdout.write('BLOCK\nDELETE без WHERE (или WHERE-тавтология вроде 1=1, которая совпадает со всеми строками) — удалит ВСЕ строки таблицы. Если это правда нужно — добавь явное условие или подтверди с владельцем отдельно.\\n');
         return;
       }
-      if(/\bUPDATE\b/i.test(noComments) && !/\bWHERE\b/i.test(noComments)){
-        process.stdout.write('BLOCK\nUPDATE без WHERE — изменит ВСЕ строки таблицы. Проверь, действительно ли нужно менять всю таблицу, или забыто условие.\\n');
+      if(/\bUPDATE\b/i.test(noComments) && (!/\bWHERE\b/i.test(noComments) || isTautology(noComments))){
+        process.stdout.write('BLOCK\nUPDATE без WHERE (или WHERE-тавтология вроде 1=1, которая совпадает со всеми строками) — изменит ВСЕ строки таблицы. Проверь, действительно ли нужно менять всю таблицу, или забыто условие.\\n');
         return;
       }
       process.stdout.write('ok\n');
