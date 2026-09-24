@@ -47,10 +47,21 @@ function ensureDir() {
   if (!existsSync(STATE_DIR)) mkdirSync(STATE_DIR, { recursive: true });
 }
 
-export function recordSignal(category, severity, message, { trail = 'default' } = {}) {
+// 25.09.2026, 5-компонентная комбинация (владелец: «соединяй дальше, до пяти и
+// больше») — добавлена классификация Just Culture (Dekker): 'honest' (честная
+// ошибка, не было прецедента) / 'atrisk' (срезал угол, знал правило) / 'violation'
+// (нарушил уже написанное ABSOLUTE-правило). Три категории требуют РАЗНОГО
+// обращения (уже записано в REPEAT-LOG 25.09) — значит должны быть данными, не
+// смешиваться в одну кучу. Необязательный параметр — старые 3 вызова (drift/
+// claim-check/secrets) не передают его и не ломаются (undefined = не классифицировано).
+const JC_WEIGHT = { honest: 1, atrisk: 1.5, violation: 2 }; // нарушение весит вдвое —
+// то же самое правило признаёт эскалацию обязательной, не опциональной, для violation
+
+export function recordSignal(category, severity, message, { trail = 'default', justCulture } = {}) {
   ensureDir();
   const sev = Math.max(1, Math.min(5, Number(severity) || 1));
-  const entry = { ts: Date.now(), category: String(category), severity: sev, message: String(message || '') };
+  const jc = ['honest', 'atrisk', 'violation'].includes(justCulture) ? justCulture : undefined;
+  const entry = { ts: Date.now(), category: String(category), severity: sev, message: String(message || ''), ...(jc ? { justCulture: jc } : {}) };
   appendFileSync(trailPath(trail), JSON.stringify(entry) + '\n', 'utf8');
   return entry;
 }
@@ -69,7 +80,8 @@ function readEntries(trail) {
 function decayWeight(entry, nowMs, halfLifeHours) {
   const ageHours = (nowMs - entry.ts) / 3_600_000;
   if (ageHours < 0) return 0; // часы съехали/тест с будущей меткой — не даём отрицательный вес
-  return entry.severity * Math.pow(0.5, ageHours / halfLifeHours);
+  const jcMult = entry.justCulture ? JC_WEIGHT[entry.justCulture] : 1; // без классификации — вес ×1
+  return entry.severity * jcMult * Math.pow(0.5, ageHours / halfLifeHours);
 }
 
 // «Насколько горячо» по каждой категории и в целом — сумма затухающих весов, не просто счётчик
@@ -83,6 +95,29 @@ export function computeHeat({ now = Date.now(), trail = 'default', halfLifeHours
     total += w;
   }
   return { total, byCategory, entryCount: entries.length };
+}
+
+// Jidoka-эскалация: violation эскалируется ОБЯЗАТЕЛЬНО с первого раза (не опция);
+// honest/atrisk — только если категория повторилась (heat выше её собственной
+// одной свежей записи среднего severity) — т.е. это уже НЕ первый случай.
+export function checkEscalation({ now = Date.now(), trail = 'default', halfLifeHours = DEFAULT_HALF_LIFE_HOURS } = {}) {
+  const entries = readEntries(trail);
+  const byCategory = {};
+  for (const e of entries) {
+    (byCategory[e.category] ||= []).push(e);
+  }
+  const result = [];
+  for (const [category, list] of Object.entries(byCategory)) {
+    const hasViolation = list.some(e => e.justCulture === 'violation');
+    const heat = list.reduce((s, e) => s + decayWeight(e, now, halfLifeHours), 0);
+    const avgSeverity = list.reduce((s, e) => s + e.severity, 0) / list.length;
+    const recurred = list.length >= 2; // повторилось хотя бы раз
+    const shouldEscalate = hasViolation || (recurred && heat >= avgSeverity);
+    if (shouldEscalate) {
+      result.push({ category, reason: hasViolation ? 'violation' : 'recurred', heat, count: list.length });
+    }
+  }
+  return result.sort((a, b) => b.heat - a.heat);
 }
 
 // «Сошлось ли несколько РАЗНЫХ категорий рядом по времени» — сила боидов не в одном,
@@ -120,16 +155,17 @@ if (process.argv[1] && process.argv[1].endsWith('signal-trail.mjs')) {
   const halfLifeHours = flags['half-life-hours'] ? Number(flags['half-life-hours']) : DEFAULT_HALF_LIFE_HOURS;
   if (cmd === 'record') {
     const [category, severity, ...msgParts] = rest;
-    if (!category) { console.error('usage: signal-trail.mjs record <category> <severity 1-5> <message> [--trail=NAME]'); process.exit(1); }
-    const entry = recordSignal(category, severity, msgParts.join(' '), { trail });
+    if (!category) { console.error('usage: signal-trail.mjs record <category> <severity 1-5> <message> [--trail=NAME] [--just-culture=honest|atrisk|violation]'); process.exit(1); }
+    const entry = recordSignal(category, severity, msgParts.join(' '), { trail, justCulture: flags['just-culture'] });
     console.log(JSON.stringify(entry));
   } else if (cmd === 'heat') {
     const heat = computeHeat({ trail, halfLifeHours });
     const conv = checkConvergence({ trail });
     const ranked = rankCategories({ trail, halfLifeHours });
-    console.log(JSON.stringify({ heat, convergence: conv, ranked }, null, 2));
+    const escalate = checkEscalation({ trail, halfLifeHours });
+    console.log(JSON.stringify({ heat, convergence: conv, ranked, escalate }, null, 2));
   } else {
-    console.error('usage: signal-trail.mjs record|heat ... [--trail=NAME] [--half-life-hours=N]');
+    console.error('usage: signal-trail.mjs record|heat ... [--trail=NAME] [--half-life-hours=N] [--just-culture=...]');
     process.exit(1);
   }
 }
