@@ -64,7 +64,8 @@
         "matcher": "Edit|Write",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" },
-          { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" }
+          { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" },
+          { "type": "command", "command": ".claude/hooks/scan-code-mixed-script.sh" }
         ]
       },
       {
