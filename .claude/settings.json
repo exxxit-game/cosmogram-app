@@ -21,7 +21,6 @@
       "Bash(gh:*)"
     ],
     "allow": [
-      "Bash(node tests/guard.mjs)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)"
@@ -71,7 +70,7 @@
     ],
     "SessionStart": [
       {
-        "matcher": "compact",
+        "matcher": "compact|startup|resume",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" }
         ]
