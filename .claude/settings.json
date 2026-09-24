@@ -66,6 +66,12 @@
           { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" },
           { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/post-commit-drift-check.sh" }
+        ]
       }
     ],
     "SessionStart": [
