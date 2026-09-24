@@ -36,6 +36,7 @@ process.stdin.on('end',()=>{
 });
 ")
   if [[ -n "$hit" ]]; then
+    node "$(dirname "$0")/lib/signal-trail.mjs" record secrets 5 "похоже на секрет в застейдженном diff: $hit" >/dev/null 2>&1
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"В застейдженных изменениях найдено похожее на секрет: ${hit}. Это ложное срабатывание (пример в комментарии/тесте) или реальный ключ, который нужно убрать и перевыпустить?\"}}"
     exit 0
   fi

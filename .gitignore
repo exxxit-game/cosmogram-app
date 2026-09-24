@@ -5,3 +5,7 @@ macet-*
 # Скриншоты Playwright MCP при проверке макетов — временные, не часть игры
 .playwright-mcp/
 .supabase-health-last.txt
+
+# Живой след сигналов хуков (signal-trail.mjs) — локальное состояние этой машины,
+# не часть проекта, не для истории git
+.claude/state/
