@@ -79,7 +79,8 @@
         "matcher": "compact|startup|resume",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" },
-          { "type": "command", "command": ".claude/hooks/check-live-version.sh" }
+          { "type": "command", "command": ".claude/hooks/check-live-version.sh" },
+          { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" }
         ]
       }
     ],
