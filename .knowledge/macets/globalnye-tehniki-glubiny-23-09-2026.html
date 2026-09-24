@@ -859,11 +859,14 @@ h1.title{font-size:26px;font-weight:800;margin:0 0 8px;text-wrap:balance}
 
   <div class="topic">
     <div class="catHead">Структурная окраска — цвет от формы, не от пигмента</div>
-    <div class="topicHead"><h2>82. Крыло бабочки без единой капли краски</h2><span class="status pend">⏳ на выбор</span></div>
+    <div class="topicHead"><h2>82. Перо без единой капли краски</h2><span class="status pend">⏳ на выбор, факт исправлен</span></div>
     <p class="topicDesc">Другая физика, чем иридесценция (карта 35) и решётка (карта 76) —
-    здесь периодическая наноструктура чешуек (фотонный кристалл) рассеивает свет так,
-    что синий Morpho остаётся синим под любым углом освещения, хотя пигмента синего
-    цвета там физически нет.</p>
+    здесь НЕупорядоченная губчатая наноструктура кератина рассеивает именно синий свет
+    так, что синий цвет НЕ меняется под любым углом, хотя пигмента синего цвета там
+    физически нет. <b>Честная правка</b>: изначально пример был про бабочку Морфо, но
+    её синий на самом деле иридесцирует (мерцает и меняется с углом — это как раз
+    пример карты 35, не этой). Настоящий пример угло-независимого структурного цвета —
+    перо голубой сойки (Cyanocitta cristata).</p>
     <div class="grid" id="gridStructColor"></div>
   </div>
 
@@ -1745,7 +1748,10 @@ loopFlash('pxSpikes', (ctx,p)=>{
   core.addColorStop(0,'rgba(255,255,255,'+(0.9*twinkle).toFixed(2)+')');
   core.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=core; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
-  const spikes=6;
+  // исправлено: у James Webb реально видно 8 лучей (6 от гексагональных
+  // сегментов главного зеркала + 2 неперекрывающихся от растяжек вторичного,
+  // остальные 4 растяжечных луча совпадают с зеркальными) — было ошибочно 6
+  const spikes=8;
   for(let i=0;i<spikes;i++){
     const a=i/spikes*6.283; // фиксированные углы — направление задано инструментом, не эмоцией кадра
     const len=6*twinkle;
@@ -1932,18 +1938,21 @@ loopFlash('pxDoppler', (ctx,p)=>{
   ctx.restore();
 },4.2,3000);
 
-/* ===== 47. Зодиакальный свет ===== */
+/* ===== 47. Зодиакальный свет (форма исправлена — была ровная полоса, реально это суживающаяся пирамида) ===== */
 mountCards('gridZodiacal', [['pxZodiacal','Самое тихое свечение файла','пыль в плоскости эклиптики']]);
 loopFlash('pxZodiacal', (ctx,p)=>{
-  ctx.save(); clipBody(ctx);
+  ctx.save(); clipBody(ctx); ctx.translate(0,2);
   ctx.rotate(-0.35);
-  const g=ctx.createLinearGradient(-6,0,6,0);
   const a=(0.35+0.1*Math.sin(p*6.283)).toFixed(2);
+  // настоящая форма — не полоса одинаковой ширины, а сужающаяся к вершине
+  // «туманная пирамида», встающая от горизонта (реальное наблюдаемое описание)
+  const g=ctx.createLinearGradient(0,6,0,-7);
   g.addColorStop(0,'rgba(255,244,220,0)');
-  g.addColorStop(0.5,'rgba(255,244,220,'+a+')');
+  g.addColorStop(0.55,'rgba(255,244,220,'+a+')');
   g.addColorStop(1,'rgba(255,244,220,0)');
-  ctx.fillStyle=g;
-  ctx.fillRect(-6,-1.1,12,2.2);
+  ctx.beginPath();
+  ctx.moveTo(-3.4,6); ctx.lineTo(3.4,6); ctx.lineTo(0,-7); ctx.closePath();
+  ctx.fillStyle=g; ctx.fill();
   ctx.restore();
 },4.2,5000);
 
@@ -2188,7 +2197,10 @@ loopFlash('pxCorona2', (ctx,p)=>{
   const rnd=mulberry32(55);
   for(let i=0;i<26;i++){
     const a=rnd()*6.283;
-    const equatorial=Math.abs(Math.sin(a));
+    // исправлено: было перепутано — экватор здесь горизонталь (a=0/π), полюса
+    // вертикаль (a=π/2) в принятой в файле развёртке эллипса; настоящие
+    // стримеры длиннее у экватора, короче у полюсов — нужен |cos|, не |sin|
+    const equatorial=Math.abs(Math.cos(a));
     const len=R*(0.5+equatorial*1.8)+0.3*Math.sin(p*6.283+i);
     const ex=Math.cos(a)*(R+len), ey=Math.sin(a)*(R+len)*0.7;
     const g=ctx.createLinearGradient(Math.cos(a)*R,Math.sin(a)*R*0.7,ex,ey);
@@ -2213,16 +2225,19 @@ loopFlash('pxGWave', (ctx,p)=>{
   ctx.restore();
 },4.2,2600);
 
-/* ===== 60. Реликтовое излучение ===== */
+/* ===== 60. Реликтовое излучение (цвет исправлен по настоящей карте Planck/WMAP —
+   было однотонно-оранжевое, реально это двухцветная холодное/горячее шкала) ===== */
 mountCards('gridCMB', [['pxCMB','Почти ничего, и это честно','финал волны 3']]);
 loopFlash('pxCMB', (ctx,p)=>{
   ctx.save(); clipBody(ctx);
   const rnd=mulberry32(909);
   for(let i=0;i<40;i++){
     const x=(rnd()-0.5)*8, y=(rnd()-0.5)*10;
-    const v=0.06+0.05*Math.sin(p*6.283+i);
+    const v=0.07+0.05*Math.sin(p*6.283+i);
+    const hot=rnd()>0.5; // настоящая карта Planck/WMAP — синие (холоднее) и
+                          // оранжевые (горячее) пятна вперемешку, не один цвет
     ctx.beginPath(); ctx.arc(x,y, 0.5+rnd()*0.6,0,6.283);
-    ctx.fillStyle='rgba(255,140,90,'+v.toFixed(2)+')';
+    ctx.fillStyle= hot ? 'rgba(255,140,90,'+v.toFixed(2)+')' : 'rgba(110,170,230,'+v.toFixed(2)+')';
     ctx.fill();
   }
   ctx.restore();
@@ -2654,7 +2669,7 @@ loopFlash('pxEyespot', (ctx,p)=>{
 },4.2,4000);
 
 /* ===== 82. Структурная окраска ===== */
-mountCards('gridStructColor', [['pxStructColor','Цвет без пигмента','фотонный кристалл, не краска']]);
+mountCards('gridStructColor', [['pxStructColor','Цвет без пигмента','губчатая наноструктура, не краска']]);
 loopFlash('pxStructColor', (ctx,p)=>{
   ctx.save(); clipBody(ctx); ctx.translate(0,-2);
   const R=3.0;
