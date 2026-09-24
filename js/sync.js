@@ -278,17 +278,36 @@ function syncFetch(url, body){
     })
     .finally(()=>{ if(t) clearTimeout(t); });
 }
-function syncPost(payload){
-  const burnWeb=!syncInitData() && !!syncWebAuth(); // 401 по веб-сессии = подпись протухла (неделя) — сгорает, вход снова в один тап
-  const burnDc=!syncInitData() && !syncWebAuth() && !!syncDcAuth(); // то же для сессии Discord
-  return syncFetch(SYNC_URL,payload).then(r=>{
-    if(r.status===401 && (burnWeb||burnDc)){
-      if(burnWeb) Store.del('tgWebAuth');
-      if(burnDc) Store.del('dcAuth');
+/* 24.09.2026 (аудит всей игры, владелец: вариант «закрыть заранее», стражи 354/355):
+   раньше сессию при 401 сжигала только главная дверь (syncPost) и только tgWebAuth/dcAuth —
+   сессию Google (gAuth, живёт 7 дней) забыли, а остальные двери (день/спидран/слалом/биатлон,
+   эстафета, Мастерская, Хартия) не сжигали ничего. Игрок оставался «вошёл» навсегда, очереди
+   молча выбрасывали каждый результат (401 = отказ навсегда, страж 270). Теперь одна общая
+   функция для всех пяти дверей. Решение владельца: жечь ТОЛЬКО на 401 {error:'auth'} (сервер
+   прямо сказал «не узнал игрока») — служебные 401 (admin_auth, google_me...) вход не трогают.
+   Какую сессию жечь, решаем ДО отправки — ту, что syncAuth() реально положил в запрос.
+   Внутри Telegram (initData) не жжём ничего — как и раньше. Дверь «Удалить мои данные»
+   (privacy) сюда осознанно не подключена: её 401 бывает и от настройки сервера (нет bot_token). */
+function syncAuthBurnKey(){
+  const a=syncAuth();
+  if(!a || a.initData) return null;
+  return a.webAuth ? 'tgWebAuth' : a.dcAuth ? 'dcAuth' : a.gAuth ? 'gAuth' : null;
+}
+function syncBurnOnAuth401(r, key){
+  if(!key || !r || r.status!==401 || typeof r.clone!=='function') return Promise.resolve(r);
+  let body;
+  try{ body=r.clone().json(); }catch(e){ return Promise.resolve(r); }
+  return Promise.resolve(body).catch(()=>null).then(d=>{
+    if(d && d.error==='auth'){
+      Store.del(key);
       if(typeof syncAuthChanged==='function') syncAuthChanged();
     }
     return r;
   });
+}
+function syncPost(payload){
+  const burnKey=syncAuthBurnKey();
+  return syncFetch(SYNC_URL,payload).then(r=>syncBurnOnAuth401(r, burnKey));
 }
 
 /* Отправка рекордов после забега. Тихая: никаких тостов/ошибок игроку.
@@ -490,7 +509,8 @@ function syncGhostGet(pid, cat){ // чужой трек: {ok,track,skin,best,nam
    полёт лучшего — и только тому, кто сам сегодня прыгал: призрак не подсказка. */
 const SYNC_DAILY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-daily';
 function syncDailyPost(payload){
-  return syncFetch(SYNC_DAILY_URL,payload).catch(()=>null); // v1.282.13: тот же поводок, что у основной двери — без него запрос дня висел вечно
+  const burnKey=syncAuthBurnKey(); // 24.09.2026: протухший вход сгорает и здесь — см. syncBurnOnAuth401
+  return syncFetch(SYNC_DAILY_URL,payload).then(r=>syncBurnOnAuth401(r, burnKey)).catch(()=>null); // v1.282.13: тот же поводок, что у основной двери — без него запрос дня висел вечно
 }
 function syncDailyQueue(){ return saneArray(Store.get('dailyQ',[]),[]); }
 function syncDailyEnqueue(o){
@@ -701,7 +721,7 @@ function syncBiathlonTop(day){ // {ok,day,top:[{pid,name,username,provider,best,
    тот же приём, что у Слалома/Биатлона выше (сеть чаще всего подводит именно на посадке), но
    флаг успеха и «цепочка кончилась» читаем из ТЕЛА ответа (d.ok/d.done), не только из HTTP-статуса. */
 const RELAY_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-relay';
-function relayPost(payload){ return syncFetch(RELAY_URL,payload).catch(()=>null); }
+function relayPost(payload){ const burnKey=syncAuthBurnKey(); return syncFetch(RELAY_URL,payload).then(r=>syncBurnOnAuth401(r, burnKey)).catch(()=>null); } // 24.09.2026: + сжигание протухшего входа
 function syncRelayGetOpen(){ // {ok,chain:{id,seed,leg,score,lives,prevTrack,prevSkin,prevName}|null}
   if(!syncAvailable()) return Promise.resolve(null);
   return relayPost(Object.assign({action:'relay_get_open'}, syncAuth())).then(r=>{
@@ -771,7 +791,8 @@ if(typeof window!=='undefined'){
    первую публичную витрину + сердечко (голос) поверх track_votes. */
 const WORKSHOP_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-workshop';
 function workshopPost(payload){
-  return syncFetch(WORKSHOP_URL,payload).catch(()=>null);
+  const burnKey=syncAuthBurnKey(); // 24.09.2026: протухший вход сгорает и здесь — см. syncBurnOnAuth401
+  return syncFetch(WORKSHOP_URL,payload).then(r=>syncBurnOnAuth401(r, burnKey)).catch(()=>null);
 }
 function workshopList(sort){ // sort: 'new'|'top'|'plays'|'mine' — витрина публична, гостю можно любую (кроме 'mine')
   if(sort==='mine' && !syncAvailable()) return Promise.resolve(null);
@@ -845,7 +866,8 @@ function workshopModerateFeatured(code, featured){ // 12.09.2026: «Выбор �
    гостю можно увидеть общий счётчик; sign требует личность (как workshopVote). */
 const CHARTER_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-charter';
 function charterPost(payload){
-  return syncFetch(CHARTER_URL,payload).catch(()=>null);
+  const burnKey=syncAuthBurnKey(); // 24.09.2026: протухший вход сгорает и здесь — см. syncBurnOnAuth401
+  return syncFetch(CHARTER_URL,payload).then(r=>syncBurnOnAuth401(r, burnKey)).catch(()=>null);
 }
 function charterStatus(){
   const body = syncAvailable() ? Object.assign({action:'status'}, syncAuth()) : {action:'status'};
