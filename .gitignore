@@ -4,3 +4,4 @@ macet-*
 
 # Скриншоты Playwright MCP при проверке макетов — временные, не часть игры
 .playwright-mcp/
+.supabase-health-last.txt
