@@ -22,6 +22,7 @@ cmd=$(printf '%s' "$out" | sed -n '2p')
 pat='>[[:space:]]*["'"'"']?[A-Za-z]:\\'
 
 if [[ "$tool" == "Bash" && "$cmd" =~ $pat ]]; then
+  node "$(dirname "$0")/lib/signal-trail.mjs" record windows-path-redirect 2 "> C:\\... вместо /c/..." --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
   echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Redirect (>/>>) целится в путь вида C:\\... — в Git Bash это дважды (14.09.2026) тихо создавало мусорный файл C:tmpXXX прямо в текущей папке вместо реального пути, без единой ошибки. Используй прямые слэши: /c/tmp/... вместо C:\\tmp\\..."}}'
   exit 0
 fi
