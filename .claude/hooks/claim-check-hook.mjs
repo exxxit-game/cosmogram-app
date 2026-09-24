@@ -230,7 +230,28 @@ function findClaims(text) {
   return matches;
 }
 
-function hasFreshLog(windowMin = CLAIM_CHECK_FRESH_MIN) {
+// 25.09.2026, найдено живым тестом: старая версия проверяла только «есть ли
+// СВЕЖАЯ запись в логе», не «относится ли она к ТЕКУЩЕМУ заявлению» — запись
+// «цвет кнопки поменял на синий» 3 минуты назад засчитывалась как подтверждение
+// для СОВЕРШЕННО другого заявления («база данных полностью очищена») в этом же
+// ходу. Честная граница: полноценного понимания смысла здесь нет (это не LLM-
+// вызов, простой детерминированный скрипт) — но грубая проверка пересечения
+// значимых слов между записанным claim и текстом сообщения снимает САМЫЙ
+// очевидный случай (совершенно другая тема), не претендуя на большее.
+function significantWords(text) {
+  const words = String(text || '').toLowerCase().match(/[a-zа-яё0-9]{4,}/gi) || [];
+  return new Set(words);
+}
+
+function isRelevant(entryClaim, messageText) {
+  const logWords = significantWords(entryClaim);
+  if (logWords.size === 0) return true; // запись без текста — не за что зацепиться, не блокируем из-за этого
+  const msgWords = significantWords(messageText);
+  for (const w of logWords) if (msgWords.has(w)) return true;
+  return false;
+}
+
+function hasFreshLog(messageText, windowMin = CLAIM_CHECK_FRESH_MIN) {
   if (!fs.existsSync(CLAIM_CHECKS_LOG)) return false;
   let lines;
   try {
@@ -249,7 +270,7 @@ function hasFreshLog(windowMin = CLAIM_CHECK_FRESH_MIN) {
       const tsStr = entry.timestamp || entry.ts;
       if (!tsStr) continue;
       const ts = parseTsAsUtc(tsStr);
-      if (!Number.isNaN(ts) && ts >= cutoff) return true;
+      if (!Number.isNaN(ts) && ts >= cutoff && isRelevant(entry.claim, messageText)) return true;
     } catch {
       continue;
     }
@@ -287,7 +308,7 @@ function main() {
   const claims = findClaims(message);
   if (!claims.length) emitOk();
 
-  if (hasFreshLog()) emitOk();
+  if (hasFreshLog(message)) emitOk();
 
   const bullets = claims.map((p) => `  - "${p}"`).join('\n');
   const reason =
