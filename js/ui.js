@@ -1845,18 +1845,9 @@ function angarShip(x, sk, s, bolshoy){
      показывало вчерашний выбор. Теперь: на своей вкладке жетон, на который сейчас смотрит
      игрок (angarSel), подменяет надетый — на всех остальных вкладках показывается то, что
      реально надето, как и раньше. Тот же приём, что уже был только у Цвета. */
-  const pvDecal = angarCat==='decal' ? angarSel : S.decal;
-  /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
-     render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
-     выше, отдельно пересчитывать не нужно. */
-  if(pvDecal){ const dc=DECALS_BY_ID.get(pvDecal);
-    if(dc && dc.ch && emojiSupported(dc.ch)){ // 29.08.2026: не рисовать тофу на самом борту — см. angarVisibleList
-      x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
-      x.fillText(dc.ch,-5.3,-0.7);
-    }
-  }
-  // 06.09.2026: вкладка «Иконки» (ICONS, S.icon/ownedIcons, правая половина борта) убрана
-  // из игры целиком (владелец) — держали слишком много места, мешали новым анимациям скина.
+  // 24.09.2026: левая половина борта («Декаль на корпусе», 28.08.2026) убрана вместе со
+  // всей вкладкой «Эмодзи» (владелец) — см. game.js:137. Правая половина («Иконки») убрана
+  // раньше, 06.09.2026 — предпросмотр борта теперь снова просто цвет скина, как и в полёте.
   x.restore();
 }
 
@@ -2447,46 +2438,37 @@ function starJewelHtml(cls){ return '<canvas class="starJewelSm'+(cls?' '+cls:''
 function starJewelWake(){
   document.querySelectorAll('.starJewelSm').forEach(c=>{ if(!c._drawn && typeof drawStarJewel==='function'){ c._drawn=1; drawStarJewel(c); } });
 }
-/* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга —
-   Цвет (было, поведение не меняется) и Декаль (новое, символ вместо канваса корабля).
+/* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга.
    06.09.2026: вкладка «Иконки» (была тут третьей, ICONS/S.icon/ownedIcons) убрана из игры
    целиком (владелец) — 268 штук держали слишком много места и мешали новым анимациям
-   скина. Вспышка (FLASHES, S.launchFx/ownedLaunchFx — НЕ S.flash, тот уже занят золотой
-   вспышкой подбора звезды) — независимая, но НЕ рисуется на самом борту постоянно, а
-   проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). */
+   скина. 24.09.2026: вкладка «Эмодзи» (была декалью — DECALS/S.decal/ownedDecals) убрана
+   из игры целиком (владелец) — см. game.js:137 для полного обоснования. Вспышка (FLASHES,
+   S.launchFx/ownedLaunchFx — НЕ S.flash, тот уже занят золотой вспышкой подбора звезды) —
+   независимая, но НЕ рисуется на самом борту постоянно, а проигрывается только первые
+   0.45с забега (см. drawLaunchFlash в render.js). */
 const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin',  favKey:'favSkins' },
-  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal', favKey:'favDecals' },
   flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx', favKey:'favLaunchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
   trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail', favKey:'favTrails' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
 };
 /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
    тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
-   владении (см. game.js: ownedDecals/ownedLaunchFx, price:0 у самих записей).
+   владении (см. game.js: ownedLaunchFx, price:0 у самих записей).
    Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
    состав каталога, не действие игрока.
    07.09.2026, владелец, явный пересмотр этого же решения («это тогда было, сейчас нужно»):
    Избранное возвращается — favKey/favXxx выше и .angarFav ниже. ANGAR_FREEBIE не убирается,
    два механизма не конфликтуют (фрибут — фиксированный подарок, избранное — выбор игрока). */
-// 04.09.2026 (владелец, живая сессия): decal поменян местами со старым бесплатным —
-// Ракета/Тарелка теперь платные, вместо них бесплатны Звезда/Сотка — выбраны
-// владельцем вживую (клик-ловушка в консоли, не на глаз по коду). flash не менялся.
-const ANGAR_FREEBIE = { decal:[3,30], flash:[1,2] };
+const ANGAR_FREEBIE = { flash:[1,2] };
 let angarCat = 'color';   // активная вкладка тюнинга
-/* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
-   потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
-   (владелец, 29.08.2026): подкатегории — из самих DECALS (поле cat), в порядке первого
-   появления в массиве, без «Нет» (id0, cat:'none' — это не подкатегория, а обычный
-   бесплатный жетон). Одним проходом по данным, а не отдельным вручную сверяемым списком —
-   не разойдётся с составом DECALS. Раньше был ещё angarSubCat — какая подкатегория выбрана
-   в отдельной ленте вкладок; сама лента снята, список теперь всегда показывает все
-   подкатегории подряд, фильтровать стало нечем. */
-const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+// 24.09.2026: ANGAR_DECAL_CATS убран вместе со всей вкладкой «Эмодзи» (владелец) — см.
+// game.js:137. Приём построения списка категорий одним проходом по данным (без него
+// расходиться) остался у Вспышки/Следа/Цвета ниже — тот же самый, что был здесь.
 // 06.09.2026: ANGAR_ICON_CATS убран вместе со всей вкладкой «Иконки» (владелец) — 268 штук
 // держали слишком много места, мешали новым анимациям скина.
 /* 05.09.2026 «Комфорт большого каталога» (владелец: «огромные каталоги получились» —
    131 Вспышка/16 Следов одной стеной): тот же приём построения списка категорий, что уже
-   был у ANGAR_DECAL_CATS выше, просто раньше не был подключён к Вспышке/Следу — старый
+   был у декали (снята 24.09.2026), просто раньше не был подключён к Вспышке/Следу — старый
    комментарий про «10 штук, не нужны категории» устарел. Живой макет (was/became) показан
    и одобрен владельцем перед этой правкой. */
 const ANGAR_FLASH_CATS = (()=>{ const seen=[]; FLASHES.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
@@ -2577,8 +2559,7 @@ function angarVisibleList(){ // список жетонов активной в�
      чтобы не быть на экране дважды. */
   const freebieIds = ANGAR_FREEBIE[angarCat] || [];
   const freebies = freebieIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
-  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS
-    : angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
+  const subCats = angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
     : angarCat==='color' ? ANGAR_SKIN_CATS : null;
   /* 06.09.2026, найдено живьём (владелец: «плитка Бумажный дублируется»): у скинов (color)
      id0 несёт настоящую категорию (cat:'classic'), не 'none' как у декалей/иконок — ветка
@@ -2638,29 +2619,24 @@ function angarBuildTabs(){
      потом (тем же заходом) — одной нерабочей вкладкой «Цвет». 28.08.2026: вторая вкладка
      «Декаль» с реальным переключением. 29.08.2026: третья — «Иконки» (правая сторона
      борта, носится вместе с декалью, не вместо), четвёртая — «Вспышка» (не на борту,
-     проигрывается на старте). 05.09.2026: пятая — «След», независимый от скина. Аура/Звук —
-     сюда же позже. */
+     проигрывается на старте). 05.09.2026: пятая — «След», независимый от скина.
+     24.09.2026: «Эмодзи» (была декалью) убрана из игры целиком (владелец) — см. game.js:137.
+     Тюнинг теперь 3 вкладки: Цвет / Вспышка / След. Аура/Звук — сюда же позже. */
   if(angarTabsBuilt) return;
   const tabs=$('angarTabs');
   if(tabs){
-    // 13.09.2026, владелец (живой скрин с обводкой): «Эмодзи» — четвёртой вкладкой, после
-    // «Следа», не второй. Порядок клика/подсветки/textContent ниже — по id, DOM-порядок не
-    // трогает: переставлена только сама строка разметки.
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
                       '<button class="angarTab" id="angarTabFlash"></button>'+
-                      '<button class="angarTab" id="angarTabTrail"></button>'+
-                      '<button class="angarTab" id="angarTabDecal"></button>';
+                      '<button class="angarTab" id="angarTabTrail"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
-    $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
     $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
     $('angarTabTrail').addEventListener('click',()=>angarSwitchCat('trail'));
   }
   angarTabsBuilt=true;
 }
 function angarRenderTabsSel(){
-  const tc=$('angarTabColor'), td=$('angarTabDecal'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
+  const tc=$('angarTabColor'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
   if(tc) tc.classList.toggle('sel', angarCat==='color');
-  if(td) td.classList.toggle('sel', angarCat==='decal');
   if(tf) tf.classList.toggle('sel', angarCat==='flash');
   if(tr) tr.classList.toggle('sel', angarCat==='trail');
 }
@@ -2711,16 +2687,14 @@ function angarBuildGrid(){
          у них есть свой item.cat от оригинала (например 'space'), без исключения заголовок
          той категории ошибочно всплыл бы прямо над ними, а не над её настоящим первым
          предметом дальше по списку. */
-      if((angarCat==='decal'||angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
+      if((angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
          && (ANGAR_FREEBIE[angarCat]||[]).indexOf(item.id)<0){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
-        if(angarCat==='decal'){
-          head.classList.add('angarCatHeadToggle');
-          head.dataset.cat=item.cat;
-          head.classList.toggle('open', S.angarDecalCollapsed.indexOf(item.cat)<0);
-        }
+        // 24.09.2026: сворачиваемые группы (.angarCatHeadToggle/S.angarDecalCollapsed) были
+        // только у «Эмодзи» (900 записей, много вкладок нужны были) — убраны вместе с ней,
+        // см. game.js:137. У Вспышки/Следа/Цвета такой нужды не было и нет.
         grid.appendChild(head);
         lastCat = item.cat;
       }
@@ -2862,7 +2836,6 @@ function angarBuildGrid(){
         })();
       }
       el.addEventListener('click',()=>{ angarPick(item.id); });
-      if(angarCat==='decal' && item.cat && item.cat!=='none' && S.angarDecalCollapsed.indexOf(item.cat)>=0) el.classList.add('angarHiddenGroup');
       grid.appendChild(el);
     });
     angarBuilt = true;
@@ -2874,7 +2847,6 @@ function renderHangar(){
   angarSel = S[ANGAR_CATS[angarCat].selKey];
   angarRenderTabsSel();
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
-  const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
   /* 09.09.2026, владелец (живой скрин, обвёл красным «След»): scrollFadeSync мерил ширину
@@ -3020,32 +2992,14 @@ function angarBuyPremium(item, els){
     }catch(e){ _angarBuyBusy=false; toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); }
   });
 }
-/* 09.09.2026 «Свёрнутые группы Эмодзи»: сам подзаголовок группы — тап по нему прячет/показывает
-   её плитки без перестройки всей сетки (angarBuilt не сбрасывается — состояние живёт в классах
-   .open/.angarHiddenGroup, персист — в S.angarDecalCollapsed/Store). Соседние плитки той же
-   группы — все .angarIt между этим подзаголовком и следующим .angarCatHead. */
-function angarToggleDecalGroup(cat){
-  const arr=S.angarDecalCollapsed; const i=arr.indexOf(cat);
-  const collapsedNow = i<0; // ещё не было в списке свёрнутых — сворачиваем сейчас
-  if(collapsedNow) arr.push(cat); else arr.splice(i,1);
-  Store.set('angarDecalCollapsed', arr);
-  sfx.click(); haptic('light');
-  const grid=$('angarGrid'); if(!grid) return;
-  const head=grid.querySelector('.angarCatHeadToggle[data-cat="'+cat+'"]');
-  if(!head) return;
-  head.classList.toggle('open', !collapsedNow);
-  let n=head.nextElementSibling;
-  while(n && !n.classList.contains('angarCatHead')){
-    n.classList.toggle('angarHiddenGroup', collapsedNow);
-    n=n.nextElementSibling;
-  }
-}
+// 24.09.2026: «Свёрнутые группы Эмодзи» (angarToggleDecalGroup, S.angarDecalCollapsed,
+// .angarCatHeadToggle/.angarHiddenGroup) убраны вместе со всей вкладкой «Эмодзи» (владелец) —
+// см. game.js:137. Только у неё было 900 записей и нужда сворачивать группы.
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
   if(e.target.closest('.angarUnwearBtn')){ e.stopPropagation(); angarUnwear(); }
-  const head=e.target.closest('.angarCatHeadToggle'); if(head){ angarToggleDecalGroup(head.dataset.cat); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
@@ -4827,8 +4781,9 @@ Store.init(()=>{
   // 29.08.2026 «2 бесплатных вместо Избранного»: id 1,2 из ANGAR_FREEBIE домешиваются в
   // ownedX явным union — не только через дефолт Store.get (тот сработал бы лишь для
   // игрока без вообще сохранённого массива, а не для уже игравших без этих двух id).
-  S.ownedDecals = Array.from(new Set(saneArray(Store.get('ownedDecals',[0]),[0]).concat(ANGAR_FREEBIE.decal)));
-  S.decal = saneNumber(Store.get('decal',0),0);
+  // 24.09.2026: S.ownedDecals/S.decal убраны вместе со всей вкладкой «Эмодзи» (владелец,
+  // тихий сброс без тоста) — старое сохранённое значение в Store просто больше никем не
+  // читается, безопасно. См. game.js:137.
   // 06.09.2026: S.ownedIcons/S.icon убраны вместе со всей вкладкой «Иконки» — старое
   // сохранённое значение в Store просто больше никем не читается, безопасно.
   S.ownedLaunchFx = Array.from(new Set(saneArray(Store.get('ownedLaunchFx',[0]),[0]).concat(ANGAR_FREEBIE.flash)));
@@ -4838,12 +4793,10 @@ Store.init(()=>{
   // 07.09.2026 «Избранное»: по одному массиву на категорию Тюнинга, пусто по умолчанию
   // (в отличие от ownedX — тут нет фрибута, только личный выбор игрока).
   S.favSkins = saneArray(Store.get('favSkins',[]),[]);
-  S.favDecals = saneArray(Store.get('favDecals',[]),[]);
   S.favLaunchFx = saneArray(Store.get('favLaunchFx',[]),[]);
   S.favTrails = saneArray(Store.get('favTrails',[]),[]);
-  // 09.09.2026 «Свёрнутые группы Эмодзи»: список ключей категорий (item.cat), которые владелец
-  // свернул — переживает перезапуск, тем же приёмом, что и favX выше.
-  S.angarDecalCollapsed = saneArray(Store.get('angarDecalCollapsed',[]),[]);
+  // 24.09.2026: S.favDecals/S.angarDecalCollapsed убраны вместе со всей вкладкой «Эмодзи» —
+  // см. game.js:137.
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);

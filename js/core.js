@@ -305,7 +305,7 @@ const Store = {
      Лимит облака — 4096 байт на ЗНАЧЕНИЕ, а не на весь список; каждый из добавленных
      ключей на порядки меньше. Тяжёлое (лента самописца, очередь писем) сюда по-прежнему
      не входит — см. правку v1.282.13. */
-  CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedDecals','decal','ownedLaunchFx','launchFx',
+  CLOUD_KEYS:['best','wallet','ownedSkins','skin','ownedLaunchFx','launchFx',
               'savedRun','stats','refBy',
               'ach','achQ','callsign','gyroUnlocked','bestGyro','bestTouch','bestKeys','bestDist','bestBullet','srBest','srBestRSG'], // 11.09.2026: srBestRSG — второй личный рекорд Speedrun (RSG), тот же список, что у srBest
   /* v1.282.13: переполнение больше не проходит молча. Всё хранилище — один ключ, поэтому
@@ -388,7 +388,7 @@ const Store = {
         continue;
       }
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv);
-      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx'||k==='ach'||k==='achQ') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
+      else if((k==='ownedSkins'||k==='ownedLaunchFx'||k==='ach'||k==='achQ') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))];
       else if(k==='stats') this.mem[k]=this._mergeStatsObj(cur,nv);
       else this.mem[k]=nv;
     }
@@ -400,7 +400,7 @@ const Store = {
       let nv; try{ nv=JSON.parse(v); }catch(e){ nv=v; }
       const cur=this.mem[k];
       if(this.MAX_KEYS[k] && typeof nv==='number' && typeof cur==='number') this.mem[k]=Math.max(cur,nv); // рекорд не крадём ни в одну сторону
-      else if((k==='ownedSkins'||k==='ownedDecals'||k==='ownedLaunchFx') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
+      else if((k==='ownedSkins'||k==='ownedLaunchFx') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // купленное не пропадает
       else if((k==='ach'||k==='achQ') && Array.isArray(nv) && Array.isArray(cur)) this.mem[k]=[...new Set(cur.concat(nv))]; // открытые достижения и ещё не показанная очередь — тоже не пропадают
       else if(k==='stats') this.mem[k]=this._mergeStatsObj(cur,nv); // счётчики за всю жизнь — по каждому полю максимум, не целиком перезаписью
       else this.mem[k]=nv;
@@ -546,7 +546,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION = '1.478.527'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION = '1.478.528'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 /* 11.09.2026 «Разбивка взлёта»: живой отчёт с Samsung A3 Core показал зонд дребезга
    (deviceProfileProbe, skymail.js) с max:1160ms в первые 2.5с взлёта — но зонд не блокирующий,
    он стартует и сразу отдаёт управление, а сам скачок мог случиться в ЛЮБОМ из тяжёлых шагов
