@@ -18,6 +18,11 @@ age_days=$(( (now - last_commit) / 86400 ))
 dirty=$(cd "$MEM_DIR" && git status --short 2>/dev/null | wc -l)
 
 if [ "$age_days" -gt "$STALE_DAYS" ] && [ "$dirty" -gt 0 ]; then
+  # 25.09.2026: подключено к тому же живому следу (rules), что REPEAT-LOG и другие
+  # хуки — если это повторится в будущих сессиях, а не разово, рейтинг это покажет,
+  # не только разовое предупреждение, которое легко пропустить мимо глаз.
+  SEV=$(( age_days > 5 ? 5 : age_days ))
+  node "$(dirname "$0")/lib/signal-trail.mjs" record memory-backup-stale "$SEV" "просрочено на ${age_days}дн, ${dirty} незакоммиченных" --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
   echo "⚠ Резервная копия памяти (git) не коммитилась $age_days дн., незакоммиченных файлов: $dirty. Рассмотри commit в $MEM_DIR." >&2
 fi
 exit 0
