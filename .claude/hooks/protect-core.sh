@@ -34,9 +34,13 @@ process.stdin.on('end',()=>{
 ")
 tool=$(printf '%s' "$out" | sed -n '1p')
 file=$(printf '%s' "$out" | sed -n '2p')
+# 25.09.2026, найдено живым тестом: файловая система Windows регистронезависима
+# (Core.js и core.js — один и тот же файл на диске), а bash `case` по умолчанию
+# регистрозависим — «Core.js»/«CORE.JS»/«Game.js» проходили мимо защиты молча.
+file_lower="${file,,}"
 
 if [[ "$tool" == "Edit" || "$tool" == "Write" ]]; then
-  case "$file" in
+  case "$file_lower" in
     *core.js|*game.js|*render.js|*input.js)
       echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Ядровый файл — окончательное разрешение за вами, на каждую правку заново."}}'
       exit 0
