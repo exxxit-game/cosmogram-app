@@ -33,6 +33,10 @@ cmd=$(printf '%s' "$out" | sed -n '2p')
 bg=$(printf '%s' "$out" | sed -n '3p')
 
 if [[ "$tool" == "Bash" && "$cmd" == *guard.mjs* && "$cmd" != *--only=* ]]; then
+  # 25.09.2026: подключено к живому трейлу rules — повторные ПОПЫТКИ локального
+  # полного прогона в течение сессии (даже каждая по отдельности пойманная) сами
+  # по себе значимый паттерн, стоящий отслеживания через сессии, не только эта одна.
+  node "$(dirname "$0")/lib/signal-trail.mjs" record guard-full-suite-attempt 3 "попытка полного прогона локально" --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
   echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Полный набор guard.mjs (без --only=) — эта же ошибка уже вешала машину на ~40-50 минут (17.09, 19.09.2026) и повторилась 24.09.2026 (ушёл в фон по таймауту Bash, не по явному run_in_background — старая версия этого hook такое не ловила). У проекта есть .github/workflows/guard.yml — полный прогон должен идти там, не локально, независимо от фона. Если это правда нужно локально — подтвердите явно, почему CI сейчас не годится."}}'
   exit 0
 fi
