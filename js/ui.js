@@ -3387,6 +3387,13 @@ wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync)
    от нашего же programmatic scrollTo() ниже). Дальше карусель стоит там, где её оставили. */
 let heroCarouselAutoT=setInterval(function(){
   if (screenName!=='menu') return;
+  /* 24.09.2026 (владелец: «пусть сперва Score Attack сыграют, а остальное увидят потом» +
+     живая жалоба «подсказка появляется намного позже, чем карусель уезжает — можешь и не
+     увидеть»): пока игрок вообще ни разу не играл — карусель не крутится сама, стоит на
+     Score Attack. Это и решает конфликт таймингов (7с прокрутка vs 15с+ ожидание
+     подсказки — сама подсказка теперь ждёт именно эту карточку, ей больше некуда уезжать),
+     и не показывает новичку раньше времени 6 режимов, которые ему рано видеть. */
+  if(typeof Stats!=='undefined' && (Stats.runs||0)===0) return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
   const n=car.children.length;
@@ -3426,6 +3433,7 @@ function idleHintCentredCard(){
 }
 function idleHintHide(){
   const svg=document.getElementById('idleHintTongue'); if(svg) svg.remove();
+  const hit=document.getElementById('idleHintTongueHit'); if(hit) hit.remove();
   const callout=document.getElementById('idleHintCallout'); if(callout) callout.remove();
   idleHintShowing=false; idleHintCalloutShown=false;
 }
@@ -3450,8 +3458,19 @@ function idleHintShow(){
     '<path d="M 37.07,4.79 C 48.38,21.76 54.04,41.56 58.28,54.28 C 45.56,50.04 25.76,44.38 13.03,28.83 Z" fill="#d32f2f"/>'+
     '<text x="48" y="42" transform="rotate(-45 48 42)" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="middle">?</text>'+
     '</g>';
-  svg.addEventListener('click', e=>{ e.stopPropagation(); sfx.click(); haptic('light'); idleHintOpenExplain(); });
-  badge.insertBefore(svg, badge.firstChild);
+  badge.insertBefore(svg, badge.firstChild); // визуально под лентой (.band рисуется поверх) — как и было
+  /* 24.09.2026 (владелец, живой телефон: «тяжеловато пальцем попасть», тапы уходят на
+     ленту → «рекорды»): видимая часть языка — узкая полоска, торчащая из-под ленты, а
+     .band идёт ПОСЛЕ в DOM и перекрывает хит-тест почти везде, кроме этой полоски.
+     Отдельная невидимая зона нажатия, вставленная ПОСЛЕ .band (значит выигрывает хит-тест
+     у ленты), кружок над видимым кончиком языка — палец может промахнуться на несколько px
+     мимо тонкой полоски и всё равно попасть. */
+  const hit=document.createElementNS(svgNS,'svg');
+  hit.id='idleHintTongueHit';
+  hit.setAttribute('viewBox','0 0 76 76');
+  hit.innerHTML='<circle cx="53" cy="49" r="17" fill="transparent"/>';
+  hit.addEventListener('click', e=>{ e.stopPropagation(); sfx.click(); haptic('light'); idleHintOpenExplain(); });
+  badge.appendChild(hit); // последний child — выше .band по хит-тесту, сам невидим
   idleHintShowing=true; idleHintCalloutShown=false; idleHintShownAt=Date.now();
   Store.set('idleHintShown', Store.get('idleHintShown',0)+1);
 }
@@ -3475,6 +3494,17 @@ function idleHintNoteActivity(){
 }
 function idleHintTick(){
   if(screenName!=='menu') return;
+  /* 24.09.2026 (владелец: «куча режимов сразу — не надо, пусть сперва Score Attack
+     сыграют, а остальное увидят потом»): пока ограничено ДВУМЯ условиями разом —
+     (1) игрок вообще ни разу не играл ни в один режим (Stats.runs===0), не только
+     Score Attack — владелец явно сказал «вообще»; (2) сейчас в центре карусели именно
+     карточка Score Attack (.hc-classic), не любая — если карусель уехала на другую,
+     подсказка молча не показывается в этот раз, ждёт следующего собственного тика,
+     когда карусель (авто-прокрутка каждые 7с) снова вернётся на Score Attack. Другие
+     6 режимов — отдельная будущая задача, не в этом заходе. */
+  if(typeof Stats==='undefined' || (Stats.runs||0)>0) return;
+  const card=idleHintCentredCard();
+  if(!card || !card.classList.contains('hc-classic')) return;
   const shown=Store.get('idleHintShown',0);
   if(shown>=IDLE_HINT_DELAYS.length) return; // все 5 показов исчерпаны — тихо навсегда
   const idleMs=Date.now()-idleHintLastActivityAt;
