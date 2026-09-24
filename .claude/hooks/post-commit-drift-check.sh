@@ -23,6 +23,7 @@ if [[ "$tool" == "Bash" && "$cmd" == *"git commit"* ]]; then
     app_dirty=$(cd "$APP_DIR" && git status --short 2>/dev/null | wc -l)
     crew_dirty=$(cd "$CREW_DIR" && git status --short 2>/dev/null | wc -l)
     if [[ "$app_dirty" -gt 0 && "$crew_dirty" -eq 0 ]] || [[ "$crew_dirty" -gt 0 && "$app_dirty" -eq 0 ]]; then
+      node "$(dirname "$0")/lib/signal-trail.mjs" record drift 4 "app_dirty=$app_dirty crew_dirty=$crew_dirty после git commit" >/dev/null 2>&1
       echo "⚠ Сразу после коммита: один репозиторий (app или crew) имеет незакоммиченные правки, другой — ни одной. Если задача трогала игровую логику — вероятно, страж в другом репозитории забыт (feedback_crew_i_app_odna_igra). Проверь СЕЙЧАС, не откладывая." >&2
       exit 2
     fi

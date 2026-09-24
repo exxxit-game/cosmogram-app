@@ -20,6 +20,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// 25.09.2026: общий затухающий след (signal-trail.mjs) — см. комментарий в самом файле.
+// Импорт в try, не await — единичный сбой этого модуля не должен ронять fail-safe хука.
+// pathToFileURL обязателен: на Windows import() сырого пути "C:\..." падает с
+// ERR_UNSUPPORTED_ESM_URL_SCHEME — поймано живым тестом, не угадано (signal-trail
+// молча не писался, heat оставался пустым, пока не добавил эту обёртку).
+let recordSignal = () => {};
+try {
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+} catch { /* модуль недоступен — хук продолжает работать без общего следа */ }
 
 const CLAIM_CHECKS_LOG = path.resolve(
   process.env.CLAIM_CHECKS_LOG_PATH ||
@@ -286,6 +299,8 @@ function main() {
     `  2. Запиши: node .claude/hooks/log-claim.mjs "<что утверждаю>" "<как проверил>"\n` +
     `  3. Ответь заново\n\n` +
     `Отключить на раз: CLAIM_CHECK_ENFORCE_MODE=warn или =off`;
+
+  try { recordSignal('claim-check', mode === 'block' ? 4 : 3, claims[0] || 'unverified claim'); } catch { /* см. комментарий у импорта выше */ }
 
   if (mode === 'warn') emitWarn(reason);
   emitBlock(reason);
