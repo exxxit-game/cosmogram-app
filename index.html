@@ -789,6 +789,44 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .heroCard .recordBadge.a-wave .shp:first-child{animation-name:wRibbonBlink;animation-duration:5.5s}
 .heroCard .recordBadge.a-wave .shp:last-child{animation-name:wRibbonBlink;animation-duration:5.5s;animation-delay:.18s}
 .heroCard .recordBadge.a-sideeye .shp{animation-name:wRibbonSideeye;animation-duration:6.4s}
+/* 25.09.2026 «Зонд»: персонаж-подсказка для совсем новых игроков (Stats.runs===0),
+   заменяет прежний язычок-подсказку на ленте (тот же смысл, другая подача — владелец:
+   «язык в научной игре смотрится омерзительно»). Свободно бродит по всему главному
+   экрану (#zondLayer — прямой потомок #startScreen, тот уже position:fixed;inset:0,
+   значит покрывает весь экран без доп. обёрток), не привязан к одной карточке. Сам
+   слой pointer-events:none — клики по кнопкам под ним проходят насквозь, только сам
+   #zond ловит тап. transition на left/top уже гасится существующим общим правилом
+   `prefers-reduced-motion` (`*{transition:none!important}` — см. ниже по файлу),
+   отдельно эту логику дублировать не нужно; JS (zondMoveNext) читает RM (js/core.js:1395)
+   ИЛИ CALM_FX (js/core.js, «Смягчить тряску», 25.09.2026 тоже по умолчанию выключен) —
+   RM сам по себе признан ненадёжным внутри Telegram WebView, CALM_FX как явный ручной
+   тумблер подстраховывает — и просто не переставляет Зонда дальше. */
+#zondLayer{position:absolute;inset:0;z-index:5;pointer-events:none}
+.zond{position:absolute;width:42px;height:48px;pointer-events:auto;cursor:pointer;
+  transition:left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1)}
+.zondSvg{width:100%;height:100%;pointer-events:none}
+.zondSvg .glow{filter:drop-shadow(0 0 4px rgba(240,192,64,.9))}
+.zondHitZone{position:absolute;left:50%;top:50%;width:66px;height:66px;
+  transform:translate(-50%,-50%);border-radius:50%}
+.zondBob{animation:zondBob 2.8s ease-in-out infinite}
+@keyframes zondBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.zondSatWrap{animation:zondOrbitSwing 3.4s ease-in-out infinite}
+@keyframes zondOrbitSwing{0%,100%{transform:translate(-6px,1px)}50%{transform:translate(6px,-1px)}}
+.zondSat{animation:zondSatBlink 3.4s ease-in-out infinite}
+@keyframes zondSatBlink{0%,45%,55%,100%{opacity:1}25%,75%{opacity:.5}}
+.zondTaunt{position:absolute;background:rgba(14,18,32,.95);border:1px solid var(--gold);
+  border-radius:12px;padding:6px 10px;font-size:11px;color:#fce1b6;white-space:nowrap;
+  opacity:0;transition:opacity .4s;pointer-events:none}
+.zondTaunt::after{content:'';position:absolute;bottom:-6px;left:16px;width:0;height:0;
+  border:6px solid transparent;border-top-color:var(--gold);border-bottom:0}
+.zondTaunt.show{opacity:1}
+.zondHint{position:absolute;background:rgba(14,18,32,.97);border:1px solid var(--gold);
+  border-radius:12px;padding:8px 11px;font-size:10.5px;color:#fce1b6;max-width:170px;
+  line-height:1.4;opacity:0;transition:opacity .3s;z-index:1;pointer-events:none}
+.zondHint.show{opacity:1}
+.zondSpark{position:absolute;font-size:22px;color:var(--gold-hi);opacity:0;
+  pointer-events:none;transition:opacity .3s, transform .3s}
+.zondSpark.show{opacity:1;transform:scale(1.3)}
 /* 15.09.2026→16.09.2026: .playHint прошла путь круглая-иконка-со-своим-самолётиком (несколько
    заходов — угол, кольцо, блик, всё убиралось/двигалось по живым скринам) → сегодня, третий
    заход того же вечера, владелец решил заменить весь круг текстовой подсказкой — идея владельца:
@@ -4678,6 +4716,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div id="duelBanner" class="hidden"></div>
   <div class="scrFoot">
   </div>
+  <div class="zondLayer" id="zondLayer"></div>
 </div>
 
 <!-- PAUSE -->

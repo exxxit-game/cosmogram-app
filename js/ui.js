@@ -1514,6 +1514,7 @@ function refreshMenu(){
   if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026 «Галерея видео-рекордов»: дверь появляется/число обновляется, если есть хоть одно видео
   if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
   if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же; 16.09.2026: заодно гасит текстовую подсказку .playHint, если след теперь есть
+  if (typeof zondTick==='function') zondTick(); // 25.09.2026: Зонд — один эпизод на первый визит совсем нового игрока, см. комментарий у самих функций
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -3392,8 +3393,13 @@ let heroCarouselAutoT=setInterval(function(){
      увидеть»): пока игрок вообще ни разу не играл — карусель не крутится сама, стоит на
      Score Attack. Это и решает конфликт таймингов (7с прокрутка vs 15с+ ожидание
      подсказки — сама подсказка теперь ждёт именно эту карточку, ей больше некуда уезжать),
-     и не показывает новичку раньше времени 6 режимов, которые ему рано видеть. */
-  if(typeof Stats!=='undefined' && (Stats.runs||0)===0) return;
+     и не показывает новичку раньше времени 6 режимов, которые ему рано видеть.
+     25.09.2026: было `Stats.runs` — такого поля не существует нигде в коде (настоящий
+     счётчик — `Stats.games`, `Stats.games++` при каждом старте, js/ui.js:954), значит
+     условие было ВСЕГДА истинным и карусель никогда не крутилась сама ни для кого,
+     сколько бы игрок ни играл. Найдено стражем Зонда, тот же неверный паттерн скопирован
+     туда же — см. комментарий у zondTick(). */
+  if(typeof Stats!=='undefined' && (Stats.games||0)===0) return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
   const n=car.children.length;
@@ -3408,6 +3414,130 @@ let heroCarouselAutoT=setInterval(function(){
   car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
+/* 25.09.2026 «Зонд» — персонаж-подсказка для совсем новых игроков, заменяет прежний
+   язычок на ленте (владелец: «в научной игре смотрится омерзительно», плюс задел на
+   будущую систему рейтинга/кастомизации, отдельная задача, см. память сессии). В
+   отличие от язычка — появляется СРАЗУ на пустом меню, не после простоя: сама идея
+   «поймай подсказку» и есть обучение, ждать бездействия не нужно. Условие показа —
+   то же самое, что было у язычка (Stats.games===0 и центр карусели — Score Attack),
+   но БЕЗ таймера ожидания. Один раз за загрузку страницы (zondShown), не при каждом
+   возврате в меню — dependency от прежнего idleHintShown-счётчика (5 показов) не
+   годится: тут нет серии показов, только один эпизод на первый визит. Бег гасится
+   ЛИБО системным `prefers-reduced-motion` (RM, js/core.js), ЛИБО ручным тумблером
+   «Смягчить тряску» (CALM_FX) — см. zondMoveNext(). Первая версия держалась только
+   на RM; при правке CALM_FX (25.09.2026, дефолт true→false — владелец: доступность
+   не включают заранее всем) выяснилось, что сам же код признаёт RM «ненадёжным
+   внутри WebView» (комментарий у CALM_FX в core.js) — там играет большинство. Раз
+   CALM_FX теперь тоже выключен по умолчанию, добавлять его вторым сигналом стало
+   безопасно — не гасит погоню зря никому. Позиции-«карманы» не захардкожены
+   в процентах (macet использовал условный демо-экран) — измеряются вживую через
+   getBoundingClientRect() тех же элементов, что уже на экране (карточка/точки
+   карусели/ряд кнопок), чтобы не гадать координаты отдельно под каждый размер
+   телефона. Текст подсказки внутри пузыря — ЗАГЛУШКА (владелец: текст ещё не готов,
+   вставить позже отдельной правкой), взято дословно из одобренного макета
+   macet-25-09-zond-final.html. */
+let zondShown=false, zondCaught=false, zondIdx=0, zondPocketsArr=[], zondMoveT=null;
+const ZOND_FACE_NORMAL='<rect x="14" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
+  '<rect x="21" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
+  '<path d="M16,33 L24,33" stroke="var(--gold-hi)" stroke-width="1.8" stroke-linecap="round"/>';
+const ZOND_FACE_CAUGHT='<path d="M12,25 Q16,21 20,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+  '<path d="M20,25 Q24,21 28,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="13" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
+  '<circle cx="27" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
+  '<ellipse cx="20" cy="34" rx="2.6" ry="2" fill="var(--gold-hi)"/>';
+function zondCentredCard(){
+  const car=$('heroCarousel'); if(!car||!car.children.length) return null;
+  const w=car.children[0].getBoundingClientRect().width; if(!w) return null;
+  const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
+  return car.children[idx];
+}
+function zondPockets(){
+  const pts=[];
+  const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
+  if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
+  const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
+  if(dots && stackEl){
+    const dR=dots.getBoundingClientRect(), sR=stackEl.getBoundingClientRect();
+    pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
+  }
+  const menuRow=$('menuRow');
+  if(menuRow && menuRow.children.length>=4){
+    const mR=menuRow.getBoundingClientRect();
+    const r1=menuRow.children[1].getBoundingClientRect(), r2=menuRow.children[2].getBoundingClientRect();
+    pts.push({x:mR.left+mR.width*0.5-21, y:(r1.bottom+r2.top)/2-24});
+  }
+  const brandSub=$('brandSub'); const wrap=document.querySelector('#startScreen .heroCarouselWrap');
+  if(brandSub && wrap){
+    const bR=brandSub.getBoundingClientRect(), wR=wrap.getBoundingClientRect();
+    pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
+  }
+  return pts;
+}
+function zondPlaceTauntNear(x,y){
+  const taunt=$('zondTaunt'); if(!taunt) return;
+  taunt.style.left=Math.max(4,x-30)+'px';
+  taunt.style.top=(y-58)+'px';
+}
+function zondShowTaunt(){
+  const zond=$('zondEl'); if(!zond) return;
+  zondPlaceTauntNear(parseFloat(zond.style.left), parseFloat(zond.style.top));
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.add('show');
+}
+function zondMoveNext(){
+  /* 25.09.2026: RM (prefers-reduced-motion) — единственный сигнал не годится, сам же
+     код признаёт (js/core.js, коммент у CALM_FX) — «ненадёжен внутри WebView», где
+     играет большинство. CALM_FX теперь тоже выключен по умолчанию (владелец: не
+     включать заранее всем) — значит безопасно добавить его вторым сигналом: ручной,
+     явно поставленный игроком тумблер надёжнее пассивного системного признака внутри
+     Telegram. Логика ИЛИ — хватает любого из двух, не оба разом. */
+  if(zondCaught || RM || CALM_FX) return;
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
+  zondIdx=(zondIdx+1)%zondPocketsArr.length;
+  const p=zondPocketsArr[zondIdx]; const zond=$('zondEl'); if(!zond) return;
+  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
+}
+function zondCatch(){
+  if(zondCaught) return;
+  zondCaught=true;
+  if(zondMoveT){ clearInterval(zondMoveT); zondMoveT=null; }
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
+  const face=$('zondFace'); if(face) face.innerHTML=ZOND_FACE_CAUGHT;
+  const zond=$('zondEl'); const x=parseFloat(zond.style.left), y=parseFloat(zond.style.top);
+  const spark=$('zondSpark'); if(spark){ spark.style.left=(x+8)+'px'; spark.style.top=(y-14)+'px'; spark.classList.add('show'); }
+  const hint=$('zondHint');
+  if(hint){
+    hint.style.left=Math.max(4,x-20)+'px'; hint.style.top=(y-70)+'px';
+    hint.textContent='Совет: короткий флик честнее держит скорость'; // ЗАГЛУШКА — текст ждёт владельца
+    hint.classList.add('show');
+  }
+  haptic('light'); sfx.click();
+}
+function zondShow(){
+  const layer=$('zondLayer'); if(!layer || zondShown) return;
+  zondPocketsArr=zondPockets(); if(!zondPocketsArr.length) return;
+  zondShown=true;
+  layer.innerHTML='<div class="zondTaunt" id="zondTaunt">Сможешь поймать меня? А-а-а!</div>'+
+    '<div class="zond" id="zondEl"><div class="zondHitZone"></div>'+
+    '<svg class="zondSvg zondBob" viewBox="0 0 40 46">'+
+    '<g class="zondSatWrap"><path d="M14,10 Q20,3 26,10" stroke="rgba(240,192,64,.35)" stroke-width="1.2" fill="none" stroke-dasharray="1.5 3"/>'+
+    '<circle class="zondSat glow" cx="26" cy="10" r="2.3" fill="var(--gold-hi)"/></g>'+
+    '<polygon points="20,14 30,21 30,33 20,40 10,33 10,21" fill="#0d2038" stroke="var(--gold-hi)" stroke-width="2"/>'+
+    '<g id="zondFace">'+ZOND_FACE_NORMAL+'</g></svg></div>'+
+    '<div class="zondSpark" id="zondSpark">✦</div><div class="zondHint" id="zondHint"></div>';
+  const p=zondPocketsArr[0]; const zond=$('zondEl');
+  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
+  zond.addEventListener('click', zondCatch);
+  setTimeout(zondShowTaunt, 400);
+  zondMoveT=setInterval(zondMoveNext, 2600);
+}
+function zondTick(){
+  if(zondShown) return; // один эпизод за загрузку страницы, не при каждом возврате в меню
+  if(screenName!=='menu') return;
+  if(typeof Stats==='undefined' || (Stats.games||0)>0) return; // 25.09.2026: было .runs — поля не существует, см. комментарий у карусели чуть выше
+  const card=zondCentredCard();
+  if(!card || !card.classList.contains('hc-classic')) return;
+  zondShow();
+}
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
@@ -4822,7 +4952,7 @@ Store.init(()=>{
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
-  CALM_FX = Store.get('calmFx',1)===1; // 06.09.2026 «Смягчить тряску и вспышки», по умолчанию включён
+  CALM_FX = Store.get('calmFx',0)===1; // 06.09.2026 «Смягчить тряску и вспышки»; 25.09.2026: дефолт true→false, владелец — доступность не включают заранее всем
   { const tsv=saneNumber(Store.get('uiTextScale',1),1); UI_TEXT_SCALE = TEXT_SCALE_STEPS.includes(tsv)?tsv:1; applyUiScale(UI_TEXT_SCALE); } // 09.09.2026 «Размер текста»
   // Скоростные полосы полностью вырезаны: чтение флага хранилища удалено, чтобы не
   // восстанавливать отключённый эффект при старом сохранённом значении.
