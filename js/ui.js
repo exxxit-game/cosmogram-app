@@ -3451,32 +3451,55 @@ function zondCentredCard(){
   const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
   return car.children[idx];
 }
+/* 25.09.2026 (владелец, живой телефон 360×800, реальные скриншоты): первая версия падала
+   в двух местах разом — (1) «карман» между heroDots и .stack на узком экране оказался
+   0px зазора (не проверял реальный зазор, только считал середину — Зонд садился прямо на
+   границу ленты точек и кнопки), (2) старт был у угла карточки, не внизу, как
+   договаривались. Теперь: МИНИМАЛЬНЫЙ зазор (ZOND_MIN_GAP) перед тем, как считать
+   «карман» реальным, и явный старт у нижнего края экрана. */
+const ZOND_MIN_GAP=30; // px — меньше не считается настоящим карманом, не втискиваем силой
 function zondPockets(){
   const pts=[];
+  const sw=window.innerWidth, sh=window.innerHeight;
+  // 1) низ экрана — то самое «начинается снизу», всегда есть запас перед safe-area
+  const scrFoot=document.querySelector('#startScreen .scrFoot');
+  const bottomY = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
+  pts.push({x:sw/2-21, y:Math.min(bottomY, sh-70)});
   const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
   if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
   const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
   if(dots && stackEl){
     const dR=dots.getBoundingClientRect(), sR=stackEl.getBoundingClientRect();
-    pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
+    if(sR.top-dR.bottom>=ZOND_MIN_GAP) pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
   }
   const menuRow=$('menuRow');
   if(menuRow && menuRow.children.length>=4){
-    const mR=menuRow.getBoundingClientRect();
     const r1=menuRow.children[1].getBoundingClientRect(), r2=menuRow.children[2].getBoundingClientRect();
-    pts.push({x:mR.left+mR.width*0.5-21, y:(r1.bottom+r2.top)/2-24});
+    if(r2.top-r1.bottom>=ZOND_MIN_GAP) pts.push({x:menuRow.getBoundingClientRect().left+menuRow.getBoundingClientRect().width*0.5-21, y:(r1.bottom+r2.top)/2-24});
   }
   const brandSub=$('brandSub'); const wrap=document.querySelector('#startScreen .heroCarouselWrap');
   if(brandSub && wrap){
     const bR=brandSub.getBoundingClientRect(), wR=wrap.getBoundingClientRect();
-    pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
+    if(wR.top-bR.bottom>=ZOND_MIN_GAP) pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
   }
   return pts;
+}
+/* 25.09.2026: было `left = x-30` без проверки края экрана — на узком телефоне (360px)
+   пузырь с фразой (~190px при реальном тексте) целиком уезжал за правый край, владелец
+   физически не мог прочитать текст. Теперь — ставим, ИЗМЕРЯЕМ реальную отрисованную
+   ширину, подвигаем обратно в границы экрана, если вылезло. */
+function zondClampToViewport(el){
+  if(!el) return;
+  const pad=8, r=el.getBoundingClientRect();
+  if(r.right>window.innerWidth-pad) el.style.left=(parseFloat(el.style.left)-(r.right-(window.innerWidth-pad)))+'px';
+  const r2=el.getBoundingClientRect();
+  if(r2.left<pad) el.style.left=(parseFloat(el.style.left)+(pad-r2.left))+'px';
 }
 function zondPlaceTauntNear(x,y){
   const taunt=$('zondTaunt'); if(!taunt) return;
   taunt.style.left=Math.max(4,x-30)+'px';
   taunt.style.top=(y-58)+'px';
+  zondClampToViewport(taunt);
 }
 function zondShowTaunt(){
   const zond=$('zondEl'); if(!zond) return;
@@ -3509,6 +3532,7 @@ function zondCatch(){
     hint.style.left=Math.max(4,x-20)+'px'; hint.style.top=(y-70)+'px';
     hint.textContent='Совет: короткий флик честнее держит скорость'; // ЗАГЛУШКА — текст ждёт владельца
     hint.classList.add('show');
+    zondClampToViewport(hint); // 25.09.2026: та же защита от вылезания за узкий экран, что у фразы
   }
   haptic('light'); sfx.click();
 }
