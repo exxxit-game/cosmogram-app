@@ -31,7 +31,8 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/protect-core.sh" }
+          { "type": "command", "command": ".claude/hooks/protect-core.sh" },
+          { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" }
         ]
       },
       {
