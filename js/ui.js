@@ -3461,16 +3461,17 @@ const ZOND_MIN_GAP=30; // px — меньше не считается насто
 function zondPockets(){
   const pts=[];
   const sw=window.innerWidth, sh=window.innerHeight;
-  /* 25.09.2026 (владелец, живьём после первого прохода фикса): с одним нижним карманом
-     побег превратился в скучный маятник «туда-сюда» — раньше (несколько точек) было
-     похоже на напёрстки, тот же ритм каждый раз. Нижнее поле обычно достаточно большое
-     и гарантированно пустое (safe-area до первой кнопки) — кладём туда НЕСКОЛЬКО точек
-     (левее/правее, где есть вертикальный запас — ещё и ближе/дальше), не одну, чтобы
-     ритм не схлопывался до двух точек на весь узкий экран. */
+  /* 25.09.2026 (владелец, живьём, два захода подряд): (1) с одним нижним карманом побег
+     превратился в скучный маятник «туда-сюда» — нужно несколько точек, не одна; (2) когда
+     точки оказались близко друг к другу (0.28-0.72 ширины), мелкие частые перескоки внутри
+     тесного пятачка сам читаются как «ёрзает, дёргается», не как «плавает по экрану» —
+     хотя формально ни одну кнопку не задевают (проверено live-device). Раздвинуто почти на
+     всю ширину экрана (0.10-0.90) — то же самое пустое поле, просто прыжки внутри него
+     крупнее и реже выглядят как движение, не подёргивание. */
   const scrFoot=document.querySelector('#startScreen .scrFoot');
   const zoneTop = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
   const zoneBottom = sh-70;
-  const xL=Math.max(16, sw*0.28-21), xR=Math.min(sw-58, sw*0.72-21), xC=sw/2-21;
+  const xL=Math.max(16, sw*0.10-21), xR=Math.min(sw-58, sw*0.90-21), xC=sw/2-21;
   pts.push({x:xC, y:Math.min(zoneTop, zoneBottom)});
   if(zoneBottom-zoneTop>=ZOND_MIN_GAP){
     const yFar=Math.min(zoneTop+(zoneBottom-zoneTop)*0.55, zoneBottom);
@@ -3566,7 +3567,7 @@ function zondShow(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>zond.classList.add('zondIn'))); // 25.09.2026: мягкое появление вместо мгновенного «хоп» — см. .zondIn в index.html
   zond.addEventListener('click', zondCatch);
   setTimeout(zondShowTaunt, 400);
-  zondMoveT=setInterval(zondMoveNext, 2600);
+  zondMoveT=setInterval(zondMoveNext, 3600); // 25.09.2026: было 2600 — с широкими точками чаще выглядело как дёрганье, не движение
 }
 function zondTick(){
   /* 25.09.2026 (владелец, прямо на живом телефоне): убрано условие Stats.games===0.
