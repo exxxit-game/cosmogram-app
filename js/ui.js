@@ -3461,10 +3461,23 @@ const ZOND_MIN_GAP=30; // px — меньше не считается насто
 function zondPockets(){
   const pts=[];
   const sw=window.innerWidth, sh=window.innerHeight;
-  // 1) низ экрана — то самое «начинается снизу», всегда есть запас перед safe-area
+  /* 25.09.2026 (владелец, живьём после первого прохода фикса): с одним нижним карманом
+     побег превратился в скучный маятник «туда-сюда» — раньше (несколько точек) было
+     похоже на напёрстки, тот же ритм каждый раз. Нижнее поле обычно достаточно большое
+     и гарантированно пустое (safe-area до первой кнопки) — кладём туда НЕСКОЛЬКО точек
+     (левее/правее, где есть вертикальный запас — ещё и ближе/дальше), не одну, чтобы
+     ритм не схлопывался до двух точек на весь узкий экран. */
   const scrFoot=document.querySelector('#startScreen .scrFoot');
-  const bottomY = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
-  pts.push({x:sw/2-21, y:Math.min(bottomY, sh-70)});
+  const zoneTop = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
+  const zoneBottom = sh-70;
+  const xL=Math.max(16, sw*0.28-21), xR=Math.min(sw-58, sw*0.72-21), xC=sw/2-21;
+  pts.push({x:xC, y:Math.min(zoneTop, zoneBottom)});
+  if(zoneBottom-zoneTop>=ZOND_MIN_GAP){
+    const yFar=Math.min(zoneTop+(zoneBottom-zoneTop)*0.55, zoneBottom);
+    pts.push({x:xL, y:yFar});
+    pts.push({x:xR, y:Math.min(zoneTop, zoneBottom)});
+    pts.push({x:xC, y:yFar});
+  }
   const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
   if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
   const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
