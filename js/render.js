@@ -1066,6 +1066,13 @@ const PREM_FX_MAP={
   bioBatMothJam:fxBioBatMothJam, bioBatEchoSilhouette:fxBioBatEchoSilhouette,
   bioEelBattery:fxBioEelBattery, bioEelVolta:fxBioEelVolta, bioEelThreeOrgans:fxBioEelThreeOrgans,
   bioEelLeap:fxBioEelLeap, bioEelSpectrum:fxBioEelSpectrum,
+  // 26.09.2026, третья партия (головоногие/биолюминесценция/чёрные дыры, 19 карточек):
+  bioCephChromatophore:fxBioCephChromatophore, bioCephLayeredSkin:fxBioCephLayeredSkin, bioCephColorBlind:fxBioCephColorBlind,
+  bioCephPassingCloud:fxBioCephPassingCloud, bioCephPapillae:fxBioCephPapillae,
+  bioLumLuciferin:fxBioLumLuciferin, bioLumFemmeFatale:fxBioLumFemmeFatale, bioLumFirefly:fxBioLumFirefly,
+  bioLumGFP:fxBioLumGFP, bioLumAnglerEsca:fxBioLumAnglerEsca, bioLumFoxfire:fxBioLumFoxfire, bioLumDinoflagellate:fxBioLumDinoflagellate,
+  cosBHSchwarzschild:fxCosBHSchwarzschild, cosBHPhotonRingM87:fxCosBHPhotonRingM87, cosBHPhotonRingSgrA:fxCosBHPhotonRingSgrA,
+  cosBHDopplerDisk:fxCosBHDopplerDisk, cosBHSpaghetti:fxCosBHSpaghetti, cosBHLensing:fxCosBHLensing, cosBHErgosphere:fxCosBHErgosphere,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1973,6 +1980,255 @@ function fxBioEelSpectrum(ctx,sk,nowMs){ // Спектр слабое↔силь
   ctx.fillStyle=strike?'hsla(50,100%,80%,.95)':'hsla(50,60%,45%,.4)';
   ctx.beginPath(); ctx.arc(7,2,strike?3:1.8,0,6.283); ctx.fill();
   if(strike){ ctx.strokeStyle='hsla(50,100%,85%,.6)'; ctx.lineWidth=0.5; ctx.beginPath(); ctx.arc(7,2,5.5,0,6.283); ctx.stroke(); }
+  ctx.restore();
+}
+/* 26.09.2026, третья партия (3 макета — головоногие/биолюминесценция/чёрные дыры, 19 карточек). */
+// --- Камуфляж головоногих (.knowledge/macets/golovonogie-kamuflyazh-5-tem-11-09-2026.html) ---
+function fxBioCephChromatophore(ctx,sk,nowMs){ // Хроматофор — мышечный ирис, обратимо мерцающие пигментные мешочки
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  [[-8,-10,60],[7,-9,320],[-6,3,20],[8,4,260],[0,-3,200],[-3,9,40],[5,9,300]].forEach(([x,y,hue],i)=>{
+    const p=((nowMs+i*300)%1400)/1400;
+    const r=1+2.2*Math.abs(Math.sin(p*Math.PI));
+    ctx.fillStyle='hsla('+hue+',80%,50%,.85)';
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxBioCephLayeredSkin(ctx,sk,nowMs){ // Слоистая кожа — хроматофор поверх иридофора поверх лейкофора (3 механизма)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  ctx.beginPath(); ctx.arc(0,0,12,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla('+((200+p*160)%360)+',80%,65%,.35)';
+  ctx.beginPath(); ctx.ellipse(0,0,10,7,p*3,0,6.283); ctx.fill();
+  for(let i=0;i<6;i++){
+    const a=i/6*6.283+p*2;
+    ctx.fillStyle='hsla(20,85%,55%,.7)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*6,Math.sin(a)*6*0.7,1.4,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxBioCephColorBlind(ctx,sk,nowMs){ // Цветовая загадка камуфляжа — узор подстраивается под фон, хотя зверь не видит цвет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000;
+  const hue=(p*360)%360;
+  ctx.fillStyle='hsla('+hue+',60%,35%,.9)'; ctx.beginPath(); ctx.arc(0,0,13,0,6.283); ctx.fill();
+  for(let i=0;i<14;i++){
+    const rnd=(i*37)%100/100;
+    const x=(rnd-0.5)*20, y=((i*53)%100/100-0.5)*24;
+    ctx.fillStyle='hsla('+hue+',60%,'+(20+rnd*40)+'%,.8)';
+    ctx.beginPath(); ctx.arc(x,y,1+rnd,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxBioCephPassingCloud(ctx,sk,nowMs){ // Бегущее облако — тёмная волна пробегает по телу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const x=-16+((nowMs%1800)/1800)*32;
+  ctx.fillStyle='rgba(255,220,170,.35)'; ctx.fillRect(-16,-22,32,38);
+  const g=ctx.createLinearGradient(x-5,0,x+5,0);
+  g.addColorStop(0,'rgba(30,20,15,0)'); g.addColorStop(0.5,'rgba(30,20,15,.95)'); g.addColorStop(1,'rgba(30,20,15,0)');
+  ctx.fillStyle=g; ctx.fillRect(-16,-22,32,38);
+  ctx.restore();
+}
+function fxBioCephPapillae(ctx,sk,nowMs){ // Папиллы — рельеф кожи вздувается 3D-буграми (мышечно-гидростатический механизм)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const rise=Math.abs(Math.sin(((nowMs%2600)/2600)*Math.PI));
+  [[-7,-8],[6,-7],[-5,2],[7,3],[0,-2],[-3,8],[4,8]].forEach(([x,y])=>{
+    const r=0.8+2*rise;
+    const g=ctx.createRadialGradient(x-r*0.3,y-r*0.3,0,x,y,r);
+    g.addColorStop(0,'rgba(230,220,200,.8)'); g.addColorStop(1,'rgba(100,90,80,.2)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+// --- Биолюминесценция (.knowledge/macets/biolyuminescenciya-7-tem-11-09-2026.html) ---
+function fxBioLumLuciferin(ctx,sk,nowMs){ // Люциферин-люцифераза × 5 — 5 разных химических путей, изобретённых природой независимо
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const hues=[55,140,190,275,320];
+  const p=(nowMs%5000)/5000;
+  const idx=Math.floor(p*5)%5;
+  const pulse=Math.sin(((p*5)%1)*Math.PI);
+  const hue=hues[idx];
+  const g=ctx.createRadialGradient(0,0,0,0,0,11);
+  g.addColorStop(0,'hsla('+hue+',95%,75%,'+(0.3+pulse*0.6)+')');
+  g.addColorStop(1,'hsla('+hue+',95%,60%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,11,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla('+hue+',95%,85%,'+(0.5+pulse*0.5)+')'; ctx.beginPath(); ctx.arc(0,0,2+pulse*1.5,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioLumFemmeFatale(ctx,sk,nowMs){ // Photuris/Photinus — обман: хищник имитирует чужой брачный сигнал (Ллойд, 1965)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p1=(nowMs%1200)/1200, on1=(p1%0.35)<0.12;
+  const p2=(nowMs%2600)/2600, on2=(p2%0.9)<0.14 && p2>0.5;
+  ctx.fillStyle='hsla(50,95%,75%,'+(on1?0.9:0.12)+')';
+  ctx.beginPath(); ctx.arc(-6,-6,2.6,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(10,90%,65%,'+(on2?0.9:0.12)+')';
+  ctx.beginPath(); ctx.arc(6,4,2.6,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioLumFirefly(ctx,sk,nowMs){ // Мигание светлячка — чистая периодическая формула, 550-570нм
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%1400)/1400;
+  const glow=p<0.18?1:0.08;
+  const g=ctx.createRadialGradient(0,0,0,0,0,9);
+  g.addColorStop(0,'hsla(65,95%,80%,'+(0.25+glow*0.6)+')');
+  g.addColorStop(1,'hsla(65,95%,60%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,9,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(65,95%,88%,'+(0.4+glow*0.6)+')'; ctx.beginPath(); ctx.arc(0,0,2.2,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioLumGFP(ctx,sk,nowMs){ // GFP-флуоресценция — не биолюминесценция! Нобель 2008, Симомура/Чалфи/Тсиен
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const pump=0.5+0.5*Math.sin(((nowMs%2000)/2000)*2*Math.PI);
+  ctx.fillStyle='rgba(120,255,170,.12)'; ctx.beginPath(); ctx.arc(0,0,12,0,6.283); ctx.fill();
+  for(let i=0;i<18;i++){
+    const a=i/18*6.283, r=4+((i*37)%7);
+    ctx.fillStyle='hsla(140,90%,'+(60+pump*20)+'%,'+(0.35+pump*0.5)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*r,Math.sin(a)*r*0.7,0.9,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxBioLumAnglerEsca(ctx,sk,nowMs){ // Esca удильщика — светящаяся приманка, бактериальное свечение, свет не свой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2400)/2400;
+  const sway=Math.sin(p*2*Math.PI)*2;
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.moveTo(0,-14); ctx.quadraticCurveTo(sway,-4,sway*1.3,4); ctx.stroke();
+  const flick=0.6+0.4*Math.sin(p*2*Math.PI*6);
+  const g=ctx.createRadialGradient(sway*1.3,4,0,sway*1.3,4,4.5);
+  g.addColorStop(0,'hsla(195,90%,80%,'+(0.5+flick*0.4)+')');
+  g.addColorStop(1,'hsla(195,90%,60%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(sway*1.3,4,4.5,0,6.283); ctx.fill();
+  for(let i=0;i<5;i++){ const a=(i/5)*6.283+p*3; ctx.fillStyle='hsla(195,90%,90%,.7)'; ctx.beginPath(); ctx.arc(sway*1.3+Math.cos(a)*1.2,4+Math.sin(a)*1.2,0.4,0,6.283); ctx.fill(); }
+  ctx.restore();
+}
+function fxBioLumFoxfire(ctx,sk,nowMs){ // Foxfire — гриб Panellus stipticus, диффузное зеленоватое свечение (мицелий-вены)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const pulse=0.6+0.4*Math.sin(((nowMs%3600)/3600)*2*Math.PI);
+  ctx.strokeStyle='hsla(150,70%,60%,'+(0.35*pulse)+')'; ctx.lineWidth=0.5;
+  const rnd=(function(seed){ let s=seed; return ()=>{ s=(s*1103515245+12345)&0x7fffffff; return (s%1000)/1000; }; })(7);
+  for(let i=0;i<10;i++){
+    const x0=(rnd()-0.5)*20, y0=(rnd()-0.5)*24;
+    ctx.beginPath(); ctx.moveTo(x0,y0);
+    let x=x0,y=y0;
+    for(let k=0;k<4;k++){ x+=(rnd()-0.5)*6; y+=(rnd()-0.5)*6; ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.fillStyle='hsla(150,80%,70%,'+(0.15*pulse)+')'; ctx.beginPath(); ctx.arc(0,0,13,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioLumDinoflagellate(ctx,sk,nowMs){ // Динофлагелляты — вспышка от сдвигового возмущения потока (гипотеза тревоги)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%1800)/1800;
+  const wave=p<0.5?p*2:0;
+  for(let i=0;i<24;i++){
+    const t=i/24;
+    const trigger=Math.abs(t-wave)<0.12 && wave>0;
+    const x=-13+t*26, y=Math.sin(t*6+p*2)*2;
+    ctx.fillStyle=trigger?'hsla(200,90%,85%,.9)':'hsla(200,60%,60%,.15)';
+    ctx.beginPath(); ctx.arc(x,y,trigger?1.3:0.6,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+// --- Чёрные дыры (.knowledge/macets/chernye-dyry-7-tem-11-09-2026.html) ---
+function fxCosBHSchwarzschild(ctx,sk,nowMs){ // Радиус Шварцшильда — горизонт + фотонная сфера в 1.5х, дышащий масштаб
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const Rh=5*(0.9+0.15*Math.sin(((nowMs%3000)/3000)*2*Math.PI));
+  ctx.strokeStyle='rgba(180,160,255,.55)'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.arc(0,0,Rh*1.5,0,6.283); ctx.stroke();
+  const g=ctx.createRadialGradient(0,0,0,0,0,Rh);
+  g.addColorStop(0,'#000'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,Rh,0,6.283); ctx.fill();
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,Rh*0.7,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHPhotonRingM87(ctx,sk,nowMs){ // Фотонное кольцо M87* — яркое кольцо вокруг тени, ярче снизу (линзирование), EHT 2019
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const R=11;
+  for(let i=0;i<40;i++){
+    const a=i/40*6.283;
+    const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
+    ctx.strokeStyle='hsla(28,90%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
+    ctx.lineWidth=1.6+boost*1.2;
+    ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHPhotonRingSgrA(ctx,sk,nowMs){ // Фотонное кольцо Sgr A* — тот же приём, другой масштаб/оттенок, EHT 2022
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const R=8;
+  for(let i=0;i<40;i++){
+    const a=i/40*6.283;
+    const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
+    ctx.strokeStyle='hsla(200,85%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
+    ctx.lineWidth=1.4+boost*1.1;
+    ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHDopplerDisk(ctx,sk,nowMs){ // Асимметричный аккреционный диск — Doppler-усиление, одна сторона ярче/голубее
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  ctx.save(); ctx.rotate(p*2*Math.PI*0.5); ctx.scale(1,0.3);
+  for(let r=3;r<=12;r+=1){
+    for(let a=0;a<Math.PI*1.9;a+=0.15){
+      const bright=0.35+0.65*Math.max(0,Math.sin(a));
+      const hue=200-bright*160;
+      ctx.strokeStyle='hsla('+hue+',90%,'+(45+bright*30)+'%,'+(0.5+bright*0.4)+')';
+      ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.arc(0,0,r,a,a+0.15); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHSpaghetti(ctx,sk,nowMs){ // Спагеттификация — объект вытягивается в нить при падении к центру (растяжение по 1/M²)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const t=(nowMs%2200)/2200;
+  const y=-16+t*28;
+  const stretch=1+t*t*9;
+  ctx.save(); ctx.translate(0,y); ctx.scale(1/Math.sqrt(stretch),stretch);
+  ctx.fillStyle='rgba(200,210,255,'+(0.9-t*0.3)+')';
+  ctx.beginPath(); ctx.ellipse(0,0,1.6,1.6,0,0,6.283); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='rgba(0,0,0,.85)'; ctx.beginPath(); ctx.arc(0,14,3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHLensing(ctx,sk,nowMs){ // Гравитационное линзирование — фон звёзд огибает центр (Эддингтон, затмение 1919)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000;
+  const stars=14;
+  for(let i=0;i<stars;i++){
+    const baseAng=i/stars*6.283 + p*0.3;
+    const R0=13;
+    const bend=3.2*Math.exp(-Math.abs(Math.sin(baseAng))*0.2);
+    const x=R0*Math.cos(baseAng), y=R0*Math.sin(baseAng)*0.55;
+    ctx.strokeStyle='rgba(220,225,255,.5)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(x*0.4,y*0.4,bend,baseAng,baseAng+1.4); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x,y,0.5,0,6.283); ctx.fill();
+  }
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosBHErgosphere(ctx,sk,nowMs){ // Эргосфера / увлечение пространства (Керр) — спиральное закручивание вокруг горизонта
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  ctx.strokeStyle='rgba(180,160,255,.6)'; ctx.lineWidth=1;
+  for(let k=0;k<3;k++){
+    ctx.beginPath();
+    for(let i=0;i<=60;i++){
+      const t=i/60;
+      const ang=t*4.4+p*6.283+k*2.1;
+      const r=2+t*10;
+      const x=r*Math.cos(ang), y=r*Math.sin(ang)*0.7;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
   ctx.restore();
 }
 function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
