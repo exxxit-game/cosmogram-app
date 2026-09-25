@@ -4778,7 +4778,14 @@ wireOn('grSendBtn','click',function(){
         _grSendBusy=false;
         if(status!=='paid') return;
         if(commentEl) commentEl.value='';
-        toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
+        /* 25.09.2026 (владелец, живой макет macet-25-09-blagodarnost-tost.html): было 1.5с
+           и один и тот же безличный текст всем всегда — «мы получили деньги как спасибо, а
+           в ответ невзрачная быстро гаснущая табличка». Теперь 4.5с (подтверждено живьём на
+           телефоне) и случайный выбор из нескольких тёплых формулировок — «не должны
+           постоянно всем говорить одно и то же». */
+        const grSentPool=(L.grSentPool&&L.grSentPool.length)?L.grSentPool:[L.grSent];
+        toast(grSentPool[Math.floor(Math.random()*grSentPool.length)],'rgba(240,192,64,.6)',4500);
+        sfx.buy(); haptic('success');
         gratitudeSkyFill();
       });
     }catch(e){ _grSendBusy=false; toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); }

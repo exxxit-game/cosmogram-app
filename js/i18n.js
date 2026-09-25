@@ -254,6 +254,7 @@ const I18N = {
     gratitudeEmptySky:'пока небо пустое — станьте первой звездой',
     grAnonLabel:'Аноним', grReported:'Спасибо, мы посмотрим', grSendFail:'Не получилось — попробуйте ещё раз',
     grSent:'Звезда зажглась. Спасибо!',
+    grSentPool:['Твоя звезда теперь горит на нашем небе. Спасибо.','Спасибо. Твоя звезда останется здесь навсегда.','Ещё одна звезда зажглась благодаря тебе. Небо стало чуть ярче.'], // 25.09.2026: владелец — не повторять одно и то же всем постоянно, взять несколько тёплых вариантов вместо одного нейтрального
     grNameShownLbl:'Покажется как: ', grNameFallback:'Пилот',
     feedbackHint:'Идея или ошибка? Каждое сообщение помогает не только вам — оно делает Cosmogram чуть лучше для всех. Спасибо! — EXXXIT', // 08.09.2026, владелец: «создатель игры» → подпись студии; 16.09.2026: убрал «вопрос»; 20.09.2026, владелец, дословно (текст присланный им же, не мой черновик): текст был «сырой, нету в нём дружелюбия» — новый смысл «мы одной крови»: сообщив об ошибке, ты чинишь её не только себе, а сразу всем игрокам, кто с ней столкнётся; 24.09.2026, владелец, живой скрин: «небо» → «Cosmogram»
     forgeFavHint:'Нажми значок над превью — сохранишь это небо сюда, до 20 штук', // 17.09.2026, «Делай»: разовая подсказка у пустого ряда «Избранное», тот же приём, что у кошелька — не постоянный текст; число поднято вместе с FORGE_FAV_MAX 7→20 в тот же вечер
@@ -494,6 +495,7 @@ const I18N = {
     gratitudeEmptySky:'the sky is still empty — be the first star',
     grAnonLabel:'Anonymous', grReported:'Thanks, we\'ll take a look', grSendFail:'Didn\'t go through — try again',
     grSent:'Your star is lit. Thank you!',
+    grSentPool:['Your star is lit. Thank you!'], // 25.09.2026: только русский пул из нескольких вариантов пока переведён — не выдумываю остальные языки сам, см. grSent выше
     grNameShownLbl:'Will show as: ', grNameFallback:'Pilot',
     feedbackHint:'Got a bug or an idea? Every message helps — not just you, it makes Cosmogram a little better for everyone. Thank you! — EXXXIT', // 20.09.2026: same warmer text as ru, see comment there; 24.09.2026: "sky" → "Cosmogram"
     forgeFavHint:'Tap the icon above the preview to save this sky here — up to 20',
@@ -713,6 +715,7 @@ const I18N = {
     gratitudeEmptySky:'el cielo aún está vacío — sé la primera estrella',
     grAnonLabel:'Anónimo', grReported:'Gracias, lo revisaremos', grSendFail:'No se pudo enviar — inténtalo de nuevo',
     grSent:'Tu estrella se encendió. ¡Gracias!',
+    grSentPool:['Tu estrella se encendió. ¡Gracias!'],
     grNameShownLbl:'Se mostrará como: ', grNameFallback:'Piloto',
     feedbackHint:'¿Una idea o un error? Cada mensaje ayuda — no solo a ti, hace Cosmogram un poco mejor para todos. ¡Gracias! — EXXXIT', // 20.09.2026: mismo texto más cálido que ru, ver comentario ahí; 24.09.2026: "cielo" → "Cosmogram"
     forgeFavHint:'Toca el icono sobre la vista previa para guardar este cielo aquí — hasta 20',
@@ -951,6 +954,7 @@ const I18N = {
     gratitudeEmptySky:'o céu ainda está vazio — sê a primeira estrela',
     grAnonLabel:'Anónimo', grReported:'Obrigado, vamos verificar', grSendFail:'Não foi possível enviar — tenta de novo',
     grSent:'A tua estrela acendeu. Obrigado!',
+    grSentPool:['A tua estrela acendeu. Obrigado!'],
     grNameShownLbl:'Vai aparecer como: ', grNameFallback:'Piloto',
     feedbackHint:'Uma ideia ou um erro? Cada mensagem ajuda — não só você, torna o Cosmogram um pouco melhor para todos. Obrigado! — EXXXIT', // 20.09.2026: mesmo texto mais caloroso que ru, ver comentário lá; 24.09.2026: "céu" → "Cosmogram"
     forgeFavHint:'Toque no ícone acima da prévia para salvar este céu aqui — até 20',
@@ -1189,6 +1193,7 @@ const I18N = {
     gratitudeEmptySky:'le ciel est encore vide — sois la première étoile',
     grAnonLabel:'Anonyme', grReported:'Merci, on va vérifier', grSendFail:'Ça n’a pas marché — réessaie',
     grSent:'Ton étoile s’est allumée. Merci !',
+    grSentPool:['Ton étoile s’est allumée. Merci !'],
     grNameShownLbl:'Affiché comme : ', grNameFallback:'Pilote',
     feedbackHint:'Une idée ou un bug ? Chaque message aide — pas seulement toi, il rend Cosmogram un peu meilleur pour tout le monde. Merci ! — EXXXIT', // 20.09.2026: même texte plus chaleureux que ru, voir commentaire là-bas; 24.09.2026: "ciel" → "Cosmogram"
     forgeFavHint:'Appuie sur l’icône au-dessus de l’aperçu pour enregistrer ce ciel ici — jusqu’à 20',
