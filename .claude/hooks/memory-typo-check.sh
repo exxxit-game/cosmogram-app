@@ -47,7 +47,12 @@ if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *"\\memory\\MEMORY
     dead=$(printf '%s' "$out" | grep -c "^МЁРТВАЯ:")
     orphans=$(printf '%s' "$out" | grep -oE "Всего сирот-правил: [0-9]+" | grep -oE "[0-9]+")
     size=$(printf '%s' "$out" | grep -oE "^[0-9]+ MEMORY.md" | grep -oE "^[0-9]+")
-    if [[ "$dead" -gt 0 || "${orphans:-0}" -gt 0 || "${size:-0}" -gt 17510 ]]; then
+    # 25.09.2026 (тот же вечер, раздутый указатель в MEMORY.md, владелец: «сделай так, чтоб
+    # не терялось») — второй, уже подтверждённо рабочий канал (PostToolUse) поверх PreToolUse-
+    # хука guard-memory-index-format.sh, который сам не подтверждён живьём. Читает секцию 4
+    # аудита (длина строк), а не только печатает её.
+    longlines=$(printf '%s' "$out" | grep -oE "Строк длиннее [0-9]+ символов: [0-9]+" | grep -oE "[0-9]+$")
+    if [[ "$dead" -gt 0 || "${orphans:-0}" -gt 0 || "${size:-0}" -gt 17510 || "${longlines:-0}" -gt 0 ]]; then
       echo "audit-memory-index.sh поймал проблему после правки MEMORY.md:" >&2
       echo "$out" >&2
       exit 2

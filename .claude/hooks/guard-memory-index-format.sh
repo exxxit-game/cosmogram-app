@@ -38,7 +38,19 @@ case "$file" in
       payload=$(printf '%s' "$contentB64" | base64 -d 2>/dev/null)
     fi
     if [[ -n "$payload" ]]; then
-      longest=$(printf '%s' "$payload" | awk -v lim="$LINE_LIMIT" '{ if (length($0) > max) { max = length($0); } } END { print max+0 }')
+      # 25.09.2026, найдено живым тестом: awk length() считает БАЙТЫ на кириллице, не символы
+      # (58 байт против 35 реальных символов) — ложно блокировало бы уже существующие
+      # легитимные строки. Счёт через node (реальные символы, тем же способом, каким
+      # калибровался порог 320 изначально).
+      longest=$(printf '%s' "$payload" | node -e "
+        let d='';process.stdin.on('data',c=>d+=c);
+        process.stdin.on('end',()=>{
+          const lines=d.split('\n');
+          let max=0;
+          for (const l of lines) if (l.length>max) max=l.length;
+          process.stdout.write(String(max));
+        });
+      ")
       if [[ "$longest" -gt "$LINE_LIMIT" ]]; then
         echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"MEMORY.md — строка длиннее $LINE_LIMIT символов (реально $longest). Это индекс-указатель, не место для содержания. Сократи строку до короткого указателя, само содержание пиши в целевой файл (rules-ledger-01.md / ledger-project-01.md / отдельный файл), не сюда.\"}}"
         exit 0
