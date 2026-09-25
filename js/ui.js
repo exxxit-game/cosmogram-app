@@ -3563,6 +3563,7 @@ function zondShow(){
     '<div class="zondSpark" id="zondSpark">✦</div><div class="zondHint" id="zondHint"></div>';
   const p=zondPocketsArr[0]; const zond=$('zondEl');
   zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>zond.classList.add('zondIn'))); // 25.09.2026: мягкое появление вместо мгновенного «хоп» — см. .zondIn в index.html
   zond.addEventListener('click', zondCatch);
   setTimeout(zondShowTaunt, 400);
   zondMoveT=setInterval(zondMoveNext, 2600);
