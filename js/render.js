@@ -1086,6 +1086,11 @@ const PREM_FX_MAP={
   freshHowardClouds:fxFreshHowardClouds, freshDiatomFrustule:fxFreshDiatomFrustule,
   wave3RoseWindow:fxWave3RoseWindow, wave3Chladni:fxWave3Chladni, wave3SnowCrystal:fxWave3SnowCrystal,
   wave3VenusPentagram:fxWave3VenusPentagram, wave3Archimedean:fxWave3Archimedean,
+  // 26.09.2026, шестая партия — туманности/галактики + магнитосфера Земли, 20 карточек:
+  nebEmission:fxNebEmission, nebReflection:fxNebReflection, nebPlanetary:fxNebPlanetary, nebSupernovaRemnant:fxNebSupernovaRemnant, nebDark:fxNebDark,
+  galElliptical:fxGalElliptical, galBarredSpiral:fxGalBarredSpiral, galIrregular:fxGalIrregular, galSombrero:fxGalSombrero, galAntennae:fxGalAntennae,
+  magNormal:fxMagNormal, magTail:fxMagTail, magLaschamp:fxMagLaschamp, magMultipolar:fxMagMultipolar, magAuroraShift:fxMagAuroraShift,
+  magVanAllen:fxMagVanAllen, magBowShock:fxMagBowShock, magPlasmasphere:fxMagPlasmasphere, magCompression:fxMagCompression, magDipoleLines:fxMagDipoleLines,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -2764,6 +2769,210 @@ function fxWave3Archimedean(ctx,sk,nowMs){ // Семейство многогр�
   }
   ctx.restore();
   ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(0,0,0.6,0,6.283); ctx.fill();
+  ctx.restore();
+}
+/* 26.09.2026, шестая (последняя из 16 отсмотренных сегодня) партия — туманности/галактики
+   + магнитосфера Земли, 20 карточек. */
+// --- Морфология туманностей и галактик (.knowledge/macets/tumannosti-galaktiki-10-tem-17-09-2026.html) ---
+function fxNebEmission(ctx,sk,nowMs){ // Эмиссионная туманность (Орион, M42) — ионизированный газ светится сам, звёздные ясли ~1300 св. лет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  for(let i=0;i<16;i++){
+    const a=(i*2.4)%6.283, r=1+((i*7)%9), size=0.4+(9-r)*0.22;
+    ctx.fillStyle='hsla('+(350-r*3)+',85%,'+(50+(9-r)*3)+'%,'+(0.35+(9-r)*0.05)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.9,Math.sin(a)*r*0.7-2,size,0,6.283); ctx.fill();
+  }
+  const p=0.5+0.5*Math.sin(nowMs/500);
+  ctx.fillStyle='hsla(350,90%,'+(60+p*15)+'%,.9)'; ctx.beginPath(); ctx.arc(0,-2,1.8,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxNebReflection(ctx,sk,nowMs){ // Отражательная туманность (Плеяды) — не светится сама, отражает: то же рэлеевское рассеяние, что у синего неба
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/700);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,8);
+  g.addColorStop(0,'hsla(210,20%,95%,1)'); g.addColorStop(0.3,'hsla(215,80%,'+(70+p*10)+'%,.55)'); g.addColorStop(1,'hsla(220,80%,50%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,8,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,-2,1.4,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxNebPlanetary(ctx,sk,nowMs){ // Планетарная туманность (Кольцо/Улитка) — историческая ошибка в названии, живёт 10-50 тыс. лет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  for(let ring=4;ring>=1;ring--){
+    const rr=ring*2.1+p*0.6, hue=200-ring*15;
+    ctx.strokeStyle='hsla('+hue+',85%,'+(55+ring*6)+'%,'+(0.55-ring*0.08)+')'; ctx.lineWidth=0.9;
+    ctx.beginPath(); ctx.arc(0,-2,rr,0,6.283); ctx.stroke();
+  }
+  ctx.fillStyle='hsla(40,90%,85%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxNebSupernovaRemnant(ctx,sk,nowMs){ // Остаток сверхновой (Краб) — взрыв, замеченный в 1054 году, виден был днём 23 дня
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  for(let i=0;i<10;i++){
+    const a=i/10*6.283+nowMs/6000;
+    for(let t=0;t<5;t++){
+      const rr=1.5+t*1.4;
+      ctx.fillStyle='hsla('+(20+t*35)+',85%,60%,'+(0.6-t*0.08)+')';
+      ctx.beginPath(); ctx.arc(Math.cos(a)*rr,Math.sin(a)*rr*0.85-2,0.5,0,6.283); ctx.fill();
+    }
+  }
+  const flash=0.5+0.5*Math.sin(nowMs/180);
+  ctx.fillStyle='hsla(200,80%,'+(70+flash*25)+'%,1)'; ctx.beginPath(); ctx.arc(0,-2,0.9,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxNebDark(ctx,sk,nowMs){ // Тёмная туманность (Конская Голова) — не светится, а заслоняет силуэтом фон IC 434
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/900);
+  const g=ctx.createRadialGradient(0,-2,2,0,-2,9);
+  g.addColorStop(0,'hsla(350,90%,'+(45+p*10)+'%,.85)'); g.addColorStop(1,'hsla(350,80%,30%,.15)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,9,0,6.283); ctx.fill();
+  ctx.fillStyle='#05060a';
+  ctx.beginPath(); ctx.ellipse(0,-3,2.6,3.6,0,0,6.283); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(1.6,-5.4,1.3,1.7,0.4,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxGalElliptical(ctx,sk,nowMs){ // Эллиптическая галактика E0-E7 — шкала Хаббла 1926, от почти круглой до вытянутой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000, squash=0.4+0.5*(0.5+0.5*Math.sin(p*6.283));
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,7);
+  g.addColorStop(0,'hsla(45,60%,88%,1)'); g.addColorStop(0.5,'hsla(40,50%,65%,.6)'); g.addColorStop(1,'hsla(35,40%,40%,0)');
+  ctx.save(); ctx.translate(0,-2); ctx.scale(1,squash); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,7,0,6.283); ctx.fill(); ctx.restore();
+  ctx.restore();
+}
+function fxGalBarredSpiral(ctx,sk,nowMs){ // Пересечённая спираль — Млечный Путь именно такой, подтверждено Spitzer лишь в 2005
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const rot=nowMs/5000;
+  ctx.fillStyle='hsla(45,70%,88%,.9)'; ctx.beginPath(); ctx.ellipse(0,-2,3.2,0.9,rot*0.3,0,6.283); ctx.fill();
+  for(let arm=0;arm<2;arm++) for(let t=0;t<14;t++){
+    const th=t/14*3.2, r=3.2+th*2.1, a=rot+arm*Math.PI+th*1.7;
+    ctx.fillStyle='hsla('+(220-t*10)+',80%,'+(60+t*2)+'%,'+(0.5-t*0.02)+')';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.5,Math.sin(a)*r*0.4-2,0.6,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxGalIrregular(ctx,sk,nowMs){ // Неправильная галактика — без устойчивой формы, обычно след столкновения с соседкой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  [[1,3,60],[-2,1,25],[0,-1,340],[3,-2,200],[-3,-2,100],[1.5,-3.5,280]].forEach(([dx,dy,hue],i)=>{
+    const p=0.5+0.5*Math.sin(nowMs/(400+i*70));
+    ctx.fillStyle='hsla('+hue+',70%,'+(60+p*15)+'%,.55)';
+    ctx.beginPath(); ctx.arc(dx,dy-2,1.3+p*0.5,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxGalSombrero(ctx,sk,nowMs){ // Галактика Сомбреро (M104) — диск ребром + тёмное кольцо пыли, 50000 св. лет в поперечнике
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/900);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,4);
+  g.addColorStop(0,'hsla(42,70%,'+(86+p*6)+'%,1)'); g.addColorStop(1,'hsla(38,50%,60%,.3)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,4,0,6.283); ctx.fill();
+  ctx.save(); ctx.translate(0,-2); ctx.rotate(nowMs/9000); ctx.scale(1,0.28);
+  ctx.strokeStyle='rgba(10,8,6,.88)'; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.arc(0,0,7.5,0,6.283); ctx.stroke();
+  ctx.restore(); ctx.restore();
+}
+function fxGalAntennae(ctx,sk,nowMs){ // Галактики-Антенны — два сталкивающихся диска, приливные хвосты, столкновение идёт прямо сейчас
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000, drift=Math.sin(p*6.283)*0.4;
+  [-2,2].forEach((side,i)=>{
+    ctx.fillStyle='hsla('+(i===0?200:30)+',70%,75%,.7)';
+    ctx.beginPath(); ctx.arc(side*1.3+drift*(i===0?1:-1),-2,2.1,0,6.283); ctx.fill();
+    ctx.strokeStyle='hsla('+(i===0?200:30)+',70%,65%,.4)'; ctx.lineWidth=0.7;
+    ctx.beginPath(); ctx.moveTo(side*1.3,-2);
+    ctx.quadraticCurveTo(side*6,-2+(i===0?-5:5),side*7.5,-2+(i===0?-2:2));
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+// --- Магнитосфера Земли (.knowledge/macets/magnitosfera-10-tem-17-09-2026.html) ---
+function fxMagNormal(ctx,sk,nowMs){ // Нормальная форма — сжата до ≈10 радиусов Земли с солнечной стороны
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/900);
+  ctx.fillStyle='hsla(200,50%,'+(65+p*10)+'%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.4,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(190,70%,65%,'+(0.4+p*0.2)+')'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.moveTo(-3,-7); ctx.quadraticCurveTo(-4.5,-2,-3,4); ctx.quadraticCurveTo(3,6,7,0); ctx.quadraticCurveTo(3,-6,-3,-7); ctx.stroke();
+  ctx.restore();
+}
+function fxMagTail(ctx,sk,nowMs){ // Хвост-шлейф — вытянут на сотни радиусов Земли, «как след за лодкой»
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.fillStyle='hsla(200,50%,70%,1)'; ctx.beginPath(); ctx.arc(-3,-2,1.2,0,6.283); ctx.fill();
+  const p=(nowMs%2000)/2000;
+  for(let i=0;i<6;i++){
+    ctx.strokeStyle='hsla(190,60%,65%,'+(0.35-i*0.05)+')'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.moveTo(-2+i*0.3,-4); ctx.lineTo(6+p*1.5,-3.5+i*0.3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-2+i*0.3,0); ctx.lineTo(6+p*1.5,0.5-i*0.3); ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxMagLaschamp(ctx,sk,nowMs){ // Экскурс Лашам — ≈41000 лет назад поле ослабло до ~10% силы на 2000 лет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/600);
+  ctx.fillStyle='hsla(0,30%,50%,'+(0.3+p*0.15)+')'; ctx.beginPath(); ctx.arc(0,-2,1.2,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(0,40%,55%,'+(0.15+p*0.1)+')'; ctx.lineWidth=0.35;
+  for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(0,-2,2+i*1.4,0,6.283); ctx.stroke(); }
+  ctx.restore();
+}
+function fxMagMultipolar(ctx,sk,nowMs){ // Мультипольное поле — во время экскурса несколько слабых полюсов вместо диполя
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  [[-3,-4],[2,-5],[3,1],[-2,3],[0,-1]].forEach(([dx,dy],i)=>{
+    const p=0.5+0.5*Math.sin(nowMs/500+i*1.3);
+    ctx.strokeStyle='hsla('+(280+i*20)+',50%,60%,'+(0.3+p*0.2)+')'; ctx.lineWidth=0.35;
+    ctx.beginPath(); ctx.arc(dx,dy-2,1.1,0,6.283); ctx.stroke();
+  });
+  ctx.restore();
+}
+function fxMagAuroraShift(ctx,sk,nowMs){ // Сияния у экватора — 2024-2025, овал сияний сместился к экватору во время сбоя поля
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/400);
+  const g=ctx.createLinearGradient(-7,-2,7,-2);
+  g.addColorStop(0,'hsla(140,80%,60%,0)'); g.addColorStop(0.5,'hsla(140,85%,'+(55+p*15)+'%,.55)'); g.addColorStop(1,'hsla(140,80%,60%,0)');
+  ctx.fillStyle=g; ctx.fillRect(-7,-2.6,14,1.2);
+  ctx.restore();
+}
+function fxMagVanAllen(ctx,sk,nowMs){ // Пояса Ван Аллена — два кольца захваченных частиц, открыты в 1958 первым спутником США
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.fillStyle='hsla(200,40%,75%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.3,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(50,80%,65%,.5)'; ctx.lineWidth=1.1;
+  ctx.beginPath(); ctx.ellipse(0,-2,2.8,1.4,0,0,6.283); ctx.stroke();
+  ctx.strokeStyle='hsla(30,80%,60%,.4)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.ellipse(0,-2,5,2.4,0,0,6.283); ctx.stroke();
+  const a1=nowMs/700, a2=nowMs/1100+2;
+  ctx.fillStyle='hsla(50,90%,80%,.9)'; ctx.beginPath(); ctx.arc(Math.cos(a1)*2.8,-2+Math.sin(a1)*1.4,0.16,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(30,90%,75%,.85)'; ctx.beginPath(); ctx.arc(Math.cos(a2)*5,-2+Math.sin(a2)*2.4,0.18,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxMagBowShock(ctx,sk,nowMs){ // Головной ударный фронт — солнечный ветер бьёт о щит первым, на ≈11-15 радиусах
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.fillStyle='hsla(200,50%,70%,1)'; ctx.beginPath(); ctx.arc(0,0,1.2,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(30,70%,65%,.55)'; ctx.lineWidth=0.6;
+  ctx.beginPath(); ctx.moveTo(-5,-9); ctx.quadraticCurveTo(-2,0,-5,9); ctx.stroke();
+  const p=(nowMs%1500)/1500;
+  for(let i=0;i<3;i++){ ctx.fillStyle='hsla(30,80%,70%,'+(0.4-i*0.1)+')'; ctx.beginPath(); ctx.arc(-6-p*1.5-i*1.5,0,0.25,0,6.283); ctx.fill(); }
+  ctx.restore();
+}
+function fxMagPlasmasphere(ctx,sk,nowMs){ // Плазмосфера — внутренняя область холодной плазмы, вращается вместе с Землёй
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/700);
+  const g=ctx.createRadialGradient(0,-2,0,0,-2,2.2);
+  g.addColorStop(0,'hsla(260,60%,'+(65+p*10)+'%,.7)'); g.addColorStop(1,'hsla(260,60%,50%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,-2,2.2,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,-2,0.7,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxMagCompression(ctx,sk,nowMs){ // Сжатие от солнечного ветра — форма пульсирует, не статична
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=0.5+0.5*Math.sin(nowMs/900);
+  ctx.fillStyle='hsla(200,50%,70%,1)'; ctx.beginPath(); ctx.arc(0,-2,1.2,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(190,60%,65%,.45)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.arc(0,-2,2.5+p*1.5,0,6.283); ctx.stroke();
+  ctx.restore();
+}
+function fxMagDipoleLines(ctx,sk,nowMs){ // Обычные дипольные линии поля — как у стержневого магнита, полюс к полюсу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  for(let i=1;i<=3;i++){
+    const p=0.5+0.5*Math.sin(nowMs/700+i);
+    ctx.strokeStyle='hsla(210,60%,70%,'+(0.3+p*0.3)+')'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.quadraticCurveTo(i*2.2,-2,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.quadraticCurveTo(-i*2.2,-2,0,7); ctx.stroke();
+  }
   ctx.restore();
 }
 function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
