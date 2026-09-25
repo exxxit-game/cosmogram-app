@@ -703,7 +703,6 @@ window.addEventListener('mousemove',e=>{
   else if(e.buttons){ input.byMouse=true; input.touchX=e.clientX/SC; input.touchY=e.clientY/SC; }
 }); // v1.99.0
 window.addEventListener('touchstart',()=>{ input.byMouse=false; },{passive:true}); // палец вернулся — снимаем метку
-window.addEventListener('pointerdown',()=>{ if(typeof idleHintNoteActivity==='function') idleHintNoteActivity(); },{passive:true}); // 24.09.2026: любая реальная активность сбрасывает таймер подсказки-бездействия
 window.addEventListener('mouseup',mouseRelease);
 window.addEventListener('mouseleave',mouseRelease);   // курсор ушёл из окна с зажатой кнопкой
 window.addEventListener('blur',mouseRelease);         // окно потеряло фокус — отпускания мы уже не увидим

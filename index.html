@@ -289,7 +289,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
    ПОСЛЕ этого правила («v1.34.0 Единая палуба») и никогда не попадали в список — правило само
    говорит «все окна — одна вуаль неба», не «кроме двух новых». Не додумано заново, тот же
    rgba, что и у остальных семи. */
-#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #diagScreen, #cardScreen, #feedbackScreen, #equalityScreen, #gratitudeScreen, #idleHintExplain {
+#startScreen, #settingsScreen, #gameOverScreen, #hangarScreen, #achScreen, #forgeScreen, #diagScreen, #cardScreen, #feedbackScreen, #equalityScreen, #gratitudeScreen {
   background:rgba(6,10,24,.45); }
 /* 15.09.2026 «Стиль А» (владелец, макет stil-igry-glavny-ekran-3-varianta-15-09-2026.html,
    вариант A «Глубокий космос + золото + вихрь», одобрено на реальном телефоне): золотой
@@ -789,28 +789,6 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .heroCard .recordBadge.a-wave .shp:first-child{animation-name:wRibbonBlink;animation-duration:5.5s}
 .heroCard .recordBadge.a-wave .shp:last-child{animation-name:wRibbonBlink;animation-duration:5.5s;animation-delay:.18s}
 .heroCard .recordBadge.a-sideeye .shp{animation-name:wRibbonSideeye;animation-duration:6.4s}
-/* 24.09.2026 «Подсказка при бездействии»: после ~15с без действий на главном экране —
-   красный «?»-язычок, приклеенный к нижнему краю золотой ленты текущей центрированной
-   карточки карусели (js/ui.js idleHintShow, geometry измерена elementFromPoint по всей
-   форме ленты, x+y=74 — реальная кромка .band в локальных координатах угла 76×76).
-   Вставляется ПЕРЕД .band внутри .recordBadge — тот же overflow:hidden угла прячет базу
-   фигуры (она заходит под ленту), видна только часть, торчащая наружу. */
-#idleHintTongue{position:absolute;left:0;top:0;width:76px;height:76px;pointer-events:auto;
-  z-index:1;cursor:pointer;transform-origin:48px 42px;animation:idleHintPopIn .4s ease-out}
-#idleHintTongue .idleHintBody{animation:idleHintPulse 1.6s ease-in-out infinite .4s}
-@keyframes idleHintPopIn{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
-@keyframes idleHintPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
-#idleHintCallout{position:absolute;background:#fff;color:#1a1a2e;font:700 11px system-ui,sans-serif;
-  padding:5px 9px;border-radius:7px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4);
-  opacity:0;transform:scale(.85);transform-origin:left center;
-  transition:opacity .25s,transform .25s;z-index:5;pointer-events:none}
-#idleHintCallout.show{opacity:1;transform:scale(1)}
-#idleHintCallout:before{content:"";position:absolute;left:-4px;top:50%;margin-top:-4px;
-  width:8px;height:8px;background:#fff;transform:rotate(45deg)}
-.idleHintExplainBody{width:min(92%,380px);pointer-events:auto;display:flex;flex-direction:column;
-  align-items:center;text-align:center;gap:16px;color:#fff}
-.idleHintExplainQ{font-size:38px;font-weight:800}
-.idleHintExplainText{font-size:15px;line-height:1.5}
 /* 15.09.2026→16.09.2026: .playHint прошла путь круглая-иконка-со-своим-самолётиком (несколько
    заходов — угол, кольцо, блик, всё убиралось/двигалось по живым скринам) → сегодня, третий
    заход того же вечера, владелец решил заменить весь круг текстовой подсказкой — идея владельца:
@@ -4710,15 +4688,6 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
     <button class="btn sec" id="restartBtn">Заново</button>
     <button class="btn ghost" id="pauseSettingsBtn">Настройки</button>
     <button class="btn ghost" id="pauseMenuBtn">Меню</button>
-  </div>
-</div>
-
-<!-- IDLE HINT EXPLAIN (24.09.2026) -->
-<div id="idleHintExplain" class="overlay hidden">
-  <div class="idleHintExplainBody">
-    <div class="idleHintExplainQ">?</div>
-    <div class="idleHintExplainText" id="idleHintExplainText"></div>
-    <button class="menuBack" id="idleHintExplainClose" aria-label="Закрыть"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   </div>
 </div>
 
