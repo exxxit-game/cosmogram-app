@@ -1073,6 +1073,12 @@ const PREM_FX_MAP={
   bioLumGFP:fxBioLumGFP, bioLumAnglerEsca:fxBioLumAnglerEsca, bioLumFoxfire:fxBioLumFoxfire, bioLumDinoflagellate:fxBioLumDinoflagellate,
   cosBHSchwarzschild:fxCosBHSchwarzschild, cosBHPhotonRingM87:fxCosBHPhotonRingM87, cosBHPhotonRingSgrA:fxCosBHPhotonRingSgrA,
   cosBHDopplerDisk:fxCosBHDopplerDisk, cosBHSpaghetti:fxCosBHSpaghetti, cosBHLensing:fxCosBHLensing, cosBHErgosphere:fxCosBHErgosphere,
+  // 26.09.2026, четвёртая партия (космос-5/антиматерия-10/белый карлик-5, 20 карточек):
+  cosLagrange:fxCosLagrange, cosEinsteinRing:fxCosEinsteinRing, cosCMB:fxCosCMB, cosLIGOChirp:fxCosLIGOChirp, cosTidalLock:fxCosTidalLock,
+  antiPairProd:fxAntiPairProd, antiAnnih511:fxAntiAnnih511, antiAndersonKink:fxAntiAndersonKink, antiPositronium:fxAntiPositronium,
+  antiAsacusa:fxAntiAsacusa, antiDeuteron:fxAntiDeuteron, antiVanAllenBounce:fxAntiVanAllenBounce, antiAlphaGFall:fxAntiAlphaGFall,
+  antiCPViolation:fxAntiCPViolation, antiSpectrometerFan:fxAntiSpectrometerFan,
+  wdLucyDiamond:fxWdLucyDiamond, wdChandrasekhar:fxWdChandrasekhar, wdDensity:fxWdDensity, wdSiriusB:fxWdSiriusB, wdMassRadiusInverse:fxWdMassRadiusInverse,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -2229,6 +2235,320 @@ function fxCosBHErgosphere(ctx,sk,nowMs){ // Эргосфера / увлечен
     ctx.stroke();
   }
   ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
+  ctx.restore();
+}
+/* 26.09.2026, четвёртая партия (космос-5/антиматерия-10/белый карлик-5, 20 карточек). */
+// --- 5 космических тем (.knowledge/macets/kosmos-5-tem-08-09-2026.html) ---
+function cosLagrangeGeom(){
+  const A=[-5,0], B=[5,0], D=10;
+  const L1=[4,0], L2=[6,0], L3=[-12,0];
+  const h=D*Math.sqrt(3)/2;
+  return {A,B,L1,L2,L3,L4:[0,h],L5:[0,-h]};
+}
+function fxCosLagrange(ctx,sk,nowMs){ // Точки Лагранжа — L4/L5 устойчивы (спутник колеблется рядом), L1/L2/L3 неустойчивы (сносит)
+  const p=(nowMs%6000)/6000;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.55,0.55);
+  ctx.rotate(p*Math.PI*2*0.25);
+  const g=cosLagrangeGeom();
+  ctx.strokeStyle='rgba(140,170,255,.35)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L2[0],g.L2[1]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L4[0],g.L4[1]); ctx.lineTo(g.B[0],g.B[1]); ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(g.A[0],g.A[1]); ctx.lineTo(g.L5[0],g.L5[1]); ctx.lineTo(g.B[0],g.B[1]); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='hsla(45,90%,70%,.95)'; ctx.beginPath(); ctx.arc(g.A[0],g.A[1],1.3,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(205,80%,65%,.95)'; ctx.beginPath(); ctx.arc(g.B[0],g.B[1],0.8,0,6.283); ctx.fill();
+  [g.L1,g.L2,g.L3].forEach(pt=>{ ctx.fillStyle='hsla(0,70%,65%,.85)'; ctx.beginPath(); ctx.arc(pt[0],pt[1],0.35,0,6.283); ctx.fill(); });
+  [g.L4,g.L5].forEach(pt=>{ ctx.fillStyle='hsla(140,80%,65%,.9)'; ctx.beginPath(); ctx.arc(pt[0],pt[1],0.4,0,6.283); ctx.fill(); });
+  const libAng=p*Math.PI*2*3;
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(g.L4[0]+Math.cos(libAng)*0.9,g.L4[1]+Math.sin(libAng)*0.6,0.22,0,6.283); ctx.fill();
+  const driftT=(p*3)%1;
+  ctx.fillStyle='rgba(255,255,255,'+(1-driftT*0.7).toFixed(2)+')'; ctx.beginPath(); ctx.arc(g.L1[0]+driftT*1.8,g.L1[1]+driftT*driftT*1.2,0.22,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxCosEinsteinRing(ctx,sk,nowMs){ // Кольцо Эйнштейна — линза распадается на дуги при смещении источника (реально сфотографировано)
+  const p=(nowMs%5200)/5200;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.85,0.85);
+  const offset=Math.sin(p*Math.PI*2)*3.2;
+  const ringR=6.2;
+  const completeness=Math.max(0.08,1-Math.abs(offset)/3.2);
+  const gapAngle=(1-completeness)*Math.PI*0.9;
+  ctx.strokeStyle='hsla(210,90%,75%,.9)'; ctx.lineWidth=0.55;
+  ctx.beginPath(); ctx.arc(offset*0.15,0,ringR,gapAngle/2,Math.PI-gapAngle/2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(offset*0.15,0,ringR,Math.PI+gapAngle/2,2*Math.PI-gapAngle/2); ctx.stroke();
+  const glow=ctx.createRadialGradient(0,0,0,0,0,2.2);
+  glow.addColorStop(0,'hsla(35,90%,80%,.95)'); glow.addColorStop(1,'hsla(35,90%,60%,0)');
+  ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(0,0,2.2,0,6.283); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(offset,0,0.28,0,6.283); ctx.fill();
+  ctx.restore();
+}
+const COS_CMB_BLOBS=(()=>{ const rnd=mulberry32(19); const arr=[]; for(let i=0;i<140;i++){ arr.push({x:(rnd()-0.5)*30,y:(rnd()-0.5)*34,r:0.6+rnd()*2.2,t:rnd()}); } return arr; })();
+function fxCosCMB(ctx,sk,nowMs){ // Реликтовое излучение — пятна статичны, крупный градиент едет (настоящая дипольная анизотропия ±0.00335К)
+  const p=(nowMs%9000)/9000;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.6,0.6);
+  COS_CMB_BLOBS.forEach(b=>{ ctx.fillStyle='hsla('+(200-b.t*160)+',70%,55%,.5)'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.283); ctx.fill(); });
+  const dipoleAngle=p*Math.PI*2;
+  const dx=Math.cos(dipoleAngle)*10, dy=Math.sin(dipoleAngle)*10;
+  const g=ctx.createLinearGradient(-dx,-dy,dx,dy);
+  g.addColorStop(0,'hsla(210,80%,60%,.28)'); g.addColorStop(0.5,'hsla(0,0%,50%,0)'); g.addColorStop(1,'hsla(15,85%,60%,.28)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(-16,14); ctx.lineTo(0,6); ctx.lineTo(16,14); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function cosChirpState(p){
+  const cyclePos=p%1;
+  if(cyclePos<0.82){
+    const tNorm=cyclePos/0.82, tc=1.0, tt=tNorm*0.999;
+    return {phase:'inspiral', sep:7*Math.pow(Math.max(1e-4,tc-tt),1/4), freq:Math.pow(Math.max(1e-4,tc-tt),-3/8)};
+  }
+  return {phase:'ringdown', ringdown:(cyclePos-0.82)/0.18};
+}
+function fxCosLIGOChirp(ctx,sk,nowMs){ // Гравитационно-волновой чирп LIGO — частота растёт как (tc-t)^(-3/8), затем слияние и дозвучивание
+  const p=(nowMs%3400)/3400;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.85,0.85);
+  const st=cosChirpState(p);
+  if(st.phase==='inspiral'){
+    const ang=p*Math.PI*2*st.freq*3.2;
+    const r=Math.min(6.5,st.sep);
+    const x1=Math.cos(ang)*r*0.5, y1=Math.sin(ang)*r*0.5;
+    ctx.strokeStyle='rgba(140,170,255,.4)'; ctx.lineWidth=0.1;
+    ctx.beginPath(); ctx.arc(0,0,r*0.5,0,6.283); ctx.stroke();
+    ctx.fillStyle='#0a0a0a'; ctx.strokeStyle='hsla(220,80%,70%,.9)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.arc(x1,y1,0.9,0,6.283); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-x1,-y1,0.65,0,6.283); ctx.fill(); ctx.stroke();
+  } else {
+    const flashA=Math.max(0,1-st.ringdown*4);
+    const g=ctx.createRadialGradient(0,0,0,0,0,9);
+    g.addColorStop(0,'hsla(210,100%,90%,'+flashA+')'); g.addColorStop(1,'hsla(210,100%,80%,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,9,0,6.283); ctx.fill();
+    for(let k=1;k<=3;k++){
+      const rr=st.ringdown*10*k/1.5, damp=Math.max(0,1-st.ringdown*2)*(1/k);
+      if(rr>0.5){ ctx.strokeStyle='hsla(210,80%,75%,'+(damp*0.6)+')'; ctx.lineWidth=0.15; ctx.beginPath(); ctx.arc(0,0,Math.min(11,rr),0,6.283); ctx.stroke(); }
+    }
+    ctx.fillStyle='#0a0a0a'; ctx.strokeStyle='hsla(220,80%,70%,.9)'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.arc(0,0,1.2,0,6.283); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxCosTidalLock(ctx,sk,nowMs){ // Приливный захват — собственный угол спутника точно равен орбитальному, как настоящая Луна
+  const p=(nowMs%7000)/7000;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.85,0.85);
+  const orbitAngle=p*Math.PI*2, orbitR=7.5;
+  const mx=Math.cos(orbitAngle)*orbitR, my=Math.sin(orbitAngle)*orbitR;
+  ctx.strokeStyle='rgba(140,170,255,.3)'; ctx.lineWidth=0.15;
+  ctx.beginPath(); ctx.arc(0,0,orbitR,0,6.283); ctx.stroke();
+  const gp=ctx.createRadialGradient(0,0,0,0,0,2.6);
+  gp.addColorStop(0,'hsla(220,70%,60%,.95)'); gp.addColorStop(1,'hsla(220,70%,40%,.5)');
+  ctx.fillStyle=gp; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
+  ctx.save(); ctx.translate(mx,my); ctx.rotate(orbitAngle);
+  ctx.fillStyle='hsla(35,20%,75%,.95)'; ctx.beginPath(); ctx.arc(0,0,1.5,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(0,70%,55%,.95)'; ctx.beginPath(); ctx.arc(-1.5,0,0.4,0,6.283); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+// --- Антиматерия, 10 карточек (.knowledge/macets/antimateriya-na-korpuse-11-09-2026.html) ---
+function fxAntiPairProd(ctx,sk,nowMs){ // Рождение пары — электрон+позитрон разлетаются вилкой из одной точки
+  const p=(nowMs%2600)/2600;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.75*0.75,0.75*0.75);
+  const pulse=0.7+0.3*Math.sin(p*2*Math.PI*2);
+  const R=14, forkY=-6, sweep=70*Math.PI/180;
+  const arm=(side,t)=> side<0 ? {x:-R+R*Math.cos(t*sweep),y:forkY+R*Math.sin(t*sweep)} : {x:R-R*Math.cos(t*sweep),y:forkY+R*Math.sin(t*sweep)};
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,forkY); ctx.stroke();
+  [[-1,'143,208,255'],[1,'255,158,201']].forEach(([side,col])=>{
+    ctx.strokeStyle='rgba('+col+','+pulse.toFixed(2)+')'; ctx.lineWidth=3;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){ const t=i/20; const pt=arm(side,t); i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y); }
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+function fxAntiAnnih511(ctx,sk,nowMs){ // Аннигиляция 511 кэВ — два гамма-фотона разлетаются строго в противоположные стороны
+  const p=(nowMs%1400)/1400;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.3*0.75,0.3*0.75);
+  const grow=Math.min(1,p*2.2);
+  const len0=4, len1=46*grow;
+  ctx.strokeStyle='rgba(255,255,255,'+(0.95-grow*0.25).toFixed(2)+')'; ctx.lineWidth=2.6;
+  [0,Math.PI].forEach(ang=>{
+    ctx.beginPath(); ctx.moveTo(Math.cos(ang)*len0,Math.sin(ang)*len0*0.4);
+    ctx.lineTo(Math.cos(ang)*len1,Math.sin(ang)*len1*0.4); ctx.stroke();
+  });
+  ctx.fillStyle='rgba(255,255,255,'+(0.9-grow*0.5).toFixed(2)+')'; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxAntiAndersonKink(ctx,sk,nowMs){ // Трек с изломом кривизны — частица меняет радиус поворота, пройдя через тонкую пластину (эффект Андерсона, открытие позитрона)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.5*0.75,0.5*0.75);
+  const R1=40, th1=35*Math.PI/180, R2=18, th2=55*Math.PI/180;
+  ctx.strokeStyle='rgba(180,220,255,.95)'; ctx.lineWidth=3;
+  ctx.beginPath();
+  for(let i=0;i<=14;i++){ const th=i/14*th1; const x=-R1+R1*Math.cos(th),y=R1*Math.sin(th); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  const junc={x:-R1+R1*Math.cos(th1),y:R1*Math.sin(th1)};
+  const tang={x:-Math.sin(th1),y:Math.cos(th1)};
+  const norm={x:-tang.y,y:tang.x};
+  const C2={x:junc.x+norm.x*R2,y:junc.y+norm.y*R2};
+  const a0=Math.atan2(junc.y-C2.y,junc.x-C2.x);
+  for(let i=0;i<=14;i++){ const a=a0-(i/14*th2); const x=C2.x+R2*Math.cos(a),y=C2.y+R2*Math.sin(a); ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.4)'; ctx.fillRect(junc.x-1,junc.y-5,2,10);
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(30,0); ctx.quadraticCurveTo(34,20,32,40); ctx.stroke();
+  ctx.restore();
+}
+let antiPositroniumCache=null;
+function antiPositroniumRings(){
+  if(antiPositroniumCache) return antiPositroniumCache;
+  const p1=new Path2D(), p2=new Path2D(), r=26;
+  for(let i=0;i<=40;i++){ const a=i/40*6.283;
+    p1.moveTo(r*Math.cos(a)+2,r*Math.sin(a)); p1.arc(r*Math.cos(a),r*Math.sin(a),2,0,6.283);
+    p2.moveTo(-r*Math.cos(a)+2,-r*Math.sin(a)); p2.arc(-r*Math.cos(a),-r*Math.sin(a),2,0,6.283);
+  }
+  antiPositroniumCache={p1,p2}; return antiPositroniumCache;
+}
+function fxAntiPositronium(ctx,sk,nowMs){ // Позитроний — электрон и позитрон кружат друг вокруг друга как временный "атом"
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.5*0.75,0.5*0.75);
+  const {p1,p2}=antiPositroniumRings();
+  ctx.save(); ctx.rotate((nowMs%3000)/3000*6.283);
+  ctx.fillStyle='rgba(143,208,255,.75)'; ctx.fill(p1);
+  ctx.fillStyle='rgba(255,158,201,.75)'; ctx.fill(p2);
+  ctx.restore();
+  ctx.restore();
+}
+let antiAsacusaCache=null;
+function antiAsacusaRings(){
+  if(antiAsacusaCache) return antiAsacusaCache;
+  const pE=new Path2D(), pP=new Path2D(), rE=14, rP=34;
+  for(let i=0;i<=30;i++){ const a=i/30*6.283;
+    pE.moveTo(rE*Math.cos(a)+1.6,rE*Math.sin(a)*.6); pE.arc(rE*Math.cos(a),rE*Math.sin(a)*.6,1.6,0,6.283);
+    pP.moveTo(rP*Math.cos(a)+2,rP*Math.sin(a)*.6); pP.arc(rP*Math.cos(a),rP*Math.sin(a)*.6,2,0,6.283);
+  }
+  antiAsacusaCache={pE,pP}; return antiAsacusaCache;
+}
+function fxAntiAsacusa(ctx,sk,nowMs){ // ASACUSA — антипротон на вложенной орбите вокруг позитрона (эксперимент CERN)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.4*0.75,0.4*0.75);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(0,0,4,0,6.283); ctx.fill();
+  const {pE,pP}=antiAsacusaRings();
+  ctx.save(); ctx.rotate((nowMs%900)/900*6.283); ctx.fillStyle='rgba(255,158,201,.7)'; ctx.fill(pE); ctx.restore();
+  ctx.save(); ctx.rotate((nowMs%4200)/4200*6.283); ctx.fillStyle='rgba(143,208,255,.75)'; ctx.fill(pP); ctx.restore();
+  ctx.restore();
+}
+function fxAntiDeuteron(ctx,sk,nowMs){ // Антидейтрон — античастицы сходятся вилкой в одну точку (обратный процесс рождению пары)
+  const p=(nowMs%2600)/2600;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.75*0.75,0.75*0.75);
+  const R=14, forkY=-6, sweep=70*Math.PI/180;
+  const arm=(side,t)=> side<0 ? {x:-R+R*Math.cos(t*sweep),y:forkY+R*Math.sin(t*sweep)} : {x:R-R*Math.cos(t*sweep),y:forkY+R*Math.sin(t*sweep)};
+  [[-1,'143,208,255'],[1,'255,158,201']].forEach(([side,col])=>{
+    ctx.strokeStyle='rgba('+col+',.95)'; ctx.lineWidth=3;
+    ctx.beginPath();
+    for(let i=0;i<=20;i++){ const t=1-i/20; const pt=arm(side,t); i===0?ctx.moveTo(pt.x,pt.y):ctx.lineTo(pt.x,pt.y); }
+    ctx.stroke();
+  });
+  const pulse=0.6+0.4*Math.sin(p*2*Math.PI*3);
+  ctx.fillStyle='rgba(255,255,255,'+pulse.toFixed(2)+')'; ctx.beginPath(); ctx.arc(0,forkY,4,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxAntiVanAllenBounce(ctx,sk,nowMs){ // Спиральный отскок в ловушке — антивещество удерживается магнитной "бутылкой", отскакивая между полюсами
+  const p=(nowMs%2200)/2200;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.28*0.75,0.28*0.75);
+  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-50,20); ctx.quadraticCurveTo(0,-30,50,20); ctx.stroke();
+  ctx.strokeStyle='rgba(143,208,255,.5)'; ctx.lineWidth=1.4;
+  ctx.beginPath();
+  for(let i=0;i<=80;i++){ const s=i/80; const guideY=20+(-30-20)*(4*s*(1-s)); const amp=10*Math.sin(Math.PI*s); const perp=Math.cos(28*s)*amp; const x=-50+100*s,y=guideY+perp*0.5; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.stroke();
+  const s=p, guideY2=20+(-30-20)*(4*s*(1-s)), amp2=10*Math.sin(Math.PI*s), perp2=Math.cos(28*s)*amp2;
+  ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(-50+100*s,guideY2+perp2*0.5,2.4,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxAntiAlphaGFall(ctx,sk,nowMs){ // Свободное падение антивещества — атомы антиводорода честно падают вниз под гравитацией (ALPHA-g, CERN)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.55*0.75,0.55*0.75);
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(-20,-16); ctx.lineTo(20,-16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-20,18); ctx.lineTo(20,18); ctx.stroke(); ctx.setLineDash([]);
+  const g=110;
+  for(let k=0;k<5;k++){
+    const t=Math.max(0,((nowMs%1300)/1300)*0.85-k*0.05);
+    const y=-16+0.5*g*t*t; if(y>18) continue;
+    ctx.globalAlpha=1-k*0.2;
+    ctx.fillStyle='rgba(200,220,255,.95)'; ctx.beginPath(); ctx.arc(0,y,3.4-k*0.4,0,6.283); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function fxAntiCPViolation(ctx,sk,nowMs){ // CP-нарушение — редкий особый распад (золотой) среди обычных, честная асимметрия материи/антиматерии
+  const p=(nowMs%1800)/1800;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.27*0.75,0.27*0.75);
+  const pulse=0.6+0.4*Math.sin(p*2*Math.PI);
+  const n=5, gap=26;
+  for(let k=0;k<n;k++){
+    const cx=(k-(n-1)/2)*gap, rare=k===2, branches=rare?2:3;
+    for(let b=0;b<branches;b++){
+      const ang=(-0.7+b*(1.4/(branches-1)));
+      ctx.strokeStyle=rare?'rgba(219,169,60,'+pulse.toFixed(2)+')':'rgba(255,255,255,.35)';
+      ctx.lineWidth=rare?2.2:1.3;
+      ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx+Math.sin(ang)*14,10-Math.cos(ang)*22); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function fxAntiSpectrometerFan(ctx,sk,nowMs){ // Веер треков — спектрометр разделяет частицы по радиусу кривизны в магнитном поле
+  const p=(nowMs%2400)/2400;
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.34*0.75,0.34*0.75);
+  ctx.translate(0,32);
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(0,-40); ctx.lineTo(0,0); ctx.stroke();
+  [{R:16,col:'143,208,255'},{R:26,col:'170,180,255'},{R:36,col:'210,160,255'},{R:46,col:'255,158,201'}].forEach(({R,col},idx)=>{
+    const hi=Math.abs((p*4)%4-idx)<0.5;
+    ctx.strokeStyle='rgba('+col+','+(hi?1:0.65)+')'; ctx.lineWidth=hi?3.4:2.4;
+    ctx.beginPath();
+    for(let a=0;a<=60;a++){ const th=a/60*1.35; const x=R*Math.sin(th),y=-R*Math.cos(th)+R; a===0?ctx.moveTo(0,-40):ctx.lineTo(x,-40+y); }
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+// --- Белый карлик, 5 карточек (.knowledge/macets/belyy-karlik-5-tem-14-09-2026.html) ---
+function fxWdLucyDiamond(ctx,sk,nowMs){ // BPM 37093 «Люси» — закристаллизовавшееся углеродно-кислородное ядро, огранённые грани
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000;
+  ctx.save(); ctx.rotate(p*2*Math.PI*0.2);
+  for(let i=0;i<8;i++){
+    const a=i/8*6.283, shine=0.5+0.5*Math.sin(nowMs/300+i);
+    ctx.fillStyle='hsla(190,70%,'+(65+shine*20)+'%,'+(0.4+shine*0.4)+')';
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*9,Math.sin(a)*9); ctx.lineTo(Math.cos(a+0.78)*9,Math.sin(a+0.78)*9); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=0.3; ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,1.5,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxWdChandrasekhar(ctx,sk,nowMs){ // Предел Чандрасекара — 1.4 массы Солнца, растущая масса пульсирует у самой грани коллапса
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  const mass=1.0+0.5*p, overLimit=mass>1.4, r=6+mass*3;
+  ctx.fillStyle=overLimit?'hsla(0,80%,55%,.85)':'hsla(50,80%,60%,.7)';
+  ctx.beginPath(); ctx.arc(0,-2,r,0,6.283); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.setLineDash([1,2]); ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.arc(0,-2,6+1.4*3,0,6.283); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+}
+function fxWdDensity(ctx,sk,nowMs){ // Плотность вещества — ≈1.8 т/см³, чайная ложка весит как машина
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2200)/2200, pulse=0.7+0.3*Math.sin(p*2*Math.PI*3);
+  const g=ctx.createRadialGradient(0,0,0,0,0,8);
+  g.addColorStop(0,'hsla(210,90%,'+(75+pulse*15)+'%,1)'); g.addColorStop(0.4,'hsla(210,80%,55%,.6)'); g.addColorStop(1,'hsla(210,80%,40%,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,8,0,6.283); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,1.6*pulse,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxWdSiriusB(ctx,sk,nowMs){ // Загадка Сириуса B — масса как у Солнца, размер как у Земли, разгадано только квантовой механикой
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%5000)/5000, ang=p*2*Math.PI;
+  ctx.fillStyle='hsla(200,85%,85%,1)'; ctx.beginPath(); ctx.arc(-2,0,5,0,6.283); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.beginPath(); ctx.ellipse(-2,0,5.5,3,0,0,6.283); ctx.stroke();
+  ctx.fillStyle='hsla(210,60%,75%,.9)'; ctx.beginPath(); ctx.arc(-2+Math.cos(ang)*5.5,Math.sin(ang)*3,1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxWdMassRadiusInverse(ctx,sk,nowMs){ // Обратная зависимость масса↔радиус — чем тяжелее белый карлик, тем он МЕНЬШЕ, не больше
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000, k=0.5+0.5*Math.sin(p*2*Math.PI);
+  ctx.fillStyle='hsla(45,70%,60%,.7)'; ctx.beginPath(); ctx.arc(-6,-2,2+k*3,0,6.283); ctx.fill();
+  ctx.fillStyle='hsla(210,70%,60%,.7)'; ctx.beginPath(); ctx.arc(6,-2,5-k*3,0,6.283); ctx.fill();
   ctx.restore();
 }
 function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
