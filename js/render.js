@@ -1079,6 +1079,13 @@ const PREM_FX_MAP={
   antiAsacusa:fxAntiAsacusa, antiDeuteron:fxAntiDeuteron, antiVanAllenBounce:fxAntiVanAllenBounce, antiAlphaGFall:fxAntiAlphaGFall,
   antiCPViolation:fxAntiCPViolation, antiSpectrometerFan:fxAntiSpectrometerFan,
   wdLucyDiamond:fxWdLucyDiamond, wdChandrasekhar:fxWdChandrasekhar, wdDensity:fxWdDensity, wdSiriusB:fxWdSiriusB, wdMassRadiusInverse:fxWdMassRadiusInverse,
+  // 26.09.2026, пятая партия (3 макета «науки для тюнинга», 15 карточек):
+  wave2Hofstadter:fxWave2Hofstadter, wave2PentagonTiling:fxWave2PentagonTiling, wave2StringArt:fxWave2StringArt,
+  wave2DodecaSpace:fxWave2DodecaSpace, wave2LensRays:fxWave2LensRays,
+  freshCalciteCross:fxFreshCalciteCross, freshZirconZity:fxFreshZirconZity, freshLittleRedDot:fxFreshLittleRedDot,
+  freshHowardClouds:fxFreshHowardClouds, freshDiatomFrustule:fxFreshDiatomFrustule,
+  wave3RoseWindow:fxWave3RoseWindow, wave3Chladni:fxWave3Chladni, wave3SnowCrystal:fxWave3SnowCrystal,
+  wave3VenusPentagram:fxWave3VenusPentagram, wave3Archimedean:fxWave3Archimedean,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -2549,6 +2556,214 @@ function fxWdMassRadiusInverse(ctx,sk,nowMs){ // Обратная зависим
   const p=(nowMs%3000)/3000, k=0.5+0.5*Math.sin(p*2*Math.PI);
   ctx.fillStyle='hsla(45,70%,60%,.7)'; ctx.beginPath(); ctx.arc(-6,-2,2+k*3,0,6.283); ctx.fill();
   ctx.fillStyle='hsla(210,70%,60%,.7)'; ctx.beginPath(); ctx.arc(6,-2,5-k*3,0,6.283); ctx.fill();
+  ctx.restore();
+}
+/* 26.09.2026, пятая партия (3 макета «науки для тюнинга», 15 карточек). */
+// --- Волна 2 (.knowledge/macets/skiny-5-tem-volna2-15-09-2026.html) ---
+function fxWave2Hofstadter(ctx,sk,nowMs){ // Бабочка Хофштадтера — фрактальный энергетический спектр, самоподобие на разных p/q
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const t=nowMs/6000;
+  function branch(x,y,w,depth,side){
+    if(depth>5||w<0.22) return;
+    ctx.strokeStyle='hsla('+(200+depth*22)+',75%,'+(50+depth*6)+'%,.7)'; ctx.lineWidth=Math.max(0.14,w*0.2);
+    ctx.beginPath(); ctx.moveTo(x-w,y); ctx.lineTo(x+w,y); ctx.stroke();
+    const drift=Math.sin(t*3+depth+side)*0.12;
+    branch(x-w*0.5+drift,y-1.15,w*0.46,depth+1,side);
+    branch(x+w*0.5+drift,y+1.15,w*0.46,depth+1,side);
+  }
+  branch(-3.2,-9,3.6,0,0); branch(3.2,-9,3.6,0,1); branch(0,10,7.6,0,2);
+  ctx.restore();
+}
+function fxWave2PentagonTiling(ctx,sk,nowMs){ // Замощение пятиугольниками — Тип 15, найден компьютерным перебором лишь в 2015
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const shimmer=nowMs/2500;
+  const pts5=(cx,cy,r,rot)=>{ const p=[]; for(let i=0;i<5;i++){ const a=rot+i/5*6.283-1.5708; p.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); } return p; };
+  [[-4,-3,0],[4,-3,0.6],[-4,3,1.2],[4,3,1.8],[0,0,0.3]].forEach(([cx,cy,rot],i)=>{
+    const p=pts5(cx,cy,2.6,rot+Math.sin(shimmer+i)*0.05);
+    ctx.beginPath(); p.forEach(([x,y],j)=>j===0?ctx.moveTo(x,y):ctx.lineTo(x,y)); ctx.closePath();
+    ctx.fillStyle='hsla('+(40+i*35)+',60%,'+(45+((nowMs/900+i*80)%20))+'%,.5)'; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.25; ctx.stroke();
+  });
+  ctx.restore();
+}
+function fxWave2StringArt(ctx,sk,nowMs){ // Стринг-арт — прямые нити образуют кардиоиду (та же кривая, что тело множества Мандельброта)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const N=24, mult=2, rot=nowMs/5000;
+  ctx.strokeStyle='hsla(280,70%,72%,.5)'; ctx.lineWidth=0.16;
+  for(let i=0;i<N;i++){
+    const a1=rot+i/N*6.283, a2=rot+(i*mult%N)/N*6.283;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a1)*8,Math.sin(a1)*8*0.85); ctx.lineTo(Math.cos(a2)*8,Math.sin(a2)*8*0.85); ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.ellipse(0,0,8,8*0.85,0,0,6.283); ctx.stroke();
+  ctx.restore();
+}
+function fxWave2DodecaSpace(ctx,sk,nowMs){ // Додекаэдрическое пространство Пуанкаре — грани склеены с поворотом 36°, гипотеза о форме Вселенной
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const spin=nowMs/5000;
+  ctx.save(); ctx.rotate(spin*0.4);
+  for(let ring=0;ring<2;ring++){
+    const r=4+ring*3.4, n=5;
+    for(let i=0;i<n;i++){
+      const a=i/n*6.283+ring*0.6283, x1=Math.cos(a)*r, y1=Math.sin(a)*r*0.9;
+      const a2=(i+1)/n*6.283+ring*0.6283, x2=Math.cos(a2)*r, y2=Math.sin(a2)*r*0.9;
+      ctx.strokeStyle='hsla('+(260+ring*40)+',70%,70%,'+(0.75-ring*0.25)+')'; ctx.lineWidth=0.35;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  const pulse=0.5+0.5*Math.sin(nowMs/700);
+  ctx.fillStyle='rgba(200,180,255,'+(0.3+pulse*0.3)+')'; ctx.beginPath(); ctx.arc(0,0,0.9,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxWave2LensRays(ctx,sk,nowMs){ // Ход лучей через линзу Ибн Сахля — вывел закон преломления в 984, за 600 лет до Снелла
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.strokeStyle='rgba(200,220,255,.6)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.ellipse(0,0,1.6,7,0,0,6.283); ctx.stroke();
+  const t=(nowMs%2600)/2600;
+  for(let i=-3;i<=3;i++){
+    const y0=i*2.1, focusX=8, focusY=0, midX=1.2*Math.cos(y0/8), p=t;
+    const x=-9+(midX+9)*Math.min(p*2,1);
+    const seg=p<0.5?[-9,y0,midX,y0]:[midX,y0,focusX,focusY+(y0*0.02)];
+    ctx.strokeStyle='hsla('+(45+i*10)+',85%,65%,.85)'; ctx.lineWidth=0.28;
+    ctx.beginPath(); ctx.moveTo(seg[0],seg[1]); ctx.lineTo(seg[2],seg[3]); ctx.stroke();
+  }
+  ctx.fillStyle='rgba(255,240,200,.9)'; ctx.beginPath(); ctx.arc(8,0,0.5,0,6.283); ctx.fill();
+  ctx.restore();
+}
+// --- «Свежие темы этой сессии» (.knowledge/macets/skiny-5-tem-15-09-2026.html) ---
+function fxFreshCalciteCross(ctx,sk,nowMs){ // Хроматическая поляризация — чёрный крест кальцита в скрещенных поляризаторах (Араго 1811)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  for(let i=6;i>=1;i--){
+    const r=i*1.5, hue=(i*55+nowMs/25)%360;
+    ctx.strokeStyle='hsla('+hue+',75%,60%,.55)'; ctx.lineWidth=0.55;
+    ctx.beginPath(); ctx.arc(0,0,r,0,6.283); ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(5,5,8,.92)'; ctx.lineWidth=1.7;
+  ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(0,9); ctx.moveTo(-9,0); ctx.lineTo(9,0); ctx.stroke();
+  ctx.restore();
+}
+function fxFreshZirconZity(ctx,sk,nowMs){ // Фрактал Ляпунова — граница «Zircon Zity», жёлтый=порядок/синий=хаос (Маркус/Хесс, 1989)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const cell=1.1, cols=16, rows=16;
+  for(let cx=0;cx<cols;cx++) for(let cy=0;cy<rows;cy++){
+    const x=(cx-cols/2)*cell, y=(cy-rows/2)*cell;
+    const n=Math.sin(x*1.3+nowMs/900)+Math.cos(y*1.7-nowMs/700)+Math.sin((x+y)*0.9+nowMs/1200);
+    ctx.fillStyle = n>0.15 ? 'hsla(48,80%,55%,.75)' : 'hsla(210,80%,55%,.75)';
+    if(Math.abs(n)<0.15) ctx.fillStyle='rgba(10,10,14,.9)';
+    ctx.fillRect(x-cell/2,y-cell/2,cell*0.92,cell*0.92);
+  }
+  ctx.restore();
+}
+function fxFreshLittleRedDot(ctx,sk,nowMs){ // Little Red Dot — действующая загадка JWST, V-спектр с изломом на пределе Бальмера (3645Å)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const pulse=0.5+0.5*Math.sin(nowMs/500);
+  ctx.fillStyle='rgba(255,255,255,.06)';
+  for(let i=0;i<10;i++){ const sx=((i*37)%17)-8.5, sy=((i*53)%17)-8.5; ctx.beginPath(); ctx.arc(sx,sy,0.18,0,6.283); ctx.fill(); }
+  const g=ctx.createRadialGradient(0,0,0,0,0,3+pulse*0.6);
+  g.addColorStop(0,'rgba(255,90,60,.95)'); g.addColorStop(.5,'rgba(200,40,30,.55)'); g.addColorStop(1,'rgba(200,40,30,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,3+pulse*0.6,0,6.283); ctx.fill();
+  ctx.fillStyle='rgba(255,140,110,1)'; ctx.beginPath(); ctx.arc(0,0,0.7,0,6.283); ctx.fill();
+  ctx.strokeStyle='rgba(120,180,255,.55)'; ctx.lineWidth=0.35;
+  ctx.beginPath(); ctx.moveTo(-8,8); ctx.lineTo(-1,2); ctx.lineTo(0,9); ctx.lineTo(8,-6); ctx.stroke();
+  ctx.restore();
+}
+function fxFreshHowardClouds(ctx,sk,nowMs){ // Номенклатура облаков Ховарда — cirrus/cumulus/stratus, три яруса (Гёте посвятил 4 стихотворения)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const t=nowMs/1400;
+  ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=0.35;
+  for(let i=0;i<5;i++){ const y=-8+i*0.5, x=-8+((t*2+i*1.3)%17); ctx.beginPath(); ctx.moveTo(x-2,y); ctx.lineTo(x+2,y+0.3); ctx.stroke(); }
+  ctx.fillStyle='rgba(230,235,250,.8)';
+  for(let i=0;i<4;i++){ const cx=-5+i*3.3+Math.sin(t+i)*0.5; ctx.beginPath(); ctx.arc(cx,0,1.6-((i%2)*0.3),0,6.283); ctx.fill(); }
+  ctx.fillStyle='rgba(180,190,215,.6)'; ctx.fillRect(-9,6,18,1.6);
+  ctx.restore();
+}
+function fxFreshDiatomFrustule(ctx,sk,nowMs){ // Фрустула диатомеи — эпитека+гипотека как чашка Петри, поры-ареолы наноразмерные
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const spin=nowMs/4000;
+  ctx.save(); ctx.rotate(spin*0.3);
+  ctx.strokeStyle='hsla(190,60%,70%,.7)'; ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.arc(0,-1,7,0,6.283); ctx.stroke();
+  ctx.strokeStyle='hsla(190,50%,55%,.5)'; ctx.lineWidth=0.35;
+  ctx.beginPath(); ctx.arc(0,2,5.6,0,6.283); ctx.stroke();
+  for(let ring=1;ring<=3;ring++){
+    const r=ring*1.7, n=Math.round(6*ring);
+    for(let i=0;i<n;i++){
+      const a=i/n*6.283+ring*0.3, x=Math.cos(a)*r, y=Math.sin(a)*r*0.85-0.5;
+      ctx.fillStyle='hsla(195,70%,75%,.55)'; ctx.beginPath(); ctx.arc(x,y,0.32,0,6.283); ctx.fill();
+    }
+  }
+  ctx.restore(); ctx.restore();
+}
+// --- Волна 3 (.knowledge/macets/skiny-5-tem-volna3-15-09-2026.html) ---
+function fxWave3RoseWindow(ctx,sk,nowMs){ // Готическая роза-окно — розетта Шартра Ø12м, строится циркулем и линейкой без осей вращения
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const spin=nowMs/9000, n=10;
+  ctx.save(); ctx.rotate(spin);
+  for(let i=0;i<n;i++){
+    const a=i/n*6.283;
+    ctx.save(); ctx.rotate(a);
+    ctx.fillStyle='hsla('+((i*36+nowMs/40)%360)+',70%,60%,.55)';
+    ctx.beginPath(); ctx.ellipse(0,-4.2,1.3,2.6,0,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=0.18; ctx.stroke();
+    ctx.restore();
+  }
+  ctx.strokeStyle='rgba(255,255,255,.4)'; ctx.lineWidth=0.25;
+  ctx.beginPath(); ctx.arc(0,0,1.4,0,6.283); ctx.stroke();
+  ctx.restore(); ctx.restore();
+}
+function fxWave3Chladni(ctx,sk,nowMs){ // Фигуры Хладни — узловые линии на колеблющейся пластине (Хладни, 1787, показано Наполеону)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const m=3,n=4, t=nowMs/1800, nx=17, ny=17;
+  for(let ix=0;ix<nx;ix++) for(let iy=0;iy<ny;iy++){
+    const x=(ix-nx/2)/(nx/2)*8, y=(iy-ny/2)/(ny/2)*8;
+    const val=Math.sin(m*Math.PI*(x+8)/16)*Math.sin(n*Math.PI*(y+8)/16) - Math.sin(n*Math.PI*(x+8)/16)*Math.sin(m*Math.PI*(y+8)/16);
+    if(Math.abs(val)<0.06){ ctx.fillStyle='rgba(255,255,255,'+(0.5+0.4*Math.sin(t+ix*0.3))+')'; ctx.fillRect(x-0.12,y-0.12,0.24,0.24); }
+  }
+  ctx.restore();
+}
+function fxWave3SnowCrystal(ctx,sk,nowMs){ // Снежный кристалл — Бентли, первое фото снежинки 1885, 6-лучевая симметрия дендрита
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const spin=nowMs/12000;
+  ctx.save(); ctx.rotate(spin);
+  for(let arm=0;arm<6;arm++){
+    ctx.save(); ctx.rotate(arm/6*6.283);
+    ctx.strokeStyle='rgba(220,240,255,.85)'; ctx.lineWidth=0.35;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-8); ctx.stroke();
+    for(let i=1;i<=4;i++){
+      const yy=-i*1.7, len=1.4-(i*0.18);
+      ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(len,yy-len*0.8); ctx.moveTo(0,yy); ctx.lineTo(-len,yy-len*0.8); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  ctx.restore(); ctx.restore();
+}
+function fxWave3VenusPentagram(ctx,sk,nowMs){ // Танцы планет — резонанс 13:8 Земля-Венера рисует пентаграмму, прецессия 1/5 оборота за ~240 лет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const drift=nowMs/40000;
+  ctx.save(); ctx.rotate(drift);
+  const pts=[]; for(let i=0;i<5;i++){ const a=i/5*6.283-1.5708; pts.push([Math.cos(a)*7,Math.sin(a)*7]); }
+  ctx.strokeStyle='hsla(330,80%,70%,.8)'; ctx.lineWidth=0.35;
+  ctx.beginPath();
+  for(let i=0;i<5;i++){ const [x,y]=pts[(i*2)%5]; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.closePath(); ctx.stroke();
+  const t=(nowMs%4000)/4000, a=t*6.283*8/13*5-1.5708;
+  ctx.fillStyle='rgba(255,220,150,1)'; ctx.beginPath(); ctx.arc(Math.cos(a)*7,Math.sin(a)*7,0.5,0,6.283); ctx.fill();
+  ctx.restore(); ctx.restore();
+}
+function fxWave3Archimedean(ctx,sk,nowMs){ // Семейство многогранников — усечённый икосаэдр (60В/90Р/32Г) = структура фуллерена C₆₀
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const spin=nowMs/6000;
+  ctx.save(); ctx.rotate(spin);
+  for(let ring=0;ring<3;ring++){
+    const r=2.2+ring*2.1, n=5+ring;
+    ctx.strokeStyle='hsla('+(160+ring*40)+',60%,65%,.65)'; ctx.lineWidth=0.28;
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){ const a=i/n*6.283+ring*0.4; const x=Math.cos(a)*r,y=Math.sin(a)*r*0.85; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(0,0,0.6,0,6.283); ctx.fill();
   ctx.restore();
 }
 function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
