@@ -1945,7 +1945,7 @@ function angarPvNameSync(){
   // (feedback_shared_constant_landmine), чуть не наступил на грабли второй раз, поймано
   // живым тестом обеих категорий до коммита.
   const isNonePlaceholder = item && item.id===0 && angarCat!=='color';
-  el.textContent = (item && !isNonePlaceholder) ? ((angarCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'')) : '';
+  el.textContent = (item && !isNonePlaceholder) ? skinI18nName(item, angarCat) : '';
 }
 
 /* «Умное живое»: 30 кадров в секунду вместо 60, засыпает через 20 секунд без касания.
@@ -2188,7 +2188,7 @@ function angarPvZoomDraw(t){
       x.restore();
       const nameEl=$('angarPvZoomName'), nameTxtEl=$('angarPvZoomNameTxt');
       if(nameEl && nameTxtEl){
-        const rawName=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
+        const rawName=skinI18nName(item, angarPvZoomCat);
         // 20.09.2026, второй заход (владелец, живой скрин: «АККРЕЦИОННЫЙ ДИСК» и «ЧЁРНОЙ ДЫРЫ» —
         // два слова на строке налезают на родную «Назад»/⌄/⋮): обычный CSS-перенос (max-width)
         // кладёт на строку столько слов, сколько влезает по ширине — у центрированного текста
@@ -2203,7 +2203,8 @@ function angarPvZoomDraw(t){
       }
       const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
       if(factEl && wrapEl){
-        if(item.fact){ factEl.textContent=item.fact; wrapEl.classList.remove('hidden'); }
+        const factTxt=skinI18nFact(item, angarPvZoomCat);
+        if(factTxt){ factEl.textContent=factTxt; wrapEl.classList.remove('hidden'); }
         else wrapEl.classList.add('hidden');
       }
     }
@@ -2245,7 +2246,7 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   // рисунок сдвинут ниже, чтобы не наезжать на имя). */
   const item=angarPvZoomItem, cat=angarPvZoomCat;
   x.textAlign='center'; x.textBaseline='alphabetic';
-  const name=item?((cat==='color' && typeof item.name==='number')?((typeof L!=='undefined'&&L.skinNames&&L.skinNames[item.name])||''):(item.name||'')):'';
+  const name=item?skinI18nName(item,cat):'';
 
   // 19.09.2026, пятым заходом (владелец: «явление на название заходит» — узор физически
   // выше своей точки translate больше, чем есть места до низа плашки имени, у разных узоров
@@ -2325,7 +2326,7 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   // работающей карточки факта чуть ниже), не полу-скруглённый гибрид. Карточка факта заодно
   // получила тот же линейный градиент+акцент слева, что уже стоит у #angarPvZoomFact в
   // живом окне (index.html) — раньше здесь был плоский fillStyle, отсюда «старый вид».
-  const fact=item&&item.fact;
+  const fact=skinI18nFact(item,cat);
   const cardX=BW*0.08, cardW=BW*0.84, cardY=BH*0.655, tagH=Math.round(BW*0.09), tagR=8; // 8px — реальный border-radius #angarPvZoomMark (8px 8px 0 0), не придумано
   x.font='700 '+Math.round(BW*0.032)+'px "Exo 2", sans-serif';
   x.textAlign='left';
@@ -2494,7 +2495,7 @@ function angarItemFill(el, item){
   // .nm задан один раз при постройке плитки (angarBuildGrid) и не должен стираться на
   // каждой перерисовке (29.08.2026, тот же баг, что уже чинили с .angarIt canvas — здесь
   // про специфичность DOM, не CSS).
-  if(nm && angarCat==='color') nm.textContent = typeof item.name==='number' ? L.skinNames[item.name] : (item.name||''); // 08.09.2026: см. коммент у angarPvNameFill выше — числовой индекс vs строка напрямую
+  if(nm && angarCat==='color') nm.textContent = skinI18nName(item, angarCat); // 08.09.2026: см. коммент у angarPvNameFill выше — числовой индекс vs строка напрямую
   if(pr){
     pr.classList.toggle('own', owned);
     // 04.09.2026 «Эксклюзивные скины за Stars»: item.premium — цена в Stars (⭐), не в ✦

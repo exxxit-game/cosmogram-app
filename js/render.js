@@ -1057,6 +1057,15 @@ const PREM_FX_MAP={
   matCorrugC:fxMatCorrugC, matLayeredLam:fxMatLayeredLam, matSteelWall:fxMatSteelWall, matBellows:fxMatBellows,
   // 26.09.2026 «Рак-богомол», первая партия из отсмотренных владельцем макетов:
   bioMantisEye:fxBioMantisEye, bioMantisPol:fxBioMantisPol, bioMantis3Eye:fxBioMantis3Eye, bioMantisPunch:fxBioMantisPunch,
+  // 26.09.2026, вторая партия (4 макета сразу — хамелеон/соты/эхолокация/угорь, 20 карточек):
+  bioChamGuanine:fxBioChamGuanine, bioChamIridophore:fxBioChamIridophore, bioChamSocial:fxBioChamSocial,
+  bioChamPanther:fxBioChamPanther, bioChamVeiled:fxBioChamVeiled,
+  bioHoneyHales:fxBioHoneyHales, bioHoneyTilingTrio:fxBioHoneyTilingTrio, bioHoneyDebate:fxBioHoneyDebate,
+  bioHoneyCircleHex:fxBioHoneyCircleHex, bioHoneyTilt13:fxBioHoneyTilt13,
+  bioBatChirp:fxBioBatChirp, bioBatDoppler:fxBioBatDoppler, bioBatStapedius:fxBioBatStapedius,
+  bioBatMothJam:fxBioBatMothJam, bioBatEchoSilhouette:fxBioBatEchoSilhouette,
+  bioEelBattery:fxBioEelBattery, bioEelVolta:fxBioEelVolta, bioEelThreeOrgans:fxBioEelThreeOrgans,
+  bioEelLeap:fxBioEelLeap, bioEelSpectrum:fxBioEelSpectrum,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1641,6 +1650,329 @@ function fxBioMantisPunch(ctx,sk,nowMs){ // Удар смашера — двой
     ctx.strokeStyle='hsla(30,50%,50%,'+(0.3+rest*0.15)+')'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(-4,-14); ctx.lineTo(0,2); ctx.stroke();
   }
+  ctx.restore();
+}
+/* 26.09.2026, вторая партия (4 макета сразу, 20 карточек) — тот же перенос 1-в-1,
+   что и «Рак-богомол» выше: координаты макетов совпадают с clipShipBody(). */
+// --- Хамелеон (.knowledge/macets/hameleon-5-tem-11-09-2026.html) ---
+function chamLatticeDots(ctx,spacing,hue,alpha){
+  for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++){
+    const x=col*spacing+((row%2)*spacing*0.5), y=row*spacing*0.87;
+    if(x<-14||x>14||y<-19||y>13) continue;
+    ctx.fillStyle='hsla('+hue+',75%,60%,'+alpha+')';
+    ctx.beginPath(); ctx.arc(x,y,spacing*0.28,0,6.283); ctx.fill();
+  }
+}
+function fxBioChamGuanine(ctx,sk,nowMs){ // Решётка гуанина — расстояние дышит, цвет сдвигается синий↔красный (30% реальная разница)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  const k=0.5+0.5*Math.sin(p*2*Math.PI);
+  chamLatticeDots(ctx,2.6+k*0.8,220-k*160,0.75);
+  ctx.restore();
+}
+function fxBioChamIridophore(ctx,sk,nowMs){ // Два слоя иридофоров — видимый цвет сверху + ИК-слой глубже (45% ИК-отражение)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  ctx.fillStyle='rgba(150,60,40,.35)';
+  ctx.beginPath(); ctx.arc(0,-4,13,0,6.283); ctx.fill();
+  const k=0.5+0.5*Math.sin(p*2*Math.PI);
+  chamLatticeDots(ctx,2.4,140+k*80,0.7);
+  ctx.restore();
+}
+function fxBioChamSocial(ctx,sk,nowMs){ // Социальный сигнал — territorial flash: вспышка вызова, затем «капитуляция» тускнеет
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  const challenge=p<0.6;
+  const bright=challenge?(0.5+0.5*Math.sin(p/0.6*Math.PI)):0.1;
+  const hue=challenge?[50,10,0][Math.floor(p*9)%3]:100;
+  ctx.fillStyle='hsla('+hue+',90%,55%,'+(0.3+bright*0.6)+')';
+  ctx.beginPath(); ctx.arc(0,-4,12,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioChamPanther(ctx,sk,nowMs){ // Панцирный хамелеон — калейдоскопичный (Амбилобе), несколько цветов сразу
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%4000)/4000;
+  [10,50,140,200,300].forEach((hue,i)=>{
+    const a=i/5*6.283+p*1.5;
+    ctx.fillStyle='hsla('+hue+',85%,55%,.55)';
+    ctx.beginPath(); ctx.arc(Math.cos(a)*6,Math.sin(a)*6*0.7-4,4,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxBioChamVeiled(ctx,sk,nowMs){ // Вуалевый хамелеон — ограниченная палитра зелёный/жёлтый/коричневый, темнеет до бирюзы при стрессе
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3200)/3200;
+  const stressed=p>0.6;
+  ctx.fillStyle='hsla('+(stressed?180:90)+',60%,'+(stressed?30:45)+'%,.6)';
+  ctx.beginPath(); ctx.arc(0,-4,12,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(50,60%,50%,.5)'; ctx.lineWidth=1.2;
+  for(let i=-2;i<=2;i++){ ctx.beginPath(); ctx.moveTo(-12,i*4-4); ctx.lineTo(12,i*4-4); ctx.stroke(); }
+  ctx.restore();
+}
+// --- Соты пчелы (.knowledge/macets/soty-shestiugolnik-5-tem-11-09-2026.html) ---
+function honeyHexPath(ctx,cx,cy,r,rot){
+  ctx.beginPath();
+  for(let k=0;k<6;k++){ const a=rot+k*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.closePath();
+}
+function honeyGrid(ctx,r,rot,strokeA){
+  const dx=r*1.73, dy=r*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(42,80%,55%,'+strokeA+')'; ctx.lineWidth=0.35;
+    honeyHexPath(ctx,cx,cy,r*0.95,rot); ctx.stroke();
+  }
+}
+function fxBioHoneyHales(ctx,sk,nowMs){ // Доказательство Хейлса 1999 — соты появляются постепенно, «доказано спустя 2000 лет»
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3500)/3500;
+  const shown=Math.max(0.15,Math.min(1,p*4));
+  const dx=2.4*1.73, dy=2.4*1.5;
+  const cells=[]; for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    cells.push([cx,cy]);
+  }
+  cells.slice(0,Math.floor(shown*cells.length)).forEach(([cx,cy])=>{
+    ctx.strokeStyle='hsla(42,85%,60%,.8)'; ctx.lineWidth=0.4;
+    honeyHexPath(ctx,cx,cy,2.28,0); ctx.stroke();
+  });
+  ctx.restore();
+}
+function fxBioHoneyTilingTrio(ctx,sk,nowMs){ // Треугольник/квадрат/шестиугольник — шестиугольник «побеждает» по периметру
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2400)/2400;
+  const hi=Math.floor(p*3);
+  [[3,-9],[4,0],[6,9]].forEach(([sides,x],i)=>{
+    ctx.save(); ctx.translate(x,0);
+    ctx.beginPath();
+    for(let k=0;k<sides;k++){ const a=-Math.PI/2+k*2*Math.PI/sides; const px=4*Math.cos(a), py=4*Math.sin(a); k===0?ctx.moveTo(px,py):ctx.lineTo(px,py); }
+    ctx.closePath();
+    ctx.strokeStyle=i===hi?'rgba(255,210,90,1)':'rgba(255,255,255,.35)';
+    ctx.lineWidth=i===hi?1.6:0.8;
+    ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+function fxBioHoneyDebate(ctx,sk,nowMs){ // Спор физика воска vs поведение пчёл — два наложенных объяснения
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3000)/3000;
+  const mix=0.5+0.5*Math.sin(p*2*Math.PI);
+  honeyGrid(ctx,2.6,0,0.35+mix*0.4);
+  const dx=2.6*1.73, dy=2.6*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(200,85%,62%,'+(0.75-mix*0.4)+')'; ctx.lineWidth=0.4;
+    honeyHexPath(ctx,cx,cy,2.28,0.18); ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxBioHoneyCircleHex(ctx,sk,nowMs){ // Круг→шестиугольник — ячейки физически стягиваются и спрямляются в решётку
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  const k=Math.abs(Math.sin(p*Math.PI));
+  const dx=2.6*1.73, dy=2.6*1.5;
+  for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
+    const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
+    if(cx<-15||cx>15||cy<-20||cy>13) continue;
+    ctx.strokeStyle='hsla(42,85%,58%,.75)'; ctx.lineWidth=0.4;
+    if(k<0.05){ ctx.beginPath(); ctx.arc(cx,cy,2.3,0,6.283); ctx.stroke(); }
+    else{
+      ctx.beginPath();
+      for(let s=0;s<32;s++){
+        const a=s/32*6.283;
+        const hexR=2.3/Math.cos(((a+Math.PI/6)%(Math.PI/3))-Math.PI/6);
+        const r=2.3*(1-k)+Math.min(hexR,3.2)*k;
+        const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+        s===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function fxBioHoneyTilt13(ctx,sk,nowMs){ // Наклон ~13° — опровергнутое объяснение (Одер и Швабе, 2020), устойчивый крен решётки
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  honeyGrid(ctx,2.6,13*Math.PI/180,0.8);
+  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.setLineDash([1,2]); ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(0,12); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+}
+// --- Эхолокация летучих мышей (.knowledge/macets/ekholokaciya-letuchih-myshey-5-tem-14-09-2026.html) ---
+function fxBioBatChirp(ctx,sk,nowMs){ // Нисходящий FM-чирп — FM1 55→22кГц, FM2 110→50кГц одновременно, один импульс
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%1200)/1200;
+  function sweepY(t){ return -9+t*15; }
+  ctx.strokeStyle='hsla(200,80%,65%,.85)'; ctx.lineWidth=0.8;
+  ctx.beginPath();
+  for(let t=0;t<=1;t+=0.04){ const x=Math.sin(t*10)*(1-t)*2.5; const y=sweepY(t); if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.strokeStyle='hsla(200,60%,50%,.4)'; ctx.lineWidth=0.5;
+  ctx.beginPath();
+  for(let t=0;t<=1;t+=0.04){ const x=Math.sin(t*10)*(1-t)*1.3+3; const y=sweepY(t); if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); }
+  ctx.stroke();
+  ctx.fillStyle='hsla(200,90%,85%,.9)';
+  ctx.beginPath(); ctx.arc(Math.sin(p*10)*(1-p)*2.5,sweepY(p),1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioBatDoppler(ctx,sk,nowMs){ // Компенсация Доплера — эхо всегда удерживается в узком опорном окне
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.strokeStyle='hsla(45,70%,60%,.35)'; ctx.lineWidth=2.2;
+  ctx.beginPath(); ctx.moveTo(-8,0); ctx.lineTo(8,0); ctx.stroke();
+  const drift=Math.sin(nowMs/650)*5;
+  const corrected=drift*0.15;
+  ctx.fillStyle='hsla(30,80%,55%,.5)';
+  ctx.beginPath(); ctx.arc(drift,-4,0.8,0,6.283); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.3;
+  ctx.beginPath(); ctx.moveTo(drift,-4); ctx.lineTo(corrected,0); ctx.stroke();
+  ctx.fillStyle='hsla(160,80%,65%,.95)';
+  ctx.beginPath(); ctx.arc(corrected,0,1.1,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioBatStapedius(ctx,sk,nowMs){ // Стапедиальная мышца — закрыть перед криком, открыть сразу после
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%900)/900;
+  let open;
+  if(p<0.08) open=1-(p/0.08);
+  else if(p<0.14) open=0;
+  else if(p<0.22) open=(p-0.14)/0.08;
+  else open=1;
+  ctx.strokeStyle='hsla(0,0%,80%,.3)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.ellipse(0,2,7,9,0,0,6.283); ctx.stroke();
+  ctx.fillStyle='hsla(190,70%,'+(40+open*30)+'%,'+(0.3+open*0.5)+')';
+  ctx.beginPath(); ctx.ellipse(0,2,5*open+0.4,6*open+0.4,0,0,6.283); ctx.fill();
+  if(p<0.1){
+    ctx.strokeStyle='hsla(0,80%,60%,'+(1-p*8)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,-6,1+p*20,0,6.283); ctx.stroke();
+  }
+  ctx.restore();
+}
+function fxBioBatMothJam(ctx,sk,nowMs){ // Сонар-джемминг мотылька — контр-щелчки сбивают нисходящий чирп бата (Corcoran, 2009)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%1600)/1600;
+  ctx.strokeStyle='hsla(200,75%,65%,.8)'; ctx.lineWidth=0.7;
+  ctx.beginPath();
+  for(let t=0;t<=Math.min(p,0.6)/0.6;t+=0.05){ const y=-9+t*13; ctx.lineTo(t*-3,y); if(t===0)ctx.moveTo(0,-9); }
+  ctx.stroke();
+  if(p>0.35 && p<0.65){
+    const jt=(p-0.35)/0.3;
+    for(let i=0;i<5;i++){
+      const jx=(Math.random()-0.5)*10, jy=(Math.random()-0.5)*6+2;
+      ctx.fillStyle='hsla(0,90%,'+(55+jt*20)+'%,'+(0.5*(1-jt))+')';
+      ctx.beginPath(); ctx.arc(jx,jy,0.5,0,6.283); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function fxBioBatEchoSilhouette(ctx,sk,nowMs){ // Эхо рисует силуэт — щелчок, расходящийся импульс, отражение возвращается контуром объекта
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2000)/2000;
+  if(p<0.4){
+    ctx.strokeStyle='hsla(160,70%,60%,'+(1-p/0.4)*0.7+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,2,p/0.4*11,0,6.283); ctx.stroke();
+  } else if(p<0.75){
+    const t=(p-0.4)/0.35;
+    ctx.strokeStyle='hsla(45,80%,65%,'+t*0.9+')'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.stroke();
+    ctx.fillStyle='hsla(45,80%,65%,'+t*0.25+')';
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.fill();
+  } else {
+    ctx.strokeStyle='hsla(45,80%,65%,.9)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.ellipse(0,3,3,4,0,0,6.283); ctx.stroke();
+  }
+  ctx.fillStyle='hsla(200,90%,85%,.8)';
+  ctx.beginPath(); ctx.arc(0,-8,0.9,0,6.283); ctx.fill();
+  ctx.restore();
+}
+// --- Электрический угорь (.knowledge/macets/elektricheskiy-ugor-5-tem-14-09-2026.html) ---
+function fxBioEelBattery(ctx,sk,nowMs){ // Биологическая батарея — тысячи электроцитов сложены последовательно, напряжения складываются
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const n=9, cellH=2.6, totalH=n*cellH, y0=-totalH/2+2;
+  const p=(nowMs%1800)/1800;
+  const litUpTo=Math.floor(p*(n+2));
+  for(let i=0;i<n;i++){
+    const y=y0+i*cellH;
+    const lit=i<=litUpTo-2;
+    ctx.fillStyle=lit?'hsla(48,90%,'+(55+((litUpTo-2-i)===0?25:0))+'%,.9)':'hsla(48,40%,30%,.35)';
+    ctx.fillRect(-6,y,12,cellH-0.5);
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.25; ctx.strokeRect(-6,y,12,cellH-0.5);
+  }
+  if(litUpTo>=n+1){
+    const flash=1-((p*(n+2))-(n+1));
+    ctx.fillStyle='hsla(50,100%,85%,'+Math.max(0,flash*0.6)+')';
+    ctx.beginPath(); ctx.arc(0,y0-2,6,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxBioEelVolta(ctx,sk,nowMs){ // Волта/Гальвани — столб чередующихся дисков, искусственный «электрический орган» (1800 год)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2400)/2400;
+  const n=7, dH=1.8, y0=-2;
+  for(let i=0;i<n;i++){
+    const y=y0+i*dH;
+    const shine=0.5+0.5*Math.sin(nowMs/260+i*1.3);
+    ctx.fillStyle=i%2===0?'hsla(35,75%,'+(50+shine*15)+'%,.9)':'hsla(210,15%,'+(70+shine*10)+'%,.85)';
+    ctx.beginPath(); ctx.ellipse(0,y,6,1.1,0,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=0.2; ctx.stroke();
+  }
+  ctx.fillStyle='hsla(50,100%,80%,.85)';
+  ctx.beginPath(); ctx.arc(0,y0+p*(n-1)*dH,0.9,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioEelThreeOrgans(ctx,sk,nowMs){ // Три органа — главный+Хантера (сильный удар), Сакса (слабая локация) — разная анатомия
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-9,10); ctx.quadraticCurveTo(0,-14,9,10); ctx.stroke();
+  [{y0:-10,y1:-1,strong:true},{y0:-1,y1:6,strong:true},{y0:6,y1:10,strong:false}].forEach(z=>{
+    const period=z.strong?900:2600;
+    const ph=(nowMs%period)/period;
+    const pulse=z.strong?(ph<0.15?1:0.15):(0.4+0.3*Math.sin(ph*6.283));
+    const midY=(z.y0+z.y1)/2;
+    ctx.fillStyle=z.strong?'hsla(50,95%,65%,'+(0.3+0.5*pulse)+')':'hsla(190,70%,65%,'+(0.3+0.3*pulse)+')';
+    ctx.beginPath(); ctx.ellipse(0,midY,7.5,(z.y1-z.y0)/2,0,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxBioEelLeap(ctx,sk,nowMs){ // Прыгающий угорь — направленный разряд, растущий по мере приближения к цели
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2200)/2200;
+  const travel=Math.min(1,p*1.4);
+  const bodyY=10-travel*18;
+  ctx.strokeStyle='hsla(150,50%,55%,.8)'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(-1,10); ctx.lineTo(-1+travel*1,bodyY); ctx.stroke();
+  if(p<0.85){
+    const intensity=0.2+travel*0.8;
+    for(let i=0;i<3;i++){
+      const jitter=(Math.sin(nowMs/40+i*7)*1.4)*intensity;
+      ctx.strokeStyle='hsla(50,100%,'+(70+i*8)+'%,'+(intensity*0.7)+')';
+      ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.moveTo(-1,bodyY);
+      ctx.lineTo(-1+jitter,bodyY-4-i*2);
+      ctx.lineTo(2+jitter*0.6,bodyY-8-i*2.4);
+      ctx.stroke();
+    }
+  } else {
+    ctx.fillStyle='hsla(50,100%,85%,.5)';
+    ctx.beginPath(); ctx.arc(-1,bodyY-6,5,0,6.283); ctx.fill();
+  }
+  ctx.restore();
+}
+function fxBioEelSpectrum(ctx,sk,nowMs){ // Спектр слабое↔сильное — мормирида (частые слабые импульсы) против угря (редкие мощные)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(-9,2); ctx.lineTo(9,2); ctx.stroke();
+  const weakPh=(nowMs%400)/400;
+  ctx.fillStyle='hsla(190,70%,65%,'+(0.35+0.35*Math.sin(weakPh*6.283*4))+')';
+  ctx.beginPath(); ctx.arc(-7,2,1.6,0,6.283); ctx.fill();
+  ctx.strokeStyle='hsla(190,70%,65%,.25)'; ctx.beginPath(); ctx.arc(-7,2,3.2,0,6.283); ctx.stroke();
+  const sp=(nowMs%2000)/2000;
+  const strike=sp<0.06;
+  ctx.fillStyle=strike?'hsla(50,100%,80%,.95)':'hsla(50,60%,45%,.4)';
+  ctx.beginPath(); ctx.arc(7,2,strike?3:1.8,0,6.283); ctx.fill();
+  if(strike){ ctx.strokeStyle='hsla(50,100%,85%,.6)'; ctx.lineWidth=0.5; ctx.beginPath(); ctx.arc(7,2,5.5,0,6.283); ctx.stroke(); }
   ctx.restore();
 }
 function fxCosHalo(ctx,sk,nowMs){ // 22° — настоящий минимальный угол преломления в гексагональном льду, две яркие точки — не сплошное кольцо
