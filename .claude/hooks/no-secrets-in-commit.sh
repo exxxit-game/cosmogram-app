@@ -33,7 +33,9 @@ process.stdin.on('end',()=>{
     [/ghp_[A-Za-z0-9]{36}/,'GitHub personal access token (classic)'],
     [/github_pat_[A-Za-z0-9_]{60,}/,'GitHub fine-grained personal access token'],
     [/sk-ant-[A-Za-z0-9-]{20,}/,'ключ вида sk-ant- (Anthropic)'],
-    [/AIza[A-Za-z0-9_-]{35}/,'ключ вида AIza (Google API)']
+    [/AIza[A-Za-z0-9_-]{35}/,'ключ вида AIza (Google API)'],
+    [/\b\d{8,10}:[A-Za-z0-9_-]{34,35}\b/,'похоже на Telegram bot_token'],
+    [/GOCSPX-[A-Za-z0-9_-]{28,}/,'похоже на Google OAuth client_secret']
   ];
   for(const [re,label] of pats){ if(re.test(added)){ console.log(label); process.exit(0); } }
 });
