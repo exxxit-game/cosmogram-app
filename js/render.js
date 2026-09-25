@@ -1055,6 +1055,8 @@ const PREM_FX_MAP={
   bioMorpho:fxBioMorpho, bioBeetlePol:fxBioBeetlePol, cosHalo:fxCosHalo, culGirih:fxCulGirih,
   // 10.09.2026 «Гофра и родственные конструкции», 4 темы одобрены ещё 06.09.2026, докодированы теперь:
   matCorrugC:fxMatCorrugC, matLayeredLam:fxMatLayeredLam, matSteelWall:fxMatSteelWall, matBellows:fxMatBellows,
+  // 26.09.2026 «Рак-богомол», первая партия из отсмотренных владельцем макетов:
+  bioMantisEye:fxBioMantisEye, bioMantisPol:fxBioMantisPol, bioMantis3Eye:fxBioMantis3Eye, bioMantisPunch:fxBioMantisPunch,
 };
 /* время выполнения — в диагностику, отдельно от frameProfile.fx выше (та величина
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
@@ -1561,6 +1563,83 @@ function fxBioBeetlePol(ctx,sk,nowMs){ // настоящий механизм (�
     g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(.5,'rgba(255,255,255,'+(.35*bright).toFixed(2)+')'); g.addColorStop(1,'rgba(255,255,255,0)');
     ctx.fillStyle=g; ctx.fillRect(-9,-9,18,18);
     ctx.restore();
+  }
+  ctx.restore();
+}
+/* 26.09.2026, партия «Рак-богомол» (4 темы, .knowledge/macets/rak-bogomol-4-tem-14-09-2026.html) —
+   портировано из макета один в один: система координат макета (BODY_PTS) совпадает с
+   clipShipBody() здесь, лишний ctx.scale(zoom) там был только для показа в маленьком
+   превью-канвасе, не часть математики рисунка. */
+function fxBioMantisEye(ctx,sk,nowMs){ // Больше рецепторов ≠ лучше — 12 узких "штрихкод"-каналов узнают цвет мгновенно, но не тонко (Thoen, 2014)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const n=12, w=1.0, x0=-n*w/2;
+  for(let i=0;i<n;i++){
+    const hue=(260+i*(360/n*1.3))%360;
+    const x=x0+i*w;
+    const flick=0.5+0.5*Math.sin(nowMs/220+i*2.1);
+    ctx.fillStyle='hsla('+hue+',75%,'+(45+flick*20)+'%,.9)';
+    ctx.fillRect(x,-9,w-0.15,18);
+  }
+  const p=(nowMs%1600)/1600;
+  const scanX=x0+p*n*w;
+  ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.moveTo(scanX,-9); ctx.lineTo(scanX,9); ctx.stroke();
+  ctx.restore();
+}
+function fxBioMantisPol(ctx,sk,nowMs){ // Циркулярная поляризация — приватный, закрученный по спирали свет, который видит только свой (2008)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%2600)/2600;
+  const turns=3;
+  ctx.strokeStyle='hsla(280,80%,70%,.7)'; ctx.lineWidth=0.6;
+  ctx.beginPath();
+  for(let t=0;t<=1;t+=0.02){
+    const ang=t*turns*6.283 + p*6.283;
+    const rr=1+t*7;
+    const x=Math.cos(ang)*rr, y=-8+t*16;
+    if(t===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle='hsla(280,90%,85%,.6)';
+  ctx.beginPath(); ctx.arc(0,-8,1.2,0,6.283); ctx.fill();
+  ctx.restore();
+}
+function fxBioMantis3Eye(ctx,sk,nowMs){ // Трёхмерное зрение одним глазом — 3 независимые зоны сами оценивают глубину, даже с одним глазом
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=0.4;
+  ctx.beginPath(); ctx.ellipse(0,2,8,10,0,0,6.283); ctx.stroke();
+  const zones=[{cy:-6,period:1800},{cy:2,period:1300},{cy:9,period:2200}];
+  zones.forEach((z,i)=>{
+    const ph=(nowMs%z.period)/z.period;
+    const focus=0.5+0.5*Math.cos(ph*6.283);
+    ctx.strokeStyle='hsla('+(190+i*40)+',75%,65%,'+(0.4+0.4*focus)+')';
+    ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.arc(0,z.cy,1.2+focus*1.2,0,6.283); ctx.stroke();
+    ctx.fillStyle='hsla('+(190+i*40)+',75%,65%,'+(0.15+0.25*focus)+')';
+    ctx.beginPath(); ctx.arc(0,z.cy,0.6,0,6.283); ctx.fill();
+  });
+  ctx.restore();
+}
+function fxBioMantisPunch(ctx,sk,nowMs){ // Удар смашера — двойной импульс: механический удар клешнёй + схлопывание кавитационного пузыря (до 1501Н, вспышка ~5000-50000К)
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%1400)/1400;
+  if(p<0.35){
+    const t=p/0.35;
+    ctx.strokeStyle='hsla(30,80%,60%,'+(1-t*0.3)+')'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-4,-14+t*10); ctx.lineTo(0,2+t*4); ctx.stroke();
+  } else if(p<0.55){
+    const t=(p-0.35)/0.2;
+    ctx.strokeStyle='hsla(40,90%,70%,'+(1-t)+')'; ctx.lineWidth=0.6;
+    ctx.beginPath(); ctx.arc(0,4,t*6,0,6.283); ctx.stroke();
+  } else if(p<0.72){
+    const t=(p-0.55)/0.17;
+    ctx.fillStyle='hsla(50,100%,90%,'+(1-t)*0.9+')';
+    ctx.beginPath(); ctx.arc(0,4,2.5*(1-t*0.4),0,6.283); ctx.fill();
+    ctx.strokeStyle='hsla(45,100%,80%,'+(1-t)+')'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.arc(0,4,3+t*7,0,6.283); ctx.stroke();
+  } else {
+    const rest=0.5+0.5*Math.sin(nowMs/500);
+    ctx.strokeStyle='hsla(30,50%,50%,'+(0.3+rest*0.15)+')'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-4,-14); ctx.lineTo(0,2); ctx.stroke();
   }
   ctx.restore();
 }
