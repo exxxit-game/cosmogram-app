@@ -32,7 +32,8 @@
         "matcher": "Edit|Write",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/protect-core.sh" },
-          { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" }
+          { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" },
+          { "type": "command", "command": "node .claude/hooks/shared-constant-guard.mjs" }
         ]
       },
       {
@@ -101,7 +102,8 @@
         "matcher": "*",
         "hooks": [
           { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=warn node .claude/hooks/claim-check-hook.mjs" },
-          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=warn node .claude/hooks/ask-then-act-guard.mjs" }
+          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=warn node .claude/hooks/ask-then-act-guard.mjs" },
+          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=warn node .claude/hooks/excuse-words-guard.mjs" }
         ]
       }
     ]
