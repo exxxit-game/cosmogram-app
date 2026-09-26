@@ -309,7 +309,7 @@ const I18N = {
     shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' '+i18nRuPts(s)+'! Сможешь больше? t.me/realcosmogrambot/app',
     shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться · t.me/realcosmogrambot/app',
     gyroOverHint:'Ты попробовал пальцем — можно попробовать гироскоп', gyroOverBtn:'Разблокировать гироскоп', gyroOverOk:'Готово — теперь можно рулить наклоном ✓', // 12.09.2026: заменили tutGyroBody/tutGyroBtn/tutTouchBtn — оффер переехал с середины полёта на экран итогов, см. .knowledge/macets/gyro-offer-na-itogah-12-09-2026.html
-    missionLbl:'Волна', angarTabColor:'Стиль', skinNames:['Бумажный','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак','Спутники','Грани','Инкрустация','Филигрань','Ядро','Прицел'],
+    missionLbl:'Волна', angarTabColor:'Стиль', skinNames:['Классический','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак','Спутники','Грани','Инкрустация','Филигрань','Ядро','Прицел'],
     decalCatNames:{mono:'Однотонные',
     classic:'Классика', live:'Живые', sacred:'Сакральная геометрия', superformula:'Суперформула Гилиса', roses:'Розы Родонеи', premium:'Премиум', celtic:'Кельтское плетение',
     bright:'Яркие', legendary:'Легендарные', stars:'Звёзды', materials:'Материалы', sigils:'Символы', illusion:'Иллюзии', patterns:'Узоры', lsystem:'L-системы',
@@ -548,7 +548,7 @@ const I18N = {
     gyroOverHint:"You've tried finger control — now you can try the gyroscope", gyroOverBtn:'Unlock gyroscope', gyroOverOk:'Done — you can steer by tilting now ✓',
     missionLbl:'Wave', angarTabColor:'Style',
     angarFilter_all:'All', angarFilter_new:'New', angarFilter_owned:'Owned', angarFilter_favorite:'Favorites',
-    skinNames:['Paper','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost','Satellites','Facets','Inlay','Filigree','Core','Aim'],
+    skinNames:['Classic','Azure','Gold','Crimson','Neon','Aurora','Plasma','Chrome','Ghost','Satellites','Facets','Inlay','Filigree','Core','Aim'],
     angarTabFlash:'Flash', angarTabTrail:'Trail',
     achTitle:'Achievements', achOf:'Unlocked',
     achClsB:'Bronze award', achClsS:'Silver award', achClsG:'Gold award', achClaim:'Claim', achDone:'Done',
@@ -777,7 +777,7 @@ const I18N = {
     gyroOverHint:'Probaste con el dedo — ahora puedes probar el giroscopio', gyroOverBtn:'Desbloquear giroscopio', gyroOverOk:'Listo — ya puedes dirigir inclinando ✓',
     missionLbl:'Oleada', angarTabColor:'Estilo',
     angarFilter_all:'Todo', angarFilter_new:'Nuevo', angarFilter_owned:'Comprado', angarFilter_favorite:'Favoritos',
-    skinNames:['Papel','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustación','Filigrana','Núcleo','Mira'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
+    skinNames:['Clásico','Azur','Oro','Escarlata','Neón','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustación','Filigrana','Núcleo','Mira'], // v1.282.14: было строкой — потребитель индексирует как массив, и Ангар показывал по одной букве
     angarTabFlash:'Destello', angarTabTrail:'Estela',
     achTitle:'Logros', achOf:'Desbloqueado',
     achClsB:'Premio de bronce', achClsS:'Premio de plata', achClsG:'Premio de oro',
@@ -1016,7 +1016,7 @@ const I18N = {
     gyroOverHint:'Você experimentou com o dedo — agora pode experimentar o giroscópio', gyroOverBtn:'Desbloquear giroscópio', gyroOverOk:'Pronto — já pode pilotar inclinando ✓',
     missionLbl:'Onda', angarTabColor:'Estilo',
     angarFilter_all:'Tudo', angarFilter_new:'Novo', angarFilter_owned:'Comprado', angarFilter_favorite:'Favoritos',
-    skinNames:['Papel','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustação','Filigrana','Núcleo','Mira'], // v1.282.14: то же — единственное расхождение типов во всём словаре
+    skinNames:['Clássico','Azul','Ouro','Escarlate','Neon','Aurora','Plasma','Cromo','Fantasma','Satélites','Facetas','Incrustação','Filigrana','Núcleo','Mira'], // v1.282.14: то же — единственное расхождение типов во всём словаре
     angarTabFlash:'Clarão', angarTabTrail:'Rasto',
     achTitle:'Conquistas', achOf:'Desbloqueado',
     achClsB:'Prêmio de bronze', achClsS:'Prêmio de prata', achClsG:'Prêmio de ouro',
@@ -1246,7 +1246,7 @@ const I18N = {
     gyroOverHint:"Tu as essayé au doigt — tu peux maintenant essayer le gyroscope", gyroOverBtn:'Débloquer le gyroscope', gyroOverOk:'Prêt — tu peux piloter en inclinant maintenant ✓',
     missionLbl:'Vague', angarTabColor:'Style',
     angarFilter_all:'Tout', angarFilter_new:'Nouveau', angarFilter_owned:'Acheté', angarFilter_favorite:'Favoris',
-    skinNames:['Papier','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme','Satellites','Facettes','Incrustation','Filigrane','Noyau','Viseur'],
+    skinNames:['Classique','Azur','Or','Cramoisi','Néon','Aurore','Plasma','Chrome','Fantôme','Satellites','Facettes','Incrustation','Filigrane','Noyau','Viseur'],
     angarTabFlash:'Éclat', angarTabTrail:'Traînée',
     achTitle:'Succès', achOf:'Débloqué',
     achClsB:'Prix bronze', achClsS:'Prix argent', achClsG:'Prix or', achClaim:'Réclamer', achDone:'Terminé',
