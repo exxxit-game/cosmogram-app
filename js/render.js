@@ -2199,21 +2199,25 @@ function fxCosBHPhotonRingSgrA(ctx,sk,nowMs){ // Фотонное кольцо S
   ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
   ctx.restore();
 }
-function fxCosBHDopplerDisk(ctx,sk,nowMs){ // Асимметричный аккреционный диск — Doppler-усиление, одна сторона ярче/голубее
-  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
-  const p=(nowMs%3400)/3400;
-  ctx.save(); ctx.rotate(p*2*Math.PI*0.5); ctx.scale(1,0.3);
-  /* 26.09.2026 «попытка группировки по stroke() отменена, владелец поймал живьём»: пробовал
-     собрать все 10 радиусов одного угла в один Path2D/stroke() (400→~40 вызовов, тот же приём,
-     что дал ×12 на Филлотаксисе 10.09) — но соседние кольца слегка перекрываются (lineWidth 1.4
-     при шаге радиуса 1.0), и именно ДВОЙНОЕ альфа-смешение на стыках отдельных stroke()-вызовов
-     давало настоящую видимую текстуру («расслоение», слова владельца) — при группировке в один
-     вызов эта текстура пропадает, диск становится более плоским/полосатым. Проверено пиксельной
-     сверкой (не байт-в-байт) и live-скриншотом на телефоне владельца — разница реальная, не
-     мнимая. Возвращено как было: отдельный beginPath/arc/stroke на каждый (r,a), цена (2.048мс,
-     самый дорогой скин в игре по полному перебанчмарку 115 активных fx) принята сознательно —
-     текстура важнее цены здесь. Если когда-нибудь понадобится тот же вид дешевле — нужен способ
-     ЧЕСТНО воспроизвести именно это двойное смешение, не просто убрать лишние вызовы. */
+/* 26.09.2026 «офскрин-спрайт вместо группировки stroke()» — группировка 400→40 вызовов
+   (первая попытка) снимала именно то ДВОЙНОЕ альфа-смешение на стыках колец, которое и
+   давало видимую текстуру («расслоение», владелец поймал живьём на реальном скриншоте).
+   Приём 3.1 из SKIN-FX-OPTIMIZATION.md подходит ЗДЕСЬ ЧЕСТНО: узор (bright/hue) зависит
+   только от угла a, не от времени — в своих локальных координатах диск НЕ меняется вообще,
+   крутится целиком только рамка вокруг него (ctx.rotate(p*...) снаружи). Значит можно
+   напечь ТОТ ЖЕ САМЫЙ рисунок (те же 400 отдельных stroke(), то же двойное смешение,
+   пиксель в пиксель) один раз в спрайт, а дальше каждый кадр — только поворот рамки и
+   drawImage(). Супервыборка ×8 (не ×4, как обычно в проекте у saturnRingSprite) — при ×4
+   поворот битмапа каждый кадр давал заметное размытие (своя проверка сравнением картинок
+   до показа владельцу, не поймано им — тут вращение спрайта каждый кадр, не статичный
+   axis-aligned блит, как у большинства других спрайтов в игре, отсюда и другая цена). */
+let bhDopplerDiskSprite=null;
+function buildBHDopplerDiskSprite(){
+  if(bhDopplerDiskSprite) return bhDopplerDiskSprite;
+  const S=8, R=13, size=R*2*S; // R=13 — небольшой запас за пределы max r=12 + половина lineWidth
+  const c=document.createElement('canvas'); c.width=size; c.height=size;
+  const x=ctx2d(c);
+  x.translate(size/2,size/2); x.scale(S,S); x.scale(1,0.3);
   for(let r=3;r<=12;r+=1){
     for(let a=0;a<Math.PI*1.9;a+=0.15){
       const bright=0.35+0.65*Math.max(0,Math.sin(a));
@@ -2222,13 +2226,22 @@ function fxCosBHDopplerDisk(ctx,sk,nowMs){ // Асимметричный акк�
       // самая яркая сторона рисовалась оранжевой. Формула ниже: тусклая/удаляющаяся сторона (bright→0.35,
       // минимум) — красная (hue→0), яркая/приближающаяся (bright→1) — синяя (hue→220), как по тексту.
       const hue=(bright-0.35)/0.65*220;
-      ctx.strokeStyle='hsla('+hue+',90%,'+(45+bright*30)+'%,'+(0.5+bright*0.4)+')';
-      ctx.lineWidth=1.4;
-      ctx.beginPath(); ctx.arc(0,0,r,a,a+0.15); ctx.stroke();
+      x.strokeStyle='hsla('+hue+',90%,'+(45+bright*30)+'%,'+(0.5+bright*0.4)+')';
+      x.lineWidth=1.4;
+      x.beginPath(); x.arc(0,0,r,a,a+0.15); x.stroke();
     }
   }
+  x.fillStyle='#000'; x.beginPath(); x.arc(0,0,2.6,0,6.283); x.fill();
+  bhDopplerDiskSprite={c,R};
+  return bhDopplerDiskSprite;
+}
+function fxCosBHDopplerDisk(ctx,sk,nowMs){ // Асимметричный аккреционный диск — Doppler-усиление, одна сторона ярче/голубее
+  ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
+  const p=(nowMs%3400)/3400;
+  const spr=buildBHDopplerDiskSprite();
+  ctx.save(); ctx.rotate(p*2*Math.PI*0.5);
+  ctx.drawImage(spr.c, -spr.R, -spr.R, spr.R*2, spr.R*2);
   ctx.restore();
-  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(0,0,2.6,0,6.283); ctx.fill();
   ctx.restore();
 }
 function fxCosBHSpaghetti(ctx,sk,nowMs){ // Спагеттификация — объект вытягивается в нить при падении к центру (растяжение по 1/M²)
@@ -4230,6 +4243,7 @@ function gfxInvalidate(){
   nebCache={h:-1,a:null,b:null};
   sheenSpr=null;
   __moonstoneG=null; // 26.09.2026: тот же класс беды, что у станции/звезды — кэш модуля gfxInvalidate обязан знать
+  bhDopplerDiskSprite=null; // 26.09.2026: офскрин-спрайт диска — та же беда «Партии 27», кэш должен знать
   for(const k in starDotCache) delete starDotCache[k];
   for(const k in trailGlowCache) delete trailGlowCache[k];
   for(const k in planeGlowCache) delete planeGlowCache[k];
