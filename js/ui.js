@@ -1730,7 +1730,11 @@ function angarShip(x, sk, s, bolshoy){
      добавлялись в это окно по отдельности, каждый раз по отдельной просьбе — вместе они
      конкурируют за один и тот же маленький борт. Теперь каждый показывается только на СВОЕЙ
      вкладке (angarCat), не на всех сразу — тот же принцип применён к вспышке/следу выше. */
-  const angarFxFn = bolshoy && angarCat==='color' && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  // 26.09.2026: id0 сохраняет старое исключение («без явления, сразу корпус») даже теперь,
+  // когда у него есть sk.fx — «крупное явление без обрезки силуэтом» задумано для только что
+  // открытых премиум-скинов, для базового это неуместно. Мерцание «Лунного камня» рисуется
+  // отдельным блоком ниже, всегда, обрезанное силуэтом, без общей системы явлений.
+  const angarFxFn = bolshoy && angarCat==='color' && sk.fx && sk.id!==0 && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
   const fxEntry = bolshoy && angarCat==='color' && (angarFxFn || (!sk.fx && sk.id!==0));
   const fxState = fxEntry ? angarPvFxPhase(sk.id) : null;
   const hullAlpha = fxState ? (fxState.phase==='event' ? 0 : fxState.tt) : 1;
@@ -1803,6 +1807,18 @@ function angarShip(x, sk, s, bolshoy){
     x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
     x.fillStyle=sk.fold;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+    // 26.09.2026: «Лунный камень» (id0) — то же самое мерцание, что fxMatMoonstone в render.js,
+    // нарисованное здесь напрямую (не через angarFxFn выше — тот путь даёт крупное «явление
+    // без обрезки силуэтом», для базового скина неуместное), всегда видно, обрезано силуэтом.
+    if(sk.id===0 && typeof clipShipBody==='function'){
+      x.save(); clipShipBody(x);
+      const mp=(performance.now()%4400)/4400;
+      const mgy=-18+((mp*2)%1)*32;
+      const mg=x.createLinearGradient(0,mgy-9,0,mgy+9);
+      mg.addColorStop(0,'hsla(220,40%,85%,0)'); mg.addColorStop(.5,'hsla(220,45%,88%,.55)'); mg.addColorStop(1,'hsla(220,40%,85%,0)');
+      x.fillStyle=mg; x.fillRect(-20,-24,40,48);
+      x.restore();
+    }
     x.globalAlpha=1;
   }
   /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец, живое устройство — «в окне
