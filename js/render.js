@@ -1554,13 +1554,24 @@ function fxMatLabradorite(ctx,sk,nowMs){ // вспышка честно толь
   }
   ctx.restore();
 }
+/* 26.09.2026 «Лунный камень стал базовым скином — печёт градиент в каждом кадре»: пока
+   id0 был «Бумажный», fxMatMoonstone была написана, но простаивала без дела — с сегодняшнего
+   утра (game.js:42) она рисуется каждый полёт у каждого игрока. Позиция блика (gy) едет
+   плавно от nowMs, поэтому старый приём «кэш один раз навсегда» (как у станции/звезды) не
+   годится напрямую — но тот же принцип применим: сам градиент кэшируется ОДИН раз в локальных
+   координатах (0,-9)→(0,9), а едет не он сам, а холст под ним через ctx.translate(0,gy) —
+   ровно тот же трюк, что уже используется для станции/звезды (кэш в местных координатах). */
+let __moonstoneG=null;
 function fxMatMoonstone(ctx,sk,nowMs){ // адуляресценция — мягко, почти всегда видно, никогда резко не выключается
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%4400)/4400;
   const gy=-18+((p*2)%1)*32;
-  const g=ctx.createLinearGradient(0,gy-9,0,gy+9);
-  g.addColorStop(0,'hsla(220,40%,85%,0)'); g.addColorStop(.5,'hsla(220,45%,88%,.55)'); g.addColorStop(1,'hsla(220,40%,85%,0)');
-  ctx.fillStyle=g; ctx.fillRect(-20,-24,40,48);
+  if(!__moonstoneG){
+    __moonstoneG=ctx.createLinearGradient(0,-9,0,9);
+    __moonstoneG.addColorStop(0,'hsla(220,40%,85%,0)'); __moonstoneG.addColorStop(.5,'hsla(220,45%,88%,.55)'); __moonstoneG.addColorStop(1,'hsla(220,40%,85%,0)');
+  }
+  ctx.translate(0,gy);
+  ctx.fillStyle=__moonstoneG; ctx.fillRect(-20,-24-gy,40,48);
   ctx.restore();
 }
 function fxBioMorpho(ctx,sk,nowMs){ // sk.body уже честный структурный синий — здесь только движущийся блик, сам цвет с углом НЕ меняется
@@ -4207,6 +4218,7 @@ function gfxInvalidate(){
   planeGradCache={skin:-1,g:null};
   nebCache={h:-1,a:null,b:null};
   sheenSpr=null;
+  __moonstoneG=null; // 26.09.2026: тот же класс беды, что у станции/звезды — кэш модуля gfxInvalidate обязан знать
   for(const k in starDotCache) delete starDotCache[k];
   for(const k in trailGlowCache) delete trailGlowCache[k];
   for(const k in planeGlowCache) delete planeGlowCache[k];
