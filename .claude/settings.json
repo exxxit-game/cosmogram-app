@@ -79,7 +79,8 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/post-commit-drift-check.sh" },
           { "type": "command", "command": ".claude/hooks/commit-tracker.sh" },
-          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" }
+          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node .claude/hooks/device-eval-vs-hwshot-guard.mjs" }
         ]
       }
     ],
