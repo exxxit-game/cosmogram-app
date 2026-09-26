@@ -37,6 +37,24 @@ const DEVICE_WORD_RE = new RegExp(
 
 const DEVICE_TOOL_RE = /\badb\b|live-device\.mjs|tools[\/\\]live-device/i;
 
+// 26.09.2026, feedback_test_kejs_sam_pro_sebya_26_09 — этот же хук ложно срабатывал
+// на прозе, ОПИСЫВАЮЩЕЙ его самого (например, отчёт о вечерней работе, упоминающий
+// и claim-слово, и device-слово как пример). Проверка: рядом (±100 символов) с
+// матчем есть слово, указывающее на обсуждение/пример, а не на реальное заявление.
+const DISCUSSION_MARKER_RE = /(?:ловит|хук|guard\.mjs|например|вроде\s+фраз|описыва\S*|паттерн)/i;
+
+function isDiscussionContext(message) {
+  const claimM = CLAIM_WORD_RE.exec(message);
+  const deviceM = DEVICE_WORD_RE.exec(message);
+  if (!claimM || !deviceM) return false;
+  const positions = [claimM.index, deviceM.index];
+  for (const pos of positions) {
+    const ctx = message.slice(Math.max(0, pos - 100), Math.min(message.length, pos + 100));
+    if (DISCUSSION_MARKER_RE.test(ctx)) return true;
+  }
+  return false;
+}
+
 function readStdin() {
   try {
     return fs.readFileSync(0, 'utf8');
@@ -136,6 +154,11 @@ function main() {
 
   const message = readLastAssistantMessage(transcriptPath);
   if (!message || !CLAIM_WORD_RE.test(message) || !DEVICE_WORD_RE.test(message)) {
+    process.stdout.write('{"continue": true, "suppressOutput": true}\n');
+    return;
+  }
+
+  if (isDiscussionContext(message)) {
     process.stdout.write('{"continue": true, "suppressOutput": true}\n');
     return;
   }
