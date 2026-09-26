@@ -113,7 +113,13 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 // нативную «Назад» Telegram на каждом экране кроме меню (setBack(name!=='menu')) — то же
 // условие, что и у паузы, просто не было доведено до остальных восьми кнопок тогда же.
 function pauseGhostSync(){
-  const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
+  // 27.09.2026 (владелец, живой hwshot-скриншот телефона): в Telegram Fullscreen-режиме
+  // нативная «Назад» физически НЕ рисуется в шапке (только «Закрыть»), даже когда
+  // tg.BackButton.isVisible держит true — это свойство отражает то, что игра сама попросила
+  // у моста, не то, что мост реально отрисовал. Раньше nativeBack не проверял isFullscreen —
+  // свои кнопки «Назад» гасли именно тогда, когда родной альтернативы не видно, оставляя
+  // игрока с одной «Закрыть» (закрыть игру целиком) и без единого пути назад по экранам.
+  const nativeBack=!!(tg && tg.BackButton && tgv('6.1') && !tg.isFullscreen);
   toggleCls('pauseBtn','ghost', nativeBack);
   // firstFlightClose исключён: плеер открывается поверх текущего экрана (galleryCardOpen() в
   // js/cinema.js не зовёт setScreen()) — если это меню, родная «Назад» Telegram там всегда
