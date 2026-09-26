@@ -69,14 +69,17 @@
           { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" },
           { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" },
           { "type": "command", "command": ".claude/hooks/scan-code-mixed-script.sh" },
-          { "type": "command", "command": ".claude/hooks/repeat-edit-tracker.sh" }
+          { "type": "command", "command": ".claude/hooks/repeat-edit-tracker.sh" },
+          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node .claude/hooks/skin-fit-registered-guard.mjs" }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/post-commit-drift-check.sh" },
-          { "type": "command", "command": ".claude/hooks/commit-tracker.sh" }
+          { "type": "command", "command": ".claude/hooks/commit-tracker.sh" },
+          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" }
         ]
       }
     ],
@@ -94,7 +97,8 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" },
           { "type": "command", "command": ".claude/hooks/check-live-version.sh" },
-          { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" }
+          { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" },
+          { "type": "command", "command": ".claude/hooks/remind-connect-phones.sh" }
         ]
       }
     ],

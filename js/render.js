@@ -1691,12 +1691,13 @@ function fxBioMantisPunch(ctx,sk,nowMs){ // Удар смашера — двой
 /* 26.09.2026, вторая партия (4 макета сразу, 20 карточек) — тот же перенос 1-в-1,
    что и «Рак-богомол» выше: координаты макетов совпадают с clipShipBody(). */
 // --- Хамелеон (.knowledge/macets/hameleon-5-tem-11-09-2026.html) ---
-function chamLatticeDots(ctx,spacing,hue,alpha){
+function chamLatticeDots(ctx,spacing,hue,alpha){ // spacing/hue честно живые (решётка гуанина реально «дышит») — кэшировать нечего, только строка цвета одна на весь кадр, не на каждую точку
+  ctx.fillStyle='hsla('+hue+',75%,60%,'+alpha+')';
+  const rr=spacing*0.28;
   for(let row=-4;row<=4;row++) for(let col=-4;col<=4;col++){
     const x=col*spacing+((row%2)*spacing*0.5), y=row*spacing*0.87;
     if(x<-14||x>14||y<-19||y>13) continue;
-    ctx.fillStyle='hsla('+hue+',75%,60%,'+alpha+')';
-    ctx.beginPath(); ctx.arc(x,y,spacing*0.28,0,6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,rr,0,6.283); ctx.fill();
   }
 }
 function fxBioChamGuanine(ctx,sk,nowMs){ // Решётка гуанина — расстояние дышит, цвет сдвигается синий↔красный (30% реальная разница)
@@ -1746,9 +1747,18 @@ function fxBioChamVeiled(ctx,sk,nowMs){ // Вуалевый хамелеон —
   ctx.restore();
 }
 // --- Соты пчелы (.knowledge/macets/soty-shestiugolnik-5-tem-11-09-2026.html) ---
+const honeyHexBasisCache={}; // 26.09.2026: 6 углов {cosA,sinA} не зависят от cx/cy/nowMs, только от rot (2-3 разных значения на весь файл) — приём 3.5 хребта
+function honeyHexBasis(rot){
+  let b=honeyHexBasisCache[rot];
+  if(b) return b;
+  b=[]; for(let k=0;k<6;k++){ const a=rot+k*Math.PI/3; b.push({cosA:Math.cos(a), sinA:Math.sin(a)}); }
+  honeyHexBasisCache[rot]=b;
+  return b;
+}
 function honeyHexPath(ctx,cx,cy,r,rot){
+  const basis=honeyHexBasis(rot);
   ctx.beginPath();
-  for(let k=0;k<6;k++){ const a=rot+k*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a); k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  for(let k=0;k<6;k++){ const b=basis[k]; const x=cx+r*b.cosA, y=cy+r*b.sinA; k===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
   ctx.closePath();
 }
 function honeyGrid(ctx,r,rot,strokeA){
@@ -1806,11 +1816,23 @@ function fxBioHoneyDebate(ctx,sk,nowMs){ // Спор физика воска vs 
   }
   ctx.restore();
 }
+let bioHoneyCircleHexBasis=null; // 26.09.2026: 32 угла — {cosA,sinA,hexR} не зависят от времени/клетки, кэшируем раз (приём 3.5 хребта); каждый кадр — только живой масштаб r по k
+function buildBioHoneyCircleHexBasis(){
+  if(bioHoneyCircleHexBasis) return bioHoneyCircleHexBasis;
+  bioHoneyCircleHexBasis=[];
+  for(let s=0;s<32;s++){
+    const a=s/32*6.283;
+    const hexR=2.3/Math.cos(((a+Math.PI/6)%(Math.PI/3))-Math.PI/6);
+    bioHoneyCircleHexBasis.push({cosA:Math.cos(a), sinA:Math.sin(a), hexR:Math.min(hexR,3.2)});
+  }
+  return bioHoneyCircleHexBasis;
+}
 function fxBioHoneyCircleHex(ctx,sk,nowMs){ // Круг→шестиугольник — ячейки физически стягиваются и спрямляются в решётку
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%2600)/2600;
   const k=Math.abs(Math.sin(p*Math.PI));
   const dx=2.6*1.73, dy=2.6*1.5;
+  const basis=buildBioHoneyCircleHexBasis();
   for(let row=-5;row<=5;row++) for(let col=-5;col<=5;col++){
     const cx=col*dx+((row%2)?dx/2:0), cy=row*dy;
     if(cx<-15||cx>15||cy<-20||cy>13) continue;
@@ -1819,10 +1841,9 @@ function fxBioHoneyCircleHex(ctx,sk,nowMs){ // Круг→шестиугольн
     else{
       ctx.beginPath();
       for(let s=0;s<32;s++){
-        const a=s/32*6.283;
-        const hexR=2.3/Math.cos(((a+Math.PI/6)%(Math.PI/3))-Math.PI/6);
-        const r=2.3*(1-k)+Math.min(hexR,3.2)*k;
-        const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+        const b=basis[s];
+        const r=2.3*(1-k)+b.hexR*k;
+        const x=cx+r*b.cosA, y=cy+r*b.sinA;
         s===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
       }
       ctx.closePath(); ctx.stroke();
@@ -2176,24 +2197,35 @@ function fxCosBHPhotonRingM87(ctx,sk,nowMs){ // Фотонное кольцо M8
   const R=8; // 26.09.2026: было 11 — самые яркие дуги кольца (боковые точки) физически не помещались в вырез
   // корпуса на translate(0,-4) (там всего ±8 по ширине), кольцо было ПОЛНОСТЬЮ обрезано — 0% видимых
   // пикселей, измерено. R=8 — то же значение, что уже у Sgr A* ниже (там кольцо видно нормально)
+  // 26.09.2026: было статично (яркость зависела только от угла, не от времени) — владелец поймал.
+  // Асимметрия «ярче снизу» — геометрия линзирования, фиксирована относительно зрителя, её не трогаем.
+  // Добавлена сцинтилляция — реальное, задокументированное явление (EHT: быстрая переменность потока
+  // Sgr A*/M87* в масштабе минут), не выдуманная анимация; каждая дуга мерцает со своим фазовым
+  // сдвигом (i*0.9), не единой пульсацией — на глаз читается как мерцание, не дыхание.
+  const p=(nowMs%2600)/2600;
   for(let i=0;i<40;i++){
     const a=i/40*6.283;
     const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
-    ctx.strokeStyle='hsla(28,90%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
-    ctx.lineWidth=1.6+boost*1.2;
+    const flicker=0.85+0.15*Math.sin(p*Math.PI*2*3+i*0.9);
+    const b=Math.max(0,boost*flicker);
+    ctx.strokeStyle='hsla(28,90%,'+(55+b*25)+'%,'+(0.5+b*0.45)+')';
+    ctx.lineWidth=1.6+b*1.2;
     ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
   }
   ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
   ctx.restore();
 }
-function fxCosBHPhotonRingSgrA(ctx,sk,nowMs){ // Фотонное кольцо Sgr A* — тот же приём, другой масштаб/оттенок, EHT 2022
+function fxCosBHPhotonRingSgrA(ctx,sk,nowMs){ // Фотонное кольцо Sgr A* — тот же приём, другой масштаб/оттенок, EHT 2022; сцинтилляция как у M87* выше
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const R=8;
+  const p=(nowMs%2600)/2600;
   for(let i=0;i<40;i++){
     const a=i/40*6.283;
     const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
-    ctx.strokeStyle='hsla(200,85%,'+(55+boost*25)+'%,'+(0.5+boost*0.45)+')';
-    ctx.lineWidth=1.4+boost*1.1;
+    const flicker=0.85+0.15*Math.sin(p*Math.PI*2*3+i*0.9);
+    const b=Math.max(0,boost*flicker);
+    ctx.strokeStyle='hsla(200,85%,'+(55+b*25)+'%,'+(0.5+b*0.45)+')';
+    ctx.lineWidth=1.4+b*1.1;
     ctx.beginPath(); ctx.arc(0,0,R,a,a+6.283/40*1.3); ctx.stroke();
   }
   ctx.fillStyle='#050505'; ctx.beginPath(); ctx.arc(0,0,R*0.72,0,6.283); ctx.fill();
@@ -2334,10 +2366,29 @@ function fxCosEinsteinRing(ctx,sk,nowMs){ // Кольцо Эйнштейна —
   ctx.restore();
 }
 const COS_CMB_BLOBS=(()=>{ const rnd=mulberry32(19); const arr=[]; for(let i=0;i<140;i++){ arr.push({x:(rnd()-0.5)*30,y:(rnd()-0.5)*34,r:0.6+rnd()*2.2,t:rnd()}); } return arr; })();
-function fxCosCMB(ctx,sk,nowMs){ // Реликтовое излучение — пятна статичны, крупный градиент едет (настоящая дипольная анизотропия ±0.00335К)
+/* 26.09.2026: 140 статичных пятен (позиция/цвет не зависят от nowMs) — прогорали каждый кадр как
+   живые beginPath+arc+fill. Первая попытка — офскрин-спрайт (приём 3.1) — давала пиксельно другой
+   результат: 140 полупрозрачных кружков компонуются на отдельном холсте, а картинка целиком потом
+   масштабируется через drawImage — при масштабировании полупрозрачных краёв цвет заметно съезжает
+   (численно проверено, не глазами: до 2978→6057 «видимых» отличий на 200×200 тесте, суперсэмплинг
+   S=8 вместо S=4 только ухудшил число — значит дело не в нехватке пикселей спрайта, а в самом
+   масштабировании готового полупрозрачного композита). Верный приём — 3.2 (Path2D с живым цветом):
+   кэшируем саму ГЕОМЕТРИЮ кружка один раз (Path2D, без масштабирования картинки), fill() —
+   каждый кадр как раньше, с тем же fillStyle. Это не пересобирает картинку — та же самая
+   растеризация, что и было, только без пересчёта arc() из чисел 140 раз в кадр. */
+let cosCmbBlobPaths=null;
+function buildCosCmbBlobPaths(){
+  if(cosCmbBlobPaths) return cosCmbBlobPaths;
+  cosCmbBlobPaths = COS_CMB_BLOBS.map(b=>{
+    const path=new Path2D(); path.arc(b.x,b.y,b.r,0,6.283);
+    return {path, style:'hsla('+(200-b.t*160)+',70%,55%,.5)'};
+  });
+  return cosCmbBlobPaths;
+}
+function fxCosCMB(ctx,sk,nowMs){ // Реликтовое излучение — пятна статичны (Path2D-кэш геометрии), крупный градиент едет (настоящая дипольная анизотропия ±0.00335К)
   const p=(nowMs%9000)/9000;
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.6,0.6);
-  COS_CMB_BLOBS.forEach(b=>{ ctx.fillStyle='hsla('+(200-b.t*160)+',70%,55%,.5)'; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.283); ctx.fill(); });
+  buildCosCmbBlobPaths().forEach(bp=>{ ctx.fillStyle=bp.style; ctx.fill(bp.path); });
   const dipoleAngle=p*Math.PI*2;
   const dx=Math.cos(dipoleAngle)*10, dy=Math.sin(dipoleAngle)*10;
   const g=ctx.createLinearGradient(-dx,-dy,dx,dy);
@@ -2426,7 +2477,7 @@ function fxAntiAnnih511(ctx,sk,nowMs){ // Аннигиляция 511 кэВ — 
   ctx.fillStyle='rgba(255,255,255,'+(0.9-grow*0.5).toFixed(2)+')'; ctx.beginPath(); ctx.arc(0,0,3,0,6.283); ctx.fill();
   ctx.restore();
 }
-function fxAntiAndersonKink(ctx,sk,nowMs){ // Трек с изломом кривизны — частица меняет радиус поворота, пройдя через тонкую пластину (эффект Андерсона, открытие позитрона)
+function fxAntiAndersonKink(ctx,sk,nowMs){ // Трек с изломом кривизны — частица меняет радиус поворота, пройдя через тонкую пластину (эффект Андерсона, открытие позитрона); 26.09.2026: была статичная диаграмма, владелец поймал — добавлена бегущая точка вдоль трека, показывает сам момент излома
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4); ctx.scale(0.5*0.75,0.5*0.75);
   const R1=40, th1=35*Math.PI/180, R2=18, th2=55*Math.PI/180;
   ctx.strokeStyle='rgba(180,220,255,.95)'; ctx.lineWidth=3;
@@ -2442,6 +2493,11 @@ function fxAntiAndersonKink(ctx,sk,nowMs){ // Трек с изломом кри�
   ctx.fillStyle='rgba(255,255,255,.4)'; ctx.fillRect(junc.x-1,junc.y-5,2,10);
   ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.6;
   ctx.beginPath(); ctx.moveTo(30,0); ctx.quadraticCurveTo(34,20,32,40); ctx.stroke();
+  const period=2200, t=(nowMs%period)/period;
+  let px,py;
+  if(t<0.5){ const th=(t/0.5)*th1; px=-R1+R1*Math.cos(th); py=R1*Math.sin(th); }
+  else { const tt=(t-0.5)/0.5; const a=a0-(tt*th2); px=C2.x+R2*Math.cos(a); py=C2.y+R2*Math.sin(a); }
+  ctx.fillStyle='rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(px,py,2.2,0,6.283); ctx.fill();
   ctx.restore();
 }
 let antiPositroniumCache=null;
@@ -3650,23 +3706,34 @@ function fxMatMarbleVein(ctx,sk,nowMs){ // Мраморные жилы — тр�
   crack(0.9,1.0,3.6,0.5,total);
   ctx.restore(); ctx.restore();
 }
+let matFrostSkeleton=null; // 26.09.2026: углы/длины/позиции дерева детерминированы (не зависят от nowMs) — только revealDepth/revealFrac живые; кэшируем скелет один раз, рекурсия и cos/sin больше не считаются каждый кадр (приём 3.4/3.5 хребта вместе)
+function buildMatFrostSkeleton(){
+  if(matFrostSkeleton) return matFrostSkeleton;
+  const total=4, segs=[];
+  function branch(x,y,ang,len,depth){
+    if(depth<=0||len<0.02) return;
+    const dirX=Math.cos(ang), dirY=Math.sin(ang);
+    segs.push({x,y,dirX,dirY,len,depth});
+    const x2=x+dirX*len, y2=y+dirY*len;
+    [-60,60].forEach(d=>branch(x2,y2,ang+d*Math.PI/180,len*0.6,depth-1));
+    branch(x2,y2,ang,len*0.75,depth-1);
+  }
+  for(let i=0;i<6;i++) branch(0,0,i*Math.PI/3,0.5,total);
+  matFrostSkeleton=segs;
+  return matFrostSkeleton;
+}
 function fxMatFrost(ctx,sk,nowMs){ // Иней/лёд — дендрит растёт под 60° (гексагональная симметрия льда Ih)
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   const p=(nowMs%2600)/2600;
   ctx.save(); ctx.scale(11,11);
   const total=4, prog=p*total, revealDepth=total-Math.floor(prog), revealFrac=prog-Math.floor(prog);
-  function branch(x,y,ang,len,depth){
-    if(depth<=0||len<0.02) return;
-    if(depth<revealDepth) return;
-    const partial= depth===revealDepth? revealFrac : 1;
-    const x2=x+Math.cos(ang)*len*partial, y2=y+Math.sin(ang)*len*partial;
-    ctx.strokeStyle='hsla(195,80%,85%,.9)'; ctx.lineWidth=len*0.4;
-    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
-    if(partial<1) return;
-    [-60,60].forEach(d=>branch(x2,y2,ang+d*Math.PI/180,len*0.6,depth-1));
-    branch(x2,y2,ang,len*0.75,depth-1);
-  }
-  for(let i=0;i<6;i++) branch(0,0,i*Math.PI/3,0.5,total);
+  buildMatFrostSkeleton().forEach(sgm=>{
+    if(sgm.depth<revealDepth) return;
+    const partial= sgm.depth===revealDepth? revealFrac : 1;
+    const x2=sgm.x+sgm.dirX*sgm.len*partial, y2=sgm.y+sgm.dirY*sgm.len*partial;
+    ctx.strokeStyle='hsla(195,80%,85%,.9)'; ctx.lineWidth=sgm.len*0.4;
+    ctx.beginPath(); ctx.moveTo(sgm.x,sgm.y); ctx.lineTo(x2,y2); ctx.stroke();
+  });
   ctx.restore(); ctx.restore();
 }
 /* 18.09.2026, та же уборка, единственная из девяти с доп. ценой — раньше ещё и пересортировывала
@@ -3734,14 +3801,16 @@ function fxMatNacre(ctx,sk,nowMs){ // Перламутр — иризация ч
   });
   ctx.restore(); ctx.restore();
 }
-function fxCulKanga(ctx,sk,nowMs){ // Суахилийская канга — своего процесса нет (печатный текстиль), только блик поверхности
+function fxCulKanga(ctx,sk,nowMs){ // Суахилийская канга — своего процесса нет (печатный текстиль), только блик поверхности (26.09.2026: блик был статичным по недосмотру — оживлён той же формулой, что у matWootz/fxMatCorrugC, без индекса ряда, т.к. полоса одна)
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
   ctx.save(); ctx.scale(9.6,9.6);
   ctx.fillStyle='#f0d840';
   ctx.beginPath(); ctx.arc(0,-0.15,0.42,0,6.283); ctx.fill();
   ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.04;
   ctx.strokeRect(-1.25,-1.25,2.5,2.5);
-  ctx.fillStyle='rgba(20,20,20,.55)';
+  const p=(nowMs%3400)/3400;
+  const shine=(Math.sin(p*Math.PI*2)+1)/2;
+  ctx.fillStyle='rgba(20,20,20,'+(0.55+shine*0.25).toFixed(2)+')';
   ctx.fillRect(-1.1,0.9,2.2,0.28);
   ctx.restore(); ctx.restore();
 }
@@ -4244,6 +4313,7 @@ function gfxInvalidate(){
   sheenSpr=null;
   __moonstoneG=null; // 26.09.2026: тот же класс беды, что у станции/звезды — кэш модуля gfxInvalidate обязан знать
   bhDopplerDiskSprite=null; // 26.09.2026: офскрин-спрайт диска — та же беда «Партии 27», кэш должен знать
+  cosCmbBlobPaths=null; // 26.09.2026: Path2D-кэш 140 пятен CMB — та же беда «Партии 27», кэш должен знать
   for(const k in starDotCache) delete starDotCache[k];
   for(const k in trailGlowCache) delete trailGlowCache[k];
   for(const k in planeGlowCache) delete planeGlowCache[k];

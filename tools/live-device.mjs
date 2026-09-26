@@ -196,10 +196,11 @@ function cdpSession(port, pageId){
   };
 }
 
-async function cmdEval(pageId, expr, port){
-  if (!pageId || expr === undefined) fail('usage: eval <pageId> <jsExpression> [port]');
+async function cmdEval(pageId, expr, port, timeoutMs){
+  if (!pageId || expr === undefined) fail('usage: eval <pageId> <jsExpression> [port] [timeoutMs]');
   port = port || PORT_DEFAULT;
-  const result = await cdpCall(port, pageId, 'Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });
+  timeoutMs = timeoutMs || 10000;
+  const result = await cdpCall(port, pageId, 'Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }, timeoutMs);
   console.log(JSON.stringify(result, null, 2));
 }
 
@@ -288,7 +289,7 @@ const HELP = `live-device.mjs — живая отладка подключённ
   devices
   forward <serial> [port]
   pages [port]
-  eval <pageId> <jsExpression> [port]
+  eval <pageId> <jsExpression> [port] [timeoutMs]   — timeoutMs по умолчанию 10000, поднять для тяжёлых батчей на слабом телефоне
   console <pageId> [durationMs] [port]
   screenshot <pageId> <outPngPath> [port]
   tap <pageId> <x> <y> [port]
@@ -302,7 +303,7 @@ try {
     case 'wake': await cmdWake(args[0], args[1] && Number(args[1])); break;
     case 'hwshot': cmdHwshot(args[0], args[1]); break;
     case 'pages': await cmdPages(args[0] && Number(args[0])); break;
-    case 'eval': await cmdEval(args[0], args[1], args[2] && Number(args[2])); break;
+    case 'eval': await cmdEval(args[0], args[1], args[2] && Number(args[2]), args[3] && Number(args[3])); break;
     case 'console': await cmdConsole(args[0], args[1], args[2] && Number(args[2])); break;
     case 'screenshot': await cmdScreenshot(args[0], args[1], args[2] && Number(args[2])); break;
     case 'tap': await cmdTap(args[0], args[1], args[2], args[3] && Number(args[3])); break;
