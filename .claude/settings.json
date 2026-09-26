@@ -33,7 +33,8 @@
         "hooks": [
           { "type": "command", "command": ".claude/hooks/protect-core.sh" },
           { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" },
-          { "type": "command", "command": "node .claude/hooks/shared-constant-guard.mjs" }
+          { "type": "command", "command": "node .claude/hooks/shared-constant-guard.mjs" },
+          { "type": "command", "command": "node .claude/hooks/geometry-measure-guard.mjs" }
         ]
       },
       {
