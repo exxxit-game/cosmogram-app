@@ -103,7 +103,8 @@
         "hooks": [
           { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=warn node .claude/hooks/claim-check-hook.mjs" },
           { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=warn node .claude/hooks/ask-then-act-guard.mjs" },
-          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=warn node .claude/hooks/excuse-words-guard.mjs" }
+          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=warn node .claude/hooks/excuse-words-guard.mjs" },
+          { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=warn node .claude/hooks/device-claim-guard.mjs" }
         ]
       }
     ]
