@@ -2162,7 +2162,9 @@ function fxCosBHSchwarzschild(ctx,sk,nowMs){ // Радиус Шварцшиль�
 }
 function fxCosBHPhotonRingM87(ctx,sk,nowMs){ // Фотонное кольцо M87* — яркое кольцо вокруг тени, ярче снизу (линзирование), EHT 2019
   ctx.save(); clipShipBody(ctx); ctx.translate(0,-4);
-  const R=11;
+  const R=8; // 26.09.2026: было 11 — самые яркие дуги кольца (боковые точки) физически не помещались в вырез
+  // корпуса на translate(0,-4) (там всего ±8 по ширине), кольцо было ПОЛНОСТЬЮ обрезано — 0% видимых
+  // пикселей, измерено. R=8 — то же значение, что уже у Sgr A* ниже (там кольцо видно нормально)
   for(let i=0;i<40;i++){
     const a=i/40*6.283;
     const boost=0.6+0.4*Math.max(0,Math.sin(a-Math.PI/2));
@@ -2193,7 +2195,11 @@ function fxCosBHDopplerDisk(ctx,sk,nowMs){ // Асимметричный акк�
   for(let r=3;r<=12;r+=1){
     for(let a=0;a<Math.PI*1.9;a+=0.15){
       const bright=0.35+0.65*Math.max(0,Math.sin(a));
-      const hue=200-bright*160;
+      // 26.09.2026: было hue=200-bright*160 (диапазон 40-200 — оранжевый↔жёлтый↔голубовато-зелёный,
+      // НИ РАЗУ не настоящий синий и не красный) — факт скина прямо говорит «ярче и голубее», а
+      // самая яркая сторона рисовалась оранжевой. Формула ниже: тусклая/удаляющаяся сторона (bright→0.35,
+      // минимум) — красная (hue→0), яркая/приближающаяся (bright→1) — синяя (hue→220), как по тексту.
+      const hue=(bright-0.35)/0.65*220;
       ctx.strokeStyle='hsla('+hue+',90%,'+(45+bright*30)+'%,'+(0.5+bright*0.4)+')';
       ctx.lineWidth=1.4;
       ctx.beginPath(); ctx.arc(0,0,r,a,a+0.15); ctx.stroke();
