@@ -17,22 +17,20 @@
 # теперь у проекта есть `.github/workflows/guard.yml` (22.09.2026) — полный набор
 # должен идти ТАМ, не на ноутбуке, вообще без исключений, независимо от фона.
 # Условие ниже больше не требует bg==1 — спрашивает про ЛЮБОЙ полный прогон.
+# 26.09.2026: логика вынесена в lib/check-guard-mjs-invocation.mjs — найдено живьём
+# в ЭТОЙ ЖЕ сессии, что старый инлайновый `node -e "..."` внутри двойных кавычек
+# bash ломал собственный regex ([\/\\] схлопывался bash'ем в [\/\], незакрытый
+# класс символов — SyntaxError на каждом вызове). Заодно чинит и старую дыру:
+# подстрочное совпадение '*guard.mjs*' срабатывало на ЛЮБОМ файле, чьё имя
+# оканчивается на '-guard.mjs' (ask-then-act-guard.mjs и т.п.) — теперь сравнение
+# точного basename, не подстроки.
 input=$(cat)
-out=$(printf '%s' "$input" | node -e "
-let d='';process.stdin.on('data',c=>d+=c);
-process.stdin.on('end',()=>{
-  try{ const j=JSON.parse(d);
-    const cmd=(j.tool_input&&j.tool_input.command)||'';
-    const bg=!!(j.tool_input&&j.tool_input.run_in_background);
-    process.stdout.write((j.tool_name||'')+'\n'+cmd.replace(/\n/g,' ')+'\n'+(bg?'1':'0')+'\n');
-  }catch(e){ process.stdout.write('\n\n0\n'); }
-});
-")
+out=$(printf '%s' "$input" | node "$(dirname "$0")/lib/check-guard-mjs-invocation.mjs")
 tool=$(printf '%s' "$out" | sed -n '1p')
-cmd=$(printf '%s' "$out" | sed -n '2p')
+shouldBlock=$(printf '%s' "$out" | sed -n '2p')
 bg=$(printf '%s' "$out" | sed -n '3p')
 
-if [[ "$tool" == "Bash" && "$cmd" == *node*guard.mjs* && "$cmd" != *--only=* ]]; then
+if [[ "$tool" == "Bash" && "$shouldBlock" == "1" ]]; then
   # 25.09.2026, поймано в этой же сессии сразу после подъёма до "deny": старое условие
   # ловило ЛЮБОЕ упоминание строки "guard.mjs" в команде — блокировало даже безобидный
   # `git diff -- tests/guard.mjs`, не только реальный запуск. Требуем токен "node" тоже
