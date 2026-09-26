@@ -45,6 +45,15 @@ if [[ "$tool" == "Edit" || "$tool" == "Write" ]]; then
       echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Ядровый файл — окончательное разрешение за вами, на каждую правку заново."}}'
       exit 0
       ;;
+    *ui.js|*index.html)
+      # 26.09.2026: тот же приём, что у ядра выше — «визуальное только через макет» держалось
+      # только словом в CLAUDE.md, hook его не проверял. Живой вечер: правка ui.js прошла
+      # без единой остановки, хотя правило требовало макет. ui.js/index.html — где реально
+      # рисуется то, что видит игрок; расширено сюда тем же механизмом (permissionDecision:
+      # "ask"), не тихий блок — окончательное решение всё равно за владельцем каждый раз.
+      echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"Визуальный файл — правило «только через макет»; подтвердите, что макет уже показан и одобрен."}}'
+      exit 0
+      ;;
   esac
 fi
 exit 0
