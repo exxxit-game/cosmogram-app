@@ -82,6 +82,12 @@
           { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
           { "type": "command", "command": "node .claude/hooks/device-eval-vs-hwshot-guard.mjs" }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          { "type": "command", "command": "node .claude/hooks/deferred-fix-guard.mjs" }
+        ]
       }
     ],
     "UserPromptSubmit": [
