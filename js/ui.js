@@ -142,6 +142,7 @@ function setScreen(name){
      не переход). setScreen — единственное место всех переходов (см. коммент про рамку
      коридора ниже), поэтому один вызов здесь ловит уход из полёта куда угодно разом. */
   if(name!=='game' && document.exitPointerLock) document.exitPointerLock();
+  if(name==='game' && typeof ballPhase!=='undefined' && ballPhase) ballFinish(); // 27.09.2026: любой старт полёта при шарике на экране = встреча пройдена (и по шарику, и мимо него)
   screenName=name;
   /* 24.08.2026: рамка коридора (#corrEdgeL/#corrEdgeR) раньше перепроверялась ТОЛЬКО из
      resize() в core.js — то есть только когда меняется размер окна. На статичном рабочем
@@ -1520,7 +1521,7 @@ function refreshMenu(){
   if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026 «Галерея видео-рекордов»: дверь появляется/число обновляется, если есть хоть одно видео
   if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
   if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же; 16.09.2026: заодно гасит текстовую подсказку .playHint, если след теперь есть
-  if (typeof zondTick==='function') zondTick(); // 25.09.2026: Зонд — один эпизод на первый визит совсем нового игрока, см. комментарий у самих функций
+  if (typeof ballTick==='function') ballTick(); // 27.09.2026: Шарик (бывший Зонд) — первая встреча, один раз на игрока, см. комментарий у самих функций
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -3428,6 +3429,7 @@ wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync)
    от нашего же programmatic scrollTo() ниже). Дальше карусель стоит там, где её оставили. */
 let heroCarouselAutoT=setInterval(function(){
   if (screenName!=='menu') return;
+  if (typeof ballActive==='function' && ballActive()) return; // 27.09.2026: шарик ведёт первую встречу у карточки Score Attack — не увозим её из-под него
   /* 24.09.2026 (владелец: «пусть сперва Score Attack сыграют, а остальное увидят потом» +
      живая жалоба «подсказка появляется намного позже, чем карусель уезжает — можешь и не
      увидеть»): пока игрок вообще ни разу не играл — карусель не крутится сама, стоит на
@@ -3438,7 +3440,7 @@ let heroCarouselAutoT=setInterval(function(){
      счётчик — `Stats.games`, `Stats.games++` при каждом старте, js/ui.js:954), значит
      условие было ВСЕГДА истинным и карусель никогда не крутилась сама ни для кого,
      сколько бы игрок ни играл. Найдено стражем Зонда, тот же неверный паттерн скопирован
-     туда же — см. комментарий у zondTick(). */
+     туда же — см. комментарий у zondTick() (27.09.2026: Зонд заменён Шариком, ballTick()). */
   if(typeof Stats!=='undefined' && (Stats.games||0)===0) return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
@@ -3454,174 +3456,147 @@ let heroCarouselAutoT=setInterval(function(){
   car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
-/* 25.09.2026 «Зонд» — персонаж-подсказка для совсем новых игроков, заменяет прежний
-   язычок на ленте (владелец: «в научной игре смотрится омерзительно», плюс задел на
-   будущую систему рейтинга/кастомизации, отдельная задача, см. память сессии). В
-   отличие от язычка — появляется СРАЗУ на пустом меню, не после простоя: сама идея
-   «поймай подсказку» и есть обучение, ждать бездействия не нужно. Условие показа —
-   то же самое, что было у язычка (Stats.games===0 и центр карусели — Score Attack),
-   но БЕЗ таймера ожидания. Один раз за загрузку страницы (zondShown), не при каждом
-   возврате в меню — dependency от прежнего idleHintShown-счётчика (5 показов) не
-   годится: тут нет серии показов, только один эпизод на первый визит. Бег гасится
-   ЛИБО системным `prefers-reduced-motion` (RM, js/core.js), ЛИБО ручным тумблером
-   «Смягчить тряску» (CALM_FX) — см. zondMoveNext(). Первая версия держалась только
-   на RM; при правке CALM_FX (25.09.2026, дефолт true→false — владелец: доступность
-   не включают заранее всем) выяснилось, что сам же код признаёт RM «ненадёжным
-   внутри WebView» (комментарий у CALM_FX в core.js) — там играет большинство. Раз
-   CALM_FX теперь тоже выключен по умолчанию, добавлять его вторым сигналом стало
-   безопасно — не гасит погоню зря никому. Позиции-«карманы» не захардкожены
-   в процентах (macet использовал условный демо-экран) — измеряются вживую через
-   getBoundingClientRect() тех же элементов, что уже на экране (карточка/точки
-   карусели/ряд кнопок), чтобы не гадать координаты отдельно под каждый размер
-   телефона. Текст подсказки внутри пузыря — ЗАГЛУШКА (владелец: текст ещё не готов,
-   вставить позже отдельной правкой), взято дословно из одобренного макета
-   macet-25-09-zond-final.html. */
-let zondShown=false, zondCaught=false, zondIdx=0, zondPocketsArr=[], zondMoveT=null;
-const ZOND_FACE_NORMAL='<rect x="14" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
-  '<rect x="21" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
-  '<path d="M16,33 L24,33" stroke="var(--gold-hi)" stroke-width="1.8" stroke-linecap="round"/>';
-const ZOND_FACE_CAUGHT='<path d="M12,25 Q16,21 20,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-  '<path d="M20,25 Q24,21 28,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-  '<circle cx="13" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
-  '<circle cx="27" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
-  '<ellipse cx="20" cy="34" rx="2.6" ry="2" fill="var(--gold-hi)"/>';
-function zondCentredCard(){
+/* 27.09.2026 «Шарик» — помощник вместо Зонда (владелец, живые макеты «Помощник: зонд, шар,
+   треугольник», вариант А «стучит»; «Переноси в игру»). Шаг 1 из 2 — первая встреча до
+   первого полёта; шаг 2 (шарик в углу, золотые точки на неоткрытых кнопках, подсказки по
+   меню) — отдельной правкой после проверки владельцем на телефоне.
+   Сценарий: шарик внизу экрана «спит» (без глаз) → глаза зажглись, «Привет!» → просьба
+   L.ballAsk с пульсирующим кольцом. Нажимается И облачко, И сам шарик (владелец: «текст
+   говорит нажать на окно, а жмут на текст» — оба пути ведут в одно место). → «!» в окошке
+   → шарик садится на карточку Score Attack и стучит по ней: круги от места удара, карточка
+   вспыхивает, фраза L.heroHintTap ВНУТРИ карточки (не облачком — прежний хвостик-облачко
+   смотрел вниз, на «Конструктор», владелец: «выглядит, будто надо нажать на конструктор»).
+   Прежняя .playHint с той же фразой на это время спрятана, чтобы текст не двоился.
+   Нажатие на шарик или на любое место карточки = полёт.
+   Кому: ВСЕМ один раз (владелец: «всем один раз») — отметка ballMet в Store. Пропуск
+   (сразу нажал на карточку и полетел, не трогая шарик) засчитывается так же — ловится в
+   setScreen('game'), единственном месте всех стартов. Пока встреча идёт, карусель сама не
+   листается (heroCarouselAutoT) — иначе увезла бы карточку из-под шарика. Если игрок сам
+   листает карусель в момент «стука», шарик едет вместе с карточкой (слушатель scroll).
+   RM/CALM_FX: прыжок-стук не включается, шарик просто сидит на карточке. */
+// var, не let: setScreen() (выше по файлу) читает ballPhase и может сработать до этой строки — typeof на let в мёртвой зоне бросает ReferenceError
+var ballShown=false, ballPhase='', ballT=null;
+const BALL_FACE_EYES='<rect x="16.4" y="24" width="2.8" height="4.2" rx="1.2" fill="#f4f6fb"/>'+
+  '<rect x="20.8" y="24" width="2.8" height="4.2" rx="1.2" fill="#f4f6fb"/>';
+const BALL_FACE_BANG='<text class="ballBang" x="20" y="28.6" text-anchor="middle" font-size="7" font-weight="800" fill="#f0c040">!</text>';
+function ballMetGet(){ return Store.get('ballMet',0)===1; }
+function ballActive(){ return !!ballPhase && !ballMetGet(); }
+function ballText(k){ return (L && L[k]) || I18N.ru[k]; } // фразы шарика пока только по-русски — переводы ждут владельца
+function ballFace(html){ const f=$('ballFace'); if(f) f.innerHTML=html; }
+function ballMoveTo(x,y,instant){
+  const b=$('ballEl'); if(!b) return;
+  if(instant) b.classList.add('ballNoMove');
+  b.style.left=x+'px'; b.style.top=y+'px';
+  if(instant){ void b.offsetWidth; b.classList.remove('ballNoMove'); }
+}
+function ballSay(text){
+  const bub=$('ballBubble'), b=$('ballEl'); if(!bub||!b) return;
+  if(!text){ bub.classList.remove('show'); return; }
+  bub.textContent=text;
+  bub.style.maxWidth=Math.min(280, window.innerWidth-16)+'px';
+  bub.style.left='0px'; bub.style.top='0px';
+  const bw=bub.offsetWidth, bh=bub.offsetHeight;
+  const cx=parseFloat(b.style.left)+21;
+  bub.style.left=Math.max(8, Math.min(window.innerWidth-8-bw, cx-bw/2))+'px';
+  bub.style.top=(parseFloat(b.style.top)-bh-12)+'px';
+  bub.style.setProperty('--tailX', (cx-parseFloat(bub.style.left))+'px');
+  bub.classList.add('show');
+}
+function ballCentredCard(){ // бывшая zondCentredCard — та же мерка: какая карточка карусели сейчас по центру
   const car=$('heroCarousel'); if(!car||!car.children.length) return null;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return null;
   const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
   return car.children[idx];
 }
-/* 25.09.2026 (владелец, живой телефон 360×800, реальные скриншоты): первая версия падала
-   в двух местах разом — (1) «карман» между heroDots и .stack на узком экране оказался
-   0px зазора (не проверял реальный зазор, только считал середину — Зонд садился прямо на
-   границу ленты точек и кнопки), (2) старт был у угла карточки, не внизу, как
-   договаривались. Теперь: МИНИМАЛЬНЫЙ зазор (ZOND_MIN_GAP) перед тем, как считать
-   «карман» реальным, и явный старт у нижнего края экрана. */
-const ZOND_MIN_GAP=30; // px — меньше не считается настоящим карманом, не втискиваем силой
-function zondPockets(){
-  const pts=[];
-  const sw=window.innerWidth, sh=window.innerHeight;
-  /* 25.09.2026 (владелец, живьём, два захода подряд): (1) с одним нижним карманом побег
-     превратился в скучный маятник «туда-сюда» — нужно несколько точек, не одна; (2) когда
-     точки оказались близко друг к другу (0.28-0.72 ширины), мелкие частые перескоки внутри
-     тесного пятачка сам читаются как «ёрзает, дёргается», не как «плавает по экрану» —
-     хотя формально ни одну кнопку не задевают (проверено live-device). Раздвинуто почти на
-     всю ширину экрана (0.10-0.90) — то же самое пустое поле, просто прыжки внутри него
-     крупнее и реже выглядят как движение, не подёргивание. */
+function ballCard(){ return document.querySelector('#heroCarousel .hc-classic'); }
+function ballPlaceOnCard(instant){
+  const card=ballCard(); if(!card) return;
+  const r=card.getBoundingClientRect();
+  ballMoveTo(r.right-68, r.top+14, instant);
+}
+function ballPoint(){
+  ballPhase='point';
+  ballFace(BALL_FACE_EYES);
+  const car=$('heroCarousel'), card=ballCard(); if(!card) return;
+  if(car) car.scrollTo({left:0});
+  if(!card.querySelector('.ballSay')){
+    const say=document.createElement('div'); say.className='ballSay'; say.textContent=L.heroHintTap; card.appendChild(say);
+    const rings=document.createElement('div'); rings.className='ballRings'; rings.innerHTML='<i></i><i></i>'; card.appendChild(rings);
+  }
+  card.classList.add('ballPoint');
+  ballPlaceOnCard(false);
+  if(!(RM || CALM_FX)){ const hop=document.querySelector('#ballEl .ballHop'); if(hop) hop.classList.add('on'); }
+}
+function ballTap(){
+  if(ballPhase==='ask'){
+    clearTimeout(ballT); ballPhase='bang';
+    const b=$('ballEl'); if(b) b.classList.remove('ballAsk');
+    ballSay(''); ballFace(BALL_FACE_BANG); haptic('light'); sfx.click();
+    ballT=setTimeout(ballPoint, 900);
+    return;
+  }
+  if(ballPhase==='point'){ const s=$('startBtn'); if(s) s.click(); }
+}
+function ballFinish(){
+  /* зовётся из setScreen('game') — любой старт полёта, пока шарик на экране: и по шарику,
+     и по карточке мимо него (пропуск = встреча пройдена, решение владельца 27.09.2026) */
+  clearTimeout(ballT);
+  Store.set('ballMet',1);
+  ballPhase='';
+  const card=ballCard(); if(card) card.classList.remove('ballPoint');
+  const layer=$('zondLayer'); if(layer) layer.innerHTML='';
+}
+function ballShow(){
+  const layer=$('zondLayer'); if(!layer || ballShown) return;
+  ballShown=true; ballPhase='sleep';
+  layer.innerHTML='<button type="button" class="ballBubble" id="ballBubble"></button>'+
+    '<div class="ball" id="ballEl"><div class="ballHit"></div><div class="ballHop">'+
+    '<svg class="ballSvg ballBob" viewBox="0 0 40 46"><g class="ballWob">'+
+    '<circle cx="20" cy="26" r="17" fill="#070a14" stroke="rgba(240,192,64,.55)" stroke-width="1.2"/>'+
+    '<ellipse cx="12.5" cy="17.5" rx="5" ry="2.4" fill="rgba(255,255,255,.2)" transform="rotate(-35 12.5 17.5)"/>'+
+    '<circle class="ballRing" cx="20" cy="27" r="12.5" fill="none" stroke="#f0c040" stroke-width="1.4"/>'+
+    '<circle cx="20" cy="27" r="9.5" fill="#0d2038" stroke="#f0c040" stroke-width="1.5"/>'+
+    '<polygon points="13.2,22.5 26.8,22.5 20,33.5" fill="#2b5fd9"/>'+
+    '<g id="ballFace"></g></g></svg></div></div>';
+  /* место внизу выбирается так, чтобы САМОЕ длинное облачко (просьба L.ballAsk) целиком
+     помещалось под кнопками меню: первая раскладка ставила шарик сразу под ними, и облачко
+     закрывало нижний ряд (снимок 360×800). Меряем реальную высоту облачка с этим текстом. */
   const scrFoot=document.querySelector('#startScreen .scrFoot');
-  const zoneTop = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
-  const zoneBottom = sh-70;
-  const xL=Math.max(16, sw*0.10-21), xR=Math.min(sw-58, sw*0.90-21), xC=sw/2-21;
-  pts.push({x:xC, y:Math.min(zoneTop, zoneBottom)});
-  if(zoneBottom-zoneTop>=ZOND_MIN_GAP){
-    const yFar=Math.min(zoneTop+(zoneBottom-zoneTop)*0.55, zoneBottom);
-    pts.push({x:xL, y:yFar});
-    pts.push({x:xR, y:Math.min(zoneTop, zoneBottom)});
-    pts.push({x:xC, y:yFar});
-  }
-  const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
-  if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
-  const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
-  if(dots && stackEl){
-    const dR=dots.getBoundingClientRect(), sR=stackEl.getBoundingClientRect();
-    if(sR.top-dR.bottom>=ZOND_MIN_GAP) pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
-  }
-  const menuRow=$('menuRow');
-  if(menuRow && menuRow.children.length>=4){
-    const r1=menuRow.children[1].getBoundingClientRect(), r2=menuRow.children[2].getBoundingClientRect();
-    if(r2.top-r1.bottom>=ZOND_MIN_GAP) pts.push({x:menuRow.getBoundingClientRect().left+menuRow.getBoundingClientRect().width*0.5-21, y:(r1.bottom+r2.top)/2-24});
-  }
-  const brandSub=$('brandSub'); const wrap=document.querySelector('#startScreen .heroCarouselWrap');
-  if(brandSub && wrap){
-    const bR=brandSub.getBoundingClientRect(), wR=wrap.getBoundingClientRect();
-    if(wR.top-bR.bottom>=ZOND_MIN_GAP) pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
-  }
-  return pts;
+  const sh=window.innerHeight;
+  const footBottom=scrFoot ? scrFoot.getBoundingClientRect().bottom : sh-160;
+  const bub=$('ballBubble');
+  bub.textContent=ballText('ballAsk'); bub.style.maxWidth=Math.min(280, window.innerWidth-16)+'px';
+  const askH=bub.offsetHeight; bub.textContent='';
+  const y=Math.min(Math.max(footBottom+16, footBottom+12+askH+12), sh-70);
+  ballMoveTo(window.innerWidth/2-21, y, true);
+  const b=$('ballEl');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('ballIn')));
+  b.addEventListener('click', ballTap);
+  $('ballBubble').addEventListener('click', ballTap);
+  ballT=setTimeout(()=>{
+    ballPhase='hello'; ballFace(BALL_FACE_EYES); ballSay(ballText('ballHello'));
+    ballT=setTimeout(()=>{
+      ballPhase='ask'; ballSay(ballText('ballAsk'));
+      const bb=$('ballEl'); if(bb) bb.classList.add('ballAsk');
+    }, 2200);
+  }, 1100);
 }
-/* 25.09.2026: было `left = x-30` без проверки края экрана — на узком телефоне (360px)
-   пузырь с фразой (~190px при реальном тексте) целиком уезжал за правый край, владелец
-   физически не мог прочитать текст. Теперь — ставим, ИЗМЕРЯЕМ реальную отрисованную
-   ширину, подвигаем обратно в границы экрана, если вылезло. */
-function zondClampToViewport(el){
-  if(!el) return;
-  const pad=8, r=el.getBoundingClientRect();
-  if(r.right>window.innerWidth-pad) el.style.left=(parseFloat(el.style.left)-(r.right-(window.innerWidth-pad)))+'px';
-  const r2=el.getBoundingClientRect();
-  if(r2.left<pad) el.style.left=(parseFloat(el.style.left)+(pad-r2.left))+'px';
-}
-function zondPlaceTauntNear(x,y){
-  const taunt=$('zondTaunt'); if(!taunt) return;
-  taunt.style.left=Math.max(4,x-30)+'px';
-  taunt.style.top=(y-58)+'px';
-  zondClampToViewport(taunt);
-}
-function zondShowTaunt(){
-  const zond=$('zondEl'); if(!zond) return;
-  zondPlaceTauntNear(parseFloat(zond.style.left), parseFloat(zond.style.top));
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.add('show');
-}
-function zondMoveNext(){
-  /* 25.09.2026: RM (prefers-reduced-motion) — единственный сигнал не годится, сам же
-     код признаёт (js/core.js, коммент у CALM_FX) — «ненадёжен внутри WebView», где
-     играет большинство. CALM_FX теперь тоже выключен по умолчанию (владелец: не
-     включать заранее всем) — значит безопасно добавить его вторым сигналом: ручной,
-     явно поставленный игроком тумблер надёжнее пассивного системного признака внутри
-     Telegram. Логика ИЛИ — хватает любого из двух, не оба разом. */
-  if(zondCaught || RM || CALM_FX) return;
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
-  zondIdx=(zondIdx+1)%zondPocketsArr.length;
-  const p=zondPocketsArr[zondIdx]; const zond=$('zondEl'); if(!zond) return;
-  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
-}
-function zondCatch(){
-  if(zondCaught) return;
-  zondCaught=true;
-  if(zondMoveT){ clearInterval(zondMoveT); zondMoveT=null; }
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
-  const face=$('zondFace'); if(face) face.innerHTML=ZOND_FACE_CAUGHT;
-  const zond=$('zondEl'); const x=parseFloat(zond.style.left), y=parseFloat(zond.style.top);
-  const spark=$('zondSpark'); if(spark){ spark.style.left=(x+8)+'px'; spark.style.top=(y-14)+'px'; spark.classList.add('show'); }
-  const hint=$('zondHint');
-  if(hint){
-    hint.style.left=Math.max(4,x-20)+'px'; hint.style.top=(y-70)+'px';
-    hint.textContent='Совет: короткий флик честнее держит скорость'; // ЗАГЛУШКА — текст ждёт владельца
-    hint.classList.add('show');
-    zondClampToViewport(hint); // 25.09.2026: та же защита от вылезания за узкий экран, что у фразы
-  }
-  haptic('light'); sfx.click();
-}
-function zondShow(){
-  const layer=$('zondLayer'); if(!layer || zondShown) return;
-  zondPocketsArr=zondPockets(); if(!zondPocketsArr.length) return;
-  zondShown=true;
-  layer.innerHTML='<div class="zondTaunt" id="zondTaunt">Сможешь поймать меня? А-а-а!</div>'+
-    '<div class="zond" id="zondEl"><div class="zondHitZone"></div>'+
-    '<svg class="zondSvg zondBob" viewBox="0 0 40 46">'+
-    '<g class="zondSatWrap"><path d="M14,10 Q20,3 26,10" stroke="rgba(240,192,64,.35)" stroke-width="1.2" fill="none" stroke-dasharray="1.5 3"/>'+
-    '<circle class="zondSat glow" cx="26" cy="10" r="2.3" fill="var(--gold-hi)"/></g>'+
-    '<polygon points="20,14 30,21 30,33 20,40 10,33 10,21" fill="#0d2038" stroke="var(--gold-hi)" stroke-width="2"/>'+
-    '<g id="zondFace">'+ZOND_FACE_NORMAL+'</g></svg></div>'+
-    '<div class="zondSpark" id="zondSpark">✦</div><div class="zondHint" id="zondHint"></div>';
-  const p=zondPocketsArr[0]; const zond=$('zondEl');
-  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>zond.classList.add('zondIn'))); // 25.09.2026: мягкое появление вместо мгновенного «хоп» — см. .zondIn в index.html
-  zond.addEventListener('click', zondCatch);
-  setTimeout(zondShowTaunt, 400);
-  zondMoveT=setInterval(zondMoveNext, 3600); // 25.09.2026: было 2600 — с широкими точками чаще выглядело как дёрганье, не движение
-}
-function zondTick(){
-  /* 25.09.2026 (владелец, прямо на живом телефоне): убрано условие Stats.games===0.
-     Та же логика, что уже решена для будущего «выпускного» ([[project_zond_vypusknoy_bonus_otlozheno_25_09]]
-     в памяти сессии) — не гадать по числу забегов, кто «уже не новичок», ждать ЯВНОГО
-     отказа игрока. Явного отказа (кнопки «не нужно») пока не существует — значит по
-     умолчанию Зонд показывается всем, один раз за загрузку страницы. Когда построим
-     кнопку подтверждения — она и станет настоящим условием отказа, не количество игр. */
-  if(zondShown) return; // один эпизод за загрузку страницы, не при каждом возврате в меню
+function ballTick(){
+  if(ballShown || ballMetGet()) return; // одна встреча за загрузку, и только пока её не было
   if(screenName!=='menu') return;
-  const card=zondCentredCard();
+  const card=ballCentredCard();
   if(!card || !card.classList.contains('hc-classic')) return;
-  zondShow();
+  ballShow();
 }
+wireOn('heroCarousel','scroll',()=>{ if(ballPhase==='point') ballPlaceOnCard(true); });
+document.getElementById('heroCarousel')?.addEventListener('click', function(e){
+  // «нажмите здесь» — по ЛЮБОМУ месту карточки, пока шарик на ней стучит (сама кнопка
+  // .cardFlyBtn занимает только нижнюю строку с названием; ленту-рекорд не перехватываем)
+  if(ballPhase!=='point') return;
+  const card=e.target.closest('.hc-classic'); if(!card) return;
+  if(e.target.closest('.recordBadge,.cardFlyBtn,.playHint')) return;
+  const s=$('startBtn'); if(s) s.click();
+});
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
