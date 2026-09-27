@@ -472,7 +472,7 @@ function audioHeartbeatTick(){
   try{
     const osc=AC.createOscillator(), g=AC.createGain();
     g.gain.value=0.001; osc.frequency.value=18000;
-    osc.connect(g); g.connect(AC.destination);
+    osc.connect(g); g.connect(audioOut(AC)); // 27.09.2026: через общий выход, как всё остальное
     osc.start(); osc.stop(AC.currentTime+0.05);
   }catch(e){}
 }
@@ -546,7 +546,7 @@ function audio(){ // создавать/возобновлять строго п
   }
   return AC; // v1.282.15: сторож звука дёргает это по таймеру каждые 2с, а resume вне жеста отклоняется — отказ уходил в глобальный обработчик и улетал письмом как «ошибка борта», маскируя настоящие падения
 }
-const GAME_VERSION = '1.478.564'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
+const GAME_VERSION = '1.478.565'; // «Об игре» в настройках — при репортах багов спрашивать её; «Рассвет космоса»
 /* 11.09.2026 «Разбивка взлёта»: живой отчёт с Samsung A3 Core показал зонд дребезга
    (deviceProfileProbe, skymail.js) с max:1160ms в первые 2.5с взлёта — но зонд не блокирующий,
    он стартует и сразу отдаёт управление, а сам скачок мог случиться в ЛЮБОМ из тяжёлых шагов
@@ -572,6 +572,31 @@ let UI_TEXT_SCALE=1; // 09.09.2026 «Размер текста», персист
 // Скоростные полосы полностью удалены: они не участвуют в игровой логике и не должны
 // оставаться в настройках, хранилище или рендере. Это безопасный способ отключить эффект
 // без ломки оставшихся систем и без побочных зависимостей по флагу.
+/* 27.09.2026 «Одна общая смесь» (владелец: «надо сделать всё качественно»; как в js13k — весь звук
+   сводится один раз в одну смесь). Было ЧЕТЫРЕ отдельных пути на динамик: beep, swoosh и пульс
+   18кГц здесь, музыка и двигатель в music.js. Музыка (утверждённый макет) сама по себе доходит до
+   0.94, звуки игры ложились сверху — сумма пробивала потолок (запись с телефона владельца: пик 1.36,
+   ~0.9% отсчётов срезано — это хрип; у прежней музыки было так же). Теперь всё идёт в одну шину:
+   общий коэффициент MIX_GAIN → мягкий потолок → динамик.
+   MIX_GAIN из замера источников, не на глаз: музыка на пике 0.94 + самый громкий звук игры
+   (блок щита) 0.20 + двигатель 0.04 = 1.18; 0.891 (−1 дБ) / 1.18 = 0.755 → 0.75. Вся смесь
+   тише на 2.5 дБ разом — соотношение музыки и звуков то же, форма музыки та же (страж 360).
+   Потолок — только ремень безопасности: до 0.9 это прямой провод (ничего не меняет), выше —
+   плавно не пускает к пределу. В обычной игре смесь до 0.9 не доходит (страж 361: пик ~0.59,
+   пачка звуков разом ~0.8). Компрессора нет намеренно: DynamicsCompressor всегда добавляет своё
+   автоусиление (замер: музыка громче на 0.7 дБ), т.е. непрозрачен даже без сжатия.
+   Шина привязана к контексту: пересоздан AudioContext — строится заново (как music.js, NOISE_BUF). */
+const MIX_GAIN=0.75;
+let AUDIO_OUT=null;
+function audioOut(ac){
+  if(!ac) return null;
+  if(AUDIO_OUT && AUDIO_OUT.context===ac) return AUDIO_OUT;
+  const inp=ac.createGain(); inp.gain.value=MIX_GAIN;
+  const cap=ac.createWaveShaper(); { const n=2048, c=new Float32Array(n); // линейно до 0.9, выше плавно, не выше 0.968 (сверено численно)
+    for(let i=0;i<n;i++){ const x=i/(n-1)*2-1, a=Math.abs(x); c[i]=Math.sign(x)*(a<=.9 ? a : .9+.08*Math.tanh((a-.9)/.08)); } cap.curve=c; }
+  inp.connect(cap); cap.connect(ac.destination);
+  return AUDIO_OUT=inp;
+}
 function beep(f,dur,type,vol,slide){
   if(MUTED)return;
   const ac=audio(); if(!ac)return;
@@ -580,7 +605,7 @@ function beep(f,dur,type,vol,slide){
   if(slide)o.frequency.exponentialRampToValueAtTime(slide,ac.currentTime+dur);
   g.gain.setValueAtTime(vol||.12,ac.currentTime);
   g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+dur);
-  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+  o.connect(g); g.connect(audioOut(ac)); o.start(); o.stop(ac.currentTime+dur);
 }
 let NOISE_BUF=null; // белый шум для свистов/взмахов (Фаза Б), кэшируется на AudioContext
 function noiseBuf(ac){
@@ -599,7 +624,7 @@ function swoosh(dur,f0,f1,vol,q){ // шум через поющий bandpass —
   const g=ac.createGain();
   g.gain.setValueAtTime(vol||.1,ac.currentTime);
   g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+dur);
-  src.connect(flt); flt.connect(g); g.connect(ac.destination);
+  src.connect(flt); flt.connect(g); g.connect(audioOut(ac));
   src.start(); src.stop(ac.currentTime+dur);
 }
 const SFX_PEAK={hit:.11, nova:.13}; // v1.48.0 «Микс»: пики приручены — эффекты бьют сайдчейном, а не громкостью
