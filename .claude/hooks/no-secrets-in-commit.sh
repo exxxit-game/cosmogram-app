@@ -30,12 +30,18 @@ process.stdin.on('end',()=>{
     [/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/,'похоже на JWT (service_role/anon ключ Supabase?)'],
     [/sk-(live|proj)-[A-Za-z0-9]{20,}/,'ключ вида sk-live-/sk-proj- (Stripe/OpenAI-подобный)'],
     [/xox[baprs]-[A-Za-z0-9-]{10,}/,'Slack token'],
-    [/ghp_[A-Za-z0-9]{36}/,'GitHub personal access token']
+    [/ghp_[A-Za-z0-9]{36}/,'GitHub personal access token (classic)'],
+    [/github_pat_[A-Za-z0-9_]{60,}/,'GitHub fine-grained personal access token'],
+    [/sk-ant-[A-Za-z0-9-]{20,}/,'ключ вида sk-ant- (Anthropic)'],
+    [/AIza[A-Za-z0-9_-]{35}/,'ключ вида AIza (Google API)'],
+    [/\b\d{8,10}:[A-Za-z0-9_-]{34,35}\b/,'похоже на Telegram bot_token'],
+    [/GOCSPX-[A-Za-z0-9_-]{28,}/,'похоже на Google OAuth client_secret']
   ];
   for(const [re,label] of pats){ if(re.test(added)){ console.log(label); process.exit(0); } }
 });
 ")
   if [[ -n "$hit" ]]; then
+    node "$(dirname "$0")/lib/signal-trail.mjs" record secrets 5 "похоже на секрет в застейдженном diff: $hit" >/dev/null 2>&1
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"ask\",\"permissionDecisionReason\":\"В застейдженных изменениях найдено похожее на секрет: ${hit}. Это ложное срабатывание (пример в комментарии/тесте) или реальный ключ, который нужно убрать и перевыпустить?\"}}"
     exit 0
   fi

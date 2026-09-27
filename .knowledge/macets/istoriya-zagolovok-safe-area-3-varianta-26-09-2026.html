@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<!--
+  Макет: карточка-история (angarPvStoryDraw, js/ui.js:2237-2375) — длинное название налезает
+  на родную шапку Telegram (26.09.2026, живой скрин владельца, «Аккреционный диск чёрной дыры»).
+
+  ИЗМЕРЕНО, НЕ ПРИДУМАНО:
+  - Реальная формула сейчас (js/ui.js:2288-2317): fs=round(BW*0.048) ФИКСИРОВАН, переносится
+    сколько угодно строк, плашка растёт от центра BH*0.10 — верхний край плашки НИЧЕМ не
+    ограничен снизу (может уйти выше y=0). Авто-уменьшения шрифта нет вообще.
+  - В игре УЖЕ есть готовый, живьём измеренный безопасный отступ для той же самой ситуации
+    (родная шапка Telegram поверх Fullscreen Mini App) — centerTitleOnHeader(), js/ui.js:337-366:
+    top = notch (t.safeAreaInset.top) + H (t.contentSafeAreaInset.top, «46px на всех трёх
+    проверенных телефонах владельца», ui.js:245-246). Ниже используются ТЕ ЖЕ числа (notch=44,
+    H=46 — типичные живые значения из этого же файла), не новая догадка с нуля.
+  - Бейдж «COSMOGRAM» (ui.js:2330-2345) сейчас — «язычок» НАД карточкой факта (~65% высоты),
+    не наверху карточки. Текст меняется на COSMOGRAM.FUN только в вариантах A/B (в «Было» —
+    как сейчас, для честного сравнения).
+
+  Три варианта ниже — не готовое решение, а три конкретных развилки для явного выбора владельца.
+  Кнопки сверху переключают "стресс-тест" названия (4 строки / одно бьющееся слово).
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Макет: заголовок истории + safe-area</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@500;700&display=swap');
+  *{box-sizing:border-box;}
+  body{margin:0;background:#05070f;color:#dfe6ff;font:14px/1.5 -apple-system,Segoe UI,sans-serif;padding:20px;}
+  h1{font-size:17px;color:#f0c040;margin:0 0 4px;}
+  p.sub{color:#8a93b8;margin:0 0 18px;max-width:900px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;}
+  .toolbar button{background:#12224a;color:#dfe6ff;border:1px solid #2a3a6a;border-radius:8px;
+    padding:8px 14px;font:600 13px "Exo 2",sans-serif;cursor:pointer;}
+  .toolbar button.active{background:#dba93c;color:#2c1f08;border-color:#dba93c;}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;}
+  .card{width:230px;}
+  .card h2{font-size:13px;margin:0 0 8px;color:#fff;}
+  .card .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;margin-bottom:6px;}
+  .tag.bad{background:#5a2020;color:#ffb0b0;}
+  .tag.good{background:#1f4a2a;color:#a0ffb0;}
+  canvas{width:230px;height:409px;border-radius:10px;border:1px solid #223;display:block;background:#000;}
+  .note{font-size:11.5px;color:#8a93b8;margin-top:8px;max-width:230px;}
+</style>
+</head>
+<body>
+
+<h1>Заголовок истории: safe-area сверху + авто-сжатие</h1>
+<p class="sub">Три конкретных варианта, не готовое решение. «Было» — точная копия текущей формулы
+(js/ui.js:2288-2345) для честного сравнения. Переключатели ниже стресс-тестируют реальное
+длинное название и синтетическое «одно бьющееся слово» (тот класс проблемы, который уже был
+раньше, «опустить чуть-чуть» — одно слово шире плашки не переносится, а сжимается по горизонтали).</p>
+
+<div class="toolbar">
+  <button id="btnT1" class="active">Название: «Аккреционный диск чёрной дыры» (4 слова)</button>
+  <button id="btnT2">Стресс-тест: «БИОЛЮМИНЕСЦЕНЦИЯ» (одно длинное слово)</button>
+</div>
+
+<div class="row">
+  <div class="card">
+    <span class="tag bad">Было — баг</span>
+    <h2>Точная копия текущей формулы</h2>
+    <canvas id="cvBaseline" width="690" height="1440"></canvas>
+    <p class="note">Плашка растёт от центра BH·0.10 без ограничения сверху — на 4 строках верхний
+    край уходит к самому y=0 или выше, под родную шапку Telegram (иконки статус-бара/кнопки
+    «Назад»/⋮). Шрифт не уменьшается никогда.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag good">Вариант A</span>
+    <h2>Safe-area снизу как жёсткий пол + авто-сжатие шрифта</h2>
+    <canvas id="cvA" width="690" height="1440"></canvas>
+    <p class="note">Верхний край плашки ЗАФИКСИРОВАН на notch+H (те же 2 живых числа, что уже
+    держат #hangarTitle) — плашка растёт вниз, никогда вверх. Если строк больше 2 — шрифт
+    уменьшается шагами (до пола) прежде чем показывать. Бейдж остаётся на месте, текст →
+    COSMOGRAM.FUN.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag good">Вариант B</span>
+    <h2>Бейдж наверх (твоя идея), имя под ним</h2>
+    <canvas id="cvB" width="690" height="1440"></canvas>
+    <p class="note">COSMOGRAM.FUN — маленькой меткой у самого верха, от safe-area. Имя — под ней,
+    с тем же авто-сжатием, что в варианте A. Меняется общая композиция карточки, не только
+    исправление бага — это структурно другое решение, отдельный выбор.</p>
+  </div>
+</div>
+
+<script>
+const TITLES={
+  t1:'Аккреционный диск чёрной дыры',
+  t2:'БИОЛЮМИНЕСЦЕНЦИЯ'
+};
+let curTitle=TITLES.t1;
+document.getElementById('btnT1').onclick=()=>{setTitle('t1');};
+document.getElementById('btnT2').onclick=()=>{setTitle('t2');};
+function setTitle(k){
+  curTitle=TITLES[k];
+  document.getElementById('btnT1').classList.toggle('active',k==='t1');
+  document.getElementById('btnT2').classList.toggle('active',k==='t2');
+  drawAll();
+}
+
+const FACT='Внутренние орбиты честно вращаются быстрее внешних (Кеплер, Ω∝R⁻¹·⁵), джет турбулентно мерцает — не стабильный луч';
+
+function bgAndDisc(x,BW,BH){
+  x.clearRect(0,0,BW,BH);
+  const bg=x.createRadialGradient(BW*0.5,BH*0.35,0,BW*0.5,BH*0.35,Math.max(BW,BH)*0.8);
+  bg.addColorStop(0,'#12224a'); bg.addColorStop(1,'#0a1030');
+  x.fillStyle=bg; x.fillRect(0,0,BW,BH);
+  // плейсхолдер узора скина — просто кольца, не настоящий fx (тут не про это)
+  x.save(); x.translate(BW/2,BH*0.42);
+  for(let i=0;i<9;i++){
+    x.beginPath(); x.ellipse(0,0,BW*0.34+i*8,BW*0.10+i*2,0,0,Math.PI*2);
+    x.strokeStyle='rgba(219,169,60,'+(0.55-i*0.05)+')'; x.lineWidth=3; x.stroke();
+  }
+  x.fillStyle='#000'; x.beginPath(); x.arc(0,0,BW*0.06,0,Math.PI*2); x.fill();
+  x.restore();
+}
+
+function drawFactCard(x,BW,BH,cardY,tagText,tagOnLeftAboveFact){
+  const cardX=BW*0.08, cardW=BW*0.84, tagH=Math.round(BW*0.09), tagR=8;
+  if(tagOnLeftAboveFact){
+    x.font='700 '+Math.round(BW*0.032)+'px "Exo 2", sans-serif';
+    x.textAlign='left';
+    const tagPad=Math.round(BW*0.03);
+    const tagW=Math.round(x.measureText(tagText).width+tagPad*2);
+    x.fillStyle='#dba93c';
+    x.beginPath();
+    x.moveTo(cardX,cardY+tagH); x.lineTo(cardX,cardY+tagR);
+    x.arcTo(cardX,cardY,cardX+tagR,cardY,tagR);
+    x.lineTo(cardX+tagW-tagR,cardY);
+    x.arcTo(cardX+tagW,cardY,cardX+tagW,cardY+tagR,tagR);
+    x.lineTo(cardX+tagW,cardY+tagH);
+    x.closePath(); x.fill();
+    x.fillStyle='#2c1f08'; x.textBaseline='middle';
+    x.fillText(tagText,cardX+tagPad,cardY+tagH/2+1);
+  }
+  const boxY=tagOnLeftAboveFact?cardY+tagH-2:cardY;
+  const fs2=Math.round(BW*0.036), lh=fs2*1.4, padX=Math.round(BW*0.045), padY=Math.round(BW*0.04);
+  x.font='500 '+fs2+'px "Exo 2", sans-serif';
+  const maxW=cardW-padX*2;
+  const words=FACT.split(' '); const lines=[]; let cur='';
+  for(const w of words){ const t=cur?cur+' '+w:w; if(x.measureText(t).width>maxW && cur){ lines.push(cur); cur=w; } else cur=t; }
+  if(cur) lines.push(cur);
+  const maxLines=6; const shown=lines.slice(0,maxLines);
+  const boxH=padY*2+shown.length*lh, r2=10;
+  const grad=x.createLinearGradient(0,boxY,0,boxY+boxH);
+  grad.addColorStop(0,'rgba(24,42,78,.96)'); grad.addColorStop(1,'rgba(15,31,61,.95)');
+  x.fillStyle=grad; x.strokeStyle='rgba(255,255,255,.10)'; x.lineWidth=1;
+  x.beginPath();
+  x.moveTo(cardX,boxY); x.lineTo(cardX+cardW-r2,boxY); x.arcTo(cardX+cardW,boxY,cardX+cardW,boxY+r2,r2);
+  x.lineTo(cardX+cardW,boxY+boxH-r2); x.arcTo(cardX+cardW,boxY+boxH,cardX+cardW-r2,boxY+boxH,r2);
+  x.lineTo(cardX+r2,boxY+boxH); x.arcTo(cardX,boxY+boxH,cardX,boxY+boxH-r2,r2);
+  x.lineTo(cardX,boxY); x.closePath(); x.fill(); x.stroke();
+  x.fillStyle='#dfe6ff'; x.textAlign='center'; x.textBaseline='alphabetic';
+  shown.forEach((ln,i)=>x.fillText(ln,BW/2,boxY+padY+fs2*0.85+i*lh,maxW));
+}
+
+// системная полоса сверху — статус-бар (тёмная) + родная шапка Telegram (чуть светлее, с кнопками)
+function drawSystemChrome(x,BW,BH,notchPx,Hpx,scale){
+  const notch=notchPx*scale, H=Hpx*scale;
+  x.fillStyle='rgba(0,0,0,.55)'; x.fillRect(0,0,BW,notch);
+  x.fillStyle='rgba(10,16,32,.55)'; x.fillRect(0,notch,BW,H);
+  x.strokeStyle='rgba(255,255,255,.18)'; x.beginPath(); x.moveTo(0,notch+H); x.lineTo(BW,notch+H); x.stroke();
+  x.fillStyle='rgba(255,255,255,.5)'; x.font='600 '+Math.round(9*scale)+'px sans-serif'; x.textAlign='left';
+  x.fillText('← Назад',10*scale,notch+H/2+3*scale);
+  x.textAlign='right'; x.fillText('⌄ ⋮',BW-10*scale,notch+H/2+3*scale);
+}
+
+function wrapLines(x,text,fs,nmaxW,font){
+  x.font=font.replace('__FS__',fs);
+  const words=text.split(' '); const lines=[]; let cur='';
+  for(const w of words){ const t=cur?cur+' '+w:w; if(x.measureText(t).width>nmaxW && cur){ lines.push(cur); cur=w; } else cur=t; }
+  if(cur) lines.push(cur);
+  return lines;
+}
+
+// === «Было» — точная копия текущей боевой формулы (ui.js:2288-2317) ===
+function drawBaseline(x,BW,BH,scale,name){
+  bgAndDisc(x,BW,BH);
+  const fs=Math.round(BW*0.048);
+  const font='700 __FS__px "Exo 2", sans-serif';
+  const nmaxW=BW*0.78, nPadY=Math.round(BW*0.035), nlh=fs*1.25;
+  const nLines=wrapLines(x,name,fs,nmaxW,font);
+  const plateW=BW*0.82, plateH=nPadY*2+nLines.length*nlh, plateX=BW*0.09, plateY=BH*0.10-plateH/2, pr=14;
+  x.fillStyle='rgba(24,42,78,1)';
+  x.beginPath();
+  x.moveTo(plateX+pr,plateY); x.lineTo(plateX+plateW-pr,plateY); x.arcTo(plateX+plateW,plateY,plateX+plateW,plateY+pr,pr);
+  x.lineTo(plateX+plateW,plateY+plateH-pr); x.arcTo(plateX+plateW,plateY+plateH,plateX+plateW-pr,plateY+plateH,pr);
+  x.lineTo(plateX+pr,plateY+plateH); x.arcTo(plateX,plateY+plateH,plateX,plateY+plateH-pr,pr);
+  x.lineTo(plateX,plateY+pr); x.arcTo(plateX,plateY,plateX+pr,plateY,pr);
+  x.closePath(); x.fill();
+  x.fillStyle='#f4f6fb'; x.textAlign='center'; x.textBaseline='alphabetic';
+  x.font=font.replace('__FS__',fs);
+  nLines.forEach((ln,i)=>x.fillText(ln,BW/2,plateY+nPadY+fs*0.85+i*nlh,nmaxW));
+  drawFactCard(x,BW,BH,BH*0.655,'COSMOGRAM',true);
+  drawSystemChrome(x,BW,BH,44,46,scale); // системная шапка рисуется ПОСЛЕДНЕЙ — так видно баг: буквы реально под ней
+}
+
+// === Вариант A: safe-area как жёсткий пол + авто-сжатие шрифта ===
+function drawVariantA(x,BW,BH,scale,name){
+  bgAndDisc(x,BW,BH);
+  const notchPx=44, Hpx=46; // те же 2 живых числа, что centerTitleOnHeader() (ui.js:342-344)
+  const topSafe=(notchPx+Hpx)*scale + 6*scale; // +6 — небольшой зазор, чтобы плашка не впритык к линии шапки
+  const font='700 __FS__px "Exo 2", sans-serif';
+  let fs=Math.round(BW*0.048);
+  const nmaxW=BW*0.78, floor=fs*0.6;
+  let nLines=wrapLines(x,name,fs,nmaxW,font);
+  while(nLines.length>2 && fs>floor){ fs=Math.round(fs*0.9); nLines=wrapLines(x,name,fs,nmaxW,font); }
+  const nPadY=Math.round(BW*0.035), nlh=fs*1.25;
+  const plateW=BW*0.82, plateH=nPadY*2+nLines.length*nlh, plateX=BW*0.09, plateY=topSafe;
+  x.fillStyle='rgba(24,42,78,1)';
+  const pr=14;
+  x.beginPath();
+  x.moveTo(plateX+pr,plateY); x.lineTo(plateX+plateW-pr,plateY); x.arcTo(plateX+plateW,plateY,plateX+plateW,plateY+pr,pr);
+  x.lineTo(plateX+plateW,plateY+plateH-pr); x.arcTo(plateX+plateW,plateY+plateH,plateX+plateW-pr,plateY+plateH,pr);
+  x.lineTo(plateX+pr,plateY+plateH); x.arcTo(plateX,plateY+plateH,plateX,plateY+plateH-pr,pr);
+  x.lineTo(plateX,plateY+pr); x.arcTo(plateX,plateY,plateX+pr,plateY,pr);
+  x.closePath(); x.fill();
+  x.fillStyle='#f4f6fb'; x.textAlign='center'; x.textBaseline='alphabetic';
+  x.font=font.replace('__FS__',fs);
+  nLines.forEach((ln,i)=>x.fillText(ln,BW/2,plateY+nPadY+fs*0.85+i*nlh,nmaxW));
+  drawFactCard(x,BW,BH,BH*0.655,'COSMOGRAM.FUN',true);
+  drawSystemChrome(x,BW,BH,notchPx,Hpx,scale);
+}
+
+// === Вариант B: бейдж наверх, имя под ним ===
+function drawVariantB(x,BW,BH,scale,name){
+  bgAndDisc(x,BW,BH);
+  const notchPx=44, Hpx=46;
+  const topSafe=(notchPx+Hpx)*scale + 6*scale;
+  // маленький бейдж прямо под safe-area, по центру
+  const tagText='COSMOGRAM.FUN';
+  x.font='700 '+Math.round(BW*0.030)+'px "Exo 2", sans-serif';
+  const tagPad=Math.round(BW*0.025), tagH=Math.round(BW*0.065);
+  const tagW=Math.round(x.measureText(tagText).width+tagPad*2);
+  const tagX=BW/2-tagW/2, tagY=topSafe;
+  x.fillStyle='#dba93c';
+  const tr=6;
+  x.beginPath();
+  x.moveTo(tagX+tr,tagY); x.lineTo(tagX+tagW-tr,tagY); x.arcTo(tagX+tagW,tagY,tagX+tagW,tagY+tr,tr);
+  x.lineTo(tagX+tagW,tagY+tagH-tr); x.arcTo(tagX+tagW,tagY+tagH,tagX+tagW-tr,tagY+tagH,tr);
+  x.lineTo(tagX+tr,tagY+tagH); x.arcTo(tagX,tagY+tagH,tagX,tagY+tagH-tr,tr);
+  x.lineTo(tagX,tagY+tr); x.arcTo(tagX,tagY,tagX+tr,tagY,tr);
+  x.closePath(); x.fill();
+  x.fillStyle='#2c1f08'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(tagText,tagX+tagW/2,tagY+tagH/2+1);
+
+  const font='700 __FS__px "Exo 2", sans-serif';
+  let fs=Math.round(BW*0.048);
+  const nmaxW=BW*0.78, floor=fs*0.6;
+  let nLines=wrapLines(x,name,fs,nmaxW,font);
+  while(nLines.length>2 && fs>floor){ fs=Math.round(fs*0.9); nLines=wrapLines(x,name,fs,nmaxW,font); }
+  const nPadY=Math.round(BW*0.035), nlh=fs*1.25;
+  const plateW=BW*0.82, plateH=nPadY*2+nLines.length*nlh, plateX=BW*0.09, plateY=tagY+tagH+8*scale, pr=14;
+  x.fillStyle='rgba(24,42,78,1)';
+  x.beginPath();
+  x.moveTo(plateX+pr,plateY); x.lineTo(plateX+plateW-pr,plateY); x.arcTo(plateX+plateW,plateY,plateX+plateW,plateY+pr,pr);
+  x.lineTo(plateX+plateW,plateY+plateH-pr); x.arcTo(plateX+plateW,plateY+plateH,plateX+plateW-pr,plateY+plateH,pr);
+  x.lineTo(plateX+pr,plateY+plateH); x.arcTo(plateX,plateY+plateH,plateX,plateY+plateH-pr,pr);
+  x.lineTo(plateX,plateY+pr); x.arcTo(plateX,plateY,plateX+pr,plateY,pr);
+  x.closePath(); x.fill();
+  x.fillStyle='#f4f6fb'; x.textAlign='center'; x.textBaseline='alphabetic';
+  x.font=font.replace('__FS__',fs);
+  nLines.forEach((ln,i)=>x.fillText(ln,BW/2,plateY+nPadY+fs*0.85+i*nlh,nmaxW));
+  // без язычка над фактом — бейдж уже показан наверху
+  drawFactCard(x,BW,BH,BH*0.655,'',false);
+  drawSystemChrome(x,BW,BH,notchPx,Hpx,scale);
+}
+
+function drawAll(){
+  const BW=270,BH=480,scale=2.556; // 690/270 — тот же приём «короб×dpr», что в игре
+  const cvs={baseline:drawBaseline,A:drawVariantA,B:drawVariantB};
+  ['Baseline','A','B'].forEach(k=>{});
+  const c1=document.getElementById('cvBaseline'), c2=document.getElementById('cvA'), c3=document.getElementById('cvB');
+  [c1,c2,c3].forEach(cv=>{ const x=cv.getContext('2d'); x.save(); x.scale(scale,scale); });
+  drawBaseline(c1.getContext('2d'),BW,BH,scale,curTitle);
+  drawVariantA(c2.getContext('2d'),BW,BH,scale,curTitle);
+  drawVariantB(c3.getContext('2d'),BW,BH,scale,curTitle);
+}
+document.fonts.ready.then(drawAll);
+setTimeout(drawAll,300); // подстраховка, если document.fonts.ready не сработает в старом WebView
+</script>
+</body>
+</html>

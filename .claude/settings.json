@@ -21,7 +21,6 @@
       "Bash(gh:*)"
     ],
     "allow": [
-      "Bash(node tests/guard.mjs)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)"
@@ -32,7 +31,10 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/protect-core.sh" }
+          { "type": "command", "command": ".claude/hooks/protect-core.sh" },
+          { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" },
+          { "type": "command", "command": "node .claude/hooks/shared-constant-guard.mjs" },
+          { "type": "command", "command": "node .claude/hooks/geometry-measure-guard.mjs" }
         ]
       },
       {
@@ -65,15 +67,39 @@
         "matcher": "Edit|Write",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" },
-          { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" }
+          { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" },
+          { "type": "command", "command": ".claude/hooks/scan-code-mixed-script.sh" },
+          { "type": "command", "command": ".claude/hooks/repeat-edit-tracker.sh" },
+          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node .claude/hooks/skin-fit-registered-guard.mjs" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/post-commit-drift-check.sh" },
+          { "type": "command", "command": ".claude/hooks/commit-tracker.sh" },
+          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node .claude/hooks/device-eval-vs-hwshot-guard.mjs" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/swear-pause-check.sh" }
         ]
       }
     ],
     "SessionStart": [
       {
-        "matcher": "compact",
+        "matcher": "compact|startup|resume",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" }
+          { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" },
+          { "type": "command", "command": ".claude/hooks/check-live-version.sh" },
+          { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" },
+          { "type": "command", "command": ".claude/hooks/remind-connect-phones.sh" }
         ]
       }
     ],
@@ -81,7 +107,10 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=warn node .claude/hooks/claim-check-hook.mjs" }
+          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=warn node .claude/hooks/claim-check-hook.mjs" },
+          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=warn node .claude/hooks/ask-then-act-guard.mjs" },
+          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=warn node .claude/hooks/excuse-words-guard.mjs" },
+          { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=warn node .claude/hooks/device-claim-guard.mjs" }
         ]
       }
     ]

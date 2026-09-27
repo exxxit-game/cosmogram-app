@@ -581,7 +581,10 @@ function ptWireTray(){
         sfx.click(); haptic('medium');
         ptRender(ptSelIdx);
         const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
-        ptShowToast('Поставил '+ptPinName(p));
+        // 24.09.2026 (владелец: «два раза одно и то же показывать» — тост «Поставил X» и тут
+        // же открывшаяся панель настройки этой самой точки): тост убран, панель уже сама —
+        // честное подтверждение, дублировать нечего. «Убрал» (ptRemovePin) тостом остаётся —
+        // после удаления панель закрывается, там подтвердить больше нечем.
         ptSetUndo(revert);
       } else if(!moved){
         // 12.09.2026: тап без переноса на ленту (и без промаха мимо неё) — не «ничего не
@@ -619,7 +622,8 @@ function ptWireTray(){
       sfx.click(); haptic('medium');
       ptRender(ptSelIdx);
       const revert=()=>{ const idx=pins.indexOf(p); if(idx>=0) pins.splice(idx,1); ptSelIdx=-1; ptRender(); };
-      ptShowToast('Поставил '+ptPinName(p));
+      // 24.09.2026: см. комментарий у того же тоста в drag-веткe выше (ptWireTray) — убран,
+      // панель настройки точки открывается сразу же и сама подтверждает постановку.
       ptSetUndo(revert);
     } else if(ptSelIdx>=0){
       ptSelIdx=-1; ptRender();

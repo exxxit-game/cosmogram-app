@@ -20,6 +20,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// 25.09.2026: общий затухающий след (signal-trail.mjs) — см. комментарий в самом файле.
+// Импорт в try, не await — единичный сбой этого модуля не должен ронять fail-safe хука.
+// pathToFileURL обязателен: на Windows import() сырого пути "C:\..." падает с
+// ERR_UNSUPPORTED_ESM_URL_SCHEME — поймано живым тестом, не угадано (signal-trail
+// молча не писался, heat оставался пустым, пока не добавил эту обёртку).
+let recordSignal = () => {};
+try {
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+} catch { /* модуль недоступен — хук продолжает работать без общего следа */ }
 
 const CLAIM_CHECKS_LOG = path.resolve(
   process.env.CLAIM_CHECKS_LOG_PATH ||
@@ -65,6 +78,39 @@ const CLAIM_PATTERNS = [
   /\*\*(?:SHIPPED|DONE|COMPLETE|READY|VERIFIED|LIVE|FIXED|RESOLVED|CLOSED)\*\*/,
   // "verified end-to-end"
   /\bverified\s+end[\s-]to[\s-]end\b/i,
+
+  /* 24.09.2026 (владелец: «размышляй дальше, ищи») — до этой правки все паттерны
+     выше были ТОЛЬКО на английском, хотя правило проекта требует отвечать
+     ПО-РУССКИ всегда (ABSOLUTE). Значит хук был декоративным весь вечер —
+     «готово»/«исправлено»/«проверено» на русском не ловились НИ РАЗУМ. \b в
+     JS regex не понимает кириллицу (основан на \w, туда кириллица не входит) —
+     границы слова ниже сделаны через (?:^|\s|["«]) / (?=[\s.,!?:;—-]|$), не \b. */
+  // "Готово.", "Исправлено:", "Проверено —", в начале строки/предложения
+  new RegExp(
+    String.raw`(?:^|(?<=[.!?])\s+|\n)\s*` +
+      String.raw`(?:готово|исправлено|проверено|сделано|решено|запущено|работает|` +
+      String.raw`закончено|завершено|закрыто|починено|отправлено|доделано)` +
+      String.raw`(?=[\s.,!:;—-]|$)`,
+    'im'
+  ),
+  // "Исправил X", "Проверил X", "Починил X", "Запустил X", "Сделал X", "Решил X"
+  new RegExp(
+    String.raw`(?:^|(?<=[.!?])\s+|\n)\s*` +
+      String.raw`(?:исправил|проверил|починил|запустил|сделал|решил|доделал|` +
+      String.raw`отправил|завершил|закрыл|реализовал)\S{0,3}\s+` +
+      String.raw`[^\n.!?]{0,80}`,
+    'im'
+  ),
+  // "X готово/исправлено/работает/проверено" (подлежащее + предикат)
+  new RegExp(
+    String.raw`[^\n.!?]{0,60}\s+` +
+      String.raw`(?:уже|теперь|наконец|полностью|окончательно)?\s*` +
+      String.raw`(?:готово|исправлено|проверено|работает|решено|сделано|запущено)` +
+      String.raw`(?=[\s.,!:;—-]|$)`,
+    'i'
+  ),
+  // Жирные маркеры на русском
+  /\*\*(?:ГОТОВО|ИСПРАВЛЕНО|ПРОВЕРЕНО|СДЕЛАНО|РЕШЕНО|ЗАПУЩЕНО|ЗАВЕРШЕНО|ЗАКРЫТО)\*\*/,
 ];
 
 const EXEMPT_CONTEXT = [
@@ -184,7 +230,28 @@ function findClaims(text) {
   return matches;
 }
 
-function hasFreshLog(windowMin = CLAIM_CHECK_FRESH_MIN) {
+// 25.09.2026, найдено живым тестом: старая версия проверяла только «есть ли
+// СВЕЖАЯ запись в логе», не «относится ли она к ТЕКУЩЕМУ заявлению» — запись
+// «цвет кнопки поменял на синий» 3 минуты назад засчитывалась как подтверждение
+// для СОВЕРШЕННО другого заявления («база данных полностью очищена») в этом же
+// ходу. Честная граница: полноценного понимания смысла здесь нет (это не LLM-
+// вызов, простой детерминированный скрипт) — но грубая проверка пересечения
+// значимых слов между записанным claim и текстом сообщения снимает САМЫЙ
+// очевидный случай (совершенно другая тема), не претендуя на большее.
+function significantWords(text) {
+  const words = String(text || '').toLowerCase().match(/[a-zа-яё0-9]{4,}/gi) || [];
+  return new Set(words);
+}
+
+function isRelevant(entryClaim, messageText) {
+  const logWords = significantWords(entryClaim);
+  if (logWords.size === 0) return true; // запись без текста — не за что зацепиться, не блокируем из-за этого
+  const msgWords = significantWords(messageText);
+  for (const w of logWords) if (msgWords.has(w)) return true;
+  return false;
+}
+
+function hasFreshLog(messageText, windowMin = CLAIM_CHECK_FRESH_MIN) {
   if (!fs.existsSync(CLAIM_CHECKS_LOG)) return false;
   let lines;
   try {
@@ -203,7 +270,7 @@ function hasFreshLog(windowMin = CLAIM_CHECK_FRESH_MIN) {
       const tsStr = entry.timestamp || entry.ts;
       if (!tsStr) continue;
       const ts = parseTsAsUtc(tsStr);
-      if (!Number.isNaN(ts) && ts >= cutoff) return true;
+      if (!Number.isNaN(ts) && ts >= cutoff && isRelevant(entry.claim, messageText)) return true;
     } catch {
       continue;
     }
@@ -241,7 +308,7 @@ function main() {
   const claims = findClaims(message);
   if (!claims.length) emitOk();
 
-  if (hasFreshLog()) emitOk();
+  if (hasFreshLog(message)) emitOk();
 
   const bullets = claims.map((p) => `  - "${p}"`).join('\n');
   const reason =
@@ -253,6 +320,8 @@ function main() {
     `  2. Запиши: node .claude/hooks/log-claim.mjs "<что утверждаю>" "<как проверил>"\n` +
     `  3. Ответь заново\n\n` +
     `Отключить на раз: CLAIM_CHECK_ENFORCE_MODE=warn или =off`;
+
+  try { recordSignal('claim-check', mode === 'block' ? 4 : 3, claims[0] || 'unverified claim'); } catch { /* см. комментарий у импорта выше */ }
 
   if (mode === 'warn') emitWarn(reason);
   emitBlock(reason);

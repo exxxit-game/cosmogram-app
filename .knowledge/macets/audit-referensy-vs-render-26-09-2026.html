@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<title>Скин vs референс — аудит 26.09.2026</title>
+<style>
+  body{background:#0b0e14;color:#e8ecf1;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;margin:0;padding:24px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .meta{color:#8b93a3;font-size:13px;margin-bottom:20px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(560px,1fr));gap:16px;}
+  .card{background:#141924;border:1px solid #232b3a;border-radius:10px;padding:12px;}
+  .hdr{display:flex;gap:8px;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;}
+  .id{color:#5fb3ff;font-weight:700;font-size:13px;}
+  .name{font-weight:600;font-size:14px;}
+  .fx{color:#6b7385;font-size:11px;font-family:monospace;}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .col{display:flex;flex-direction:column;}
+  .lbl{font-size:10px;letter-spacing:.06em;color:#6b7385;margin-bottom:4px;text-transform:uppercase;}
+  .render,.ref{width:100%;height:200px;object-fit:contain;background:#05070c;border-radius:6px;border:1px solid #232b3a;}
+  .textref{background:#05070c;border:1px solid #232b3a;border-radius:6px;padding:8px;height:200px;overflow:auto;font-size:12px;line-height:1.4;}
+  .textref.missing{color:#e06b6b;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .badge{display:inline-block;font-size:10px;background:#232b3a;color:#9fb3d1;padding:2px 6px;border-radius:4px;margin-bottom:6px;}
+  .src{color:#6b7385;font-size:10px;margin-top:6px;font-family:monospace;}
+</style></head>
+<body>
+<h1>Скин ↔ референс: сверка 98 явлений (id113-210)</h1>
+<div class="meta">Слева — как рисуется в игре прямо сейчас. Справа — фото, если найдено на диске, иначе цитата из исследования. 26.09.2026.</div>
+<div class="grid">
+<div class="card">
+    <div class="hdr"><span class="id">#113</span><span class="name">Больше рецепторов ≠ лучше</span><span class="fx">bioMantisEye</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id113.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/mantis-shrimp-glaza-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#114</span><span class="name">Циркулярная поляризация</span><span class="fx">bioMantisPol</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id114.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/rak-bogomol-krugovaya-polyarizaciya-realnye-dannye.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#115</span><span class="name">Трёхмерное зрение одним глазом</span><span class="fx">bioMantis3Eye</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id115.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/mantis-shrimp-glaza-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#116</span><span class="name">Удар смашера</span><span class="fx">bioMantisPunch</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id116.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/mantis-shrimp-glaza-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#117</span><span class="name">Решётка гуанина — дышащий цвет</span><span class="fx">bioChamGuanine</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id117.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Тот файл целиком про НЕИЗМЕНЯЕМЫЙ, фиксированный структурный цвет: крыло бабочки Морфо, павлинье перо, жук-скарабей, перламутр — во всех случаях наноразмерная структура ткани построена один раз в процессе роста и дальше физически не меняется; крыло Морфо синее всегда, под любым освещением (меняется лишь кажущийся оттенок при повороте — это угол наблюдения, не перестройка самой структуры). Этот файл — принципиально ДР…</p><div class="src">tyuning/CHAMELEON-COLOR-CHANGE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#118</span><span class="name">Два слоя иридофоров</span><span class="fx">bioChamIridophore</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id118.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/hameleon-2-sloya-iridoforov-realnaya-diagramma.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#119</span><span class="name">Социальный сигнал, не камуфляж</span><span class="fx">bioChamSocial</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id119.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>1. **Регулируемая решётка нанокристаллов гуанина как «Flash/скин, где цвет меняется физикой, а не краской» — самый сильный и самый научно точный пункт файла.** В отличие от любого другого пункта всей цветовой линейки серии, здесь есть готовое число управляющего параметра (30% разницы расстояния между расслабленным и возбуждённым состоянием, диапазон решётки 233–480 нм) и прямая, честная параллель уже отрисованному в …</p><div class="src">tyuning/CHAMELEON-COLOR-CHANGE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#120</span><span class="name">Панцирный хамелеон</span><span class="fx">bioChamPanther</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id120.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/hameleon-nastoyaschy-panterovy-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#121</span><span class="name">Вуалевый хамелеон</span><span class="fx">bioChamVeiled</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id121.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированный, но по качеству источника более низкий Тир (специализированные зоо-/петкеринг-сайты, не рецензируемые статьи, — честно помечено ниже уровнем документированности, чем Тир 1–2 выше) факт видовой вариации: **панцирный хамелеон** (*Furcifer pardalis*, тот самый вид landmark-исследования 2015 года) задокументированно один из самых зрелищных — в зависимости от локальной популяции на Мадагаскаре может по…</p><div class="src">tyuning/CHAMELEON-COLOR-CHANGE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#122</span><span class="name">Доказательство Хейлса, 1999</span><span class="fx">bioHoneyHales</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id122.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/soty-geksagon-realnoe-foto-makro.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#123</span><span class="name">Три фигуры-мостильщицы</span><span class="fx">bioHoneyTilingTrio</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id123.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/soty-geksagon-realnoe-foto-makro.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#124</span><span class="name">Открытый научный спор</span><span class="fx">bioHoneyDebate</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id124.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/soty-geksagon-realnoe-foto-makro.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#125</span><span class="name">Круг → шестиугольник</span><span class="fx">bioHoneyCircleHex</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id125.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/soty-geksagon-realnoe-foto-makro.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#126</span><span class="name">Наклон ~13°</span><span class="fx">bioHoneyTilt13</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id126.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/soty-geksagon-realnoe-foto-makro.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#127</span><span class="name">Нисходящий FM-чирп</span><span class="fx">bioBatChirp</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id127.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/letuchie-myshi-polet-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#128</span><span class="name">Компенсация Доплера</span><span class="fx">bioBatDoppler</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id128.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/letuchie-myshi-polet-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#129</span><span class="name">Мышца среднего уха</span><span class="fx">bioBatStapedius</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id129.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/letuchie-myshi-polet-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#130</span><span class="name">Сонар-джемминг мотылька</span><span class="fx">bioBatMothJam</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id130.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Девяносто седьмой файл в серии «Науки для тюнинга». Тема — биологический сонар: активное излучение ультразвука и извлечение информации из отражённого эха, а не пассивное слушание чужих звуков.</p><div class="src">tyuning/BAT-ECHOLOCATION.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#131</span><span class="name">Эхо рисует силуэт</span><span class="fx">bioBatEchoSilhouette</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id131.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/letuchie-myshi-polet-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#132</span><span class="name">Биологическая батарея</span><span class="fx">bioEelBattery</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id132.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/elektricheskiy-ugor-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#133</span><span class="name">Волта, Гальвани и угорь</span><span class="fx">bioEelVolta</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id133.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/elektricheskiy-ugor-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#134</span><span class="name">Три органа, не один</span><span class="fx">bioEelThreeOrgans</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id134.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/elektricheskiy-ugor-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#135</span><span class="name">Прыгающий угорь</span><span class="fx">bioEelLeap</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id135.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/elektricheskiy-ugor-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#136</span><span class="name">Спектр слабое ↔ сильное</span><span class="fx">bioEelSpectrum</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id136.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/elektricheskiy-ugor-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#137</span><span class="name">Хроматофор — мышечный ирис</span><span class="fx">bioCephChromatophore</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id137.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/osminog-kamuflyazh-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#138</span><span class="name">Слоистая кожа (3 механизма)</span><span class="fx">bioCephLayeredSkin</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id138.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/osminog-kamuflyazh-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#139</span><span class="name">Цветовая загадка камуфляжа</span><span class="fx">bioCephColorBlind</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id139.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/osminog-kamuflyazh-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#140</span><span class="name">Бегущее облако</span><span class="fx">bioCephPassingCloud</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id140.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/osminog-kamuflyazh-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#141</span><span class="name">Папиллы — рельеф кожи</span><span class="fx">bioCephPapillae</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id141.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/osminog-schupalce-prisoski-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#142</span><span class="name">Люциферин-люцифераза × 5</span><span class="fx">bioLumLuciferin</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id142.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **Реакция люциферин—люцифераза — задокументированный, самый сильный пункт файла: универсальный ПРИНЦИП хемилюминесценции, реализованный природой минимум четырьмя ХИМИЧЕСКИ РАЗНЫМИ, независимо возникшими парами молекул, — редкий во всей серии случай конвергентной эволюции на уровне самой химии, а не только формы.** Задокументированный общий механизм: светоизлучающая молекула-субстрат («люциферин») окисляется молекул…</p><div class="src">tyuning/BIOLUMINESCENCE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#143</span><span class="name">Photuris/Photinus — обман</span><span class="fx">bioLumFemmeFatale</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id143.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **Реакция люциферин—люцифераза — задокументированный, самый сильный пункт файла: универсальный ПРИНЦИП хемилюминесценции, реализованный природой минимум четырьмя ХИМИЧЕСКИ РАЗНЫМИ, независимо возникшими парами молекул, — редкий во всей серии случай конвергентной эволюции на уровне самой химии, а не только формы.** Задокументированный общий механизм: светоизлучающая молекула-субстрат («люциферин») окисляется молекул…</p><div class="src">tyuning/BIOLUMINESCENCE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#144</span><span class="name">Мигание светлячка</span><span class="fx">bioLumFirefly</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id144.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/firefly-biolyuminescenciya-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#145</span><span class="name">GFP-флуоресценция</span><span class="fx">bioLumGFP</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id145.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **Реакция люциферин—люцифераза — задокументированный, самый сильный пункт файла: универсальный ПРИНЦИП хемилюминесценции, реализованный природой минимум четырьмя ХИМИЧЕСКИ РАЗНЫМИ, независимо возникшими парами молекул, — редкий во всей серии случай конвергентной эволюции на уровне самой химии, а не только формы.** Задокументированный общий механизм: светоизлучающая молекула-субстрат («люциферин») окисляется молекул…</p><div class="src">tyuning/BIOLUMINESCENCE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#146</span><span class="name">Esca удильщика</span><span class="fx">bioLumAnglerEsca</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id146.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/udilshik-esca-primanka-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#147</span><span class="name">Foxfire — гриб</span><span class="fx">bioLumFoxfire</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id147.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **Foxfire (лисий огонь) — задокументированное свечение гнилой древесины несколькими видами грибов, и задокументированно ПЯТАЯ, отдельная от четырёх систем из Тира 1 химическая линия люциферина — на основе вещества хиспидин.** Задокументированные конкретные виды, часто встречающиеся в Северной Америке — опёнок осенний (*Armillaria mellea*), гриб-фонарь ложный/«фонарь Джека» (*Omphalotus olearius*) и горькая устрица/…</p><div class="src">tyuning/BIOLUMINESCENCE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#148</span><span class="name">Динофлагелляты</span><span class="fx">bioLumDinoflagellate</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id148.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/dinoflagellyaty-biolyuminescenciya-volna-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#149</span><span class="name">Горизонт + фотонная сфера</span><span class="fx">cosBHSchwarzschild</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id149.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Тема этого файла — экстремальная гравитация: горизонт событий, искривление света вблизи коллапсировавшей массы, раскалённый диск падающего вещества, приливное растяжение. Другой физический РЕЖИМ, чем везде выше, — не тепловое излучение, не преломление, не инженерия, а искривление самой геометрии пространства-времени настолько сильно, что из данной области не может выйти даже свет.</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#150</span><span class="name">Фотонное кольцо — M87*</span><span class="fx">cosBHPhotonRingM87</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id150.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/m87-chernaya-dyra-eht-2019.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#151</span><span class="name">Фотонное кольцо — Sgr A*</span><span class="fx">cosBHPhotonRingSgrA</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id151.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**Как эта физика превращается в реальный, сфотографированный визуальный эффект — «фотонное кольцо» на снимке Event Horizon Telescope.** Задокументированные точные факты о первом в истории прямом изображении чёрной дыры: коллаборация **Event Horizon Telescope (EHT)** опубликовала **10 апреля 2019 года** первое прямое изображение сверхмассивной чёрной дыры **M87*** (в центре галактики M87) — снимок показывает яркое кол…</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#152</span><span class="name">Асимметричный аккреционный диск</span><span class="fx">cosBHDopplerDisk</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id152.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**Задокументированный, визуально сильный и честно АСИММЕТРИЧНЫЙ эффект — релятивистское доплеровское усиление (Doppler beaming/boosting).** Вещество во внутренней части диска движется по орбите со скоростью, составляющей задокументированно значительную долю скорости света. Из-за этого сторона диска, вращающаяся В СТОРОНУ наблюдателя, задокументированно выглядит ЯРЧЕ и голубее, а сторона, вращающаяся ОТ наблюдателя, —…</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#153</span><span class="name">Спагеттификация</span><span class="fx">cosBHSpaghetti</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id153.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированный реальный термин и механизм: **спагеттификация** (spaghettification) — растяжение падающего тела в длину и сжатие в поперечнике под действием **приливных сил** — разницы силы гравитационного притяжения между ближней к чёрной дыре и дальней от неё частями тела (ближняя часть притягивается заметно сильнее дальней, отсюда растяжение вдоль направления падения).</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#154</span><span class="name">Гравитационное линзирование</span><span class="fx">cosBHLensing</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id154.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**`ATMOSPHERIC-OPTICS.md`.** Тот файл — преломление и дисперсия света на каплях воды и кристаллах льда ЗЕМНОЙ атмосферы (радуга, гало, паргелии) и атомная эмиссия аврoры — вся эта физика происходит в слабом гравитационном поле, где пространство-время можно считать плоским. Гравитационное линзирование этого файла (Тир 1 ниже) — искривление самого СВЕТОВОГО ЛУЧА за счёт кривизны пространства-времени, а не за счёт прело…</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#155</span><span class="name">Эргосфера (Керр)</span><span class="fx">cosBHErgosphere</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id155.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Керровская чёрная дыра (эргосфера/увлечение пространства) и излучение Хокинга остаются в файле как честно задокументированный резерв (Тир 3) — первое реально сложнее объяснить кратко ради умеренной визуальной отдачи, второе прямо и честно помечено как неподтверждённое наблюдением, что делает его менее подходящим для подачи как «твёрдый факт» в обучающей подписи без дополнительной оговорки.</p><div class="src">tyuning/BLACK-HOLE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#156</span><span class="name">Точки Лагранжа</span><span class="fx">cosLagrange</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id156.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/tochki-lagranzha-jwst-l2-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#157</span><span class="name">Кольцо Эйнштейна</span><span class="fx">cosEinsteinRing</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id157.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (общий абзац файла)</div><p>Отдельный файл от `GENERATIVE-GEOMETRY.md`/`HUMAN-SYMBOLS.md`/`COLOR-THEORY.md`: это не абстрактная формула и не культурный знак, а реальные, задокументированные астрономические объекты и явления — источник для скинов, честно другой домен, хотя иногда пересекается с физикой (например, кольца планет — орбитальная механика, а не декоративный узор).</p><div class="src">tyuning/COSMIC-PHENOMENA.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#158</span><span class="name">Реликтовое излучение (CMB)</span><span class="fx">cosCMB</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id158.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/reliktovoe-izluchenie-planck-cmb.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#159</span><span class="name">Гравитационно-волновой чирп (LIGO)</span><span class="fx">cosLIGOChirp</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id159.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/ligo-gravitacionnaya-volna-chirp-realnye-dannye.png" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#160</span><span class="name">Приливный захват</span><span class="fx">cosTidalLock</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id160.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Файл серии «Науки для тюнинга» — продолжение открытого исследовательского потока ([[project_znaniya_sverh_kataloga]] в памяти). Тема — одна из пяти уже одобренных владельцем космических тем («Космос, 5 тем», макет 08.09.2026 — Лагранж/кольцо Эйнштейна/ реликтовое излучение/чирп LIGO/приливный захват), единственная из пяти, у которой до сих пор не было отдельного исследовательского файла — Лагранж уже в `LAGRANGE-POIN…</p><div class="src">tyuning/TIDAL-LOCKING.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#161</span><span class="name">Рождение пары</span><span class="fx">antiPairProd</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id161.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**3. Рождение пары — настоящий, документированный, «вильчатый» узор (сильный кандидат в скин/вспышку).** Гамма-квант с энергией не меньше **1.022 МэВ** (ровно удвоенная энергия покоя электрона) может в поле ядра исчезнуть и родить пару электрон-позитрон. В пузырьковой камере это видно буквально: невидимый след фотона внезапно «раздваивается» на два дуговых трека, которые в магнитном поле закручиваются в ПРОТИВОПОЛОЖН…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#162</span><span class="name">Аннигиляция 511 кэВ</span><span class="fx">antiAnnih511</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id162.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/annigilyaciya-511-kev-integral-realnye-dannye.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#163</span><span class="name">Трек с изломом кривизны</span><span class="fx">antiAndersonKink</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id163.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**2. Найдена — Карл Андерсон, 2 августа 1932, камера Вильсона.** Реальный, физически изящный метод: камеру окружало сильное магнитное поле, искривлявшее пути заряженных частиц по дугам; в середину камеры был вставлен слой свинца толщиной 6 мм — частица, проходящая сквозь него, честно теряла энергию и после свинца искривлялась СИЛЬНЕЕ, чем до — по этому изменению кривизны Андерсон доказал, что частица летела снизу вве…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#164</span><span class="name">Позитроний</span><span class="fx">antiPositronium</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id164.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**12. Позитроний — «атом», у которого оба «ядра» — лептоны (электрон и позитрон кружат друг вокруг друга).** Не антиатом в строгом смысле (в нём нет ни одной настоящей античастицы ядра — только связка электрон+позитрон), но прямое следствие существования антиматерии и удобный полигон для проверки квантовой электродинамики с рекордной точностью. Честная деталь: живёт очень недолго — **142 наносекунды** для три́плетног…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#165</span><span class="name">ASACUSA — вложенная орбита</span><span class="fx">antiAsacusa</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id165.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**18. ASACUSA (Япония, CERN) — лазерная спектроскопия антипротонного гелия, ЕЩЁ более точная проверка CPT, чем BASE (п.13).** Отдельный от ALPHA эксперимент: японская коллаборация ASACUSA изучает не антиводород, а «антипротонный гелий» (антипротон, захваченный атомом обычного гелия вместо одного из электронов) — экзотический гибридный атом. Двухфотонная лазерная спектроскопия трёх частот измерена с точностью (2.3–5)×…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#166</span><span class="name">Антидейтрон</span><span class="fx">antiDeuteron</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id166.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**16. Первый составной антиядерный объект — антидейтрон, CERN, 1965.** До этого находили только ОДИНОЧНЫЕ античастицы (позитрон 1932, антипротон 1955). В 1965 году группа под руководством Антонино Дзикики на протонном синхротроне CERN впервые получила АНТИЯДРО — связку антипротон+антинейтрон (антидейтрон), то есть первое доказательство, что античастицы вообще могут связываться в составные антиядра, не только существо…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#167</span><span class="name">Спиральный отскок в ловушке</span><span class="fx">antiVanAllenBounce</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id167.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**13. BASE (CERN) — самое точное прямое сравнение протона и антипротона, точность дошла до долей на миллиард.** Ловят единичный антипротон в электромагнитной ловушке Пеннинга, охлаждают ниже 1 Кельвина, сравнивают его магнитный момент с протонным. Реальное число: совпадение в пределах **0.8 частей на миллион** — мощнейшая проверка теоремы CPT, ещё точнее, чем данные ALPHA по спектру (п.5 выше). Источники: [CERN: BASE…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#168</span><span class="name">Свободное падение антивещества</span><span class="fx">antiAlphaGFall</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id168.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**4. Аннигиляция — обратный процесс, тоже настоящая точная геометрия (кандидат во вспышку).** Электрон и позитрон при встрече не «взрываются абстрактно» — превращаются РОВНО в два гамма-фотона с энергией **511 кэВ каждый**, летящих в ТОЧНО противоположных направлениях (сохранение импульса, не приближённо). Ровно на этом принципе работают настоящие ПЭТ-сканеры (позитронно-эмиссионная томография) в больницах прямо сейч…</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#169</span><span class="name">CP-нарушение</span><span class="fx">antiCPViolation</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id169.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**6. Самая большая настоящая загадка — барионная асимметрия («почему мы вообще существуем»).** По всем известным законам физики Большой взрыв должен был создать одинаковое количество материи и антиматерии, которые должны были аннигилировать друг с другом полностью. Реальная, часто цитируемая оценка: на каждый **миллиард** пар материя-антиматерия, аннигилировавших в ранней Вселенной, ОДНА частица материи «выжила» без …</p><div class="src">RESEARCH-2026-09-ANTIMATTER.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#170</span><span class="name">Веер треков — спектрометр</span><span class="fx">antiSpectrometerFan</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id170.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/lhc-stolknovenie-chastic-detektor-event-display-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#171</span><span class="name">BPM 37093 — «Люси»</span><span class="fx">wdLucyDiamond</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id171.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/bpm37093-almaznaya-zvezda-realnye-dannye-fourier.png" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#172</span><span class="name">Предел Чандрасекара</span><span class="fx">wdChandrasekhar</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id172.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**`BLACK-HOLE-PHYSICS.md`.** Целевой поиск по файлу — ни «белого карлика», ни «Чандрасекара», ни «вырождения» не встречается вообще; файл целиком про экстремальную гравитацию (радиус Шварцшильда, горизонт событий, аккреционный диск) — ни одна формула того файла (Rs=2GM/c², фотонная сфера) не применима к белому карлику: у белого карлика есть настоящая твёрдая поверхность из вещества, а не геометрическая граница ухода …</p><div class="src">tyuning/WHITE-DWARF-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#173</span><span class="name">Плотность вещества</span><span class="fx">wdDensity</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id173.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Первый широкий заход (06.09.2026) — **исследовано (реальные источники, WebSearch, не по памяти), плотность белого карлика дополнительно перепроверена численно прямо в этом заходе (`node -e`, см. Тир 1), НИЧЕГО не отрисовано и не проверено визуально.** Тот же принцип, что у всей серии — «изучено» ≠ «готово к макету».</p><div class="src">tyuning/WHITE-DWARF-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#174</span><span class="name">Загадка Сириуса B</span><span class="fx">wdSiriusB</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id174.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/sirius-belyi-karlik-realnoe-foto-hubble.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#175</span><span class="name">Масса ↔ радиус наоборот</span><span class="fx">wdMassRadiusInverse</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id175.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Разграничивающий, объединяющий все три файла принцип, который стоит проговорить явно: три конечных исхода коллапса звезды различает ровно одна величина — исходная масса звезды-предшественника. Белый карлик — исход для звёзд малой и средней массы (см. Тир 1 ниже, до ~8 масс Солнца); нейтронная звезда — для более массивных (обычно свыше ~8 масс Солнца, см. `PULSAR-PHYSICS.md`); чёрная дыра — когда масса ядра слишком ве…</p><div class="src">tyuning/WHITE-DWARF-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#176</span><span class="name">Бабочка Хофштадтера</span><span class="fx">wave2Hofstadter</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id176.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/hofstadter-babochka-realnye-dannye-stm-grafen.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#177</span><span class="name">Замощение пятиугольниками</span><span class="fx">wave2PentagonTiling</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id177.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (общий абзац файла)</div><p>Продолжение открытого ряда «Науки для тюнинга» (папка `.knowledge/tyuning/`). Тема выбрана из референсов владельца — реальная, недавно (2017) закрытая математическая история.</p><div class="src">tyuning/PENTAGON-TILING-HISTORY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#178</span><span class="name">Стринг-арт (Мэри Буль)</span><span class="fx">wave2StringArt</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id178.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **Спирограф/гипотрохоида** — точка ФИЗИЧЕСКИ движется по кривой (маленький круг катится внутри большого) — сама кривая существует как траектория движения. Стринг-арт — принципиально другой источник кривой: ни одна нить сама не изогнута, все нити — ПРЯМЫЕ нити между двумя точками; кривая, которую видит глаз, физически нигде не проведена — это **огибающая** (envelope) семейства прямых линий, оптическая иллюзия гладко…</p><div class="src">tyuning/STRING-ART-CURVE-STITCHING.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#179</span><span class="name">Пространство Пуанкаре</span><span class="fx">wave2DodecaSpace</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id179.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **2003 — статья Люмине, Уикса, Риазуэло, Леуку, Юзана.** Задокументированный факт — гипотезу додекаэдрического пространства как модель формы Вселенной предложила команда из пяти авторов (Jean-Pierre Luminet, Jeff Weeks, Alexei Riazuelo, Roland Lehoucq, Jean-Philippe Uzan), статья в *Nature*, 2003. - **Механизм — конечное, но безграничное пространство, склеенное само на себя.** Задокументированная геометрическая иде…</p><div class="src">tyuning/DODECAHEDRAL-UNIVERSE.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#180</span><span class="name">Линза Ибн Сахля</span><span class="fx">wave2LensRays</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id180.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **984 год, Ибн Сахль, Багдад — реальное первое известное открытие закона преломления, за ~600 лет до имени, под которым он известен сегодня.** Задокументированный факт — арабский математик и физик **Ибн Сахль** (Абу Саад аль-Аля ибн Сахль) в трактате «О жгучих зеркалах и линзах» (ок. 984 г.) первым вывел точный закон преломления света и использовал его, чтобы рассчитать форму «анакластических» линз — линз, фокусиру…</p><div class="src">tyuning/LENS-RAY-DIAGRAMS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#181</span><span class="name">Хроматическая поляризация</span><span class="fx">freshCalciteCross</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id181.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **`STRUCTURAL-COLOR-BIOLOGY.md` / `MANTIS-SHRIMP-VISION.md` / `CEPHALOPOD-CAMOUFLAGE.md` (упоминания поляризации)** — там поляризация разбирается в ЖИВОЙ ткани (хитин жука, глаз рака- богомола, кожа головоногого) — либо ПРОИЗВОДСТВО, либо ОБНАРУЖЕНИЕ поляризации биологическим объектом. Этот файл — про НЕЖИВОЙ, прозрачный минеральный кристалл (кальцит, кварц, селитра, сахар) и чисто оптический эффект интерференции, …</p><div class="src">tyuning/CHROMATIC-POLARIZATION.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#182</span><span class="name">Фрактал Ляпунова</span><span class="fx">freshZirconZity</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id182.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **`GENERATIVE-GEOMETRY.md` (множества Мандельброта/Жюлиа)** — та тема строится на КОМПЛЕКСНОЙ квадратичной итерации `z → z² + c`; узнать, улетает ли орбита в бесконечность. Этот файл — про совсем другую, ВЕЩЕСТВЕННУЮ итерацию (логистическое отображение популяции `x → r·x·(1−x)`, r чередуется по двум значениям A/B) и другую измеряемую величину (показатель Ляпунова, знак — хаос или порядок), не «улетает или нет». Вне…</p><div class="src">tyuning/LYAPUNOV-FRACTAL.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#183</span><span class="name">Little Red Dot</span><span class="fx">freshLittleRedDot</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id183.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/little-red-dots-jwst-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#184</span><span class="name">Облака Ховарда</span><span class="fx">freshHowardClouds</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id184.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **`WEATHER-INSTRUMENTS.md`** — тот файл про ПРИБОРЫ (барометр, гигрометр и т.д.), облака там упомянуты вскользь, без собственной номенклатуры. Этот файл — не про приборы измерения погоды, а про то, как вообще появилась и почему прижилась сама СИСТЕМА ИМЁН для форм облака. - **`ATMOSPHERIC-OPTICS.md`** — тот файл про оптические ЭФФЕКТЫ в атмосфере (радуга, гало, sun dog) — про то, что свет ДЕЛАЕТ, проходя сквозь атм…</p><div class="src">tyuning/CLOUD-CLASSIFICATION-HOWARD.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#185</span><span class="name">Панцирь диатомеи</span><span class="fx">freshDiatomFrustule</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id185.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/diatomei-mikroskop-geometricheskie-formy-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#186</span><span class="name">Готическая роза-окно</span><span class="fx">wave3RoseWindow</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id186.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/roza-okno-gotika-realnoe-foto-shartr.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#187</span><span class="name">Фигуры Хладни</span><span class="fx">wave3Chladni</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id187.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/chladni-figury-realnaya-plastina-pesok.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#188</span><span class="name">Снежный кристалл</span><span class="fx">wave3SnowCrystal</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id188.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/snezhinka-wilson-bentley-original-1885-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#189</span><span class="name">Танцы планет</span><span class="fx">wave3VenusPentagram</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id189.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/venera-pentagramma-orbitalny-rezonans-realnye-dannye.png" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#190</span><span class="name">Семейство многогранников</span><span class="fx">wave3Archimedean</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id190.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/arhimedovy-tela-realnaya-model-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#191</span><span class="name">Эмиссионная (Орион)</span><span class="fx">nebEmission</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id191.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**`STAR-COLOR-PHYSICS.md`.** Тот файл — про ФИЗИКУ ЦВЕТА: почему у звезды или туманности вообще есть тот или иной цвет (излучение чёрного тела звезды по закону Вина, эмиссионные линии ионизированного газа туманности, на примере H-альфа и Туманности Ориона). Этот файл — принципиально другой вопрос: не ПОЧЕМУ туманность или галактика такого цвета, а КАКОЙ ИМЕННО ФОРМЫ и по какому МЕХАНИЗМУ ПРОИСХОЖДЕНИЯ она устроена — …</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#192</span><span class="name">Отражательная (Плеяды)</span><span class="fx">nebReflection</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id192.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **«Планетарная туманность» связана с планетами — неточно, реальный исторический мисномер.** См. раздел про планетарные туманности выше: название дал Уильям Гершель в XVIII веке за чисто зрительное сходство с диском планеты в тогдашний телескоп, объекты не имеют никакого отношения к настоящим планетам — это оболочка, сброшенная умирающей звездой, подобной Солнцу. - **Диаграмма-«камертон» Хаббла — это эволюционная по…</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#193</span><span class="name">Планетарная (Кольцо/Улитка)</span><span class="fx">nebPlanetary</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id193.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированный и один из двух сильнейших мифокоррекционных пунктов файла: название «**планетарная туманность**» — задокументированный ИСТОРИЧЕСКИЙ МИСНОМЕР (неправильное по существу, но прижившееся имя). Задокументированное происхождение — **Уильям Гершель**, открыватель Урана, в XVIII веке (популярные пересказы относят к 1780-м годам) назвал такие объекты «планетарными» именно потому, что в его тогдашний телеск…</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#194</span><span class="name">Остаток сверхновой (Краб)</span><span class="fx">nebSupernovaRemnant</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id194.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/krabovidnaya-tumannost-pulsar-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#195</span><span class="name">Тёмная (Конская Голова)</span><span class="fx">nebDark</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id195.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>- **«Планетарная туманность» связана с планетами — неточно, реальный исторический мисномер.** См. раздел про планетарные туманности выше: название дал Уильям Гершель в XVIII веке за чисто зрительное сходство с диском планеты в тогдашний телескоп, объекты не имеют никакого отношения к настоящим планетам — это оболочка, сброшенная умирающей звездой, подобной Солнцу. - **Диаграмма-«камертон» Хаббла — это эволюционная по…</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#196</span><span class="name">Эллиптическая E0-E7</span><span class="fx">galElliptical</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id196.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (общий абзац файла)</div><p>Семьдесят пятая волна серии «Науки для тюнинга». Владелец явно попросил максимум материала именно про космос («и про космос как можно больше») — параллельная волна 74 в это же время разбирает физику чёрных дыр (экстремальная гравитация), этот файл — принципиально другая тема: реальные, задокументированные, ИМЕНОВАННЫЕ категории туманностей и галактик по их настоящей структуре и происхождению, не по цвету и не по грав…</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#197</span><span class="name">Баррéдная спираль</span><span class="fx">galBarredSpiral</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id197.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированное различие: обычные спирали делятся по степени закрученности рукавов на **Sa** (туго закрученные рукава вокруг крупного центрального балджа), **Sb**, **Sc** (рукава закручены слабее, балдж меньше); отдельная, параллельная ветвь камертона — **пересечённые (баррéдные) спирали SBa/SBb/SBc**, у которых через ядро проходит задокументированная реальная ПРЯМАЯ перемычка («bar») из звёзд, а сами спиральные …</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#198</span><span class="name">Неправильная галактика</span><span class="fx">galIrregular</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id198.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**`STAR-COLOR-PHYSICS.md`.** Тот файл — про ФИЗИКУ ЦВЕТА: почему у звезды или туманности вообще есть тот или иной цвет (излучение чёрного тела звезды по закону Вина, эмиссионные линии ионизированного газа туманности, на примере H-альфа и Туманности Ориона). Этот файл — принципиально другой вопрос: не ПОЧЕМУ туманность или галактика такого цвета, а КАКОЙ ИМЕННО ФОРМЫ и по какому МЕХАНИЗМУ ПРОИСХОЖДЕНИЯ она устроена — …</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#199</span><span class="name">Сомбреро (M104)</span><span class="fx">galSombrero</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id199.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/sombrero-galaktika-m104-realnoe-foto-hubble.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#200</span><span class="name">Галактики-Антенны</span><span class="fx">galAntennae</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id200.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>**`GENERATIVE-GEOMETRY.md`.** Тот файл уже содержит «Золотую спираль» (квадраты Фибоначчи 1,1,2,3, 5,8,13) и филлотаксис (модель Фогеля, золотой угол 137,5°) — оба реальных, но геометрически ДРУГИХ построения: пошаговое наращивание квадратами и точечное размещение по углу, оба без параметра «со временем закручивается туже/слабее». Спиральные рукава галактики в реальной астрофизике обычно описывают ДРУГОЙ математическ…</p><div class="src">tyuning/NEBULA-GALAXY-MORPHOLOGY.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#201</span><span class="name">Нормальная форма</span><span class="fx">magNormal</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id201.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/magnitosfera-avrora-iz-kosmosa-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#202</span><span class="name">Хвост-шлейф</span><span class="fx">magTail</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id202.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированные реальные расстояния: подсолнечная точка магнитопаузы — **≈9-11 радиусов Земли (R⊕)**, головной ударный (bow shock) — **≈11-15 R⊕**, форма — гиперболический щит, раскрывающийся к флангам и полюсам. Хвост магнитосферы (ночная сторона) вытянут в противоположную от Солнца сторону на **сотни R⊕**, по некоторым оценкам — до **~1000 R⊕**, точная длина неизвестна («как след за лодкой»). [Royal Belgian Ins…</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#203</span><span class="name">Экскурс Лашам</span><span class="fx">magLaschamp</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id203.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Найдено 17.09.2026 из присланных владельцем референсов (сравнение формы магнитосферы «сегодня» vs «во время экскурса Лашам»). Проверено WebSearch, не по памяти.</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#204</span><span class="name">Мультипольное поле</span><span class="fx">magMultipolar</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id204.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>1. Нормальная форма (сжатая+хвост) 2. Хвост-шлейф (сотни R⊕) 3. Экскурс Лашам (10% силы) 4. Мультипольное поле во время экскурса 5. Смещённый к экватору овал сияний 6. Пояса Ван Аллена 7. Головной ударный фронт (bow shock) 8. Плазмосфера 9. Сжатие от солнечного ветра (динамика) 10. Обычные дипольные линии поля (базовая форма для контраста)</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#205</span><span class="name">Сияния у экватора</span><span class="fx">magAuroraShift</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id205.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/steve-avrora-fenomen-realnoe-foto.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#206</span><span class="name">Пояса Ван Аллена</span><span class="fx">magVanAllen</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id206.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/poyasa-van-allena-realnaya-model-nasa.jpg" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#207</span><span class="name">Головной ударный фронт</span><span class="fx">magBowShock</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id207.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>Задокументированные реальные расстояния: подсолнечная точка магнитопаузы — **≈9-11 радиусов Земли (R⊕)**, головной ударный (bow shock) — **≈11-15 R⊕**, форма — гиперболический щит, раскрывающийся к флангам и полюсам. Хвост магнитосферы (ночная сторона) вытянут в противоположную от Солнца сторону на **сотни R⊕**, по некоторым оценкам — до **~1000 R⊕**, точная длина неизвестна («как след за лодкой»). [Royal Belgian Ins…</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#208</span><span class="name">Плазмосфера</span><span class="fx">magPlasmasphere</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id208.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>1. Нормальная форма (сжатая+хвост) 2. Хвост-шлейф (сотни R⊕) 3. Экскурс Лашам (10% силы) 4. Мультипольное поле во время экскурса 5. Смещённый к экватору овал сияний 6. Пояса Ван Аллена 7. Головной ударный фронт (bow shock) 8. Плазмосфера 9. Сжатие от солнечного ветра (динамика) 10. Обычные дипольные линии поля (базовая форма для контраста)</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#209</span><span class="name">Сжатие от ветра</span><span class="fx">magCompression</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id209.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><div class="textref"><div class="badge">текст (найдена точная цитата)</div><p>1. Нормальная форма (сжатая+хвост) 2. Хвост-шлейф (сотни R⊕) 3. Экскурс Лашам (10% силы) 4. Мультипольное поле во время экскурса 5. Смещённый к экватору овал сияний 6. Пояса Ван Аллена 7. Головной ударный фронт (bow shock) 8. Плазмосфера 9. Сжатие от солнечного ветра (динамика) 10. Обычные дипольные линии поля (базовая форма для контраста)</p><div class="src">tyuning/MAGNETOSPHERE-PHYSICS.md</div></div></div>
+    </div>
+  </div>
+<div class="card">
+    <div class="hdr"><span class="id">#210</span><span class="name">Дипольные линии</span><span class="fx">magDipoleLines</span></div>
+    <div class="pair">
+      <div class="col"><div class="lbl">В ИГРЕ</div><img class="render" src="audit-renders-26-09-2026/id210.png" loading="lazy" alt="рендер"></div>
+      <div class="col"><div class="lbl">РЕФЕРЕНС</div><img class="ref" src="../referensy-foto/magnitnye-linii-opilki-1913.png" loading="lazy" alt="референс"></div>
+    </div>
+  </div>
+</div>
+</body></html>

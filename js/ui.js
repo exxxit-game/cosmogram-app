@@ -113,7 +113,13 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 // нативную «Назад» Telegram на каждом экране кроме меню (setBack(name!=='menu')) — то же
 // условие, что и у паузы, просто не было доведено до остальных восьми кнопок тогда же.
 function pauseGhostSync(){
-  const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
+  // 27.09.2026 (владелец, живой hwshot-скриншот телефона): в Telegram Fullscreen-режиме
+  // нативная «Назад» физически НЕ рисуется в шапке (только «Закрыть»), даже когда
+  // tg.BackButton.isVisible держит true — это свойство отражает то, что игра сама попросила
+  // у моста, не то, что мост реально отрисовал. Раньше nativeBack не проверял isFullscreen —
+  // свои кнопки «Назад» гасли именно тогда, когда родной альтернативы не видно, оставляя
+  // игрока с одной «Закрыть» (закрыть игру целиком) и без единого пути назад по экранам.
+  const nativeBack=!!(tg && tg.BackButton && tgv('6.1') && !tg.isFullscreen);
   toggleCls('pauseBtn','ghost', nativeBack);
   // firstFlightClose исключён: плеер открывается поверх текущего экрана (galleryCardOpen() в
   // js/cinema.js не зовёт setScreen()) — если это меню, родная «Назад» Telegram там всегда
@@ -1514,6 +1520,7 @@ function refreshMenu(){
   if (typeof galleryBtnRefresh==='function') galleryBtnRefresh(); // 16.09.2026 «Галерея видео-рекордов»: дверь появляется/число обновляется, если есть хоть одно видео
   if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
   if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же; 16.09.2026: заодно гасит текстовую подсказку .playHint, если след теперь есть
+  if (typeof zondTick==='function') zondTick(); // 25.09.2026: Зонд — один эпизод на первый визит совсем нового игрока, см. комментарий у самих функций
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -1729,7 +1736,11 @@ function angarShip(x, sk, s, bolshoy){
      добавлялись в это окно по отдельности, каждый раз по отдельной просьбе — вместе они
      конкурируют за один и тот же маленький борт. Теперь каждый показывается только на СВОЕЙ
      вкладке (angarCat), не на всех сразу — тот же принцип применён к вспышке/следу выше. */
-  const angarFxFn = bolshoy && angarCat==='color' && sk.fx && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
+  // 26.09.2026: id0 сохраняет старое исключение («без явления, сразу корпус») даже теперь,
+  // когда у него есть sk.fx — «крупное явление без обрезки силуэтом» задумано для только что
+  // открытых премиум-скинов, для базового это неуместно. Мерцание «Лунного камня» рисуется
+  // отдельным блоком ниже, всегда, обрезанное силуэтом, без общей системы явлений.
+  const angarFxFn = bolshoy && angarCat==='color' && sk.fx && sk.id!==0 && typeof PREM_FX_MAP!=='undefined' ? PREM_FX_MAP[sk.fx] : null;
   const fxEntry = bolshoy && angarCat==='color' && (angarFxFn || (!sk.fx && sk.id!==0));
   const fxState = fxEntry ? angarPvFxPhase(sk.id) : null;
   const hullAlpha = fxState ? (fxState.phase==='event' ? 0 : fxState.tt) : 1;
@@ -1802,6 +1813,18 @@ function angarShip(x, sk, s, bolshoy){
     x.beginPath(); x.moveTo(0,-22); x.lineTo(-16,14); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
     x.fillStyle=sk.fold;
     x.beginPath(); x.moveTo(0,-22); x.lineTo(0,6); x.lineTo(16,14); x.closePath(); x.fill();
+    // 26.09.2026: «Лунный камень» (id0) — то же самое мерцание, что fxMatMoonstone в render.js,
+    // нарисованное здесь напрямую (не через angarFxFn выше — тот путь даёт крупное «явление
+    // без обрезки силуэтом», для базового скина неуместное), всегда видно, обрезано силуэтом.
+    if(sk.id===0 && typeof clipShipBody==='function'){
+      x.save(); clipShipBody(x);
+      const mp=(performance.now()%4400)/4400;
+      const mgy=-18+((mp*2)%1)*32;
+      const mg=x.createLinearGradient(0,mgy-9,0,mgy+9);
+      mg.addColorStop(0,'hsla(220,40%,85%,0)'); mg.addColorStop(.5,'hsla(220,45%,88%,.55)'); mg.addColorStop(1,'hsla(220,40%,85%,0)');
+      x.fillStyle=mg; x.fillRect(-20,-24,40,48);
+      x.restore();
+    }
     x.globalAlpha=1;
   }
   /* 04.09.2026 «Эксклюзивные скины за Stars» (владелец, живое устройство — «в окне
@@ -1845,18 +1868,9 @@ function angarShip(x, sk, s, bolshoy){
      показывало вчерашний выбор. Теперь: на своей вкладке жетон, на который сейчас смотрит
      игрок (angarSel), подменяет надетый — на всех остальных вкладках показывается то, что
      реально надето, как и раньше. Тот же приём, что уже был только у Цвета. */
-  const pvDecal = angarCat==='decal' ? angarSel : S.decal;
-  /* 28.08.2026 «Декаль на корпусе» — то же место и та же прикидка размера/позиции, что в
-     render.js (полёт): координаты в тех же локальных единицах, масштаб уже даёт x.scale(s,s)
-     выше, отдельно пересчитывать не нужно. */
-  if(pvDecal){ const dc=DECALS_BY_ID.get(pvDecal);
-    if(dc && dc.ch && emojiSupported(dc.ch)){ // 29.08.2026: не рисовать тофу на самом борту — см. angarVisibleList
-      x.textAlign='center'; x.textBaseline='middle'; x.font='9px sans-serif';
-      x.fillText(dc.ch,-5.3,-0.7);
-    }
-  }
-  // 06.09.2026: вкладка «Иконки» (ICONS, S.icon/ownedIcons, правая половина борта) убрана
-  // из игры целиком (владелец) — держали слишком много места, мешали новым анимациям скина.
+  // 24.09.2026: левая половина борта («Декаль на корпусе», 28.08.2026) убрана вместе со
+  // всей вкладкой «Эмодзи» (владелец) — см. game.js:137. Правая половина («Иконки») убрана
+  // раньше, 06.09.2026 — предпросмотр борта теперь снова просто цвет скина, как и в полёте.
   x.restore();
 }
 
@@ -1953,7 +1967,7 @@ function angarPvNameSync(){
   // (feedback_shared_constant_landmine), чуть не наступил на грабли второй раз, поймано
   // живым тестом обеих категорий до коммита.
   const isNonePlaceholder = item && item.id===0 && angarCat!=='color';
-  el.textContent = (item && !isNonePlaceholder) ? ((angarCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'')) : '';
+  el.textContent = (item && !isNonePlaceholder) ? skinI18nName(item, angarCat) : '';
 }
 
 /* «Умное живое»: 30 кадров в секунду вместо 60, засыпает через 20 секунд без касания.
@@ -2013,7 +2027,24 @@ function angarPvWake(){ // касание будит уснувшее превь
    подтверждает, что методика не изменилась. Полное измерение ЖИВЬЁМ также показало, что
    почти вся остальная таблица (~46 из 57 узоров) тоже недостаточна — но это отдельная,
    гораздо более широкая задача, которую владелец решил пока не трогать (только эти 4). */
-const ANGAR_PV_FIT_COLOR={58:0.767,59:0.729,62:0.772,63:0.823,64:0.627,65:0.462,66:0.776,67:0.51,68:0.338,69:0.906,70:0.723,71:0.462,72:0.458,73:0.377,74:0.493,75:0.359,76:0.417,77:0.52,78:0.417,79:0.181,80:0.59,81:0.493,82:0.431,83:0.263,84:0.365,85:0.706,86:0.36,87:0.415,88:0.357,89:0.317,90:0.88,91:0.359,92:0.591,93:0.348,94:0.444,95:0.888,96:0.417,97:0.49,98:0.49,99:0.49,100:0.49,101:0.49,102:0.358,103:0.171,104:0.271,105:0.271,106:0.602,107:0.54,108:0.444,109:0.357,110:0.271,111:0.3,112:0.315};
+const ANGAR_PV_FIT_COLOR={58:0.767,59:0.729,62:0.772,63:0.823,64:0.627,65:0.462,66:0.776,67:0.51,68:0.338,69:0.906,70:0.723,71:0.462,72:0.458,73:0.377,74:0.493,75:0.359,76:0.417,77:0.52,78:0.417,79:0.181,80:0.59,81:0.493,82:0.431,83:0.263,84:0.365,85:0.706,86:0.36,87:0.415,88:0.357,89:0.317,90:0.88,91:0.359,92:0.591,93:0.348,94:0.444,95:0.888,96:0.417,97:0.49,98:0.49,99:0.49,100:0.49,101:0.49,102:0.358,103:0.171,104:0.271,105:0.271,106:0.602,107:0.54,108:0.444,109:0.357,110:0.271,111:0.3,112:0.315,
+  /* 26.09.2026: id113-210 (~98 карточек, несколько заходов добавления скинов) — ни один не
+     проходил через этот стол вообще, седьмой случай «новое не подключено везде»
+     (feedback_novoe_ne_podklyuchennoe_vezde_povtoryayushiysya_bag.md). Первая попытка чисел
+     (спрятана в истории коммитов) оказалась НЕВЕРНОЙ по методу — bbox мерился на реальном
+     холсте angarPvZoomCv, а холст сам ОБРЕЗАЕТ переполнение по границе: значение spanX≈0.99
+     означало «хоть немного не влезает», не «насколько именно» — 0.808 от такого измерения почти
+     не давало эффекта, владелец поймал живьём. Исправлено: узор рисуется в офскрин-холст с
+     запасом ×6 (bigW=W*6), БЕЗ обрезки вообще (clipShipBody временно no-op, тот же приём, что и
+     сам angarPvFxReveal использует на фазе 'event') — так измеряется НАСТОЯЩИЙ размер, не
+     прижатый к границе. fit=min(1,0.8/max(trueSpanX,trueSpanY)), проверено обратным
+     прогоном — с новыми числами trueSpanX действительно ложится на ~0.8 (было проверено на
+     id122/124/125/126/140/200/164, самых больших переполнениях). Это первое приближение по
+     чистой геометрии, не финальная художественная калибровка (та требует взгляда владельца на
+     устройстве, как и вся таблица выше) — если что-то визуально не понравится, поправить
+     точечно, не всю таблицу заново. */
+  113:0.727,114:0.684,115:0.58,116:0.86,117:0.365,118:0.364,119:0.396,120:0.491,121:0.396,122:0.277,123:0.359,124:0.293,125:0.295,126:0.294,127:0.889,128:0.588,129:0.661,131:0.816,132:0.563,133:0.784,134:0.519,135:0.825,136:0.491,137:0.44,138:0.396,139:0.364,140:0.295,141:0.494,142:0.468,143:0.556,144:0.611,145:0.396,146:0.584,147:0.354,148:0.364,149:0.645,150:0.513,151:0.523,152:0.519,153:0.43,154:0.352,155:0.435,158:0.46,160:0.734,161:0.762,162:0.455,163:0.606,164:0.449,165:0.506,166:0.879,167:0.444,168:0.62,169:0.379,170:0.792,171:0.556,172:0.455,173:0.62,174:0.792,175:0.497,176:0.479,177:0.721,178:0.58,179:0.678,180:0.909,181:0.51,182:0.541,183:0.567,184:0.53,185:0.625,186:0.708,187:0.62,188:0.602,189:0.667,190:0.755,191:0.721,192:0.63,193:0.53,194:0.63,195:0.53,196:0.708,197:0.899,199:0.69,200:0.31,201:0.833,202:0.825,203:0.964,205:0.734,206:0.833,207:0.721,210:0.851
+};
 const ANGAR_PV_FIT_FLASH={90:0.706,91:0.458,92:0.537,93:0.528,94:0.465,95:0.47,96:0.419,97:0.531,98:0.833,99:0.488,101:0.54,102:0.382,117:0.528,118:0.534,119:0.307,120:0.54,121:0.531,122:0.531,123:0.433,124:0.415,125:0.498,126:0.498,127:0.498,128:0.498,129:0.493,130:0.493,131:0.485,132:0.227,133:0.189};
 /* 16.09.2026 «Биполярная туманность — низ обрезан ровной линией» (владелец, три скрина подряд):
    на пике «дыхания» нижняя доля перехлёстывала СТАРУЮ линию обрезки на 49px. Тогдашний фикс —
@@ -2196,7 +2227,7 @@ function angarPvZoomDraw(t){
       x.restore();
       const nameEl=$('angarPvZoomName'), nameTxtEl=$('angarPvZoomNameTxt');
       if(nameEl && nameTxtEl){
-        const rawName=(angarPvZoomCat==='color' && typeof item.name==='number') ? (L.skinNames[item.name]||'') : (item.name||'');
+        const rawName=skinI18nName(item, angarPvZoomCat);
         // 20.09.2026, второй заход (владелец, живой скрин: «АККРЕЦИОННЫЙ ДИСК» и «ЧЁРНОЙ ДЫРЫ» —
         // два слова на строке налезают на родную «Назад»/⌄/⋮): обычный CSS-перенос (max-width)
         // кладёт на строку столько слов, сколько влезает по ширине — у центрированного текста
@@ -2211,7 +2242,8 @@ function angarPvZoomDraw(t){
       }
       const factEl=$('angarPvZoomFact'), wrapEl=$('angarPvZoomFactWrap');
       if(factEl && wrapEl){
-        if(item.fact){ factEl.textContent=item.fact; wrapEl.classList.remove('hidden'); }
+        const factTxt=skinI18nFact(item, angarPvZoomCat);
+        if(factTxt){ factEl.textContent=factTxt; wrapEl.classList.remove('hidden'); }
         else wrapEl.classList.add('hidden');
       }
     }
@@ -2253,7 +2285,7 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   // рисунок сдвинут ниже, чтобы не наезжать на имя). */
   const item=angarPvZoomItem, cat=angarPvZoomCat;
   x.textAlign='center'; x.textBaseline='alphabetic';
-  const name=item?((cat==='color' && typeof item.name==='number')?((typeof L!=='undefined'&&L.skinNames&&L.skinNames[item.name])||''):(item.name||'')):'';
+  const name=item?skinI18nName(item,cat):'';
 
   // 19.09.2026, пятым заходом (владелец: «явление на название заходит» — узор физически
   // выше своей точки translate больше, чем есть места до низа плашки имени, у разных узоров
@@ -2333,7 +2365,7 @@ function angarPvStoryDraw(x, BW, BH, tMs){
   // работающей карточки факта чуть ниже), не полу-скруглённый гибрид. Карточка факта заодно
   // получила тот же линейный градиент+акцент слева, что уже стоит у #angarPvZoomFact в
   // живом окне (index.html) — раньше здесь был плоский fillStyle, отсюда «старый вид».
-  const fact=item&&item.fact;
+  const fact=skinI18nFact(item,cat);
   const cardX=BW*0.08, cardW=BW*0.84, cardY=BH*0.655, tagH=Math.round(BW*0.09), tagR=8; // 8px — реальный border-radius #angarPvZoomMark (8px 8px 0 0), не придумано
   x.font='700 '+Math.round(BW*0.032)+'px "Exo 2", sans-serif';
   x.textAlign='left';
@@ -2447,46 +2479,37 @@ function starJewelHtml(cls){ return '<canvas class="starJewelSm'+(cls?' '+cls:''
 function starJewelWake(){
   document.querySelectorAll('.starJewelSm').forEach(c=>{ if(!c._drawn && typeof drawStarJewel==='function'){ c._drawn=1; drawStarJewel(c); } });
 }
-/* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга —
-   Цвет (было, поведение не меняется) и Декаль (новое, символ вместо канваса корабля).
+/* 28.08.2026 «Вкладка Декаль»: список данных и ключи S/Store на категорию тюнинга.
    06.09.2026: вкладка «Иконки» (была тут третьей, ICONS/S.icon/ownedIcons) убрана из игры
    целиком (владелец) — 268 штук держали слишком много места и мешали новым анимациям
-   скина. Вспышка (FLASHES, S.launchFx/ownedLaunchFx — НЕ S.flash, тот уже занят золотой
-   вспышкой подбора звезды) — независимая, но НЕ рисуется на самом борту постоянно, а
-   проигрывается только первые 0.45с забега (см. drawLaunchFlash в render.js). */
+   скина. 24.09.2026: вкладка «Эмодзи» (была декалью — DECALS/S.decal/ownedDecals) убрана
+   из игры целиком (владелец) — см. game.js:137 для полного обоснования. Вспышка (FLASHES,
+   S.launchFx/ownedLaunchFx — НЕ S.flash, тот уже занят золотой вспышкой подбора звезды) —
+   независимая, но НЕ рисуется на самом борту постоянно, а проигрывается только первые
+   0.45с забега (см. drawLaunchFlash в render.js). */
 const ANGAR_CATS = {
   color: { list:SKINS,  ownedKey:'ownedSkins',  selKey:'skin',  favKey:'favSkins' },
-  decal: { list:DECALS, ownedKey:'ownedDecals', selKey:'decal', favKey:'favDecals' },
   flash: { list:FLASHES, ownedKey:'ownedLaunchFx', selKey:'launchFx', favKey:'favLaunchFx' }, // 29.08.2026: S.flash уже занят золотой вспышкой подбора — см. game.js
   trail: { list:TRAILS, ownedKey:'ownedTrails', selKey:'trail', favKey:'favTrails' } // 05.09.2026: 5-я вкладка — след, независимый от скина (владелец, см. game.js:TRAILS)
 };
 /* 29.08.2026 «Избранное нам не нужно» (владелец, после трёх неудачных заходов со звёздочкой-
    тогглом): вместо выбора игроком — 2 фиксированных id на категорию, сразу бесплатные и во
-   владении (см. game.js: ownedDecals/ownedLaunchFx, price:0 у самих записей).
+   владении (см. game.js: ownedLaunchFx, price:0 у самих записей).
    Тот же приём, что бумажный скин в Цвете — пустые клетки у «Без украшений» заполняет сам
    состав каталога, не действие игрока.
    07.09.2026, владелец, явный пересмотр этого же решения («это тогда было, сейчас нужно»):
    Избранное возвращается — favKey/favXxx выше и .angarFav ниже. ANGAR_FREEBIE не убирается,
    два механизма не конфликтуют (фрибут — фиксированный подарок, избранное — выбор игрока). */
-// 04.09.2026 (владелец, живая сессия): decal поменян местами со старым бесплатным —
-// Ракета/Тарелка теперь платные, вместо них бесплатны Звезда/Сотка — выбраны
-// владельцем вживую (клик-ловушка в консоли, не на глаз по коду). flash не менялся.
-const ANGAR_FREEBIE = { decal:[3,30], flash:[1,2] };
+const ANGAR_FREEBIE = { flash:[1,2] };
 let angarCat = 'color';   // активная вкладка тюнинга
-/* «просто можно категории сделать для эмодзи, чтобы не всей кучей» (владелец, 28.08.2026),
-   потом «а полный каталог, с разделением на категории в одном списке, а не кучей вкладок»
-   (владелец, 29.08.2026): подкатегории — из самих DECALS (поле cat), в порядке первого
-   появления в массиве, без «Нет» (id0, cat:'none' — это не подкатегория, а обычный
-   бесплатный жетон). Одним проходом по данным, а не отдельным вручную сверяемым списком —
-   не разойдётся с составом DECALS. Раньше был ещё angarSubCat — какая подкатегория выбрана
-   в отдельной ленте вкладок; сама лента снята, список теперь всегда показывает все
-   подкатегории подряд, фильтровать стало нечем. */
-const ANGAR_DECAL_CATS = (()=>{ const seen=[]; DECALS.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
+// 24.09.2026: ANGAR_DECAL_CATS убран вместе со всей вкладкой «Эмодзи» (владелец) — см.
+// game.js:137. Приём построения списка категорий одним проходом по данным (без него
+// расходиться) остался у Вспышки/Следа/Цвета ниже — тот же самый, что был здесь.
 // 06.09.2026: ANGAR_ICON_CATS убран вместе со всей вкладкой «Иконки» (владелец) — 268 штук
 // держали слишком много места, мешали новым анимациям скина.
 /* 05.09.2026 «Комфорт большого каталога» (владелец: «огромные каталоги получились» —
    131 Вспышка/16 Следов одной стеной): тот же приём построения списка категорий, что уже
-   был у ANGAR_DECAL_CATS выше, просто раньше не был подключён к Вспышке/Следу — старый
+   был у декали (снята 24.09.2026), просто раньше не был подключён к Вспышке/Следу — старый
    комментарий про «10 штук, не нужны категории» устарел. Живой макет (was/became) показан
    и одобрен владельцем перед этой правкой. */
 const ANGAR_FLASH_CATS = (()=>{ const seen=[]; FLASHES.forEach(d=>{ if(d.cat && d.cat!=='none' && seen.indexOf(d.cat)<0) seen.push(d.cat); }); return seen; })();
@@ -2511,7 +2534,7 @@ function angarItemFill(el, item){
   // .nm задан один раз при постройке плитки (angarBuildGrid) и не должен стираться на
   // каждой перерисовке (29.08.2026, тот же баг, что уже чинили с .angarIt canvas — здесь
   // про специфичность DOM, не CSS).
-  if(nm && angarCat==='color') nm.textContent = typeof item.name==='number' ? L.skinNames[item.name] : (item.name||''); // 08.09.2026: см. коммент у angarPvNameFill выше — числовой индекс vs строка напрямую
+  if(nm && angarCat==='color') nm.textContent = skinI18nName(item, angarCat); // 08.09.2026: см. коммент у angarPvNameFill выше — числовой индекс vs строка напрямую
   if(pr){
     pr.classList.toggle('own', owned);
     // 04.09.2026 «Эксклюзивные скины за Stars»: item.premium — цена в Stars (⭐), не в ✦
@@ -2577,8 +2600,7 @@ function angarVisibleList(){ // список жетонов активной в�
      чтобы не быть на экране дважды. */
   const freebieIds = ANGAR_FREEBIE[angarCat] || [];
   const freebies = freebieIds.map(id=>cfg.list.find(d=>d.id===id)).filter(Boolean);
-  const subCats = angarCat==='decal' ? ANGAR_DECAL_CATS
-    : angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
+  const subCats = angarCat==='flash' ? ANGAR_FLASH_CATS : angarCat==='trail' ? ANGAR_TRAIL_CATS
     : angarCat==='color' ? ANGAR_SKIN_CATS : null;
   /* 06.09.2026, найдено живьём (владелец: «плитка Бумажный дублируется»): у скинов (color)
      id0 несёт настоящую категорию (cat:'classic'), не 'none' как у декалей/иконок — ветка
@@ -2638,29 +2660,24 @@ function angarBuildTabs(){
      потом (тем же заходом) — одной нерабочей вкладкой «Цвет». 28.08.2026: вторая вкладка
      «Декаль» с реальным переключением. 29.08.2026: третья — «Иконки» (правая сторона
      борта, носится вместе с декалью, не вместо), четвёртая — «Вспышка» (не на борту,
-     проигрывается на старте). 05.09.2026: пятая — «След», независимый от скина. Аура/Звук —
-     сюда же позже. */
+     проигрывается на старте). 05.09.2026: пятая — «След», независимый от скина.
+     24.09.2026: «Эмодзи» (была декалью) убрана из игры целиком (владелец) — см. game.js:137.
+     Тюнинг теперь 3 вкладки: Цвет / Вспышка / След. Аура/Звук — сюда же позже. */
   if(angarTabsBuilt) return;
   const tabs=$('angarTabs');
   if(tabs){
-    // 13.09.2026, владелец (живой скрин с обводкой): «Эмодзи» — четвёртой вкладкой, после
-    // «Следа», не второй. Порядок клика/подсветки/textContent ниже — по id, DOM-порядок не
-    // трогает: переставлена только сама строка разметки.
     tabs.innerHTML = '<button class="angarTab" id="angarTabColor"></button>'+
                       '<button class="angarTab" id="angarTabFlash"></button>'+
-                      '<button class="angarTab" id="angarTabTrail"></button>'+
-                      '<button class="angarTab" id="angarTabDecal"></button>';
+                      '<button class="angarTab" id="angarTabTrail"></button>';
     $('angarTabColor').addEventListener('click',()=>angarSwitchCat('color'));
-    $('angarTabDecal').addEventListener('click',()=>angarSwitchCat('decal'));
     $('angarTabFlash').addEventListener('click',()=>angarSwitchCat('flash'));
     $('angarTabTrail').addEventListener('click',()=>angarSwitchCat('trail'));
   }
   angarTabsBuilt=true;
 }
 function angarRenderTabsSel(){
-  const tc=$('angarTabColor'), td=$('angarTabDecal'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
+  const tc=$('angarTabColor'), tf=$('angarTabFlash'), tr=$('angarTabTrail');
   if(tc) tc.classList.toggle('sel', angarCat==='color');
-  if(td) td.classList.toggle('sel', angarCat==='decal');
   if(tf) tf.classList.toggle('sel', angarCat==='flash');
   if(tr) tr.classList.toggle('sel', angarCat==='trail');
 }
@@ -2711,16 +2728,14 @@ function angarBuildGrid(){
          у них есть свой item.cat от оригинала (например 'space'), без исключения заголовок
          той категории ошибочно всплыл бы прямо над ними, а не над её настоящим первым
          предметом дальше по списку. */
-      if((angarCat==='decal'||angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
+      if((angarCat==='flash'||angarCat==='trail'||angarCat==='color') && item.cat && item.cat!=='none' && item.cat!==lastCat
          && (ANGAR_FREEBIE[angarCat]||[]).indexOf(item.id)<0){
         const head=document.createElement('div');
         head.className='angarCatHead';
         head.textContent = (L.decalCatNames && L.decalCatNames[item.cat]) || item.cat;
-        if(angarCat==='decal'){
-          head.classList.add('angarCatHeadToggle');
-          head.dataset.cat=item.cat;
-          head.classList.toggle('open', S.angarDecalCollapsed.indexOf(item.cat)<0);
-        }
+        // 24.09.2026: сворачиваемые группы (.angarCatHeadToggle/S.angarDecalCollapsed) были
+        // только у «Эмодзи» (900 записей, много вкладок нужны были) — убраны вместе с ней,
+        // см. game.js:137. У Вспышки/Следа/Цвета такой нужды не было и нет.
         grid.appendChild(head);
         lastCat = item.cat;
       }
@@ -2862,7 +2877,6 @@ function angarBuildGrid(){
         })();
       }
       el.addEventListener('click',()=>{ angarPick(item.id); });
-      if(angarCat==='decal' && item.cat && item.cat!=='none' && S.angarDecalCollapsed.indexOf(item.cat)>=0) el.classList.add('angarHiddenGroup');
       grid.appendChild(el);
     });
     angarBuilt = true;
@@ -2874,7 +2888,6 @@ function renderHangar(){
   angarSel = S[ANGAR_CATS[angarCat].selKey];
   angarRenderTabsSel();
   const tabColor=$('angarTabColor'); if(tabColor) tabColor.textContent=L.angarTabColor;
-  const tabDecal=$('angarTabDecal'); if(tabDecal) tabDecal.textContent=L.angarTabDecal;
   const tabFlash=$('angarTabFlash'); if(tabFlash) tabFlash.textContent=L.angarTabFlash;
   const tabTrail=$('angarTabTrail'); if(tabTrail) tabTrail.textContent=L.angarTabTrail;
   /* 09.09.2026, владелец (живой скрин, обвёл красным «След»): scrollFadeSync мерил ширину
@@ -3020,32 +3033,14 @@ function angarBuyPremium(item, els){
     }catch(e){ _angarBuyBusy=false; toast(L.notEnough,'rgba(255,159,176,.5)'); haptic('error'); }
   });
 }
-/* 09.09.2026 «Свёрнутые группы Эмодзи»: сам подзаголовок группы — тап по нему прячет/показывает
-   её плитки без перестройки всей сетки (angarBuilt не сбрасывается — состояние живёт в классах
-   .open/.angarHiddenGroup, персист — в S.angarDecalCollapsed/Store). Соседние плитки той же
-   группы — все .angarIt между этим подзаголовком и следующим .angarCatHead. */
-function angarToggleDecalGroup(cat){
-  const arr=S.angarDecalCollapsed; const i=arr.indexOf(cat);
-  const collapsedNow = i<0; // ещё не было в списке свёрнутых — сворачиваем сейчас
-  if(collapsedNow) arr.push(cat); else arr.splice(i,1);
-  Store.set('angarDecalCollapsed', arr);
-  sfx.click(); haptic('light');
-  const grid=$('angarGrid'); if(!grid) return;
-  const head=grid.querySelector('.angarCatHeadToggle[data-cat="'+cat+'"]');
-  if(!head) return;
-  head.classList.toggle('open', !collapsedNow);
-  let n=head.nextElementSibling;
-  while(n && !n.classList.contains('angarCatHead')){
-    n.classList.toggle('angarHiddenGroup', collapsedNow);
-    n=n.nextElementSibling;
-  }
-}
+// 24.09.2026: «Свёрнутые группы Эмодзи» (angarToggleDecalGroup, S.angarDecalCollapsed,
+// .angarCatHeadToggle/.angarHiddenGroup) убраны вместе со всей вкладкой «Эмодзи» (владелец) —
+// см. game.js:137. Только у неё было 900 записей и нужда сворачивать группы.
 // 28.08.2026: кнопка живёт внутри жетона и пересоздаётся при каждой перерисовке (innerHTML) —
 // вешать слушатель на неё саму бессмысленно, он терялся бы. Делегирование на сетку целиком.
 if(typeof $==='function' && $('angarGrid')) $('angarGrid').addEventListener('click', e=>{
   if(e.target.closest('.angarTileBuy')){ e.stopPropagation(); angarAct(); }
   if(e.target.closest('.angarUnwearBtn')){ e.stopPropagation(); angarUnwear(); }
-  const head=e.target.closest('.angarCatHeadToggle'); if(head){ angarToggleDecalGroup(head.dataset.cat); }
 });
 if(typeof $==='function' && $('hangarScreen')) $('hangarScreen').addEventListener('pointerdown', angarPvWake);
 
@@ -3433,6 +3428,18 @@ wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync)
    от нашего же programmatic scrollTo() ниже). Дальше карусель стоит там, где её оставили. */
 let heroCarouselAutoT=setInterval(function(){
   if (screenName!=='menu') return;
+  /* 24.09.2026 (владелец: «пусть сперва Score Attack сыграют, а остальное увидят потом» +
+     живая жалоба «подсказка появляется намного позже, чем карусель уезжает — можешь и не
+     увидеть»): пока игрок вообще ни разу не играл — карусель не крутится сама, стоит на
+     Score Attack. Это и решает конфликт таймингов (7с прокрутка vs 15с+ ожидание
+     подсказки — сама подсказка теперь ждёт именно эту карточку, ей больше некуда уезжать),
+     и не показывает новичку раньше времени 6 режимов, которые ему рано видеть.
+     25.09.2026: было `Stats.runs` — такого поля не существует нигде в коде (настоящий
+     счётчик — `Stats.games`, `Stats.games++` при каждом старте, js/ui.js:954), значит
+     условие было ВСЕГДА истинным и карусель никогда не крутилась сама ни для кого,
+     сколько бы игрок ни играл. Найдено стражем Зонда, тот же неверный паттерн скопирован
+     туда же — см. комментарий у zondTick(). */
+  if(typeof Stats!=='undefined' && (Stats.games||0)===0) return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
   const n=car.children.length;
@@ -3447,6 +3454,174 @@ let heroCarouselAutoT=setInterval(function(){
   car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
+/* 25.09.2026 «Зонд» — персонаж-подсказка для совсем новых игроков, заменяет прежний
+   язычок на ленте (владелец: «в научной игре смотрится омерзительно», плюс задел на
+   будущую систему рейтинга/кастомизации, отдельная задача, см. память сессии). В
+   отличие от язычка — появляется СРАЗУ на пустом меню, не после простоя: сама идея
+   «поймай подсказку» и есть обучение, ждать бездействия не нужно. Условие показа —
+   то же самое, что было у язычка (Stats.games===0 и центр карусели — Score Attack),
+   но БЕЗ таймера ожидания. Один раз за загрузку страницы (zondShown), не при каждом
+   возврате в меню — dependency от прежнего idleHintShown-счётчика (5 показов) не
+   годится: тут нет серии показов, только один эпизод на первый визит. Бег гасится
+   ЛИБО системным `prefers-reduced-motion` (RM, js/core.js), ЛИБО ручным тумблером
+   «Смягчить тряску» (CALM_FX) — см. zondMoveNext(). Первая версия держалась только
+   на RM; при правке CALM_FX (25.09.2026, дефолт true→false — владелец: доступность
+   не включают заранее всем) выяснилось, что сам же код признаёт RM «ненадёжным
+   внутри WebView» (комментарий у CALM_FX в core.js) — там играет большинство. Раз
+   CALM_FX теперь тоже выключен по умолчанию, добавлять его вторым сигналом стало
+   безопасно — не гасит погоню зря никому. Позиции-«карманы» не захардкожены
+   в процентах (macet использовал условный демо-экран) — измеряются вживую через
+   getBoundingClientRect() тех же элементов, что уже на экране (карточка/точки
+   карусели/ряд кнопок), чтобы не гадать координаты отдельно под каждый размер
+   телефона. Текст подсказки внутри пузыря — ЗАГЛУШКА (владелец: текст ещё не готов,
+   вставить позже отдельной правкой), взято дословно из одобренного макета
+   macet-25-09-zond-final.html. */
+let zondShown=false, zondCaught=false, zondIdx=0, zondPocketsArr=[], zondMoveT=null;
+const ZOND_FACE_NORMAL='<rect x="14" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
+  '<rect x="21" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
+  '<path d="M16,33 L24,33" stroke="var(--gold-hi)" stroke-width="1.8" stroke-linecap="round"/>';
+const ZOND_FACE_CAUGHT='<path d="M12,25 Q16,21 20,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+  '<path d="M20,25 Q24,21 28,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="13" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
+  '<circle cx="27" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
+  '<ellipse cx="20" cy="34" rx="2.6" ry="2" fill="var(--gold-hi)"/>';
+function zondCentredCard(){
+  const car=$('heroCarousel'); if(!car||!car.children.length) return null;
+  const w=car.children[0].getBoundingClientRect().width; if(!w) return null;
+  const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
+  return car.children[idx];
+}
+/* 25.09.2026 (владелец, живой телефон 360×800, реальные скриншоты): первая версия падала
+   в двух местах разом — (1) «карман» между heroDots и .stack на узком экране оказался
+   0px зазора (не проверял реальный зазор, только считал середину — Зонд садился прямо на
+   границу ленты точек и кнопки), (2) старт был у угла карточки, не внизу, как
+   договаривались. Теперь: МИНИМАЛЬНЫЙ зазор (ZOND_MIN_GAP) перед тем, как считать
+   «карман» реальным, и явный старт у нижнего края экрана. */
+const ZOND_MIN_GAP=30; // px — меньше не считается настоящим карманом, не втискиваем силой
+function zondPockets(){
+  const pts=[];
+  const sw=window.innerWidth, sh=window.innerHeight;
+  /* 25.09.2026 (владелец, живьём, два захода подряд): (1) с одним нижним карманом побег
+     превратился в скучный маятник «туда-сюда» — нужно несколько точек, не одна; (2) когда
+     точки оказались близко друг к другу (0.28-0.72 ширины), мелкие частые перескоки внутри
+     тесного пятачка сам читаются как «ёрзает, дёргается», не как «плавает по экрану» —
+     хотя формально ни одну кнопку не задевают (проверено live-device). Раздвинуто почти на
+     всю ширину экрана (0.10-0.90) — то же самое пустое поле, просто прыжки внутри него
+     крупнее и реже выглядят как движение, не подёргивание. */
+  const scrFoot=document.querySelector('#startScreen .scrFoot');
+  const zoneTop = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
+  const zoneBottom = sh-70;
+  const xL=Math.max(16, sw*0.10-21), xR=Math.min(sw-58, sw*0.90-21), xC=sw/2-21;
+  pts.push({x:xC, y:Math.min(zoneTop, zoneBottom)});
+  if(zoneBottom-zoneTop>=ZOND_MIN_GAP){
+    const yFar=Math.min(zoneTop+(zoneBottom-zoneTop)*0.55, zoneBottom);
+    pts.push({x:xL, y:yFar});
+    pts.push({x:xR, y:Math.min(zoneTop, zoneBottom)});
+    pts.push({x:xC, y:yFar});
+  }
+  const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
+  if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
+  const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
+  if(dots && stackEl){
+    const dR=dots.getBoundingClientRect(), sR=stackEl.getBoundingClientRect();
+    if(sR.top-dR.bottom>=ZOND_MIN_GAP) pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
+  }
+  const menuRow=$('menuRow');
+  if(menuRow && menuRow.children.length>=4){
+    const r1=menuRow.children[1].getBoundingClientRect(), r2=menuRow.children[2].getBoundingClientRect();
+    if(r2.top-r1.bottom>=ZOND_MIN_GAP) pts.push({x:menuRow.getBoundingClientRect().left+menuRow.getBoundingClientRect().width*0.5-21, y:(r1.bottom+r2.top)/2-24});
+  }
+  const brandSub=$('brandSub'); const wrap=document.querySelector('#startScreen .heroCarouselWrap');
+  if(brandSub && wrap){
+    const bR=brandSub.getBoundingClientRect(), wR=wrap.getBoundingClientRect();
+    if(wR.top-bR.bottom>=ZOND_MIN_GAP) pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
+  }
+  return pts;
+}
+/* 25.09.2026: было `left = x-30` без проверки края экрана — на узком телефоне (360px)
+   пузырь с фразой (~190px при реальном тексте) целиком уезжал за правый край, владелец
+   физически не мог прочитать текст. Теперь — ставим, ИЗМЕРЯЕМ реальную отрисованную
+   ширину, подвигаем обратно в границы экрана, если вылезло. */
+function zondClampToViewport(el){
+  if(!el) return;
+  const pad=8, r=el.getBoundingClientRect();
+  if(r.right>window.innerWidth-pad) el.style.left=(parseFloat(el.style.left)-(r.right-(window.innerWidth-pad)))+'px';
+  const r2=el.getBoundingClientRect();
+  if(r2.left<pad) el.style.left=(parseFloat(el.style.left)+(pad-r2.left))+'px';
+}
+function zondPlaceTauntNear(x,y){
+  const taunt=$('zondTaunt'); if(!taunt) return;
+  taunt.style.left=Math.max(4,x-30)+'px';
+  taunt.style.top=(y-58)+'px';
+  zondClampToViewport(taunt);
+}
+function zondShowTaunt(){
+  const zond=$('zondEl'); if(!zond) return;
+  zondPlaceTauntNear(parseFloat(zond.style.left), parseFloat(zond.style.top));
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.add('show');
+}
+function zondMoveNext(){
+  /* 25.09.2026: RM (prefers-reduced-motion) — единственный сигнал не годится, сам же
+     код признаёт (js/core.js, коммент у CALM_FX) — «ненадёжен внутри WebView», где
+     играет большинство. CALM_FX теперь тоже выключен по умолчанию (владелец: не
+     включать заранее всем) — значит безопасно добавить его вторым сигналом: ручной,
+     явно поставленный игроком тумблер надёжнее пассивного системного признака внутри
+     Telegram. Логика ИЛИ — хватает любого из двух, не оба разом. */
+  if(zondCaught || RM || CALM_FX) return;
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
+  zondIdx=(zondIdx+1)%zondPocketsArr.length;
+  const p=zondPocketsArr[zondIdx]; const zond=$('zondEl'); if(!zond) return;
+  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
+}
+function zondCatch(){
+  if(zondCaught) return;
+  zondCaught=true;
+  if(zondMoveT){ clearInterval(zondMoveT); zondMoveT=null; }
+  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
+  const face=$('zondFace'); if(face) face.innerHTML=ZOND_FACE_CAUGHT;
+  const zond=$('zondEl'); const x=parseFloat(zond.style.left), y=parseFloat(zond.style.top);
+  const spark=$('zondSpark'); if(spark){ spark.style.left=(x+8)+'px'; spark.style.top=(y-14)+'px'; spark.classList.add('show'); }
+  const hint=$('zondHint');
+  if(hint){
+    hint.style.left=Math.max(4,x-20)+'px'; hint.style.top=(y-70)+'px';
+    hint.textContent='Совет: короткий флик честнее держит скорость'; // ЗАГЛУШКА — текст ждёт владельца
+    hint.classList.add('show');
+    zondClampToViewport(hint); // 25.09.2026: та же защита от вылезания за узкий экран, что у фразы
+  }
+  haptic('light'); sfx.click();
+}
+function zondShow(){
+  const layer=$('zondLayer'); if(!layer || zondShown) return;
+  zondPocketsArr=zondPockets(); if(!zondPocketsArr.length) return;
+  zondShown=true;
+  layer.innerHTML='<div class="zondTaunt" id="zondTaunt">Сможешь поймать меня? А-а-а!</div>'+
+    '<div class="zond" id="zondEl"><div class="zondHitZone"></div>'+
+    '<svg class="zondSvg zondBob" viewBox="0 0 40 46">'+
+    '<g class="zondSatWrap"><path d="M14,10 Q20,3 26,10" stroke="rgba(240,192,64,.35)" stroke-width="1.2" fill="none" stroke-dasharray="1.5 3"/>'+
+    '<circle class="zondSat glow" cx="26" cy="10" r="2.3" fill="var(--gold-hi)"/></g>'+
+    '<polygon points="20,14 30,21 30,33 20,40 10,33 10,21" fill="#0d2038" stroke="var(--gold-hi)" stroke-width="2"/>'+
+    '<g id="zondFace">'+ZOND_FACE_NORMAL+'</g></svg></div>'+
+    '<div class="zondSpark" id="zondSpark">✦</div><div class="zondHint" id="zondHint"></div>';
+  const p=zondPocketsArr[0]; const zond=$('zondEl');
+  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>zond.classList.add('zondIn'))); // 25.09.2026: мягкое появление вместо мгновенного «хоп» — см. .zondIn в index.html
+  zond.addEventListener('click', zondCatch);
+  setTimeout(zondShowTaunt, 400);
+  zondMoveT=setInterval(zondMoveNext, 3600); // 25.09.2026: было 2600 — с широкими точками чаще выглядело как дёрганье, не движение
+}
+function zondTick(){
+  /* 25.09.2026 (владелец, прямо на живом телефоне): убрано условие Stats.games===0.
+     Та же логика, что уже решена для будущего «выпускного» ([[project_zond_vypusknoy_bonus_otlozheno_25_09]]
+     в памяти сессии) — не гадать по числу забегов, кто «уже не новичок», ждать ЯВНОГО
+     отказа игрока. Явного отказа (кнопки «не нужно») пока не существует — значит по
+     умолчанию Зонд показывается всем, один раз за загрузку страницы. Когда построим
+     кнопку подтверждения — она и станет настоящим условием отказа, не количество игр. */
+  if(zondShown) return; // один эпизод за загрузку страницы, не при каждом возврате в меню
+  if(screenName!=='menu') return;
+  const card=zondCentredCard();
+  if(!card || !card.classList.contains('hc-classic')) return;
+  zondShow();
+}
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
@@ -4553,7 +4728,11 @@ function gratitudeSkyFill(){
     grStars = (r && r.ok && Array.isArray(r.stars)) ? r.stars.map(function(row){ return Object.assign({id:row.id}, grStarPos(row.id)); }) : [];
     const cnt=$('grStarCount'), empty=$('grEmpty');
     if(grStars.length>0){
-      if(cnt){ cnt.textContent='★ '+grStars.length; cnt.classList.remove('hidden'); }
+      // 24.09.2026 (владелец, живой скрин с обводкой: «три места, разные звёзды») — было
+      // textContent='★ '+N (обычный текстовый глиф, плоский, без градиента) — расходился с
+      // suma/кнопкой отправки ниже, у которых #i-gr-star (объёмный золотой SVG). Теперь везде
+      // одна и та же иконка.
+      if(cnt){ cnt.innerHTML='<svg class="ic" aria-hidden="true"><use href="#i-gr-star"></use></svg>'+grStars.length; cnt.classList.remove('hidden'); }
       if(empty) empty.classList.add('hidden');
     } else {
       if(cnt) cnt.classList.add('hidden');
@@ -4683,7 +4862,14 @@ wireOn('grSendBtn','click',function(){
         _grSendBusy=false;
         if(status!=='paid') return;
         if(commentEl) commentEl.value='';
-        toast(L.grSent,'rgba(240,192,64,.6)'); sfx.buy(); haptic('success');
+        /* 25.09.2026 (владелец, живой макет macet-25-09-blagodarnost-tost.html): было 1.5с
+           и один и тот же безличный текст всем всегда — «мы получили деньги как спасибо, а
+           в ответ невзрачная быстро гаснущая табличка». Теперь 4.5с (подтверждено живьём на
+           телефоне) и случайный выбор из нескольких тёплых формулировок — «не должны
+           постоянно всем говорить одно и то же». */
+        const grSentPool=(L.grSentPool&&L.grSentPool.length)?L.grSentPool:[L.grSent];
+        toast(grSentPool[Math.floor(Math.random()*grSentPool.length)],'rgba(240,192,64,.6)',4500);
+        sfx.buy(); haptic('success');
         gratitudeSkyFill();
       });
     }catch(e){ _grSendBusy=false; toast(L.grSendFail,'rgba(255,159,176,.5)'); haptic('error'); }
@@ -4827,8 +5013,9 @@ Store.init(()=>{
   // 29.08.2026 «2 бесплатных вместо Избранного»: id 1,2 из ANGAR_FREEBIE домешиваются в
   // ownedX явным union — не только через дефолт Store.get (тот сработал бы лишь для
   // игрока без вообще сохранённого массива, а не для уже игравших без этих двух id).
-  S.ownedDecals = Array.from(new Set(saneArray(Store.get('ownedDecals',[0]),[0]).concat(ANGAR_FREEBIE.decal)));
-  S.decal = saneNumber(Store.get('decal',0),0);
+  // 24.09.2026: S.ownedDecals/S.decal убраны вместе со всей вкладкой «Эмодзи» (владелец,
+  // тихий сброс без тоста) — старое сохранённое значение в Store просто больше никем не
+  // читается, безопасно. См. game.js:137.
   // 06.09.2026: S.ownedIcons/S.icon убраны вместе со всей вкладкой «Иконки» — старое
   // сохранённое значение в Store просто больше никем не читается, безопасно.
   S.ownedLaunchFx = Array.from(new Set(saneArray(Store.get('ownedLaunchFx',[0]),[0]).concat(ANGAR_FREEBIE.flash)));
@@ -4838,12 +5025,10 @@ Store.init(()=>{
   // 07.09.2026 «Избранное»: по одному массиву на категорию Тюнинга, пусто по умолчанию
   // (в отличие от ownedX — тут нет фрибута, только личный выбор игрока).
   S.favSkins = saneArray(Store.get('favSkins',[]),[]);
-  S.favDecals = saneArray(Store.get('favDecals',[]),[]);
   S.favLaunchFx = saneArray(Store.get('favLaunchFx',[]),[]);
   S.favTrails = saneArray(Store.get('favTrails',[]),[]);
-  // 09.09.2026 «Свёрнутые группы Эмодзи»: список ключей категорий (item.cat), которые владелец
-  // свернул — переживает перезапуск, тем же приёмом, что и favX выше.
-  S.angarDecalCollapsed = saneArray(Store.get('angarDecalCollapsed',[]),[]);
+  // 24.09.2026: S.favDecals/S.angarDecalCollapsed убраны вместе со всей вкладкой «Эмодзи» —
+  // см. game.js:137.
   Stats = Object.assign(Stats, Store.get('stats',{})||{}); // миграция: старые сейвы без новых полей дополняются дефолтами
   // чувствительность гироскопа (персист) — только известные ступени
   const sv=saneNumber(Store.get('sens',1),1);
@@ -4858,7 +5043,7 @@ Store.init(()=>{
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
   CONTRAST = Store.get('contrast',0)===1; COLORBLIND = Store.get('colorblind',0)===1; canvasFilterSync(); // v1.280.0
-  CALM_FX = Store.get('calmFx',1)===1; // 06.09.2026 «Смягчить тряску и вспышки», по умолчанию включён
+  CALM_FX = Store.get('calmFx',0)===1; // 06.09.2026 «Смягчить тряску и вспышки»; 25.09.2026: дефолт true→false, владелец — доступность не включают заранее всем
   { const tsv=saneNumber(Store.get('uiTextScale',1),1); UI_TEXT_SCALE = TEXT_SCALE_STEPS.includes(tsv)?tsv:1; applyUiScale(UI_TEXT_SCALE); } // 09.09.2026 «Размер текста»
   // Скоростные полосы полностью вырезаны: чтение флага хранилища удалено, чтобы не
   // восстанавливать отключённый эффект при старом сохранённом значении.
