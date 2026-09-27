@@ -70,7 +70,7 @@ const music = (()=>{
   const stats={pads:0, notes:0, stings:0, kicks:0, bars:0}; // счётчики для стенда
   function createSynth(ac, dest){
     const rnd=mulberry(7), live=[];
-    const out=ac.createGain(); out.gain.value=.8*4; /* ×4: полёт по громкости как прежняя музыка (~−6..−7 дБ), решение владельца 27.09.2026 */ out.connect(dest);
+    const out=ac.createGain(); out.gain.value=.8; /* как в утверждённом макете (27.09.2026: убрано самодеятельное ×4) */ out.connect(dest);
     const len=Math.floor(ac.sampleRate*2.2), ir=ac.createBuffer(2,len,ac.sampleRate); // реверб с фиксированным зерном — без случайности от запуска к запуску
     for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(rnd()*2-1)*Math.pow(1-i/len,3); }
     const conv=ac.createConvolver(); conv.buffer=ir; const wet=ac.createGain(); wet.gain.value=.28; conv.connect(wet); wet.connect(out);
@@ -163,10 +163,11 @@ const music = (()=>{
   }
 
   /* ── ПЛАНИРОВЩИК ─────────────────────────────────────────────────────────── */
-  let mg=null, lim=null, syn=null;
+  let mg=null, sat=null, syn=null;
+  const MASTER_DRIVE=1.1, MASTER_GAIN=1.0783, MASTER_RANGE=2; // выход утверждённого макета (см. ensureChain); RANGE — кривая строится на ±2
   let theme=null, ducked=false, pendingTheme=null, timer=null, nextBar=0;
   let menuBar=MENU[0], runBar=S1[0], stage=1, runStartWave=1, lastDist=0, pos=null;
-  const MG_MENU=.12, MG_GAME=.9, // меню тише полёта: ~−15 дБ, как было до усиления (решение про громкость — только о полёте)
+  const MG_MENU=1, MG_GAME=1, // 27.09.2026: как в утверждённом макете — меню и полёт одной громкостью, шина на 1 (прижим паузы/удара — доли от неё)
         MG={menu:MG_MENU, game:MG_GAME};
   const BAR=4*60/SCORE.bpm;
   function wave(){ return (typeof S!=='undefined'&&S.mission)||1; }
@@ -176,16 +177,22 @@ const music = (()=>{
     const ac=audio(); if(!ac) return null;
     if(mg && mg.context!==ac){ // контекст умер и пересоздан (закрытие браузером / «тихая заморозка», core.js) — узлы старого не годятся
       try{ syn&&syn.stop(0); }catch(e){}
-      mg=null; lim=null; syn=null; theme=null; pendingTheme=null;
+      mg=null; sat=null; syn=null; theme=null; pendingTheme=null;
       if(timer){ clearInterval(timer); timer=null; }
     }
     if(!mg){
       mg=ac.createGain(); mg.gain.value=0;
-      lim=ac.createDynamicsCompressor(); lim.threshold.value=-10; lim.knee.value=6; lim.ratio.value=12; lim.attack.value=.002; lim.release.value=.2; // ограничитель: макет выравнивался после рендера, в игре — на лету
-      // мягкое насыщение (tanh) — физический потолок: компрессор не успевает за атакой бочки, без этого пики уходили выше 0 дБ (замер: +2 дБ);
-      // ×0.94 — пик −0.5 дБ, как у прежней музыки
-      const sat=ac.createWaveShaper(); { const n=1024, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=i/(n-1)*2-1; c[i]=.94*Math.tanh(1.5*x)/Math.tanh(1.5); } sat.curve=c; }
-      mg.connect(lim); lim.connect(sat); sat.connect(ac.destination);
+      /* 27.09.2026 (владелец: «у тебя есть чёткий оригинал, который я одобрил — возьми его и ровно такой же
+         помести в игру»). Выход — ровно как в утверждённом макете (fin «без тик-так», движок v2b): сумма
+         голосов → tanh(1.1·x) → ×1.0783 (= 0.94 / пик после насыщения по всему 6-минутному треку, пересчитано
+         тем же скриптом рендера; пересчёт совпал с утверждённым файлом до −48.5 дБ — уровень шума mp3).
+         Было при вставке в игру (не утверждалось): ×4, сжатие −10 дБ 12:1, насыщение tanh(1.5·x), меню −8 дБ —
+         отсюда хрип и лишние круги прослушивания. Страж 360 сверяет кривую с макетом по точкам. */
+      // WaveShaper обрезает вход жёстко за ±1, а сумма голосов в макете доходит до ~1.22 (tanh там её плавно сглаживал) —
+      // поэтому на вход идёт половина сигнала, а кривая построена на ±2: передаточная функция = tanh(1.1·x)·1.0783 до |x|≤2
+      const pre=ac.createGain(); pre.gain.value=1/MASTER_RANGE;
+      sat=ac.createWaveShaper(); { const n=4096, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=(i/(n-1)*2-1)*MASTER_RANGE; c[i]=Math.tanh(MASTER_DRIVE*x)*MASTER_GAIN; } sat.curve=c; }
+      mg.connect(pre); pre.connect(sat); sat.connect(ac.destination);
       syn=createSynth(ac, mg);
     }
     return ac;
@@ -273,6 +280,7 @@ const music = (()=>{
     _ducked:()=>ducked,
     _levels:()=>({menu:MG_MENU, game:MG_GAME}),
     _score:SCORE,
+    _master:()=>({ drive:MASTER_DRIVE, gain:MASTER_GAIN, range:MASTER_RANGE, curve: sat?Array.from(sat.curve):[] }),
     _pos:()=>pos,
     _tick:()=>tick(),
     _forceNextBarDue(){ nextBar=-1; }
