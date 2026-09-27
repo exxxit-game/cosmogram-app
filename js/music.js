@@ -192,7 +192,7 @@ const music = (()=>{
       // поэтому на вход идёт половина сигнала, а кривая построена на ±2: передаточная функция = tanh(1.1·x)·1.0783 до |x|≤2
       const pre=ac.createGain(); pre.gain.value=1/MASTER_RANGE;
       sat=ac.createWaveShaper(); { const n=4096, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=(i/(n-1)*2-1)*MASTER_RANGE; c[i]=Math.tanh(MASTER_DRIVE*x)*MASTER_GAIN; } sat.curve=c; }
-      mg.connect(pre); pre.connect(sat); sat.connect(ac.destination);
+      mg.connect(pre); pre.connect(sat); sat.connect(audioOut(ac)); // в общую смесь (core.js) вместе со звуками игры — страж 361
       syn=createSynth(ac, mg);
     }
     return ac;
@@ -337,7 +337,7 @@ const engine=(()=>{
         const sg=ac.createGain(); sg.gain.value=pr.sub;
         sub.connect(sg); sg.connect(g); sub.start();
       }
-      src.connect(flt); flt.connect(g); g.connect(ac.destination);
+      src.connect(flt); flt.connect(g); g.connect(audioOut(ac)); // двигатель — в общую смесь
       src.start(); on=true; ducked=false; gen++; // новое поколение — отложенная чистка от stop() его не тронет
       if(!timer) timer=setInterval(loop,150);
       loop();
