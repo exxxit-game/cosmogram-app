@@ -163,7 +163,44 @@ const music = (()=>{
   }
 
   /* ── ПЛАНИРОВЩИК ─────────────────────────────────────────────────────────── */
-  let mg=null, sat=null, syn=null;
+  let mg=null, sat=null, syn=null, ana=null;
+  /* 27.09.2026 ИЗМЕРИТЕЛЬ (владелец: «как только начинаешь играть — музыка сразу пропадает» + «рыпение
+     с самого начала»; на компьютере в полёте музыка не пропадает — дело в телефоне, гадать по коду
+     нельзя). «Отзыв» говорил «музыка играет» по одним состояниям (тема, громкость) — настоящий звук
+     не мерил никто. Музыка пишет в ленту чёрного ящика (уходит с «Отзывом»), только замеры, звук не
+     меняется: bench — один раз в меню, сколько телефон считает 2 такта самой плотной части (доля от
+     реального времени; ближе к 100% — звук не успевает, это треск); «полёт» — через 6 с полёта:
+     уровень сигнала музыки (анализатор после выхода), запас нот впереди, ход звуковых часов к
+     настенным (clk<1 — звук отстаёт); тревога «такты стоят» — тема выбрана, а нот нет. Страж 362. */
+  let lastTickAt=0, benchStarted=false, benchRes=null, themeAt=0, flight=null, deadSaid=false;
+  function tape(d){ try{ if(typeof BB!=='undefined'&&BB.log) BB.log('music',d); }catch(e){} }
+  function rmsDb(){ if(!ana) return null; const a=new Float32Array(ana.fftSize); ana.getFloatTimeDomainData(a);
+    let q=0; for(let i=0;i<a.length;i++) q+=a[i]*a[i]; return 20*Math.log10(Math.sqrt(q/a.length)+1e-9); }
+  function bench(){ // та же партитура на отдельном офлайн-контексте: такты 57–58 («drive» — самая плотная часть 1-го этапа)
+    benchStarted=true;
+    try{
+      const sr=AC.sampleRate, sec=2*BAR+.5, off=new OfflineAudioContext(2,Math.ceil(sec*sr),sr);
+      const keep=Object.assign({},stats), b=createSynth(off,off.destination); b.bar(57,0); b.bar(58,BAR); Object.assign(stats,keep);
+      const t=performance.now();
+      off.startRendering().then(()=>{ const ms=performance.now()-t; benchRes={ms:Math.round(ms), pct:Math.round(ms/10/sec)};
+        tape('bench '+sec.toFixed(1)+'с→'+benchRes.ms+'мс ('+benchRes.pct+'%) '+sr+'Hz'); })
+        .catch(e=>tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)));
+    }catch(e){ tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)); }
+  }
+  function meter(ac){ // зовётся из tick(): копит замеры полёта и пишет одну строку через ~6 с
+    const now=performance.now();
+    if(theme==='menu' && !benchStarted && now-themeAt>5000) bench();
+    if(theme!=='game' || !flight || flight.said) return;
+    const r=rmsDb(); if(r!=null && now-themeAt>1500) flight.rms.push(r);
+    if(now-flight.w0<6000) return;
+    flight.said=true;
+    const v=flight.rms.slice().sort((a,b)=>a-b), med=v.length?Math.round(v[v.length>>1]):'?';
+    const clk=((ac.currentTime-flight.c0)/((now-flight.w0)/1000)).toFixed(2);
+    let ps=''; try{ const s2=ac.playbackStats; if(s2&&s2.underrunEvents!=null) ps=' undr'+s2.underrunEvents; }catch(e){}
+    tape('полёт rms'+med+'dB впереди'+(nextBar-ac.currentTime).toFixed(1)+'с clk'+clk+' lat'+Math.round(1000*(ac.baseLatency||0))+'мс'+ps);
+  }
+  function markTheme(){ themeAt=performance.now(); deadSaid=false;
+    flight = theme==='game' && AC ? {w0:themeAt, c0:AC.currentTime, rms:[], said:false} : null; }
   const MASTER_DRIVE=1.1, MASTER_GAIN=1.0783, MASTER_RANGE=2; // выход утверждённого макета (см. ensureChain); RANGE — кривая строится на ±2
   let theme=null, ducked=false, pendingTheme=null, timer=null, nextBar=0;
   let menuBar=MENU[0], runBar=S1[0], stage=1, runStartWave=1, lastDist=0, pos=null;
@@ -177,7 +214,7 @@ const music = (()=>{
     const ac=audio(); if(!ac) return null;
     if(mg && mg.context!==ac){ // контекст умер и пересоздан (закрытие браузером / «тихая заморозка», core.js) — узлы старого не годятся
       try{ syn&&syn.stop(0); }catch(e){}
-      mg=null; sat=null; syn=null; theme=null; pendingTheme=null;
+      mg=null; sat=null; syn=null; ana=null; theme=null; pendingTheme=null;
       if(timer){ clearInterval(timer); timer=null; }
     }
     if(!mg){
@@ -193,6 +230,7 @@ const music = (()=>{
       const pre=ac.createGain(); pre.gain.value=1/MASTER_RANGE;
       sat=ac.createWaveShaper(); { const n=4096, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=(i/(n-1)*2-1)*MASTER_RANGE; c[i]=Math.tanh(MASTER_DRIVE*x)*MASTER_GAIN; } sat.curve=c; }
       mg.connect(pre); pre.connect(sat); sat.connect(audioOut(ac)); // в общую смесь (core.js) вместе со звуками игры — страж 361
+      ana=ac.createAnalyser(); ana.fftSize=2048; sat.connect(ana); // измеритель: только слушает, в звук не идёт
       syn=createSynth(ac, mg);
     }
     return ac;
@@ -213,15 +251,17 @@ const music = (()=>{
     const hadTheme=theme, hadPending=pendingTheme; // ensureChain() при смене контекста обнуляет тему — продолжаем ту же
     const ac=ensureChain(); if(!ac||!mg) return;
     if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
+    lastTickAt=performance.now();
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой
     while(nextBar < ac.currentTime + .9){
       if(pendingTheme){ // смена темы — на границе такта, не посреди фразы
         theme=pendingTheme; pendingTheme=null; if(theme==='game') resetRun(); else menuBar=MENU[0];
-        fadeTo(MG[theme]||MG_GAME,1.0);
+        fadeTo(MG[theme]||MG_GAME,1.0); markTheme();
       }
       pos=syn.bar(nextScoreBar(), nextBar);
       nextBar+=BAR;
     }
+    meter(ac);
   }
   function fadeTo(v,sec){
     if(!mg||!AC) return;
@@ -234,10 +274,13 @@ const music = (()=>{
       if(MUTED||!MUSIC_ON){ theme=null; pendingTheme=null; return; }
       const ac=ensureChain(); if(!ac){ theme=null; pendingTheme=null; return; }
       ducked=false; // v1.282.14: приглушение не переживает новый старт (иначе весь забег вполголоса)
-      if(theme===th){ pendingTheme=null; if(mg) fadeTo(MG[th]||MG_GAME,.4); return; }
+      if(theme===th){ pendingTheme=null; if(mg) fadeTo(MG[th]||MG_GAME,.4);
+        if(!deadSaid && lastTickAt && performance.now()-lastTickAt>1500){ deadSaid=true; // измеритель: тема есть, а планировщик нот молчит
+          tape('такты стоят '+((performance.now()-lastTickAt)/1000).toFixed(1)+'с · '+th+' · таймер'+(timer?1:0)+' · ctx'+(mg&&mg.context===AC?'=':'≠')); }
+        return; }
       if(!theme){ // ничего не играло — начинаем сразу
         theme=th; pendingTheme=null; if(th==='game') resetRun(); else menuBar=MENU[0];
-        nextBar=ac.currentTime+.08; fadeTo(MG[th]||MG_GAME,1.6);
+        nextBar=ac.currentTime+.08; fadeTo(MG[th]||MG_GAME,1.6); markTheme();
         if(!timer) timer=setInterval(tick,200);
         tick(); return;
       }
@@ -283,7 +326,8 @@ const music = (()=>{
     _master:()=>({ drive:MASTER_DRIVE, gain:MASTER_GAIN, range:MASTER_RANGE, curve: sat?Array.from(sat.curve):[] }),
     _pos:()=>pos,
     _tick:()=>tick(),
-    _forceNextBarDue(){ nextBar=-1; }
+    _forceNextBarDue(){ nextBar=-1; },
+    _diag:()=>({ rms:rmsDb(), ahead:AC?nextBar-AC.currentTime:null, tickAge:lastTickAt?(performance.now()-lastTickAt)/1000:null, bench:benchRes })
   };
 })();
 
