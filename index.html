@@ -1917,6 +1917,19 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #moreBox .hint { margin:0; }
 #accPanel .csInput { margin:0 12px 10px; width:calc(100% - 24px); } /* v1.66.3: позывной живёт в «Профиле» */
 #settingsScreen .gyroBar { margin:0 0 10px; min-height:0; }
+/* 28.09.2026 (макет nastroyki-pk-telefon): подпись под названием строки — что это и зачем */
+.setRow .setKW { display:flex; flex-direction:column; min-width:0; flex:1 1 auto; }
+.setRow:has(> .setKW) { flex-wrap:nowrap; } /* строка с подписью не переносит значение/тумблер вниз (у .setRow flex-wrap — ради «Размера текста») */
+.setHint { margin-top:2px; font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(158,178,224,.55); }
+.setHint:empty { display:none; }
+#csRow .csInput { width:7.2em; flex:none; margin:0; padding:6px 10px; text-align:right; letter-spacing:1px; }
+#accTableRow { cursor:default; } #accTableRow:active { background:none; }
+.diagSum { padding:12px 16px 2px; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#8fff9f; }
+.diagSum.warn { color:#ffcf6a; } .diagSum:empty { display:none; }
+#diagList .drow .who, #diagListRare .drow .who { display:block; font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(158,178,224,.55); margin-top:2px; }
+#diagList .drow .dst, #diagListRare .drow .dst { min-width:66px; font-size:10px; letter-spacing:.08em; }
+#diagList .drow > span:nth-child(2), #diagListRare .drow > span:nth-child(2) { flex:1 1 auto; min-width:0; }
+#diagList .drow .dbtn, #diagListRare .drow .dbtn { flex:none; width:auto !important; } /* «Оживить» — по своему тексту, не на полстроки */
 
 .hidden { display:none !important; }
 
@@ -4573,9 +4586,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.572"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.572"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.572"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.573"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.573"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.573"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4815,23 +4828,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div>
   <div class="setGrp spoiler" id="setGrpGame" role="button" tabindex="0"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
   <div class="setPanel hidden" id="panelGame">
-    <!-- v1.284.20 (партия 47): выключатель гироскопа. Стоит ПЕРВЫМ и прямо над «Чувствительностью»
-         намеренно — обе строки про один и тот же руль, и погашенная чувствительность под
-         выключенным тумблером объясняет себя сама, без единого слова подписи. -->
-    <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <!-- 15.09.2026: переехала сюда с главного экрана (см. комментарий у .scrMid выше) — тот же
-         .setRow, что у соседей, hidden по умолчанию, показывается кодом в ui.js (NEEDS_TILT_PERMISSION
-         && !TG_ORIENT), не CSS. Текст — тот же вопрос, что был на кнопке, не Key/Value пара. -->
-    <div class="setRow hidden" id="tiltBtn" role="button" tabindex="0">Разрешить управление наклоном?</div>
-    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
     <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
-    <!-- 09.09.2026 «Переназначение клавиш» (владелец, для игроков с ограниченной подвижностью руки):
-         только 4 направления, тап входит в режим «нажмите клавишу», следующее нажатие — новая
-         привязка ВМЕСТО дефолтной пары стрелка+буква для этого направления. Логика в ui.js/input.js. -->
-    <div class="setRow" id="setKeyLeftBtn" role="button" tabindex="0"><span class="setK">Влево</span><span class="setV arr">← / A</span></div>
-    <div class="setRow" id="setKeyRightBtn" role="button" tabindex="0"><span class="setK">Вправо</span><span class="setV arr">→ / D</span></div>
-    <div class="setRow" id="setKeyUpBtn" role="button" tabindex="0"><span class="setK">Вверх</span><span class="setV arr">↑ / W</span></div>
-    <div class="setRow" id="setKeyDownBtn" role="button" tabindex="0"><span class="setK">Вниз</span><span class="setV arr">↓ / S</span></div>
     <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setTextScaleBtn" role="button" tabindex="0"><span class="setK">Размер текста</span><span class="setV arr">100%</span></div> <!-- 09.09.2026 «Размер текста»: цикл-строка, тот же стиль, что у Чувствительности/Графики -->
@@ -4853,15 +4850,43 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          больше нет что выключать» подтверждена вживую. Своего состояния в Store у неё не
          было — то, что она обещала, уже честно делает ghostAgain/ghostActive() через
          «ЕЩЁ РАЗ?» строкой выше, а не пустое место рядом. -->
-    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setK">ЕЩЁ РАЗ?</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Призрак</span><span class="setHint" id="againHint">твой рекордный полёт летит рядом</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+  </div>
+  <!-- 28.09.2026 (владелец, макет nastroyki-pk-telefon): «Управление» — у каждого устройства своё.
+       ПК: клавиши + «Вернуть клавиши как было». Телефон: гироскоп, чувствительность, калибровка
+       (калибровка переехала сюда из нижней панели). Что видно — решает ui.js (ctrlVisibility):
+       гироскоп — по gyroSensorThere() (датчик реально прислал данные), клавиши — по мыши/клавише. -->
+  <div class="setGrp spoiler" id="setGrpCtrl" role="button" tabindex="0"><span class="setGrpT">Управление</span><span class="setGrpSub" id="setGrpCtrlSub"></span></div>
+  <div class="setPanel hidden" id="panelCtrl">
+    <!-- v1.284.20 (партия 47): выключатель гироскопа. Стоит ПЕРВЫМ и прямо над «Чувствительностью»
+         намеренно — обе строки про один и тот же руль, и погашенная чувствительность под
+         выключенным тумблером объясняет себя сама, без единого слова подписи. -->
+    <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <!-- 15.09.2026: переехала сюда с главного экрана (см. комментарий у .scrMid выше) — тот же
+         .setRow, что у соседей, hidden по умолчанию, показывается кодом в ui.js (NEEDS_TILT_PERMISSION
+         && !TG_ORIENT), не CSS. Текст — тот же вопрос, что был на кнопке, не Key/Value пара. -->
+    <div class="setRow hidden" id="tiltBtn" role="button" tabindex="0">Разрешить управление наклоном?</div>
+    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
+    <div class="setRow" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+    <!-- 09.09.2026 «Переназначение клавиш» (владелец, для игроков с ограниченной подвижностью руки):
+         только 4 направления, тап входит в режим «нажмите клавишу», следующее нажатие — новая
+         привязка ВМЕСТО дефолтной пары стрелка+буква для этого направления. Логика в ui.js/input.js. -->
+    <div class="setRow" id="setKeyLeftBtn" role="button" tabindex="0"><span class="setK">Влево</span><span class="setV arr">← / A</span></div>
+    <div class="setRow" id="setKeyRightBtn" role="button" tabindex="0"><span class="setK">Вправо</span><span class="setV arr">→ / D</span></div>
+    <div class="setRow" id="setKeyUpBtn" role="button" tabindex="0"><span class="setK">Вверх</span><span class="setV arr">↑ / W</span></div>
+    <div class="setRow" id="setKeyDownBtn" role="button" tabindex="0"><span class="setK">Вниз</span><span class="setV arr">↓ / S</span></div>
+    <div class="setRow solo" id="setKeyResetBtn" role="button" tabindex="0">Вернуть клавиши как было</div>
   </div>
   <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
   <div class="setPanel hidden" id="accPanel">
     <div class="setRow solo hidden" id="gyroUnlockBtn" role="button" tabindex="0">Открыть «Полёт без рук»</div>
     <div class="setRow hidden" id="setGyroOffBtn" role="button" tabindex="0"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
+    <!-- 28.09.2026 (макет nastroyki-pk-telefon): было «Ты в общей таблице как PO RO» над полем с
+         подсказкой «ПИЛОТ», а в заголовке группы — «PORO»: одно имя тремя способами. Теперь две
+         подписанные строки: имя из входа (так видят другие) и позывной (морзянка), каждая про своё. -->
+    <div class="setRow" id="accTableRow"><span class="setKW"><span class="setK" id="accTableK">В общей таблице</span><span class="setHint" id="accTableHint">имя из входа — так тебя видят другие</span></span><span class="setV" id="accTableV"></span></div>
+    <div class="setRow" id="csRow"><span class="setKW"><span class="setK" id="csRowK">Позывной</span><span class="setHint" id="csRowHint"></span></span><input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/></div>
     <div id="accStatus" class="accStatus"></div>
-    <div class="csCap" id="csCap">Позывной — звучит в морзянке и виброэфире</div>
-    <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
     <div id="dcWidget"></div>
     <div id="gWidget"></div>
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
@@ -4880,8 +4905,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          стрелка (.go::after, она и так стоит через position:absolute справа, от solo не
          зависела). Убран solo у обеих — тот же ритм, что у всего остального экрана.
          Макет: macet-02-09-nastroyki-ryad-vyravnen.html. -->
-    <div class="setRow" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-    <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+    <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Автоотчёты об ошибках</span><span class="setHint" id="setBeaconHint">сами отправляются, если в игре что-то сломалось</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
     <div class="setRow go" id="diagBtn" role="button" tabindex="0">Диагностика</div>
   </div>
 </div>
@@ -4901,8 +4925,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          мешает лететь и что человек проверяет чаще всего; всё техническое — под «Ещё».
          Две кнопки ручной отправки убраны: «Почта неба» присылает то же самое сама.
          Страж 111. -->
+    <!-- 28.09.2026 (владелец): кнопки «Сообщить о проблеме» здесь нет намеренно — дубль, спрятанный
+         глубоко. Автодиагностика прикладывается в «Поддержке» с главного экрана, в одно касание. -->
     <div class="setPanel">
-      <div id="diagList" style="padding:6px 8px 0"></div>
+      <div class="diagSum" id="diagSum"></div>
+      <div id="diagList" style="padding:0 8px 4px"></div>
     </div>
     <!-- 02.09.2026 (владелец, живое устройство): «Проверка вибрации»/«Записать полёт» и
          текст-справка под «Ещё» — разная природа (жать / читать), одна коробка на двоих
@@ -4910,15 +4937,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          спойлера (это не редкость, ей незачем прятаться), макет
          macet-02-09-servisnyy-centr-instrumenty-v2.html. -->
     <div class="setPanel">
-      <div class="diagToolsLbl">Проверки</div>
+      <div class="diagToolsLbl" id="diagProbesLbl">Проверки</div>
       <!-- 30.08.2026 (владелец): разовая проверка цены записи «Кино полёта» на слабом
            телефоне (Samsung A03 Core) — не постоянная функция игрока, техническая кнопка
            для этого теста. Жми, потом сразу лети — следующий взлёт запишется, на посадке
            покажет средний/минимальный FPS. -->
-      <div class="stack" style="padding:0 8px 10px">
-        <button class="btn ghost" id="diagVibroBtn">Проверка виброэфира</button>
-      </div>
-      <div class="statusBar gyroBar" style="margin:0 8px 10px"><span class="metric" id="diagVibroStat"></span></div>
+      <!-- 28.09.2026: результат проверки — подписью в той же строке; прежняя пустая .statusBar под
+           кнопкой держала min-height 32px и оставляла дыру. Строка видна только на телефоне. -->
+      <div class="setRow" id="diagVibroBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Проверка вибрации</span><span class="setHint" id="diagVibroStat"></span></span></div>
       <div class="stack" style="padding:0 8px 12px">
         <!-- 02.09.2026 (владелец): «Скопировать самописец» и «Написать в поддержку» убраны —
              оба ведут туда же, куда уже ведёт «Написать разработчику» с главного экрана
@@ -5901,26 +5927,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.572" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.572"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.572"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.572"></script>
-<script defer src="js/game.js?v=1.478.572" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.572"></script>
-<script defer src="js/sync.js?v=1.478.572"></script>
-<script defer src="js/render.js?v=1.478.572"></script>
-<script defer src="js/planetarium.js?v=1.478.572"></script>
-<script defer src="js/goldstar.js?v=1.478.572"></script>
-<script defer src="js/finish.js?v=1.478.572"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.572"></script>
-<script defer src="js/gyro.js?v=1.478.572"></script>
-<script defer src="js/forge.js?v=1.478.572"></script>
-<script defer src="js/partitura.js?v=1.478.572"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.572"></script>
-<script defer src="js/card.js?v=1.478.572"></script>
-<script defer src="js/star.js?v=1.478.572"></script>
-<script defer src="js/cinema.js?v=1.478.572"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.572"></script>
+<script defer src="js/core.js?v=1.478.573" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.573"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.573"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.573"></script>
+<script defer src="js/game.js?v=1.478.573" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.573"></script>
+<script defer src="js/sync.js?v=1.478.573"></script>
+<script defer src="js/render.js?v=1.478.573"></script>
+<script defer src="js/planetarium.js?v=1.478.573"></script>
+<script defer src="js/goldstar.js?v=1.478.573"></script>
+<script defer src="js/finish.js?v=1.478.573"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.573"></script>
+<script defer src="js/gyro.js?v=1.478.573"></script>
+<script defer src="js/forge.js?v=1.478.573"></script>
+<script defer src="js/partitura.js?v=1.478.573"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.573"></script>
+<script defer src="js/card.js?v=1.478.573"></script>
+<script defer src="js/star.js?v=1.478.573"></script>
+<script defer src="js/cinema.js?v=1.478.573"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.573"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
