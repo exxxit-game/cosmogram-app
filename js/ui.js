@@ -3916,7 +3916,7 @@ function feedbackTapeFit(budget){
   }
   return head+OMIT+(kept.length?'\n'+kept.join('\n'):'');
 }
-function feedbackAttachTape(){ // приложить ленту самописца к письму (одна точка для кнопки в Поддержке и «Сообщить о проблеме»)
+function feedbackAttachTape(){ // приложить ленту самописца к письму («Добавить автодиагностику» в Поддержке)
   const ta=$('feedbackText'); if(!ta) return false;
   if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return false; // уже приложено — не дублируем
   const budget=ta.maxLength-(ta.value||'').length-FEEDBACK_TAPE_MARK.length;
@@ -3927,10 +3927,7 @@ wireOn('feedbackAttachBtn', 'click', ()=>{
   sfx.click(); haptic('light');
   if(feedbackAttachTape() && typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
 });
-wireOn('diagProblemBtn', 'click', ()=>{ // 28.09.2026 (макет nastroyki-pk-telefon): одна кнопка — Поддержка с отчётом внутри
-  openFeedback('diag'); feedbackAttachTape();
-  const ta=$('feedbackText'); if(ta){ try{ ta.focus(); ta.setSelectionRange(0,0); ta.scrollTop=0; }catch(e){} }
-});
+
 wireOn('feedbackPhotoBtn', 'click', ()=>{
   if(feedbackPhotos.length>=FEEDBACK_PHOTO_MAX) return;
   sfx.click(); haptic('light');
@@ -5091,7 +5088,7 @@ function applyLang(){
   // 28.09.2026 (макет nastroyki-pk-telefon): подписи строк, «Управление», профиль, «Сообщить о проблеме»
   setText('againHint',L.againHint); setText('setBeaconHint',L.setBeaconHint); setText('setKeyResetBtn',L.keysReset);
   setText('accTableK',L.accTableK); setText('accTableHint',L.accTableHint); setText('csRowK',L.csRowK);
-  setText('diagProblemT',L.diagReport); setText('diagProblemHint',L.diagReportHint); setText('diagProbesLbl',L.diagProbes);
+  setText('diagProbesLbl',L.diagProbes);
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); keyBindRowsVisibility(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш; keyBindRowsVisibility() — прячет переназначение на сенсорных, там нет клавиатуры
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия

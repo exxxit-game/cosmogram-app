@@ -1924,9 +1924,6 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .setHint:empty { display:none; }
 #csRow .csInput { width:7.2em; flex:none; margin:0; padding:6px 10px; text-align:right; letter-spacing:1px; }
 #accTableRow { cursor:default; } #accTableRow:active { background:none; }
-#diagProblemBtn { width:min(92%,380px); margin:2px auto 12px; display:flex; flex-direction:column; align-items:center; gap:3px;
-  border-radius:var(--r-btn); border:1px solid rgba(240,192,64,.6); background:linear-gradient(rgba(40,32,14,.85),rgba(20,16,8,.85)); color:#f0c040; }
-.diagProblemHint { font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(240,210,140,.75); }
 .diagSum { padding:12px 16px 2px; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#8fff9f; }
 .diagSum.warn { color:#ffcf6a; } .diagSum:empty { display:none; }
 #diagList .drow .who, #diagListRare .drow .who { display:block; font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(158,178,224,.55); margin-top:2px; }
@@ -4928,10 +4925,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          мешает лететь и что человек проверяет чаще всего; всё техническое — под «Ещё».
          Две кнопки ручной отправки убраны: «Почта неба» присылает то же самое сама.
          Страж 111. -->
-    <!-- 28.09.2026 (владелец, макет nastroyki-pk-telefon): одна кнопка от места проблемы до сообщения —
-         открывает Поддержку с уже приложенной автодиагностикой, игрок пишет одну фразу. Это не
-         прежние «Скопировать отчёт»/«Самописец» (сняты 02.09): те просили копировать текст руками. -->
-    <button class="btn pri" id="diagProblemBtn"><span id="diagProblemT">Сообщить о проблеме</span><span class="diagProblemHint" id="diagProblemHint">одна фраза — отчёт устройства приложится сам</span></button>
+    <!-- 28.09.2026 (владелец): кнопки «Сообщить о проблеме» здесь нет намеренно — дубль, спрятанный
+         глубоко. Автодиагностика прикладывается в «Поддержке» с главного экрана, в одно касание. -->
     <div class="setPanel">
       <div class="diagSum" id="diagSum"></div>
       <div id="diagList" style="padding:0 8px 4px"></div>
