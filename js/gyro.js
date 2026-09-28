@@ -25,7 +25,10 @@ function gyroSensorThere(){ // оффер только там, где накло
   // v1.108.1: iOS — разрешение только по тапу, заранее проверить нечем, доверяем API как и раньше;
   // мобильный Telegram (Android) — датчик почти гарантирован; всё остальное (ноутбук, ТВ, десктоп,
   // веб без подтверждённой мобильности) — только по настоящим данным, не по факту существования API.
-  if (typeof NEEDS_TILT_PERMISSION!=='undefined' && NEEDS_TILT_PERMISSION) return HAS_GYRO;
+  /* 28.09.2026: requestPermission() больше не значит «это iPhone» — Chrome выпустил его и на ПК
+     (Intent to Ship blink-dev 2026-06-17, M151; разрешение по умолчанию «Allow», о железе не говорит).
+     Без сенсорного экрана (ноутбук/ПК) доверять API нельзя: там датчика нет — прячем руль наклона. */
+  if (typeof NEEDS_TILT_PERMISSION!=='undefined' && NEEDS_TILT_PERMISSION) return HAS_GYRO && ((typeof navigator!=='undefined' && navigator.maxTouchPoints)||0)>0;
   if (typeof IS_LIKELY_MOBILE!=='undefined' && IS_LIKELY_MOBILE) return HAS_GYRO;
   return HAS_GYRO && (typeof realGyroSeen!=='undefined' && realGyroSeen);
 }

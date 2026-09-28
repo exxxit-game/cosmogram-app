@@ -1575,8 +1575,12 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
     +((typeof morseHapOn==='function'&&morseHapOn())?1:0);
   put('setGrpSoundSub', onN===4?L.setWellAll:(onN===0?L.setWellNone:L.setWellSome));
   if(typeof Q!=='undefined'){ const gfxT=(Q.mode==='auto'?L.gfxAuto:(Q.mode==='low'?L.gfxLow:(Q.mode==='med'?L.gfxMed:(Q.mode==='ultra'&&gfxUltraOk()?L.gfxUltra:L.gfxHigh))));
-    put('setGrpGameSub', gfxT+' · ×'+input.sens); }
-  put('setGrpProfSub', (typeof myCallsign==='function'?myCallsign():'')||L.csDefault);
+    put('setGrpGameSub', gfxT+' · '+Math.round((typeof UI_TEXT_SCALE!=='undefined'?UI_TEXT_SCALE:1)*100)+'%'); } // 28.09.2026: чувствительность уехала в «Управление» — здесь размер текста, как в макете
+  { const parts=[]; // 28.09.2026 «Управление»: шёпот про то, чем рулишь на ЭТОМ устройстве
+    if (gyroThere()) parts.push((typeof gyroRul==='function'&&!gyroRul())?L.ctrlSubGyroOff:L.ctrlSubGyro(input.sens));
+    if (hasKeyboardLikely()){ const own=(typeof KEY_BINDS!=='undefined')&&['left','right','up','down'].some(d=>KEY_BINDS[d]); parts.push(own?L.ctrlSubKeysOwn:L.ctrlSubKeys); }
+    put('setGrpCtrlSub', parts.join(' · ')); }
+  put('setGrpProfSub', L.csRowK+' '+((typeof myCallsign==='function'?myCallsign():'')||L.csDefault)); // 28.09.2026: подписано, что это позывной — было голое «PORO»
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
 function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
@@ -3721,14 +3725,15 @@ function diagRows(){
   const R=[]; const now=performance.now();
   const fresh=Math.max(input._t||0, (typeof tgOrientLast==='number'?tgOrientLast:0));
   const alive=(typeof lastGamma!=='undefined' && lastGamma!=null) && (now-fresh)<1500;
-  if (!HAS_GYRO) R.push({st:'info', txt:L.diagNoSensor});
+  const gy=gyroThere(); // 28.09.2026: было HAS_GYRO (есть ли API) — на ПК «датчик молчит» красным, а «Оживить» ничего не делало
+  if (!gy) R.push(hasKeyboardLikely() ? {st:'info', lv:L.diagLvCtrl, txt:L.diagCtrlPc, who:L.diagCtrlPcWho} : {st:'info', txt:L.diagNoSensor});
   else if (alive) R.push({st:'ok', txt:L.diagSensorOk+(gyroSrc==='tg'?L.diagChanTg:L.diagChanWeb)});
-  else R.push({st:'warn', txt:L.diagSensorDead, fix:L.diagFixSensor, act:diagFixSensor});
-  if (HAS_GYRO){
+  else R.push({st:'warn', txt:L.diagSensorDead, who:L.diagWhoSensor, fix:L.diagFixSensor, act:diagFixSensor});
+  if (gy){
     if (input.baseG!=null){ // v1.99.5 «Свежий ноль»: ноль должен не просто существовать, а совпадать с позой
       const zm=(lastGamma!=null&&typeof remapAxes==='function')?remapAxes(lastGamma,lastBeta==null?0:lastBeta):null;
       const skew=zm?Math.abs(zm[0]-input.baseG):0;
-      if (alive && skew>25) R.push({st:'warn', txt:L.diagZeroSkew+' '+Math.round(input.baseG)+'° → '+Math.round(zm[0])+'°', fix:L.diagFixCal, act:()=>calibrateTilt()});
+      if (alive && skew>25) R.push({st:'warn', txt:L.diagZeroSkew+' '+Math.round(input.baseG)+'° → '+Math.round(zm[0])+'°', who:L.diagWhoZero, fix:L.diagFixCal, act:()=>calibrateTilt()});
       else R.push({st:'ok', txt:L.diagZeroOk+' '+Math.round(input.baseG)+'°'});
     }
     else if (alive) R.push({st:'warn', txt:L.diagZeroWait, fix:L.diagFixCal, act:()=>calibrateTilt()});
@@ -3743,7 +3748,7 @@ function diagRows(){
     }
   }
   if (Q.fps>=45) R.push({st:'ok', txt:L.diagFpsOk+' '+Math.round(Q.fps)});
-  else R.push({st:'warn', txt:L.diagFpsLow+' '+Math.round(Q.fps), fix:L.diagFixGfx, act:diagFixGfx});
+  else R.push({st:'warn', txt:L.diagFpsLow+' '+Math.round(Q.fps), who:L.diagWhoFps, fix:L.diagFixGfx, act:diagFixGfx});
   R.push({st: MUTED?'info':'ok', txt: MUTED?L.diagSoundOff:L.diagSoundOn});
   // v1.99.6 «Паспорт штурвала» (02.09.2026: переименован в «Геймпад» — «штурвал» без
   // расшифровки не говорил игроку, что это джойстик/геймпад; EN/ES/PT/FR уже были прямым
@@ -3774,9 +3779,11 @@ function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые 
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
 function diagRowNode(r){ // одна строка сервисного центра: значок состояния, текст, кнопка лечения
   const d=document.createElement('div'); d.className='drow';
-  const icn=r.st==='ok'?'OK':(r.st==='warn'?'!':'i');
-  const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ff9fb0':'#8fd0ff');
-  d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+'</span>';
+  // 28.09.2026 (макет nastroyki-pk-telefon, образец VALORANT): уровень словом, не значком, и «чья проблема» строкой ниже
+  const icn=r.st==='ok'?L.diagLvOk:(r.st==='warn'?L.diagLvWarn:(r.lv||L.diagLvInfo));
+  const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ffcf6a':'#9fe8ff');
+  d.dataset.st=r.st;
+  d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+(r.who?'<span class="who">'+r.who+'</span>':'')+'</span>';
   if (r.fix){ const b=document.createElement('button'); b.className='btn ghost dbtn';
     b.style.cssText='font-size:12px;padding:6px 12px;min-height:0;margin:0 0 0 auto';
     b.textContent=r.fix; b.addEventListener('click',()=>{ sfx.click(); r.act(); }); d.appendChild(b); }
@@ -3795,6 +3802,7 @@ function diagBuild(){
   const redk=rows.filter(r=>r.st!=='warn' && r.rare);  // устройство борта — под спойлер
   list.innerHTML='';
   for (const r of bedy.concat(glav)) list.appendChild(diagRowNode(r));
+  { const sm=$('diagSum'); if(sm){ sm.textContent=bedy.length?L.diagSumWarn(bedy.length):L.diagSumOk; sm.classList.toggle('warn', !!bedy.length); } } // 28.09.2026: итог одной строкой сверху
   const rare=$('diagListRare');
   if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
 }
@@ -3908,14 +3916,20 @@ function feedbackTapeFit(budget){
   }
   return head+OMIT+(kept.length?'\n'+kept.join('\n'):'');
 }
-wireOn('feedbackAttachBtn', 'click', ()=>{
-  const ta=$('feedbackText'); if(!ta) return;
-  sfx.click(); haptic('light');
-  if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return; // уже приложено — не дублируем
+function feedbackAttachTape(){ // приложить ленту самописца к письму (одна точка для кнопки в Поддержке и «Сообщить о проблеме»)
+  const ta=$('feedbackText'); if(!ta) return false;
+  if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return false; // уже приложено — не дублируем
   const budget=ta.maxLength-(ta.value||'').length-FEEDBACK_TAPE_MARK.length;
   ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+feedbackTapeFit(budget);
-  feedbackUpdateCount();
-  if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
+  feedbackUpdateCount(); return true;
+}
+wireOn('feedbackAttachBtn', 'click', ()=>{
+  sfx.click(); haptic('light');
+  if(feedbackAttachTape() && typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
+});
+wireOn('diagProblemBtn', 'click', ()=>{ // 28.09.2026 (макет nastroyki-pk-telefon): одна кнопка — Поддержка с отчётом внутри
+  openFeedback('diag'); feedbackAttachTape();
+  const ta=$('feedbackText'); if(ta){ try{ ta.focus(); ta.setSelectionRange(0,0); ta.scrollTop=0; }catch(e){} }
 });
 wireOn('feedbackPhotoBtn', 'click', ()=>{
   if(feedbackPhotos.length>=FEEDBACK_PHOTO_MAX) return;
@@ -3942,7 +3956,7 @@ wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая про�
 });
 // v1.65.0 «Спойлеры»: категории — аккордеон. Открыта всегда одна панель — ничего ни на что не налезает,
 // закрытый экран помещается целиком; экран скроллится как страховка + подскролл к открытой шапке
-const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpProf','accPanel']];
+const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpCtrl','panelCtrl'],['setGrpProf','accPanel']]; // 28.09.2026: + «Управление»
 SET_GRPS.forEach(([gId,pId])=>{
   const g=$(gId), p=$(pId); if(!g||!p) return;
   g.addEventListener('click', ()=>{
@@ -3994,10 +4008,46 @@ function keyBindAllLabels(){ ['left','right','up','down'].forEach(keyBindRowLabe
    смысл только там, где есть настоящая клавиатура. 'ontouchstart' in window — тот же признак
    мобильного/сенсорного устройства, что core.js уже использует для safe-area/качества графики
    (tgInsetsSync, автоопределение тира) — не новый метод, тот же самый. */
-function keyBindRowsVisibility(){
-  const touch=('ontouchstart' in window);
-  ['left','right','up','down'].forEach(dir=>{ const el=$(KEY_DIR_ROW[dir]); if(el) el.classList.toggle('hidden',touch); });
+function keyBindRowsVisibility(){ ctrlVisibility(); } // 28.09.2026: решает ctrlVisibility() ниже — одно место на всё «что видно на этом устройстве»
+/* 28.09.2026 (владелец, скрины с ПК; макет nastroyki-pk-telefon; исследование
+   .knowledge/RESEARCH-2026-09-SETTINGS-DESKTOP.md): на устройстве видно только то, что на нём
+   реально работает. Раньше гироскоп прятался по HAS_GYRO (есть ли API — на ПК всегда «да»),
+   вибрация не пряталась никогда, клавиши — по 'ontouchstart' (ноутбук с тачем терял клавиши).
+   Гироскоп — gyroSensorThere(): датчик реально прислал данные (или это телефон).
+   Клавиши — есть мышь/тачпад (any-pointer:fine) или уже была нажата клавиша: наличие
+   клавиатуры браузер не сообщает (Media Queries 4), честный сигнал только такой.
+   Вибрация — проверить нельзя вовсе (на ПК-Chrome vibrate() отвечает true, а внутри пусто —
+   исходник Chromium; Firefox убрал на ПК; Safari нет): решаем по устройству — Telegram на
+   телефоне или сенсорный браузер (не Firefox, там вибрация не работает). */
+var keySeen=false; // var, не let: ctrlVisibility() может позваться раньше этой строки (applyLang при загрузке) — без «мёртвой зоны»
+window.addEventListener('keydown', ()=>{ if(keySeen) return; keySeen=true; if(screenName==='settings'){ ctrlVisibility(); setWellFill(); } }, {capture:true, passive:true});
+function hasKeyboardLikely(){ try{ if(window.matchMedia && matchMedia('(any-pointer:fine)').matches) return true; }catch(e){} return keySeen; }
+function gyroThere(){ return (typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; }
+function vibroAvail(){
+  if (typeof IS_LIKELY_MOBILE!=='undefined' && IS_LIKELY_MOBILE) return true;
+  if (typeof navigator==='undefined' || typeof navigator.vibrate!=='function') return false;
+  if (/Firefox\//.test(navigator.userAgent||'')) return false;
+  let coarse=false; try{ coarse=!!(window.matchMedia && matchMedia('(pointer:coarse)').matches); }catch(e){}
+  return coarse && (navigator.maxTouchPoints||0)>0;
 }
+function ctrlVisibility(){
+  const g=gyroThere(), k=hasKeyboardLikely(), v=vibroAvail();
+  ['setGyroBtn','setSensBtn','setCalibBtn'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden',!g); });
+  { const t=$('tiltBtn'); if(t) t.classList.toggle('hidden', !(g && NEEDS_TILT_PERMISSION && !TG_ORIENT)); }
+  ['left','right','up','down'].forEach(dir=>{ const el=$(KEY_DIR_ROW[dir]); if(el) el.classList.toggle('hidden',!k); });
+  { const r=$('setKeyResetBtn'); if(r) r.classList.toggle('hidden',!k); }
+  ['setVibroBtn','setMorseHapBtn','diagVibroBtn'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden',!v); });
+  const grp=$('setGrpCtrl'), pan=$('panelCtrl');
+  if (grp){ grp.classList.toggle('hidden', !g && !k); if(!g && !k && pan){ pan.classList.add('hidden'); grp.classList.remove('open'); } }
+  { const e=$('setGrpSound'); const t=e&&e.querySelector('.setGrpT'); if(t) t.textContent=v?L.setGrpSound:L.setGrpSoundPc; }
+  setText('csRowHint', v?L.csRowHintPhone:L.csRowHintPc);
+}
+wireOn('setKeyResetBtn', 'click', ()=>{ // 28.09.2026 «Вернуть клавиши как было» — пустая привязка = стрелка+буква по умолчанию
+  keyRebindListening=null;
+  ['left','right','up','down'].forEach(d=>{ KEY_BINDS[d]=''; Store.set(KEY_DIR_STORE[d],''); });
+  keyBindAllLabels(); setWellFill(); haptic('light'); sfx.click();
+  if(typeof toast==='function') toast(L.keysResetDone,'rgba(159,232,255,.5)');
+});
 function keyRebindListen(dir){
   if(keyRebindListening) keyBindRowLabel(keyRebindListening); // отменяем прошлое незавершённое ожидание, если было
   keyRebindListening=dir;
@@ -4050,7 +4100,7 @@ function exxxitLogoHTML(){
 }
 function aboutFill(){ setHTML('feedbackAbout', 'Cosmogram · v'+GAME_VERSION+exxxitLogoHTML()); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0); 03.09.2026: + карточка студии; 04.09.2026: переехало из «Об игре» (Настройки) на «Написать разработчику» — владелец: «я разработчик, это мой логотип»
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
-function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
+function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; ctrlVisibility(); // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API; 28.09.2026: + строки «Управления»
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
   const o=$('setGyroOffBtn'); if(o){ o.classList.toggle('hidden', !has || !gyroUnlocked()); rowSw('setGyroOffBtn', gyroUnlocked()); } } // v1.106.0 «Штурман по желанию»: ряд-выключатель виден только при открытом замке
 wireOn('gyroUnlockBtn', 'click', async ()=>{ // открытие «Полёта без рук» из настроек — тем же ритуалом: разрешение + «держи ровно»
@@ -4206,8 +4256,10 @@ function accFill(){ // настройки: статус входа + кнопк�
   const st=$('accStatus'), out=$('accOutBtn'), del=$('accDeleteBtn');
   if(!st || typeof syncAvailable!=='function') return;
   const dw=$('dcWidget'), gw=$('gWidget');
+  const nm=(typeof syncAuthName==='function')?(syncAuthName()||''):''; // 28.09.2026: строка «В общей таблице» — имя как есть, без вырезанных пробелов
+  { const tv=$('accTableV'); if(tv) tv.textContent=(syncAvailable()&&nm)?nm:L.accTableGuest; }
   if (syncAvailable()){
-    st.textContent=L.accIn(typeof syncAuthName==='function'?(syncAuthName()||''):'');
+    st.textContent=''; // 28.09.2026: имя уже сказано строкой «В общей таблице» — второй раз не повторяем
     if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
     out.classList.toggle('hidden', !!syncInitData()); // из мини-аппа «выходить» нечего — ты дома
     if(del) del.classList.remove('hidden'); // 05.09.2026: в отличие от «Выйти», удалить есть что всегда, если вошёл — хоть из мини-аппа, хоть с веб-сессии
@@ -4231,7 +4283,7 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
   else { const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
-  accFill(); webJoinFill();
+  accFill(); webJoinFill(); csFill(); setWellFill(); // 28.09.2026: позывной-подсказка и подпись профиля — свежие после входа (раньше оставалось «ПИЛОТ»)
   if(typeof syncFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncFlush().catch(()=>{});
   if(typeof syncDailyFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncDailyFlush().catch(()=>{});
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
@@ -5036,18 +5088,22 @@ function applyLang(){
   setText('relayMineBtnLbl', L.relayMineBtnLbl);
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
-  setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
+  // 28.09.2026 (макет nastroyki-pk-telefon): подписи строк, «Управление», профиль, «Сообщить о проблеме»
+  setText('againHint',L.againHint); setText('setBeaconHint',L.setBeaconHint); setText('setKeyResetBtn',L.keysReset);
+  setText('accTableK',L.accTableK); setText('accTableHint',L.accTableHint); setText('csRowK',L.csRowK);
+  setText('diagProblemT',L.diagReport); setText('diagProblemHint',L.diagReportHint); setText('diagProbesLbl',L.diagProbes);
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); keyBindRowsVisibility(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш; keyBindRowsVisibility() — прячет переназначение на сенсорных, там нет клавиатуры
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
+  grpT('setGrpCtrl',L.setGrpCtrl); ctrlVisibility(); // 28.09.2026: «Управление»; название звуковой группы зависит от устройства — ставит ctrlVisibility
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setTextScaleBtn','setTextScale'],
    ['setKeyLeftBtn','setKeyLeft'],['setKeyRightBtn','setKeyRight'],['setKeyUpBtn','setKeyUp'],['setKeyDownBtn','setKeyDown'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
-  setText('diagVibroBtn',L.diagVibro);
+  { const vb=$('diagVibroBtn'); const vk=vb&&vb.querySelector('.setK'); if(vk) vk.textContent=L.diagVibro; } // 28.09.2026: строка, а не кнопка — текст в .setK, результат рядом
 }
 /* баланс сетки 2 колонки: нечётная последняя видимая кнопка растягивается на всю ширину (v1.34.0) */
 function gridBalance(row){ if(!row) return;
@@ -5089,9 +5145,9 @@ Store.init(()=>{
   // Input Fallback System: iOS — красивая кнопка разрешения наклона (только если
   // нет родного моста Telegram: там системное разрешение не нужно вовсе);
   // устройство без датчика — гиро-кнопки не показываем вовсе
-  if(NEEDS_TILT_PERMISSION && !TG_ORIENT) $('tiltBtn').classList.remove('hidden');
+  // 28.09.2026: кнопка разрешения наклона — внутри ctrlVisibility() (только где датчик правда есть)
   gyroStatus(); // диагностика датчика в настройках: Telegram / браузер / молчит
-  if(!HAS_GYRO){ $('setCalibBtn').classList.add('hidden'); $('setSensBtn').classList.add('hidden'); $('setGyroBtn').classList.add('hidden'); } // v1.284.20: нет датчика — нечего и выключать
+  ctrlVisibility(); // 28.09.2026: было if(!HAS_GYRO) — на ПК HAS_GYRO всегда true, строки гироскопа не прятались; теперь честная проверка
   // настройки: звук, вибро, графика, язык из хранилища
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
