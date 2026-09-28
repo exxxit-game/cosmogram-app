@@ -3206,11 +3206,19 @@ function duelBanner(){ // плашка вызова в меню + планка �
   }
   if(d && typeof duelGhostFetch==='function') duelGhostFetch(); // склейка: призрак вызвавшего — рядом в забеге
 }
+function duelWebPid(){ // 28.09.2026: вызов из веб-ссылки — новая cosmogram.fun/?d=<id> или старая #duel=<id>
+  try{
+    const q=new URLSearchParams(location.search).get('d');
+    if(q) return duelParse('duel_'+q);
+    if(location.hash && location.hash.indexOf('#duel=')===0) return duelParse('duel_'+location.hash.slice(6));
+  }catch(e){}
+  return null;
+}
 function duelBoot(){ // deep-link ?startapp=duel_<pid> (Telegram) или #duel=<pid> (веб, тот же приём, что forgeBoot у #map=)
   try{
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
     let pid = duelParse(sp);
-    if(!pid && location.hash && location.hash.indexOf('#duel=')===0) pid = duelParse('duel_'+location.hash.slice(6)); // 30.08.2026: друг без Telegram открыл веб-ссылку
+    if(!pid) pid = duelWebPid(); // 30.08.2026: друг без Telegram открыл веб-ссылку; 28.09.2026: и новую cosmogram.fun/?d=<id>. 
     if(!pid || (typeof syncMyId==='function' && pid===syncMyId())){ duelBanner(); return false; } // не вызов / сам себе
     syncDuel(pid).then(d=>{
       if(d && d.ok && d.best>0){
@@ -4651,7 +4659,7 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
      было некуда. Веб-версия игры уже умеет Discord/Google (см. duelBoot — тот же приём,
      что forgeBoot уже делает для #map=), поэтому вне Telegram шарим ссылку на неё саму,
      не на t.me. */
-  const webLink=location.origin+location.pathname+'#duel='+pid;
+  const webLink='https://cosmogram.fun/?d='+pid; // 28.09.2026 (владелец купил домен): красивый короткий адрес вместо адреса текущей страницы с #duel=
   const text=L.duelShareText(Math.floor(S.dist), S.mission);
   /* v1.282.20: счётчик двигаем ТОЛЬКО когда окно отправки реально открылось. Раньше он
      рос по самому нажатию, и достижение «Дуэлянт» (+10 ✦) бралось тапом с немедленным

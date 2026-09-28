@@ -1056,7 +1056,7 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
     try{ tg.openTelegramLink(shareUrl); haptic('success'); mapAskPublish(code, cfg.n); return; }catch(e){}
   }
   if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
-    navigator.share({text:txt, url:link}).catch(()=>{});
+    navigator.share({text:txt, url:'https://cosmogram.fun/#map='+code}).catch(()=>{}); // 28.09.2026: вне Telegram — наш адрес, не t.me (владелец: «в Telegram — t.me, вне — cosmogram.fun»)
     haptic('success'); mapAskPublish(code, cfg.n); return;
   }
   // 18.09.2026 (второй видео-аудит другими методами): раньше публикация предлагалась
