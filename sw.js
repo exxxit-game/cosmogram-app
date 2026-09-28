@@ -5,8 +5,13 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.478.574';
+const V = '1.478.575';
 const CACHE = 'cosmogram-v' + V;
+/* 28.09.2026: музыка — готовые записи (music/*.mp3, ~6 МБ). Свой кэш, который НЕ стирается при смене
+   версии игры — иначе каждый выпуск заново качал бы 6 МБ. Меняется только когда перезаписана сама
+   музыка: тогда поднять MUSIC_REC здесь и REC в js/music.js (страж 364 сверяет, что они равны). */
+const MUSIC_REC = 'r1';
+const MUSIC_CACHE = 'cosmogram-music-' + MUSIC_REC;
 // 26.08.2026: i18n.js вынесен из core.js, должен грузиться первым — 'core' его использует
 // 01.09.2026: partitura.js добавлен в index.html вместе с Партитурой, но забыт здесь — страж 29
 // поймал (файл грузился игроку, но не кэшировался офлайн). Место в списке — сразу за forge, как
@@ -56,7 +61,7 @@ self.addEventListener('activate', e => { // старые релизы убира
          вкладки застревали на старом воркере до ручного переоткрытия. Ловим ошибку у КАЖДОГО
          delete по отдельности — один неудачный не должен мешать остальным подчиститься и не
          должен мешать claim() выполниться. */
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k).catch(err => console.error('[sw] не удалось удалить старый кэш', k, err)))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== MUSIC_CACHE).map(k => caches.delete(k).catch(err => console.error('[sw] не удалось удалить старый кэш', k, err)))))
       .then(() => self.clients.claim())
   );
 });
@@ -69,6 +74,13 @@ self.addEventListener('fetch', e => {
       fetch(e.request)
         .then(r => { const cp = r.clone(); caches.open(CACHE).then(c => c.put('index.html', cp)); return r; })
         .catch(() => caches.match('index.html').then(m => m || caches.match('./')))
+    );
+    return;
+  }
+  if (url.pathname.includes('/music/')){ // записи музыки: свой долгий кэш (см. MUSIC_CACHE)
+    e.respondWith(
+      caches.open(MUSIC_CACHE).then(c => c.match(e.request).then(hit => hit ||
+        fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; })))
     );
     return;
   }

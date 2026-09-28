@@ -163,7 +163,7 @@ const music = (()=>{
   }
 
   /* ── ПЛАНИРОВЩИК ─────────────────────────────────────────────────────────── */
-  let mg=null, sat=null, syn=null, ana=null;
+  let mg=null, sat=null, ana=null;
   /* 27.09.2026 ИЗМЕРИТЕЛЬ (владелец: «как только начинаешь играть — музыка сразу пропадает» + «рыпение
      с самого начала»; на компьютере в полёте музыка не пропадает — дело в телефоне, гадать по коду
      нельзя). «Отзыв» говорил «музыка играет» по одним состояниям (тема, громкость) — настоящий звук
@@ -172,40 +172,84 @@ const music = (()=>{
      реального времени; ближе к 100% — звук не успевает, это треск); «полёт» — через 6 с полёта:
      уровень сигнала музыки (анализатор после выхода), запас нот впереди, ход звуковых часов к
      настенным (clk<1 — звук отстаёт); тревога «такты стоят» — тема выбрана, а нот нет. Страж 362. */
-  let lastTickAt=0, benchStarted=false, benchRes=null, themeAt=0, flight=null, deadSaid=false;
+  let lastTickAt=0, themeAt=0, flight=null, deadSaid=false;
   function tape(d){ try{ if(typeof BB!=='undefined'&&BB.log) BB.log('music',d); }catch(e){} }
   function rmsDb(){ if(!ana) return null; const a=new Float32Array(ana.fftSize); ana.getFloatTimeDomainData(a);
     let q=0; for(let i=0;i<a.length;i++) q+=a[i]*a[i]; return 20*Math.log10(Math.sqrt(q/a.length)+1e-9); }
-  function bench(){ // та же партитура на отдельном офлайн-контексте: такты 57–58 («drive» — самая плотная часть 1-го этапа)
-    benchStarted=true;
-    try{
-      const sr=AC.sampleRate, sec=2*BAR+.5, off=new OfflineAudioContext(2,Math.ceil(sec*sr),sr);
-      const keep=Object.assign({},stats), b=createSynth(off,off.destination); b.bar(57,0); b.bar(58,BAR); Object.assign(stats,keep);
-      const t=performance.now();
-      off.startRendering().then(()=>{ const ms=performance.now()-t; benchRes={ms:Math.round(ms), pct:Math.round(ms/10/sec)};
-        tape('bench '+sec.toFixed(1)+'с→'+benchRes.ms+'мс ('+benchRes.pct+'%) '+sr+'Hz'); return benchParts(sr,sec); })
-        .catch(e=>tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)));
-    }catch(e){ tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)); }
+  /* 28.09.2026 ЗАПИСИ ВМЕСТО СИНТЕЗАТОРА (замеры с телефонов владельца: сочинять звук на ходу — Oppo
+     85–107% ядра, Samsung 218%: треск и 318–3427 провалов звука в полёте; готовые записи — 5–13%).
+     Решение владельца: вся музыка заранее записана ЭТИМ ЖЕ синтезатором (createSynth выше — источник
+     записей, в игре он больше не звучит) с эхом внутри, MP3 128 кбит/с (слепой тест — разницы не
+     услышал), фальшивый финал остаётся; пока кусок не скачан — тишина, потом плавно музыка.
+     Куски по 8 тактов (финал+затишье 65–75 — один кусок), у каждого свой «хвост» эха ~2 с: он
+     доигрывает поверх следующего куска, поэтому любой переход партитуры (круг, финал, смена темы)
+     звучит, как у синтезатора. Хранится сумма голосов ДО мастера на ×0.5 — мастер (tanh, страж 360)
+     остаётся живым, как был. Память: раскодированный кусок ~6 МБ, держим только нужные (текущий,
+     следующий, начало меню), а не все 5,5 минут разом (~129 МБ). Страж 364. */
+  const REC='r1', REC_DIR='music/';
+  const CHUNKS=[[1,8],[9,16],[17,24],[25,32],[33,40],[41,48],[49,56],[57,64],[65,75]];
+  for(let a=76;a<=179;a+=8) CHUNKS.push([a,Math.min(179,a+7)]);
+  const recName=a=>'c'+String(a).padStart(3,'0');
+  const chunkOf=b=>CHUNKS.find(c=>b>=c[0]&&b<=c[1]);
+  const NEXT_AFTER={16:1, 64:S1LOOP, 179:S2LOOP}; // куда партитура идёт после последнего такта куска
+  const bytes=new Map(), bufs=new Map(), decoding=new Map(), live=new Set(), recLog=[];
+  let cur=null, need=null, keepAll=false, recStat={first:null, err:0};
+  function recUrl(n){ return REC_DIR+n+'.mp3?r='+REC; }
+  function fetchBytes(n){
+    if(!bytes.has(n)) bytes.set(n, fetch(recUrl(n)).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }));
+    return bytes.get(n);
   }
-  /* 28.09.2026 (владелец: «сначала замерить реверб на лету»): выбор между «готовые части целиком» и
-     «инструменты без реверба + реверб в игре» решает цена самого реверба на телефоне. Два замера тем же
-     способом, что bench: bench-rev — тот же отклик 2.2 с (то же зерно mulberry(7)) на стерео-шуме;
-     bench-buf — 16 готовых записей разом (цена проигрывания частей). Только замер, звук не меняется. */
-  function benchParts(sr,sec){
-    const run=(label,build)=>{ const off=new OfflineAudioContext(2,Math.ceil(sec*sr),sr); build(off); const t=performance.now();
-      return off.startRendering().then(()=>{ const ms=performance.now()-t; tape(label+' '+sec.toFixed(1)+'с→'+Math.round(ms)+'мс ('+Math.round(ms/10/sec)+'%)'); }); };
-    const noiseBuf=(off,secs)=>{ const r=mulberry(3), b=off.createBuffer(2,Math.floor(off.sampleRate*secs),off.sampleRate);
-      for(let c=0;c<2;c++){ const d=b.getChannelData(c); for(let i=0;i<d.length;i++) d[i]=r()*2-1; } return b; };
-    return run('bench-rev',off=>{ const r=mulberry(7), len=Math.floor(sr*2.2), ir=off.createBuffer(2,len,sr);
-        for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(r()*2-1)*Math.pow(1-i/len,3); }
-        const cv=off.createConvolver(); cv.buffer=ir; const src=off.createBufferSource(); src.buffer=noiseBuf(off,sec); src.connect(cv); cv.connect(off.destination); src.start(0); })
-      .then(()=>run('bench-buf',off=>{ const b=noiseBuf(off,2); for(let k=0;k<16;k++){ const s=off.createBufferSource(); s.buffer=b; s.loop=true;
-        const g=off.createGain(); g.gain.value=.05; s.connect(g); g.connect(off.destination); s.start(k*.01); } }))
-      .catch(e=>tape('bench-parts ошибка '+String((e&&e.name)||e).slice(0,30)));
+  function want(n){ // скачать и раскодировать заранее; копия байтов остаётся — раскодировать снова без сети
+    if(!n||bufs.has(n)||decoding.has(n)||!AC) return decoding.get(n)||Promise.resolve();
+    const ac=AC, t0=performance.now();
+    const p=fetchBytes(n).then(ab=>{ const t1=performance.now(); return ac.decodeAudioData(ab.slice(0)).then(b=>{
+        bufs.set(n,b); decoding.delete(n); trim();
+        if(!recStat.first){ recStat.first=n; prefetchAll(); tape('запись: '+n+' скачан '+Math.round(t1-t0)+'мс, раскодирован '+Math.round(performance.now()-t1)+'мс · '+ac.sampleRate+'Hz'); }
+      }); })
+      .catch(e=>{ decoding.delete(n); bytes.delete(n); recStat.err++; if(recStat.err<=3) tape('запись: '+n+' не загрузилась · '+String((e&&e.message)||e).slice(0,40)); });
+    decoding.set(n,p); return p;
   }
+  function prefetchAll(){ // остальные куски — только байты, по одному, фоном (раскодируются, когда понадобятся)
+    const names=CHUNKS.map(c=>recName(c[0])).concat(['sting_record','sting_death']); let i=0;
+    const step=()=>{ while(i<names.length && bytes.has(names[i])) i++; if(i<names.length) fetchBytes(names[i++]).then(step,step); };
+    step(); want('sting_record'); want('sting_death');
+  }
+  function trim(){ // держим раскодированными только нужные куски
+    if(keepAll) return; // стенд: _preload() — все куски сразу
+    const keep=new Set(['c001','sting_record','sting_death']); if(cur) keep.add(cur.n); if(need) keep.add(need);
+    live.forEach(x=>keep.add(x.n));
+    const ahead=predictNext(); if(ahead) keep.add(ahead);
+    if(theme==='menu'||pendingTheme==='game') keep.add(recName(S1[0])); // из меню — сразу в полёт
+    [...bufs.keys()].forEach(n=>{ if(!keep.has(n)) bufs.delete(n); });
+  }
+  function predictNext(){ // какой кусок понадобится следующим
+    if(!cur) return null;
+    const end=cur.b;
+    if(theme==='game' && stage===1 && runStartWave<FINALE_WAVE && wave()>=FINALE_WAVE-1) return recName(FIN);
+    const nb=NEXT_AFTER[end]||end+1, c=chunkOf(nb); return c?recName(c[0]):null;
+  }
+  function stopSrc(x,at){ try{ x.g.gain.cancelScheduledValues(0); x.g.gain.setValueAtTime(x.g.gain.value,Math.max(AC.currentTime,at-.04)); x.g.gain.linearRampToValueAtTime(0,at); x.src.stop(at+.02); }catch(e){} }
+  function playBar(b,t){ // один такт партитуры: продолжить кусок или начать нужный
+    const c=chunkOf(b), n=recName(c[0]);
+    if(cur && cur.n===n && b===cur.last+1){ cur.last=b; if(b===c[1]-2) want(predictNext()); return posOf(b); }
+    if(cur && cur.last!==cur.b){ stopSrc(cur,t); recLog.push({cut:cur.n,at:+t.toFixed(3),end:+t.toFixed(3)}); } // ушли с середины куска — погасить ДО нового такта
+    cur=null;
+    const buf=bufs.get(n);
+    if(!buf){ need=n; want(n); return posOf(b); } // ещё не скачан — тишина; следующий такт попробует снова
+    need=null;
+    const src=AC.createBufferSource(); src.buffer=buf; const g=AC.createGain(); src.connect(g); g.connect(mg);
+    const off=(b-c[0])*BAR;
+    if(off>0){ g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(1,t+1); } // вход с середины (после тишины) — плавно
+    src.start(t,off);
+    const x={n,a:c[0],b:c[1],last:b,src,g}; live.add(x); src.onended=()=>{ live.delete(x); };
+    cur=x; recLog.push({n,off:b-c[0],at:+t.toFixed(3)}); if(recLog.length>80) recLog.shift();
+    want(predictNext()); want(theme==='menu'?recName(S1[0]):'c001'); // смена темы — без ожидания
+    return posOf(b);
+  }
+  function posOf(b){ const sec=SCORE.sections.find(s=>b>=s.from&&b<=s.to); stats.bars++; return { bar:b, sec:sec.id, cyc:(((b-(sec.origin||1))%8)+8)%8 }; }
+  function stopAll(at){ live.forEach(x=>stopSrc(x,at)); cur=null; }
   function meter(ac){ // зовётся из tick(): копит замеры полёта и пишет одну строку через ~6 с
     const now=performance.now();
-    if(theme==='menu' && !benchStarted && now-themeAt>5000) bench();
     if(theme!=='game' || !flight || flight.said) return;
     const r=rmsDb(); if(r!=null && now-themeAt>1500) flight.rms.push(r);
     if(now-flight.w0<6000) return;
@@ -229,9 +273,10 @@ const music = (()=>{
     if(MUTED||!MUSIC_ON) return null;
     const ac=audio(); if(!ac) return null;
     if(mg && mg.context!==ac){ // контекст умер и пересоздан (закрытие браузером / «тихая заморозка», core.js) — узлы старого не годятся
-      try{ syn&&syn.stop(0); }catch(e){}
-      mg=null; sat=null; syn=null; ana=null; theme=null; pendingTheme=null;
-      if(timer){ clearInterval(timer); timer=null; }
+      // 28.09.2026: раньше здесь же гасился таймер тактов — и больше не включался (музыка молчала до конца
+      // сеанса после любой «тихой заморозки»). Тема и таймер живут дальше, на новом контексте — с ближайшего такта.
+      mg=null; sat=null; ana=null; live.clear(); cur=null; nextBar=0;
+      decoding.clear(); // раскодированные куски годятся и новому контексту; незаконченные — начать заново
     }
     if(!mg){
       mg=ac.createGain(); mg.gain.value=0;
@@ -243,11 +288,9 @@ const music = (()=>{
          отсюда хрип и лишние круги прослушивания. Страж 360 сверяет кривую с макетом по точкам. */
       // WaveShaper обрезает вход жёстко за ±1, а сумма голосов в макете доходит до ~1.22 (tanh там её плавно сглаживал) —
       // поэтому на вход идёт половина сигнала, а кривая построена на ±2: передаточная функция = tanh(1.1·x)·1.0783 до |x|≤2
-      const pre=ac.createGain(); pre.gain.value=1/MASTER_RANGE;
       sat=ac.createWaveShaper(); { const n=4096, c=new Float32Array(n); for(let i=0;i<n;i++){ const x=(i/(n-1)*2-1)*MASTER_RANGE; c[i]=Math.tanh(MASTER_DRIVE*x)*MASTER_GAIN; } sat.curve=c; }
-      mg.connect(pre); pre.connect(sat); sat.connect(audioOut(ac)); // в общую смесь (core.js) вместе со звуками игры — страж 361
+      mg.connect(sat); sat.connect(audioOut(ac)); // записи хранятся уже на ×1/MASTER_RANGE (это и был pre); в общую смесь (core.js) вместе со звуками игры — страж 361
       ana=ac.createAnalyser(); ana.fftSize=2048; sat.connect(ana); // измеритель: только слушает, в звук не идёт
-      syn=createSynth(ac, mg);
     }
     return ac;
   }
@@ -267,6 +310,7 @@ const music = (()=>{
     const hadTheme=theme, hadPending=pendingTheme; // ensureChain() при смене контекста обнуляет тему — продолжаем ту же
     const ac=ensureChain(); if(!ac||!mg) return;
     if(!theme && hadTheme){ theme=hadTheme; pendingTheme=hadPending; }
+    if(!theme) return;
     lastTickAt=performance.now();
     if(nextBar < ac.currentTime-.3) nextBar = ac.currentTime+.05; // после сна контекста — не играем прошлое пачкой
     while(nextBar < ac.currentTime + .9){
@@ -274,7 +318,7 @@ const music = (()=>{
         theme=pendingTheme; pendingTheme=null; if(theme==='game') resetRun(); else menuBar=MENU[0];
         fadeTo(MG[theme]||MG_GAME,1.0); markTheme();
       }
-      pos=syn.bar(nextScoreBar(), nextBar);
+      pos=playBar(nextScoreBar(), nextBar);
       nextBar+=BAR;
     }
     meter(ac);
@@ -304,7 +348,7 @@ const music = (()=>{
     },
     stop(fade){
       theme=null; pendingTheme=null; ducked=false;
-      if(mg&&AC) fadeTo(0,fade||1.2);
+      if(mg&&AC){ fadeTo(0,fade||1.2); stopAll(AC.currentTime+(fade||1.2)); }
       if(timer){ clearInterval(timer); timer=null; }
     },
     duck(on){ // пауза: музыка в фон, не обрываем
@@ -329,8 +373,10 @@ const music = (()=>{
     },
     sting(kind){ // кода: смерть — три ноты вниз; рекорд — фанфара
       if(MUTED||!MUSIC_ON) return;
-      const ac=ensureChain(); if(!ac||!syn) return;
-      syn.sting(ac.currentTime+.05,kind); stats.stings++;
+      const ac=ensureChain(); if(!ac||!mg) return;
+      const n='sting_'+(kind==='record'?'record':'death'), buf=bufs.get(n); stats.stings++;
+      if(!buf){ want(n); return; } // ещё не скачан — код пропускаем, не ждём
+      const src=ac.createBufferSource(); src.buffer=buf; src.connect(mg); src.start(ac.currentTime+.05);
     },
     /* --- для стенда --- */
     _stats:stats,
@@ -343,7 +389,10 @@ const music = (()=>{
     _pos:()=>pos,
     _tick:()=>tick(),
     _forceNextBarDue(){ nextBar=-1; },
-    _diag:()=>({ rms:rmsDb(), ahead:AC?nextBar-AC.currentTime:null, tickAge:lastTickAt?(performance.now()-lastTickAt)/1000:null, bench:benchRes })
+    _diag:()=>({ rms:rmsDb(), ahead:AC?nextBar-AC.currentTime:null, tickAge:lastTickAt?(performance.now()-lastTickAt)/1000:null, rec:{ playing:cur?cur.n:null, loaded:[...bufs.keys()], first:recStat.first, err:recStat.err } }),
+    _rec:()=>({ playing:cur?cur.n:null, ctxOk:!!(mg&&mg.context===AC), log:recLog.slice(), loaded:[...bufs.keys()] }),
+    _preload:()=>{ keepAll=true; recLog.length=0; return Promise.all(CHUNKS.map(c=>want(recName(c[0]))).concat([want('sting_record'),want('sting_death')])); },
+    _synth:(ac,dest)=>createSynth(ac,dest) // источник записей: tools/record-music.mjs
   };
 })();
 
