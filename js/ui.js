@@ -1090,7 +1090,8 @@ function gameOver(){
   if (pacifistNow) Stats.pacifistRuns=(Stats.pacifistRuns||0)+1;
   saveStats();
   Store.del('savedRun');
-  setText('myRank',''); // ранг прошлого забега не течёт в этот
+  overRankFill(null,''); // ранг прошлого забега не течёт в этот (28.09.2026: карточка места вместо строки #myRank)
+  shareSheetShow(false);
   webJoinFill(); // гость видит мостик: «войди — и полёт в общей таблице» (v1.51.0)
   setText('finalScore',sc); // синхронно финал — для мгновенного отображения и тестов
   const sg=++scoreCountGen, fsEl=$('finalScore'), t0=performance.now(); // count-up 0→sc за 0.8s
@@ -1173,8 +1174,7 @@ function gameOver(){
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
-  const nl=(typeof achNextLoc==='function')?achNextLoc():null; // космическая шкала: «До Луны: 200 м»
-  setText('toLoc', nl ? L.toLoc(aT(nl).n, fmtN(nl.need-Stats.totalDist)) : '');
+  overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
@@ -1335,9 +1335,13 @@ function submitFailSignal(kind, ok){
       // ему это не было нужно.
       if(rank<=10 && !isRecord && typeof hapticMorse==='function')
         setTimeout(()=>hapticMorse(myCallsign()),1100); // виброэфир: аплодисменты топ-10 (v1.54.0)
-      if(screenName==='over'){ const rl=$('myRank'); if(rl) rl.textContent=L.rankWorld(rank); }
+      if(screenName==='over') overRankFill(d, rankCat); // 28.09.2026: карточка места с соседом сверху (вариант Б)
     }).catch(()=>{}); // v1.282.13: ранг — украшение, его сбой не должен всплывать необработанным отказом
   }
+  else if (typeof syncTop==='function' && S.mode==='classic'){ // 28.09.2026: гостю — «Твои N — это M-е место» в приглашении войти
+    const genW=runNow(); overJoinWouldBe(null,0);
+    syncTop(cat).then(d=>{ if(runSame(genW) && screenName==='over') overJoinWouldBe(d, sc); }).catch(()=>{});
+  } else overJoinWouldBe(null,0);
   // дуэль: сравнение чистого пробега с планкой друга (любой забег участвует)
   if (dl){
     const win = duelWinNow;
@@ -1483,7 +1487,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   const st=$('stats'); if(st){ st.innerHTML=''; st.classList.add('hidden'); }
   const rp=$('runPass'); if(rp) rp.classList.add('hidden');
   const rh=$('runHead'); if(rh){ rh.innerHTML=''; rh.classList.add('hidden'); } // 30.08.2026: новая строка режима+управления — та же чистка, что у соседей
-  const mr=$('myRank'); if(mr) mr.textContent='';
+  overRankFill(null,''); toggleCls('overLoc','hidden',true); // 28.09.2026: карточка места и полоска шкалы — тоже не чужие
   const dr=$('duelRes'); if(dr) dr.innerHTML='';
   const tr=$('toRecord'); if(tr) tr.textContent='';
   const tl=$('toLoc'); if(tl) tl.textContent='';
@@ -3202,11 +3206,19 @@ function duelBanner(){ // плашка вызова в меню + планка �
   }
   if(d && typeof duelGhostFetch==='function') duelGhostFetch(); // склейка: призрак вызвавшего — рядом в забеге
 }
+function duelWebPid(){ // 28.09.2026: вызов из веб-ссылки — новая cosmogram.fun/?d=<id> или старая #duel=<id>
+  try{
+    const q=new URLSearchParams(location.search).get('d');
+    if(q) return duelParse('duel_'+q);
+    if(location.hash && location.hash.indexOf('#duel=')===0) return duelParse('duel_'+location.hash.slice(6));
+  }catch(e){}
+  return null;
+}
 function duelBoot(){ // deep-link ?startapp=duel_<pid> (Telegram) или #duel=<pid> (веб, тот же приём, что forgeBoot у #map=)
   try{
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
     let pid = duelParse(sp);
-    if(!pid && location.hash && location.hash.indexOf('#duel=')===0) pid = duelParse('duel_'+location.hash.slice(6)); // 30.08.2026: друг без Telegram открыл веб-ссылку
+    if(!pid) pid = duelWebPid(); // 30.08.2026: друг без Telegram открыл веб-ссылку; 28.09.2026: и новую cosmogram.fun/?d=<id>. 
     if(!pid || (typeof syncMyId==='function' && pid===syncMyId())){ duelBanner(); return false; } // не вызов / сам себе
     syncDuel(pid).then(d=>{
       if(d && d.ok && d.best>0){
@@ -4213,7 +4225,7 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
   /* v1.282.20: раньше виджет входа перемонтировался на КАЖДОЙ смерти — а dcMount/gMount вставляют
      внешнюю кнопку и заводят сторож на 5 секунд. Двадцать смертей за сессию у веб-гостя = двадцать
      вставок подряд. Монтируем один раз и оставляем, пока он жив. */
-  if (guest){ $('webJoinTxt').textContent=L.webJoin;
+  if (guest){ $('webJoinTxt').textContent=L.topJoinSub; setText('webJoinTitle',L.topJoinTitle); // 28.09.2026 (вариант Б): приглашение — карточкой на месте «Ты в мире», тексты те же, что у приглашения в Турнирах
     const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0);
     const gj0=$('gJoinWidget'); if (gj0 && !gj0.firstChild) gMount(gj0); }
   else { const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
@@ -4554,6 +4566,71 @@ function wireTopGhostButtons(listId, getCat, screen){
   });
 }
 wireTopGhostButtons('topList', ()=>topCat, 'ach');
+/* 28.09.2026 «Итоги — что дальше» (вариант Б, владелец: «Заменяем»). Карточка места в мире:
+   #N, сосед сверху (имя · счёт) и сколько до него, кнопка призрака на него — та же .topGh,
+   что в Турнирах (wireTopGhostButtons ниже подключён и к #overRank). №1 — «Ты первый в мире»
+   и отрыв от второго, без призрака (гнаться не за кем). Соседа нет в ответе (сервер отдаёт
+   первые 100 строк; 28.09.2026 в таблицах 2–16 игроков) — только место. Пока только Score
+   Attack (владелец: остальные режимы — отдельным шагом), только вошедшему. */
+const OVER_RANK_CATS=['touch','gyro','keys'];
+function ovT(k){ return (L && L[k]!==undefined) ? L[k] : I18N.ru[k]; } // новые строки пока только по-русски
+function overRankFill(d, cat){
+  const el=$('overRank'); if(!el) return;
+  const ok = S.mode==='classic' && OVER_RANK_CATS.includes(cat) && d && d.ok && d.me && d.me.rank>0;
+  if(!ok){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
+  const head='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT('overRankYou'))+'</span>'+
+    '<span class="orPlace"><span class="orNum">#'+rank+'</span><span class="orMode">'+escapeHtml(L.modeClassic)+'</span></span></div>';
+  let next='';
+  if(rank===1){
+    const second=top.find(r=>r && !r.me);
+    if(second) next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+      '<span class="orWho">'+escapeHtml(ovT('overRankBehind')('#2 '+String(second.name||'').slice(0,64)+' · '+fmtN(saneNumber(second.best,0)).replace(/ /g,'\u00a0')))+'</span>'+
+      '<span class="orGap">'+escapeHtml(ovT('overRankFirst'))+' · '+escapeHtml(ovT('overRankLead')(fmtN(Math.max(0,myBest-saneNumber(second.best,0)))))+'</span></div></div>';
+  } else {
+    const up=top[rank-2];
+    if(up && !up.me && saneNumber(up.best,0)>myBest){
+      const gap=saneNumber(up.best,0)-myBest;
+      next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+        '<span class="orWho">'+escapeHtml(ovT('overRankNext')('#'+(rank-1)+' '+String(up.name||'').slice(0,64)+' · '+fmtN(saneNumber(up.best,0)).replace(/ /g,'\u00a0')))+'</span>'+
+        '<span class="orGap">'+escapeHtml(ovT('overRankGap')(fmtN(gap)))+'</span></div>'+
+        (up.pid ? '<button type="button" class="topGh orGhost" data-gh="'+Math.floor(Number(up.pid))+'" data-cat="'+escapeHtml(cat)+'" data-best="'+saneNumber(up.best,0)+'">'+ic('ghost')+'<span>'+escapeHtml(ovT('overRankGhost'))+'</span></button>' : '')+
+        '</div>';
+    }
+  }
+  el.innerHTML=head+next;
+  el.classList.remove('hidden');
+}
+/* Гостю — на месте карточки приглашение войти (#webJoin), с «Твои N — это M-е место из T»
+   по тем же первым 100 строкам. Если он ниже всех строк ответа — строку не показываем:
+   «16-е из 15» звучит как ошибка (та же формулировка в Турнирах пока считает по-старому). */
+function overJoinWouldBe(d, sc){
+  const el=$('webJoinWould'); if(!el) return;
+  const top=(d && d.ok && Array.isArray(d.top)) ? d.top : null;
+  if(!top || !(sc>0) || S.mode!=='classic'){ el.classList.add('hidden'); el.textContent=''; return; }
+  const place=top.filter(r=>saneNumber(r && r.best,0)>sc).length+1;
+  if(place>top.length){ el.classList.add('hidden'); el.textContent=''; return; }
+  el.textContent=L.topWouldBe(fmtN(sc), place, top.length);
+  el.classList.remove('hidden');
+}
+function overLocFill(){ // полоска «До Линии Кармана» (или следующей точки шкалы) — на самом экране, не в подробностях
+  const wrap=$('overLoc'); if(!wrap) return;
+  const nl=(typeof achNextLoc==='function')?achNextLoc():null;
+  if(!nl){ wrap.classList.add('hidden'); setText('toLoc',''); setText('toLocLeft',''); return; }
+  const need=(typeof needOf==='function')?needOf(nl):nl.need;
+  const parts=String(L.toLoc(aT(nl).n,'\u0001')).split('\u0001');
+  setText('toLoc', parts[0].replace(/[\s:：]+$/,''));
+  setText('toLocLeft', fmtN(need-Stats.totalDist)+(parts[1]||''));
+  const f=$('toLocFill'); if(f) f.style.width=(Math.round(Math.min(1,Math.max(0,(Stats.totalDist||0)/need))*10000)/100)+'%';
+  wrap.classList.remove('hidden');
+}
+function shareSheetShow(on){ toggleCls('shareSheet','hidden',!on); }
+wireOn('shareBtn','click',()=>{ sfx.click(); haptic('light'); shareSheetShow(true); });
+wireOn('shareSheet','click',e=>{ // тап мимо панели — закрыть; выбор в панели — своя кнопка уже отработала, панель закрывается следом
+  if(e.target.id==='shareSheet' || e.target.closest('#shareSheetPanel .btn')) shareSheetShow(false);
+});
+wireTopGhostButtons('overRank', ()=>'touch', 'over');
+
 
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */
 function morseHapLabel(){ rowSw('setMorseHapBtn', typeof morseHapOn==='function'&&morseHapOn()); setWellFill(); }
@@ -4582,7 +4659,7 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
      было некуда. Веб-версия игры уже умеет Discord/Google (см. duelBoot — тот же приём,
      что forgeBoot уже делает для #map=), поэтому вне Telegram шарим ссылку на неё саму,
      не на t.me. */
-  const webLink=location.origin+location.pathname+'#duel='+pid;
+  const webLink='https://cosmogram.fun/?d='+pid; // 28.09.2026 (владелец купил домен): красивый короткий адрес вместо адреса текущей страницы с #duel=
   const text=L.duelShareText(Math.floor(S.dist), S.mission);
   /* v1.282.20: счётчик двигаем ТОЛЬКО когда окно отправки реально открылось. Раньше он
      рос по самому нажатию, и достижение «Дуэлянт» (+10 ✦) бралось тапом с немедленным
@@ -4935,6 +5012,7 @@ function applyLang(){
   setText('tribuneBtn',L.tribune); // v1.100.1 «Трибуна чемпиона» — на языке игрока
   setText('goldChip',L.goldChip); // v1.100.2 «Золотая звезда дня» — на языке игрока
   setText('overDetailsBtn',L.overDetails);
+  setText('shareBtn',L.share); setText('shareSheetTitle',L.share); // 28.09.2026: «Поделиться» на итогах (вариант Б)
   setText('statusBtn',L.statusStar); // v1.98.0 «Звезда-статус» — на языке игрока
   // заголовок «РАЗБИЛСЯ!» убран (v1.27.0): никто не разбивается — экран поражения добрый и компактный
   setText('menuBtn',L.menu);
@@ -5116,7 +5194,9 @@ Store.init(()=>{
   Store.del('seenIntro'); Store.del('tutDone'); Store.del('lesson'); Store.del('lsnPass'); Store.del('lsnV'); // гигиена: ключи школы больше не нужны
   Store.del('tutVoice'); // гигиена: голос вычеркнут (v1.20.0)
   const mapPending = (typeof forgeBoot==='function') ? forgeBoot() : false; // трасса друга по ссылке (v1.68.0)
-  const duelPending = !mapPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
+  // 28.09.2026: короткая ссылка на трассу (?t=/startapp=t_) — код приходит с сервера позже; пока — обычное меню, по приходу — в конструктор
+  const shortPending = !mapPending && (typeof forgeBootShort==='function') ? forgeBootShort(()=>{ if(!S.running){ setScreen('forge'); forgeOpen(); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } }) : false;
+  const duelPending = !mapPending && !shortPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
   /* Здесь стояла отправка «Opened Game» в Amplitude с полем platform: telegram / telegram_web /
      discord / guest. Канал убран (см. index.html), но САМА мысль верная и ещё пригодится:
      это единственное место, где игра различает вошедшего и гостя. Когда дойдём до партии

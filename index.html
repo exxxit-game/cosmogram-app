@@ -28,12 +28,12 @@
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
 <meta property="og:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды. Играй прямо в браузере или в Telegram."/>
-<meta property="og:image" content="https://exxxit-game.github.io/cosmogram-app/icons/og-image.png"/>
-<meta property="og:url" content="https://exxxit-game.github.io/cosmogram-app/"/>
+<meta property="og:image" content="https://cosmogram.fun/icons/og-image.png"/>
+<meta property="og:url" content="https://cosmogram.fun/"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
 <meta name="twitter:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды."/>
-<meta name="twitter:image" content="https://exxxit-game.github.io/cosmogram-app/icons/og-image.png"/>
+<meta name="twitter:image" content="https://cosmogram.fun/icons/og-image.png"/>
 <!-- PWA «Вторая дверь»: устанавливается на домашний экран, работает офлайн -->
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -4024,7 +4024,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      а сам счёт. И было плоские padding-bottom:26px без var(--sab) — единственный экран, где
      нижний отступ не учитывает жест-полосу/чёлку снизу (у #startScreen .scrFoot её уже
      учитывает). Оба фикса — тот же приём, что уже работает на других экранах, не новое число. */
-#gameOverScreen > :first-child { margin-top:auto; } /* короткие итоги — по центру */
+#gameOverScreen > :first-child { margin-top:0; } /* 28.09.2026 (вариант Б): было auto — итоги по центру; теперь счёт и карточка сверху, «Ещё раз» с рядом — прижаты вниз (margin-top:auto у #retryBtn), как в макете */
 #gameOverScreen > :last-child { margin-bottom:auto; } /* длинные — честный скролл без среза */
 #newRecord { width:min(92%,380px); } /* плашки рекордов переносятся с полями */
 
@@ -4073,18 +4073,67 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   0%,100% { box-shadow:0 0 16px rgba(240,192,64,.14); transform:scale(1); }
   50% { box-shadow:0 0 30px rgba(240,192,64,.32); transform:scale(1.012); }
 } /* 16.09.2026 «Небесный прибор»: пульс синим на уже латунной кнопке .btn.pri.hero — было заметно на GameOver */
-#overQuiet { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:4px; } /* 01.09.2026: было 10px — тот же шаг (12), что уже держит ритм отступов игры, см. отчёт «Пространство в меню» */
-#overQuiet .btn { min-height:40px; padding:8px 14px; font-size:14px; opacity:.92;
-  background:rgba(14,18,32,.62); border-color:rgba(201,164,92,.3); } /* 01.09.2026: тихая тройка приглушена нарочно (opacity), но не должна тонуть в вуали — тот же контраст-буст, что у .btn.ghost, поверх уже пониженной видимости; 16.09.2026 подтянута за латунной правкой .btn.ghost */
-#overQuiet .btn:hover, #overQuiet .btn:active { opacity:1; }
-/* 01.09.2026: «Карточка» — единственная кнопка тройки, доступная всегда (Вызов/Клип условные) —
-   лёгкое золотое выделение отличает её как «якорь», не делает героем наравне с «Ещё раз» */
-#overQuiet #cardBtn { opacity:1; border-color:rgba(201,164,92,.5); color:#f0dcb0; } /* специфичность выше #overQuiet .btn (ID+ID против ID+класс) — иначе тихая тройка перебивает */
-#overMore { width:100%; display:flex; flex-direction:column; align-items:center; }
-#overMore.hidden { display:none; } /* вся вторая сцена — за спойлером */
-#menuBtn { margin-top:8px; opacity:.82; }
-#overDetailsBtn { margin:4px 0 6px; }
+/* 28.09.2026 «Итоги — что дальше» (вариант Б, макет «Итоги полёта — варианты», владелец:
+   «Заменяем»). Как в Smash Hit/Trackmania с доски референсов: одна крупная «Ещё раз» во всю
+   колонку, под ней ровно три тихие кнопки (Вызов/Поделиться/Меню), «Подробности полёта» —
+   тихой строкой. Карточка/Клип/«В статус» — в панели «Поделиться» снизу (#shareSheet). Над
+   кнопками — карточка места в мире (#overRank) или приглашение гостю (#webJoin) и полоска
+   «До Линии Кармана» (#overLoc). Подпись «Ваш результат» в варианте Б не показывается,
+   медали — на ~0.72 от прежнего (владелец: «уменьшенные, как в Б»). Прежняя «тихая тройка»
+   #overQuiet (01.09.2026) этим заменена целиком. */
+#gameOverScreen #finalScoreLabel { display:none; }
+#gameOverScreen #finalScore { font-size:clamp(64px,22.5vw,96px); font-weight:800; margin-top:6px; }
+#recordMedals .medalBox { zoom:.72; }
+#recordMedals .medalCap { font-size:10px; }
+#gameOverScreen #newRecord .recChip { background:none; border:0; padding:2px 6px; font-size:12px; opacity:.9; }
+.overCard { width:min(92%,380px); box-sizing:border-box; margin:18px 0 0; padding:14px 16px; border-radius:var(--r-card);
+  border:1px solid rgba(201,164,92,.3); background:rgba(14,18,32,.62); display:flex; flex-direction:column; gap:12px;
+  text-align:left; font-variant-numeric:tabular-nums; }
+.overCard.hidden { display:none; }
+.orHead { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.orLbl { font-size:13px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orPlace { display:flex; align-items:baseline; gap:8px; }
+.orNum { font-family:var(--font-disp); font-size:30px; font-weight:800; color:#f2f7ff; }
+.orMode { font-size:12px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orLine { height:1px; background:rgba(201,164,92,.2); }
+.orNext { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.orNextTxt { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.orWho { font-size:11px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orGap { font-size:15px; font-weight:700; color:var(--gold-hi); letter-spacing:.04em; text-transform:uppercase; }
+.overCard .topGh.orGhost { all:unset; box-sizing:border-box; flex:none; min-height:40px; padding:6px 12px; border-radius:12px;
+  border:1px solid rgba(201,164,92,.4); background:rgba(14,18,32,.7); color:#dce9ff; font-size:12px;
+  letter-spacing:.05em; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.overCard .topGh.orGhost .ic { width:1.1em; height:1.1em; }
+#webJoin.overCard { gap:8px; margin:18px 0 0; text-align:left; } /* id+класс: перебивает старое #webJoin{margin;text-align:center} */
+#webJoin.overCard #webJoinTxt { color:#9fb4d8; font-size:12px; font-weight:400; line-height:1.45; padding:0; margin:0; text-shadow:none; text-transform:none; letter-spacing:.02em; }
+#webJoinTitle { font-size:15px; font-weight:700; color:var(--gold-hi); letter-spacing:.04em; text-transform:uppercase; }
+#webJoinWould { font-size:13px; color:#f2f7ff; letter-spacing:.04em; text-transform:uppercase; }
+#webJoinWould.hidden { display:none; }
+#overLoc { width:min(92%,380px); margin:14px 0 0; display:flex; flex-direction:column; gap:6px; }
+#overLoc.hidden { display:none; }
+.overLocRow { display:flex; justify-content:space-between; gap:10px; font-size:11px; color:#9fb4d8;
+  letter-spacing:.05em; text-transform:uppercase; font-variant-numeric:tabular-nums; }
+.overLocBar { height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+#toLocFill { display:block; height:6px; width:0; background:var(--gold-hi); }
+#gameOverScreen #toLoc { color:inherit; font-size:inherit; line-height:inherit; text-align:left; margin:0; min-height:0; }
+#gameOverScreen #retryBtn { width:min(92%,380px); min-height:64px; font-size:22px; font-weight:800; margin:auto 0 0;
+  border-color:rgba(240,192,64,.65); box-shadow:0 0 22px rgba(240,192,64,.22); }
+#overRow { width:min(92%,380px); display:flex; gap:10px; margin-top:12px; }
+#overRow .btn { flex:1 1 0; min-width:0; min-height:46px; padding:8px 6px; font-size:14px; margin:0; opacity:1; }
+#overRow #duelBtn { border-color:rgba(201,164,92,.5); color:#f0dcb0; }
+#overDetailsBtn { margin:8px 0 0; background:none; border:0; box-shadow:none; color:#9fb4d8; font-size:12px; padding:8px; min-height:0; }
 #overDetailsBtn::after { margin-left:8px; } /* стрелка при тексте, не на краю */
+#overMore { width:100%; display:flex; flex-direction:column; align-items:center; margin-top:6px; }
+#overMore.hidden { display:none; } /* вся вторая сцена — за спойлером */
+#shareSheet { position:fixed; inset:0; z-index:60; background:rgba(6,10,24,.55); display:flex; align-items:flex-end; }
+#shareSheet.hidden { display:none; }
+#shareSheetPanel { width:100%; box-sizing:border-box; padding:18px 16px calc(28px + var(--sab)); border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(201,164,92,.4); background:#0f1a33; display:flex; flex-direction:column; align-items:center; gap:10px;
+  animation:shareUp .25s cubic-bezier(.22,1,.36,1) both; }
+@keyframes shareUp { from{ transform:translateY(24px); opacity:0; } to{ transform:none; opacity:1; } }
+#shareSheetTitle { font-size:13px; font-weight:600; color:var(--gold-hi); letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px; }
+#shareSheetPanel .btn { width:min(100%,380px); min-height:52px; margin:0; }
+#shareSheetPanel #cardBtn { border-color:rgba(201,164,92,.5); color:#f0dcb0; }
 
 /* ---------- Одна таблица, несколько входов (v1.51.0) ---------- */
 .accStatus { color:var(--muted); font-size:13px; text-align:center; line-height:1.5; padding:2px 10px; }
@@ -4524,9 +4573,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.569"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.569"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.569"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.571"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.571"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.571"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -5701,11 +5750,20 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div id="goldChip" class="hidden">★ Знак дня</div><!-- v1.100.2 «Золотая звезда дня»: снич пойман — честь, не очки -->
   <div id="dayStats" class="hidden"></div><!-- v1.100.2: «сегодня её взяли N из M» -->
   <div id="duelRes"></div>
-  <div id="webJoin" class="hidden">
+  <!-- 28.09.2026 «Итоги — что дальше» (вариант Б, владелец: «Заменяем»): карточка места в мире
+       (только Score Attack, вошедшему) — #3, сосед сверху и сколько до него, кнопка призрака на
+       него; №1 — «Ты первый в мире» и отрыв от второго. Гостю на том же месте — приглашение
+       войти (#webJoin ниже) с «Твои N — это M-е место». Заполняет overRankFill()/overJoinWouldBe(). -->
+  <div id="overRank" class="overCard hidden"></div>
+  <div id="webJoin" class="overCard hidden">
+    <div id="webJoinTitle"></div>
+    <div id="webJoinWould" class="hidden"></div>
     <div id="webJoinTxt"></div>
     <div id="dcJoinWidget"></div>
     <div id="gJoinWidget"></div>
   </div>
+  <!-- 28.09.2026: «До Линии Кармана» переехала из подробностей на сам экран — полоской (вариант Б). -->
+  <div id="overLoc" class="hidden"><div class="overLocRow"><span id="toLoc"></span><span id="toLocLeft"></span></div><div class="overLocBar"><i id="toLocFill"></i></div></div>
   <button class="btn pri" id="retryBtn">Ещё раз</button>
   <!-- 12.09.2026 «Оффер гироскопа переехал с середины полёта»: владелец — мир не должен сам
        замирать посреди игры («резко и случайно»). Раньше (v1.16.0-v1.284.20) gyroOfferDue()
@@ -5726,25 +5784,32 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        видимая кнопка тройки (Вызов/Клип условные), но раньше стояла в середине и визуально
        прыгала по месту, когда соседи то появлялись, то нет. Теперь первая — стабильный якорь,
        не зависит от того, что показано рядом. Макет: macet-01-09-tihaya-troyka.html. -->
-  <div id="overQuiet">
-    <button class="btn ghost" id="cardBtn">Карточка</button>
+  <!-- 28.09.2026 (вариант Б): под «Ещё раз» — ровно три кнопки: Вызов, Поделиться, Меню.
+       Карточка/Клип/«В статус» — внутри панели «Поделиться» (#shareSheet ниже), со своей
+       прежней логикой показа (Клип и статус — только когда доступны). -->
+  <div id="overRow">
     <button class="btn ghost hidden" id="duelBtn">Вызов</button>
-    <!-- 31.08.2026 «Момент полёта»: видна только если запись реально поймала момент в ЭТОМ
-         полёте (cinemaClipRefresh, ui.js) — скрывается заново на каждом взлёте, не донашивает
-         клип с прошлой посадки. -->
-    <button class="btn ghost hidden" id="cinemaClipBtn">Клип</button>
+    <button class="btn ghost" id="shareBtn">Поделиться</button>
+    <button class="btn ghost small" id="menuBtn">Меню</button>
   </div>
-  <button class="btn ghost small hidden" id="statusBtn">✨ В статус</button><!-- v1.98.0 «Звезда-статус»: рекорд + Premium + 8.0 — искра в статус на 3 дня -->
   <button class="btn ghost small spoiler" id="overDetailsBtn">Подробности полёта</button>
   <div id="overMore" class="hidden">
     <div id="toRecord"></div>
-    <div id="toLoc"></div>
-    <div id="myRank"></div>
     <div id="runHead"></div>
     <div id="runPass"></div>
     <div id="stats"></div>
   </div>
-  <button class="btn ghost small" id="menuBtn">Меню</button>
+  <div id="shareSheet" class="hidden">
+  <div id="shareSheetPanel">
+    <div id="shareSheetTitle">Поделиться</div>
+    <button class="btn ghost" id="cardBtn">Карточка</button>
+    <!-- 31.08.2026 «Момент полёта»: видна только если запись реально поймала момент в ЭТОМ
+         полёте (cinemaClipRefresh, ui.js) — скрывается заново на каждом взлёте, не донашивает
+         клип с прошлой посадки. -->
+    <button class="btn ghost hidden" id="cinemaClipBtn">Клип</button>
+    <button class="btn ghost hidden" id="statusBtn">✨ В статус</button><!-- v1.98.0 «Звезда-статус»: рекорд + Premium + 8.0 — искра в статус на 3 дня -->
+  </div>
+  </div>
 </div>
 
 <!-- КАРТОЧКА РЕЗУЛЬТАТА (v1.73.0): красивая картинка для скриншота — Telegram не даёт
@@ -5836,26 +5901,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.569" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.569"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.569"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.569"></script>
-<script defer src="js/game.js?v=1.478.569" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.569"></script>
-<script defer src="js/sync.js?v=1.478.569"></script>
-<script defer src="js/render.js?v=1.478.569"></script>
-<script defer src="js/planetarium.js?v=1.478.569"></script>
-<script defer src="js/goldstar.js?v=1.478.569"></script>
-<script defer src="js/finish.js?v=1.478.569"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.569"></script>
-<script defer src="js/gyro.js?v=1.478.569"></script>
-<script defer src="js/forge.js?v=1.478.569"></script>
-<script defer src="js/partitura.js?v=1.478.569"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.569"></script>
-<script defer src="js/card.js?v=1.478.569"></script>
-<script defer src="js/star.js?v=1.478.569"></script>
-<script defer src="js/cinema.js?v=1.478.569"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.569"></script>
+<script defer src="js/core.js?v=1.478.571" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.571"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.571"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.571"></script>
+<script defer src="js/game.js?v=1.478.571" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.571"></script>
+<script defer src="js/sync.js?v=1.478.571"></script>
+<script defer src="js/render.js?v=1.478.571"></script>
+<script defer src="js/planetarium.js?v=1.478.571"></script>
+<script defer src="js/goldstar.js?v=1.478.571"></script>
+<script defer src="js/finish.js?v=1.478.571"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.571"></script>
+<script defer src="js/gyro.js?v=1.478.571"></script>
+<script defer src="js/forge.js?v=1.478.571"></script>
+<script defer src="js/partitura.js?v=1.478.571"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.571"></script>
+<script defer src="js/card.js?v=1.478.571"></script>
+<script defer src="js/star.js?v=1.478.571"></script>
+<script defer src="js/cinema.js?v=1.478.571"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.571"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

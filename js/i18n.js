@@ -66,6 +66,7 @@ const I18N = {
     biathlonMisses:(n)=>'−'+n+' промах'+(n===1?'':(n>=2&&n<=4?'а':'ов')), // 06.09.2026
     modeRelay:'Эстафета', modeRelayD:'Открытая цепочка: 4 этапа по 1000м, передавай следующему свой полёт', // 06.09.2026; 09.09.2026: владелец — «лети свой, передавай» звучало как два разных действия, короче одной фразой; 10.09.2026: было 300м, владелец — «мало, конец сразу»
     heroHintTap:'Чтобы начать полёт, нажмите здесь.', // 16.09.2026 (владелец, дословно, финальная правка текста того же вечера): вместо иконки-самолётика на карточках режимов — текстовая подсказка, прячется сама после первого забега (.trail появляется)
+    overRankYou:'Ты в мире', overRankNext:s=>'Следующий: '+s, overRankGap:n=>'Ещё '+n+' до места выше', overRankFirst:'Ты первый в мире', overRankBehind:s=>'Следом: '+s, overRankLead:n=>'отрыв '+n, overRankGhost:'С призраком', // 28.09.2026 итоги «Что дальше» (вариант Б, макет одобрен владельцем). Только ru — другие языки берут эти же строки (ovT() в ui.js), переводы ждут владельца
     ballHello:'Привет!', ballAsk:'Для того чтобы подтвердить, что вы самостоятельно сделали выбор, пожалуйста, нажмите на это окно.', // 27.09.2026 Шарик, первая встреча (владелец, дословно). Только ru — другие языки пока берут эти же строки (ballText() в ui.js), переводы ждут владельца
     heroRibbonNoRecord:'ПОЛЕТЕЛИ?', // 21.09.2026 (владелец, дословно): пока рекорда нет, глаза на ленте + эта фраза вместо числа
     relayWatching:(n)=>'Смотрю этап '+n+'…', relayLegSent:(n)=>'Этап '+n+' сдан', relayChainDone:'Эстафета завершена!',
@@ -307,8 +308,8 @@ const I18N = {
     diagSoundOn:'Звук включён', diagSoundOff:'Звук выключен в настройках',
     diagKicked:'Запросили датчик заново — подвигай телефон',
     diagReportBtn:'Скопировать отчёт', diagCopied:'Отчёт скопирован — вставь его в сообщение',
-    shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' '+i18nRuPts(s)+'! Сможешь больше? t.me/realcosmogrambot/app',
-    shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться · t.me/realcosmogrambot/app',
+    shareText:s=>'🚀 Мой рекорд в Cosmogram: '+s+' '+i18nRuPts(s)+'! Сможешь больше? cosmogram.fun',
+    shareTextGyro:s=>'📱 Лечу гироскопом в Cosmogram — так в Telegram почти никто не умеет! Рекорд: '+s+' · попробуй угнаться · cosmogram.fun',
     gyroOverHint:'Ты попробовал пальцем — можно попробовать гироскоп', gyroOverBtn:'Разблокировать гироскоп', gyroOverOk:'Готово — теперь можно рулить наклоном ✓', // 12.09.2026: заменили tutGyroBody/tutGyroBtn/tutTouchBtn — оффер переехал с середины полёта на экран итогов, см. .knowledge/macets/gyro-offer-na-itogah-12-09-2026.html
     missionLbl:'Волна', angarTabColor:'Стиль', skinNames:['Лунный камень','Лазурь','Золото','Алый','Неон','Аврора','Плазма','Хром','Призрак','Спутники','Грани','Инкрустация','Филигрань','Ядро','Прицел'],
     decalCatNames:{mono:'Однотонные',
@@ -544,8 +545,8 @@ const I18N = {
     diagSoundOn:'Sound on', diagSoundOff:'Sound off in settings',
     diagKicked:'Sensor re-requested — move the phone',
     diagReportBtn:'Copy report', diagCopied:'Report copied — paste it into your message',
-    shareText:s=>'🚀 My Cosmogram record: '+s+' '+(s===1?'point':'points')+'! Beat it? t.me/realcosmogrambot/app',
-    shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me · t.me/realcosmogrambot/app',
+    shareText:s=>'🚀 My Cosmogram record: '+s+' '+(s===1?'point':'points')+'! Beat it? cosmogram.fun',
+    shareTextGyro:s=>'📱 Flying hands-free (gyro) in Cosmogram — almost no Telegram game can! Record: '+s+' · try to catch me · cosmogram.fun',
     gyroOverHint:"You've tried finger control — now you can try the gyroscope", gyroOverBtn:'Unlock gyroscope', gyroOverOk:'Done — you can steer by tilting now ✓',
     missionLbl:'Wave', angarTabColor:'Style',
     angarFilter_all:'All', angarFilter_new:'New', angarFilter_owned:'Owned', angarFilter_favorite:'Favorites',
@@ -773,8 +774,8 @@ const I18N = {
     diagSoundOn:'Sonido activado', diagSoundOff:'Sonido desactivado en ajustes',
     diagKicked:'Sensor solicitado de nuevo — mueve el teléfono',
     diagReportBtn:'Copiar informe', diagCopied:'Informe copiado — pégalo en tu mensaje',
-    shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' '+(s===1?'punto':'puntos')+'! ¿Puedes superarlo? t.me/realcosmogrambot/app',
-    shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme · t.me/realcosmogrambot/app',
+    shareText:s=>'🚀 Mi récord en Cosmogram: '+s+' '+(s===1?'punto':'puntos')+'! ¿Puedes superarlo? cosmogram.fun',
+    shareTextGyro:s=>'📱 ¡Vuelo con giroscopio en Cosmogram — casi nadie en Telegram sabe hacerlo! Récord: '+s+' · intenta alcanzarme · cosmogram.fun',
     gyroOverHint:'Probaste con el dedo — ahora puedes probar el giroscopio', gyroOverBtn:'Desbloquear giroscopio', gyroOverOk:'Listo — ya puedes dirigir inclinando ✓',
     missionLbl:'Oleada', angarTabColor:'Estilo',
     angarFilter_all:'Todo', angarFilter_new:'Nuevo', angarFilter_owned:'Comprado', angarFilter_favorite:'Favoritos',
@@ -1012,8 +1013,8 @@ const I18N = {
     diagSoundOn:'Som ligado', diagSoundOff:'Som desligado nas configurações',
     diagKicked:'Sensor solicitado de novo — mexa o telefone',
     diagReportBtn:'Copiar relatório', diagCopied:'Relatório copiado — cole na sua mensagem',
-    shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' '+(s===1?'ponto':'pontos')+'! Consegue superar? t.me/realcosmogrambot/app',
-    shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar · t.me/realcosmogrambot/app',
+    shareText:s=>'🚀 Meu recorde no Cosmogram: '+s+' '+(s===1?'ponto':'pontos')+'! Consegue superar? cosmogram.fun',
+    shareTextGyro:s=>'📱 Estou voando de giroscópio no Cosmogram — quase ninguém no Telegram sabe fazer isso! Recorde: '+s+' · tente me alcançar · cosmogram.fun',
     gyroOverHint:'Você experimentou com o dedo — agora pode experimentar o giroscópio', gyroOverBtn:'Desbloquear giroscópio', gyroOverOk:'Pronto — já pode pilotar inclinando ✓',
     missionLbl:'Onda', angarTabColor:'Estilo',
     angarFilter_all:'Tudo', angarFilter_new:'Novo', angarFilter_owned:'Comprado', angarFilter_favorite:'Favoritos',
@@ -1242,8 +1243,8 @@ const I18N = {
     diagSoundOn:'Son activé', diagSoundOff:'Son désactivé dans les réglages',
     diagKicked:'Capteur redemandé — bouge le téléphone',
     diagReportBtn:'Copier le rapport', diagCopied:'Rapport copié — colle-le dans ton message',
-    shareText:s=>'🚀 Mon record Cosmogram : '+s+' '+(s===1?'point':'points')+' ! Peux-tu faire mieux ? t.me/realcosmogrambot/app',
-    shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper · t.me/realcosmogrambot/app',
+    shareText:s=>'🚀 Mon record Cosmogram : '+s+' '+(s===1?'point':'points')+' ! Peux-tu faire mieux ? cosmogram.fun',
+    shareTextGyro:s=>'📱 Je vole mains libres (gyroscope) dans Cosmogram — presque aucun jeu Telegram ne le peut ! Record : '+s+' · essaie de me rattraper · cosmogram.fun',
     gyroOverHint:"Tu as essayé au doigt — tu peux maintenant essayer le gyroscope", gyroOverBtn:'Débloquer le gyroscope', gyroOverOk:'Prêt — tu peux piloter en inclinant maintenant ✓',
     missionLbl:'Vague', angarTabColor:'Style',
     angarFilter_all:'Tout', angarFilter_new:'Nouveau', angarFilter_owned:'Acheté', angarFilter_favorite:'Favoris',

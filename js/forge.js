@@ -1045,10 +1045,57 @@ function mapAskPublish(code, name){
     else declined();
   }catch(e){ declined(); }
 }
+/* 28.09.2026 «Короткие ссылки на трассы» (владелец купил cosmogram.fun: «красивый адрес и короткая
+   ссылка», «сразу с сервером»). Сервер cosmogram-links хранит пару «5-значный номер → CG2-код».
+   Номер берём ЗАРАНЕЕ, на итогах своей трассы (forgeShortPrefetch в mapOver): системное
+   «Поделиться» браузер открывает только сразу после нажатия, ждать сеть в этот момент нельзя.
+   Номера нет (сеть, сервер, ещё не пришёл) — прежняя длинная ссылка, ничего не ломается. */
+const LINKS_URL='https://cwpijvgdrrvnvldhnmbj.supabase.co/functions/v1/cosmogram-links';
+const SHORT_ID_RE=/^[2-9a-km-zA-HJ-NP-Z]{5,8}$/; // тот же набор знаков, что у сервера (без 0/O, 1/l/I)
+const forgeShortCache={}; // код трассы → номер
+function forgeShortPost(body){
+  const ctl=(typeof AbortController==='function')?new AbortController():null;
+  const t=setTimeout(()=>{ try{ ctl&&ctl.abort(); }catch(e){} }, 10000); // 10с: живой замер 28.09 — до ~3с, холодный старт функции дольше; 4с обрывали настоящий ответ
+  return fetch(LINKS_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:ctl?ctl.signal:undefined})
+    .then(r=>r.json()).finally(()=>clearTimeout(t));
+}
+function forgeShortPrefetch(code){
+  if(!code || forgeShortCache[code]) return Promise.resolve(forgeShortCache[code]||null);
+  return forgeShortPost({action:'make',code:code}).then(d=>{
+    if(d && d.ok && SHORT_ID_RE.test(String(d.id||''))) forgeShortCache[code]=String(d.id);
+    return forgeShortCache[code]||null;
+  }).catch(()=>null);
+}
+function forgeShareLinks(code){
+  const id=forgeShortCache[code];
+  return id ? { tg:'https://t.me/realcosmogrambot/app?startapp=t_'+id, web:'https://cosmogram.fun/?t='+id }
+            : { tg:'https://t.me/realcosmogrambot/app?startapp=map_'+code, web:'https://cosmogram.fun/#map='+code };
+}
+function forgeShortId(){ // номер из входящей ссылки: startapp=t_<номер> (Telegram) или cosmogram.fun/?t=<номер>
+  try{
+    const sp=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param;
+    if(sp && String(sp).indexOf('t_')===0 && SHORT_ID_RE.test(String(sp).slice(2))) return String(sp).slice(2);
+    const q=new URLSearchParams(location.search).get('t');
+    if(q && SHORT_ID_RE.test(q)) return q;
+  }catch(e){}
+  return null;
+}
+function forgeBootShort(onReady){ // true — ссылка с номером есть, трасса догрузится; onReady — когда код пришёл и разобран
+  const id=forgeShortId(); if(!id) return false;
+  forgeShortPost({action:'get',id:id}).then(d=>{
+    const cfg=(d && d.ok && d.code) ? forgeDecode(String(d.code)) : null;
+    if(!cfg){ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('map_short_fail', id); return; }
+    forgeShortCache[String(d.code)]=id;
+    forgeCfg=cfg; Store.set('forgeLast',cfg);
+    if(typeof onReady==='function') onReady();
+  }).catch(()=>{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('map_short_fail', id); });
+  return true;
+}
 function mapShare(){ // v1.87.0: «Поделиться» живёт в итогах трассы — там, где случился восторг, а не на панели кузницы
   const cfg=forgeSanitize(forgeCfg);
   const code=forgeEncode(cfg);
-  const link='https://t.me/realcosmogrambot/app?startapp=map_'+code; // тот же мост, что и у дуэлей (v1.68.0)
+  const links=forgeShareLinks(code); // 28.09.2026: короткий номер, если уже пришёл (forgeShortPrefetch на итогах), иначе прежняя длинная
+  const link=links.tg; // тот же мост, что и у дуэлей (v1.68.0)
   const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
@@ -1056,7 +1103,7 @@ function mapShare(){ // v1.87.0: «Поделиться» живёт в итог
     try{ tg.openTelegramLink(shareUrl); haptic('success'); mapAskPublish(code, cfg.n); return; }catch(e){}
   }
   if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
-    navigator.share({text:txt, url:link}).catch(()=>{});
+    navigator.share({text:txt, url:links.web}).catch(()=>{}); // 28.09.2026: вне Telegram — наш адрес, не t.me (владелец: «в Telegram — t.me, вне — cosmogram.fun»)
     haptic('success'); mapAskPublish(code, cfg.n); return;
   }
   // 18.09.2026 (второй видео-аудит другими методами): раньше публикация предлагалась
@@ -1423,7 +1470,7 @@ function mapOver(sc){
      итогов у неё общий с обычным забегом, и на нём оставались висеть виджеты предыдущего:
      «✨ В статус» (награда за рекорд — её можно было надеть по итогам незачётного забега),
      «★ Знак дня», статистика дня и мёртвая кнопка трибуны. */
-  ['goldChip','dayStats','tribuneBtn','statusBtn'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); });
+  ['goldChip','dayStats','tribuneBtn','statusBtn','overRank','overLoc'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); }); // 28.09.2026: + карточка места и полоска шкалы (итоги «Что дальше») — у своей трассы их нет
   const fsEl=$('finalScore'); if(fsEl) fsEl.textContent=sc;
   const winPill=S.mapWin?'<span class="miniPill">'+ic('trophy')+L.forgeWin+'</span>':'';
   const statsEl=$('stats');
@@ -1436,6 +1483,7 @@ function mapOver(sc){
   // вставки в innerHTML, чтобы не зависеть от того, что апстрим-очистка никогда не даст сбой.
   if(statsEl) statsEl.innerHTML='<div class="bestPills rise" style="animation-delay:200ms"><span class="miniPill">'+ic('plane')+escapeHtml(S.customName||L.forgeDefName)+'</span>'+winPill+'</div>';
   runPassFill();
+  try{ forgeShortPrefetch(forgeEncode(forgeSanitize(forgeCfg))); }catch(e){} // 28.09.2026: короткий номер для «Поделиться» — заранее, пока игрок смотрит итоги
   if (typeof cardCapture==='function') cardCapture(sc,{win:!!S.mapWin}); // v1.73.0: карточка и для своей трассы — с именем автора
   const cardBtnEl2=$('cardBtn'); if(cardBtnEl2) cardBtnEl2.classList.remove('hidden'); // v1.282.10: та же кнопка, тот же возврат видимости после настоящего забега
   tryOnRevert(); music.sting(S.mapWin?'record':'death'); music.stop(2); engine.stop();
