@@ -5194,7 +5194,9 @@ Store.init(()=>{
   Store.del('seenIntro'); Store.del('tutDone'); Store.del('lesson'); Store.del('lsnPass'); Store.del('lsnV'); // гигиена: ключи школы больше не нужны
   Store.del('tutVoice'); // гигиена: голос вычеркнут (v1.20.0)
   const mapPending = (typeof forgeBoot==='function') ? forgeBoot() : false; // трасса друга по ссылке (v1.68.0)
-  const duelPending = !mapPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
+  // 28.09.2026: короткая ссылка на трассу (?t=/startapp=t_) — код приходит с сервера позже; пока — обычное меню, по приходу — в конструктор
+  const shortPending = !mapPending && (typeof forgeBootShort==='function') ? forgeBootShort(()=>{ if(!S.running){ setScreen('forge'); forgeOpen(); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } }) : false;
+  const duelPending = !mapPending && !shortPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
   /* Здесь стояла отправка «Opened Game» в Amplitude с полем platform: telegram / telegram_web /
      discord / guest. Канал убран (см. index.html), но САМА мысль верная и ещё пригодится:
      это единственное место, где игра различает вошедшего и гостя. Когда дойдём до партии
