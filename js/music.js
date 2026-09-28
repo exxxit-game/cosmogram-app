@@ -183,9 +183,25 @@ const music = (()=>{
       const keep=Object.assign({},stats), b=createSynth(off,off.destination); b.bar(57,0); b.bar(58,BAR); Object.assign(stats,keep);
       const t=performance.now();
       off.startRendering().then(()=>{ const ms=performance.now()-t; benchRes={ms:Math.round(ms), pct:Math.round(ms/10/sec)};
-        tape('bench '+sec.toFixed(1)+'с→'+benchRes.ms+'мс ('+benchRes.pct+'%) '+sr+'Hz'); })
+        tape('bench '+sec.toFixed(1)+'с→'+benchRes.ms+'мс ('+benchRes.pct+'%) '+sr+'Hz'); return benchParts(sr,sec); })
         .catch(e=>tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)));
     }catch(e){ tape('bench ошибка '+String((e&&e.name)||e).slice(0,30)); }
+  }
+  /* 28.09.2026 (владелец: «сначала замерить реверб на лету»): выбор между «готовые части целиком» и
+     «инструменты без реверба + реверб в игре» решает цена самого реверба на телефоне. Два замера тем же
+     способом, что bench: bench-rev — тот же отклик 2.2 с (то же зерно mulberry(7)) на стерео-шуме;
+     bench-buf — 16 готовых записей разом (цена проигрывания частей). Только замер, звук не меняется. */
+  function benchParts(sr,sec){
+    const run=(label,build)=>{ const off=new OfflineAudioContext(2,Math.ceil(sec*sr),sr); build(off); const t=performance.now();
+      return off.startRendering().then(()=>{ const ms=performance.now()-t; tape(label+' '+sec.toFixed(1)+'с→'+Math.round(ms)+'мс ('+Math.round(ms/10/sec)+'%)'); }); };
+    const noiseBuf=(off,secs)=>{ const r=mulberry(3), b=off.createBuffer(2,Math.floor(off.sampleRate*secs),off.sampleRate);
+      for(let c=0;c<2;c++){ const d=b.getChannelData(c); for(let i=0;i<d.length;i++) d[i]=r()*2-1; } return b; };
+    return run('bench-rev',off=>{ const r=mulberry(7), len=Math.floor(sr*2.2), ir=off.createBuffer(2,len,sr);
+        for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(r()*2-1)*Math.pow(1-i/len,3); }
+        const cv=off.createConvolver(); cv.buffer=ir; const src=off.createBufferSource(); src.buffer=noiseBuf(off,sec); src.connect(cv); cv.connect(off.destination); src.start(0); })
+      .then(()=>run('bench-buf',off=>{ const b=noiseBuf(off,2); for(let k=0;k<16;k++){ const s=off.createBufferSource(); s.buffer=b; s.loop=true;
+        const g=off.createGain(); g.gain.value=.05; s.connect(g); g.connect(off.destination); s.start(k*.01); } }))
+      .catch(e=>tape('bench-parts ошибка '+String((e&&e.name)||e).slice(0,30)));
   }
   function meter(ac){ // зовётся из tick(): копит замеры полёта и пишет одну строку через ~6 с
     const now=performance.now();
