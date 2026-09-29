@@ -45,6 +45,19 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 30.09.2026 (владелец: «что может стать лучше, где может объединиться») — своя копия
+// readLastAssistantMessage() (ветка Б, словесная проверка) вынесена в общую библиотеку —
+// та же логика жила ТРИЖДЫ (этот файл, excuse-words-guard.mjs, device-claim-guard.mjs).
+// findHighStakesActionsThisTurn()/isRealUserTurn() ниже НЕ трогаю — внешне похожи на
+// collectCurrentTurnBlocks()/isGenuineUserEntry() из lib/current-turn-blocks.mjs, но при
+// сверке нашлось реальное расхождение в двух краевых случаях (null-запись, content не
+// строка и не массив) — сливать вслепую ради мнимого сходства не стал, этот файл самый
+// важный из пяти Stop-хуков.
+let readLastAssistantMessageShared;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'last-assistant-message.mjs');
+  ({ readLastAssistantMessage: readLastAssistantMessageShared } = await import(pathToFileURL(modPath).href));
+}
 
 const CLAIM_CHECKS_LOG = path.resolve(
   process.env.CLAIM_CHECKS_LOG_PATH ||
@@ -160,41 +173,7 @@ function parseTsAsUtc(tsStr) {
 }
 
 function readLastAssistantMessage(transcriptPath) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
-  let lines;
-  try {
-    lines = readTail(transcriptPath).split('\n');
-  } catch {
-    return '';
-  }
-  const nowTs = Date.now() / 1000;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (entry.type !== 'assistant') continue;
-    const tsStr = entry.timestamp;
-    if (tsStr) {
-      const ts = parseTsAsUtc(tsStr);
-      if (!Number.isNaN(ts) && nowTs - ts > STALE_THRESHOLD_S) return ''; // устаревший ход
-    }
-    const msg = entry.message || {};
-    const content = msg.content;
-    if (typeof content === 'string') return content;
-    if (Array.isArray(content)) {
-      return content
-        .filter((b) => b && typeof b === 'object' && b.type === 'text')
-        .map((b) => b.text || '')
-        .join('\n');
-    }
-    return '';
-  }
-  return '';
+  return readLastAssistantMessageShared(transcriptPath, STALE_THRESHOLD_S);
 }
 
 // Настоящая пользовательская реплика (начало текущего хода), не tool_result,
