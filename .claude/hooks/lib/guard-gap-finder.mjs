@@ -263,6 +263,34 @@ function checkHookActivity() {
   return rows;
 }
 
+// ---------- Г) POSIX-путь → node fs — статическая защита от целого класса бага ----------
+// 29.09.2026 (владелец: «пути постоянно ломаются у Windows... надо противодействие сделать»).
+// Реальный найденный баг: `pwd` под git-bash даёт POSIX-путь (/c/...), node на Windows читает
+// его нормально ТОЛЬКО как свой entry-script argv (`node "$DIR/x.mjs"`), но fs.existsSync/
+// readFileSync ВНУТРИ запущенного JS такой путь не понимают (проверено численно). Эвристика
+// (не идеальная, может дать ложный "проверить руками" — это лучше, чем тихо пропустить):
+// файл считается ПОДОЗРИТЕЛЬНЫМ, если в нём есть command substitution с "голым" `pwd`
+// (без `-W`) И где-то в файле есть fs-вызов (существующий из существующих или node -e
+// с existsSync/readFileSync/writeFileSync/readdirSync/appendFileSync) — то есть оба условия
+// разом, не одно из двух (bare pwd сам по себе безопасен, если используется только как
+// node-entry-script argv, как в commit-tracker.sh — проверено, не флагуется).
+function checkWindowsPathRisk() {
+  const shFiles = fs.readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.sh'));
+  const suspicious = [];
+  for (const f of shFiles) {
+    const filePath = path.join(HOOKS_DIR, f);
+    // 29.09.2026: первая версия ловила слово "pwd" в объясняющих КОММЕНТАРИЯХ про сам баг
+    // (ложное срабатывание на уже починенном repeat-edit-tracker.sh) — убрать строки-комментарии
+    // (начинаются с # после пробелов) перед проверкой, смотреть только на реальный код.
+    const codeOnly = fs.readFileSync(filePath, 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+    const withoutSafePwd = codeOnly.replace(/pwd\s+-W/g, '');
+    const hasBarePwd = /\bpwd\b/.test(withoutSafePwd);
+    const hasFsCall = /(existsSync|readFileSync|writeFileSync|readdirSync|appendFileSync)\s*\(/.test(codeOnly);
+    if (hasBarePwd && hasFsCall) suspicious.push('.claude/hooks/' + f);
+  }
+  return suspicious;
+}
+
 function main() {
   const cmd = process.argv[2];
   if (cmd !== 'scan') {
@@ -319,6 +347,17 @@ function main() {
   }
   console.log('  (тишина сама по себе не значит "сломан" — может значить "нарушений правда не было";');
   console.log('   это сырые данные для решения при memory-консолидации, не готовый вердикт.)');
+
+  console.log('');
+  console.log('════════ Г) риск POSIX-пути → node fs (pwd без -W + fs-вызов в одном файле) ════════');
+  const pathRisks = checkWindowsPathRisk();
+  if (pathRisks.length) {
+    for (const p of pathRisks) console.log(`  ⚠ ${p} — есть "голый" pwd И fs-вызов в одном файле, проверить руками (репозиторий класса: repeat-edit-tracker.sh, найден 29.09.2026)`);
+  } else {
+    console.log('  Ни одного файла с обоими признаками разом — риск не обнаружен эвристикой.');
+  }
+  console.log('  (эвристика, не доказательство ни в ту, ни в другую сторону — снимает часть ручной работы,');
+  console.log('   не заменяет live-тест нового хука перед доверием к нему.)');
 
   console.log('');
   console.log('════════ конец отчёта — ничего не записано в settings.json, регистрация всегда отдельным шагом ════════');
