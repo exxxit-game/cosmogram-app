@@ -47,17 +47,25 @@ function main() {
   // где-то", нужно "идёт ли guard.mjs СРАЗУ ПОСЛЕ node как аргумент запуска" (пропуская
   // флаги вида -e/--foo между ними, реальный вызов может быть "node --experimental-x
   // tests/guard.mjs").
+  // 29.09.2026 (найдено на себе же, живьём: `node --check tests/guard.mjs` — чистая
+  // синтаксическая проверка, guard.mjs НИ РАЗУ не выполняется — заблокировался наравне
+  // с настоящим полным прогоном). `--check` — флаг самого node (как `-e`/`--only=`),
+  // но меняет смысл вызова полностью: с "выполнить" на "проверить синтаксис и выйти".
+  // Раньше это было не страшно (deny не было, только несуществующий "ask"), теперь
+  // ложное срабатывание реально блокирует легитимное действие — цена неточности выросла.
+  let hasCheckFlag = false;
   let realInvocation = false;
   for (let i = 0; i < tokens.length; i++) {
     if (!isNodeTok(tokens[i])) continue;
     for (let j = i + 1; j < tokens.length && j <= i + 4; j++) {
+      if (tokens[j] === '--check' || tokens[j] === '-c') hasCheckFlag = true;
       if (tokens[j].startsWith('-')) continue; // флаг node самого — пропускаем, ищем дальше
       if (isGuardMjsTok(tokens[j])) realInvocation = true;
       break; // первый не-флаговый токен после node — это и есть скрипт; дальше не ищем
     }
     if (realInvocation) break;
   }
-  const shouldBlock = realInvocation && !cmd.includes('--only=');
+  const shouldBlock = realInvocation && !cmd.includes('--only=') && !hasCheckFlag;
 
   process.stdout.write(`${j.tool_name || ''}\n${shouldBlock ? '1' : '0'}\n${bg ? '1' : '0'}\n`);
 }
