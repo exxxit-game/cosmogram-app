@@ -22,13 +22,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const DEFAULT_MODE = 'warn';
 const STATE_CHANGING_TOOL_RE = /^(Edit|MultiEdit|Write|NotebookEdit|Bash)$/i;
-// 29.09.2026: было своей копией функции здесь — вынесено в lib/read-transcript-tail.mjs,
-// после того как тот же баг нашёлся ЕЩЁ в четырёх хуках отдельно от этого. Один модуль,
-// не шесть копий.
-let readTail;
+// 30.09.2026 (владелец: «что может стать лучше, где может объединиться») —
+// isGenuineUserEntry/isToolResultUserEntry/граничный обход были побайтово одинаковы в
+// этом файле и ask-then-act-guard.mjs. collectCurrentTurnWithBoundary() отдаёт и сам
+// граничный user-entry (нужен здесь для userEntryHasImage), и блоки хода после него.
+let collectCurrentTurnWithBoundary;
 {
-  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
-  ({ readTail } = await import(pathToFileURL(modPath).href));
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'current-turn-blocks.mjs');
+  ({ collectCurrentTurnWithBoundary } = await import(pathToFileURL(modPath).href));
 }
 // 29.09.2026 (владелец: «покрыть все непокрытые моменты») — этот хук единственный из пяти
 // Stop-хуков ни разу не писал в signal-trail при срабатывании (excuse-words/ask-then-act/
@@ -42,16 +43,6 @@ let recordSignal = () => {};
   recordSignal = rs;
 }
 
-function isToolResultUserEntry(entry) {
-  if (entry.type !== 'user') return false;
-  const content = entry.message && entry.message.content;
-  if (!Array.isArray(content)) return false;
-  return content.some((b) => b && b.type === 'tool_result');
-}
-function isGenuineUserEntry(entry) {
-  if (entry.type !== 'user') return false;
-  return !isToolResultUserEntry(entry);
-}
 function userEntryHasImage(entry) {
   const content = entry.message && entry.message.content;
   if (!Array.isArray(content)) return false;
@@ -62,23 +53,7 @@ function userEntryHasImage(entry) {
 // Идём с конца транскрипта: сначала собираем блоки ТЕКУЩЕГО хода (всё после последнего
 // настоящего user-сообщения), затем смотрим, содержало ли ТО САМОЕ user-сообщение картинку.
 function analyze(transcriptPath) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return null;
-  let lines;
-  try { lines = readTail(transcriptPath).split('\n'); } catch { return null; }
-
-  const currentTurnBlocks = [];
-  let lastGenuineUserEntry = null;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let entry;
-    try { entry = JSON.parse(line); } catch { continue; }
-    if (isGenuineUserEntry(entry)) { lastGenuineUserEntry = entry; break; }
-    if (entry.type !== 'assistant') continue;
-    const content = entry.message && entry.message.content;
-    if (!Array.isArray(content)) continue;
-    for (let j = content.length - 1; j >= 0; j--) currentTurnBlocks.unshift(content[j]);
-  }
+  const { lastGenuineUserEntry, currentTurnBlocks } = collectCurrentTurnWithBoundary(transcriptPath);
   if (!lastGenuineUserEntry || !userEntryHasImage(lastGenuineUserEntry)) return null;
 
   let sawAskUserQuestion = false;
