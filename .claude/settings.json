@@ -108,7 +108,8 @@
           { "type": "command", "command": ".claude/hooks/check-live-version.sh" },
           { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" },
           { "type": "command", "command": ".claude/hooks/remind-connect-phones.sh" },
-          { "type": "command", "command": ".claude/hooks/whole-game-health-check.sh" }
+          { "type": "command", "command": ".claude/hooks/whole-game-health-check.sh" },
+          { "type": "command", "command": ".claude/hooks/check-tooling-currency.sh" }
         ]
       }
     ],
