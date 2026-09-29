@@ -26,21 +26,19 @@ try {
   recordSignal = rs;
 } catch { /* модуль недоступен — хук продолжает работать без общего следа */ }
 
-// 29.09.2026 (владелец: «почини себя везде, где только можно») — тот же
-// ERR_STRING_TOO_LONG-баг, что и в claim-check-hook/ask-then-act-guard/
-// evidence-anchoring-guard/device-claim-guard, был и здесь. Общий модуль.
-let readTail;
+// 30.09.2026 (владелец: «что может стать лучше, где может объединиться») — своя копия
+// readLastAssistantMessage() вынесена в lib/last-assistant-message.mjs: та же логика жила
+// ТРИЖДЫ (этот файл, claim-check-hook.mjs, device-claim-guard.mjs). Комментарий ниже про
+// «унаследовал не полностью» (29.09.2026) — прямое доказательство риска раздельных копий,
+// не гипотеза: то же самое дублирование, которое привело к неполному переносу тогда.
+let readLastAssistantMessage;
 {
-  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
-  ({ readTail } = await import(pathToFileURL(modPath).href));
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'last-assistant-message.mjs');
+  ({ readLastAssistantMessage } = await import(pathToFileURL(modPath).href));
 }
 
 const DEFAULT_MODE = 'warn';
-// 29.09.2026 (владелец: «проверяй хуки») — этот файл сам себя называет «по образцу
-// claim-check-hook.mjs», но защиту от гонки при сбросе транскрипта на диск
-// (STALE_THRESHOLD_S) унаследовал не полностью — нашлось при построчной сверке
-// с оригиналом, не выдумано. Та же константа, что уже в claim-check-hook.mjs.
-const STALE_THRESHOLD_S = 30;
+const STALE_THRESHOLD_S = 30; // передаётся в общий readLastAssistantMessage(), не локальная копия
 
 // Узкий список — по образцу claim-check: лучше пропустить редкий случай, чем
 // шуметь на обычной прозе. \b не годится для кириллицы в JS-regex (основан на
@@ -79,40 +77,6 @@ function emitWarn(msg) {
 function emitBlock(reason) {
   process.stdout.write(JSON.stringify({ decision: 'block', reason }) + '\n');
   process.exit(0);
-}
-
-function readLastAssistantMessage(transcriptPath) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
-  let lines;
-  try {
-    lines = readTail(transcriptPath).split('\n');
-  } catch {
-    return '';
-  }
-  const nowTs = Date.now() / 1000;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (entry.type !== 'assistant') continue;
-    const tsStr = entry.timestamp;
-    if (tsStr) {
-      const ts = new Date(tsStr).getTime() / 1000;
-      if (!Number.isNaN(ts) && nowTs - ts > STALE_THRESHOLD_S) return ''; // устаревший ход
-    }
-    const content = entry.message && entry.message.content;
-    if (typeof content === 'string') return content;
-    if (Array.isArray(content)) {
-      return content.filter((b) => b && b.type === 'text').map((b) => b.text || '').join('\n');
-    }
-    return '';
-  }
-  return '';
 }
 
 function findExcuses(text) {
@@ -155,7 +119,7 @@ function main() {
   const transcriptPath = hookData.transcript_path;
   if (!transcriptPath) emitOk();
 
-  const message = readLastAssistantMessage(transcriptPath);
+  const message = readLastAssistantMessage(transcriptPath, STALE_THRESHOLD_S);
   if (!message) emitOk();
 
   const excuses = findExcuses(message);
