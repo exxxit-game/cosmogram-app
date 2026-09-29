@@ -27,6 +27,16 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 30.09.2026 (владелец: «что может стать лучше, где может объединиться») — своя копия
+// readLastAssistantMessage() вынесена в lib/last-assistant-message.mjs: та же логика жила
+// ТРИЖДЫ (здесь, claim-check-hook.mjs, excuse-words-guard.mjs), и именно из-за раздельных
+// копий 29.09.2026 близость-проверка (PROXIMITY_CHARS ниже) чинилась только здесь — баг того
+// же класса теоретически мог прятаться в двух других. Один модуль — одна точка починки.
+let readLastAssistantMessage;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'last-assistant-message.mjs');
+  ({ readLastAssistantMessage } = await import(pathToFileURL(modPath).href));
+}
 // 29.09.2026 (владелец: «покрыть все непокрытые моменты») — вместе с evidence-anchoring-guard
 // был единственным из пяти Stop-хуков без записи в signal-trail при срабатывании.
 let recordSignal = () => {};
@@ -38,11 +48,7 @@ let recordSignal = () => {};
 
 const DEFAULT_MODE = 'warn';
 const WINDOW_MIN = 30;
-// 29.09.2026 (владелец: «проверяй хуки») — этот файл сам себя называет «по образцу
-// claim-check-hook.mjs», но защиту от гонки при сбросе транскрипта на диск
-// (STALE_THRESHOLD_S) унаследовал не полностью — нашлось при построчной сверке
-// с оригиналом, не выдумано. Та же константа, что уже в claim-check-hook.mjs.
-const STALE_THRESHOLD_S = 30;
+const STALE_THRESHOLD_S = 30; // передаётся в общий readLastAssistantMessage(), не локальная копия
 
 // Узкий список слов-заявлений (подмножество claim-check, не полный список —
 // здесь важна КОМБИНАЦИЯ с device-словом, не сама по себе).
@@ -113,40 +119,6 @@ function readStdin() {
   }
 }
 
-function readLastAssistantMessage(transcriptPath) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
-  let lines;
-  try {
-    lines = readTail(transcriptPath).split('\n');
-  } catch {
-    return '';
-  }
-  const nowTs = Date.now() / 1000;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (entry.type !== 'assistant') continue;
-    const tsStr = entry.timestamp;
-    if (tsStr) {
-      const ts = new Date(tsStr).getTime() / 1000;
-      if (!Number.isNaN(ts) && nowTs - ts > STALE_THRESHOLD_S) return ''; // устаревший ход
-    }
-    const content = entry.message && entry.message.content;
-    if (typeof content === 'string') return content;
-    if (Array.isArray(content)) {
-      return content.filter((b) => b && b.type === 'text').map((b) => b.text || '').join('\n');
-    }
-    return '';
-  }
-  return '';
-}
-
 function hasRecentDeviceToolCall(transcriptPath, windowMin) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
   let lines;
@@ -208,7 +180,7 @@ function main() {
     return;
   }
 
-  const message = readLastAssistantMessage(transcriptPath);
+  const message = readLastAssistantMessage(transcriptPath, STALE_THRESHOLD_S);
   if (!message || !hasProximateClaim(message)) {
     process.stdout.write('{"continue": true, "suppressOutput": true}\n');
     return;
