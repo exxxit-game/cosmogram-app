@@ -202,23 +202,34 @@ function writeDrafts(candidates) {
 
 // ---------- B) не подключено / битая ссылка ----------
 
+// 30.09.2026: crew больше не держит СВОИ копии хуков — ссылается на app по пути
+// `../cosmogram-app/.claude/hooks/...` (одна правда вместо двух расходящихся копий;
+// найдено живьём: копия guard-full-suite-warn.sh в crew отстала от app на баг, починенный
+// ещё 26.09). Поэтому ссылка бывает и локальной (`.claude/hooks/x`), и внешней (`../<репо>/...`):
+// внешнюю проверяем от корня репозитория, а отсутствующая локальная папка хуков — не ошибка.
+function listDir(dir) {
+  return fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+}
+
 function checkWiring(hooksDir, settingsPath) {
   const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  const repoRoot = path.dirname(path.dirname(settingsPath)); // <корень>/.claude/settings.json → <корень>
   const referenced = new Set();
+  const external = new Set();
   function walk(hooks) {
     for (const group of hooks || []) {
       for (const h of group.hooks || []) {
         const cmd = h.command || '';
-        const m = cmd.match(/\.claude\/hooks\/[^\s"]+/);
-        if (m) referenced.add(m[0].replace(/\\/g, '/'));
+        const m = cmd.match(/(?:\.\.\/[^\/\s"]+\/)?\.claude\/hooks\/[^\s"]+/);
+        if (!m) continue;
+        const p = m[0].replace(/\\/g, '/');
+        if (p.startsWith('../')) external.add(p); else referenced.add(p);
       }
     }
   }
   for (const evt of Object.keys(settings.hooks || {})) walk(settings.hooks[evt]);
 
-  const allFiles = fs
-    .readdirSync(hooksDir)
-    .filter((f) => (f.endsWith('.mjs') || f.endsWith('.sh')) && !f.startsWith('.'));
+  const allFiles = listDir(hooksDir).filter((f) => (f.endsWith('.mjs') || f.endsWith('.sh')) && !f.startsWith('.'));
 
   const orphans = [];
   for (const f of allFiles) {
@@ -232,8 +243,11 @@ function checkWiring(hooksDir, settingsPath) {
     const abs = path.join(hooksDir, rel);
     if (!fs.existsSync(abs)) broken.push(ref);
   }
+  for (const ref of external) {
+    if (!fs.existsSync(path.resolve(repoRoot, ref))) broken.push(ref);
+  }
 
-  return { orphans, broken, referencedCount: referenced.size, fileCount: allFiles.length };
+  return { orphans, broken, referencedCount: referenced.size + external.size, externalCount: external.size, fileCount: allFiles.length };
 }
 
 // Известные намеренно-ручные файлы — не hook'и вообще, не ошибка, что их нет в settings.json
@@ -284,7 +298,7 @@ function checkHookActivity() {
 // разом, не одно из двух (bare pwd сам по себе безопасен, если используется только как
 // node-entry-script argv, как в commit-tracker.sh — проверено, не флагуется).
 function checkWindowsPathRisk(hooksDir) {
-  const shFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.sh'));
+  const shFiles = listDir(hooksDir).filter((f) => f.endsWith('.sh'));
   const suspicious = [];
   for (const f of shFiles) {
     const filePath = path.join(hooksDir, f);
@@ -312,7 +326,7 @@ function checkWindowsPathRisk(hooksDir) {
 // Это — код, не текст: при каждом scan автоматически находит ЛЮБОЙ .sh-хук, который всё
 // ещё использует ask, независимо от того, помню я урок в моменте или нет.
 function checkAskUsage(hooksDir) {
-  const shFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.sh'));
+  const shFiles = listDir(hooksDir).filter((f) => f.endsWith('.sh'));
   const found = [];
   for (const f of shFiles) {
     const codeOnly = fs.readFileSync(path.join(hooksDir, f), 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
@@ -372,7 +386,7 @@ function main() {
   // 29.09.2026: обе стороны игры разом, не только та, где физически лежит этот скрипт —
   // найдено живьём, что crew копия хуков отстаёт от app'ной незаметно, если не сверять обе.
   const repos = [{ label: 'app', hooksDir: HOOKS_DIR, settingsPath: SETTINGS_PATH }];
-  if (fs.existsSync(CREW_HOOKS_DIR) && fs.existsSync(CREW_SETTINGS_PATH)) {
+  if (fs.existsSync(CREW_SETTINGS_PATH)) { // папки хуков в crew может не быть вовсе — он ссылается на app
     repos.push({ label: 'crew', hooksDir: CREW_HOOKS_DIR, settingsPath: CREW_SETTINGS_PATH });
   } else {
     repos.push({ label: 'crew', missing: true });
@@ -382,8 +396,9 @@ function main() {
   console.log('════════ Б) не подключено / битая ссылка (settings.json ↔ файлы на диске) ════════');
   for (const repo of repos) {
     if (repo.missing) { console.log(`  [${repo.label}] не найден рядом — пропущено.`); continue; }
-    const { orphans, broken, referencedCount, fileCount } = checkWiring(repo.hooksDir, repo.settingsPath);
-    console.log(`  [${repo.label}] файлов: ${fileCount}. Упомянуто в settings.json: ${referencedCount}.`);
+    const { orphans, broken, referencedCount, externalCount, fileCount } = checkWiring(repo.hooksDir, repo.settingsPath);
+    console.log(`  [${repo.label}] своих файлов: ${fileCount}. Упомянуто в settings.json: ${referencedCount}` +
+      (externalCount ? ` (из них ${externalCount} — ссылки на соседний репозиторий).` : '.'));
     const knownManualBase = new Set([...KNOWN_MANUAL].map((k) => k.replace(/^\.claude\/hooks\//, '')));
     const realOrphans = orphans.filter((o) => !knownManualBase.has(o));
     if (realOrphans.length) {
