@@ -113,13 +113,12 @@ if(!(tg && tg.BackButton && tgv('6.1'))){
 // нативную «Назад» Telegram на каждом экране кроме меню (setBack(name!=='menu')) — то же
 // условие, что и у паузы, просто не было доведено до остальных восьми кнопок тогда же.
 function pauseGhostSync(){
-  // 27.09.2026 (владелец, живой hwshot-скриншот телефона): в Telegram Fullscreen-режиме
-  // нативная «Назад» физически НЕ рисуется в шапке (только «Закрыть»), даже когда
-  // tg.BackButton.isVisible держит true — это свойство отражает то, что игра сама попросила
-  // у моста, не то, что мост реально отрисовал. Раньше nativeBack не проверял isFullscreen —
-  // свои кнопки «Назад» гасли именно тогда, когда родной альтернативы не видно, оставляя
-  // игрока с одной «Закрыть» (закрыть игру целиком) и без единого пути назад по экранам.
-  const nativeBack=!!(tg && tg.BackButton && tgv('6.1') && !tg.isFullscreen);
+  // 28.09.2026 (владелец, живой скрин после смены адреса в BotFather): правка 27.09
+  // «в Fullscreen родной Назад нет — показываем свои» была сделана в сломанном состоянии:
+  // бот открывал старый адрес github.io → редирект на cosmogram.fun → Telegram блокировал
+  // команды моста с чужого домена, поэтому родная «Назад» не рисовалась. С верным адресом
+  // она рисуется и в Fullscreen — свои кнопки снова призраки, иначе видны две «Назад» разом.
+  const nativeBack=!!(tg && tg.BackButton && tgv('6.1'));
   toggleCls('pauseBtn','ghost', nativeBack);
   // firstFlightClose исключён: плеер открывается поверх текущего экрана (galleryCardOpen() в
   // js/cinema.js не зовёт setScreen()) — если это меню, родная «Назад» Telegram там всегда
@@ -142,6 +141,7 @@ function setScreen(name){
      не переход). setScreen — единственное место всех переходов (см. коммент про рамку
      коридора ниже), поэтому один вызов здесь ловит уход из полёта куда угодно разом. */
   if(name!=='game' && document.exitPointerLock) document.exitPointerLock();
+  if(name==='game' && typeof ballPhase!=='undefined' && ballPhase) ballFinish(); // 27.09.2026: любой старт полёта при шарике на экране = встреча пройдена (и по шарику, и мимо него)
   screenName=name;
   /* 24.08.2026: рамка коридора (#corrEdgeL/#corrEdgeR) раньше перепроверялась ТОЛЬКО из
      resize() в core.js — то есть только когда меняется размер окна. На статичном рабочем
@@ -1089,7 +1089,8 @@ function gameOver(){
   if (pacifistNow) Stats.pacifistRuns=(Stats.pacifistRuns||0)+1;
   saveStats();
   Store.del('savedRun');
-  setText('myRank',''); // ранг прошлого забега не течёт в этот
+  overRankFill(null,''); // ранг прошлого забега не течёт в этот (28.09.2026: карточка места вместо строки #myRank)
+  shareSheetShow(false);
   webJoinFill(); // гость видит мостик: «войди — и полёт в общей таблице» (v1.51.0)
   setText('finalScore',sc); // синхронно финал — для мгновенного отображения и тестов
   const sg=++scoreCountGen, fsEl=$('finalScore'), t0=performance.now(); // count-up 0→sc за 0.8s
@@ -1172,8 +1173,7 @@ function gameOver(){
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
-  const nl=(typeof achNextLoc==='function')?achNextLoc():null; // космическая шкала: «До Луны: 200 м»
-  setText('toLoc', nl ? L.toLoc(aT(nl).n, fmtN(nl.need-Stats.totalDist)) : '');
+  overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
@@ -1334,9 +1334,13 @@ function submitFailSignal(kind, ok){
       // ему это не было нужно.
       if(rank<=10 && !isRecord && typeof hapticMorse==='function')
         setTimeout(()=>hapticMorse(myCallsign()),1100); // виброэфир: аплодисменты топ-10 (v1.54.0)
-      if(screenName==='over'){ const rl=$('myRank'); if(rl) rl.textContent=L.rankWorld(rank); }
+      if(screenName==='over') overRankFill(d, rankCat); // 28.09.2026: карточка места с соседом сверху (вариант Б)
     }).catch(()=>{}); // v1.282.13: ранг — украшение, его сбой не должен всплывать необработанным отказом
   }
+  else if (typeof syncTop==='function' && S.mode==='classic'){ // 28.09.2026: гостю — «Твои N — это M-е место» в приглашении войти
+    const genW=runNow(); overJoinWouldBe(null,0);
+    syncTop(cat).then(d=>{ if(runSame(genW) && screenName==='over') overJoinWouldBe(d, sc); }).catch(()=>{});
+  } else overJoinWouldBe(null,0);
   // дуэль: сравнение чистого пробега с планкой друга (любой забег участвует)
   if (dl){
     const win = duelWinNow;
@@ -1482,7 +1486,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   const st=$('stats'); if(st){ st.innerHTML=''; st.classList.add('hidden'); }
   const rp=$('runPass'); if(rp) rp.classList.add('hidden');
   const rh=$('runHead'); if(rh){ rh.innerHTML=''; rh.classList.add('hidden'); } // 30.08.2026: новая строка режима+управления — та же чистка, что у соседей
-  const mr=$('myRank'); if(mr) mr.textContent='';
+  overRankFill(null,''); toggleCls('overLoc','hidden',true); // 28.09.2026: карточка места и полоска шкалы — тоже не чужие
   const dr=$('duelRes'); if(dr) dr.innerHTML='';
   const tr=$('toRecord'); if(tr) tr.textContent='';
   const tl=$('toLoc'); if(tl) tl.textContent='';
@@ -1521,7 +1525,7 @@ function refreshMenu(){
   if (typeof heroRecordBadgesFill==='function') heroRecordBadgesFill(); // 15.09.2026: только что мог появиться новый рекорд — бейджи карусели догоняют его сразу, не ждут смены языка
   if (typeof heroTrailsFill==='function') heroTrailsFill(); // 15.09.2026: только что мог появиться новый рекорд — линия траектории догоняет его тут же; 16.09.2026: заодно гасит текстовую подсказку .playHint, если след теперь есть
   if (typeof heroRelayChainFill==='function') heroRelayChainFill(); // 29.09.2026: раньше звалась только один раз при applyLang() на самой первой загрузке — если tgAuth-сессии ещё не было (свежий игрок), тот единственный запрос падал 401 и подсказка застывала на весь сеанс. Возврат в меню — дешёвый повторный шанс, тем же приёмом, что уже у соседей выше.
-  if (typeof zondTick==='function') zondTick(); // 25.09.2026: Зонд — один эпизод на первый визит совсем нового игрока, см. комментарий у самих функций
+  if (typeof ballTick==='function') ballTick(); // 27.09.2026: Шарик (бывший Зонд) — первая встреча, один раз на игрока, см. комментарий у самих функций
 }
 function autosave(){
   /* v1.282.14: занавес смерти не сохраняем. pauseGame честно отказывается работать при
@@ -1571,8 +1575,12 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
     +((typeof morseHapOn==='function'&&morseHapOn())?1:0);
   put('setGrpSoundSub', onN===4?L.setWellAll:(onN===0?L.setWellNone:L.setWellSome));
   if(typeof Q!=='undefined'){ const gfxT=(Q.mode==='auto'?L.gfxAuto:(Q.mode==='low'?L.gfxLow:(Q.mode==='med'?L.gfxMed:(Q.mode==='ultra'&&gfxUltraOk()?L.gfxUltra:L.gfxHigh))));
-    put('setGrpGameSub', gfxT+' · ×'+input.sens); }
-  put('setGrpProfSub', (typeof myCallsign==='function'?myCallsign():'')||L.csDefault);
+    put('setGrpGameSub', gfxT+' · '+Math.round((typeof UI_TEXT_SCALE!=='undefined'?UI_TEXT_SCALE:1)*100)+'%'); } // 28.09.2026: чувствительность уехала в «Управление» — здесь размер текста, как в макете
+  { const parts=[]; // 28.09.2026 «Управление»: шёпот про то, чем рулишь на ЭТОМ устройстве
+    if (gyroThere()) parts.push((typeof gyroRul==='function'&&!gyroRul())?L.ctrlSubGyroOff:L.ctrlSubGyro(input.sens));
+    if (hasKeyboardLikely()){ const own=(typeof KEY_BINDS!=='undefined')&&['left','right','up','down'].some(d=>KEY_BINDS[d]); parts.push(own?L.ctrlSubKeysOwn:L.ctrlSubKeys); }
+    put('setGrpCtrlSub', parts.join(' · ')); }
+  put('setGrpProfSub', L.csRowK+' '+((typeof myCallsign==='function'?myCallsign():'')||L.csDefault)); // 28.09.2026: подписано, что это позывной — было голое «PORO»
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
 function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
@@ -3202,11 +3210,19 @@ function duelBanner(){ // плашка вызова в меню + планка �
   }
   if(d && typeof duelGhostFetch==='function') duelGhostFetch(); // склейка: призрак вызвавшего — рядом в забеге
 }
+function duelWebPid(){ // 28.09.2026: вызов из веб-ссылки — новая cosmogram.fun/?d=<id> или старая #duel=<id>
+  try{
+    const q=new URLSearchParams(location.search).get('d');
+    if(q) return duelParse('duel_'+q);
+    if(location.hash && location.hash.indexOf('#duel=')===0) return duelParse('duel_'+location.hash.slice(6));
+  }catch(e){}
+  return null;
+}
 function duelBoot(){ // deep-link ?startapp=duel_<pid> (Telegram) или #duel=<pid> (веб, тот же приём, что forgeBoot у #map=)
   try{
     const sp = tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
     let pid = duelParse(sp);
-    if(!pid && location.hash && location.hash.indexOf('#duel=')===0) pid = duelParse('duel_'+location.hash.slice(6)); // 30.08.2026: друг без Telegram открыл веб-ссылку
+    if(!pid) pid = duelWebPid(); // 30.08.2026: друг без Telegram открыл веб-ссылку; 28.09.2026: и новую cosmogram.fun/?d=<id>. 
     if(!pid || (typeof syncMyId==='function' && pid===syncMyId())){ duelBanner(); return false; } // не вызов / сам себе
     syncDuel(pid).then(d=>{
       if(d && d.ok && d.best>0){
@@ -3429,6 +3445,7 @@ wireOn('heroCarousel','scroll',()=>{ requestAnimationFrame(heroCarouselDotsSync)
    от нашего же programmatic scrollTo() ниже). Дальше карусель стоит там, где её оставили. */
 let heroCarouselAutoT=setInterval(function(){
   if (screenName!=='menu') return;
+  if (typeof ballActive==='function' && ballActive()) return; // 27.09.2026: шарик ведёт первую встречу у карточки Score Attack — не увозим её из-под него
   /* 24.09.2026 (владелец: «пусть сперва Score Attack сыграют, а остальное увидят потом» +
      живая жалоба «подсказка появляется намного позже, чем карусель уезжает — можешь и не
      увидеть»): пока игрок вообще ни разу не играл — карусель не крутится сама, стоит на
@@ -3439,7 +3456,7 @@ let heroCarouselAutoT=setInterval(function(){
      счётчик — `Stats.games`, `Stats.games++` при каждом старте, js/ui.js:954), значит
      условие было ВСЕГДА истинным и карусель никогда не крутилась сама ни для кого,
      сколько бы игрок ни играл. Найдено стражем Зонда, тот же неверный паттерн скопирован
-     туда же — см. комментарий у zondTick(). */
+     туда же — см. комментарий у zondTick() (27.09.2026: Зонд заменён Шариком, ballTick()). */
   if(typeof Stats!=='undefined' && (Stats.games||0)===0) return;
   const car=$('heroCarousel'); if(!car || !car.children.length) return;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return;
@@ -3455,174 +3472,147 @@ let heroCarouselAutoT=setInterval(function(){
   car.scrollTo({ left: target, behavior:'smooth' });
 }, 7000);
 wireOn('heroCarousel','pointerdown',()=>{ if(heroCarouselAutoT){ clearInterval(heroCarouselAutoT); heroCarouselAutoT=null; } });
-/* 25.09.2026 «Зонд» — персонаж-подсказка для совсем новых игроков, заменяет прежний
-   язычок на ленте (владелец: «в научной игре смотрится омерзительно», плюс задел на
-   будущую систему рейтинга/кастомизации, отдельная задача, см. память сессии). В
-   отличие от язычка — появляется СРАЗУ на пустом меню, не после простоя: сама идея
-   «поймай подсказку» и есть обучение, ждать бездействия не нужно. Условие показа —
-   то же самое, что было у язычка (Stats.games===0 и центр карусели — Score Attack),
-   но БЕЗ таймера ожидания. Один раз за загрузку страницы (zondShown), не при каждом
-   возврате в меню — dependency от прежнего idleHintShown-счётчика (5 показов) не
-   годится: тут нет серии показов, только один эпизод на первый визит. Бег гасится
-   ЛИБО системным `prefers-reduced-motion` (RM, js/core.js), ЛИБО ручным тумблером
-   «Смягчить тряску» (CALM_FX) — см. zondMoveNext(). Первая версия держалась только
-   на RM; при правке CALM_FX (25.09.2026, дефолт true→false — владелец: доступность
-   не включают заранее всем) выяснилось, что сам же код признаёт RM «ненадёжным
-   внутри WebView» (комментарий у CALM_FX в core.js) — там играет большинство. Раз
-   CALM_FX теперь тоже выключен по умолчанию, добавлять его вторым сигналом стало
-   безопасно — не гасит погоню зря никому. Позиции-«карманы» не захардкожены
-   в процентах (macet использовал условный демо-экран) — измеряются вживую через
-   getBoundingClientRect() тех же элементов, что уже на экране (карточка/точки
-   карусели/ряд кнопок), чтобы не гадать координаты отдельно под каждый размер
-   телефона. Текст подсказки внутри пузыря — ЗАГЛУШКА (владелец: текст ещё не готов,
-   вставить позже отдельной правкой), взято дословно из одобренного макета
-   macet-25-09-zond-final.html. */
-let zondShown=false, zondCaught=false, zondIdx=0, zondPocketsArr=[], zondMoveT=null;
-const ZOND_FACE_NORMAL='<rect x="14" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
-  '<rect x="21" y="23" width="5" height="7" rx="2" fill="#f4f6fb"/>'+
-  '<path d="M16,33 L24,33" stroke="var(--gold-hi)" stroke-width="1.8" stroke-linecap="round"/>';
-const ZOND_FACE_CAUGHT='<path d="M12,25 Q16,21 20,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-  '<path d="M20,25 Q24,21 28,25" stroke="#f4f6fb" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-  '<circle cx="13" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
-  '<circle cx="27" cy="30" r="2" fill="rgba(240,150,150,.55)"/>'+
-  '<ellipse cx="20" cy="34" rx="2.6" ry="2" fill="var(--gold-hi)"/>';
-function zondCentredCard(){
+/* 27.09.2026 «Шарик» — помощник вместо Зонда (владелец, живые макеты «Помощник: зонд, шар,
+   треугольник», вариант А «стучит»; «Переноси в игру»). Шаг 1 из 2 — первая встреча до
+   первого полёта; шаг 2 (шарик в углу, золотые точки на неоткрытых кнопках, подсказки по
+   меню) — отдельной правкой после проверки владельцем на телефоне.
+   Сценарий: шарик внизу экрана «спит» (без глаз) → глаза зажглись, «Привет!» → просьба
+   L.ballAsk с пульсирующим кольцом. Нажимается И облачко, И сам шарик (владелец: «текст
+   говорит нажать на окно, а жмут на текст» — оба пути ведут в одно место). → «!» в окошке
+   → шарик садится на карточку Score Attack и стучит по ней: круги от места удара, карточка
+   вспыхивает, фраза L.heroHintTap ВНУТРИ карточки (не облачком — прежний хвостик-облачко
+   смотрел вниз, на «Конструктор», владелец: «выглядит, будто надо нажать на конструктор»).
+   Прежняя .playHint с той же фразой на это время спрятана, чтобы текст не двоился.
+   Нажатие на шарик или на любое место карточки = полёт.
+   Кому: ВСЕМ один раз (владелец: «всем один раз») — отметка ballMet в Store. Пропуск
+   (сразу нажал на карточку и полетел, не трогая шарик) засчитывается так же — ловится в
+   setScreen('game'), единственном месте всех стартов. Пока встреча идёт, карусель сама не
+   листается (heroCarouselAutoT) — иначе увезла бы карточку из-под шарика. Если игрок сам
+   листает карусель в момент «стука», шарик едет вместе с карточкой (слушатель scroll).
+   RM/CALM_FX: прыжок-стук не включается, шарик просто сидит на карточке. */
+// var, не let: setScreen() (выше по файлу) читает ballPhase и может сработать до этой строки — typeof на let в мёртвой зоне бросает ReferenceError
+var ballShown=false, ballPhase='', ballT=null;
+const BALL_FACE_EYES='<rect x="16.4" y="24" width="2.8" height="4.2" rx="1.2" fill="#f4f6fb"/>'+
+  '<rect x="20.8" y="24" width="2.8" height="4.2" rx="1.2" fill="#f4f6fb"/>';
+const BALL_FACE_BANG='<text class="ballBang" x="20" y="28.6" text-anchor="middle" font-size="7" font-weight="800" fill="#f0c040">!</text>';
+function ballMetGet(){ return Store.get('ballMet',0)===1; }
+function ballActive(){ return !!ballPhase && !ballMetGet(); }
+function ballText(k){ return (L && L[k]) || I18N.ru[k]; } // фразы шарика пока только по-русски — переводы ждут владельца
+function ballFace(html){ const f=$('ballFace'); if(f) f.innerHTML=html; }
+function ballMoveTo(x,y,instant){
+  const b=$('ballEl'); if(!b) return;
+  if(instant) b.classList.add('ballNoMove');
+  b.style.left=x+'px'; b.style.top=y+'px';
+  if(instant){ void b.offsetWidth; b.classList.remove('ballNoMove'); }
+}
+function ballSay(text){
+  const bub=$('ballBubble'), b=$('ballEl'); if(!bub||!b) return;
+  if(!text){ bub.classList.remove('show'); return; }
+  bub.textContent=text;
+  bub.style.maxWidth=Math.min(280, window.innerWidth-16)+'px';
+  bub.style.left='0px'; bub.style.top='0px';
+  const bw=bub.offsetWidth, bh=bub.offsetHeight;
+  const cx=parseFloat(b.style.left)+21;
+  bub.style.left=Math.max(8, Math.min(window.innerWidth-8-bw, cx-bw/2))+'px';
+  bub.style.top=(parseFloat(b.style.top)-bh-12)+'px';
+  bub.style.setProperty('--tailX', (cx-parseFloat(bub.style.left))+'px');
+  bub.classList.add('show');
+}
+function ballCentredCard(){ // бывшая zondCentredCard — та же мерка: какая карточка карусели сейчас по центру
   const car=$('heroCarousel'); if(!car||!car.children.length) return null;
   const w=car.children[0].getBoundingClientRect().width; if(!w) return null;
   const idx=Math.max(0, Math.min(car.children.length-1, Math.round(car.scrollLeft/w)));
   return car.children[idx];
 }
-/* 25.09.2026 (владелец, живой телефон 360×800, реальные скриншоты): первая версия падала
-   в двух местах разом — (1) «карман» между heroDots и .stack на узком экране оказался
-   0px зазора (не проверял реальный зазор, только считал середину — Зонд садился прямо на
-   границу ленты точек и кнопки), (2) старт был у угла карточки, не внизу, как
-   договаривались. Теперь: МИНИМАЛЬНЫЙ зазор (ZOND_MIN_GAP) перед тем, как считать
-   «карман» реальным, и явный старт у нижнего края экрана. */
-const ZOND_MIN_GAP=30; // px — меньше не считается настоящим карманом, не втискиваем силой
-function zondPockets(){
-  const pts=[];
-  const sw=window.innerWidth, sh=window.innerHeight;
-  /* 25.09.2026 (владелец, живьём, два захода подряд): (1) с одним нижним карманом побег
-     превратился в скучный маятник «туда-сюда» — нужно несколько точек, не одна; (2) когда
-     точки оказались близко друг к другу (0.28-0.72 ширины), мелкие частые перескоки внутри
-     тесного пятачка сам читаются как «ёрзает, дёргается», не как «плавает по экрану» —
-     хотя формально ни одну кнопку не задевают (проверено live-device). Раздвинуто почти на
-     всю ширину экрана (0.10-0.90) — то же самое пустое поле, просто прыжки внутри него
-     крупнее и реже выглядят как движение, не подёргивание. */
+function ballCard(){ return document.querySelector('#heroCarousel .hc-classic'); }
+function ballPlaceOnCard(instant){
+  const card=ballCard(); if(!card) return;
+  const r=card.getBoundingClientRect();
+  ballMoveTo(r.right-68, r.top+14, instant);
+}
+function ballPoint(){
+  ballPhase='point';
+  ballFace(BALL_FACE_EYES);
+  const car=$('heroCarousel'), card=ballCard(); if(!card) return;
+  if(car) car.scrollTo({left:0});
+  if(!card.querySelector('.ballSay')){
+    const say=document.createElement('div'); say.className='ballSay'; say.textContent=L.heroHintTap; card.appendChild(say);
+    const rings=document.createElement('div'); rings.className='ballRings'; rings.innerHTML='<i></i><i></i>'; card.appendChild(rings);
+  }
+  card.classList.add('ballPoint');
+  ballPlaceOnCard(false);
+  if(!(RM || CALM_FX)){ const hop=document.querySelector('#ballEl .ballHop'); if(hop) hop.classList.add('on'); }
+}
+function ballTap(){
+  if(ballPhase==='ask'){
+    clearTimeout(ballT); ballPhase='bang';
+    const b=$('ballEl'); if(b) b.classList.remove('ballAsk');
+    ballSay(''); ballFace(BALL_FACE_BANG); haptic('light'); sfx.click();
+    ballT=setTimeout(ballPoint, 900);
+    return;
+  }
+  if(ballPhase==='point'){ const s=$('startBtn'); if(s) s.click(); }
+}
+function ballFinish(){
+  /* зовётся из setScreen('game') — любой старт полёта, пока шарик на экране: и по шарику,
+     и по карточке мимо него (пропуск = встреча пройдена, решение владельца 27.09.2026) */
+  clearTimeout(ballT);
+  Store.set('ballMet',1);
+  ballPhase='';
+  const card=ballCard(); if(card) card.classList.remove('ballPoint');
+  const layer=$('zondLayer'); if(layer) layer.innerHTML='';
+}
+function ballShow(){
+  const layer=$('zondLayer'); if(!layer || ballShown) return;
+  ballShown=true; ballPhase='sleep';
+  layer.innerHTML='<button type="button" class="ballBubble" id="ballBubble"></button>'+
+    '<div class="ball" id="ballEl"><div class="ballHit"></div><div class="ballHop">'+
+    '<svg class="ballSvg ballBob" viewBox="0 0 40 46"><g class="ballWob">'+
+    '<circle cx="20" cy="26" r="17" fill="#070a14" stroke="rgba(240,192,64,.55)" stroke-width="1.2"/>'+
+    '<ellipse cx="12.5" cy="17.5" rx="5" ry="2.4" fill="rgba(255,255,255,.2)" transform="rotate(-35 12.5 17.5)"/>'+
+    '<circle class="ballRing" cx="20" cy="27" r="12.5" fill="none" stroke="#f0c040" stroke-width="1.4"/>'+
+    '<circle cx="20" cy="27" r="9.5" fill="#0d2038" stroke="#f0c040" stroke-width="1.5"/>'+
+    '<polygon points="13.2,22.5 26.8,22.5 20,33.5" fill="#2b5fd9"/>'+
+    '<g id="ballFace"></g></g></svg></div></div>';
+  /* место внизу выбирается так, чтобы САМОЕ длинное облачко (просьба L.ballAsk) целиком
+     помещалось под кнопками меню: первая раскладка ставила шарик сразу под ними, и облачко
+     закрывало нижний ряд (снимок 360×800). Меряем реальную высоту облачка с этим текстом. */
   const scrFoot=document.querySelector('#startScreen .scrFoot');
-  const zoneTop = scrFoot ? scrFoot.getBoundingClientRect().bottom+16 : sh-90;
-  const zoneBottom = sh-70;
-  const xL=Math.max(16, sw*0.10-21), xR=Math.min(sw-58, sw*0.90-21), xC=sw/2-21;
-  pts.push({x:xC, y:Math.min(zoneTop, zoneBottom)});
-  if(zoneBottom-zoneTop>=ZOND_MIN_GAP){
-    const yFar=Math.min(zoneTop+(zoneBottom-zoneTop)*0.55, zoneBottom);
-    pts.push({x:xL, y:yFar});
-    pts.push({x:xR, y:Math.min(zoneTop, zoneBottom)});
-    pts.push({x:xC, y:yFar});
-  }
-  const card=zondCentredCard(); const cardR=card&&card.getBoundingClientRect();
-  if(cardR) pts.push({x:cardR.right-46, y:cardR.top+14});
-  const dots=$('heroDots'); const stackEl=document.querySelector('#startScreen .stack');
-  if(dots && stackEl){
-    const dR=dots.getBoundingClientRect(), sR=stackEl.getBoundingClientRect();
-    if(sR.top-dR.bottom>=ZOND_MIN_GAP) pts.push({x:(dR.left+dR.right)/2-21, y:(dR.bottom+sR.top)/2-24});
-  }
-  const menuRow=$('menuRow');
-  if(menuRow && menuRow.children.length>=4){
-    const r1=menuRow.children[1].getBoundingClientRect(), r2=menuRow.children[2].getBoundingClientRect();
-    if(r2.top-r1.bottom>=ZOND_MIN_GAP) pts.push({x:menuRow.getBoundingClientRect().left+menuRow.getBoundingClientRect().width*0.5-21, y:(r1.bottom+r2.top)/2-24});
-  }
-  const brandSub=$('brandSub'); const wrap=document.querySelector('#startScreen .heroCarouselWrap');
-  if(brandSub && wrap){
-    const bR=brandSub.getBoundingClientRect(), wR=wrap.getBoundingClientRect();
-    if(wR.top-bR.bottom>=ZOND_MIN_GAP) pts.push({x:(bR.left+bR.right)/2-21, y:(bR.bottom+wR.top)/2-24});
-  }
-  return pts;
+  const sh=window.innerHeight;
+  const footBottom=scrFoot ? scrFoot.getBoundingClientRect().bottom : sh-160;
+  const bub=$('ballBubble');
+  bub.textContent=ballText('ballAsk'); bub.style.maxWidth=Math.min(280, window.innerWidth-16)+'px';
+  const askH=bub.offsetHeight; bub.textContent='';
+  const y=Math.min(Math.max(footBottom+16, footBottom+12+askH+12), sh-70);
+  ballMoveTo(window.innerWidth/2-21, y, true);
+  const b=$('ballEl');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>b.classList.add('ballIn')));
+  b.addEventListener('click', ballTap);
+  $('ballBubble').addEventListener('click', ballTap);
+  ballT=setTimeout(()=>{
+    ballPhase='hello'; ballFace(BALL_FACE_EYES); ballSay(ballText('ballHello'));
+    ballT=setTimeout(()=>{
+      ballPhase='ask'; ballSay(ballText('ballAsk'));
+      const bb=$('ballEl'); if(bb) bb.classList.add('ballAsk');
+    }, 2200);
+  }, 1100);
 }
-/* 25.09.2026: было `left = x-30` без проверки края экрана — на узком телефоне (360px)
-   пузырь с фразой (~190px при реальном тексте) целиком уезжал за правый край, владелец
-   физически не мог прочитать текст. Теперь — ставим, ИЗМЕРЯЕМ реальную отрисованную
-   ширину, подвигаем обратно в границы экрана, если вылезло. */
-function zondClampToViewport(el){
-  if(!el) return;
-  const pad=8, r=el.getBoundingClientRect();
-  if(r.right>window.innerWidth-pad) el.style.left=(parseFloat(el.style.left)-(r.right-(window.innerWidth-pad)))+'px';
-  const r2=el.getBoundingClientRect();
-  if(r2.left<pad) el.style.left=(parseFloat(el.style.left)+(pad-r2.left))+'px';
-}
-function zondPlaceTauntNear(x,y){
-  const taunt=$('zondTaunt'); if(!taunt) return;
-  taunt.style.left=Math.max(4,x-30)+'px';
-  taunt.style.top=(y-58)+'px';
-  zondClampToViewport(taunt);
-}
-function zondShowTaunt(){
-  const zond=$('zondEl'); if(!zond) return;
-  zondPlaceTauntNear(parseFloat(zond.style.left), parseFloat(zond.style.top));
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.add('show');
-}
-function zondMoveNext(){
-  /* 25.09.2026: RM (prefers-reduced-motion) — единственный сигнал не годится, сам же
-     код признаёт (js/core.js, коммент у CALM_FX) — «ненадёжен внутри WebView», где
-     играет большинство. CALM_FX теперь тоже выключен по умолчанию (владелец: не
-     включать заранее всем) — значит безопасно добавить его вторым сигналом: ручной,
-     явно поставленный игроком тумблер надёжнее пассивного системного признака внутри
-     Telegram. Логика ИЛИ — хватает любого из двух, не оба разом. */
-  if(zondCaught || RM || CALM_FX) return;
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
-  zondIdx=(zondIdx+1)%zondPocketsArr.length;
-  const p=zondPocketsArr[zondIdx]; const zond=$('zondEl'); if(!zond) return;
-  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
-}
-function zondCatch(){
-  if(zondCaught) return;
-  zondCaught=true;
-  if(zondMoveT){ clearInterval(zondMoveT); zondMoveT=null; }
-  const taunt=$('zondTaunt'); if(taunt) taunt.classList.remove('show');
-  const face=$('zondFace'); if(face) face.innerHTML=ZOND_FACE_CAUGHT;
-  const zond=$('zondEl'); const x=parseFloat(zond.style.left), y=parseFloat(zond.style.top);
-  const spark=$('zondSpark'); if(spark){ spark.style.left=(x+8)+'px'; spark.style.top=(y-14)+'px'; spark.classList.add('show'); }
-  const hint=$('zondHint');
-  if(hint){
-    hint.style.left=Math.max(4,x-20)+'px'; hint.style.top=(y-70)+'px';
-    hint.textContent='Совет: короткий флик честнее держит скорость'; // ЗАГЛУШКА — текст ждёт владельца
-    hint.classList.add('show');
-    zondClampToViewport(hint); // 25.09.2026: та же защита от вылезания за узкий экран, что у фразы
-  }
-  haptic('light'); sfx.click();
-}
-function zondShow(){
-  const layer=$('zondLayer'); if(!layer || zondShown) return;
-  zondPocketsArr=zondPockets(); if(!zondPocketsArr.length) return;
-  zondShown=true;
-  layer.innerHTML='<div class="zondTaunt" id="zondTaunt">Сможешь поймать меня? А-а-а!</div>'+
-    '<div class="zond" id="zondEl"><div class="zondHitZone"></div>'+
-    '<svg class="zondSvg zondBob" viewBox="0 0 40 46">'+
-    '<g class="zondSatWrap"><path d="M14,10 Q20,3 26,10" stroke="rgba(240,192,64,.35)" stroke-width="1.2" fill="none" stroke-dasharray="1.5 3"/>'+
-    '<circle class="zondSat glow" cx="26" cy="10" r="2.3" fill="var(--gold-hi)"/></g>'+
-    '<polygon points="20,14 30,21 30,33 20,40 10,33 10,21" fill="#0d2038" stroke="var(--gold-hi)" stroke-width="2"/>'+
-    '<g id="zondFace">'+ZOND_FACE_NORMAL+'</g></svg></div>'+
-    '<div class="zondSpark" id="zondSpark">✦</div><div class="zondHint" id="zondHint"></div>';
-  const p=zondPocketsArr[0]; const zond=$('zondEl');
-  zond.style.left=p.x+'px'; zond.style.top=p.y+'px';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>zond.classList.add('zondIn'))); // 25.09.2026: мягкое появление вместо мгновенного «хоп» — см. .zondIn в index.html
-  zond.addEventListener('click', zondCatch);
-  setTimeout(zondShowTaunt, 400);
-  zondMoveT=setInterval(zondMoveNext, 3600); // 25.09.2026: было 2600 — с широкими точками чаще выглядело как дёрганье, не движение
-}
-function zondTick(){
-  /* 25.09.2026 (владелец, прямо на живом телефоне): убрано условие Stats.games===0.
-     Та же логика, что уже решена для будущего «выпускного» ([[project_zond_vypusknoy_bonus_otlozheno_25_09]]
-     в памяти сессии) — не гадать по числу забегов, кто «уже не новичок», ждать ЯВНОГО
-     отказа игрока. Явного отказа (кнопки «не нужно») пока не существует — значит по
-     умолчанию Зонд показывается всем, один раз за загрузку страницы. Когда построим
-     кнопку подтверждения — она и станет настоящим условием отказа, не количество игр. */
-  if(zondShown) return; // один эпизод за загрузку страницы, не при каждом возврате в меню
+function ballTick(){
+  if(ballShown || ballMetGet()) return; // одна встреча за загрузку, и только пока её не было
   if(screenName!=='menu') return;
-  const card=zondCentredCard();
+  const card=ballCentredCard();
   if(!card || !card.classList.contains('hc-classic')) return;
-  zondShow();
+  ballShow();
 }
+wireOn('heroCarousel','scroll',()=>{ if(ballPhase==='point') ballPlaceOnCard(true); });
+document.getElementById('heroCarousel')?.addEventListener('click', function(e){
+  // «нажмите здесь» — по ЛЮБОМУ месту карточки, пока шарик на ней стучит (сама кнопка
+  // .cardFlyBtn занимает только нижнюю строку с названием; ленту-рекорд не перехватываем)
+  if(ballPhase!=='point') return;
+  const card=e.target.closest('.hc-classic'); if(!card) return;
+  if(e.target.closest('.recordBadge,.cardFlyBtn,.playHint')) return;
+  const s=$('startBtn'); if(s) s.click();
+});
 // v1.282.14: экран открываем ПЕРВЫМ, наполняем вторым — иначе страж forgeSkyKick видит
 // #forgeScreen ещё скрытым, молча выходит, и живое мини-небо не стартует до первого касания.
 wireOn('konstruktorBtn', 'click', ()=>{ sfx.click(); haptic('light'); setScreen('forge'); if(typeof forgeOpen==='function')forgeOpen(); }); // v1.68.0: конструктор трассы; 05.09.2026: кнопка переехала с modeForge (внутри «Соревнований») на главный экран
@@ -3735,14 +3725,15 @@ function diagRows(){
   const R=[]; const now=performance.now();
   const fresh=Math.max(input._t||0, (typeof tgOrientLast==='number'?tgOrientLast:0));
   const alive=(typeof lastGamma!=='undefined' && lastGamma!=null) && (now-fresh)<1500;
-  if (!HAS_GYRO) R.push({st:'info', txt:L.diagNoSensor});
+  const gy=gyroThere(); // 28.09.2026: было HAS_GYRO (есть ли API) — на ПК «датчик молчит» красным, а «Оживить» ничего не делало
+  if (!gy) R.push(hasKeyboardLikely() ? {st:'info', lv:L.diagLvCtrl, txt:L.diagCtrlPc, who:L.diagCtrlPcWho} : {st:'info', txt:L.diagNoSensor});
   else if (alive) R.push({st:'ok', txt:L.diagSensorOk+(gyroSrc==='tg'?L.diagChanTg:L.diagChanWeb)});
-  else R.push({st:'warn', txt:L.diagSensorDead, fix:L.diagFixSensor, act:diagFixSensor});
-  if (HAS_GYRO){
+  else R.push({st:'warn', txt:L.diagSensorDead, who:L.diagWhoSensor, fix:L.diagFixSensor, act:diagFixSensor});
+  if (gy){
     if (input.baseG!=null){ // v1.99.5 «Свежий ноль»: ноль должен не просто существовать, а совпадать с позой
       const zm=(lastGamma!=null&&typeof remapAxes==='function')?remapAxes(lastGamma,lastBeta==null?0:lastBeta):null;
       const skew=zm?Math.abs(zm[0]-input.baseG):0;
-      if (alive && skew>25) R.push({st:'warn', txt:L.diagZeroSkew+' '+Math.round(input.baseG)+'° → '+Math.round(zm[0])+'°', fix:L.diagFixCal, act:()=>calibrateTilt()});
+      if (alive && skew>25) R.push({st:'warn', txt:L.diagZeroSkew+' '+Math.round(input.baseG)+'° → '+Math.round(zm[0])+'°', who:L.diagWhoZero, fix:L.diagFixCal, act:()=>calibrateTilt()});
       else R.push({st:'ok', txt:L.diagZeroOk+' '+Math.round(input.baseG)+'°'});
     }
     else if (alive) R.push({st:'warn', txt:L.diagZeroWait, fix:L.diagFixCal, act:()=>calibrateTilt()});
@@ -3757,7 +3748,7 @@ function diagRows(){
     }
   }
   if (Q.fps>=45) R.push({st:'ok', txt:L.diagFpsOk+' '+Math.round(Q.fps)});
-  else R.push({st:'warn', txt:L.diagFpsLow+' '+Math.round(Q.fps), fix:L.diagFixGfx, act:diagFixGfx});
+  else R.push({st:'warn', txt:L.diagFpsLow+' '+Math.round(Q.fps), who:L.diagWhoFps, fix:L.diagFixGfx, act:diagFixGfx});
   R.push({st: MUTED?'info':'ok', txt: MUTED?L.diagSoundOff:L.diagSoundOn});
   // v1.99.6 «Паспорт штурвала» (02.09.2026: переименован в «Геймпад» — «штурвал» без
   // расшифровки не говорил игроку, что это джойстик/геймпад; EN/ES/PT/FR уже были прямым
@@ -3788,9 +3779,11 @@ function diagRefresh(){ if (screenName!=='diag') return; // v1.66.3: живые 
   const now=performance.now(); if(now-diagLastT<500) return; diagLastT=now; diagBuild(); }
 function diagRowNode(r){ // одна строка сервисного центра: значок состояния, текст, кнопка лечения
   const d=document.createElement('div'); d.className='drow';
-  const icn=r.st==='ok'?'OK':(r.st==='warn'?'!':'i');
-  const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ff9fb0':'#8fd0ff');
-  d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+'</span>';
+  // 28.09.2026 (макет nastroyki-pk-telefon, образец VALORANT): уровень словом, не значком, и «чья проблема» строкой ниже
+  const icn=r.st==='ok'?L.diagLvOk:(r.st==='warn'?L.diagLvWarn:(r.lv||L.diagLvInfo));
+  const col=r.st==='ok'?'#8fff9f':(r.st==='warn'?'#ffcf6a':'#9fe8ff');
+  d.dataset.st=r.st;
+  d.innerHTML='<span class="dst" style="color:'+col+'">'+icn+'</span><span>'+r.txt+(r.who?'<span class="who">'+r.who+'</span>':'')+'</span>';
   if (r.fix){ const b=document.createElement('button'); b.className='btn ghost dbtn';
     b.style.cssText='font-size:12px;padding:6px 12px;min-height:0;margin:0 0 0 auto';
     b.textContent=r.fix; b.addEventListener('click',()=>{ sfx.click(); r.act(); }); d.appendChild(b); }
@@ -3809,6 +3802,7 @@ function diagBuild(){
   const redk=rows.filter(r=>r.st!=='warn' && r.rare);  // устройство борта — под спойлер
   list.innerHTML='';
   for (const r of bedy.concat(glav)) list.appendChild(diagRowNode(r));
+  { const sm=$('diagSum'); if(sm){ sm.textContent=bedy.length?L.diagSumWarn(bedy.length):L.diagSumOk; sm.classList.toggle('warn', !!bedy.length); } } // 28.09.2026: итог одной строкой сверху
   const rare=$('diagListRare');
   if (rare){ rare.innerHTML=''; for (const r of redk) rare.appendChild(diagRowNode(r)); }
 }
@@ -3922,15 +3916,18 @@ function feedbackTapeFit(budget){
   }
   return head+OMIT+(kept.length?'\n'+kept.join('\n'):'');
 }
-wireOn('feedbackAttachBtn', 'click', ()=>{
-  const ta=$('feedbackText'); if(!ta) return;
-  sfx.click(); haptic('light');
-  if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return; // уже приложено — не дублируем
+function feedbackAttachTape(){ // приложить ленту самописца к письму («Добавить автодиагностику» в Поддержке)
+  const ta=$('feedbackText'); if(!ta) return false;
+  if(ta.value.indexOf(FEEDBACK_TAPE_MARK)>=0) return false; // уже приложено — не дублируем
   const budget=ta.maxLength-(ta.value||'').length-FEEDBACK_TAPE_MARK.length;
   ta.value=(ta.value||'')+FEEDBACK_TAPE_MARK+feedbackTapeFit(budget);
-  feedbackUpdateCount();
-  if(typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
+  feedbackUpdateCount(); return true;
+}
+wireOn('feedbackAttachBtn', 'click', ()=>{
+  sfx.click(); haptic('light');
+  if(feedbackAttachTape() && typeof toast==='function') toast(L.feedbackAttached,'rgba(159,232,255,.5)');
 });
+
 wireOn('feedbackPhotoBtn', 'click', ()=>{
   if(feedbackPhotos.length>=FEEDBACK_PHOTO_MAX) return;
   sfx.click(); haptic('light');
@@ -3956,7 +3953,7 @@ wireOn('diagCinemaTestBtn', 'click', ()=>{ // 30.08.2026: разовая про�
 });
 // v1.65.0 «Спойлеры»: категории — аккордеон. Открыта всегда одна панель — ничего ни на что не налезает,
 // закрытый экран помещается целиком; экран скроллится как страховка + подскролл к открытой шапке
-const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpProf','accPanel']];
+const SET_GRPS=[['setGrpSound','panelSound'],['setGrpGame','panelGame'],['setGrpCtrl','panelCtrl'],['setGrpProf','accPanel']]; // 28.09.2026: + «Управление»
 SET_GRPS.forEach(([gId,pId])=>{
   const g=$(gId), p=$(pId); if(!g||!p) return;
   g.addEventListener('click', ()=>{
@@ -4008,10 +4005,46 @@ function keyBindAllLabels(){ ['left','right','up','down'].forEach(keyBindRowLabe
    смысл только там, где есть настоящая клавиатура. 'ontouchstart' in window — тот же признак
    мобильного/сенсорного устройства, что core.js уже использует для safe-area/качества графики
    (tgInsetsSync, автоопределение тира) — не новый метод, тот же самый. */
-function keyBindRowsVisibility(){
-  const touch=('ontouchstart' in window);
-  ['left','right','up','down'].forEach(dir=>{ const el=$(KEY_DIR_ROW[dir]); if(el) el.classList.toggle('hidden',touch); });
+function keyBindRowsVisibility(){ ctrlVisibility(); } // 28.09.2026: решает ctrlVisibility() ниже — одно место на всё «что видно на этом устройстве»
+/* 28.09.2026 (владелец, скрины с ПК; макет nastroyki-pk-telefon; исследование
+   .knowledge/RESEARCH-2026-09-SETTINGS-DESKTOP.md): на устройстве видно только то, что на нём
+   реально работает. Раньше гироскоп прятался по HAS_GYRO (есть ли API — на ПК всегда «да»),
+   вибрация не пряталась никогда, клавиши — по 'ontouchstart' (ноутбук с тачем терял клавиши).
+   Гироскоп — gyroSensorThere(): датчик реально прислал данные (или это телефон).
+   Клавиши — есть мышь/тачпад (any-pointer:fine) или уже была нажата клавиша: наличие
+   клавиатуры браузер не сообщает (Media Queries 4), честный сигнал только такой.
+   Вибрация — проверить нельзя вовсе (на ПК-Chrome vibrate() отвечает true, а внутри пусто —
+   исходник Chromium; Firefox убрал на ПК; Safari нет): решаем по устройству — Telegram на
+   телефоне или сенсорный браузер (не Firefox, там вибрация не работает). */
+var keySeen=false; // var, не let: ctrlVisibility() может позваться раньше этой строки (applyLang при загрузке) — без «мёртвой зоны»
+window.addEventListener('keydown', ()=>{ if(keySeen) return; keySeen=true; if(screenName==='settings'){ ctrlVisibility(); setWellFill(); } }, {capture:true, passive:true});
+function hasKeyboardLikely(){ try{ if(window.matchMedia && matchMedia('(any-pointer:fine)').matches) return true; }catch(e){} return keySeen; }
+function gyroThere(){ return (typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; }
+function vibroAvail(){
+  if (typeof IS_LIKELY_MOBILE!=='undefined' && IS_LIKELY_MOBILE) return true;
+  if (typeof navigator==='undefined' || typeof navigator.vibrate!=='function') return false;
+  if (/Firefox\//.test(navigator.userAgent||'')) return false;
+  let coarse=false; try{ coarse=!!(window.matchMedia && matchMedia('(pointer:coarse)').matches); }catch(e){}
+  return coarse && (navigator.maxTouchPoints||0)>0;
 }
+function ctrlVisibility(){
+  const g=gyroThere(), k=hasKeyboardLikely(), v=vibroAvail();
+  ['setGyroBtn','setSensBtn','setCalibBtn'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden',!g); });
+  { const t=$('tiltBtn'); if(t) t.classList.toggle('hidden', !(g && NEEDS_TILT_PERMISSION && !TG_ORIENT)); }
+  ['left','right','up','down'].forEach(dir=>{ const el=$(KEY_DIR_ROW[dir]); if(el) el.classList.toggle('hidden',!k); });
+  { const r=$('setKeyResetBtn'); if(r) r.classList.toggle('hidden',!k); }
+  ['setVibroBtn','setMorseHapBtn','diagVibroBtn'].forEach(id=>{ const el=$(id); if(el) el.classList.toggle('hidden',!v); });
+  const grp=$('setGrpCtrl'), pan=$('panelCtrl');
+  if (grp){ grp.classList.toggle('hidden', !g && !k); if(!g && !k && pan){ pan.classList.add('hidden'); grp.classList.remove('open'); } }
+  { const e=$('setGrpSound'); const t=e&&e.querySelector('.setGrpT'); if(t) t.textContent=v?L.setGrpSound:L.setGrpSoundPc; }
+  setText('csRowHint', v?L.csRowHintPhone:L.csRowHintPc);
+}
+wireOn('setKeyResetBtn', 'click', ()=>{ // 28.09.2026 «Вернуть клавиши как было» — пустая привязка = стрелка+буква по умолчанию
+  keyRebindListening=null;
+  ['left','right','up','down'].forEach(d=>{ KEY_BINDS[d]=''; Store.set(KEY_DIR_STORE[d],''); });
+  keyBindAllLabels(); setWellFill(); haptic('light'); sfx.click();
+  if(typeof toast==='function') toast(L.keysResetDone,'rgba(159,232,255,.5)');
+});
 function keyRebindListen(dir){
   if(keyRebindListening) keyBindRowLabel(keyRebindListening); // отменяем прошлое незавершённое ожидание, если было
   keyRebindListening=dir;
@@ -4064,7 +4097,7 @@ function exxxitLogoHTML(){
 }
 function aboutFill(){ setHTML('feedbackAbout', 'Cosmogram · v'+GAME_VERSION+exxxitLogoHTML()); } // 28.08.2026: строка канала убрана по просьбе владельца (aboutTags вычеркнуты ещё в v1.27.0); 03.09.2026: + карточка студии; 04.09.2026: переехало из «Об игре» (Настройки) на «Написать разработчику» — владелец: «я разработчик, это мой логотип»
 // iOS: системный запрос доступа к датчикам — только по явному тапу красивой кнопки
-function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API
+function refreshGyroLock(){ const has=(typeof gyroSensorThere==='function')?gyroSensorThere():HAS_GYRO; ctrlVisibility(); // v1.108.1: та же честная проверка, что и у автооффера — не просто факт API; 28.09.2026: + строки «Управления»
   const b=$('gyroUnlockBtn'); if(b) b.classList.toggle('hidden', !has || gyroUnlocked());
   const o=$('setGyroOffBtn'); if(o){ o.classList.toggle('hidden', !has || !gyroUnlocked()); rowSw('setGyroOffBtn', gyroUnlocked()); } } // v1.106.0 «Штурман по желанию»: ряд-выключатель виден только при открытом замке
 wireOn('gyroUnlockBtn', 'click', async ()=>{ // открытие «Полёта без рук» из настроек — тем же ритуалом: разрешение + «держи ровно»
@@ -4220,8 +4253,10 @@ function accFill(){ // настройки: статус входа + кнопк�
   const st=$('accStatus'), out=$('accOutBtn'), del=$('accDeleteBtn');
   if(!st || typeof syncAvailable!=='function') return;
   const dw=$('dcWidget'), gw=$('gWidget');
+  const nm=(typeof syncAuthName==='function')?(syncAuthName()||''):''; // 28.09.2026: строка «В общей таблице» — имя как есть, без вырезанных пробелов
+  { const tv=$('accTableV'); if(tv) tv.textContent=(syncAvailable()&&nm)?nm:L.accTableGuest; }
   if (syncAvailable()){
-    st.textContent=L.accIn(typeof syncAuthName==='function'?(syncAuthName()||''):'');
+    st.textContent=''; // 28.09.2026: имя уже сказано строкой «В общей таблице» — второй раз не повторяем
     if(dw) dw.innerHTML=''; if(gw) gw.innerHTML='';
     out.classList.toggle('hidden', !!syncInitData()); // из мини-аппа «выходить» нечего — ты дома
     if(del) del.classList.remove('hidden'); // 05.09.2026: в отличие от «Выйти», удалить есть что всегда, если вошёл — хоть из мини-аппа, хоть с веб-сессии
@@ -4239,13 +4274,13 @@ function webJoinFill(){ // экран итогов: гостю — пригла�
   /* v1.282.20: раньше виджет входа перемонтировался на КАЖДОЙ смерти — а dcMount/gMount вставляют
      внешнюю кнопку и заводят сторож на 5 секунд. Двадцать смертей за сессию у веб-гостя = двадцать
      вставок подряд. Монтируем один раз и оставляем, пока он жив. */
-  if (guest){ $('webJoinTxt').textContent=L.webJoin;
+  if (guest){ $('webJoinTxt').textContent=L.topJoinSub; setText('webJoinTitle',L.topJoinTitle); // 28.09.2026 (вариант Б): приглашение — карточкой на месте «Ты в мире», тексты те же, что у приглашения в Турнирах
     const dj0=$('dcJoinWidget'); if (dj0 && !dj0.firstChild) dcMount(dj0);
     const gj0=$('gJoinWidget'); if (gj0 && !gj0.firstChild) gMount(gj0); }
   else { const dj=$('dcJoinWidget'); if(dj) dj.innerHTML=''; const gj=$('gJoinWidget'); if(gj) gj.innerHTML=''; }
 }
 function syncAuthChanged(){ // зовёт sync.js после входа виджетом, выхода или 401
-  accFill(); webJoinFill();
+  accFill(); webJoinFill(); csFill(); setWellFill(); // 28.09.2026: позывной-подсказка и подпись профиля — свежие после входа (раньше оставалось «ПИЛОТ»)
   if(typeof syncFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncFlush().catch(()=>{});
   if(typeof syncDailyFlush==='function' && typeof syncAvailable==='function' && syncAvailable()) syncDailyFlush().catch(()=>{});
   if (screenName==='ach' && $('achTopWrap') && !$('achTopWrap').classList.contains('hidden')) renderTop();
@@ -4580,6 +4615,71 @@ function wireTopGhostButtons(listId, getCat, screen){
   });
 }
 wireTopGhostButtons('topList', ()=>topCat, 'ach');
+/* 28.09.2026 «Итоги — что дальше» (вариант Б, владелец: «Заменяем»). Карточка места в мире:
+   #N, сосед сверху (имя · счёт) и сколько до него, кнопка призрака на него — та же .topGh,
+   что в Турнирах (wireTopGhostButtons ниже подключён и к #overRank). №1 — «Ты первый в мире»
+   и отрыв от второго, без призрака (гнаться не за кем). Соседа нет в ответе (сервер отдаёт
+   первые 100 строк; 28.09.2026 в таблицах 2–16 игроков) — только место. Пока только Score
+   Attack (владелец: остальные режимы — отдельным шагом), только вошедшему. */
+const OVER_RANK_CATS=['touch','gyro','keys'];
+function ovT(k){ return (L && L[k]!==undefined) ? L[k] : I18N.ru[k]; } // новые строки пока только по-русски
+function overRankFill(d, cat){
+  const el=$('overRank'); if(!el) return;
+  const ok = S.mode==='classic' && OVER_RANK_CATS.includes(cat) && d && d.ok && d.me && d.me.rank>0;
+  if(!ok){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
+  const head='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT('overRankYou'))+'</span>'+
+    '<span class="orPlace"><span class="orNum">#'+rank+'</span><span class="orMode">'+escapeHtml(L.modeClassic)+'</span></span></div>';
+  let next='';
+  if(rank===1){
+    const second=top.find(r=>r && !r.me);
+    if(second) next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+      '<span class="orWho">'+escapeHtml(ovT('overRankBehind')('#2 '+String(second.name||'').slice(0,64)+' · '+fmtN(saneNumber(second.best,0)).replace(/ /g,'\u00a0')))+'</span>'+
+      '<span class="orGap">'+escapeHtml(ovT('overRankFirst'))+' · '+escapeHtml(ovT('overRankLead')(fmtN(Math.max(0,myBest-saneNumber(second.best,0)))))+'</span></div></div>';
+  } else {
+    const up=top[rank-2];
+    if(up && !up.me && saneNumber(up.best,0)>myBest){
+      const gap=saneNumber(up.best,0)-myBest;
+      next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+        '<span class="orWho">'+escapeHtml(ovT('overRankNext')('#'+(rank-1)+' '+String(up.name||'').slice(0,64)+' · '+fmtN(saneNumber(up.best,0)).replace(/ /g,'\u00a0')))+'</span>'+
+        '<span class="orGap">'+escapeHtml(ovT('overRankGap')(fmtN(gap)))+'</span></div>'+
+        (up.pid ? '<button type="button" class="topGh orGhost" data-gh="'+Math.floor(Number(up.pid))+'" data-cat="'+escapeHtml(cat)+'" data-best="'+saneNumber(up.best,0)+'">'+ic('ghost')+'<span>'+escapeHtml(ovT('overRankGhost'))+'</span></button>' : '')+
+        '</div>';
+    }
+  }
+  el.innerHTML=head+next;
+  el.classList.remove('hidden');
+}
+/* Гостю — на месте карточки приглашение войти (#webJoin), с «Твои N — это M-е место из T»
+   по тем же первым 100 строкам. Если он ниже всех строк ответа — строку не показываем:
+   «16-е из 15» звучит как ошибка (та же формулировка в Турнирах пока считает по-старому). */
+function overJoinWouldBe(d, sc){
+  const el=$('webJoinWould'); if(!el) return;
+  const top=(d && d.ok && Array.isArray(d.top)) ? d.top : null;
+  if(!top || !(sc>0) || S.mode!=='classic'){ el.classList.add('hidden'); el.textContent=''; return; }
+  const place=top.filter(r=>saneNumber(r && r.best,0)>sc).length+1;
+  if(place>top.length){ el.classList.add('hidden'); el.textContent=''; return; }
+  el.textContent=L.topWouldBe(fmtN(sc), place, top.length);
+  el.classList.remove('hidden');
+}
+function overLocFill(){ // полоска «До Линии Кармана» (или следующей точки шкалы) — на самом экране, не в подробностях
+  const wrap=$('overLoc'); if(!wrap) return;
+  const nl=(typeof achNextLoc==='function')?achNextLoc():null;
+  if(!nl){ wrap.classList.add('hidden'); setText('toLoc',''); setText('toLocLeft',''); return; }
+  const need=(typeof needOf==='function')?needOf(nl):nl.need;
+  const parts=String(L.toLoc(aT(nl).n,'\u0001')).split('\u0001');
+  setText('toLoc', parts[0].replace(/[\s:：]+$/,''));
+  setText('toLocLeft', fmtN(need-Stats.totalDist)+(parts[1]||''));
+  const f=$('toLocFill'); if(f) f.style.width=(Math.round(Math.min(1,Math.max(0,(Stats.totalDist||0)/need))*10000)/100)+'%';
+  wrap.classList.remove('hidden');
+}
+function shareSheetShow(on){ toggleCls('shareSheet','hidden',!on); }
+wireOn('shareBtn','click',()=>{ sfx.click(); haptic('light'); shareSheetShow(true); });
+wireOn('shareSheet','click',e=>{ // тап мимо панели — закрыть; выбор в панели — своя кнопка уже отработала, панель закрывается следом
+  if(e.target.id==='shareSheet' || e.target.closest('#shareSheetPanel .btn')) shareSheetShow(false);
+});
+wireTopGhostButtons('overRank', ()=>'touch', 'over');
+
 
 /* typeof-страховки: при миксе версий из кэша (старый core + новый ui) подписи молчат, но applyLang не падает (v1.55.0) */
 function morseHapLabel(){ rowSw('setMorseHapBtn', typeof morseHapOn==='function'&&morseHapOn()); setWellFill(); }
@@ -4608,7 +4708,7 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
      было некуда. Веб-версия игры уже умеет Discord/Google (см. duelBoot — тот же приём,
      что forgeBoot уже делает для #map=), поэтому вне Telegram шарим ссылку на неё саму,
      не на t.me. */
-  const webLink=location.origin+location.pathname+'#duel='+pid;
+  const webLink='https://cosmogram.fun/?d='+pid; // 28.09.2026 (владелец купил домен): красивый короткий адрес вместо адреса текущей страницы с #duel=
   const text=L.duelShareText(Math.floor(S.dist), S.mission);
   /* v1.282.20: счётчик двигаем ТОЛЬКО когда окно отправки реально открылось. Раньше он
      рос по самому нажатию, и достижение «Дуэлянт» (+10 ✦) бралось тапом с немедленным
@@ -4961,6 +5061,7 @@ function applyLang(){
   setText('tribuneBtn',L.tribune); // v1.100.1 «Трибуна чемпиона» — на языке игрока
   setText('goldChip',L.goldChip); // v1.100.2 «Золотая звезда дня» — на языке игрока
   setText('overDetailsBtn',L.overDetails);
+  setText('shareBtn',L.share); setText('shareSheetTitle',L.share); // 28.09.2026: «Поделиться» на итогах (вариант Б)
   setText('statusBtn',L.statusStar); // v1.98.0 «Звезда-статус» — на языке игрока
   // заголовок «РАЗБИЛСЯ!» убран (v1.27.0): никто не разбивается — экран поражения добрый и компактный
   setText('menuBtn',L.menu);
@@ -4984,18 +5085,22 @@ function applyLang(){
   setText('relayMineBtnLbl', L.relayMineBtnLbl);
   setText('diagBtn',L.diagBtn);
   setText('diagTitle',L.diagBtn); // v1.66.3: экран сервисного центра; 28.08.2026: diagBackBtn — круглая иконка, текст не пишем
-  setText('csCap',L.csCap); // v1.66.3: подпись позывного в «Профиле»
+  // 28.09.2026 (макет nastroyki-pk-telefon): подписи строк, «Управление», профиль, «Сообщить о проблеме»
+  setText('againHint',L.againHint); setText('setBeaconHint',L.setBeaconHint); setText('setKeyResetBtn',L.keysReset);
+  setText('accTableK',L.accTableK); setText('accTableHint',L.accTableHint); setText('csRowK',L.csRowK);
+  setText('diagProbesLbl',L.diagProbes);
   setText('diagMoreBtn',L.moreLbl); // 13.08.2026: спойлер «Ещё» — тот же ярлык, что в настройках
   gyroRowLabel(); sensLabel(); soundLabel(); musicLabel(); langLabel(); vibroLabel(); gfxLabel(); gyroStatus(); morseHapLabel(); csFill(); setWellFill(); textScaleLabel(); keyBindAllLabels(); keyBindRowsVisibility(); // v1.284.20: тумблер гироскопа рисуется первым — он гасит соседние строки, значит обязан отработать до них. 05.09.2026: morseLabel() убран — Морзянка больше не тумблер Настроек; 09.09.2026: textScaleLabel()/keyBindAllLabels() — та же роль для «Размера текста»/переназначения клавиш; keyBindRowsVisibility() — прячет переназначение на сенсорных, там нет клавиатуры
   const grpT=(id,t)=>{ const e=$(id); if(e){ const s=e.querySelector('.setGrpT'); if(s) s.textContent=t; } }; // v1.91.0: заголовок живёт в .setGrpT — рядом шёпот самочувствия
   grpT('setGrpSound',L.setGrpSound); grpT('setGrpGame',L.setGrpGame); // v1.63.0: две группы вместо четырёх
   grpT('setGrpProf',L.setGrpProf); // v1.64.0: карточка «Профиль»
+  grpT('setGrpCtrl',L.setGrpCtrl); ctrlVisibility(); // 28.09.2026: «Управление»; название звуковой группы зависит от устройства — ставит ctrlVisibility
   [['setSoundBtn','setSound'],['setMusicBtn','setMusic'],['setVibroBtn','setVibro'],
    ['setMorseHapBtn','setMorseHap'],['setGyroBtn','setGyroRow'],['setSensBtn','sens'],['setGfxBtn','setGfx'],['setContrastBtn','setContrast'],
    ['setColorblindBtn','setColorblind'],['setReduceShakeBtn','setReduceShake'],['setTextScaleBtn','setTextScale'],
    ['setKeyLeftBtn','setKeyLeft'],['setKeyRightBtn','setKeyRight'],['setKeyUpBtn','setKeyUp'],['setKeyDownBtn','setKeyDown'],['setLangBtn','setLang'],
    ['setAgainBtn','again'],['setGyroOffBtn','setGyroOff'],['setBeaconBtn','setBeacon']].forEach(p=>{ const b=$(p[0]); if(b) b.querySelector('.setK').textContent=L[p[1]]; });
-  setText('diagVibroBtn',L.diagVibro);
+  { const vb=$('diagVibroBtn'); const vk=vb&&vb.querySelector('.setK'); if(vk) vk.textContent=L.diagVibro; } // 28.09.2026: строка, а не кнопка — текст в .setK, результат рядом
 }
 /* баланс сетки 2 колонки: нечётная последняя видимая кнопка растягивается на всю ширину (v1.34.0) */
 function gridBalance(row){ if(!row) return;
@@ -5037,9 +5142,9 @@ Store.init(()=>{
   // Input Fallback System: iOS — красивая кнопка разрешения наклона (только если
   // нет родного моста Telegram: там системное разрешение не нужно вовсе);
   // устройство без датчика — гиро-кнопки не показываем вовсе
-  if(NEEDS_TILT_PERMISSION && !TG_ORIENT) $('tiltBtn').classList.remove('hidden');
+  // 28.09.2026: кнопка разрешения наклона — внутри ctrlVisibility() (только где датчик правда есть)
   gyroStatus(); // диагностика датчика в настройках: Telegram / браузер / молчит
-  if(!HAS_GYRO){ $('setCalibBtn').classList.add('hidden'); $('setSensBtn').classList.add('hidden'); $('setGyroBtn').classList.add('hidden'); } // v1.284.20: нет датчика — нечего и выключать
+  ctrlVisibility(); // 28.09.2026: было if(!HAS_GYRO) — на ПК HAS_GYRO всегда true, строки гироскопа не прятались; теперь честная проверка
   // настройки: звук, вибро, графика, язык из хранилища
   MUTED = Store.get('muted',0)===1;
   VIBRO = Store.get('vibro',1)!==0;
@@ -5142,7 +5247,9 @@ Store.init(()=>{
   Store.del('seenIntro'); Store.del('tutDone'); Store.del('lesson'); Store.del('lsnPass'); Store.del('lsnV'); // гигиена: ключи школы больше не нужны
   Store.del('tutVoice'); // гигиена: голос вычеркнут (v1.20.0)
   const mapPending = (typeof forgeBoot==='function') ? forgeBoot() : false; // трасса друга по ссылке (v1.68.0)
-  const duelPending = !mapPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
+  // 28.09.2026: короткая ссылка на трассу (?t=/startapp=t_) — код приходит с сервера позже; пока — обычное меню, по приходу — в конструктор
+  const shortPending = !mapPending && (typeof forgeBootShort==='function') ? forgeBootShort(()=>{ if(!S.running){ setScreen('forge'); forgeOpen(); toast(L.forgeGuest,'rgba(255,215,106,.5)'); } }) : false;
+  const duelPending = !mapPending && !shortPending && (typeof duelBoot==='function') ? duelBoot() : false; // дуэль по ссылке: планка с сервера, баннер живёт в меню
   /* Здесь стояла отправка «Opened Game» в Amplitude с полем platform: telegram / telegram_web /
      discord / guest. Канал убран (см. index.html), но САМА мысль верная и ещё пригодится:
      это единственное место, где игра различает вошедшего и гостя. Когда дойдём до партии

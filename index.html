@@ -28,12 +28,12 @@
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
 <meta property="og:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды. Играй прямо в браузере или в Telegram."/>
-<meta property="og:image" content="https://exxxit-game.github.io/cosmogram-app/icons/og-image.png"/>
-<meta property="og:url" content="https://exxxit-game.github.io/cosmogram-app/"/>
+<meta property="og:image" content="https://cosmogram.fun/icons/og-image.png"/>
+<meta property="og:url" content="https://cosmogram.fun/"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="Cosmogram — бумажный самолётик в открытом космосе"/>
 <meta name="twitter:description" content="Уворачивайся от астероидов, лови звёзды, ставь честные рекорды."/>
-<meta name="twitter:image" content="https://exxxit-game.github.io/cosmogram-app/icons/og-image.png"/>
+<meta name="twitter:image" content="https://cosmogram.fun/icons/og-image.png"/>
 <!-- PWA «Вторая дверь»: устанавливается на домашний экран, работает офлайн -->
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -797,51 +797,57 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .heroCard .recordBadge.a-wave .shp:first-child{animation-name:wRibbonBlink;animation-duration:5.5s}
 .heroCard .recordBadge.a-wave .shp:last-child{animation-name:wRibbonBlink;animation-duration:5.5s;animation-delay:.18s}
 .heroCard .recordBadge.a-sideeye .shp{animation-name:wRibbonSideeye;animation-duration:6.4s}
-/* 25.09.2026 «Зонд»: персонаж-подсказка для совсем новых игроков (Stats.runs===0),
-   заменяет прежний язычок-подсказку на ленте (тот же смысл, другая подача — владелец:
-   «язык в научной игре смотрится омерзительно»). Свободно бродит по всему главному
-   экрану (#zondLayer — прямой потомок #startScreen, тот уже position:fixed;inset:0,
-   значит покрывает весь экран без доп. обёрток), не привязан к одной карточке. Сам
-   слой pointer-events:none — клики по кнопкам под ним проходят насквозь, только сам
-   #zond ловит тап. transition на left/top уже гасится существующим общим правилом
-   `prefers-reduced-motion` (`*{transition:none!important}` — см. ниже по файлу),
-   отдельно эту логику дублировать не нужно; JS (zondMoveNext) читает RM (js/core.js:1395)
-   ИЛИ CALM_FX (js/core.js, «Смягчить тряску», 25.09.2026 тоже по умолчанию выключен) —
-   RM сам по себе признан ненадёжным внутри Telegram WebView, CALM_FX как явный ручной
-   тумблер подстраховывает — и просто не переставляет Зонда дальше. */
+/* 27.09.2026 «Шарик» — помощник вместо Зонда (живые макеты владельца, вариант А «стучит»;
+   вся логика и сценарий — у ballShow() в js/ui.js). Слой тот же #zondLayer — прямой потомок
+   #startScreen (position:fixed;inset:0), сам слой pointer-events:none, нажимаются только
+   шарик и его облачко. Облачко — <button>: владелец поймал, что люди жмут на текст, а не на
+   шар, — теперь оба ведут в одно место. Всё движение гасится общим правилом
+   prefers-reduced-motion ниже по файлу; прыжок-стук JS не включает при RM/CALM_FX. */
 #zondLayer{position:absolute;inset:0;z-index:5;pointer-events:none}
-.zond{position:absolute;width:42px;height:48px;pointer-events:auto;cursor:pointer;
-  transition:left 1.1s cubic-bezier(.4,0,.2,1), top 1.1s cubic-bezier(.4,0,.2,1),
+.ball{position:absolute;width:42px;height:48px;pointer-events:auto;cursor:pointer;
+  transition:left .9s cubic-bezier(.4,0,.2,1), top .9s cubic-bezier(.4,0,.2,1),
     opacity .45s ease-out, transform .45s cubic-bezier(.34,1.4,.64,1);
   opacity:0;transform:scale(.5)}
-.zond.zondIn{opacity:1;transform:scale(1)} /* 25.09.2026 (владелец, живьём: «хоп, и появилось, пугает
-  резкостью», позже — «уже не мешает, примелькалось»): оставил только мягкое ПЕРВОЕ появление
-  (было мгновенное из ничего, теперь прозрачное/мелкое → плавно доращивается) — смягчение самого
-  дальнего прыжка не делаю, владелец сказал, что это уже не беспокоит, лишняя сложность сейчас
-  не нужна. Длительность left/top — прежняя 1.1с, без изменений. */
-.zondSvg{width:100%;height:100%;pointer-events:none}
-.zondSvg .glow{filter:drop-shadow(0 0 4px rgba(240,192,64,.9))}
-.zondHitZone{position:absolute;left:50%;top:50%;width:66px;height:66px;
+.ball.ballIn{opacity:1;transform:scale(1)}
+.ball.ballNoMove{transition:opacity .45s ease-out, transform .45s cubic-bezier(.34,1.4,.64,1)}
+.ballSvg{display:block;width:42px;height:48px;pointer-events:none}
+.ballHit{position:absolute;left:50%;top:50%;width:66px;height:66px;
   transform:translate(-50%,-50%);border-radius:50%}
-.zondBob{animation:zondBob 2.8s ease-in-out infinite}
-@keyframes zondBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-.zondSatWrap{animation:zondOrbitSwing 3.4s ease-in-out infinite}
-@keyframes zondOrbitSwing{0%,100%{transform:translate(-6px,1px)}50%{transform:translate(6px,-1px)}}
-.zondSat{animation:zondSatBlink 3.4s ease-in-out infinite}
-@keyframes zondSatBlink{0%,45%,55%,100%{opacity:1}25%,75%{opacity:.5}}
-.zondTaunt{position:absolute;background:rgba(14,18,32,.95);border:1px solid var(--gold);
-  border-radius:12px;padding:6px 10px;font-size:11px;color:#fce1b6;white-space:nowrap;
-  opacity:0;transition:opacity .4s;pointer-events:none}
-.zondTaunt::after{content:'';position:absolute;bottom:-6px;left:16px;width:0;height:0;
-  border:6px solid transparent;border-top-color:var(--gold);border-bottom:0}
-.zondTaunt.show{opacity:1}
-.zondHint{position:absolute;background:rgba(14,18,32,.97);border:1px solid var(--gold);
-  border-radius:12px;padding:8px 11px;font-size:10.5px;color:#fce1b6;max-width:170px;
-  line-height:1.4;opacity:0;transition:opacity .3s;z-index:1;pointer-events:none}
-.zondHint.show{opacity:1}
-.zondSpark{position:absolute;font-size:22px;color:var(--gold-hi);opacity:0;
-  pointer-events:none;transition:opacity .3s, transform .3s}
-.zondSpark.show{opacity:1;transform:scale(1.3)}
+.ballBob{animation:ballBob 2.8s ease-in-out infinite}
+@keyframes ballBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.ballWob{transform-origin:20px 26px;animation:ballWob 3.2s ease-in-out infinite}
+@keyframes ballWob{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.ballRing{opacity:0}
+.ball.ballAsk .ballRing{animation:ballPulse 1.4s ease-in-out infinite}
+@keyframes ballPulse{0%,100%{opacity:.25}50%{opacity:1}}
+.ballHop{transform-origin:21px 46px}
+.ballHop.on{animation:ballHop 1.6s cubic-bezier(.3,0,.3,1) .9s infinite}
+@keyframes ballHop{0%,100%{transform:translateY(0) scale(1,1)}8%{transform:translateY(1px) scale(1.08,.9)}
+  40%{transform:translateY(-16px) scale(.96,1.04)}72%{transform:translateY(0) scale(1,1)}}
+.ballBubble{all:unset;position:absolute;box-sizing:border-box;pointer-events:auto;cursor:pointer;
+  background:rgba(14,18,32,.96);border:1px solid var(--gold);border-radius:12px;padding:8px 12px;
+  font-size:12px;line-height:1.45;color:#fce1b6;text-align:center;letter-spacing:.02em;text-transform:none;
+  opacity:0;transform:translateY(6px);transition:opacity .35s ease-out, transform .35s ease-out;visibility:hidden}
+.ballBubble.show{opacity:1;transform:none;visibility:visible}
+.ballBubble::after{content:'';position:absolute;left:var(--tailX,50%);bottom:-7px;width:12px;height:12px;
+  margin-left:-6px;transform:rotate(45deg);background:rgba(14,18,32,.96);
+  border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+/* стук по карточке: фраза внутри карточки, круги от места удара, вспышка рамки */
+.heroCard .ballSay,.heroCard .ballRings{display:none}
+.heroCard.ballPoint .playHint{display:none}
+.heroCard.ballPoint .ballSay{display:block;position:absolute;right:70px;top:22px;width:190px;max-width:calc(100% - 150px);
+  text-align:right;font-size:13px;line-height:1.4;font-weight:600;color:var(--gold-hi);
+  text-shadow:0 0 10px rgba(240,192,64,.35);letter-spacing:.02em;text-transform:none;pointer-events:none;z-index:2;
+  animation:ballSayIn .4s ease-out .9s both}
+@keyframes ballSayIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.heroCard.ballPoint .ballRings{display:block;position:absolute;right:47px;top:58px;width:0;height:0;pointer-events:none;z-index:2}
+.heroCard .ballRings i{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+  border:2px solid var(--gold-hi);opacity:0;animation:ballRing 1.6s ease-out .9s infinite}
+.heroCard .ballRings i+i{animation-delay:1.08s}
+@keyframes ballRing{0%{transform:scale(.3);opacity:.9}55%{transform:scale(2.4);opacity:0}100%{opacity:0}}
+.heroCard.ballPoint{animation:ballLit 1.6s ease-out .9s infinite}
+@keyframes ballLit{0%,100%{box-shadow:0 8px 20px rgba(0,0,0,.35),0 0 0 1px rgba(240,192,64,.35) inset}
+  6%{box-shadow:0 8px 20px rgba(0,0,0,.35),0 0 0 2px rgba(240,192,64,.95) inset,0 0 26px rgba(240,192,64,.45) inset}}
 /* 15.09.2026→16.09.2026: .playHint прошла путь круглая-иконка-со-своим-самолётиком (несколько
    заходов — угол, кольцо, блик, всё убиралось/двигалось по живым скринам) → сегодня, третий
    заход того же вечера, владелец решил заменить весь круг текстовой подсказкой — идея владельца:
@@ -1911,6 +1917,19 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 #moreBox .hint { margin:0; }
 #accPanel .csInput { margin:0 12px 10px; width:calc(100% - 24px); } /* v1.66.3: позывной живёт в «Профиле» */
 #settingsScreen .gyroBar { margin:0 0 10px; min-height:0; }
+/* 28.09.2026 (макет nastroyki-pk-telefon): подпись под названием строки — что это и зачем */
+.setRow .setKW { display:flex; flex-direction:column; min-width:0; flex:1 1 auto; }
+.setRow:has(> .setKW) { flex-wrap:nowrap; } /* строка с подписью не переносит значение/тумблер вниз (у .setRow flex-wrap — ради «Размера текста») */
+.setHint { margin-top:2px; font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(158,178,224,.55); }
+.setHint:empty { display:none; }
+#csRow .csInput { width:7.2em; flex:none; margin:0; padding:6px 10px; text-align:right; letter-spacing:1px; }
+#accTableRow { cursor:default; } #accTableRow:active { background:none; }
+.diagSum { padding:12px 16px 2px; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#8fff9f; }
+.diagSum.warn { color:#ffcf6a; } .diagSum:empty { display:none; }
+#diagList .drow .who, #diagListRare .drow .who { display:block; font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:none; color:rgba(158,178,224,.55); margin-top:2px; }
+#diagList .drow .dst, #diagListRare .drow .dst { min-width:66px; font-size:10px; letter-spacing:.08em; }
+#diagList .drow > span:nth-child(2), #diagListRare .drow > span:nth-child(2) { flex:1 1 auto; min-width:0; }
+#diagList .drow .dbtn, #diagListRare .drow .dbtn { flex:none; width:auto !important; } /* «Оживить» — по своему тексту, не на полстроки */
 
 .hidden { display:none !important; }
 
@@ -4018,7 +4037,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      а сам счёт. И было плоские padding-bottom:26px без var(--sab) — единственный экран, где
      нижний отступ не учитывает жест-полосу/чёлку снизу (у #startScreen .scrFoot её уже
      учитывает). Оба фикса — тот же приём, что уже работает на других экранах, не новое число. */
-#gameOverScreen > :first-child { margin-top:auto; } /* короткие итоги — по центру */
+#gameOverScreen > :first-child { margin-top:0; } /* 28.09.2026 (вариант Б): было auto — итоги по центру; теперь счёт и карточка сверху, «Ещё раз» с рядом — прижаты вниз (margin-top:auto у #retryBtn), как в макете */
 #gameOverScreen > :last-child { margin-bottom:auto; } /* длинные — честный скролл без среза */
 #newRecord { width:min(92%,380px); } /* плашки рекордов переносятся с полями */
 
@@ -4067,18 +4086,67 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   0%,100% { box-shadow:0 0 16px rgba(240,192,64,.14); transform:scale(1); }
   50% { box-shadow:0 0 30px rgba(240,192,64,.32); transform:scale(1.012); }
 } /* 16.09.2026 «Небесный прибор»: пульс синим на уже латунной кнопке .btn.pri.hero — было заметно на GameOver */
-#overQuiet { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:4px; } /* 01.09.2026: было 10px — тот же шаг (12), что уже держит ритм отступов игры, см. отчёт «Пространство в меню» */
-#overQuiet .btn { min-height:40px; padding:8px 14px; font-size:14px; opacity:.92;
-  background:rgba(14,18,32,.62); border-color:rgba(201,164,92,.3); } /* 01.09.2026: тихая тройка приглушена нарочно (opacity), но не должна тонуть в вуали — тот же контраст-буст, что у .btn.ghost, поверх уже пониженной видимости; 16.09.2026 подтянута за латунной правкой .btn.ghost */
-#overQuiet .btn:hover, #overQuiet .btn:active { opacity:1; }
-/* 01.09.2026: «Карточка» — единственная кнопка тройки, доступная всегда (Вызов/Клип условные) —
-   лёгкое золотое выделение отличает её как «якорь», не делает героем наравне с «Ещё раз» */
-#overQuiet #cardBtn { opacity:1; border-color:rgba(201,164,92,.5); color:#f0dcb0; } /* специфичность выше #overQuiet .btn (ID+ID против ID+класс) — иначе тихая тройка перебивает */
-#overMore { width:100%; display:flex; flex-direction:column; align-items:center; }
-#overMore.hidden { display:none; } /* вся вторая сцена — за спойлером */
-#menuBtn { margin-top:8px; opacity:.82; }
-#overDetailsBtn { margin:4px 0 6px; }
+/* 28.09.2026 «Итоги — что дальше» (вариант Б, макет «Итоги полёта — варианты», владелец:
+   «Заменяем»). Как в Smash Hit/Trackmania с доски референсов: одна крупная «Ещё раз» во всю
+   колонку, под ней ровно три тихие кнопки (Вызов/Поделиться/Меню), «Подробности полёта» —
+   тихой строкой. Карточка/Клип/«В статус» — в панели «Поделиться» снизу (#shareSheet). Над
+   кнопками — карточка места в мире (#overRank) или приглашение гостю (#webJoin) и полоска
+   «До Линии Кармана» (#overLoc). Подпись «Ваш результат» в варианте Б не показывается,
+   медали — на ~0.72 от прежнего (владелец: «уменьшенные, как в Б»). Прежняя «тихая тройка»
+   #overQuiet (01.09.2026) этим заменена целиком. */
+#gameOverScreen #finalScoreLabel { display:none; }
+#gameOverScreen #finalScore { font-size:clamp(64px,22.5vw,96px); font-weight:800; margin-top:6px; }
+#recordMedals .medalBox { zoom:.72; }
+#recordMedals .medalCap { font-size:10px; }
+#gameOverScreen #newRecord .recChip { background:none; border:0; padding:2px 6px; font-size:12px; opacity:.9; }
+.overCard { width:min(92%,380px); box-sizing:border-box; margin:18px 0 0; padding:14px 16px; border-radius:var(--r-card);
+  border:1px solid rgba(201,164,92,.3); background:rgba(14,18,32,.62); display:flex; flex-direction:column; gap:12px;
+  text-align:left; font-variant-numeric:tabular-nums; }
+.overCard.hidden { display:none; }
+.orHead { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.orLbl { font-size:13px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orPlace { display:flex; align-items:baseline; gap:8px; }
+.orNum { font-family:var(--font-disp); font-size:30px; font-weight:800; color:#f2f7ff; }
+.orMode { font-size:12px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orLine { height:1px; background:rgba(201,164,92,.2); }
+.orNext { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.orNextTxt { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.orWho { font-size:11px; color:#9fb4d8; letter-spacing:.05em; text-transform:uppercase; }
+.orGap { font-size:15px; font-weight:700; color:var(--gold-hi); letter-spacing:.04em; text-transform:uppercase; }
+.overCard .topGh.orGhost { all:unset; box-sizing:border-box; flex:none; min-height:40px; padding:6px 12px; border-radius:12px;
+  border:1px solid rgba(201,164,92,.4); background:rgba(14,18,32,.7); color:#dce9ff; font-size:12px;
+  letter-spacing:.05em; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.overCard .topGh.orGhost .ic { width:1.1em; height:1.1em; }
+#webJoin.overCard { gap:8px; margin:18px 0 0; text-align:left; } /* id+класс: перебивает старое #webJoin{margin;text-align:center} */
+#webJoin.overCard #webJoinTxt { color:#9fb4d8; font-size:12px; font-weight:400; line-height:1.45; padding:0; margin:0; text-shadow:none; text-transform:none; letter-spacing:.02em; }
+#webJoinTitle { font-size:15px; font-weight:700; color:var(--gold-hi); letter-spacing:.04em; text-transform:uppercase; }
+#webJoinWould { font-size:13px; color:#f2f7ff; letter-spacing:.04em; text-transform:uppercase; }
+#webJoinWould.hidden { display:none; }
+#overLoc { width:min(92%,380px); margin:14px 0 0; display:flex; flex-direction:column; gap:6px; }
+#overLoc.hidden { display:none; }
+.overLocRow { display:flex; justify-content:space-between; gap:10px; font-size:11px; color:#9fb4d8;
+  letter-spacing:.05em; text-transform:uppercase; font-variant-numeric:tabular-nums; }
+.overLocBar { height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+#toLocFill { display:block; height:6px; width:0; background:var(--gold-hi); }
+#gameOverScreen #toLoc { color:inherit; font-size:inherit; line-height:inherit; text-align:left; margin:0; min-height:0; }
+#gameOverScreen #retryBtn { width:min(92%,380px); min-height:64px; font-size:22px; font-weight:800; margin:auto 0 0;
+  border-color:rgba(240,192,64,.65); box-shadow:0 0 22px rgba(240,192,64,.22); }
+#overRow { width:min(92%,380px); display:flex; gap:10px; margin-top:12px; }
+#overRow .btn { flex:1 1 0; min-width:0; min-height:46px; padding:8px 6px; font-size:14px; margin:0; opacity:1; }
+#overRow #duelBtn { border-color:rgba(201,164,92,.5); color:#f0dcb0; }
+#overDetailsBtn { margin:8px 0 0; background:none; border:0; box-shadow:none; color:#9fb4d8; font-size:12px; padding:8px; min-height:0; }
 #overDetailsBtn::after { margin-left:8px; } /* стрелка при тексте, не на краю */
+#overMore { width:100%; display:flex; flex-direction:column; align-items:center; margin-top:6px; }
+#overMore.hidden { display:none; } /* вся вторая сцена — за спойлером */
+#shareSheet { position:fixed; inset:0; z-index:60; background:rgba(6,10,24,.55); display:flex; align-items:flex-end; }
+#shareSheet.hidden { display:none; }
+#shareSheetPanel { width:100%; box-sizing:border-box; padding:18px 16px calc(28px + var(--sab)); border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(201,164,92,.4); background:#0f1a33; display:flex; flex-direction:column; align-items:center; gap:10px;
+  animation:shareUp .25s cubic-bezier(.22,1,.36,1) both; }
+@keyframes shareUp { from{ transform:translateY(24px); opacity:0; } to{ transform:none; opacity:1; } }
+#shareSheetTitle { font-size:13px; font-weight:600; color:var(--gold-hi); letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px; }
+#shareSheetPanel .btn { width:min(100%,380px); min-height:52px; margin:0; }
+#shareSheetPanel #cardBtn { border-color:rgba(201,164,92,.5); color:#f0dcb0; }
 
 /* ---------- Одна таблица, несколько входов (v1.51.0) ---------- */
 .accStatus { color:var(--muted); font-size:13px; text-align:center; line-height:1.5; padding:2px 10px; }
@@ -4518,9 +4586,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.565"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.565"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.565"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.576"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.576"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.576"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -4760,23 +4828,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   </div>
   <div class="setGrp spoiler" id="setGrpGame" role="button" tabindex="0"><span class="setGrpT">Игра и экран</span><span class="setGrpSub" id="setGrpGameSub"></span></div>
   <div class="setPanel hidden" id="panelGame">
-    <!-- v1.284.20 (партия 47): выключатель гироскопа. Стоит ПЕРВЫМ и прямо над «Чувствительностью»
-         намеренно — обе строки про один и тот же руль, и погашенная чувствительность под
-         выключенным тумблером объясняет себя сама, без единого слова подписи. -->
-    <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
-    <!-- 15.09.2026: переехала сюда с главного экрана (см. комментарий у .scrMid выше) — тот же
-         .setRow, что у соседей, hidden по умолчанию, показывается кодом в ui.js (NEEDS_TILT_PERMISSION
-         && !TG_ORIENT), не CSS. Текст — тот же вопрос, что был на кнопке, не Key/Value пара. -->
-    <div class="setRow hidden" id="tiltBtn" role="button" tabindex="0">Разрешить управление наклоном?</div>
-    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
     <div class="setRow" id="setGfxBtn" role="button" tabindex="0"><span class="setK">Графика</span><span class="setV arr">Авто</span></div>
-    <!-- 09.09.2026 «Переназначение клавиш» (владелец, для игроков с ограниченной подвижностью руки):
-         только 4 направления, тап входит в режим «нажмите клавишу», следующее нажатие — новая
-         привязка ВМЕСТО дефолтной пары стрелка+буква для этого направления. Логика в ui.js/input.js. -->
-    <div class="setRow" id="setKeyLeftBtn" role="button" tabindex="0"><span class="setK">Влево</span><span class="setV arr">← / A</span></div>
-    <div class="setRow" id="setKeyRightBtn" role="button" tabindex="0"><span class="setK">Вправо</span><span class="setV arr">→ / D</span></div>
-    <div class="setRow" id="setKeyUpBtn" role="button" tabindex="0"><span class="setK">Вверх</span><span class="setV arr">↑ / W</span></div>
-    <div class="setRow" id="setKeyDownBtn" role="button" tabindex="0"><span class="setK">Вниз</span><span class="setV arr">↓ / S</span></div>
     <div class="setRow" id="setContrastBtn" role="button" tabindex="0"><span class="setK">Высокий контраст</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setColorblindBtn" role="button" tabindex="0"><span class="setK">Для дальтоников</span><span class="setSw" role="switch" aria-checked="false"><i></i></span></div>
     <div class="setRow" id="setTextScaleBtn" role="button" tabindex="0"><span class="setK">Размер текста</span><span class="setV arr">100%</span></div> <!-- 09.09.2026 «Размер текста»: цикл-строка, тот же стиль, что у Чувствительности/Графики -->
@@ -4798,15 +4850,43 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          больше нет что выключать» подтверждена вживую. Своего состояния в Store у неё не
          было — то, что она обещала, уже честно делает ghostAgain/ghostActive() через
          «ЕЩЁ РАЗ?» строкой выше, а не пустое место рядом. -->
-    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setK">ЕЩЁ РАЗ?</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Призрак</span><span class="setHint" id="againHint">твой рекордный полёт летит рядом</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+  </div>
+  <!-- 28.09.2026 (владелец, макет nastroyki-pk-telefon): «Управление» — у каждого устройства своё.
+       ПК: клавиши + «Вернуть клавиши как было». Телефон: гироскоп, чувствительность, калибровка
+       (калибровка переехала сюда из нижней панели). Что видно — решает ui.js (ctrlVisibility):
+       гироскоп — по gyroSensorThere() (датчик реально прислал данные), клавиши — по мыши/клавише. -->
+  <div class="setGrp spoiler" id="setGrpCtrl" role="button" tabindex="0"><span class="setGrpT">Управление</span><span class="setGrpSub" id="setGrpCtrlSub"></span></div>
+  <div class="setPanel hidden" id="panelCtrl">
+    <!-- v1.284.20 (партия 47): выключатель гироскопа. Стоит ПЕРВЫМ и прямо над «Чувствительностью»
+         намеренно — обе строки про один и тот же руль, и погашенная чувствительность под
+         выключенным тумблером объясняет себя сама, без единого слова подписи. -->
+    <div class="setRow" id="setGyroBtn" role="button" tabindex="0"><span class="setK">Гироскоп</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+    <!-- 15.09.2026: переехала сюда с главного экрана (см. комментарий у .scrMid выше) — тот же
+         .setRow, что у соседей, hidden по умолчанию, показывается кодом в ui.js (NEEDS_TILT_PERMISSION
+         && !TG_ORIENT), не CSS. Текст — тот же вопрос, что был на кнопке, не Key/Value пара. -->
+    <div class="setRow hidden" id="tiltBtn" role="button" tabindex="0">Разрешить управление наклоном?</div>
+    <div class="setRow" id="setSensBtn" role="button" tabindex="0"><span class="setK">Чувствительность</span><span class="setV arr">×1</span></div>
+    <div class="setRow" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
+    <!-- 09.09.2026 «Переназначение клавиш» (владелец, для игроков с ограниченной подвижностью руки):
+         только 4 направления, тап входит в режим «нажмите клавишу», следующее нажатие — новая
+         привязка ВМЕСТО дефолтной пары стрелка+буква для этого направления. Логика в ui.js/input.js. -->
+    <div class="setRow" id="setKeyLeftBtn" role="button" tabindex="0"><span class="setK">Влево</span><span class="setV arr">← / A</span></div>
+    <div class="setRow" id="setKeyRightBtn" role="button" tabindex="0"><span class="setK">Вправо</span><span class="setV arr">→ / D</span></div>
+    <div class="setRow" id="setKeyUpBtn" role="button" tabindex="0"><span class="setK">Вверх</span><span class="setV arr">↑ / W</span></div>
+    <div class="setRow" id="setKeyDownBtn" role="button" tabindex="0"><span class="setK">Вниз</span><span class="setV arr">↓ / S</span></div>
+    <div class="setRow solo" id="setKeyResetBtn" role="button" tabindex="0">Вернуть клавиши как было</div>
   </div>
   <div class="setGrp spoiler" id="setGrpProf" role="button" tabindex="0"><span class="setGrpT">Профиль</span><span class="setGrpSub" id="setGrpProfSub"></span></div>
   <div class="setPanel hidden" id="accPanel">
     <div class="setRow solo hidden" id="gyroUnlockBtn" role="button" tabindex="0">Открыть «Полёт без рук»</div>
     <div class="setRow hidden" id="setGyroOffBtn" role="button" tabindex="0"><span class="setK">Полёт без рук</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.106.0 «Штурман по желанию»: замок двусторонний -->
+    <!-- 28.09.2026 (макет nastroyki-pk-telefon): было «Ты в общей таблице как PO RO» над полем с
+         подсказкой «ПИЛОТ», а в заголовке группы — «PORO»: одно имя тремя способами. Теперь две
+         подписанные строки: имя из входа (так видят другие) и позывной (морзянка), каждая про своё. -->
+    <div class="setRow" id="accTableRow"><span class="setKW"><span class="setK" id="accTableK">В общей таблице</span><span class="setHint" id="accTableHint">имя из входа — так тебя видят другие</span></span><span class="setV" id="accTableV"></span></div>
+    <div class="setRow" id="csRow"><span class="setKW"><span class="setK" id="csRowK">Позывной</span><span class="setHint" id="csRowHint"></span></span><input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/></div>
     <div id="accStatus" class="accStatus"></div>
-    <div class="csCap" id="csCap">Позывной — звучит в морзянке и виброэфире</div>
-    <input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/>
     <div id="dcWidget"></div>
     <div id="gWidget"></div>
     <button class="btn ghost small hidden" id="accOutBtn">Выйти</button>
@@ -4825,8 +4905,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          стрелка (.go::after, она и так стоит через position:absolute справа, от solo не
          зависела). Убран solo у обеих — тот же ритм, что у всего остального экрана.
          Макет: macet-02-09-nastroyki-ryad-vyravnen.html. -->
-    <div class="setRow" id="setCalibBtn" role="button" tabindex="0"><span id="setCalibTxt">Калибровка наклона</span><i id="calLamp" class="calLamp" data-state="red" title=""></i></div>
-    <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setK">Помогать экипажу отчётами и статистикой</span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
+    <div class="setRow" id="setBeaconBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Автоотчёты об ошибках</span><span class="setHint" id="setBeaconHint">сами отправляются, если в игре что-то сломалось</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div> <!-- v1.108.0 «Почта неба»: честный выключатель — выкл значит молчание -->
     <div class="setRow go" id="diagBtn" role="button" tabindex="0">Диагностика</div>
   </div>
 </div>
@@ -4846,8 +4925,11 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          мешает лететь и что человек проверяет чаще всего; всё техническое — под «Ещё».
          Две кнопки ручной отправки убраны: «Почта неба» присылает то же самое сама.
          Страж 111. -->
+    <!-- 28.09.2026 (владелец): кнопки «Сообщить о проблеме» здесь нет намеренно — дубль, спрятанный
+         глубоко. Автодиагностика прикладывается в «Поддержке» с главного экрана, в одно касание. -->
     <div class="setPanel">
-      <div id="diagList" style="padding:6px 8px 0"></div>
+      <div class="diagSum" id="diagSum"></div>
+      <div id="diagList" style="padding:0 8px 4px"></div>
     </div>
     <!-- 02.09.2026 (владелец, живое устройство): «Проверка вибрации»/«Записать полёт» и
          текст-справка под «Ещё» — разная природа (жать / читать), одна коробка на двоих
@@ -4855,15 +4937,14 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          спойлера (это не редкость, ей незачем прятаться), макет
          macet-02-09-servisnyy-centr-instrumenty-v2.html. -->
     <div class="setPanel">
-      <div class="diagToolsLbl">Проверки</div>
+      <div class="diagToolsLbl" id="diagProbesLbl">Проверки</div>
       <!-- 30.08.2026 (владелец): разовая проверка цены записи «Кино полёта» на слабом
            телефоне (Samsung A03 Core) — не постоянная функция игрока, техническая кнопка
            для этого теста. Жми, потом сразу лети — следующий взлёт запишется, на посадке
            покажет средний/минимальный FPS. -->
-      <div class="stack" style="padding:0 8px 10px">
-        <button class="btn ghost" id="diagVibroBtn">Проверка виброэфира</button>
-      </div>
-      <div class="statusBar gyroBar" style="margin:0 8px 10px"><span class="metric" id="diagVibroStat"></span></div>
+      <!-- 28.09.2026: результат проверки — подписью в той же строке; прежняя пустая .statusBar под
+           кнопкой держала min-height 32px и оставляла дыру. Строка видна только на телефоне. -->
+      <div class="setRow" id="diagVibroBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Проверка вибрации</span><span class="setHint" id="diagVibroStat"></span></span></div>
       <div class="stack" style="padding:0 8px 12px">
         <!-- 02.09.2026 (владелец): «Скопировать самописец» и «Написать в поддержку» убраны —
              оба ведут туда же, куда уже ведёт «Написать разработчику» с главного экрана
@@ -4949,37 +5030,23 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="equalityBackBtn" aria-label="Назад"><svg class="ic" aria-hidden="true"><use href="#i-back"></use></svg></button>
   <div class="screenTitle" id="equalityTitle">Равноправие</div>
   <div class="scrBody"><div class="setPanel charterBody">
-    <!-- 27.09.2026 Хартия неба v3 (владелец, текст согласован построчно в чате, «добавляй в игру»).
-         Прежний текст v2.1 (48 статей) — в .knowledge/CHARTER.md и в истории git. Острый тон
-         опубликован сознательно раньше плана «после миллиона» — отдельное «да» владельца.
-         Подписи ниже (chSign) не сброшены — решение владельца «оставить как есть». -->
-    <div class="chSub">Официальное уведомление. Прочтение обязательно не является.</div>
-    <p>В детстве у нас не было денег на игры. Сдавали металл и бутылки, играли у друзей и у соседей — и всё равно играли, потому что играть было счастьем.</p>
-    <p>Теперь всего много, а играть стало противно.</p>
-    <h2>§1. О деньгах.</h2>
-    <p>Сначала ты платил за приставку. Её можно было потрогать, отнести другу, продать, когда вырос.</p>
-    <p>Потом тебе предложили платить за шанс выиграть приставку.</p>
-    <p>Потом — за шанс выиграть картинку. Потрогать её нельзя, отнести другу нельзя, продать нельзя. Живёт она на чужом сервере, пока его не выключат.</p>
-    <p>Каждый шаг назывался «новые возможности».</p>
-    <p>Денег стало уходить больше. Игры в них стало меньше.</p>
-    <p>Когда похожую схему назвали NFT, мир возмутился. Скины продавали так же задолго до этого — и никто не заметил.</p>
-    <p>Поэтому здесь одно правило: деньги — за качественный товар. Не за механики, которые залезают тебе в подсознание.</p>
-    <h2>§2. Краткий словарь индустрии</h2>
-    <p class="chArt"><b>Лутбокс</b> — азартная игра для тех, кому азартные игры запрещены по возрасту. В Бельгии с 2018 года так и называется официально.</p>
-    <p class="chArt"><b>Энергия</b> — усталость, которую игра выдаёт тебе бесплатно, чтобы продать её отмену.</p>
-    <p class="chArt"><b>Предложение ограничено</b> — предложение, которое вернётся в пятницу.</p>
-    <p class="chArt"><b>Бесплатно</b> — см. «энергия».</p>
-    <p class="chArt"><b>Боевой пропуск</b> — работа, за которую платишь ты.</p>
-    <h2>§3. Отчёт о прогрессе.</h2>
-    <p>Один хоккейный симулятор выходит каждый год с 1991-го. Тридцать пять лет. Лёд за это время остался тем же самым льдом. Заметно изменилось одно: бесплатные персонажи стали платными. Бесплатным по-прежнему остаётся только лёд — по всей видимости, патент на воду пока не оформлен.</p>
-    <h2>§4. Для сравнения.</h2>
-    <p>Если бы в булочной хлеб продавали в закрытых коробках и батон попадался в трёх случаях из ста, это называлось бы мошенничеством. В игре это называется «сундук».</p>
-    <h2>§5. Врач.</h2>
-    <p>Говорят, в старом Китае врачу платили, пока пациент здоров. Мы решили, что нам тоже выгоднее, чтобы ты был здоров.</p>
-    <h2>§6. Что здесь запрещено навсегда.</h2>
-    <p>Реклама. Покупка победы. Случайное за деньги. Таймеры, которые торопят. Энергия, которую продают обратно.</p>
-    <h2>§7. Заключение.</h2>
-    <p>Спасибо, что прочитали. Можете идти спать. Вы приблизились к науке.</p>
+    <!-- 27.09.2026 Хартия неба, сквозной монолог (владелец, текст согласован по шагам в чате:
+         главная мысль → план без повторов → варианты на каждое место → «делаем в игру»).
+         Одно рассуждение сверху вниз, шутки — ступеньки доказательства (приём Карлина),
+         голоса: Портал (уведомления курсивом), Уитли («Честно: мы тоже…»). Факты проверены:
+         серия NHL с 1991, Hockey Ultimate Team с NHL 11 (2010), Royal Match >6 млрд $, закрытия
+         VR-студий. «Кит» отложен владельцем «на другой раз». Подписи (chSign) не сброшены. -->
+    <div class="chSub">Официальное уведомление. Прочтение не является обязательным. Понимание — тем более.</div>
+    <p>Если в вашем мире шанс до сих пор продаётся за деньги — сообщите об этом взрослому. Если взрослый — это вы, да поможет вам рассудок.</p>
+    <p>Игры придумали, чтобы в них было хорошо. За это и платили: сделал хорошую игру — её купили. Сделал плохую — не купили. Честная сделка, как с хлебом.</p>
+    <p>Потом кто-то сел и посчитал. Если человеку хорошо, он заплатит один раз. А если его удержать — будет платить каждый день.<br>С этого дня игры стали делать для второго.</p>
+    <p>Сначала перестали продавать вещь. Стали продавать шанс на вещь — так выгоднее: вещь покупают один раз, а шанс — пока не повезёт.<br>Потом перестали продавать даже шанс на вещь. Стали продавать шанс на картинку вещи. Её не нужно делать, хранить и доставлять. Идеальный товар: его не существует.</p>
+    <p>Работает ли это? Один хоккейный симулятор выходит каждый год с 1991-го. Последние части сами обзорщики называют обновлением составов. Зато с 2010 года хоккеистов там продают в запечатанных пакетах — какой попадётся.<br>Хоккей остался хоккеем. Хоккеисты стали лотереей.</p>
+    <p>Но честные названия плохо продаются. Поэтому всё переименовали.<br>Усталость, которую тебе выдают бесплатно, чтобы продать её отмену, назвали <b>энергией</b>.<br>Предложение, которое вернётся в пятницу, назвали <b>ограниченным</b>.<br>Работу, за которую платишь ты, назвали <b>боевым пропуском</b>.<br>Зарплату за то, что пришёл на работу, назвали <b>ежедневной наградой</b>.<br>Ничего не поменялось. Просто стало звучать как игра.</p>
+    <p>Индустрия попробовала обе дороги и подвела итог.<br><i>Отчёт отдела прогресса.</i> Виртуальная реальность: студии закрываются. «Три в ряд»: шесть миллиардов долларов с одной игры. Вывод отдела: прогресс нерентабелен. Отдел прогресса закрыт.<br><i>Внимание: некоторые игры спроектированы так, чтобы вы не могли остановиться. Если вам удалось остановиться, пожалуйста, сообщите им об ошибке.</i></p>
+    <p>Поэтому правило здесь одно.<br>Хорошая игра зарабатывает, когда тебе с ней хорошо. Плохая — когда тебе без неё плохо.<br>Говорят, в старом Китае врачу платили, пока пациент здоров. Нам тоже выгоднее, чтобы ты был здоров.</p>
+    <p>Честно: мы тоже ведём тебя за руку. Только к небу, а не к кошельку. Не верь на слово — код игры открыт.<br>И деньги нам тоже нужны: небо, знаете ли, кто-то оплачивает. Поэтому есть кнопка «Спасибо» — в полёте она не даёт ничего. Совсем ничего. Мы проверили. И скоро будут скины за доллар — только для красоты.<br>Чего здесь не будет никогда: рекламы, покупки победы, случайного за деньги и таймеров, которые торопят.</p>
+    <p>Лучшие игры живут десятилетиями без единого крючка. Мы собираемся проверить, работает ли это до сих пор.<br>Спасибо, что прочитали. Можете идти спать. Вы приблизились к науке.</p>
     <!-- 15.09.2026 (владелец, макет ravnopravie-podpis-macet.html, «отлично, да») — подпись под
          Хартией: общий счётчик (не личная отметка — владелец выбрал явно, «сложнее»), backend
          cosmogram-charter (charter_signatures, player_id PK — один раз навсегда, ON CONFLICT DO
@@ -5709,11 +5776,20 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <div id="goldChip" class="hidden">★ Знак дня</div><!-- v1.100.2 «Золотая звезда дня»: снич пойман — честь, не очки -->
   <div id="dayStats" class="hidden"></div><!-- v1.100.2: «сегодня её взяли N из M» -->
   <div id="duelRes"></div>
-  <div id="webJoin" class="hidden">
+  <!-- 28.09.2026 «Итоги — что дальше» (вариант Б, владелец: «Заменяем»): карточка места в мире
+       (только Score Attack, вошедшему) — #3, сосед сверху и сколько до него, кнопка призрака на
+       него; №1 — «Ты первый в мире» и отрыв от второго. Гостю на том же месте — приглашение
+       войти (#webJoin ниже) с «Твои N — это M-е место». Заполняет overRankFill()/overJoinWouldBe(). -->
+  <div id="overRank" class="overCard hidden"></div>
+  <div id="webJoin" class="overCard hidden">
+    <div id="webJoinTitle"></div>
+    <div id="webJoinWould" class="hidden"></div>
     <div id="webJoinTxt"></div>
     <div id="dcJoinWidget"></div>
     <div id="gJoinWidget"></div>
   </div>
+  <!-- 28.09.2026: «До Линии Кармана» переехала из подробностей на сам экран — полоской (вариант Б). -->
+  <div id="overLoc" class="hidden"><div class="overLocRow"><span id="toLoc"></span><span id="toLocLeft"></span></div><div class="overLocBar"><i id="toLocFill"></i></div></div>
   <button class="btn pri" id="retryBtn">Ещё раз</button>
   <!-- 12.09.2026 «Оффер гироскопа переехал с середины полёта»: владелец — мир не должен сам
        замирать посреди игры («резко и случайно»). Раньше (v1.16.0-v1.284.20) gyroOfferDue()
@@ -5734,25 +5810,32 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
        видимая кнопка тройки (Вызов/Клип условные), но раньше стояла в середине и визуально
        прыгала по месту, когда соседи то появлялись, то нет. Теперь первая — стабильный якорь,
        не зависит от того, что показано рядом. Макет: macet-01-09-tihaya-troyka.html. -->
-  <div id="overQuiet">
-    <button class="btn ghost" id="cardBtn">Карточка</button>
+  <!-- 28.09.2026 (вариант Б): под «Ещё раз» — ровно три кнопки: Вызов, Поделиться, Меню.
+       Карточка/Клип/«В статус» — внутри панели «Поделиться» (#shareSheet ниже), со своей
+       прежней логикой показа (Клип и статус — только когда доступны). -->
+  <div id="overRow">
     <button class="btn ghost hidden" id="duelBtn">Вызов</button>
-    <!-- 31.08.2026 «Момент полёта»: видна только если запись реально поймала момент в ЭТОМ
-         полёте (cinemaClipRefresh, ui.js) — скрывается заново на каждом взлёте, не донашивает
-         клип с прошлой посадки. -->
-    <button class="btn ghost hidden" id="cinemaClipBtn">Клип</button>
+    <button class="btn ghost" id="shareBtn">Поделиться</button>
+    <button class="btn ghost small" id="menuBtn">Меню</button>
   </div>
-  <button class="btn ghost small hidden" id="statusBtn">✨ В статус</button><!-- v1.98.0 «Звезда-статус»: рекорд + Premium + 8.0 — искра в статус на 3 дня -->
   <button class="btn ghost small spoiler" id="overDetailsBtn">Подробности полёта</button>
   <div id="overMore" class="hidden">
     <div id="toRecord"></div>
-    <div id="toLoc"></div>
-    <div id="myRank"></div>
     <div id="runHead"></div>
     <div id="runPass"></div>
     <div id="stats"></div>
   </div>
-  <button class="btn ghost small" id="menuBtn">Меню</button>
+  <div id="shareSheet" class="hidden">
+  <div id="shareSheetPanel">
+    <div id="shareSheetTitle">Поделиться</div>
+    <button class="btn ghost" id="cardBtn">Карточка</button>
+    <!-- 31.08.2026 «Момент полёта»: видна только если запись реально поймала момент в ЭТОМ
+         полёте (cinemaClipRefresh, ui.js) — скрывается заново на каждом взлёте, не донашивает
+         клип с прошлой посадки. -->
+    <button class="btn ghost hidden" id="cinemaClipBtn">Клип</button>
+    <button class="btn ghost hidden" id="statusBtn">✨ В статус</button><!-- v1.98.0 «Звезда-статус»: рекорд + Premium + 8.0 — искра в статус на 3 дня -->
+  </div>
+  </div>
 </div>
 
 <!-- КАРТОЧКА РЕЗУЛЬТАТА (v1.73.0): красивая картинка для скриншота — Telegram не даёт
@@ -5844,26 +5927,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.565" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.565"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.565"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.565"></script>
-<script defer src="js/game.js?v=1.478.565" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.565"></script>
-<script defer src="js/sync.js?v=1.478.565"></script>
-<script defer src="js/render.js?v=1.478.565"></script>
-<script defer src="js/planetarium.js?v=1.478.565"></script>
-<script defer src="js/goldstar.js?v=1.478.565"></script>
-<script defer src="js/finish.js?v=1.478.565"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.565"></script>
-<script defer src="js/gyro.js?v=1.478.565"></script>
-<script defer src="js/forge.js?v=1.478.565"></script>
-<script defer src="js/partitura.js?v=1.478.565"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.565"></script>
-<script defer src="js/card.js?v=1.478.565"></script>
-<script defer src="js/star.js?v=1.478.565"></script>
-<script defer src="js/cinema.js?v=1.478.565"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.565"></script>
+<script defer src="js/core.js?v=1.478.576" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.576"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.576"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.576"></script>
+<script defer src="js/game.js?v=1.478.576" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.576"></script>
+<script defer src="js/sync.js?v=1.478.576"></script>
+<script defer src="js/render.js?v=1.478.576"></script>
+<script defer src="js/planetarium.js?v=1.478.576"></script>
+<script defer src="js/goldstar.js?v=1.478.576"></script>
+<script defer src="js/finish.js?v=1.478.576"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.576"></script>
+<script defer src="js/gyro.js?v=1.478.576"></script>
+<script defer src="js/forge.js?v=1.478.576"></script>
+<script defer src="js/partitura.js?v=1.478.576"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.576"></script>
+<script defer src="js/card.js?v=1.478.576"></script>
+<script defer src="js/star.js?v=1.478.576"></script>
+<script defer src="js/cinema.js?v=1.478.576"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.576"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
