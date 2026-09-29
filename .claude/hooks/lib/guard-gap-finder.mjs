@@ -58,6 +58,15 @@ const HOOKS_DIR = path.join(__dirname, '..');
 const PROJECT_ROOT = path.join(HOOKS_DIR, '..', '..');
 const SETTINGS_PATH = path.join(PROJECT_ROOT, '.claude', 'settings.json');
 const DRAFTS_DIR = path.join(HOOKS_DIR, 'drafts');
+// 29.09.2026 (владелец: «проверяй дальше» — нашлось, что crew держит ОТДЕЛЬНУЮ копию
+// части этих же хуков, и она отстала: 3 хука там всё ещё были на "ask" уже ПОСЛЕ того,
+// как app-версии починены). «app+crew — одна игра» (уже принцип whole-game-health-check.sh) —
+// разделы Б/Г/Д ниже теперь проверяют ОБА репозитория одним прогоном, не только тот, где
+// живёт сам скрипт. Если crew не найден рядом (другая машина/раскладка) — секции для него
+// молча пропускаются, не падают.
+const CREW_DIR = path.join(PROJECT_ROOT, '..', 'cosmogram-crew');
+const CREW_HOOKS_DIR = path.join(CREW_DIR, '.claude', 'hooks');
+const CREW_SETTINGS_PATH = path.join(CREW_DIR, '.claude', 'settings.json');
 
 const UNCOVERED_TRAIL = 'uncovered';
 const UNCOVERED_THRESHOLD = 3; // нижняя граница «правила 3-5», владелец выбрал не менять
@@ -193,8 +202,8 @@ function writeDrafts(candidates) {
 
 // ---------- B) не подключено / битая ссылка ----------
 
-function checkWiring() {
-  const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
+function checkWiring(hooksDir, settingsPath) {
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
   const referenced = new Set();
   function walk(hooks) {
     for (const group of hooks || []) {
@@ -208,19 +217,19 @@ function checkWiring() {
   for (const evt of Object.keys(settings.hooks || {})) walk(settings.hooks[evt]);
 
   const allFiles = fs
-    .readdirSync(HOOKS_DIR)
+    .readdirSync(hooksDir)
     .filter((f) => (f.endsWith('.mjs') || f.endsWith('.sh')) && !f.startsWith('.'));
 
   const orphans = [];
   for (const f of allFiles) {
     const found = [...referenced].some((r) => r.endsWith(f));
-    if (!found) orphans.push('.claude/hooks/' + f);
+    if (!found) orphans.push(f);
   }
 
   const broken = [];
   for (const ref of referenced) {
     const rel = ref.replace(/^\.claude\/hooks\//, '');
-    const abs = path.join(HOOKS_DIR, rel);
+    const abs = path.join(hooksDir, rel);
     if (!fs.existsSync(abs)) broken.push(ref);
   }
 
@@ -274,11 +283,11 @@ function checkHookActivity() {
 // с existsSync/readFileSync/writeFileSync/readdirSync/appendFileSync) — то есть оба условия
 // разом, не одно из двух (bare pwd сам по себе безопасен, если используется только как
 // node-entry-script argv, как в commit-tracker.sh — проверено, не флагуется).
-function checkWindowsPathRisk() {
-  const shFiles = fs.readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.sh'));
+function checkWindowsPathRisk(hooksDir) {
+  const shFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.sh'));
   const suspicious = [];
   for (const f of shFiles) {
-    const filePath = path.join(HOOKS_DIR, f);
+    const filePath = path.join(hooksDir, f);
     // 29.09.2026: первая версия ловила слово "pwd" в объясняющих КОММЕНТАРИЯХ про сам баг
     // (ложное срабатывание на уже починенном repeat-edit-tracker.sh) — убрать строки-комментарии
     // (начинаются с # после пробелов) перед проверкой, смотреть только на реальный код.
@@ -286,7 +295,7 @@ function checkWindowsPathRisk() {
     const withoutSafePwd = codeOnly.replace(/pwd\s+-W/g, '');
     const hasBarePwd = /\bpwd\b/.test(withoutSafePwd);
     const hasFsCall = /(existsSync|readFileSync|writeFileSync|readdirSync|appendFileSync)\s*\(/.test(codeOnly);
-    if (hasBarePwd && hasFsCall) suspicious.push('.claude/hooks/' + f);
+    if (hasBarePwd && hasFsCall) suspicious.push(f);
   }
   return suspicious;
 }
@@ -302,12 +311,12 @@ function checkWindowsPathRisk() {
 // исследованием этого же вечера (McMillan/Huang et al.: текст не удерживается надёжно).
 // Это — код, не текст: при каждом scan автоматически находит ЛЮБОЙ .sh-хук, который всё
 // ещё использует ask, независимо от того, помню я урок в моменте или нет.
-function checkAskUsage() {
-  const shFiles = fs.readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.sh'));
+function checkAskUsage(hooksDir) {
+  const shFiles = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.sh'));
   const found = [];
   for (const f of shFiles) {
-    const codeOnly = fs.readFileSync(path.join(HOOKS_DIR, f), 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
-    if (/permissionDecision[\\"']*\s*:\s*[\\"']*ask/.test(codeOnly)) found.push('.claude/hooks/' + f);
+    const codeOnly = fs.readFileSync(path.join(hooksDir, f), 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+    if (/permissionDecision[\\"']*\s*:\s*[\\"']*ask/.test(codeOnly)) found.push(f);
   }
   return found;
 }
@@ -334,20 +343,33 @@ function main() {
     }
   }
 
+  // 29.09.2026: обе стороны игры разом, не только та, где физически лежит этот скрипт —
+  // найдено живьём, что crew копия хуков отстаёт от app'ной незаметно, если не сверять обе.
+  const repos = [{ label: 'app', hooksDir: HOOKS_DIR, settingsPath: SETTINGS_PATH }];
+  if (fs.existsSync(CREW_HOOKS_DIR) && fs.existsSync(CREW_SETTINGS_PATH)) {
+    repos.push({ label: 'crew', hooksDir: CREW_HOOKS_DIR, settingsPath: CREW_SETTINGS_PATH });
+  } else {
+    repos.push({ label: 'crew', missing: true });
+  }
+
   console.log('');
   console.log('════════ Б) не подключено / битая ссылка (settings.json ↔ файлы на диске) ════════');
-  const { orphans, broken, referencedCount, fileCount } = checkWiring();
-  console.log(`Файлов в .claude/hooks (и /lib): ${fileCount}. Упомянуто в settings.json: ${referencedCount}.`);
-  const realOrphans = orphans.filter((o) => !KNOWN_MANUAL.has(o));
-  if (realOrphans.length) {
-    for (const o of realOrphans) console.log(`⚠ существует на диске, НЕ упомянут в settings.json: ${o}`);
-  } else {
-    console.log('Сирот нет (кроме заведомо ручных файлов — log-claim.mjs и т.п., это не баг).');
-  }
-  if (broken.length) {
-    for (const b of broken) console.log(`⚠ упомянут в settings.json, файла на диске НЕТ: ${b}`);
-  } else {
-    console.log('Битых ссылок нет.');
+  for (const repo of repos) {
+    if (repo.missing) { console.log(`  [${repo.label}] не найден рядом — пропущено.`); continue; }
+    const { orphans, broken, referencedCount, fileCount } = checkWiring(repo.hooksDir, repo.settingsPath);
+    console.log(`  [${repo.label}] файлов: ${fileCount}. Упомянуто в settings.json: ${referencedCount}.`);
+    const knownManualBase = new Set([...KNOWN_MANUAL].map((k) => k.replace(/^\.claude\/hooks\//, '')));
+    const realOrphans = orphans.filter((o) => !knownManualBase.has(o));
+    if (realOrphans.length) {
+      for (const o of realOrphans) console.log(`  ⚠ [${repo.label}] существует на диске, НЕ упомянут в settings.json: ${o}`);
+    } else {
+      console.log(`  [${repo.label}] сирот нет (кроме заведомо ручных файлов).`);
+    }
+    if (broken.length) {
+      for (const b of broken) console.log(`  ⚠ [${repo.label}] упомянут в settings.json, файла на диске НЕТ: ${b}`);
+    } else {
+      console.log(`  [${repo.label}] битых ссылок нет.`);
+    }
   }
 
   console.log('');
@@ -371,22 +393,28 @@ function main() {
 
   console.log('');
   console.log('════════ Г) риск POSIX-пути → node fs (pwd без -W + fs-вызов в одном файле) ════════');
-  const pathRisks = checkWindowsPathRisk();
-  if (pathRisks.length) {
-    for (const p of pathRisks) console.log(`  ⚠ ${p} — есть "голый" pwd И fs-вызов в одном файле, проверить руками (репозиторий класса: repeat-edit-tracker.sh, найден 29.09.2026)`);
-  } else {
-    console.log('  Ни одного файла с обоими признаками разом — риск не обнаружен эвристикой.');
+  for (const repo of repos) {
+    if (repo.missing) { console.log(`  [${repo.label}] не найден рядом — пропущено.`); continue; }
+    const pathRisks = checkWindowsPathRisk(repo.hooksDir);
+    if (pathRisks.length) {
+      for (const p of pathRisks) console.log(`  ⚠ [${repo.label}] ${p} — есть "голый" pwd И fs-вызов в одном файле, проверить руками`);
+    } else {
+      console.log(`  [${repo.label}] риск не обнаружен эвристикой.`);
+    }
   }
   console.log('  (эвристика, не доказательство ни в ту, ни в другую сторону — снимает часть ручной работы,');
   console.log('   не заменяет live-тест нового хука перед доверием к нему.)');
 
   console.log('');
   console.log('════════ Д) permissionDecision:"ask" — документированно ненадёжен здесь (29.09.2026) ════════');
-  const askHooks = checkAskUsage();
-  if (askHooks.length) {
-    for (const h of askHooks) console.log(`  ⚠ ${h} — всё ещё использует "ask". 6 документированных случаев (guard-full-suite-warn.sh ×5, protect-core.sh) показывают, что окно разрешения владельцу не приходит. Перевести на "deny", если ставки реальные.`);
-  } else {
-    console.log('  Ни один .sh-хук не использует "ask" — либо уже переведены на deny, либо ask ни разу не применялся.');
+  for (const repo of repos) {
+    if (repo.missing) { console.log(`  [${repo.label}] не найден рядом — пропущено.`); continue; }
+    const askHooks = checkAskUsage(repo.hooksDir);
+    if (askHooks.length) {
+      for (const h of askHooks) console.log(`  ⚠ [${repo.label}] ${h} — всё ещё использует "ask". Окно разрешения владельцу документированно не приходит здесь. Перевести на "deny", если ставки реальные.`);
+    } else {
+      console.log(`  [${repo.label}] ни один .sh-хук не использует "ask".`);
+    }
   }
 
   console.log('');
