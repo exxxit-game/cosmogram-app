@@ -36,6 +36,11 @@ let readTail;
 }
 
 const DEFAULT_MODE = 'warn';
+// 29.09.2026 (владелец: «проверяй хуки») — этот файл сам себя называет «по образцу
+// claim-check-hook.mjs», но защиту от гонки при сбросе транскрипта на диск
+// (STALE_THRESHOLD_S) унаследовал не полностью — нашлось при построчной сверке
+// с оригиналом, не выдумано. Та же константа, что уже в claim-check-hook.mjs.
+const STALE_THRESHOLD_S = 30;
 
 // Узкий список — по образцу claim-check: лучше пропустить редкий случай, чем
 // шуметь на обычной прозе. \b не годится для кириллицы в JS-regex (основан на
@@ -84,6 +89,7 @@ function readLastAssistantMessage(transcriptPath) {
   } catch {
     return '';
   }
+  const nowTs = Date.now() / 1000;
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -94,6 +100,11 @@ function readLastAssistantMessage(transcriptPath) {
       continue;
     }
     if (entry.type !== 'assistant') continue;
+    const tsStr = entry.timestamp;
+    if (tsStr) {
+      const ts = new Date(tsStr).getTime() / 1000;
+      if (!Number.isNaN(ts) && nowTs - ts > STALE_THRESHOLD_S) return ''; // устаревший ход
+    }
     const content = entry.message && entry.message.content;
     if (typeof content === 'string') return content;
     if (Array.isArray(content)) {
