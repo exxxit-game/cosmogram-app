@@ -30,6 +30,17 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 29.09.2026 (владелец: «покрыть все непокрытые моменты») — этот хук единственный из пяти
+// Stop-хуков ни разу не писал в signal-trail при срабатывании (excuse-words/ask-then-act/
+// claim-check уже это делают) — значит его реальная частота срабатывания невидима для
+// guard-gap-finder.mjs и периодической проверки «изменилось ли поведение», не только
+// технически ли хук существует. Тот же приём, что у соседей: fail-safe, если импорт не удался.
+let recordSignal = () => {};
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+}
 
 function isToolResultUserEntry(entry) {
   if (entry.type !== 'user') return false;
@@ -96,6 +107,8 @@ function main() {
 
   const violation = analyze(hookData.transcript_path);
   if (!violation) emitOk();
+
+  try { recordSignal('evidence-anchoring', 3, violation.tool); } catch { /* см. комментарий у импорта выше */ }
 
   emitWarn(
     `⚠️  evidence-anchoring — владелец только что прислал изображение(я) (доказательство ` +

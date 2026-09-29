@@ -237,6 +237,32 @@ const KNOWN_MANUAL = new Set([
   '.claude/hooks/lib/check-guard-mjs-invocation.mjs',
 ]);
 
+// ---------- В) активность хуков — периодическая проверка "изменилось ли поведение" ----------
+// 29.09.2026 (владелец: «покрыть все непокрытые моменты» + CLAUDE.md «раз в
+// memory-консолидацию проверять не сработал ли хук технически, а изменилось ли реальное
+// поведение», WHO-checklist Ontario-провал — без живой проверки скатывается в галочку).
+// Список известных категорий синхронизирован вручную с recordSignal-вызовами в hooks/*.mjs —
+// если добавляешь новый recordSignal с новой категорией, добавь её и сюда.
+const KNOWN_HOOK_CATEGORIES = [
+  'excuse-words', 'ask-then-act', 'claim-check', 'evidence-anchoring',
+  'device-claim', 'shared-constant', 'geometry-measure',
+];
+const ACTIVITY_WINDOW_DAYS = 30;
+
+function checkHookActivity() {
+  const entries = readEntries('default');
+  const now = Date.now();
+  const windowMs = ACTIVITY_WINDOW_DAYS * 24 * 3_600_000;
+  const rows = [];
+  for (const category of KNOWN_HOOK_CATEGORIES) {
+    const forCat = entries.filter((e) => e.category === category);
+    const recent = forCat.filter((e) => now - e.ts <= windowMs);
+    const lastTs = forCat.length ? Math.max(...forCat.map((e) => e.ts)) : null;
+    rows.push({ category, totalEver: forCat.length, recentCount: recent.length, lastTs });
+  }
+  return rows;
+}
+
 function main() {
   const cmd = process.argv[2];
   if (cmd !== 'scan') {
@@ -274,6 +300,25 @@ function main() {
   } else {
     console.log('Битых ссылок нет.');
   }
+
+  console.log('');
+  console.log(`════════ В) активность хуков (${ACTIVITY_WINDOW_DAYS} дней, signal-trail trail=default) ════════`);
+  const activity = checkHookActivity();
+  const neverFired = activity.filter((r) => r.totalEver === 0);
+  const silentRecently = activity.filter((r) => r.totalEver > 0 && r.recentCount === 0);
+  const active = activity.filter((r) => r.recentCount > 0).sort((a, b) => b.recentCount - a.recentCount);
+  for (const r of active) {
+    const lastDate = new Date(r.lastTs).toISOString().slice(0, 10);
+    console.log(`  ${r.category}: ${r.recentCount} раз(а) за ${ACTIVITY_WINDOW_DAYS} дней (последний раз ${lastDate}, всего за всё время ${r.totalEver})`);
+  }
+  if (silentRecently.length) {
+    console.log(`  Молчат последние ${ACTIVITY_WINDOW_DAYS} дней (срабатывали раньше): ${silentRecently.map((r) => r.category).join(', ')}`);
+  }
+  if (neverFired.length) {
+    console.log(`  ⚠ Ни разу не сработали за всё время (проверить, реально ли достижимы, или правда никогда не было повода): ${neverFired.map((r) => r.category).join(', ')}`);
+  }
+  console.log('  (тишина сама по себе не значит "сломан" — может значить "нарушений правда не было";');
+  console.log('   это сырые данные для решения при memory-консолидации, не готовый вердикт.)');
 
   console.log('');
   console.log('════════ конец отчёта — ничего не записано в settings.json, регистрация всегда отдельным шагом ════════');

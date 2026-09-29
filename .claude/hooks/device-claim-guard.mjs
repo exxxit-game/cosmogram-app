@@ -27,6 +27,14 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 29.09.2026 (владелец: «покрыть все непокрытые моменты») — вместе с evidence-anchoring-guard
+// был единственным из пяти Stop-хуков без записи в signal-trail при срабатывании.
+let recordSignal = () => {};
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+}
 
 const DEFAULT_MODE = 'warn';
 const WINDOW_MIN = 30;
@@ -185,6 +193,8 @@ function main() {
     `«Похоже по коду» — это гипотеза, не находка (feedback_rm_nenadezhen_webview_25_09).\n` +
     `Подтвердить живым вызовом или переформулировать заявление как гипотезу.\n\n` +
     `Отключить на раз: DEVICE_CLAIM_ENFORCE_MODE=off`;
+
+  try { recordSignal('device-claim', mode === 'block' ? 4 : 3, 'device claim without recent tool call'); } catch { /* см. комментарий у импорта выше */ }
 
   const mode2 = mode;
   if (mode2 === 'warn') {

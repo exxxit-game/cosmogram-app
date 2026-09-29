@@ -16,6 +16,18 @@
  * контексте) — это подсказка себе самому в момент правки, не отказ.
  */
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// 29.09.2026 (владелец: «покрыть все непокрытые моменты») — этот хук и
+// geometry-measure-guard.mjs были последними двумя из всех warn-хуков без записи в
+// signal-trail при срабатывании (найдено сверкой всех .mjs-хуков разом, не по одному).
+let recordSignal = () => {};
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+}
 
 const DECL_RE = /\b(?:const|let|var)\s+([A-Za-z_][A-Za-z0-9_]{2,})\s*=/g;
 
@@ -94,6 +106,8 @@ function main() {
     process.stdout.write('{"continue": true, "suppressOutput": true}\n');
     return;
   }
+
+  try { recordSignal('shared-constant', 2, flagged.map((f) => f.name).join(',')); } catch { /* см. комментарий у импорта выше */ }
 
   const bullets = flagged.map((f) => `  - ${f.name}: встречается ${f.count} раз(а) в этом файле`).join('\n');
   const msg =

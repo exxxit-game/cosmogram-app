@@ -33,6 +33,14 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 29.09.2026 (владелец: «покрыть все непокрытые моменты») — вместе с shared-constant-guard
+// был одним из двух оставшихся warn-хуков без записи в signal-trail при срабатывании.
+let recordSignal = () => {};
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
+  const { recordSignal: rs } = await import(pathToFileURL(modPath).href);
+  recordSignal = rs;
+}
 
 const WINDOW_MIN = 20;
 
@@ -159,6 +167,8 @@ function main() {
     process.stdout.write('{"continue": true, "suppressOutput": true}\n');
     return;
   }
+
+  try { recordSignal('geometry-measure', 2, changedProps.join(',')); } catch { /* см. комментарий у импорта выше */ }
 
   const msg =
     `⚠️  geometry-measure-guard — меняется число позиционирования (${changedProps.join(', ')})\n` +
