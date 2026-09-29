@@ -34,13 +34,19 @@ file=$(printf '%s' "$out" | sed -n '1p')
 tool=$(printf '%s' "$out" | sed -n '2p')
 newStringB64=$(printf '%s' "$out" | sed -n '3p')
 contentB64=$(printf '%s' "$out" | sed -n '4p')
+# 29.09.2026 (владелец: «проверяй хуки», найдено тем же приёмом, что уже вскрыл
+# такую же дыру в protect-core.sh): точное "Edit"/"Write" молча пропускало бы
+# любой другой инструмент с похожим именем (MultiEdit — в этой среде сейчас нет,
+# ToolSearch подтвердил, но матчер settings.json тоже точный, не подстрока — если
+# такой инструмент появится позже, хук замолчит так же тихо, как раньше без jq).
+tool_lower="${tool,,}"
 
 case "$file" in
   */MEMORY.md|MEMORY.md)
     payload=""
-    if [[ "$tool" == "Edit" ]]; then
+    if [[ "$tool_lower" == *edit* ]]; then
       payload=$(printf '%s' "$newStringB64" | base64 -d 2>/dev/null)
-    elif [[ "$tool" == "Write" ]]; then
+    elif [[ "$tool_lower" == "write" ]]; then
       payload=$(printf '%s' "$contentB64" | base64 -d 2>/dev/null)
     fi
     if [[ -n "$payload" ]]; then
@@ -65,9 +71,9 @@ case "$file" in
     ;;
   */CLAUDE.md|CLAUDE.md)
     payload=""
-    if [[ "$tool" == "Edit" ]]; then
+    if [[ "$tool_lower" == *edit* ]]; then
       payload=$(printf '%s' "$newStringB64" | base64 -d 2>/dev/null)
-    elif [[ "$tool" == "Write" ]]; then
+    elif [[ "$tool_lower" == "write" ]]; then
       payload=$(printf '%s' "$contentB64" | base64 -d 2>/dev/null)
     fi
     if [[ -n "$payload" ]]; then
