@@ -34,6 +34,18 @@ try {
   recordSignal = rs;
 } catch { /* модуль недоступен — хук продолжает работать без общего следа */ }
 
+// 29.09.2026 (владелец: «почини себя везде, где только можно»): транскрипты с картинками
+// легко переваливают за лимит V8-строки (~512МБ), readFileSync на весь файл падал с
+// ERR_STRING_TOO_LONG, try/catch это тихо превращал в «нет claim'а», хотя файл просто не
+// прочитался — этот хук, САМЫЙ важный (единственная проверка «готово» без пустых слов),
+// был нерабочим на длинных сессиях столько же, сколько и остальные пять. Нужен только
+// хвост (последнее сообщение ассистента), не файл целиком.
+let readTail;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
+  ({ readTail } = await import(pathToFileURL(modPath).href));
+}
+
 const CLAIM_CHECKS_LOG = path.resolve(
   process.env.CLAIM_CHECKS_LOG_PATH ||
     path.join(os.homedir(), '.claude', 'state', 'claim_checks', 'log.jsonl')
@@ -139,7 +151,7 @@ function readLastAssistantMessage(transcriptPath) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
   let lines;
   try {
-    lines = fs.readFileSync(transcriptPath, 'utf8').split('\n');
+    lines = readTail(transcriptPath).split('\n');
   } catch {
     return '';
   }

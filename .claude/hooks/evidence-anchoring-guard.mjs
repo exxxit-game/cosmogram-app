@@ -17,31 +17,18 @@
  * Режимы (EVIDENCE_ANCHOR_ENFORCE_MODE): warn (по умолчанию) | off.
  */
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const DEFAULT_MODE = 'warn';
 const STATE_CHANGING_TOOL_RE = /^(Edit|MultiEdit|Write|NotebookEdit|Bash)$/i;
-// 27.09.2026: транскрипты с картинками (base64) легко переваливают за лимит
-// V8-строки (readFileSync на весь файл падает с ERR_STRING_TOO_LONG) — подтверждено
-// на этой же сессии, файл >512МБ. Хвоста в TAIL_BYTES достаточно: нужно только
-// последнее настоящее user-сообщение и текущий ход, не вся история с начала.
-const TAIL_BYTES = 24 * 1024 * 1024;
-function readTail(filePath) {
-  const fd = fs.openSync(filePath, 'r');
-  try {
-    const size = fs.fstatSync(fd).size;
-    const start = Math.max(0, size - TAIL_BYTES);
-    const len = size - start;
-    const buf = Buffer.alloc(len);
-    fs.readSync(fd, buf, 0, len, start);
-    const text = buf.toString('utf8');
-    if (start === 0) return text; // прочитан весь файл — первая строка цела, не обрубать
-    // хвост из середины файла — первая строка почти наверняка обрублена посередине,
-    // отбрасываем её, остальные строки парсим как обычно.
-    const nl = text.indexOf('\n');
-    return nl === -1 ? '' : text.slice(nl + 1);
-  } finally {
-    fs.closeSync(fd);
-  }
+// 29.09.2026: было своей копией функции здесь — вынесено в lib/read-transcript-tail.mjs,
+// после того как тот же баг нашёлся ЕЩЁ в четырёх хуках отдельно от этого. Один модуль,
+// не шесть копий.
+let readTail;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
+  ({ readTail } = await import(pathToFileURL(modPath).href));
 }
 
 function isToolResultUserEntry(entry) {

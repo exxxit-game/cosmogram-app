@@ -26,6 +26,15 @@ try {
   recordSignal = rs;
 } catch { /* модуль недоступен — хук продолжает работать без общего следа */ }
 
+// 29.09.2026 (владелец: «почини себя везде, где только можно») — тот же
+// ERR_STRING_TOO_LONG-баг, что и в claim-check-hook/ask-then-act-guard/
+// evidence-anchoring-guard/device-claim-guard, был и здесь. Общий модуль.
+let readTail;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
+  ({ readTail } = await import(pathToFileURL(modPath).href));
+}
+
 const DEFAULT_MODE = 'warn';
 
 // Узкий список — по образцу claim-check: лучше пропустить редкий случай, чем
@@ -71,7 +80,7 @@ function readLastAssistantMessage(transcriptPath) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
   let lines;
   try {
-    lines = fs.readFileSync(transcriptPath, 'utf8').split('\n');
+    lines = readTail(transcriptPath).split('\n');
   } catch {
     return '';
   }

@@ -23,6 +23,16 @@
  * Режим: GEOMETRY_MEASURE_GUARD_MODE=off отключает.
  */
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// 29.09.2026 (владелец: «почини себя везде, где только можно») — тот же
+// ERR_STRING_TOO_LONG-баг, что и в остальных пяти хуках. Общий модуль.
+let readTail;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
+  ({ readTail } = await import(pathToFileURL(modPath).href));
+}
 
 const WINDOW_MIN = 20;
 
@@ -70,7 +80,7 @@ function hasRecentMeasurement(transcriptPath, windowMin) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
   let lines;
   try {
-    lines = fs.readFileSync(transcriptPath, 'utf8').split('\n');
+    lines = readTail(transcriptPath).split('\n');
   } catch {
     return false;
   }

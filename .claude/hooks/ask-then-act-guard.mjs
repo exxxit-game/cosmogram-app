@@ -24,27 +24,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// 27.09.2026: транскрипты с картинками (base64) легко переваливают за лимит V8-строки —
-// readFileSync на весь файл падает с ERR_STRING_TOO_LONG, try/catch ниже это ловил и МОЛЧА
-// считал «нарушений нет», хотя на самом деле файл просто не прочитался. Подтверждено на
-// реальной сессии (>512МБ транскрипт) — хук был неработающим весь вечер именно тогда, когда
-// длинная сессия нужнее всего. Хвоста в TAIL_BYTES достаточно — нужен только текущий ход.
-const TAIL_BYTES = 24 * 1024 * 1024;
-function readTail(filePath) {
-  const fd = fs.openSync(filePath, 'r');
-  try {
-    const size = fs.fstatSync(fd).size;
-    const start = Math.max(0, size - TAIL_BYTES);
-    const len = size - start;
-    const buf = Buffer.alloc(len);
-    fs.readSync(fd, buf, 0, len, start);
-    const text = buf.toString('utf8');
-    if (start === 0) return text;
-    const nl = text.indexOf('\n');
-    return nl === -1 ? '' : text.slice(nl + 1);
-  } finally {
-    fs.closeSync(fd);
-  }
+// 29.09.2026: было своей копией функции здесь — вынесено в lib/read-transcript-tail.mjs,
+// после того как тот же баг (ERR_STRING_TOO_LONG на транскриптах с картинками, >512МБ)
+// нашёлся ЕЩЁ в четырёх хуках отдельно от этого. Один модуль — не шесть копий.
+let readTail;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
+  ({ readTail } = await import(pathToFileURL(modPath).href));
 }
 
 let recordSignal = () => {};
