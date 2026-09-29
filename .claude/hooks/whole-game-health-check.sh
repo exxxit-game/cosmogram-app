@@ -70,6 +70,21 @@ else
 fi
 echo ""
 
+echo "── CLAUDE.md — размер (29.09.2026, мягкий ориентир ~40KB, жёсткого нет — правила"
+echo "   не индекс, рост иногда оправдан; guard-memory-index-format.sh уже ловит невёрнутый"
+echo "   абзац построчно, ДО записи) ──"
+if [ -f "$APP_DIR/CLAUDE.md" ]; then
+  size=$(wc -c < "$APP_DIR/CLAUDE.md" | tr -d ' ')
+  echo "  $size байт"
+  if [ "$size" -gt 40960 ]; then
+    echo "  ⚠ больше ~40KB — стоит перечитать целиком, нет ли того, что явно устарело/дублирует"
+    echo "    себя же, прежде чем добавлять ещё."
+  fi
+else
+  echo "  CLAUDE.md не найден по пути $APP_DIR"
+fi
+echo ""
+
 echo "════════ Supabase ════════"
 echo ""
 echo "  25.09.2026: сознательно НЕ вызывается напрямую из bash — потребовало бы держать"
