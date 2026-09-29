@@ -470,6 +470,39 @@ function main() {
     }
   }
 
+  // 30.09.2026 (владелец: «какие инструменты ты не использовал, хотя нужно было»): хуки ловили только
+  // НАРУШЕНИЯ, а простой инструмента не оставлял следа вообще. tool-usage-log.mjs теперь пишет каждый
+  // вызов скилла/субагента/MCP-инструмента в trail=usage; здесь — сводка и список простаивающих скиллов.
+  console.log('');
+  console.log('════════ Ж) использование инструментов: скиллы / субагенты / MCP (журнал trail=usage) ════════');
+  const usage = readEntries('usage');
+  const skillsDir = path.join(PROJECT_ROOT, '.claude', 'skills');
+  const skillNames = fs.existsSync(skillsDir)
+    ? fs.readdirSync(skillsDir).filter((d) => fs.existsSync(path.join(skillsDir, d, 'SKILL.md')))
+    : [];
+  if (!usage.length) {
+    console.log('  Журнал ещё пуст — запись началась 30.09.2026 (хук tool-usage-log.mjs). «Что простаивает» станет видно,');
+    console.log('  когда наберётся хотя бы несколько дней данных; раньше делать вывод было бы гаданием.');
+  } else {
+    const since = new Date(Math.min(...usage.map((e) => e.ts))).toISOString().slice(0, 10);
+    const counts = {};
+    for (const e of usage) counts[e.category] = (counts[e.category] || 0) + 1;
+    console.log(`  Запись ведётся с ${since}, вызовов записано: ${usage.length}.`);
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([c, n]) => `${c.replace(/^use:/, '')}×${n}`);
+    console.log(`  Чаще всего: ${top.join(', ')}`);
+    const unusedSkills = skillNames.filter((s) => !counts['use:skill:' + s]);
+    if (unusedSkills.length) {
+      console.log(`  ⚠ Скиллы проекта без единого вызова с ${since}: ${unusedSkills.join(', ')}`);
+      console.log('    (не значит «не нужны» — значит не вызывались; сверить с ситуациями, где должны были.)');
+    } else {
+      console.log('  Все скиллы проекта хотя бы раз вызывались.');
+    }
+    if (!counts['use:agent:general-purpose'] && !Object.keys(counts).some((c) => c.startsWith('use:agent:'))) {
+      console.log('  ⚠ Субагенты (Agent) не вызывались ни разу — параллельная проверка независимых кусков не используется.');
+    }
+  }
+
   console.log('');
   console.log('════════ конец отчёта — ничего не записано в settings.json, регистрация всегда отдельным шагом ════════');
 }

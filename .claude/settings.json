@@ -84,6 +84,12 @@
         ]
       },
       {
+        "matcher": "^(Skill|Agent|mcp__.*)$",
+        "hooks": [
+          { "type": "command", "command": "node .claude/hooks/tool-usage-log.mjs" }
+        ]
+      },
+      {
         "matcher": "AskUserQuestion",
         "hooks": [
           { "type": "command", "command": "node .claude/hooks/deferred-fix-guard.mjs" }
