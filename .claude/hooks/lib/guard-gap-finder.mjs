@@ -291,6 +291,27 @@ function checkWindowsPathRisk() {
   return suspicious;
 }
 
+// ---------- Д) permissionDecision:"ask" — документированно ненадёжен в этом окружении ----------
+// 29.09.2026 (владелец: «мы вроде что-то сделали против повтора, а они повторяются и
+// повторяются» — прямая, точная претензия). Урок «ask не показывает окно владельцу»
+// существовал уже 5 раз (guard-full-suite-warn.sh, 17.09-25.09) ДО того, как protect-core.sh/
+// no-windows-path-redirect.sh/no-secrets-in-commit.sh всё равно построились на ask —
+// потому что урок жил ТОЛЬКО текстом в одном комментарии, не проверялся кодом при
+// написании нового хука. Записать ещё раз текстом (feedback_ask_permission_nenadezhen_29_09)
+// решает эту сессию, не решает в принципе — тот же класс провала, что уже доказан
+// исследованием этого же вечера (McMillan/Huang et al.: текст не удерживается надёжно).
+// Это — код, не текст: при каждом scan автоматически находит ЛЮБОЙ .sh-хук, который всё
+// ещё использует ask, независимо от того, помню я урок в моменте или нет.
+function checkAskUsage() {
+  const shFiles = fs.readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.sh'));
+  const found = [];
+  for (const f of shFiles) {
+    const codeOnly = fs.readFileSync(path.join(HOOKS_DIR, f), 'utf8').split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+    if (/permissionDecision[\\"']*\s*:\s*[\\"']*ask/.test(codeOnly)) found.push('.claude/hooks/' + f);
+  }
+  return found;
+}
+
 function main() {
   const cmd = process.argv[2];
   if (cmd !== 'scan') {
@@ -358,6 +379,15 @@ function main() {
   }
   console.log('  (эвристика, не доказательство ни в ту, ни в другую сторону — снимает часть ручной работы,');
   console.log('   не заменяет live-тест нового хука перед доверием к нему.)');
+
+  console.log('');
+  console.log('════════ Д) permissionDecision:"ask" — документированно ненадёжен здесь (29.09.2026) ════════');
+  const askHooks = checkAskUsage();
+  if (askHooks.length) {
+    for (const h of askHooks) console.log(`  ⚠ ${h} — всё ещё использует "ask". 6 документированных случаев (guard-full-suite-warn.sh ×5, protect-core.sh) показывают, что окно разрешения владельцу не приходит. Перевести на "deny", если ставки реальные.`);
+  } else {
+    console.log('  Ни один .sh-хук не использует "ask" — либо уже переведены на deny, либо ask ни разу не применялся.');
+  }
 
   console.log('');
   console.log('════════ конец отчёта — ничего не записано в settings.json, регистрация всегда отдельным шагом ════════');
