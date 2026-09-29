@@ -67,11 +67,21 @@ export function isMockupEdit(block) {
   return MOCKUP_FILE_RE.test(p) || MOCKUP_HTML_PATH_RE.test(p);
 }
 
-/** Скриншот: специальные инструменты или computer{action:'screenshot'}. */
+/**
+ * «Посмотрел»: скриншот-инструмент, computer{action:'screenshot'}, снимок ВНУТРИ кода Playwright
+ * (browser_run_code_unsafe с page.screenshot — так снято 30.09 при ложном срабатывании: имя
+ * инструмента без слова screenshot), либо Read картинки (png/jpg/webp) — момент, когда
+ * картинку реально увидели.
+ */
 export function isScreenshot(block) {
   if (!block || block.type !== 'tool_use') return false;
-  if (SCREENSHOT_TOOL_RE.test(block.name || '')) return true;
-  return /computer$/.test(block.name || '') && block.input && block.input.action === 'screenshot';
+  const name = block.name || '';
+  const input = block.input || {};
+  if (SCREENSHOT_TOOL_RE.test(name)) return true;
+  if (/computer$/.test(name) && input.action === 'screenshot') return true;
+  if (/run_code/.test(name) && /screenshot\s*\(/.test(String(input.code || ''))) return true;
+  if (name === 'Read' && /\.(png|jpe?g|webp)$/i.test(String(input.file_path || ''))) return true;
+  return false;
 }
 
 /** Чистая функция для теста: true = нарушение (макет опубликован, отрисовку не смотрели). */
