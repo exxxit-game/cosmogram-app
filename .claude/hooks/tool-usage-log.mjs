@@ -24,7 +24,7 @@ try {
   const ti = input.tool_input || {};
   let category = '';
   if (name === 'Skill') category = 'skill:' + String(ti.skill || '?');
-  else if (name === 'Agent') category = 'agent:' + String(ti.subagent_type || 'general-purpose');
+  else if (name === 'Agent' || name === 'Task') category = 'agent:' + String(ti.subagent_type || 'general-purpose');
   else if (name.startsWith('mcp__')) category = 'mcp:' + name.split('__').slice(2).join('__');
   if (!category) done();
 

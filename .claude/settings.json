@@ -84,7 +84,7 @@
         ]
       },
       {
-        "matcher": "^(Skill|Agent|mcp__.*)$",
+        "matcher": "^(Skill|Agent|Task|mcp__.*)$",
         "hooks": [
           { "type": "command", "command": "node .claude/hooks/tool-usage-log.mjs" }
         ]
@@ -126,7 +126,8 @@
           { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=block node .claude/hooks/excuse-words-guard.mjs" },
           { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node .claude/hooks/device-claim-guard.mjs" },
           { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node .claude/hooks/evidence-anchoring-guard.mjs" },
-          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node .claude/hooks/revoke-grant-verify-guard.mjs" }
+          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node .claude/hooks/revoke-grant-verify-guard.mjs" },
+          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node .claude/hooks/mockup-unseen-guard.mjs" }
         ]
       }
     ]
