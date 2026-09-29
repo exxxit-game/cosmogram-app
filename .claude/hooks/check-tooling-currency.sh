@@ -16,7 +16,10 @@
 set -uo pipefail
 STATE_DIR="$(dirname "$0")/../state"
 STAMP_FILE="$STATE_DIR/tooling-currency-check.stamp"
-STALE_DAYS=14
+STALE_DAYS=1
+# 30.09.2026 (владелец, прямо: «раз в 14 дней — не серьёзно, за день может появиться
+# много»): изменено с 14 на 1. Компромисс владелец явно принял на себя (лишний
+# WebFetch раз в сутки, не бесплатно по времени хода) — сознательно, не додумано.
 
 mkdir -p "$STATE_DIR" 2>/dev/null || true
 now=$(date +%s)
