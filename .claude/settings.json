@@ -119,7 +119,8 @@
           { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=block node .claude/hooks/ask-then-act-guard.mjs" },
           { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=block node .claude/hooks/excuse-words-guard.mjs" },
           { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node .claude/hooks/device-claim-guard.mjs" },
-          { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node .claude/hooks/evidence-anchoring-guard.mjs" }
+          { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node .claude/hooks/evidence-anchoring-guard.mjs" },
+          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node .claude/hooks/revoke-grant-verify-guard.mjs" }
         ]
       }
     ]
