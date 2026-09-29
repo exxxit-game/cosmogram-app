@@ -321,6 +321,32 @@ function checkAskUsage(hooksDir) {
   return found;
 }
 
+// ---------- Е) *_ENFORCE_MODE=warn в settings.json — тот же провал, найденный на СЕБЕ ----------
+// 29.09.2026 (владелец: «проверяем всё, очень внимательно и конкретно»). Проверка claim-check-
+// hook показала: warn-режим Stop-хука технически срабатывает верно, но 9+ раз подряд не привёл
+// ни к какому изменению поведения — не хук молчал, молчал я. Тот же вывод, тем же вечером,
+// применён к трём соседним Stop-хукам (ask-then-act/excuse-words/device-claim). Чтобы этот
+// класс не всплыл в 7-й раз случайно — сканировать settings.json на любой ENFORCE_MODE=warn
+// у Stop-хука автоматически. EXEMPT — хуки, у которых warn выбран НАМЕРЕННО, по дизайну
+// (не забытая настройка) — evidence-anchoring-guard.mjs сам объясняет почему в своём
+// заголовке: визуальное доказательство иногда однозначно само по себе, жёсткий гейт здесь
+// был бы неверным по замыслу, не по недосмотру.
+const WARN_MODE_EXEMPT = new Set(['evidence-anchoring-guard.mjs']);
+
+function checkWarnModeStopHooks(settingsPath) {
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  const stopHooks = settings.hooks && settings.hooks.Stop;
+  const found = [];
+  for (const group of stopHooks || []) {
+    for (const h of group.hooks || []) {
+      const cmd = h.command || '';
+      const m = cmd.match(/_ENFORCE_MODE=warn.*?([a-zA-Z0-9_.-]+\.mjs)/);
+      if (m && !WARN_MODE_EXEMPT.has(m[1])) found.push(m[1]);
+    }
+  }
+  return found;
+}
+
 function main() {
   const cmd = process.argv[2];
   if (cmd !== 'scan') {
@@ -414,6 +440,18 @@ function main() {
       for (const h of askHooks) console.log(`  ⚠ [${repo.label}] ${h} — всё ещё использует "ask". Окно разрешения владельцу документированно не приходит здесь. Перевести на "deny", если ставки реальные.`);
     } else {
       console.log(`  [${repo.label}] ни один .sh-хук не использует "ask".`);
+    }
+  }
+
+  console.log('');
+  console.log('════════ Е) Stop-хуки на ENFORCE_MODE=warn (29.09.2026, живой провал на claim-check) ════════');
+  for (const repo of repos) {
+    if (repo.missing) { console.log(`  [${repo.label}] не найден рядом — пропущено.`); continue; }
+    const warnHooks = checkWarnModeStopHooks(repo.settingsPath);
+    if (warnHooks.length) {
+      for (const h of warnHooks) console.log(`  ⚠ [${repo.label}] ${h} — Stop-хук на ENFORCE_MODE=warn. Если не в списке EXEMPT (осознанный выбор дизайна) — проверить, действительно ли warn достаточен, или нужен block.`);
+    } else {
+      console.log(`  [${repo.label}] все Stop-хуки либо block, либо осознанно EXEMPT.`);
     }
   }
 
