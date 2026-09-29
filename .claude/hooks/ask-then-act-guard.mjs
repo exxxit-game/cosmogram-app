@@ -24,6 +24,29 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+// 27.09.2026: транскрипты с картинками (base64) легко переваливают за лимит V8-строки —
+// readFileSync на весь файл падает с ERR_STRING_TOO_LONG, try/catch ниже это ловил и МОЛЧА
+// считал «нарушений нет», хотя на самом деле файл просто не прочитался. Подтверждено на
+// реальной сессии (>512МБ транскрипт) — хук был неработающим весь вечер именно тогда, когда
+// длинная сессия нужнее всего. Хвоста в TAIL_BYTES достаточно — нужен только текущий ход.
+const TAIL_BYTES = 24 * 1024 * 1024;
+function readTail(filePath) {
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    const size = fs.fstatSync(fd).size;
+    const start = Math.max(0, size - TAIL_BYTES);
+    const len = size - start;
+    const buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, start);
+    const text = buf.toString('utf8');
+    if (start === 0) return text;
+    const nl = text.indexOf('\n');
+    return nl === -1 ? '' : text.slice(nl + 1);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 let recordSignal = () => {};
 try {
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'signal-trail.mjs');
@@ -77,7 +100,7 @@ function collectCurrentTurnBlocks(transcriptPath) {
   if (!transcriptPath || !fs.existsSync(transcriptPath)) return [];
   let lines;
   try {
-    lines = fs.readFileSync(transcriptPath, 'utf8').split('\n');
+    lines = readTail(transcriptPath).split('\n');
   } catch {
     return [];
   }
