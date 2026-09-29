@@ -32,6 +32,14 @@ let readTail;
   const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'read-transcript-tail.mjs');
   ({ readTail } = await import(pathToFileURL(modPath).href));
 }
+// 30.09.2026 (владелец: «что может стать лучше, где может объединиться») —
+// isGenuineUserEntry/isToolResultUserEntry/collectCurrentTurnBlocks были побайтово
+// одинаковы в этом файле и evidence-anchoring-guard.mjs — не похожи, скопированы.
+let collectCurrentTurnBlocks;
+{
+  const modPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'current-turn-blocks.mjs');
+  ({ collectCurrentTurnBlocks } = await import(pathToFileURL(modPath).href));
+}
 
 let recordSignal = () => {};
 try {
@@ -65,48 +73,6 @@ function questionSnippet(text) {
   const lastPeriodGroup = Math.max(t.lastIndexOf('. '), t.lastIndexOf('\n'), t.lastIndexOf('! '));
   const start = lastPeriodGroup === -1 ? 0 : lastPeriodGroup + 1;
   return t.slice(start).trim().slice(-160);
-}
-
-function isToolResultUserEntry(entry) {
-  if (entry.type !== 'user') return false;
-  const content = entry.message && entry.message.content;
-  if (!Array.isArray(content)) return false;
-  return content.some((b) => b && b.type === 'tool_result');
-}
-
-function isGenuineUserEntry(entry) {
-  if (entry.type !== 'user') return false;
-  return !isToolResultUserEntry(entry);
-}
-
-// Собирает content-блоки всех assistant-сообщений с конца транскрипта назад,
-// до первого НАСТОЯЩЕГО пользовательского сообщения (tool_result — не в счёт,
-// это ответ на мой же вызов инструмента внутри того же хода).
-function collectCurrentTurnBlocks(transcriptPath) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) return [];
-  let lines;
-  try {
-    lines = readTail(transcriptPath).split('\n');
-  } catch {
-    return [];
-  }
-  const collected = [];
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    if (isGenuineUserEntry(entry)) break; // граница хода — дальше не наш ход
-    if (entry.type !== 'assistant') continue;
-    const content = entry.message && entry.message.content;
-    if (!Array.isArray(content)) continue;
-    for (let j = content.length - 1; j >= 0; j--) collected.unshift(content[j]);
-  }
-  return collected;
 }
 
 function findViolation(blocks) {
