@@ -16,7 +16,12 @@ if [ -z "$LOCAL_VER" ]; then
   echo "=== check-live-version: не удалось прочитать локальный GAME_VERSION ==="
   exit 0
 fi
-LIVE_JS=$(curl -s --max-time 5 "https://exxxit-game.github.io/cosmogram-app/js/core.js" 2>/dev/null)
+# 29.09.2026 (владелец: «проверяй хуки», найдено живьём): github.io теперь постоянно
+# (301) редиректит на подключённый домен cosmogram.fun — curl без -L получал HTML-
+# страницу редиректа вместо core.js и хук молча врал «не удалось прочитать версию».
+# -L идёт по редиректу, куда бы он ни вёл сейчас или в будущем (домен ещё может
+# смениться — role .site пока не решена, см. project_dva_domena_fun_site_kupleny_26_09).
+LIVE_JS=$(curl -sL --max-time 5 "https://exxxit-game.github.io/cosmogram-app/js/core.js" 2>/dev/null)
 if [ -z "$LIVE_JS" ]; then
   echo "=== check-live-version: живой сайт не ответил за 5с (нет сети или сайт недоступен) — сверка версии пропущена, не считать это подтверждением совпадения ==="
   exit 0
