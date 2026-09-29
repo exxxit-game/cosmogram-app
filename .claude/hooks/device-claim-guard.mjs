@@ -79,6 +79,32 @@ function isDiscussionContext(message) {
   return false;
 }
 
+// 29.09.2026, живой провал, найден при самопроверке хуков (не в теории): длинное
+// сообщение упомянуло «проверено» (про запись claim-check, ~начало сообщения) и
+// «на телефоне» (про то, что живой тест ЕЩЁ НЕ делали, ~конец сообщения) — 1600+
+// символов друг от друга, в двух вообще не связанных предложениях. Хук требовал
+// подтверждения фикса на телефоне, которого никто не заявлял. Проверка ANYWHERE
+// в сообщении достаточна для короткой реплики, но не для длинного отчёта — нужна
+// БЛИЗОСТЬ: хотя бы одна пара совпадений claim+device в пределах PROXIMITY_CHARS
+// друг от друга (как в одном предложении/соседних), не просто оба слова где-то.
+const PROXIMITY_CHARS = 300;
+
+function hasProximateClaim(message) {
+  const claimRe = new RegExp(CLAIM_WORD_RE.source, 'gi');
+  const deviceRe = new RegExp(DEVICE_WORD_RE.source, 'gi');
+  const claimPositions = [];
+  const devicePositions = [];
+  let m;
+  while ((m = claimRe.exec(message)) !== null) { claimPositions.push(m.index); if (m[0] === '') claimRe.lastIndex++; }
+  while ((m = deviceRe.exec(message)) !== null) { devicePositions.push(m.index); if (m[0] === '') deviceRe.lastIndex++; }
+  for (const c of claimPositions) {
+    for (const d of devicePositions) {
+      if (Math.abs(c - d) <= PROXIMITY_CHARS) return true;
+    }
+  }
+  return false;
+}
+
 function readStdin() {
   try {
     return fs.readFileSync(0, 'utf8');
@@ -183,7 +209,7 @@ function main() {
   }
 
   const message = readLastAssistantMessage(transcriptPath);
-  if (!message || !CLAIM_WORD_RE.test(message) || !DEVICE_WORD_RE.test(message)) {
+  if (!message || !hasProximateClaim(message)) {
     process.stdout.write('{"continue": true, "suppressOutput": true}\n');
     return;
   }
