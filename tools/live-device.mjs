@@ -76,6 +76,22 @@ function cmdDevices(){
   lines.forEach(l => console.log(l));
 }
 
+// 29.09.2026 (владелец, после того как сам перепутал: вызвал pages/eval серийником вместо
+// порта — команды это молча приняли как порт, не ошибку, и оба раза случайно попали на один
+// и тот же старый форвард одного из телефонов). pages/eval адресуются портом, не серийником —
+// если забыть forward для конкретного устройства перед ними, легко тихо прочитать данные не
+// с того телефона. Печатать здесь, какой серийник реально стоит за портом ПРЯМО СЕЙЧАС
+// (adb forward --list, не из памяти о более раннем forward) — обе команды ниже теперь это
+// показывают перед основным выводом, не только после явной путаницы.
+function whichSerial(port){
+  try {
+    const out = sh('adb forward --list');
+    const line = out.split('\n').find(l => l.includes(`tcp:${port} `));
+    if (!line) return null;
+    return line.trim().split(/\s+/)[0];
+  } catch { return null; }
+}
+
 function cmdForward(serial, port){
   if (!serial) fail('usage: forward <serial> [port]');
   port = port || PORT_DEFAULT;
@@ -134,6 +150,8 @@ async function listPages(port){
 
 async function cmdPages(port){
   port = port || PORT_DEFAULT;
+  const serial = whichSerial(port);
+  console.log(`[порт ${port} -> ${serial || 'не форварднут ни на один телефон прямо сейчас'}]`);
   const pages = await listPages(port);
   if (!pages.length) { console.log('(нет открытых страниц)'); return; }
   pages.forEach(p => console.log(`${p.id}  ${p.url}  ${JSON.parse(p.description||'{}').visible === false ? '[свёрнуто]' : ''}`));
@@ -200,6 +218,8 @@ async function cmdEval(pageId, expr, port, timeoutMs){
   if (!pageId || expr === undefined) fail('usage: eval <pageId> <jsExpression> [port] [timeoutMs]');
   port = port || PORT_DEFAULT;
   timeoutMs = timeoutMs || 10000;
+  const serial = whichSerial(port);
+  console.error(`[порт ${port} -> ${serial || 'не форварднут ни на один телефон прямо сейчас'}]`);
   const result = await cdpCall(port, pageId, 'Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }, timeoutMs);
   console.log(JSON.stringify(result, null, 2));
 }
