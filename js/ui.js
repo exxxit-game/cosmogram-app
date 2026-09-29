@@ -1136,7 +1136,7 @@ function gameOver(){
   if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
   if (S.mode==='slalom'){ // 06.09.2026: победа — время финиша (как Спидран), срыв — отдельная плашка, без времени (нечестно сравнивать недоезд)
     if (S.slalomWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(slalomNewBest?L.slalomNewBest:L.slalomFinish)+' '+fmtTime(S.time)+'</span>');
-    else if (S.slalomFail) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.slalomDQ+'</span>');
+    else if (S.slalomFail && !overFlightWillShow()) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.slalomDQ+'</span>'); // 30.09.2026: срыв теперь отмечен крестом на рельсе «Твоего заезда» (владелец: «ставь там, где понятно»); строка остаётся запасной, если рисовать нечем
   }
   if (S.mode==='biathlon' && S.biathlonWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(biathlonNewBest?L.biathlonNewBest:L.biathlonFinish)+' '+fmtTime(S.time)+(S.biathlonMisses?' ('+L.biathlonMisses(S.biathlonMisses)+')':'')+'</span>');
   if (S.mode==='relay'){ // 06.09.2026: сдал — плашка с номером этапа (сеть решает, дошла ли она — см. дальше в этой функции), сорвался — плашка без сети, как slalomDQ
@@ -1161,7 +1161,7 @@ function gameOver(){
   if (ghostBeatNow) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('ghost')+' '+L.ghostBeat(ghostName,sc,ghostBest)+'</span>');
   // v1.108.1 «Пасхалки заговорили»: e42/e9000/e1337 взводились в Stats и молчали — теперь есть момент
   if (distM===42) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg42+'</span>');
-  if (sc>9000) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg9000+'</span>');
+  // 30.09.2026 (владелец, скриншот итогов): плашка «Больше 9000!» убрана — и так видно по счёту, только место занимает. Флаг Stats.e9000 (выше) остаётся — убрана надпись, не пасхалка в статистике.
   if (sc===1337) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg1337+'</span>');
   setHTML('newRecord', recChips.join(''));
   /* v1.282.14: возвращаем блоки, которые мог спрятать финиш своей трассы. mapOver гасит
@@ -1174,6 +1174,7 @@ function gameOver(){
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
   overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
+  overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины — только Score Attack и срыв в «Без касаний»; в остальных режимах сама прячет и чистит карточку
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
@@ -1487,6 +1488,7 @@ function endTheater(){ // v1.94.0 «Театр призраков» Т1: зан�
   const rp=$('runPass'); if(rp) rp.classList.add('hidden');
   const rh=$('runHead'); if(rh){ rh.innerHTML=''; rh.classList.add('hidden'); } // 30.08.2026: новая строка режима+управления — та же чистка, что у соседей
   overRankFill(null,''); toggleCls('overLoc','hidden',true); // 28.09.2026: карточка места и полоска шкалы — тоже не чужие
+  overFlightClear(); // 30.09.2026: и «Твой полёт» — зритель Театра не должен увидеть линию чужого/прошлого полёта
   const dr=$('duelRes'); if(dr) dr.innerHTML='';
   const tr=$('toRecord'); if(tr) tr.textContent='';
   const tl=$('toLoc'); if(tl) tl.textContent='';
@@ -4672,6 +4674,115 @@ function overLocFill(){ // полоска «До Линии Кармана» (и
   setText('toLocLeft', fmtN(need-Stats.totalDist)+(parts[1]||''));
   const f=$('toLocFill'); if(f) f.style.width=(Math.round(Math.min(1,Math.max(0,(Stats.totalDist||0)/need))*10000)/100)+'%';
   wrap.classList.remove('hidden');
+}
+/* 30.09.2026 «Твой полёт» (макет «Экран после поражения», владелец: «вноси: Score Attack А + Без касаний А»).
+   Линия только что законченного полёта из rec ([xq,yq,dist] раз в 10 кадров, game.js) — тот же тонкий росчерк,
+   что фоном на карточках режимов (heroTrailsFill выше), но подогнан по размаху под карточку: без этого полёт,
+   где самолёт почти не сдвигался, был бы мелкой точкой. Конец линии — место столкновения; на нём круглый стикер
+   вида (PT_ICON_SVG/PT_KIND_COLOR из partitura.js, они же в палитре Конструктора), а не слово. Луч (beam) убивает
+   заряженная пара Ловцов — показываем стикер Ловца (в живой БД луч убил 1 из ~1249 смертей — отдельный значок
+   не нужен). Дорисовывание линии — только при Q.level>=2: замер на живых телефонах 30.09 — Samsung (тир 0)
+   теряет ~30% кадров при дорисовывании со свечением, статичная линия почти бесплатна; Oppo без потерь.
+   Пока только Score Attack и срыв в «Без касаний» (остальные режимы — без карточки, решение владельца). */
+const OF_W=326; // ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
+const OF_KIND_ALIAS={beam:'seeker'};
+const OF_KIND_NAME={rock:'fkRock',debris:'fkDebris',drift:'fkDrift',mine:'fkMine',sat:'fkSat',comet:'fkComet',seeker:'fkSeeker',gate:'fkGate'}; // тот же набор, что PT_KIND_LABEL (partitura.js), имена — из i18n на всех языках
+function ofMix(hex,k){ // смесь #rrggbb с белым (k>0) или чёрным (k<0), доля |k|; без color-mix — старые WebView его не знают
+  const n=parseInt(String(hex).slice(1),16), t=k>0?255:0, a=Math.abs(k), c=v=>Math.round(v+(t-v)*a);
+  return 'rgb('+c((n>>16)&255)+','+c((n>>8)&255)+','+c(n&255)+')';
+}
+function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec → путь SVG в рамке карточки; null — нечего рисовать
+  const n=samples&&samples.length; if(!n || n<2) return null;
+  const STEP=Math.max(1,Math.ceil(n/60)), pts=[]; // ≤~61 точки — рисунок, не полная лента (как ~26 на карточках режимов); ceil, не floor: при floor запись из 80 замеров рисовалась всеми 80 (поймано стражем)
+  for(let i=0;i<n;i+=STEP) pts.push(samples[i]);
+  if(pts[pts.length-1]!==samples[n-1]) pts.push(samples[n-1]); // конец линии — всегда настоящее место столкновения
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const p of pts){ if(p[0]<x0)x0=p[0]; if(p[0]>x1)x1=p[0]; if(p[1]<y0)y0=p[1]; if(p[1]>y1)y1=p[1]; }
+  const MINR=14; // минимальный размах в квантах (из 91): почти неподвижный самолёт не раздувается на всю карточку
+  let bw=x1-x0, bh=y1-y0;
+  if(bw<MINR){ x0=(x0+x1)/2-MINR/2; bw=MINR; }
+  if(bh<MINR){ y0=(y0+y1)/2-MINR/2; bh=MINR; }
+  const aw=W-pad.l-pad.r, ah=H-pad.t-pad.b;
+  let d='', sx=0, sy=0, ex=0, ey=0;
+  pts.forEach(function(p,i){
+    const x=Math.round((pad.l+(p[0]-x0)/bw*aw)*10)/10, y=Math.round((pad.t+(p[1]-y0)/bh*ah)*10)/10;
+    d+=(i?' L':'M')+x+','+y;
+    if(i===0){ sx=x; sy=y; }
+    ex=x; ey=y;
+  });
+  return { d:d, sx:sx, sy:sy, ex:ex, ey:ey };
+}
+function overFlightClear(){ const el=$('overFlight'); if(!el) return; el.classList.add('hidden'); el.classList.remove('draw'); el.innerHTML=''; }
+function overFlightWillShow(){ // одно условие на двоих: и карточке (рисовать ли), и итогам (нужна ли запасная строка «Срыв»)
+  const slalom=(S.mode==='slalom'), classic=(S.mode==='classic');
+  if(!(classic || (slalom && S.slalomFail && !S.slalomWin))) return false; // победа в слаломе — не срыв, карточка не нужна
+  return !(typeof rec==='undefined' || !rec || rec.length<20); // восстановленный забег: часы и запись начались с нуля
+}
+function overFlightFill(){
+  const el=$('overFlight'); if(!el) return;
+  overFlightClear(); // всегда с чистого листа: полёт прошлого забега или другого режима сюда не течёт
+  if(!overFlightWillShow()) return;
+  const slalom=(S.mode==='slalom');
+  const H=slalom?290:176, RAIL=slalom?30:0, RX=OF_W-18;
+  const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
+  if(!m) return;
+  let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
+  const haveStk=!!(OF_KIND_NAME[kind] && typeof PT_ICON_SVG!=='undefined' && PT_ICON_SVG[kind] && typeof PT_KIND_COLOR!=='undefined' && PT_KIND_COLOR[kind]);
+  const trailCol=HERO_TRAIL_COLOR[slalom?'slalom':'touch'];
+  const unit=' '+(L.unitM||'м'), dist=Math.max(0,Math.floor(S.dist));
+  const right=slalom ? fmtN(Math.min(dist,SLALOM_DIST))+' / '+fmtN(SLALOM_DIST)+unit : fmtN(dist)+unit;
+  let svg='', failCap='';
+  if(slalom){ // рельса до финиша: сплошная — сколько долетел, пунктир — сколько осталось, флажок — финиш, красный крест — место срыва
+    const top=18, bot=H-18, yNow=Math.round((bot-Math.min(1,dist/SLALOM_DIST)*(bot-top))*10)/10;
+    svg+='<line class="ofRailLeft" x1="'+RX+'" y1="'+top+'" x2="'+RX+'" y2="'+yNow+'"/>'
+      +'<line class="ofRailDone" stroke="'+trailCol+'" x1="'+RX+'" y1="'+yNow+'" x2="'+RX+'" y2="'+bot+'"/>'
+      +'<path d="M'+RX+' '+top+'v14M'+RX+' '+top+'l12 4-12 4" fill="none" stroke="#f0c040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path class="ofCross" d="M'+(RX-6)+' '+(yNow-6)+'l12 12M'+(RX+6)+' '+(yNow-6)+'l-12 12" fill="none" stroke="#ff5f6d" stroke-width="2.6" stroke-linecap="round"/>';
+    // 30.09.2026 (владелец, скриншот): «срыв ставь там, где понятно, как Мину» — крест на самой рельсе в точке срыва + короткая подпись слева, а не строка под счётом
+    failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap'))+'</div>';
+  }
+  svg+='<path class="ofTrail" pathLength="1" stroke="'+trailCol+'" d="'+m.d+'"/><circle cx="'+m.sx+'" cy="'+m.sy+'" r="3" fill="#dfe8ff"/>';
+  let stk='', cap='';
+  if(haveStk){
+    const col=PT_KIND_COLOR[kind];
+    let b=''; for(let k=0;k<8;k++){ const a=k*Math.PI/4, c=Math.cos(a), s=Math.sin(a); // вспышка: 8 коротких штрихов вокруг стикера
+      b+='<line x1="'+(Math.round((m.ex+c*25)*10)/10)+'" y1="'+(Math.round((m.ey+s*25)*10)/10)+'" x2="'+(Math.round((m.ex+c*31)*10)/10)+'" y2="'+(Math.round((m.ey+s*31)*10)/10)+'"/>'; }
+    svg+='<g class="ofBurst" stroke="'+col+'">'+b+'</g>';
+    const px=Math.round(m.ex/OF_W*10000)/100, py=Math.round(m.ey/H*10000)/100;
+    stk='<div class="ofStk" data-kind="'+kind+'" style="left:'+px+'%;top:'+py+'%;background:linear-gradient(160deg,'+ofMix(col,.3)+','+ofMix(col,-.12)+')">'+PT_ICON_SVG[kind]+'</div>';
+    const capTxt=beam ? ovT('overBeamCap') : (L[OF_KIND_NAME[kind]]||'');
+    const capTop = m.ey > H-58 ? 'calc('+py+'% - 44px)' : 'calc('+py+'% + 25px)'; // у нижней кромки подпись уходит НАД стикер
+    cap='<div class="ofCap" style="left:'+px+'%;top:'+capTop+'">'+escapeHtml(capTxt)+'</div>';
+  }
+  el.style.setProperty('--ofGlow', slalom?'rgba(107,224,255,.5)':'rgba(190,225,255,.55)');
+  el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span><span class="orMode">'+escapeHtml(right)+'</span></div>'
+    +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap+'</div>';
+  const still=(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  el.classList.toggle('draw', typeof Q!=='undefined' && Q.level>=2 && !still);
+  el.classList.remove('hidden');
+  requestAnimationFrame(function(){ requestAnimationFrame(overFlightFit); }); // экран может показаться на кадр позже заполнения — меряем после вёрстки
+  setTimeout(overFlightFit, 400); // и ещё раз: страховка, если первый замер пришёл до показа экрана (тогда scrollHeight==clientHeight==0 и мерить нечего)
+}
+/* 30.09.2026: «Ещё раз» — главная кнопка, её нельзя выталкивать за край. В макете места было ~290px (экран 844 px, с карточкой
+   места), на настоящем экране Telegram-игрока с короткой высотой (Samsung ~360×700) его меньше — карточка сжимается РОВНО на
+   столько, на сколько экран переполнен (min 90px высоты рисунка), а при запасе остаётся полного размера. SVG держит пропорцию
+   сам (height:auto), поэтому сужаем ширину — высота и оверлеи стикера/подписи (проценты) следуют за ней. Замер на живой странице
+   (Playwright): 390×844 — полный размер, 360×740 — 153→100px и прокрутки нет; на 360×640 с гостевым приглашением доходит до min. */
+function overFlightFit(){
+  const el=$('overFlight'), scr=$('gameOverScreen'); if(!el || !scr || el.classList.contains('hidden')) return;
+  const box=el.querySelector('.ofBox'); if(!box) return;
+  box.style.maxWidth='';
+  const over=scr.scrollHeight-scr.clientHeight; if(over<=2) return;
+  const r=box.getBoundingClientRect(); if(!r.height) return;
+  const newH=Math.max(90, r.height-over-2);
+  if(newH<r.height) box.style.maxWidth=Math.floor(r.width*newH/r.height)+'px';
+}
+/* Карточка места («Ты в мире»), приглашение войти, медали и плашки рекордов приходят на итоги ПОЗЖЕ — после ответа сервера — и
+   делают экран выше уже после одной подгонки (живая находка 30.09: на 360×740 подгонка иногда не срабатывала). Поэтому подгонка
+   перезапускается при любом изменении размера этих блоков. Сам #overFlight не наблюдаем — иначе подгонка зацикливалась бы. */
+if(typeof ResizeObserver!=='undefined'){
+  const ofRo=new ResizeObserver(function(){ overFlightFit(); });
+  ['overRank','webJoin','overLoc','newRecord','recordMedals','duelRes','goldChip','dayStats'].forEach(function(id){ const e=$(id); if(e) ofRo.observe(e); });
 }
 function shareSheetShow(on){ toggleCls('shareSheet','hidden',!on); }
 wireOn('shareBtn','click',()=>{ sfx.click(); haptic('light'); shareSheetShow(true); });

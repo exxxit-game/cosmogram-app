@@ -1470,7 +1470,7 @@ function mapOver(sc){
      итогов у неё общий с обычным забегом, и на нём оставались висеть виджеты предыдущего:
      «✨ В статус» (награда за рекорд — её можно было надеть по итогам незачётного забега),
      «★ Знак дня», статистика дня и мёртвая кнопка трибуны. */
-  ['goldChip','dayStats','tribuneBtn','statusBtn','overRank','overLoc'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); }); // 28.09.2026: + карточка места и полоска шкалы (итоги «Что дальше») — у своей трассы их нет
+  ['goldChip','dayStats','tribuneBtn','statusBtn','overRank','overLoc','overFlight'].forEach(function(id){ const el=$(id); if(el) el.classList.add('hidden'); }); // 28.09.2026: + карточка места и полоска шкалы (итоги «Что дальше») — у своей трассы их нет; 30.09.2026: + «Твой полёт» (только Score Attack и Без касаний)
   const fsEl=$('finalScore'); if(fsEl) fsEl.textContent=sc;
   const winPill=S.mapWin?'<span class="miniPill">'+ic('trophy')+L.forgeWin+'</span>':'';
   const statsEl=$('stats');
