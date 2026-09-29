@@ -54,6 +54,18 @@ const CLAIM_CHECK_FRESH_MIN = 15;   // минут — записи свежее 
 const STALE_THRESHOLD_S = 30;       // защита от гонки при сбросе транскрипта на диск
 const DEFAULT_MODE = 'warn';
 
+// 29.09.2026 (владелец, после AskUserQuestion «гибрид по цене ошибки»): словесный regex
+// ниже никогда не будет полным — я могу написать «готово» способом, который он не
+// предусмотрит, не нарочно. Для дорогих, труднообратимых действий (деплой на живой
+// Supabase, SQL/миграция, git commit) это не годится — цена необнаруженного пропуска
+// намного больше цены лишней проверки. Для них проверка обязательна НЕЗАВИСИМО от слов,
+// см. skill deploy-edge и правило CLAUDE.md 27.08.2026 «живая внешняя система — не то же
+// самое, что локальный файл». execute_sql намеренно не отделяет чтение от записи — надёжно
+// отличить их строкой SQL нельзя, а сверка после чтения (например REVOKE/GRANT) тоже
+// требуется правилом 06.09.2026.
+const HIGH_STAKES_TOOL_RE = /__(deploy_edge_function|execute_sql|apply_migration)$/;
+const GIT_COMMIT_RE = /(^|[\s;&|])git\s+commit\b/;
+
 // Однозначные слова-закрытия — узкий список, чтобы не срабатывать на обычной
 // прозе («данные актуальны», «мы закончили?»).
 const COMPLETION_VERBS = [
@@ -183,6 +195,114 @@ function readLastAssistantMessage(transcriptPath) {
     return '';
   }
   return '';
+}
+
+// Настоящая пользовательская реплика (начало текущего хода), не tool_result,
+// который тоже имеет type:"user" в транскрипте — подтверждено живым транскриптом
+// 29.09.2026 (tool_use записи внутри assistant.message.content, схема сверена grep'ом
+// по реальному .jsonl этой же сессии, не по памяти).
+function isRealUserTurn(entry) {
+  if (!entry || entry.type !== 'user') return false;
+  const content = entry.message && entry.message.content;
+  if (typeof content === 'string') return true;
+  if (!Array.isArray(content)) return false;
+  return content.every((b) => b && b.type !== 'tool_result');
+}
+
+// Дорогие вызовы (deploy/SQL-миграция/git commit) в ТЕКУЩЕМ ходу — от последней
+// настоящей пользовательской реплики до конца транскрипта. Раздел на округлённые
+// временные рамки хода, а не «за последние N минут»: несколько дорогих вызовов
+// подряд в одном ходу не должны требовать N отдельных проверок.
+//
+// Возвращает ещё и lastActionTs — момент ПОСЛЕДНЕГО дорогого вызова. Первая версия
+// сверяла только «есть ли ЛЮБАЯ свежая запись за 15 минут» — поймано до первого же
+// живого теста (не после): я сам логировал два подтверждения буквально минуту назад
+// про СОВЕРШЕННО другую правку (check-guard-mjs-invocation.mjs), и эта старая запись
+// засчиталась бы как «подтверждение» для деплоя, случившегося уже ПОСЛЕ нее. Тот же
+// класс ошибки, что уже чинил 25.09 в словесной ветке (isRelevant) — здесь решается
+// не сверкой слов (в этой ветке текста может не быть вовсе), а порядком во времени:
+// запись обязана идти ПОСЛЕ самого вызова, не просто «где-то в последние 15 минут».
+function findHighStakesActionsThisTurn(transcriptPath) {
+  if (!transcriptPath || !fs.existsSync(transcriptPath)) return { names: [], lastActionTs: null };
+  let lines;
+  try {
+    lines = readTail(transcriptPath).split('\n');
+  } catch {
+    return { names: [], lastActionTs: null };
+  }
+  const entries = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    try {
+      entries.push(JSON.parse(t));
+    } catch {
+      /* обрубленная хвостом читаемого куска первая строка — пропускаем */
+    }
+  }
+  let turnStart = 0;
+  for (let i = entries.length - 1; i >= 0; i--) {
+    if (isRealUserTurn(entries[i])) {
+      turnStart = i;
+      break;
+    }
+  }
+  const found = [];
+  let lastActionTs = null;
+  for (let i = turnStart; i < entries.length; i++) {
+    const e = entries[i];
+    if (e.type !== 'assistant') continue;
+    const content = e.message && e.message.content;
+    if (!Array.isArray(content)) continue;
+    let hit = false;
+    for (const b of content) {
+      if (!b || b.type !== 'tool_use') continue;
+      if (HIGH_STAKES_TOOL_RE.test(b.name || '')) {
+        found.push(b.name);
+        hit = true;
+        continue;
+      }
+      if (b.name === 'Bash' && b.input && GIT_COMMIT_RE.test(b.input.command || '')) {
+        found.push('git commit');
+        hit = true;
+      }
+    }
+    if (hit && e.timestamp) {
+      const ts = parseTsAsUtc(e.timestamp);
+      if (!Number.isNaN(ts)) lastActionTs = ts;
+    }
+  }
+  return { names: found, lastActionTs };
+}
+
+// Свежая запись СТРОГО ПОСЛЕ момента дорогого вызова (не просто «в последние N минут») —
+// см. комментарий у findHighStakesActionsThisTurn. sinceTs===null (нет метки времени у
+// вызова, редкий случай) — откатываемся на обычное окно в 15 минут без сверки слов.
+function hasFreshLogSince(sinceTs) {
+  if (!fs.existsSync(CLAIM_CHECKS_LOG)) return false;
+  let lines;
+  try {
+    lines = readTail(CLAIM_CHECKS_LOG).split('\n');
+  } catch {
+    return false;
+  }
+  const nowTs = Date.now() / 1000;
+  const cutoff = sinceTs == null ? nowTs - CLAIM_CHECK_FRESH_MIN * 60 : sinceTs;
+  const tail = lines.slice(-20);
+  for (let i = tail.length - 1; i >= 0; i--) {
+    const line = tail[i].trim();
+    if (!line) continue;
+    try {
+      const entry = JSON.parse(line);
+      const tsStr = entry.timestamp || entry.ts;
+      if (!tsStr) continue;
+      const ts = parseTsAsUtc(tsStr);
+      if (!Number.isNaN(ts) && ts >= cutoff) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
 }
 
 function isBacktickWrapped(text, mStart, mEnd) {
@@ -315,6 +435,29 @@ function main() {
   if (!transcriptPath) emitOk();
 
   const message = readLastAssistantMessage(transcriptPath);
+
+  // Ветка А (29.09.2026, гибрид по цене ошибки) — дорогие вызовы в этом ходу требуют
+  // записи ПОСЛЕ вызова, независимо от слов ответа (message может быть пустым, если
+  // ход закончился без завершающей прозы — не выходим из хука до этой проверки).
+  const highStakes = findHighStakesActionsThisTurn(transcriptPath);
+  if (highStakes.names.length && !hasFreshLogSince(highStakes.lastActionTs)) {
+    const uniq = [...new Set(highStakes.names)];
+    const reason =
+      `⚠️  Claim-check — в этом ходу были дорогие вызовы без свежей записи о проверке:\n` +
+      uniq.map((n) => `  - ${n}`).join('\n') + '\n\n' +
+      `Деплой/SQL-миграция/git commit требуют записи независимо от того, что написано\n` +
+      `текстом (29.09.2026, «живая внешняя система — не то же самое, что локальный файл»).\n` +
+      `Перед завершением хода:\n` +
+      `  1. Выполни реальную проверку (сверка содержимого, живой запрос и т.п.)\n` +
+      `  2. Запиши: node .claude/hooks/log-claim.mjs "<что утверждаю>" "<как проверил>"\n` +
+      `  3. Ответь заново\n\n` +
+      `Отключить на раз: CLAIM_CHECK_ENFORCE_MODE=warn или =off`;
+    try { recordSignal('claim-check', mode === 'block' ? 4 : 3, `дорогой вызов без проверки: ${uniq[0]}`); } catch { /* см. комментарий у импорта выше */ }
+    if (mode === 'warn') emitWarn(reason);
+    emitBlock(reason);
+  }
+
+  // Ветка Б — прежняя словесная проверка, без изменений в логике.
   if (!message) emitOk();
 
   const claims = findClaims(message);
