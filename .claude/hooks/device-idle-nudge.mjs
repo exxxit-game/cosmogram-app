@@ -74,7 +74,10 @@ function main() {
     return; // Bash-вызовы сами по себе не считаются perf-правкой
   }
 
-  if (toolName === 'Edit' || toolName === 'Write') {
+  // 29.09.2026 (владелец: «проверяй хуки», тот же класс, что уже правился в protect-core.sh
+  // и др.): точное сравнение молча пропускало бы любой другой *Edit-инструмент.
+  const toolNameLower = toolName.toLowerCase();
+  if (toolNameLower.includes('edit') || toolNameLower === 'write') {
     const file = String(input.file_path || '');
     if (!PERF_FILE_RE.test(file)) return;
     record('perf-edit');
