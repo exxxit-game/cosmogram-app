@@ -79,13 +79,21 @@ echo "  укреплялась именно она — заводить в фа�
 echo "  шагом назад). Правильная комбинация без компромисса: если этот файл существует —"
 echo "  агент (Claude) дописывает сюда живой результат get_advisors(security)+"
 echo "  get_advisors(performance) СВОИМ ходом через MCP, тем же вызовом, что и обычно."
-SUPA_APPEND="$(dirname "$0")/../../.supabase-health-last.txt"
+SUPA_APPEND="$APP_DIR/.supabase-health-last.txt"
 if [ -f "$SUPA_APPEND" ]; then
   echo ""
   echo "  Последний живой результат (дописан агентом отдельным MCP-вызовом):"
   cat "$SUPA_APPEND" | sed 's/^/  /'
 else
   echo "  (пока не дописан в этом заходе — $SUPA_APPEND не найден)"
+fi
+echo ""
+
+echo "════════ Разрывы hook-инфраструктуры (guard-gap-finder.mjs, 29.09.2026) ════════"
+if [ -f "$APP_DIR/.claude/hooks/lib/guard-gap-finder.mjs" ]; then
+  node "$APP_DIR/.claude/hooks/lib/guard-gap-finder.mjs" scan 2>&1 | sed 's/^/  /'
+else
+  echo "  guard-gap-finder.mjs не найден"
 fi
 echo ""
 echo "════════ конец отчёта ════════"

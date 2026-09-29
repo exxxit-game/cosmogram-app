@@ -66,7 +66,10 @@ export function recordSignal(category, severity, message, { trail = 'default', j
   return entry;
 }
 
-function readEntries(trail) {
+// 29.09.2026 (guard-gap-finder.mjs): экспортирован наружу — новому инструменту нужен
+// точный список записей по категории (не только агрегированный heat), чтобы считать
+// "сколько раз конкретный необшитый паттерн повторился" отдельно от общей эскалации.
+export function readEntries(trail) {
   const file = trailPath(trail);
   if (!existsSync(file)) return [];
   const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
