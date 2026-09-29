@@ -17,8 +17,11 @@ process.stdin.on('end',()=>{
 ")
 tool=$(printf '%s' "$out" | sed -n '1p')
 file=$(printf '%s' "$out" | sed -n '2p')
-
-if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *.js && -f "$file" ]]; then
+tool_lower="${tool,,}"
+# 29.09.2026 (владелец: «проверяй хуки», тот же класс, что уже нашёлся и был
+# исправлен в protect-core.sh/guard-memory-index-format.sh): точное "Edit"/"Write"
+# молча пропустило бы любой другой *Edit-инструмент.
+if [[ ("$tool_lower" == *edit* || "$tool_lower" == "write") && "$file" == *.js && -f "$file" ]]; then
   err=$(node --check "$file" 2>&1)
   if [[ $? -ne 0 ]]; then
     echo "Синтаксическая ошибка в $file после правки:" >&2

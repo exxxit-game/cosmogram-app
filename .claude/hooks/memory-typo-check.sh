@@ -17,8 +17,12 @@ process.stdin.on('end',()=>{
 ")
 tool=$(printf '%s' "$out" | sed -n '1p')
 file=$(printf '%s' "$out" | sed -n '2p')
-
-if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *"\\memory\\"*.md && "$file" != *"MEMORY.md" ]]; then
+tool_lower="${tool,,}"
+# 29.09.2026 (владелец: «проверяй хуки», тот же класс, что уже нашёлся и был
+# исправлен в protect-core.sh/guard-memory-index-format.sh): точное "Edit"/"Write"
+# молча пропустило бы любой другой *Edit-инструмент — а именно этот хук ловит
+# кризисы вроде 247 потерянных файлов из 387, замолчать он не должен.
+if [[ ("$tool_lower" == *edit* || "$tool_lower" == "write") && "$file" == *"\\memory\\"*.md && "$file" != *"MEMORY.md" ]]; then
   memdir=$(dirname "$file")
   scanner="$memdir/scan-suspect-tokens.mjs"
   if [[ -f "$scanner" ]]; then
@@ -39,7 +43,7 @@ fi
 # не лучше «буду внимательнее». Именно этот инструмент поймал бы сегодняшний кризис (247
 # потерянных файлов из 387) сразу, а не после того, как владелец сам заметил. Теперь —
 # каждая правка MEMORY.md сама зовёт аудит.
-if [[ ("$tool" == "Edit" || "$tool" == "Write") && "$file" == *"\\memory\\MEMORY.md" ]]; then
+if [[ ("$tool_lower" == *edit* || "$tool_lower" == "write") && "$file" == *"\\memory\\MEMORY.md" ]]; then
   memdir=$(dirname "$file")
   auditor="$memdir/audit-memory-index.sh"
   if [[ -f "$auditor" ]]; then
