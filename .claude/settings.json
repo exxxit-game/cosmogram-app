@@ -72,7 +72,8 @@
           { "type": "command", "command": ".claude/hooks/scan-code-mixed-script.sh" },
           { "type": "command", "command": ".claude/hooks/repeat-edit-tracker.sh" },
           { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
-          { "type": "command", "command": "node .claude/hooks/skin-fit-registered-guard.mjs" }
+          { "type": "command", "command": "node .claude/hooks/skin-fit-registered-guard.mjs" },
+          { "type": "command", "command": ".claude/hooks/visual-file-nudge.sh" }
         ]
       },
       {
