@@ -67,7 +67,11 @@ const [cmd, ...args] = process.argv.slice(2);
 
 function fail(msg){ console.error('ERROR: ' + msg); process.exit(1); }
 
-function sh(cmd){ return execSync(cmd, { encoding: 'utf8' }); }
+// 29.09.2026 (владелец: «проверяй хуки/инструменты», найдено живьём): execSync без
+// maxBuffer падал с ENOBUFS на hwshot для Oppo CPH2631 (экран выше разрешением, чем
+// у Samsung SM-A032F — base64-PNG крупнее, вылезал за умолчание Node). 200МБ с запасом
+// хватит на любой реалистичный adb-вывод (скриншот, логи), не только на этот случай.
+function sh(cmd){ return execSync(cmd, { encoding: 'utf8', maxBuffer: 200 * 1024 * 1024 }); }
 
 function cmdDevices(){
   const out = sh('adb devices -l');
