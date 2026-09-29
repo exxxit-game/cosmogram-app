@@ -267,7 +267,7 @@ function hasFreshLog(messageText, windowMin = CLAIM_CHECK_FRESH_MIN) {
   if (!fs.existsSync(CLAIM_CHECKS_LOG)) return false;
   let lines;
   try {
-    lines = fs.readFileSync(CLAIM_CHECKS_LOG, 'utf8').split('\n');
+    lines = readTail(CLAIM_CHECKS_LOG).split('\n');
   } catch {
     return false;
   }
