@@ -97,9 +97,11 @@ function scanTurn(transcriptPath) {
     if (!Array.isArray(content)) continue;
     for (const b of content) {
       if (!b || b.type !== 'tool_use') continue;
-      if (!/__execute_sql$/.test(b.name || '')) continue;
+      // 30.09.2026: REVOKE/GRANT в apply_migration тоже надо перечитывать, но проверкой служит только чтение через execute_sql.
+      const isSql = /__execute_sql$/.test(b.name || '');
+      if (!isSql && !/__apply_migration$/.test(b.name || '')) continue;
       const sql = sqlOf(b.input);
-      calls.push({ seq, isRevokeGrant: REVOKE_GRANT_RE.test(sql), isVerify: VERIFY_RE.test(sql) });
+      calls.push({ seq, isRevokeGrant: REVOKE_GRANT_RE.test(sql), isVerify: isSql && VERIFY_RE.test(sql) });
       seq++;
     }
   }
