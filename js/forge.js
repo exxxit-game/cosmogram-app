@@ -1886,11 +1886,11 @@ function workshopRenderList(){
       if(emptyEl){
         emptyEl.classList.remove('hidden');
         if(offline){
-          emptyEl.textContent=L.syncOffline||'Нет соединения — попробуй позже';
+          emptyEl.textContent=L.syncOffline||'Нет соединения — попробуйте позже';
         } else if(likedOnly){
           // 12.09.2026, владелец, живой тест руками: пустое «Избранное» было тупиком — фраза
           // без действия, непонятно, что делать дальше. Настоящая кнопка вместо тупика.
-          emptyEl.innerHTML=(L.workshopEmptyFav||'пока пусто — сохрани понравившееся небо, и оно появится здесь')+
+          emptyEl.innerHTML=(L.workshopEmptyFav||'пока пусто — сохраните понравившееся небо, и оно появится здесь')+
             '<br><button class="btn ghost" id="workshopFavEmptyCTA" style="margin-top:10px">'+(L.workshopFavEmptyCTA||'Смотреть Топ')+'</button>';
           const cta=$('workshopFavEmptyCTA');
           if(cta) cta.addEventListener('click', function(){
@@ -1902,7 +1902,7 @@ function workshopRenderList(){
           // konstruktor-sozdat-svoe-nebo-19-09-2026.html, явное «да»): та же дверь, что уже
           // была у пустого «Избранное» выше (реальная кнопка вместо тупика), только ведёт на
           // вкладку «Создать» — тот же forgeTabSet('create'), что у кнопки вверху экрана.
-          emptyEl.innerHTML=(L.workshopEmptyMine||'у тебя ещё нет своих небес')+
+          emptyEl.innerHTML=(L.workshopEmptyMine||'у вас ещё нет своих небес')+
             '<br><button class="btn ghost" id="workshopMineEmptyCTA" style="margin-top:10px">'+(L.workshopMineEmptyCTA||'Создать')+'</button>';
           const mineCta=$('workshopMineEmptyCTA');
           if(mineCta) mineCta.addEventListener('click', function(){
@@ -2212,7 +2212,7 @@ wireOnLocal('workshopList','click',function(e){
       // честно, гейт выше пропустил, но сети не было, workshopVote() молча вернул null):
       // раньше при неудаче лайк просто ничего не делал, без единой подсказки — с точки
       // зрения игрока «сломано», хотя причина честная (нет соединения). Один явный тост.
-      if(!res || !res.ok){ toast(L.syncOffline||'Нет соединения — попробуй позже','rgba(255,159,176,.5)'); return; }
+      if(!res || !res.ok){ toast(L.syncOffline||'Нет соединения — попробуйте позже','rgba(255,159,176,.5)'); return; }
       // 15.09.2026 (владелец, прямое решение — реверс находки 3.1 от 14.09.2026): лайк
       // самому себе теперь разрешён, сервер (cosmogram-workshop) больше не возвращает
       // own_track для vote — ветка-тост под неё снята вместе с сервером, не только здесь.
@@ -2251,14 +2251,14 @@ wireOnLocal('workshopList','click',function(e){
     // тусклая, но клик всё равно уходит на сервер и получает содержательный ответ).
     if(act.classList.contains('used')) { haptic('light'); return; }
     workshopNotice(code).then(function(res){
-      if(!res){ toast(L.syncOffline||'Нет соединения — попробуй позже', 'rgba(255,159,176,.5)'); return; }
+      if(!res){ toast(L.syncOffline||'Нет соединения — попробуйте позже', 'rgba(255,159,176,.5)'); return; }
       if(res.error==='cooldown'){
         act.classList.add('used');
         act.title = L.workshopNoticeCooldown ? L.workshopNoticeCooldown(res.daysLeft) : '';
         toast(L.workshopNoticeCooldown ? L.workshopNoticeCooldown(res.daysLeft) : '', 'rgba(240,192,64,.5)');
         return;
       }
-      if(res.error || !res.ok){ toast(L.syncOffline||'Не получилось — попробуй позже', 'rgba(255,159,176,.5)'); return; }
+      if(res.error || !res.ok){ toast(L.syncOffline||'Не получилось — попробуйте позже', 'rgba(255,159,176,.5)'); return; }
       act.classList.add('used');
       act.title = L.workshopNoticeCooldown ? L.workshopNoticeCooldown(7) : '';
       toast(L.workshopNoticed||'Показано в Случайных', 'rgba(240,192,64,.5)');
