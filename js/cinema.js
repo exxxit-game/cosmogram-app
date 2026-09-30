@@ -818,8 +818,9 @@ function cinemaClipRefresh(cat, n){
   const b=$('cinemaClipBtn'); if(!b) return;
   b.classList.remove('hidden');
   b.classList.remove('glow'); void b.offsetWidth; b.classList.add('glow'); // перезапуск анимации, если сработало дважды подряд
+  if (typeof overFlightVideo==='function') overFlightVideo(true); // 30.09.2026: та же дверь — значком в левом нижнем углу «Твоего полёта» (ui.js), не только в панели «Поделиться»
 }
-function cinemaClipHide(){ const b=$('cinemaClipBtn'); if(b){ b.classList.add('hidden'); b.classList.remove('glow'); } }
+function cinemaClipHide(){ const b=$('cinemaClipBtn'); if(b){ b.classList.add('hidden'); b.classList.remove('glow'); } if (typeof overFlightVideo==='function') overFlightVideo(false); }
 let _clipUrl=null;
 async function cinemaClipOpen(){
   const blob = await cinemaLoadHighlight(); if(!blob) return;

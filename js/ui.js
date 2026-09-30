@@ -1045,28 +1045,31 @@ function gameOver(){
   const prevDist=saneNumber(Store.get('bestDist',0),0);
   const isDistRecord = distM>prevDist && distM>0;
   if (isDistRecord){ Store.set('bestDist',distM); if (!isRecord) haptic('success'); }
+  let finPrev=0; // 30.09.2026 «Финиш по времени»: прежний личный рекорд времени этого режима (до перезаписи ниже) — для «−2.3 с» под временем
   let srNewBest=false; // Спидран: рекорд — лучшее время до цели (v1.42.0)
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored){ // v1.282.20: часы восстановленного забега начинались бы с нуля — такой рекорд нечестен
     const srKey = S.speedrunRSG ? 'srBestRSG' : 'srBest'; // 11.09.2026 «Speedrun RSG»: свой личный рекорд, не мешается с постоянным SSG
-    const prevSr=saneNumber(Store.get(srKey,0),0);
+    const prevSr=saneNumber(Store.get(srKey,0),0); finPrev=prevSr;
     if (!prevSr || S.time<prevSr){ Store.set(srKey,S.time); srNewBest=true;
       if (typeof ghostSave==='function') ghostSave('speedrun'); } // 15.09.2026: своя ветка победы (S.srWin) — ghostSave выше в общем isRecord её не видел, след не сохранялся ни на одной победе
     else ghostSaveIfFirstEver('speedrun'); // 18.09.2026: победа есть, старое время не побито — но линия для категории может быть ещё пустой
   }
   let slalomNewBest=false; // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — рекорд считается только на настоящей победе
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored){
-    const prevSl=saneNumber(Store.get('slalomBest',0),0);
+    const prevSl=saneNumber(Store.get('slalomBest',0),0); finPrev=prevSl;
     if (!prevSl || S.time<prevSl){ Store.set('slalomBest',S.time); slalomNewBest=true;
       if (typeof ghostSave==='function') ghostSave('slalom'); } // 15.09.2026: та же дыра, что у Спидрана — своя ветка победы, общий ghostSave(cat) выше её не касался
     else ghostSaveIfFirstEver('slalom'); // 18.09.2026: та же добавка, что у Спидрана
   }
   let biathlonNewBest=false; // 06.09.2026 «Биатлон»: тот же приём — S.time уже несёт штрафы на этот момент
   if (S.mode==='biathlon' && S.biathlonWin && !S.wasRestored){
-    const prevBi=saneNumber(Store.get('biathlonBest',0),0);
+    const prevBi=saneNumber(Store.get('biathlonBest',0),0); finPrev=prevBi;
     if (!prevBi || S.time<prevBi){ Store.set('biathlonBest',S.time); biathlonNewBest=true;
       if (typeof ghostSave==='function') ghostSave('biathlon'); } // 15.09.2026: та же дыра — своя ветка победы
     else ghostSaveIfFirstEver('biathlon'); // 18.09.2026: та же добавка, что у Спидрана/Слалома
   }
+  // 30.09.2026 «Финиш по времени» (макет, владелец: «вноси все три режима»): победа в Спидране / «Без касаний» / Биатлоне — главным числом идёт ВРЕМЯ, очки уходят на рисунок «Твоего полёта»
+  OF_FIN={ on:!!((S.mode==='speedrun'&&S.srWin)||(S.mode==='slalom'&&S.slalomWin)||(S.mode==='biathlon'&&S.biathlonWin)), prev:finPrev, rec:!!(srNewBest||slalomNewBest||biathlonNewBest), sc:sc, raw:Math.floor(S.score) }; // sc — итог × плавность (то, что уходит в рекорд), raw — очки до множителя: цель Спидрана проверяется именно по raw (game.js: S.score>=SR_GOAL)
   S.wallet += S.starsCollected;
   Store.set('wallet', S.wallet);
   if (ghostBeatNow) Stats.ghostBeats=(Stats.ghostBeats||0)+1; // сколько чужих призраков повержено (ачивка gv1)
@@ -1095,10 +1098,12 @@ function gameOver(){
   overRankFill(null,''); // ранг прошлого забега не течёт в этот (28.09.2026: карточка места вместо строки #myRank)
   shareSheetShow(false);
   webJoinFill(); // гость видит мостик: «войди — и полёт в общей таблице» (v1.51.0)
-  setText('finalScore',sc); // синхронно финал — для мгновенного отображения и тестов
+  const finTxt=OF_FIN.on ? fmtTime(S.time) : ''; // 30.09.2026 «Финиш по времени»: на победе главное число — время, без count-up (он про очки)
+  setText('finalScore',OF_FIN.on?finTxt:sc); // синхронно финал — для мгновенного отображения и тестов
+  toggleCls('finalScore','finLong',finTxt.length>6); // «12:34.5» и длиннее — чуть мельче, чтобы не выходить за колонку
   const sg=++scoreCountGen, fsEl=$('finalScore'), t0=performance.now(); // count-up 0→sc за 0.8s
   requestAnimationFrame(function tick(now){
-    if(sg!==scoreCountGen || screenName!=='over') return; // устаревший цикл молчит
+    if(sg!==scoreCountGen || screenName!=='over' || OF_FIN.on) return; // устаревший цикл молчит
     const k=Math.min(1,(now-t0)/800);
     fsEl.textContent=String(Math.round(sc*(1-Math.pow(1-k,3)))); // easeOutCubic
     if(k<1) requestAnimationFrame(tick);
@@ -1114,6 +1119,7 @@ function gameOver(){
     gyro:   { cls:'cat-gyro',   icon:'i-medal-gyro',   vb:'0 0 24 24',      label:L.recordGyro },
     keys:   { cls:'cat-keys',   icon:'i-medal-keys',   vb:'0 0 24 24',      label:L.recordKeys },
     dist:   { cls:'cat-dist',   icon:'i-medal-dist',   vb:'0 0 24 24',      label:L.recordDist },
+    time:   { cls:'cat-time',   icon:'i-medal-bullet', vb:'0 0 24 24',      label:ovT('overMedalTime') }, // 30.09.2026 «Финиш по времени»: секундомер (тот же символ, что у Bullet Time) тёмным на золотом диске
   };
   function medalHTML(cat, delayMs){
     const m=MEDAL_CAT[cat];
@@ -1127,6 +1133,7 @@ function gameOver(){
       +'</div>';
   }
   const medals=[];
+  if (OF_FIN.rec) medals.push(medalHTML('time', 0)); // 30.09.2026 «Финиш по времени»: новое лучшее время Спидрана / «Без касаний» / Биатлона — золотая медаль (раньше это была текстовая плашка «Новый рекорд времени»)
   // Caravan (05.09.2026): своей медали-иконки нет — новая медаль это визуал, а по правилу
   // проекта визуал идёт только через макет. Рекорд объявляется текстовой плашкой
   // ниже (recChips), как уже сделано для Спидрана, а не золотой медалью с иконкой.
@@ -1136,12 +1143,11 @@ function gameOver(){
 
   // остальные особые моменты — золотые плашки в ряд с иконками категорий (не строки текста)
   const recChips=[];
-  if (S.mode==='speedrun' && S.srWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(srNewBest?L.srNewBest:L.srFinish)+' '+fmtTime(S.time)+'</span>');
+  // 30.09.2026 «Финиш по времени»: плашки «Новый рекорд времени / Финиш! 1:24.3» Спидрана, «Без касаний» и Биатлона сняты — время теперь главное число экрана, разница к рекорду под ним, рекорд — золотая медаль (overFinishFill, medals выше)
   if (S.mode==='slalom'){ // 06.09.2026: победа — время финиша (как Спидран), срыв — отдельная плашка, без времени (нечестно сравнивать недоезд)
-    if (S.slalomWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(slalomNewBest?L.slalomNewBest:L.slalomFinish)+' '+fmtTime(S.time)+'</span>');
+    if (S.slalomWin){ /* победа: см. «Финиш по времени» выше */ }
     else if (S.slalomFail && !overFlightWillShow()) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.slalomDQ+'</span>'); // 30.09.2026: срыв теперь отмечен крестом на рельсе «Твоего заезда» (владелец: «ставь там, где понятно»); строка остаётся запасной, если рисовать нечем
   }
-  if (S.mode==='biathlon' && S.biathlonWin) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('timer')+(biathlonNewBest?L.biathlonNewBest:L.biathlonFinish)+' '+fmtTime(S.time)+(S.biathlonMisses?' ('+L.biathlonMisses(S.biathlonMisses)+')':'')+'</span>');
   if (S.mode==='relay'){ // 06.09.2026: сдал — плашка с номером этапа (сеть решает, дошла ли она — см. дальше в этой функции), сорвался — плашка без сети, как slalomDQ
     if (S.relayLegDone) recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('plane')+L.relayLegSent(S.relayLeg)+'</span>');
     else recChips.push('<span class="recChip rise" style="animation-delay:0ms">'+ic('x')+L.relayFail+'</span>');
@@ -1177,9 +1183,10 @@ function gameOver(){
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
-  OF_TOREC=(!isRecord && sc>0 && prevCat>sc) ? prevCat-sc : 0; // 30.09.2026: то же число — золотой строкой на рисунке «Твоего полёта» (раньше жило только в спойлере)
+  OF_TOREC=(!foreignRecordMode && !isRecord && sc>0 && prevCat>sc) ? prevCat-sc : 0; // 30.09.2026: то же число — золотой строкой на рисунке «Твоего полёта» (раньше жило только в спойлере); только Score Attack: у Спидрана/«Без касаний»/Биатлона prevCat — рекорд чужой дисциплины (см. foreignRecordMode выше), «До рекорда» по нему был бы враньём
   overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
-  overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины — только Score Attack и срыв в «Без касаний»; в остальных режимах сама прячет и чистит карточку
+  overFinishFill(sc); // 30.09.2026 «Финиш по времени»: разница к рекорду под временем / «Цель · Не хватило» при вылете Спидрана; в остальных режимах прячет свой блок
+  overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины (или флажок финиша) — Score Attack, «Без касаний», Спидран, Биатлон; в остальных режимах сама прячет и чистит карточку
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
@@ -1298,22 +1305,38 @@ function submitFailSignal(kind, ok){
       // (js/goldstar.js) — заявка star:true при малой пройденной дистанции физически невозможна,
       // сервер теперь может её отбить, не веря голому булеву флагу
       track: ghostPackDaily() }).then(ok=>submitFailSignal('daily',ok)); // 23.09.2026: было голым вызовом без .then — см. комментарий у submitFailSignal
+  let timeSubmitP=null; // 30.09.2026 «Финиш по времени»: обещание отправки времени (true — сервер принял) — после него спрашиваем таблицу и рисуем карточку места (см. ниже)
   // 03.09.2026 «Спидран получает свою таблицу»: тот же приём, что у Трассы дня — только
   // реально добежавший до цели (srWin), не восстановленный забег (часы начались бы с нуля).
   if (S.mode==='speedrun' && S.srWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSpeedrunSubmit==='function' && typeof ghostPackDaily==='function')
-    syncSpeedrunSubmit({ day:(S.speedrunRSG?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY), time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed» / 11.09.2026 «RSG»: свой постоянный ключ на каждый вариант, одна и та же таблица
-      track: ghostPackDaily() }).then(ok=>submitFailSignal('speedrun',ok));
+    timeSubmitP=syncSpeedrunSubmit({ day:(S.speedrunRSG?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY), time_sec:S.time, skin:S.skin, // 03.09.2026 «Set Seed» / 11.09.2026 «RSG»: свой постоянный ключ на каждый вариант, одна и та же таблица
+      track: ghostPackDaily() }).then(ok=>{ submitFailSignal('speedrun',ok); return ok; });
   // 06.09.2026 «Слалом»: тот же приём, что у Спидрана — только настоящая победа (slalomWin), не срыв
   if (S.mode==='slalom' && S.slalomWin && !S.wasRestored && rec.length>=20 &&
     typeof syncSlalomSubmit==='function' && typeof ghostPackDaily==='function')
-    syncSlalomSubmit({ day:SLALOM_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
-      track: ghostPackDaily() }).then(ok=>submitFailSignal('slalom',ok));
+    timeSubmitP=syncSlalomSubmit({ day:SLALOM_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
+      track: ghostPackDaily() }).then(ok=>{ submitFailSignal('slalom',ok); return ok; });
   // 06.09.2026 «Биатлон»: тот же приём — S.time на этот момент уже несёт штрафы за промахи
   if (S.mode==='biathlon' && S.biathlonWin && !S.wasRestored && rec.length>=20 &&
     typeof syncBiathlonSubmit==='function' && typeof ghostPackDaily==='function')
-    syncBiathlonSubmit({ day:BIATHLON_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
-      track: ghostPackDaily() }).then(ok=>submitFailSignal('biathlon',ok));
+    timeSubmitP=syncBiathlonSubmit({ day:BIATHLON_ETERNAL_DAY, time_sec:S.time, skin:S.skin,
+      track: ghostPackDaily() }).then(ok=>{ submitFailSignal('biathlon',ok); return ok; });
+  /* 30.09.2026 «Финиш по времени»: карточка «Ты в мире #N» для времени (владелец: «добавить карточку места»). Как у Score Attack: только вошедшему
+     (syncAvailable) и только после того, как сервер ПРИНЯЛ время (ok) — иначе место посчиталось бы по прошлому. Таблицы времени идут по возрастанию
+     (меньше — лучше), лента соседа едет прямо в строке — её берёт общая кнопка призрака (wireTopGhostButtons, FIXED_COURSE_KEY). */
+  if (OF_FIN.on && timeSubmitP && typeof syncAvailable==='function' && syncAvailable()){
+    const genT=runNow(), tMode=S.mode, tRsg=!!S.speedrunRSG;
+    const tDay=(tMode==='speedrun') ? (tRsg?SPEEDRUN_RSG_DAY:SPEEDRUN_ETERNAL_DAY) : (tMode==='slalom' ? SLALOM_ETERNAL_DAY : BIATHLON_ETERNAL_DAY);
+    timeSubmitP.then(ok=>{
+      if(!ok) return null;
+      const topFn=(tMode==='speedrun') ? syncSpeedrunTop : (tMode==='slalom' ? syncSlalomTop : syncBiathlonTop);
+      return (typeof topFn==='function') ? topFn(tDay) : null;
+    }).then(d=>{
+      if(!runSame(genT) || screenName!=='over') return; // ушёл с экрана / начал новый полёт, пока летел ответ
+      overTimeRankFill(d, tMode, tRsg);
+    }).catch(()=>{}); // место — украшение, сбой сети не должен всплывать необработанным отказом
+  }
   /* 06.09.2026 «Эстафета»: сдача этапа — только настоящая (relayLegDone), сорванный этап
      на сервер вообще не идёт (владелец: «цепочка остаётся открытой на том же этапе, ничего
      не пишем») — relayLegDone уже гарантирует это условие, отдельная проверка тут не нужна.
@@ -4657,6 +4680,67 @@ function overRankFill(d, cat){
   el.innerHTML=head+next;
   el.classList.remove('hidden');
 }
+/* 30.09.2026 «Финиш по времени» (макет «Финиш по времени», владелец: «вноси все три режима»). Под временем — разница к личному рекорду:
+   «−2.3 с» зелёным и «прошлый рекорд 1:26.6», если побит; «+5.2 с» оранжевым и «рекорд 1:26.6», если нет; первое время — «первое время»
+   без разницы. Восстановленный забег (часы начались с нуля) не сравниваем. При вылете Спидрана до цели — «Цель 10 000 · Не хватило N»
+   с полоской: считаем по очкам ДО множителя плавности (S.score) — именно по ним игра решает, что цель взята (game.js). */
+function overFinishFill(sc){
+  const el=$('finishDelta'); if(!el) return;
+  el.classList.add('hidden'); el.innerHTML='';
+  if(OF_FIN.on){
+    if(S.wasRestored) return;
+    const prev=OF_FIN.prev, sec=' '+ovT('overSecUnit');
+    if(prev>0){
+      const raw=S.time-prev; let mag=Math.round(Math.abs(raw)*10)/10; if(mag===0 && raw!==0) mag=0.1; // побитое на сотые всё равно «−0.1», а не «−0.0»
+      const good=OF_FIN.rec;
+      el.innerHTML='<div class="fdRow '+(good?'good':'bad')+'"><b>'+(good?'−':'+')+mag.toFixed(1)+escapeHtml(sec)+'</b><span>'+escapeHtml(ovT(good?'overFinPrev':'overFinBest'))+' '+fmtTime(prev)+'</span></div>';
+    } else el.innerHTML='<div class="fdRow"><span>'+escapeHtml(ovT('overFinFirst'))+'</span></div>';
+    el.classList.remove('hidden');
+    return;
+  }
+  if(S.mode==='speedrun' && !S.srWin && sc>0){
+    const raw=Math.max(0,Math.floor(S.score)), left=Math.max(0,SR_GOAL-raw), pct=Math.round(Math.min(1,raw/SR_GOAL)*100);
+    el.innerHTML='<div class="fdGoal"><div class="fdGoalRow"><span>'+escapeHtml(ovT('overGoal')(fmtN(SR_GOAL)))+'</span><b>'+escapeHtml(ovT('overGoalLeft')(fmtN(left)))+'</b></div>'
+      +'<div class="fdBar"><i style="width:'+pct+'%"></i></div></div>';
+    el.classList.remove('hidden');
+  }
+}
+/* Карточка места для времени («Ты в мире #4 · Speedrun», «Следующий: #3 Орион · 1:23.5 / Ещё 0.8 с до места выше», «С призраком»).
+   Тот же #overRank, что у Score Attack, но таблица идёт по возрастанию: выше — у кого время МЕНЬШЕ. Сравниваем с ЛУЧШИМ временем
+   игрока (d.me.best), а не только что пролетевшим: место в таблице определяется лучшим. Лента соседа едет в строке топа — кладём её
+   в topFixedTrackByPid, где её ждёт общая кнопка призрака; у Speedrun RSG (новая трасса каждый забег) призрака нет — трасса не совпадёт. */
+function overTimeRankFill(d, mode, rsg){
+  const el=$('overRank'); if(!el) return;
+  const ok = d && d.ok && d.me && d.me.rank>0 && (mode==='speedrun'||mode==='slalom'||mode==='biathlon');
+  if(!ok){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
+  const sec=' '+ovT('overSecUnit'), gapTxt=function(x){ let g=Math.round(Math.max(0,x)*10)/10; if(g===0 && x>0) g=0.1; return g.toFixed(1)+sec; };
+  const modeName=(mode==='speedrun') ? L.modeSpeedrun : (mode==='slalom' ? L.modeSlalom : L.modeBiathlon);
+  const head='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT('overRankYou'))+'</span>'+
+    '<span class="orPlace"><span class="orNum">#'+rank+'</span><span class="orMode">'+escapeHtml(modeName)+'</span></span></div>';
+  const who=function(r,n){ return '#'+n+' '+String(r.name||'').slice(0,64)+' · '+fmtTime(saneNumber(r.best,0)); };
+  let next='';
+  if(rank===1){
+    const second=top.find(function(r){ return r && !r.me; });
+    if(second) next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+      '<span class="orWho">'+escapeHtml(ovT('overRankBehind')(who(second,2)))+'</span>'+
+      '<span class="orGap">'+escapeHtml(ovT('overRankFirst'))+' · '+escapeHtml(ovT('overRankLead')(gapTxt(saneNumber(second.best,0)-myBest)))+'</span></div></div>';
+  } else {
+    const up=top[rank-2];
+    if(up && !up.me && saneNumber(up.best,0)>0 && saneNumber(up.best,0)<myBest){
+      topFixedTrackByPid={}; // перестраивается так же, как в таблице (renderTopFor): лента — прямо в строке, сеть не нужна
+      if(!rsg) top.forEach(function(r){ if(r && r.pid && typeof r.track==='string') topFixedTrackByPid[r.pid]={track:r.track, skin:r.skin, name:r.name}; });
+      const canGhost = !rsg && up.pid && topFixedTrackByPid[up.pid];
+      next='<div class="orLine"></div><div class="orNext"><div class="orNextTxt">'+
+        '<span class="orWho">'+escapeHtml(ovT('overRankNext')(who(up,rank-1)))+'</span>'+
+        '<span class="orGap">'+escapeHtml(ovT('overRankGap')(gapTxt(myBest-saneNumber(up.best,0))))+'</span></div>'+
+        (canGhost ? '<button type="button" class="topGh orGhost" data-gh="'+Math.floor(Number(up.pid))+'" data-cat="'+mode+'" data-best="'+Math.floor(saneNumber(up.best,0))+'">'+ic('ghost')+'<span>'+escapeHtml(ovT('overRankGhost'))+'</span></button>' : '')+
+        '</div>';
+    }
+  }
+  el.innerHTML=head+next;
+  el.classList.remove('hidden');
+}
 /* Гостю — на месте карточки приглашение войти (#webJoin), с «Твои N — это M-е место из T»
    по тем же первым 100 строкам. Если он ниже всех строк ответа — строку не показываем:
    «16-е из 15» звучит как ошибка (та же формулировка в Турнирах пока считает по-старому). */
@@ -4691,6 +4775,7 @@ function overLocFill(){ // полоска «До Линии Кармана» (и
    Пока только Score Attack и срыв в «Без касаний» (остальные режимы — без карточки, решение владельца). */
 const OF_W=326; // ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
 let OF_REC={combo:false,wave:false}, OF_TOREC=0, OF_CHIPS=[]; // что побито в этом полёте / сколько до рекорда / плашки gameOver() — заполняет gameOver(), читает overFlightFill()
+let OF_FIN={on:false,prev:0,rec:false,sc:0,raw:0}, OF_VID=false; // 30.09.2026 «Финиш по времени»: победа во «времени» (on), прежний рекорд (prev), побит ли (rec), очки итога / до множителя; OF_VID — есть ли клип «Момента полёта» (cinemaClipRefresh) для кнопки видео в углу окошка
 const OF_KIND_ALIAS={beam:'seeker'};
 const OF_KIND_NAME={rock:'fkRock',debris:'fkDebris',drift:'fkDrift',mine:'fkMine',sat:'fkSat',comet:'fkComet',seeker:'fkSeeker',gate:'fkGate'}; // тот же набор, что PT_KIND_LABEL (partitura.js), имена — из i18n на всех языках
 function ofMix(hex,k){ // смесь #rrggbb с белым (k>0) или чёрным (k<0), доля |k|; без color-mix — старые WebView его не знают
@@ -4726,7 +4811,7 @@ function overFlightClear(){
 }
 function overFlightWillShow(){ // одно условие на двоих: и карточке (рисовать ли), и итогам (нужна ли запасная строка «Срыв»)
   const slalom=(S.mode==='slalom'), classic=(S.mode==='classic');
-  if(!(classic || (slalom && S.slalomFail && !S.slalomWin))) return false; // победа в слаломе — не срыв, карточка не нужна
+  if(!(classic || (slalom && (S.slalomFail || S.slalomWin)) || S.mode==='speedrun' || S.mode==='biathlon')) return false; // 30.09.2026 «Финиш по времени»: и победа в слаломе (заезд до флажка), и Спидран/Биатлон — финиш или вылет
   return !(typeof rec==='undefined' || !rec || rec.length<20); // восстановленный забег: часы и запись начались с нуля
 }
 /* 30.09.2026: оболочка-страховка. Карточка «Твой полёт» — украшение итогов: если в её сборке что-то упадёт (неожиданная запись rec,
@@ -4743,28 +4828,36 @@ function overFlightFillInner(){
   const el=$('overFlight'); if(!el) return;
   overFlightClear(); // всегда с чистого листа: полёт прошлого забега или другого режима сюда не течёт
   if(!overFlightWillShow()) return;
-  const slalom=(S.mode==='slalom');
+  const slalom=(S.mode==='slalom'), fin=OF_FIN.on, mode=S.mode; // fin — финиш во «времени» (Спидран / «Без касаний» / Биатлон): флажок вместо стикера причины
   const H=slalom?290:176, RAIL=slalom?30:0, RX=OF_W-18;
   const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
   if(!m) return;
   let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
   const haveStk=!!(OF_KIND_NAME[kind] && typeof PT_ICON_SVG!=='undefined' && PT_ICON_SVG[kind] && typeof PT_KIND_COLOR!=='undefined' && PT_KIND_COLOR[kind]);
-  const trailCol=HERO_TRAIL_COLOR[slalom?'slalom':'touch'];
+  const trailCol=HERO_TRAIL_COLOR[slalom?'slalom':(mode==='classic'?'touch':mode)]||HERO_TRAIL_COLOR.touch; // цвет линии — режима (у Спидрана / Биатлона свой, как на карточках режимов)
   const unit=' '+(L.unitM||'м'), dist=Math.max(0,Math.floor(S.dist));
   const distTxt=fmtN(slalom?Math.min(dist,SLALOM_DIST):dist)+unit; // пройденное — в подписи стикера / креста, а не в шапке (в шапке теперь переключатель)
   let svg='', failCap='';
   if(slalom){ // рельса до финиша: сплошная — сколько долетел, пунктир — сколько осталось, флажок — финиш, красный крест — место срыва
-    const top=18, bot=H-18, yNow=Math.round((bot-Math.min(1,dist/SLALOM_DIST)*(bot-top))*10)/10;
+    const top=18, bot=H-18, yNow=Math.round((bot-(fin?1:Math.min(1,dist/SLALOM_DIST))*(bot-top))*10)/10; // победа — рельса сплошная целиком, без креста
     svg+='<line class="ofRailLeft" x1="'+RX+'" y1="'+top+'" x2="'+RX+'" y2="'+yNow+'"/>'
       +'<line class="ofRailDone" stroke="'+trailCol+'" x1="'+RX+'" y1="'+yNow+'" x2="'+RX+'" y2="'+bot+'"/>'
-      +'<path d="M'+RX+' '+top+'v14M'+RX+' '+top+'l12 4-12 4" fill="none" stroke="#f0c040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
-      +'<path class="ofCross" d="M'+(RX-6)+' '+(yNow-6)+'l12 12M'+(RX+6)+' '+(yNow-6)+'l-12 12" fill="none" stroke="#ff5f6d" stroke-width="2.6" stroke-linecap="round"/>';
-    // 30.09.2026 (владелец, скриншот): «срыв ставь там, где понятно, как Мину» — крест на самой рельсе в точке срыва + короткая подпись слева, а не строка под счётом
-    failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap')+' · '+distTxt)+'</div>';
+      +'<path d="M'+RX+' '+top+'v14M'+RX+' '+top+'l12 4-12 4" fill="none" stroke="#f0c040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    if(!fin){
+      svg+='<path class="ofCross" d="M'+(RX-6)+' '+(yNow-6)+'l12 12M'+(RX+6)+' '+(yNow-6)+'l-12 12" fill="none" stroke="#ff5f6d" stroke-width="2.6" stroke-linecap="round"/>';
+      // 30.09.2026 (владелец, скриншот): «срыв ставь там, где понятно, как Мину» — крест на самой рельсе в точке срыва + короткая подпись слева, а не строка под счётом
+      failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap')+' · '+distTxt)+'</div>';
+    }
   }
   svg+='<path class="ofTrail" pathLength="1" stroke="'+trailCol+'" d="'+m.d+'"/><circle cx="'+m.sx+'" cy="'+m.sy+'" r="3" fill="#dfe8ff"/>';
   let stk='', cap='';
-  if(haveStk){
+  if(fin){ // финиш: золотой круглый стикер с флажком на конце линии + «Финиш · очки» (очки ушли с главного числа на рисунок — решение владельца)
+    const px=Math.round(m.ex/OF_W*10000)/100, py=Math.round(m.ey/H*10000)/100;
+    stk='<div class="ofStk" data-kind="finish" style="left:'+px+'%;top:'+py+'%;color:#2c3e50;background:linear-gradient(160deg,#ffe38a,#e0a92a)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v16M8 5l11 4-11 4"/></svg></div>';
+    const capTop = m.ey > H-58 ? 'calc('+py+'% - 44px)' : 'calc('+py+'% + 25px)';
+    cap='<div class="ofCap" style="left:'+px+'%;top:'+capTop+'">'+escapeHtml(ovT('overFinCap')+(OF_FIN.sc>0?' · '+fmtN(OF_FIN.sc):''))+'</div>';
+  }
+  else if(haveStk){
     const col=PT_KIND_COLOR[kind];
     let b=''; for(let k=0;k<8;k++){ const a=k*Math.PI/4, c=Math.cos(a), s=Math.sin(a); // вспышка: 8 коротких штрихов вокруг стикера
       b+='<line x1="'+(Math.round((m.ex+c*25)*10)/10)+'" y1="'+(Math.round((m.ey+s*25)*10)/10)+'" x2="'+(Math.round((m.ex+c*31)*10)/10)+'" y2="'+(Math.round((m.ey+s*31)*10)/10)+'"/>'; }
@@ -4781,16 +4874,19 @@ function overFlightFillInner(){
      спойлера сюда не перенесены: первое и так видно по смерти, остальное — профиль, не итоги полёта. */
   const marks=overFlightMarks(OF_CHIPS);
   const cell=function(v,l,recd){ return '<div class="ofCell'+(recd?' rec':'')+'"><b>'+(recd?'▲ ':'')+escapeHtml(String(v))+'</b><span>'+escapeHtml(l)+'</span></div>'; };
-  const cells=cell(fmtTime(S.time),L.passTime)+cell(S.starsCollected,L.stars)+cell('×'+S.comboMax,L.maxCombo,OF_REC.combo)
-    +cell(S.nearMiss,L.nearMiss)+cell(Math.round(S.smooth*100)+'%',L.passSmooth)+cell(S.mission,L.missionLbl,OF_REC.wave);
-  const marksTxt=marks.map(function(x){ return x.txt; }).join(' · ');
+  const bi=(mode==='biathlon'); // Биатлон: волн нет — на их месте «Промахи» (каждый добавляет штраф ко времени)
+  const cells=(fin ? cell(fmtN(OF_FIN.sc),ovT('overStatScore')) : cell(fmtTime(S.time),L.passTime))+cell(S.starsCollected,L.stars)+cell('×'+S.comboMax,L.maxCombo,OF_REC.combo) // финиш: время уже главным числом экрана — в «Цифрах» очки
+    +cell(S.nearMiss,L.nearMiss)+cell(Math.round(S.smooth*100)+'%',L.passSmooth)+(bi ? cell(S.biathlonMisses||0,ovT('overStatMiss')) : cell(S.mission,L.missionLbl,OF_REC.wave));
+  const penTxt=(fin && bi && S.biathlonMisses>0) ? ovT('overPenalty')(S.biathlonMisses, BIATHLON_PENALTY_SEC) : ''; // «Штраф: 2 × 3 с» — откуда прибавка ко времени
+  const marksTxt=(penTxt ? [penTxt] : []).concat(marks.map(function(x){ return x.txt; })).join(' · ');
   const hook=OF_TOREC>0 ? '<div class="ofHook">'+escapeHtml(L.toRecord+fmtN(OF_TOREC))+'</div>' : ''; // «До рекорда N» золотом на рисунке — самая полезная цифра для «ещё разок»
-  const dot=(OF_REC.combo||OF_REC.wave) ? '<i class="ofDot"></i>' : ''; // золотая точка на «Цифрах»: есть что посмотреть, не текстом
+  const dot=(OF_REC.combo||(!bi && OF_REC.wave)) ? '<i class="ofDot"></i>' : ''; // золотая точка на «Цифрах»: есть что посмотреть, не текстом (у Биатлона волны нет — её рекорд не подсвечивается)
   el.style.setProperty('--ofGlow', slalom?'rgba(107,224,255,.5)':'rgba(190,225,255,.55)');
   el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span>'
       +'<div class="ofSeg"><button type="button" class="on" data-v="line">'+escapeHtml(ovT('overSegLine'))+'</button><button type="button" data-v="nums">'+escapeHtml(ovT('overSegNums'))+dot+'</button></div></div>'
     +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap+hook
-    +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div></div>';
+    +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div>'
+    +'<button type="button" class="ofVid'+(OF_VID?'':' hidden')+'" aria-label="'+escapeHtml(ovT('overVideoBtn'))+'">'+ic('play')+'</button></div>'; // видео этого полёта — левый нижний угол (владелец: «чтобы место не пустовало»); виден, только если «Момент полёта» записал клип
   overBadgesFill(marks); // награды — круглыми значками по бокам медали; плашки-текст под счётом больше не нужны
   if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки стали значками — иначе непонятая плашка пропала бы бесследно
   toggleCls('overDetailsBtn','hidden',true); toggleCls('overMore','hidden',true); // подробности теперь внутри окошка — строка «Подробности полёта» внизу не нужна (в режимах без окошка остаётся)
@@ -4836,8 +4932,18 @@ function overFlightView(nums){ // «Цифры» лежат поверх рис�
   el.querySelectorAll('.ofSeg button').forEach(function(b){ b.classList.toggle('on', (b.dataset.v==='nums')===!!nums); });
   if(nums){ const d=el.querySelector('.ofDot'); if(d) d.remove(); } // посмотрел — точка гаснет
 }
+function overFlightVideo(on){ // 30.09.2026: cinema.js сообщает, есть ли клип «Момента полёта» для этого полёта — кнопка-значок в левом нижнем углу окошка (работает в любом порядке: клип может появиться и до, и после заполнения окошка)
+  OF_VID=!!on;
+  const v=document.querySelector('#overFlight .ofVid'); if(v) v.classList.toggle('hidden',!OF_VID);
+}
 (function(){ const ofEl=$('overFlight'); if(!ofEl) return;
   ofEl.addEventListener('click', function(e){ // две кнопки в шапке ИЛИ тап по любому месту окошка — переключить
+    if(e.target.closest('.ofVid')){ // видео этого полёта: тот же плеер, что у «Клип» в панели «Поделиться»; окошко при этом не переключается
+      if(typeof sfx!=='undefined' && sfx.click) sfx.click();
+      if(typeof haptic==='function') haptic('light');
+      if(typeof cinemaClipOpen==='function') cinemaClipOpen();
+      return;
+    }
     const b=e.target.closest('.ofSeg button');
     if(b) overFlightView(b.dataset.v==='nums'); else overFlightView(!ofEl.classList.contains('showNums'));
     if(typeof sfx!=='undefined' && sfx.click) sfx.click();
