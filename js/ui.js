@@ -1072,6 +1072,9 @@ function gameOver(){
   if (ghostBeatNow) Stats.ghostBeats=(Stats.ghostBeats||0)+1; // сколько чужих призраков повержено (ачивка gv1)
   Stats.deaths++; Stats.totalStars+=S.starsCollected;
   Stats.totalDist+=distM; // профиль: суммарная дистанция — база космической шкалы
+  // 30.09.2026 «Подробности внутри окошка»: что побито в ЭТОМ полёте — считаем ДО перезаписи рекордов ниже. Прежний рекорд 0 не считается
+  // (первый полёт в жизни: побить нечего, подсветка горела бы всегда); подсвечивается в «Цифрах» только честно побитое.
+  OF_REC.combo=(Stats.bestCombo>0 && S.comboMax>Stats.bestCombo); OF_REC.wave=(Stats.bestWave>0 && S.mission>Stats.bestWave);
   if(S.comboMax>Stats.bestCombo)Stats.bestCombo=S.comboMax;
   if(S.mission>Stats.bestWave)Stats.bestWave=S.mission;
   if(S.smooth>=0.99)Stats.perfectRuns++;
@@ -1163,6 +1166,7 @@ function gameOver(){
   if (distM===42) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg42+'</span>');
   // 30.09.2026 (владелец, скриншот итогов): плашка «Больше 9000!» убрана — и так видно по счёту, только место занимает. Флаг Stats.e9000 (выше) остаётся — убрана надпись, не пасхалка в статистике.
   if (sc===1337) recChips.push('<span class="recChip rise" style="animation-delay:'+(recChips.length*60)+'ms">'+ic('target')+L.egg1337+'</span>');
+  OF_CHIPS=recChips.slice(); // 30.09.2026: копия для «Твоего полёта» — там награды становятся значками у медали, а слова уходят в «Цифры»; в режимах без окошка плашки остаются как были
   setHTML('newRecord', recChips.join(''));
   /* v1.282.14: возвращаем блоки, которые мог спрятать финиш своей трассы. mapOver гасит
      #stats и #runPass, а снимал этот hidden кто-то — никто: во всём проекте нет ни одного
@@ -1173,6 +1177,7 @@ function gameOver(){
   if (typeof cardCapture==='function') cardCapture(sc,{rec:isRecord||srNewBest}); // v1.73.0: карточка для скриншота — данные итога на борт
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
+  OF_TOREC=(!isRecord && sc>0 && prevCat>sc) ? prevCat-sc : 0; // 30.09.2026: то же число — золотой строкой на рисунке «Твоего полёта» (раньше жило только в спойлере)
   overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
   overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины — только Score Attack и срыв в «Без касаний»; в остальных режимах сама прячет и чистит карточку
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
@@ -4685,6 +4690,7 @@ function overLocFill(){ // полоска «До Линии Кармана» (и
    теряет ~30% кадров при дорисовывании со свечением, статичная линия почти бесплатна; Oppo без потерь.
    Пока только Score Attack и срыв в «Без касаний» (остальные режимы — без карточки, решение владельца). */
 const OF_W=326; // ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
+let OF_REC={combo:false,wave:false}, OF_TOREC=0, OF_CHIPS=[]; // что побито в этом полёте / сколько до рекорда / плашки gameOver() — заполняет gameOver(), читает overFlightFill()
 const OF_KIND_ALIAS={beam:'seeker'};
 const OF_KIND_NAME={rock:'fkRock',debris:'fkDebris',drift:'fkDrift',mine:'fkMine',sat:'fkSat',comet:'fkComet',seeker:'fkSeeker',gate:'fkGate'}; // тот же набор, что PT_KIND_LABEL (partitura.js), имена — из i18n на всех языках
 function ofMix(hex,k){ // смесь #rrggbb с белым (k>0) или чёрным (k<0), доля |k|; без color-mix — старые WebView его не знают
@@ -4712,13 +4718,28 @@ function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec 
   });
   return { d:d, sx:sx, sy:sy, ex:ex, ey:ey };
 }
-function overFlightClear(){ const el=$('overFlight'); if(!el) return; el.classList.add('hidden'); el.classList.remove('draw'); el.innerHTML=''; }
+function overFlightClear(){
+  const el=$('overFlight'); if(!el) return;
+  el.classList.add('hidden'); el.classList.remove('draw','showNums'); el.innerHTML='';
+  const rm=$('recordMedals'); if(rm){ rm.querySelectorAll('.ofSide').forEach(function(e){ e.remove(); }); rm.classList.remove('ofRow'); } // значки наград у медали — вместе с карточкой
+  toggleCls('overDetailsBtn','hidden',false); // строка «Подробности полёта» внизу возвращается везде, где окошка нет (скрывает её только overFlightFill)
+}
 function overFlightWillShow(){ // одно условие на двоих: и карточке (рисовать ли), и итогам (нужна ли запасная строка «Срыв»)
   const slalom=(S.mode==='slalom'), classic=(S.mode==='classic');
   if(!(classic || (slalom && S.slalomFail && !S.slalomWin))) return false; // победа в слаломе — не срыв, карточка не нужна
   return !(typeof rec==='undefined' || !rec || rec.length<20); // восстановленный забег: часы и запись начались с нуля
 }
+/* 30.09.2026: оболочка-страховка. Карточка «Твой полёт» — украшение итогов: если в её сборке что-то упадёт (неожиданная запись rec,
+   отсутствующий значок и т.п.), экран итогов обязан остаться целым, а не оборвать gameOver() на полпути (после него идут ачивки,
+   рейтинг, отправка счёта). Ошибка глушится, карточка прячется, причина уходит анонимным сигналом в диагностику. */
 function overFlightFill(){
+  try{ overFlightFillInner(); }
+  catch(e){
+    try{ overFlightClear(); }catch(e2){}
+    try{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('overflight_err', String(e&&e.message||e).slice(0,80)); }catch(e3){}
+  }
+}
+function overFlightFillInner(){
   const el=$('overFlight'); if(!el) return;
   overFlightClear(); // всегда с чистого листа: полёт прошлого забега или другого режима сюда не течёт
   if(!overFlightWillShow()) return;
@@ -4730,7 +4751,7 @@ function overFlightFill(){
   const haveStk=!!(OF_KIND_NAME[kind] && typeof PT_ICON_SVG!=='undefined' && PT_ICON_SVG[kind] && typeof PT_KIND_COLOR!=='undefined' && PT_KIND_COLOR[kind]);
   const trailCol=HERO_TRAIL_COLOR[slalom?'slalom':'touch'];
   const unit=' '+(L.unitM||'м'), dist=Math.max(0,Math.floor(S.dist));
-  const right=slalom ? fmtN(Math.min(dist,SLALOM_DIST))+' / '+fmtN(SLALOM_DIST)+unit : fmtN(dist)+unit;
+  const distTxt=fmtN(slalom?Math.min(dist,SLALOM_DIST):dist)+unit; // пройденное — в подписи стикера / креста, а не в шапке (в шапке теперь переключатель)
   let svg='', failCap='';
   if(slalom){ // рельса до финиша: сплошная — сколько долетел, пунктир — сколько осталось, флажок — финиш, красный крест — место срыва
     const top=18, bot=H-18, yNow=Math.round((bot-Math.min(1,dist/SLALOM_DIST)*(bot-top))*10)/10;
@@ -4739,7 +4760,7 @@ function overFlightFill(){
       +'<path d="M'+RX+' '+top+'v14M'+RX+' '+top+'l12 4-12 4" fill="none" stroke="#f0c040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
       +'<path class="ofCross" d="M'+(RX-6)+' '+(yNow-6)+'l12 12M'+(RX+6)+' '+(yNow-6)+'l-12 12" fill="none" stroke="#ff5f6d" stroke-width="2.6" stroke-linecap="round"/>';
     // 30.09.2026 (владелец, скриншот): «срыв ставь там, где понятно, как Мину» — крест на самой рельсе в точке срыва + короткая подпись слева, а не строка под счётом
-    failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap'))+'</div>';
+    failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap')+' · '+distTxt)+'</div>';
   }
   svg+='<path class="ofTrail" pathLength="1" stroke="'+trailCol+'" d="'+m.d+'"/><circle cx="'+m.sx+'" cy="'+m.sy+'" r="3" fill="#dfe8ff"/>';
   let stk='', cap='';
@@ -4750,13 +4771,29 @@ function overFlightFill(){
     svg+='<g class="ofBurst" stroke="'+col+'">'+b+'</g>';
     const px=Math.round(m.ex/OF_W*10000)/100, py=Math.round(m.ey/H*10000)/100;
     stk='<div class="ofStk" data-kind="'+kind+'" style="left:'+px+'%;top:'+py+'%;background:linear-gradient(160deg,'+ofMix(col,.3)+','+ofMix(col,-.12)+')">'+PT_ICON_SVG[kind]+'</div>';
-    const capTxt=beam ? ovT('overBeamCap') : (L[OF_KIND_NAME[kind]]||'');
+    const capTxt=(beam ? ovT('overBeamCap') : (L[OF_KIND_NAME[kind]]||'')) + (slalom ? '' : ' · '+distTxt); // «Мина · 640 м»: где остановило
     const capTop = m.ey > H-58 ? 'calc('+py+'% - 44px)' : 'calc('+py+'% + 25px)'; // у нижней кромки подпись уходит НАД стикер
     cap='<div class="ofCap" style="left:'+px+'%;top:'+capTop+'">'+escapeHtml(capTxt)+'</div>';
   }
+  /* 30.09.2026 «Подробности внутри окошка» (вариант А, макет «Итоги обычного игрока»): шесть чисел, которые объясняют счёт (время, звёзды,
+     комбо, впритык, плавность, волна); побитое подсвечено золотом со стрелкой — игра хранит рекорды комбо и волны (Stats.bestCombo/bestWave),
+     по остальным честного «рекорда» нет, там подсветки не будет. Удары, бонусы, «режим · управление» и пять плашек «личные рекорды» из
+     спойлера сюда не перенесены: первое и так видно по смерти, остальное — профиль, не итоги полёта. */
+  const marks=overFlightMarks(OF_CHIPS);
+  const cell=function(v,l,recd){ return '<div class="ofCell'+(recd?' rec':'')+'"><b>'+(recd?'▲ ':'')+escapeHtml(String(v))+'</b><span>'+escapeHtml(l)+'</span></div>'; };
+  const cells=cell(fmtTime(S.time),L.passTime)+cell(S.starsCollected,L.stars)+cell('×'+S.comboMax,L.maxCombo,OF_REC.combo)
+    +cell(S.nearMiss,L.nearMiss)+cell(Math.round(S.smooth*100)+'%',L.passSmooth)+cell(S.mission,L.missionLbl,OF_REC.wave);
+  const marksTxt=marks.map(function(x){ return x.txt; }).join(' · ');
+  const hook=OF_TOREC>0 ? '<div class="ofHook">'+escapeHtml(L.toRecord+fmtN(OF_TOREC))+'</div>' : ''; // «До рекорда N» золотом на рисунке — самая полезная цифра для «ещё разок»
+  const dot=(OF_REC.combo||OF_REC.wave) ? '<i class="ofDot"></i>' : ''; // золотая точка на «Цифрах»: есть что посмотреть, не текстом
   el.style.setProperty('--ofGlow', slalom?'rgba(107,224,255,.5)':'rgba(190,225,255,.55)');
-  el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span><span class="orMode">'+escapeHtml(right)+'</span></div>'
-    +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap+'</div>';
+  el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span>'
+      +'<div class="ofSeg"><button type="button" class="on" data-v="line">'+escapeHtml(ovT('overSegLine'))+'</button><button type="button" data-v="nums">'+escapeHtml(ovT('overSegNums'))+dot+'</button></div></div>'
+    +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap+hook
+    +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div></div>';
+  overBadgesFill(marks); // награды — круглыми значками по бокам медали; плашки-текст под счётом больше не нужны
+  if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки стали значками — иначе непонятая плашка пропала бы бесследно
+  toggleCls('overDetailsBtn','hidden',true); toggleCls('overMore','hidden',true); // подробности теперь внутри окошка — строка «Подробности полёта» внизу не нужна (в режимах без окошка остаётся)
   const still=(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   el.classList.toggle('draw', typeof Q!=='undefined' && Q.level>=2 && !still);
   el.classList.remove('hidden');
@@ -4777,6 +4814,36 @@ function overFlightFit(){
   const newH=Math.max(90, r.height-over-2);
   if(newH<r.height) box.style.maxWidth=Math.floor(r.width*newH/r.height)+'px';
 }
+function overFlightMarks(chips){ // плашки gameOver() (HTML) → [{icn, txt}]: иконка и слова; что не разобралось — не берём (плашка останется текстом)
+  const out=[];
+  (chips||[]).forEach(function(h){
+    const m=String(h).match(/<use href="#i-([\w-]+)"><\/use><\/svg>([\s\S]*?)<\/span>\s*$/); if(!m) return;
+    const txt=m[2].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim(); if(txt) out.push({icn:m[1],txt:txt});
+  });
+  return out;
+}
+function overBadgesFill(marks){ // круглые значки наград по бокам медали (поровну слева и справа, медаль остаётся по центру)
+  const rm=$('recordMedals'); if(!rm || !marks || !marks.length) return;
+  const meds=Array.prototype.map.call(rm.querySelectorAll('.medalCol'), function(e){ return e.outerHTML; }).join(''); // медаль(и) заново, без старых боковых групп
+  const b=marks.map(function(x){ return '<span class="ofBdg" title="'+escapeHtml(x.txt)+'">'+ic(x.icn)+'</span>'; });
+  const nl=Math.ceil(b.length/2);
+  rm.classList.add('ofRow');
+  rm.innerHTML='<div class="ofSide l">'+b.slice(0,nl).join('')+'</div>'+meds+'<div class="ofSide r">'+b.slice(nl).join('')+'</div>';
+}
+function overFlightView(nums){ // «Цифры» лежат поверх рисунка того же размера: экран при переключении не двигается
+  const el=$('overFlight'); if(!el) return;
+  el.classList.toggle('showNums', !!nums);
+  el.querySelectorAll('.ofSeg button').forEach(function(b){ b.classList.toggle('on', (b.dataset.v==='nums')===!!nums); });
+  if(nums){ const d=el.querySelector('.ofDot'); if(d) d.remove(); } // посмотрел — точка гаснет
+}
+(function(){ const ofEl=$('overFlight'); if(!ofEl) return;
+  ofEl.addEventListener('click', function(e){ // две кнопки в шапке ИЛИ тап по любому месту окошка — переключить
+    const b=e.target.closest('.ofSeg button');
+    if(b) overFlightView(b.dataset.v==='nums'); else overFlightView(!ofEl.classList.contains('showNums'));
+    if(typeof sfx!=='undefined' && sfx.click) sfx.click();
+    if(typeof haptic==='function') haptic('light');
+  });
+})();
 /* Карточка места («Ты в мире»), приглашение войти, медали и плашки рекордов приходят на итоги ПОЗЖЕ — после ответа сервера — и
    делают экран выше уже после одной подгонки (живая находка 30.09: на 360×740 подгонка иногда не срабатывала). Поэтому подгонка
    перезапускается при любом изменении размера этих блоков. Сам #overFlight не наблюдаем — иначе подгонка зацикливалась бы. */
