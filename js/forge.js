@@ -1016,10 +1016,8 @@ function forgeIsVerified(code){
    «после теста вернуться сюда, а не искать снова»; «Поделиться» уехало на карточку карты).
    Шаг «Сохранить» теперь две равные кнопки: «Тестировать» (бывший «Полёт», тот же забег) и
    «Опубликовать» — включается, когда ЭТА карта пройдена до финиша (тот же «Clear Check», что
-   был раньше за «Поделиться»). Проверка — по карте БЕЗ имени (forgeVerifyKey): назвал карту
-   уже после теста — тест не слетает; поменял любую точку/цвет — слетает, как и прежде. */
+   был раньше за «Поделиться»). Проверка — по точному коду, как и прежде. */
 let forgeTestReturn=false; // true — полёт запущен кнопкой «Тестировать» с этого шага: «Меню»/«Назад» на итогах ведут обратно сюда (toMenu, ui.js)
-function forgeVerifyKey(cfg){ return forgeEncode(forgeSanitize(Object.assign({},cfg,{n:''}))); }
 function forgePublishedHas(code){ const l=Store.get('forgePublished',[]); return Array.isArray(l) && l.indexOf(code)>=0; }
 function forgePublishedAdd(code){
   let l=Store.get('forgePublished',[]); if(!Array.isArray(l)) l=[];
@@ -1031,36 +1029,28 @@ function forgePubCfg(){ const nm=$('forgeName'); const c=Object.assign({},forgeC
 function forgePubState(){ // 'untested' → 'noname' → 'ready' → 'done'
   const cfg=forgePubCfg(), code=forgeEncode(cfg);
   if(forgePublishedHas(code)) return {st:'done',cfg:cfg,code:code};
-  if(!(forgeIsVerified(code)||forgeIsVerified(forgeVerifyKey(cfg)))) return {st:'untested',cfg:cfg,code:code};
+  if(!forgeIsVerified(code)) return {st:'untested',cfg:cfg,code:code};
   if(!cfg.n) return {st:'noname',cfg:cfg,code:code};
   return {st:'ready',cfg:cfg,code:code};
 }
-function forgePubSync(warn){ // кнопка и подпись под ней по состоянию; warn — красная подпись (нажали, а нельзя)
-  const b=$('forgePubBtn'), h=$('forgePubHint'); if(!b||!h) return;
+function forgePubSync(){ // кнопка «Опубликовать» по состоянию: тусклая, пока карта не пройдена/не названа; «Опубликовано» после публикации
+  const b=$('forgePubBtn'); if(!b) return;
   const s=forgePubState().st;
   b.textContent = s==='done' ? (L.forgePubDone||'Опубликовано') : (L.forgePubBtn||'Опубликовать');
   b.classList.toggle('off', s!=='ready');
-  h.textContent = ({
-    untested:(L.forgePubHintUntested||'Сначала нажмите «Тестировать» и пролетите карту до финиша — тогда «Опубликовать» включится.'),
-    noname:(L.forgePubHintNoName||'Карта пройдена. Дайте ей имя — и можно публиковать.'),
-    ready:(L.forgePubHintReady||'Карта пройдена. Можно публиковать — увидят все.'),
-    done:(L.forgePubHintDone||'Опубликовано. Карта теперь в «Летать» → «Мои»; отправить другу — значком на её карточке.')
-  })[s];
-  h.classList.toggle('warn', !!warn);
 }
 let _forgePublishBusy=false;
 function forgePublish(){
   const s=forgePubState();
   if(s.st==='done'){ haptic('light'); return; }
-  if(s.st==='untested'){ forgePubSync(true); haptic('error'); return; } // подпись красным — прямо на экране, не тостом под окном Telegram
-  if(s.st==='noname'){ forgePubSync(true); haptic('error'); const nm=$('forgeName'); if(nm) nm.focus(); return; }
+  if(s.st==='untested'){ toast(L.forgeNeedRealRun||'Сначала пролети это небо по-настоящему — потом можно опубликовать','rgba(255,159,176,.5)'); haptic('error'); return; } // прежний текст игры
+  if(s.st==='noname'){ haptic('error'); const nm=$('forgeName'); if(nm) nm.focus(); return; }
   if(_forgePublishBusy) return;
   _forgePublishBusy=true; sfx.click(); haptic('light');
   Store.set('forgeLast',s.cfg);
   workshopSubmit(s.code, s.cfg.n).then(function(res){
     if(res && res.ok){ forgePublishedAdd(s.code); toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)'); haptic('success'); forgePubSync(); return; }
-    const why=!res ? (L.syncOffline||'Нет связи') : ({ bad_name:'Имя не подходит — измените его', exists:'Такая карта уже опубликована', rate:'Слишком часто — подождите минуту', daily_limit:'На сегодня лимит публикаций', auth:'Нужен вход через Telegram' })[res.error] || (L.syncOffline||'Не вышло — попробуйте позже');
-    toast(why,'rgba(255,159,176,.5)'); haptic('error');
+    toast(L.syncOffline,'rgba(255,159,176,.5)'); haptic('error'); // прежний тост игры на любой отказ
   }).catch(function(){ toast(L.syncOffline||'Нет связи','rgba(255,159,176,.5)'); }).finally(function(){ _forgePublishBusy=false; });
 }
 function forgeTestPlay(){ forgeReadForm(); forgeTestReturn=true; forgePlay(); } // «Тестировать»: тот же полёт, что был «Полёт», + запомнить, куда вернуться

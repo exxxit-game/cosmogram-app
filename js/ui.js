@@ -917,7 +917,6 @@ function gameOver(){
     // естественный забег до конца уже засчитывается. Без этого «Поделиться» не даёт публиковать.
     if((S.customL===0 || S.mapWin) && typeof forgeVerifyCode==='function' && typeof forgeEncode==='function' && typeof forgeSanitize==='function' && typeof forgeCfg!=='undefined'){
       forgeVerifyCode(forgeEncode(forgeSanitize(forgeCfg)));
-      if(typeof forgeVerifyKey==='function') forgeVerifyCode(forgeVerifyKey(forgeCfg)); // 01.10.2026: и без имени — назвал карту после теста, тест не слетает
     }
     theaterTrack=null; toggleCls('watchBtn','hidden',true); mapOver(sc); return;
   }
