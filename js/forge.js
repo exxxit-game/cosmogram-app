@@ -1167,14 +1167,10 @@ async function mapShareRich(code, name){
     const cfg=forgeDecode(code); if(!cfg) throw new Error('bad_code');
     const link=forgeShareLinks(code).tg; const startapp=link.slice(link.indexOf('startapp=')+9);
     const caption=(L.forgeShareTxt||'').replace('%s', name||cfg.n||L.forgeDefName);
-    const r=await syncFetch(SYNC_URL,{action:'share_map',initData:tg.initData,png:forgeShareImagePng(cfg),caption:caption,startapp:startapp});
+    const r=await syncFetch(SYNC_URL,{action:'share_map',initData:tg.initData,png:forgeShareImagePng(Object.assign({},cfg,{n:name||cfg.n})),caption:caption,startapp:startapp});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
-    tg.shareMessage(ans.id,function(ok){
-      if(ok){ haptic('success'); return; }
-      if(typeof BEACON!=='undefined') BEACON.signal('map_share_fail','share_rejected_after_id');
-      mapShareCode(code,name); // Telegram отказал — прежний путь со ссылкой
-    });
+    tg.shareMessage(ans.id,function(ok){ if(ok) haptic('success'); }); // окно выбора чата уже показано: отказ/отмена — не повод слать ссылку вдогонку (было: второе сообщение со ссылкой)
   }catch(e){
     if(typeof BEACON!=='undefined') BEACON.signal('map_share_fail','no_id: '+String(e&&e.message||e).slice(0,60));
     mapShareCode(code,name); // не вышло — прежний путь со ссылкой
@@ -2279,7 +2275,7 @@ wireOnLocal('workshopList','click',function(e){
     forgeWorkshopEdit(code); forgeTabSet('create'); return;
   } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
   if(act.dataset.act==='share'){ // 01.10.2026: отправить другу ЭТУ карту (код строки)
-    const shCfg=forgeDecode(code); mapShareRich(code, shCfg?shCfg.n:''); return;
+    const nameEl=row.querySelector('.wName'); const shCfg=forgeDecode(code); mapShareRich(code, (nameEl&&nameEl.textContent.trim())||(shCfg?shCfg.n:'')); return; // имя — с самой карточки (в коде трассы его может не быть)
   }
   if(act.dataset.act==='info'){
     // 12.09.2026: overlay лежит поверх .wBanner (position:absolute;inset:0, index.html) —
