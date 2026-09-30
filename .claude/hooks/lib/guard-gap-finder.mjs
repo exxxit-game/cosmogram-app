@@ -69,7 +69,7 @@ const CREW_HOOKS_DIR = path.join(CREW_DIR, '.claude', 'hooks');
 const CREW_SETTINGS_PATH = path.join(CREW_DIR, '.claude', 'settings.json');
 
 const UNCOVERED_TRAIL = 'uncovered';
-const UNCOVERED_THRESHOLD = 3; // нижняя граница «правила 3-5», владелец выбрал не менять
+const UNCOVERED_THRESHOLD = 1; // 30.09.2026: было 3 («правило 3-5», ранее владелец выбирал не менять). Владелец, зло: "если просто записывать — нахуй ты нужен" → механизм с ПЕРВОЙ зафиксированной ошибки класса
 
 // ---------- A) необшитые паттерны ----------
 

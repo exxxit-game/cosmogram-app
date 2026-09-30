@@ -80,6 +80,8 @@
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/repeat-edit-tracker.sh" },
           { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
           { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/skin-fit-registered-guard.mjs" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/invented-names-guard.mjs" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/feedback-needs-mechanism-guard.mjs" },
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/visual-file-nudge.sh" }
         ]
       },
