@@ -194,7 +194,11 @@ const music = (()=>{
   const NEXT_AFTER={16:1, 64:S1LOOP, 179:S2LOOP}; // куда партитура идёт после последнего такта куска
   const bytes=new Map(), bufs=new Map(), decoding=new Map(), live=new Set(), recLog=[];
   let cur=null, need=null, keepAll=false, recStat={first:null, err:0};
-  function recUrl(n){ return REC_DIR+n+'.mp3?r='+REC; }
+  /* 30.09.2026: телефонам на 44 100 — свой набор music/44/: та же запись 48 000, только пересчитанная по частоте
+     (tools/record-music.mjs, SR=44100). Вычитание волн с набором 48 000: −33…−44 дБ (финал c065 −22.5 дБ), меньше, чем
+     одобренный отличается сам от себя после повторного сжатия в MP3 (−23…−26 дБ). Samsung A03: файл 48 000 раскодировался с пересчётом частоты 4 150 мс на кусок, файл 44 100 —
+     480 мс; кусок звучит ~17 с, т.е. было ~четверть ядра только на распаковку. Страж 365. */
+  function recUrl(n){ return REC_DIR+(AC&&AC.sampleRate===44100?'44/':'')+n+'.mp3?r='+REC; }
   function fetchBytes(n){
     if(!bytes.has(n)) bytes.set(n, fetch(recUrl(n)).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.arrayBuffer(); }));
     return bytes.get(n);
