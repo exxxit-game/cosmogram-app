@@ -1,5 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "350000"
+  },
   "permissions": {
     "defaultMode": "default",
     "deny": [
@@ -31,39 +34,39 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/protect-core.sh" },
-          { "type": "command", "command": ".claude/hooks/guard-memory-index-format.sh" },
-          { "type": "command", "command": "node .claude/hooks/shared-constant-guard.mjs" },
-          { "type": "command", "command": "node .claude/hooks/geometry-measure-guard.mjs" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/protect-core.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-memory-index-format.sh" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/shared-constant-guard.mjs" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/geometry-measure-guard.mjs" }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/version-guard.sh" },
-          { "type": "command", "command": ".claude/hooks/bash-safety-guard.sh" },
-          { "type": "command", "command": ".claude/hooks/no-broad-git-add.sh" },
-          { "type": "command", "command": ".claude/hooks/no-secrets-in-commit.sh" },
-          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" },
-          { "type": "command", "command": ".claude/hooks/russian-description-guard.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/version-guard.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/bash-safety-guard.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-broad-git-add.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-secrets-in-commit.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/russian-description-guard.sh" }
         ]
       },
       {
         "matcher": "mcp__.*__browser_run_code_unsafe",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh" }
         ]
       },
       {
         "matcher": "mcp__.*__deploy_edge_function",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/guard-deploy-content.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-deploy-content.sh" }
         ]
       },
       {
         "matcher": "mcp__.*__(execute_sql|apply_migration)",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/guard-supabase-write.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-supabase-write.sh" }
         ]
       }
     ],
@@ -71,34 +74,34 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/syntax-check-js.sh" },
-          { "type": "command", "command": ".claude/hooks/memory-typo-check.sh" },
-          { "type": "command", "command": ".claude/hooks/scan-code-mixed-script.sh" },
-          { "type": "command", "command": ".claude/hooks/repeat-edit-tracker.sh" },
-          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
-          { "type": "command", "command": "node .claude/hooks/skin-fit-registered-guard.mjs" },
-          { "type": "command", "command": ".claude/hooks/visual-file-nudge.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/syntax-check-js.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/memory-typo-check.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/scan-code-mixed-script.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/repeat-edit-tracker.sh" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/skin-fit-registered-guard.mjs" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/visual-file-nudge.sh" }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/post-commit-drift-check.sh" },
-          { "type": "command", "command": ".claude/hooks/commit-tracker.sh" },
-          { "type": "command", "command": "node .claude/hooks/device-idle-nudge.mjs" },
-          { "type": "command", "command": "node .claude/hooks/device-eval-vs-hwshot-guard.mjs" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/post-commit-drift-check.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/commit-tracker.sh" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-eval-vs-hwshot-guard.mjs" }
         ]
       },
       {
         "matcher": "^(Skill|Agent|Task|mcp__.*)$",
         "hooks": [
-          { "type": "command", "command": "node .claude/hooks/tool-usage-log.mjs" }
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-usage-log.mjs" }
         ]
       },
       {
         "matcher": "AskUserQuestion",
         "hooks": [
-          { "type": "command", "command": "node .claude/hooks/deferred-fix-guard.mjs" }
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/deferred-fix-guard.mjs" }
         ]
       }
     ],
@@ -106,7 +109,7 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/swear-pause-check.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/swear-pause-check.sh" }
         ]
       }
     ],
@@ -114,12 +117,12 @@
       {
         "matcher": "compact|startup|resume",
         "hooks": [
-          { "type": "command", "command": ".claude/hooks/reinject-session-state.sh" },
-          { "type": "command", "command": ".claude/hooks/check-live-version.sh" },
-          { "type": "command", "command": ".claude/hooks/check-memory-backup-age.sh" },
-          { "type": "command", "command": ".claude/hooks/remind-connect-phones.sh" },
-          { "type": "command", "command": ".claude/hooks/whole-game-health-check.sh" },
-          { "type": "command", "command": ".claude/hooks/check-tooling-currency.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/reinject-session-state.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-live-version.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-memory-backup-age.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/remind-connect-phones.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/whole-game-health-check.sh" },
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-tooling-currency.sh" }
         ]
       }
     ],
@@ -127,14 +130,14 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=block node .claude/hooks/claim-check-hook.mjs" },
-          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=block node .claude/hooks/ask-then-act-guard.mjs" },
-          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=block node .claude/hooks/excuse-words-guard.mjs" },
-          { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node .claude/hooks/device-claim-guard.mjs" },
-          { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node .claude/hooks/evidence-anchoring-guard.mjs" },
-          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node .claude/hooks/revoke-grant-verify-guard.mjs" },
-          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node .claude/hooks/mockup-unseen-guard.mjs" },
-          { "type": "command", "command": "WORST_CASE_ENFORCE_MODE=block node .claude/hooks/worst-case-gate.mjs" }
+          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/claim-check-hook.mjs" },
+          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/ask-then-act-guard.mjs" },
+          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/excuse-words-guard.mjs" },
+          { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-claim-guard.mjs" },
+          { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/evidence-anchoring-guard.mjs" },
+          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/revoke-grant-verify-guard.mjs" },
+          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/mockup-unseen-guard.mjs" },
+          { "type": "command", "command": "WORST_CASE_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/worst-case-gate.mjs" }
         ]
       }
     ]
