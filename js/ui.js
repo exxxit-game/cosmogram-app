@@ -4782,7 +4782,7 @@ function overFlightFit(){
    перезапускается при любом изменении размера этих блоков. Сам #overFlight не наблюдаем — иначе подгонка зацикливалась бы. */
 if(typeof ResizeObserver!=='undefined'){
   const ofRo=new ResizeObserver(function(){ overFlightFit(); });
-  ['overRank','webJoin','overLoc','newRecord','recordMedals','duelRes','goldChip','dayStats'].forEach(function(id){ const e=$(id); if(e) ofRo.observe(e); });
+  ['overRank','webJoin','overLoc','newRecord','recordMedals','duelRes','goldChip','dayStats','gyroOfferWrap'].forEach(function(id){ const e=$(id); if(e) ofRo.observe(e); }); // gyroOfferWrap — разовое предложение на ПЕРВОМ приземлении новичка (gyro.js), раскрывается позже подгонки
 }
 function shareSheetShow(on){ toggleCls('shareSheet','hidden',!on); }
 wireOn('shareBtn','click',()=>{ sfx.click(); haptic('light'); shareSheetShow(true); });
