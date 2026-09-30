@@ -976,6 +976,7 @@ function ghostSaveIfFirstEver(cat){
   ghostSave(cat); // сам ghostSave коротко отсеет слишком короткий забег (rec.length<20)
 }
 function gameOver(){
+  overBtnsHome(); // 30.09.2026: «Ещё раз»/«Смотреть» живут в карточке «Твой полёт»; итоги без карточки (Своя трасса, Театр) берут их на прежнем месте
   if (typeof premSkinPerfReport==='function') premSkinPerfReport(); // 05.09.2026: диагностика fx-времени 30 доп. премиум-скинов — одно сообщение на посадку, не каждый кадр
   if (typeof cinemaFirstFlightStop==='function') cinemaFirstFlightStop(); // 28.08.2026: стоп до любого раннего return ниже — первый полёт всегда должен сохраниться, каким бы ни оказался финиш
   if (typeof cinemaTestStop==='function') cinemaTestStop(); // 30.08.2026: тот же порядок — до любого раннего return
@@ -4791,7 +4792,8 @@ function overLocFill(){ // полоска «До Линии Кармана» (и
    не нужен). Дорисовывание линии — только при Q.level>=2: замер на живых телефонах 30.09 — Samsung (тир 0)
    теряет ~30% кадров при дорисовывании со свечением, статичная линия почти бесплатна; Oppo без потерь.
    Пока только Score Attack и срыв в «Без касаний» (остальные режимы — без карточки, решение владельца). */
-const OF_W=326; // ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
+let OF_BOXW=299; // ширина поля рисунка: 299 на всю карточку, 189 рядом с левой колонкой (слот + значки) — для расчёта подписей
+const OF_W=326;// ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
 let OF_REC={combo:false,wave:false}, OF_TOREC=0, OF_CHIPS=[]; // что побито в этом полёте / сколько до рекорда / плашки gameOver() — заполняет gameOver(), читает overFlightFill()
 let OF_FIN={on:false,prev:0,rec:false,sc:0,raw:0,end:''}, OF_VID=false; // 30.09.2026 «Финиш по времени»: победа во «времени» (on), прежний рекорд (prev), побит ли (rec), очки итога / до множителя; OF_VID — есть ли клип «Момента полёта» (cinemaClipRefresh) для кнопки видео в углу окошка
 const OF_KIND_ALIAS={beam:'seeker'};
@@ -4801,7 +4803,7 @@ function ofMix(hex,k){ // смесь #rrggbb с белым (k>0) или чёрн
   return 'rgb('+c((n>>16)&255)+','+c((n>>8)&255)+','+c(n&255)+')';
 }
 function ofCapLeft(pct, txt){ // подпись центрируется под стикером, но не вылезает за края рисунка: ширину оцениваем по числу знаков (заглавные 10.5px с разрядкой ≈ 7.6px), ширина рисунка ≈ 299px
-  const lo=(String(txt).length*3.8+4)/299*100;
+  const lo=(String(txt).length*3.8+4)/OF_BOXW*100;
   return Math.round(Math.min(100-lo,Math.max(lo,pct))*100)/100;
 }
 function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec → путь SVG в рамке карточки; null — нечего рисовать
@@ -4825,8 +4827,15 @@ function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec 
   });
   return { d:d, sx:sx, sy:sy, ex:ex, ey:ey };
 }
+function overBtnsHome(){ // 30.09.2026 «Схема экрана итогов»: «Ещё раз» и «Смотреть» переезжают в карточку «Твой полёт» (overFlightFillInner); перед очисткой карточки и на каждом итоге без неё они возвращаются на своё место — иначе спрятались бы вместе с ней
+  const scr=$('gameOverScreen'), rb=$('retryBtn'), wb=$('watchBtn'), gw=$('gyroOfferWrap'), tb=$('tribuneBtn');
+  if(scr) scr.classList.remove('ofBtnIn');
+  if(rb && gw && gw.parentNode && rb.parentNode!==gw.parentNode) gw.parentNode.insertBefore(rb,gw);
+  if(wb && tb && tb.parentNode && wb.parentNode!==tb.parentNode) tb.parentNode.insertBefore(wb,tb);
+}
 function overFlightClear(){
   const el=$('overFlight'); if(!el) return;
+  overBtnsHome(); // кнопки — наружу ДО очистки карточки: innerHTML='' унёс бы их с собой
   el.classList.add('hidden'); el.classList.remove('draw','showNums'); el.innerHTML='';
   const rm=$('recordMedals'); if(rm){ rm.querySelectorAll('.ofSide').forEach(function(e){ e.remove(); }); rm.classList.remove('ofRow'); } // значки наград у медали — вместе с карточкой
   toggleCls('overDetailsBtn','hidden',false); // строка «Подробности полёта» внизу возвращается везде, где окошка нет (скрывает её только overFlightFill)
@@ -4851,7 +4860,10 @@ function overFlightFillInner(){
   overFlightClear(); // всегда с чистого листа: полёт прошлого забега или другого режима сюда не течёт
   if(!overFlightWillShow()) return;
   const slalom=(S.mode==='slalom'), fin=OF_FIN.on, mode=S.mode; // fin — финиш во «времени» (Спидран / «Без касаний» / Биатлон): флажок вместо стикера причины
-  const H=slalom?290:176, RAIL=slalom?30:0, RX=OF_W-18;
+  const marks=overFlightMarks(OF_CHIPS); // все награды полёта: одна главная идёт в слот слева, остальные — мелкими значками под ним
+  const slot=overFlightSlot(marks), side=!!(slot.html||slot.icons);
+  OF_BOXW=side?189:299; // рисунок делит карточку с левой колонкой — подписи считаем по его ширине
+  const H=slalom?(side?330:290):(side?250:176), RAIL=slalom?30:0, RX=OF_W-18;
   const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
   if(!m) return;
   let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
@@ -4895,25 +4907,27 @@ function overFlightFillInner(){
      комбо, впритык, плавность, волна); побитое подсвечено золотом со стрелкой — игра хранит рекорды комбо и волны (Stats.bestCombo/bestWave),
      по остальным честного «рекорда» нет, там подсветки не будет. Удары, бонусы, «режим · управление» и пять плашек «личные рекорды» из
      спойлера сюда не перенесены: первое и так видно по смерти, остальное — профиль, не итоги полёта. */
-  const marks=document.querySelector('#recordMedals .medalCol') ? overFlightMarks(OF_CHIPS) : []; // награды становятся значками у медали ТОЛЬКО когда медаль есть; без медали плашки остаются таблетками под счётом (макет «Оформление итогов», Небо месяца / Караван / Эстафета)
   const cell=function(v,l,recd){ return '<div class="ofCell'+(recd?' rec':'')+'"><b>'+(recd?'▲ ':'')+escapeHtml(String(v))+'</b><span>'+escapeHtml(l)+'</span></div>'; };
   const bi=(mode==='biathlon'); // Биатлон: волн нет — на их месте «Промахи» (каждый добавляет штраф ко времени)
   const cells=(fin ? cell(fmtN(OF_FIN.sc),ovT('overStatScore')) : cell(fmtTime(S.time),L.passTime))+cell(S.starsCollected,L.stars)+cell('×'+S.comboMax,L.maxCombo,OF_REC.combo) // финиш: время уже главным числом экрана — в «Цифрах» очки
     +cell(S.nearMiss,L.nearMiss)+cell(Math.round(S.smooth*100)+'%',L.passSmooth)+(bi ? cell(S.biathlonMisses||0,ovT('overStatMiss')) : cell(S.mission,L.missionLbl,OF_REC.wave));
   const penTxt=(fin && bi && S.biathlonMisses>0) ? ovT('overPenalty')(S.biathlonMisses, BIATHLON_PENALTY_SEC) : ''; // «Штраф: 2 × 3 с» — откуда прибавка ко времени
   const marksTxt=(penTxt ? [penTxt] : []).concat(marks.map(function(x){ return x.txt; })).join(' · ');
-  const hook=OF_TOREC>0 ? '<div class="ofHook">'+escapeHtml(L.toRecord+fmtN(OF_TOREC))+'</div>' : ''; // «До рекорда N» золотом на рисунке — самая полезная цифра для «ещё разок»
   const dot=(OF_REC.combo||(!bi && OF_REC.wave)) ? '<i class="ofDot"></i>' : ''; // золотая точка на «Цифрах»: есть что посмотреть, не текстом (у Биатлона волны нет — её рекорд не подсвечивается)
   el.style.setProperty('--ofGlow', 'rgba('+ofAccRGB(trailCol)+',.5)');
   const accN=parseInt(String(trailCol).slice(1),16); // оттенок режима для шапки и рамки окошка (вариант Q): цвет следа + его rgb-тройка для прозрачностей в CSS
   el.style.setProperty('--ofAcc', trailCol); el.style.setProperty('--ofAccRGB', ((accN>>16)&255)+','+((accN>>8)&255)+','+(accN&255));
   el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span>'
       +'<div class="ofSeg"><button type="button" class="on" data-v="line">'+escapeHtml(ovT('overSegLine'))+'</button><button type="button" data-v="nums">'+escapeHtml(ovT('overSegNums'))+dot+'</button></div></div>'
-    +'<div class="ofBody"><div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap+hook
-    +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div>'
-    +'<button type="button" class="ofVid'+(OF_VID?'':' hidden')+'" aria-label="'+escapeHtml(ovT('overVideoBtn'))+'">'+ic('play')+'</button></div></div>'; // видео этого полёта — левый нижний угол (владелец: «чтобы место не пустовало»); виден, только если «Момент полёта» записал клип
-  overBadgesFill(marks); // награды — круглыми значками по бокам медали; плашки-текст под счётом больше не нужны
-  if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки стали значками — иначе непонятая плашка пропала бы бесследно
+    +'<div class="ofBody">'+(side?'<div class="ofColL">'+slot.html+(slot.icons?'<div class="ofIco">'+slot.icons+'</div>':'')+'</div>':'')
+    +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap
+    +'<button type="button" class="ofVid'+(OF_VID?'':' hidden')+'" aria-label="'+escapeHtml(ovT('overVideoBtn'))+'">'+ic('play')+'</button></div>' // видео этого полёта — левый нижний угол поля рисунка (владелец: «чтобы место не пустовало»); виден, только если «Момент полёта» записал клип
+    +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div></div>' // «Цифры» лежат поверх всей области (колонка + рисунок), а не только поверх рисунка
+    +'<div class="ofFoot"></div>'; // сюда переезжают «Ещё раз» и «Смотреть»
+  const foot=el.querySelector('.ofFoot'), rb=$('retryBtn'), wb=$('watchBtn'), scr=$('gameOverScreen');
+  if(foot && rb){ foot.appendChild(rb); if(wb) foot.appendChild(wb); if(scr) scr.classList.add('ofBtnIn'); } // 30.09.2026 «Схема экрана итогов»: кнопки на карточке, не отдельной полосой внизу
+  if(slot.fd){ const fd=$('finishDelta'); if(fd) fd.classList.add('hidden'); } // разница уже в слоте — под цифрой её больше нет
+  if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки разобраны (слот или значок) — иначе непонятая плашка пропала бы бесследно
   toggleCls('overDetailsBtn','hidden',true); toggleCls('overMore','hidden',true); // подробности теперь внутри окошка — строка «Подробности полёта» внизу не нужна (в режимах без окошка остаётся)
   const still=(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   el.classList.toggle('draw', typeof Q!=='undefined' && Q.level>=2 && !still);
@@ -4939,17 +4953,26 @@ function overFlightMarks(chips){ // плашки gameOver() (HTML) → [{icn, tx
   const out=[];
   (chips||[]).forEach(function(h){
     const m=String(h).match(/<use href="#i-([\w-]+)"><\/use><\/svg>([\s\S]*?)<\/span>\s*$/); if(!m) return;
-    const txt=m[2].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim(); if(txt) out.push({icn:m[1],txt:txt});
+    const txt=m[2].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim(); if(txt) out.push({icn:m[1],txt:txt,calm:/class="recChip[^"]*\bcalm\b/.test(h)}); // calm — спокойная отметка («Без единого удара»…), не рекорд
   });
   return out;
 }
-function overBadgesFill(marks){ // круглые значки наград по бокам медали (поровну слева и справа, медаль остаётся по центру)
-  const rm=$('recordMedals'); if(!rm || !marks || !marks.length) return;
-  const meds=Array.prototype.map.call(rm.querySelectorAll('.medalCol'), function(e){ return e.outerHTML; }).join(''); // медаль(и) заново, без старых боковых групп
-  const b=marks.map(function(x){ return '<span class="ofBdg" title="'+escapeHtml(x.txt)+'">'+ic(x.icn)+'</span>'; });
-  const nl=Math.ceil(b.length/2);
-  rm.classList.add('ofRow');
-  rm.innerHTML='<div class="ofSide l">'+b.slice(0,nl).join('')+'</div>'+meds+'<div class="ofSide r">'+b.slice(nl).join('')+'</div>';
+/* 30.09.2026 «Схема экрана итогов» (макет «Одно главное», владелец: «пусть что-то одно светится… если рекорд, то рекорд, а если нет — что-то другое, чтобы экраны не были пустые»).
+   Слева на карточке «Твой полёт» — ровно ОДНО главное по приоритету: разница к рекорду / «Цель · Не хватило» / «первое время» (времена, собрано overFinishFill),
+   иначе первая награда-рекорд, иначе «До рекорда N». Остальные награды — мелкими круглыми значками под ним (слова остаются в «Цифрах»). Пусто — колонки нет. */
+function overFlightSlot(marks){
+  let html='', fd=false, used=null;
+  const el=$('finishDelta');
+  if(el && !el.classList.contains('hidden') && el.firstElementChild){ html='<div class="ofSlot fd">'+el.innerHTML+'</div>'; fd=true; }
+  else {
+    used=(marks||[]).find(function(x){ return !x.calm; })||null;
+    if(used) html='<div class="ofSlot gold"><span class="ofSlotTxt">'+escapeHtml(used.txt)+'</span></div>';
+    else if(OF_TOREC>0) html='<div class="ofSlot gold"><b>'+escapeHtml(fmtN(OF_TOREC))+'</b><span>'+escapeHtml(String(L.toRecord).replace(/[\s:：]+$/,''))+'</span></div>';
+  }
+  const icons=(marks||[]).filter(function(x){ return x!==used; }).map(function(x){
+    return '<span class="ofBdg'+(x.calm?' calm':'')+'" title="'+escapeHtml(x.txt)+'">'+ic(x.icn)+'</span>';
+  }).join('');
+  return { html:html, icons:icons, fd:fd };
 }
 function overFlightView(nums){ // «Цифры» лежат поверх рисунка того же размера: экран при переключении не двигается
   const el=$('overFlight'); if(!el) return;
@@ -4969,6 +4992,7 @@ function overFlightVideo(on){ // 30.09.2026: cinema.js сообщает, ест�
       if(typeof cinemaClipOpen==='function') cinemaClipOpen();
       return;
     }
+    if(e.target.closest('.ofFoot')) return; // «Ещё раз» / «Смотреть» — свои кнопки, окошко не переключают
     const b=e.target.closest('.ofSeg button');
     if(b) overFlightView(b.dataset.v==='nums'); else overFlightView(!ofEl.classList.contains('showNums'));
     if(typeof sfx!=='undefined' && sfx.click) sfx.click();
