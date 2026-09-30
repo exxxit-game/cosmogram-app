@@ -1140,6 +1140,47 @@ function forgeBootShort(onReady){ // true — ссылка с номером е�
   return true;
 }
 function mapShare(){ const cfg=forgeSanitize(forgeCfg); mapShareCode(forgeEncode(cfg), cfg.n); } // v1.87.0
+/* 01.10.2026 «Красивая отправка карты» (владелец: «как у Gorilla Case: картинка карты, подпись и кнопка «Играть», ссылки не видно»).
+   Тот же путь, что у карточки результата (card.js cardSend): картинка уходит на сервер (share_map), сервер готовит
+   сообщение (savePreparedInlineMessage), игра шлёт его tg.shareMessage(id). Картинка рисуется из самой карты —
+   её цвета неба, туман, имя и длина. Нет нужного моста/сети/ответа — прежний путь со ссылкой (mapShareCode). */
+function forgeShareImagePng(cfg){
+  const cv=document.createElement('canvas'); cv.width=800; cv.height=420;
+  forgeMiniSwatchPaint(cv,cfg);
+  const x=cv.getContext('2d');
+  const g=x.createLinearGradient(0,150,0,420); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.55)');
+  x.fillStyle=g; x.fillRect(0,150,800,270);
+  const ff=getComputedStyle(document.body).fontFamily||'sans-serif';
+  x.textBaseline='alphabetic';
+  x.fillStyle='#fff'; x.font='700 58px '+ff; x.fillText(String(cfg.n||L.forgeDefName).toUpperCase(),40,350);
+  x.fillStyle='rgba(255,255,255,.75)'; x.font='500 28px '+ff; x.fillText(cfg.l>0?(cfg.l+' '+(L.unitM||'м')):'∞',40,392);
+  return cv.toDataURL('image/png');
+}
+let _mapShareBusy=false;
+async function mapShareRich(code, name){
+  if(!code) return;
+  const can=typeof tg!=='undefined' && tg && tg.shareMessage && tg.initData && typeof tgv==='function' && tgv('8.0') && typeof SYNC_URL!=='undefined';
+  if(!can){ mapShareCode(code,name); return; }
+  if(_mapShareBusy) return;
+  _mapShareBusy=true;
+  try{
+    const cfg=forgeDecode(code); if(!cfg) throw new Error('bad_code');
+    const link=forgeShareLinks(code).tg; const startapp=link.slice(link.indexOf('startapp=')+9);
+    const caption=(L.forgeShareTxt||'').replace('%s', name||cfg.n||L.forgeDefName);
+    const r=await syncFetch(SYNC_URL,{action:'share_map',initData:tg.initData,png:forgeShareImagePng(cfg),caption:caption,startapp:startapp});
+    const ans=await r.json();
+    if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
+    tg.shareMessage(ans.id,function(ok){
+      if(ok){ haptic('success'); return; }
+      if(typeof BEACON!=='undefined') BEACON.signal('map_share_fail','share_rejected_after_id');
+      mapShareCode(code,name); // Telegram отказал — прежний путь со ссылкой
+    });
+  }catch(e){
+    if(typeof BEACON!=='undefined') BEACON.signal('map_share_fail','no_id: '+String(e&&e.message||e).slice(0,60));
+    mapShareCode(code,name); // не вышло — прежний путь со ссылкой
+  }
+  _mapShareBusy=false;
+}
 /* 01.10.2026: «Поделиться» уехало с шага «Сохранить» на карточку карты в «Летать» (значок «отправить»,
    data-act="share") — делиться можно любой картой списка, не только той, что сейчас в редакторе.
    Вопрос «опубликовать?» после отправки убран: публикация — своя кнопка на шаге «Сохранить». */
@@ -2238,7 +2279,7 @@ wireOnLocal('workshopList','click',function(e){
     forgeWorkshopEdit(code); forgeTabSet('create'); return;
   } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
   if(act.dataset.act==='share'){ // 01.10.2026: отправить другу ЭТУ карту (код строки)
-    const shCfg=forgeDecode(code); mapShareCode(code, shCfg?shCfg.n:''); return;
+    const shCfg=forgeDecode(code); mapShareRich(code, shCfg?shCfg.n:''); return;
   }
   if(act.dataset.act==='info'){
     // 12.09.2026: overlay лежит поверх .wBanner (position:absolute;inset:0, index.html) —
