@@ -4223,30 +4223,37 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   display:flex; align-items:center; justify-content:center; cursor:pointer; }
 #overFlight .ofVid .ic { width:18px; height:18px; fill:currentColor; }
 #overFlight.showNums .ofVid { visibility:hidden; }
-/* 30.09.2026 «Оформление итогов» (вариант Q, макет «Оформление итогов: цвет и разделение», владелец: «Вариант Q… призрак иконкой… для других режимов тоже»).
-   Цветовые роли: подписи приглушены (#7f92b6), значения белые, ключевое золотое, зелёный/оранжевый — лучше/хуже, у «Твоего полёта» свой оттенок
-   режима (--ofAcc / --ofAccRGB задаёт JS из цвета следа режима; color-mix не берём — старые WebView его не знают). Место — золотая плитка. */
-#overRank.overCard { flex:none; flex-direction:row; align-items:stretch; gap:12px; padding:12px; margin-top:16px; }
-#overRank .rkTile { flex:none; width:76px; border-radius:12px; background:linear-gradient(160deg,#f6d774,#c9962e 70%,#8a5a12); color:#1a2c4a;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; box-shadow:0 0 18px rgba(240,192,64,.28); }
-#overRank .rkTile b { font-family:var(--font-disp); font-size:34px; font-weight:800; line-height:1; }
-#overRank .rkTile span { font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
-#overRank .rkR { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:7px; justify-content:center; }
-#overRank .rkMode { font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+/* 30.09.2026 «Оформление итогов», вариант V2 (макет «Карточка места…», владелец: «так намного разумнее… какого цвета карточка режима, такого цвета и здесь»).
+   Золото — ТОЛЬКО за результатом и наградой (число, медаль, рекорд). У каждого режима свой цвет (MODE_ACC в ui.js; подобран измерением с учётом дальтонизма:
+   .knowledge/RESEARCH-2026-09-MODE-COLORS.md); JS ставит --acc / --accRGB на карточку; color-mix не берём — старые WebView его не знают.
+   Место — стеклянная плитка цвета режима: точный номер до 999-го, глубже «Топ N%» / «Лучше N% игроков». Полоска — насколько ты близок к соседу сверху. */
+#overRank.overCard { --acc:#5fbcf4; --accRGB:95,188,244; flex:none; flex-direction:row; align-items:stretch; gap:12px; padding:12px; margin-top:16px; border-color:rgba(160,185,225,.22); }
+#overRank .rkTile { flex:none; min-width:76px; box-sizing:border-box; padding:0 8px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:linear-gradient(160deg,rgba(var(--accRGB),.34),rgba(var(--accRGB),.08)); border:1px solid rgba(var(--accRGB),.6); box-shadow:0 0 16px rgba(var(--accRGB),.18); }
+#overRank .rkTile b { font-family:var(--font-disp); font-weight:800; line-height:1; white-space:nowrap; color:#fff; text-shadow:0 0 14px rgba(var(--accRGB),.6); }
+#overRank .rkTile span { font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.75); }
+#overRank .rkTile em { font-style:normal; font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:#fff; opacity:.75; margin-bottom:-2px; }
+#overRank .rkR { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:6px; }
+#overRank .rkTop { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:24px; }
+#overRank .rkMode { font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--acc); }
 #overRank .rkLbl { font-size:11px; font-weight:600; letter-spacing:.16em; color:#7f92b6; text-transform:uppercase; }
-#overRank .rvTop { display:flex; align-items:baseline; gap:8px; min-width:0; }
-#overRank .rvNo { flex:none; font-size:14px; font-weight:700; color:#f2f7ff; letter-spacing:.04em; }
-#overRank .rvName { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:700; color:#f2f7ff; letter-spacing:.04em; text-transform:uppercase; }
-#overRank .rvTime { flex:none; font-size:13px; font-weight:700; color:var(--gold-hi); white-space:nowrap; }
-#overRank .rkGap { font-size:11.5px; font-weight:700; color:var(--gold-hi); letter-spacing:.02em; text-transform:uppercase; }
-#overRank .topGh.orGhost { flex:none; align-self:center; width:44px; height:44px; min-height:0; padding:0; border-radius:50%; justify-content:center;
-  border-color:rgba(201,164,92,.5); color:var(--gold-hi); }
-#overRank .topGh.orGhost .ic { width:22px; height:22px; }
+#overRank .rvTop { display:flex; align-items:baseline; gap:7px; min-width:0; }
+#overRank .rvNo { flex:none; padding:1px 6px; border-radius:9px; background:rgba(255,255,255,.09); font-size:11px; font-weight:700; color:#c3d2ee; }
+#overRank .rvName { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:700; color:#f2f7ff; letter-spacing:.04em; text-transform:uppercase; }
+#overRank .rvVal { flex:none; font-size:13px; font-weight:700; color:#f2f7ff; white-space:nowrap; }
+#overRank .track { position:relative; height:4px; border-radius:2px; background:rgba(255,255,255,.09); margin:2px 0; }
+#overRank .track i { position:absolute; left:0; top:0; bottom:0; border-radius:2px; background:linear-gradient(90deg,rgba(var(--accRGB),.4),var(--acc)); box-shadow:0 0 8px rgba(var(--accRGB),.5); }
+#overRank .track em { position:absolute; right:-1px; top:-2px; width:8px; height:8px; border-radius:50%; background:#dce9ff; box-shadow:0 0 6px rgba(220,233,255,.7); }
+#overRank .rkGap { font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--acc); }
+#overRank .topGh.orGhost { flex:none; position:relative; width:26px; height:26px; min-height:0; padding:0; border-radius:50%; justify-content:center;
+  border:1px solid rgba(160,185,225,.45); background:rgba(14,18,32,.7); color:#dce9ff; }
+#overRank .topGh.orGhost::after { content:''; position:absolute; inset:-9px; } /* зона нажатия 44px при видимых 26 */
+#overRank .topGh.orGhost .ic { width:15px; height:15px; }
 #overLoc { margin-top:14px; gap:5px; }
 .overLocRow { font-size:10.5px; color:#7f92b6; letter-spacing:.1em; }
 #toLocLeft { color:#f2f7ff; font-weight:600; }
 .overLocBar { height:4px; border-radius:2px; }
-#toLocFill { height:4px; background:linear-gradient(90deg,#c9962e,var(--gold-hi)); }
+#toLocFill { height:4px; background:linear-gradient(90deg,#5f7fb8,#b9d2ff); } /* холодный, не золотой: золото — только за результатом */
 #overFlight.overCard { --ofAcc:#ffb27a; --ofAccRGB:255,178,122; flex:none; padding:0 0 10px; overflow:hidden; margin-top:16px; border-color:rgba(var(--ofAccRGB),.32); }
 #overFlight .orHead { padding:9px 12px 9px 16px; background:linear-gradient(90deg,rgba(var(--ofAccRGB),.20),rgba(var(--ofAccRGB),.04)); }
 #overFlight .orLbl { font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--ofAcc); }
@@ -4674,6 +4681,8 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      слева (две короткие чёрточки) — призрак «гонится», а не стоит на месте, тот же смысл,
      что и у кнопки рядом («Смотреть полёт»). -->
 <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M6 20v-8.2a6 6 0 0 1 12 0V20l-2.5-1.9-2.1 1.9-1.4-1.5-1.4 1.5-2.1-1.9z" fill="#f0c040" stroke="#2c3e50" stroke-width="1"></path><path d="M9.6 10.6h.01M14.4 10.6h.01" stroke="#2c3e50"></path><path d="M2.5 13.5h1.4M2 16h1.8" stroke="#9fe8ff"></path></symbol>
+<!-- 30.09.2026: контурный призрак (currentColor) для карточки места — у i-ghost зашита золотая заливка, а золото теперь только за результатом -->
+<symbol id="i-ghost-line" viewBox="0 0 24 24"><path d="M6 20v-8.2a6 6 0 0 1 12 0V20l-2.5-1.9-2.1 1.9-1.4-1.5-1.4 1.5-2.1-1.9z"></path><circle cx="10" cy="11" r=".9" fill="currentColor"></circle><circle cx="14" cy="11" r=".9" fill="currentColor"></circle></symbol>
 <!-- 26.08.2026: значок Discord был нарисован приблизительно (blob + два кружка-глаза),
      жалоба владельца «у дискорда самая странная» — справедливая, это не их логотип.
      Ниже — официальный контур («Clyde»), координаты сверены с Simple Icons (MIT,
@@ -4718,9 +4727,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.581"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.581"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.581"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.582"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.582"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.582"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -6068,26 +6077,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.581" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.581"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.581"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.581"></script>
-<script defer src="js/game.js?v=1.478.581" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.581"></script>
-<script defer src="js/sync.js?v=1.478.581"></script>
-<script defer src="js/render.js?v=1.478.581"></script>
-<script defer src="js/planetarium.js?v=1.478.581"></script>
-<script defer src="js/goldstar.js?v=1.478.581"></script>
-<script defer src="js/finish.js?v=1.478.581"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.581"></script>
-<script defer src="js/gyro.js?v=1.478.581"></script>
-<script defer src="js/forge.js?v=1.478.581"></script>
-<script defer src="js/partitura.js?v=1.478.581"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.581"></script>
-<script defer src="js/card.js?v=1.478.581"></script>
-<script defer src="js/star.js?v=1.478.581"></script>
-<script defer src="js/cinema.js?v=1.478.581"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.581"></script>
+<script defer src="js/core.js?v=1.478.582" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.582"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.582"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.582"></script>
+<script defer src="js/game.js?v=1.478.582" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.582"></script>
+<script defer src="js/sync.js?v=1.478.582"></script>
+<script defer src="js/render.js?v=1.478.582"></script>
+<script defer src="js/planetarium.js?v=1.478.582"></script>
+<script defer src="js/goldstar.js?v=1.478.582"></script>
+<script defer src="js/finish.js?v=1.478.582"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.582"></script>
+<script defer src="js/gyro.js?v=1.478.582"></script>
+<script defer src="js/forge.js?v=1.478.582"></script>
+<script defer src="js/partitura.js?v=1.478.582"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.582"></script>
+<script defer src="js/card.js?v=1.478.582"></script>
+<script defer src="js/star.js?v=1.478.582"></script>
+<script defer src="js/cinema.js?v=1.478.582"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.582"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

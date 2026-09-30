@@ -4658,35 +4658,52 @@ function overRankFill(d, cat){
   const ok = S.mode==='classic' && OVER_RANK_CATS.includes(cat) && d && d.ok && d.me && d.me.rank>0;
   if(!ok){ el.classList.add('hidden'); el.innerHTML=''; return; }
   const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
-  const o={ rank:rank, modeName:L.modeClassic, acc:ofAcc('classic'), rival:null, gapTxt:'', ghost:null };
+  const o={ rank:rank, total:Math.floor(saneNumber(d.total,0)), modeName:L.modeClassic, mode:'classic', rival:null, gapTxt:'', ghost:null, ratio:null };
   if(rank===1){
     const second=top.find(r=>r && !r.me);
-    if(second){ o.rival={ name:'#2 '+String(second.name||'').slice(0,64), val:fmtN(saneNumber(second.best,0)) };
+    if(second){ o.rival={ no:'#2', name:String(second.name||'').slice(0,64), val:fmtN(saneNumber(second.best,0)) };
       o.gapTxt=ovT('overRankFirst')+' · '+ovT('overRankLead')(fmtN(Math.max(0,myBest-saneNumber(second.best,0)))); }
   } else {
     const up=top[rank-2];
     if(up && !up.me && saneNumber(up.best,0)>myBest){
-      o.rival={ name:'#'+(rank-1)+' '+String(up.name||'').slice(0,64), val:fmtN(saneNumber(up.best,0)) };
+      o.rival={ no:'#'+(rank-1), name:String(up.name||'').slice(0,64), val:fmtN(saneNumber(up.best,0)) };
       o.gapTxt=ovT('overRankGap')(fmtN(saneNumber(up.best,0)-myBest));
+      o.ratio=myBest/saneNumber(up.best,1); // полоска: насколько ты близок к соседу сверху
       if(up.pid) o.ghost={ pid:Math.floor(Number(up.pid)), cat:cat, best:saneNumber(up.best,0) };
     }
   }
-  el.innerHTML=overRankHtml(o);
+  el.innerHTML=overRankHtml(o); ofTheme(el,'classic');
   el.classList.remove('hidden');
 }
-/* 30.09.2026 «Оформление итогов» (вариант Q, владелец: «Вариант Q… призрак иконкой»). Общая разметка карточки места для Score Attack и для времени:
-   золотая плитка с местом слева, справа режим (цветом режима), сосед сверху (имя белым, результат золотом) и сколько до него; призрак — круглая
-   кнопка-значок (как в Топе), подпись «С призраком» — в aria-label/title. Без соседа (глубоко в таблице) — плитка и «Ты в мире». */
+/* 30.09.2026 «Оформление итогов», вариант V2 (макет «Карточка места…», владелец: «так намного разумнее… какого цвета карточка режима, такого цвета и здесь»).
+   Цвета режимов — MODE_ACC: подобраны ИЗМЕРЕНИЕМ (OKLab при обычном зрении и трёх видах дальтонизма, контраст текста ≥4.5:1, отличие от золота
+   результата; .knowledge/RESEARCH-2026-09-MODE-COLORS.md, tools/mode-palette-search.mjs). Золото зарезервировано за результатом и наградой.
+   Карточка места: плитка (точный номер до 999-го; с 1 000-го — «Топ N%», если N≤50, иначе «Лучше N% игроков»; пока сервер не отдаёт общее число
+   игроков — «1000+»), справа режим, сосед сверху (номер · имя · результат), полоска близости к нему, сколько до него; призрак — маленький контурный
+   значок (зона нажатия 44px), подпись «С призраком» — в aria-label/title. У соседа в глубине таблицы номер не показываем — он игроку ничего не даёт. */
+const MODE_ACC={ classic:'#5fbcf4', daily:'#db85b3', speedrun:'#f86f3c', caravan:'#cff3ac', slalom:'#6cf7f7', biathlon:'#15ad6e', relay:'#9875da' };
+function ofAcc(mode){ return MODE_ACC[mode]||MODE_ACC.classic; }
+function ofAccRGB(hex){ const n=parseInt(String(hex).slice(1),16); return ((n>>16)&255)+','+((n>>8)&255)+','+(n&255); }
+function ofTheme(el,mode){ const a=ofAcc(mode); el.style.setProperty('--acc',a); el.style.setProperty('--accRGB',ofAccRGB(a)); }
 function overRankHtml(o){
-  const rkPx=Math.max(12,Math.min(34,Math.floor(68/((String(o.rank).length+1)*0.69)))); // плитка фиксированной ширины (76px): #4 — 34px, #999 — 26px, #100000 — 15px; цифра сама подгоняется под число знаков, чтобы место в тысячи не вылезало за плитку (владелец)
-  const tile='<div class="rkTile"><b style="font-size:'+rkPx+'px">#'+o.rank+'</b><span>'+escapeHtml(ovT('overRankWorld'))+'</span></div>';
-  let right='<span class="rkMode" style="color:'+o.acc+'">'+escapeHtml(o.modeName)+'</span>';
-  if(o.rival) right+='<div class="rvTop"><span class="rvNo">'+escapeHtml(o.rival.name.split(' ')[0])+'</span><span class="rvName">'+escapeHtml(o.rival.name.split(' ').slice(1).join(' '))+'</span><span class="rvTime">'+escapeHtml(o.rival.val).replace(/ /g,' ')+'</span></div><span class="rkGap">'+escapeHtml(o.gapTxt)+'</span>';
-  else right+='<span class="rkLbl">'+escapeHtml(ovT('overRankYou'))+'</span>';
-  const gh=o.ghost ? '<button type="button" class="topGh orGhost" data-gh="'+o.ghost.pid+'" data-cat="'+escapeHtml(o.ghost.cat)+'" data-best="'+Math.floor(o.ghost.best)+'" aria-label="'+escapeHtml(ovT('overRankGhost'))+'" title="'+escapeHtml(ovT('overRankGhost'))+'">'+ic('ghost')+'</button>' : '';
-  return tile+'<div class="rkR">'+right+'</div>'+gh;
+  const W=escapeHtml(ovT('overRankWorld'));
+  const exact=o.rank<1000;
+  let tile;
+  if(exact){ const px=({1:34,2:34,3:26})[String(o.rank).length]||26; tile='<div class="rkTile"><b style="font-size:'+px+'px">#'+o.rank+'</b><span>'+W+'</span></div>'; }
+  else if(o.total>0){
+    const topPct=Math.min(100,Math.max(1,Math.ceil(o.rank/o.total*100))); // доля игроков, которые впереди или вровень
+    if(topPct<=50) tile='<div class="rkTile"><em>'+escapeHtml(ovT('overRankTop'))+'</em><b style="font-size:34px">'+topPct+'%</b><span>'+W+'</span></div>';
+    else tile='<div class="rkTile"><em>'+escapeHtml(ovT('overRankBetter'))+'</em><b style="font-size:34px">'+Math.max(1,Math.floor((o.total-o.rank)/o.total*100))+'%</b><span>'+escapeHtml(ovT('overRankPlayers'))+'</span></div>';
+  } else tile='<div class="rkTile"><b style="font-size:24px">1000+</b><span>'+W+'</span></div>'; // сервер ещё не отдал общее число игроков — честно «далеко», без выдуманной доли
+  const gh=o.ghost ? '<button type="button" class="topGh orGhost" data-gh="'+o.ghost.pid+'" data-cat="'+escapeHtml(o.ghost.cat)+'" data-best="'+Math.floor(o.ghost.best)+'" aria-label="'+escapeHtml(ovT('overRankGhost'))+'" title="'+escapeHtml(ovT('overRankGhost'))+'">'+ic('ghost-line')+'</button>' : '';
+  let right='<div class="rkTop"><span class="rkMode">'+escapeHtml(o.modeName)+'</span>'+gh+'</div>';
+  if(o.rival){
+    right+='<div class="rvTop">'+(exact ? '<span class="rvNo">'+escapeHtml(o.rival.no)+'</span>' : '')+'<span class="rvName">'+escapeHtml(o.rival.name)+'</span><span class="rvVal">'+escapeHtml(o.rival.val).replace(/ /g,'\u00a0')+'</span></div>';
+    if(o.ratio!=null && isFinite(o.ratio)) right+='<div class="track"><i style="width:'+Math.max(6,Math.min(100,Math.round(o.ratio*100)))+'%"></i><em></em></div>';
+    right+='<span class="rkGap">'+escapeHtml(o.gapTxt)+'</span>';
+  } else right+='<span class="rkLbl">'+escapeHtml(ovT('overRankYou'))+'</span>';
+  return tile+'<div class="rkR">'+right+'</div>';
 }
-function ofAcc(mode){ return HERO_TRAIL_COLOR[mode==='classic'?'touch':mode]||HERO_TRAIL_COLOR.touch; } // оттенок режима для карточек итогов — тот же, что у линии полёта на карточке режима
 /* 30.09.2026 «Финиш по времени» (макет «Финиш по времени», владелец: «вноси все три режима»). Под временем — разница к личному рекорду:
    «−2.3 с» зелёным и «прошлый рекорд 1:26.6», если побит; «+5.2 с» оранжевым и «рекорд 1:26.6», если нет; первое время — «первое время»
    без разницы. Восстановленный забег (часы начались с нуля) не сравниваем. При вылете Спидрана до цели — «Цель 10 000 · Не хватило N»
@@ -4723,23 +4740,23 @@ function overTimeRankFill(d, mode, rsg){
   const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
   const sec=' '+ovT('overSecUnit'), gapTxt=function(x){ let g=Math.round(Math.max(0,x)*10)/10; if(g===0 && x>0) g=0.1; return g.toFixed(1)+sec; };
   const modeName=(mode==='speedrun') ? L.modeSpeedrun : (mode==='slalom' ? L.modeSlalom : L.modeBiathlon);
-  const who=function(r,n){ return '#'+n+' '+String(r.name||'').slice(0,64); };
-  const o={ rank:rank, modeName:modeName, acc:ofAcc(mode), rival:null, gapTxt:'', ghost:null };
+  const o={ rank:rank, total:Math.floor(saneNumber(d.total,0)), modeName:modeName, mode:mode, rival:null, gapTxt:'', ghost:null, ratio:null };
   if(rank===1){
     const second=top.find(function(r){ return r && !r.me; });
-    if(second){ o.rival={ name:who(second,2), val:fmtTime(saneNumber(second.best,0)) };
+    if(second){ o.rival={ no:'#2', name:String(second.name||'').slice(0,64), val:fmtTime(saneNumber(second.best,0)) };
       o.gapTxt=ovT('overRankFirst')+' · '+ovT('overRankLead')(gapTxt(saneNumber(second.best,0)-myBest)); }
   } else {
     const up=top[rank-2];
     if(up && !up.me && saneNumber(up.best,0)>0 && saneNumber(up.best,0)<myBest){
       topFixedTrackByPid={}; // перестраивается так же, как в таблице (renderTopFor): лента — прямо в строке, сеть не нужна
       if(!rsg) top.forEach(function(r){ if(r && r.pid && typeof r.track==='string') topFixedTrackByPid[r.pid]={track:r.track, skin:r.skin, name:r.name}; });
-      o.rival={ name:who(up,rank-1), val:fmtTime(saneNumber(up.best,0)) };
+      o.rival={ no:'#'+(rank-1), name:String(up.name||'').slice(0,64), val:fmtTime(saneNumber(up.best,0)) };
       o.gapTxt=ovT('overRankGap')(gapTxt(myBest-saneNumber(up.best,0)));
+      o.ratio=saneNumber(up.best,0)/myBest; // меньше время — лучше: полоска показывает, насколько ты близок к более быстрому соседу
       if(!rsg && up.pid && topFixedTrackByPid[up.pid]) o.ghost={ pid:Math.floor(Number(up.pid)), cat:mode, best:saneNumber(up.best,0) };
     }
   }
-  el.innerHTML=overRankHtml(o);
+  el.innerHTML=overRankHtml(o); ofTheme(el,mode);
   el.classList.remove('hidden');
 }
 /* Гостю — на месте карточки приглашение войти (#webJoin), с «Твои N — это M-е место из T»
@@ -4839,7 +4856,7 @@ function overFlightFillInner(){
   if(!m) return;
   let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
   const haveStk=!!(OF_KIND_NAME[kind] && typeof PT_ICON_SVG!=='undefined' && PT_ICON_SVG[kind] && typeof PT_KIND_COLOR!=='undefined' && PT_KIND_COLOR[kind]);
-  const trailCol=HERO_TRAIL_COLOR[slalom?'slalom':(mode==='classic'?'touch':mode)]||HERO_TRAIL_COLOR.touch; // цвет линии — режима (у Спидрана / Биатлона свой, как на карточках режимов)
+  const trailCol=ofAcc(mode); // цвет режима из общей палитры (MODE_ACC): линия, рельса, шапка и рамка окошка — одного цвета с карточкой места
   const unit=' '+(L.unitM||'м'), dist=Math.max(0,Math.floor(S.dist));
   const distTxt=fmtN(slalom?Math.min(dist,SLALOM_DIST):dist)+unit; // пройденное — в подписи стикера / креста, а не в шапке (в шапке теперь переключатель)
   let svg='', failCap='';
@@ -4887,7 +4904,7 @@ function overFlightFillInner(){
   const marksTxt=(penTxt ? [penTxt] : []).concat(marks.map(function(x){ return x.txt; })).join(' · ');
   const hook=OF_TOREC>0 ? '<div class="ofHook">'+escapeHtml(L.toRecord+fmtN(OF_TOREC))+'</div>' : ''; // «До рекорда N» золотом на рисунке — самая полезная цифра для «ещё разок»
   const dot=(OF_REC.combo||(!bi && OF_REC.wave)) ? '<i class="ofDot"></i>' : ''; // золотая точка на «Цифрах»: есть что посмотреть, не текстом (у Биатлона волны нет — её рекорд не подсвечивается)
-  el.style.setProperty('--ofGlow', slalom?'rgba(107,224,255,.5)':'rgba(190,225,255,.55)');
+  el.style.setProperty('--ofGlow', 'rgba('+ofAccRGB(trailCol)+',.5)');
   const accN=parseInt(String(trailCol).slice(1),16); // оттенок режима для шапки и рамки окошка (вариант Q): цвет следа + его rgb-тройка для прозрачностей в CSS
   el.style.setProperty('--ofAcc', trailCol); el.style.setProperty('--ofAccRGB', ((accN>>16)&255)+','+((accN>>8)&255)+','+(accN&255));
   el.innerHTML='<div class="orHead"><span class="orLbl">'+escapeHtml(ovT(slalom?'overRunTitle':'overFlightTitle'))+'</span>'
