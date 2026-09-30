@@ -128,21 +128,14 @@ const SETUP_SRC = `({ H, lang, AUDIT_SRC, ROW_AUDIT_SRC }) => {
     sa_pct_top: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600 }, rank: () => overRankFill({ ok: true, total: H.rankDeep.total, me: { rank: 40000, best: 840 }, top: top(40000, 840, 850) }, 'touch') },
     sa_pct_better: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600, bonuses: 3 }, rank: () => overRankFill({ ok: true, total: H.rankDeep.total, me: { rank: H.rankDeep.value, best: 840 }, top: top(H.rankDeep.value, 840, 850) }, 'touch') },
     sa_no_total: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600 }, rank: () => overRankFill({ ok: true, me: { rank: H.rankDeep.value, best: 840 }, top: top(H.rankDeep.value, 840, 850) }, 'touch') },
-    sp_pct_better: { mode: 'speedrun', store: [['srBest', 660]], s: { srWin: 1, time: H.speedrunTimeSec.value, score: 10200, dist: 5200 }, rank: () => overTimeRankFill({ ok: true, total: H.rankDeep.total, me: { rank: H.rankDeep.value, best: 600 }, top: top(H.rankDeep.value, 600, 599, true) }, 'speedrun', false) },
     // Score Attack, верх таблицы: очки в шесть знаков, две медали, награды значками, полный «Цифры»
     sa_top_records: { mode: 'classic', store: [['bestTouch', 90000], ['bestDist', 8000]], s: { score: 99500, dist: H.dist.value, bonuses: 3, comboMax: H.combo.value, starsCollected: H.stars.value, nearMiss: H.nearMiss.value, mission: H.wave.value }, ghost: true,
       rank: () => overRankFill({ ok: true, me: { rank: 2, best: 99500 }, top: [{ pid: 9, name, best: H.rivalScore.value }, { me: true, best: 99500 }] }, 'touch') },
     // первый полёт в жизни: обе медали + разовое предложение гироскопа, которое раскрывается уже после подгонки
     sa_first_flight: { mode: 'classic', store: [['bestTouch', 0], ['bestDist', 0]], s: { score: 380, dist: 240, bonuses: 2 }, gyro: true, rank: () => overRankFill({ ok: true, me: { rank: 37, best: 380 }, top: top(37, 380, 410) }, 'touch') },
-    sp_win_deep: { mode: 'speedrun', store: [['srBest', 660]], s: { srWin: 1, time: H.speedrunTimeSec.value, score: 10200, dist: 5200, bonuses: 3 }, rank: () => overTimeRankFill({ ok: true, me: { rank: H.rank.value, best: 600 }, top: top(H.rank.value, 600, 599, true) }, 'speedrun', false) },
-    sp_win_slower: { mode: 'speedrun', store: [['srBest', 252.3]], s: { srWin: 1, time: H.speedrunTimeSec.value, score: 10200, dist: 5200 }, rank: () => overTimeRankFill({ ok: true, me: { rank: 3, best: 252.3 }, top: top(3, 252.3, 251, true) }, 'speedrun', false) },
-    sp_death: { mode: 'speedrun', store: [['srBest', 252.3]], s: { score: 9999, dist: 4800, time: 400 } },
     sl_win: { mode: 'slalom', store: [['slalomBest', 200]], s: { slalomWin: 1, time: H.slalomTimeSec.value, score: 3200, dist: 2000 }, rank: () => overTimeRankFill({ ok: true, me: { rank: H.rank.value, best: 180 }, top: top(H.rank.value, 180, 179, true) }, 'slalom', false) },
     sl_fail: { mode: 'slalom', s: { slalomFail: 1, dist: 1999, score: 3200 } },
-    bi_win: { mode: 'biathlon', store: [['biathlonBest', 130]], s: { biathlonWin: 1, biathlonMisses: H.biathlonMisses.value, time: H.biathlonTimeSec.value, score: 6400, dist: 3000 }, rank: () => overTimeRankFill({ ok: true, me: { rank: H.rank.value, best: 96 }, top: top(H.rank.value, 96, 95, true) }, 'biathlon', false) },
-    bi_death: { mode: 'biathlon', s: { score: 5000, dist: 2900, biathlonMisses: H.biathlonMisses.value } },
     daily: { mode: 'daily', s: { dailyDay: '2026-09-30', score: 46430, dist: H.dist.value, bonuses: 3 }, gold: true },
-    caravan: { mode: 'caravan', s: { caravanTimeUp: 1, score: 9000, dist: 3000, bonuses: 3 } },
     relay: { mode: 'relay', s: { relayLegDone: 1, relayLeg: H.relayLeg.value, score: 8000, dist: 3000, bonuses: 3 } }
   };
   window.__wc = {
@@ -150,7 +143,7 @@ const SETUP_SRC = `({ H, lang, AUDIT_SRC, ROW_AUDIT_SRC }) => {
     run: async (id) => {
       const sc = scenarios[id];
       try {
-        Object.assign(S, { running: true, mode: sc.mode, srWin: 0, slalomWin: 0, slalomFail: 0, biathlonWin: 0, biathlonMisses: 0, wasRestored: 0, speedrunRSG: 0, smooth: 1, lives: 0, hits: 1, bonuses: 0, lastHitKind: longKind, starsCollected: 45, comboMax: 12, nearMiss: 7, mission: 6, caravanTimeUp: 0, relayLegDone: 0, time: 50, dist: 2400, score: 4377, everDash: 0, everNova: 0 }, sc.s || {});
+        Object.assign(S, { running: true, mode: sc.mode, slalomWin: 0, slalomFail: 0, wasRestored: 0, smooth: 1, lives: 0, hits: 1, bonuses: 0, lastHitKind: longKind, starsCollected: 45, comboMax: 12, nearMiss: 7, mission: 6, caravanTimeUp: 0, relayLegDone: 0, time: 50, dist: 2400, score: 4377, everDash: 0, everNova: 0 }, sc.s || {});
         runMode = sc.mode; fillRec(S.dist);
         (sc.store || []).forEach(([k, val]) => Store.set(k, val));
         try { ghostForeign = !!sc.ghost; foreignFrom = sc.ghost ? 'top' : ''; ghostPid = sc.ghost ? 5 : 0; ghostCat = sc.ghost ? 'touch' : ''; ghostBest = sc.ghost ? 1000 : 0; ghostName = name; } catch (e) { /* переменные призрака недоступны — сценарий идёт без него */ }

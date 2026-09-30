@@ -516,25 +516,9 @@ function difficulty(){ // волна + полёт; ранний ramp делае�
   const base=(S.mission-1)*0.20 + S.dist/6000;
   const opening=.62*(1-Math.exp(-S.dist/100))*Math.exp(-S.dist/900); // к ~5с даёт живой темп, к поздней игре почти исчезает
   return Math.min(1, base+opening); }
-const SR_GOAL=10000; // Спидран: цель по очкам — решение режиссёра (v1.42.0)
-const CARAVAN_TIME=60; // 05.09.2026 «Caravan» (Cave, «Caravan mode» — прочный жанровый термин, не выдумка):
-  // фиксированное время вместо «пока не умер» — Score Attack на таймер. Оригинал — 5 минут, у нас средний
-  // забег ~30с, поэтому 60с (владелец выбрал сам, не решение по умолчанию) — короткий, напряжённый отрезок
-  // на весь отведённый срок, а не растянутая копия оригинала не по темпу игры.
 const SLALOM_DIST=2000; // 01.10.2026 (владелец): было 4500 — до финиша почти никто не долетал, места в мире не было; 06.09.2026 «Слалом»: длина того же порядка, что у пресета fpSlalom. Сервер (cosmogram-daily SLALOM_DIST) — то же число, страж сверяет
   // Конструктора (forge.js) — не переиспользуем сам пресет (это утащило бы систему авторской
   // расстановки внутрь дисциплины), только ориентир по метражу для похожего ощущения дистанции.
-// 06.09.2026 «Биатлон»: скорость+точность в одном забеге, реальный формат Sprint (2 рубежа) —
-// владелец выбрал числа сам. Скоростной 300м → рубеж (собери всё) 200м → скоростной 300м →
-// рубеж 200м → финиш на 1000м. Штраф — как в настоящем Individual-формате (флэт-время),
-// не штрафной круг (Sprint) — тот потребовал бы новой геометрии трассы, владелец выбрал проще.
-const BIATHLON_LEG=300, BIATHLON_RANGE=200;
-const BIATHLON_R1_START=BIATHLON_LEG;                    // 300
-const BIATHLON_R1_END=BIATHLON_R1_START+BIATHLON_RANGE;  // 500
-const BIATHLON_R2_START=BIATHLON_R1_END+BIATHLON_LEG;    // 800
-const BIATHLON_R2_END=BIATHLON_R2_START+BIATHLON_RANGE;  // 1000
-const BIATHLON_DIST=BIATHLON_R2_END;
-const BIATHLON_PENALTY_SEC=3; // штраф за каждую не собранную звезду рубежа — владелец выбрал сам
 // 06.09.2026 «Эстафета»: открытая цепочка на всех (в игре ещё нет системы друзей/команд —
 // владелец выбрал так сам), 4 этапа по 300м. Каждый этап — свой сид (relaySeed+'·relay·'+leg),
 // не один непрерывный сид на все 1200м: непрерывность здесь — в счёте/жизнях, которые
@@ -1077,12 +1061,10 @@ function ghostPackDaily(){ // v1.100.1 «Трибуна чемпиона»: ле
    все тиры Caravan делят одну ленту каждый (как и один бейдж на всех троих/каждый). */
 function ghostCatBucket(cat){
   if(cat==='gyro'||cat==='keys'||cat==='touch') return 'touch';
-  if(cat && cat.indexOf('caravan')===0) return 'caravan';
   return cat||'touch';
 }
 function ghostRunKey(){ // тот же бакет, но по ТЕКУЩЕМУ забегу (ghostLoad зовётся до его конца, cat ещё не посчитан)
   if(runMode==='classic') return 'ghostRun_touch';
-  if(runMode==='caravan') return 'ghostRun_caravan';
   return 'ghostRun_'+(runMode||'touch');
 }
 function ghostSave(cat){ // вызывается из gameOver при новом рекорде — cat: та же категория, что уже у Store.set(modeKey,...) рядом
@@ -1117,7 +1099,7 @@ function ghostLoad(){ // вызывается из startGame
          на всех» снова переставало существовать, а игрок неделями получал одну и ту же
          заученную трассу. Гонка с призраком имеет смысл только на общем поле; в зачётных
          режимах поле задаёт день, и призрак там просто тень. */
-      const ownSky = (runMode==='classic' || runMode==='caravan'); // 05.09.2026: Caravan — тоже свежий случайный сид на забег, как Classic
+      const ownSky = (runMode==='classic'); // 01.10.2026: Caravan удалён
       if (ownSky && fg.seed && typeof keyRNG==='function'){ mapRNG=keyRNG(String(fg.seed)); mapSeedKey=String(fg.seed); mapSeqReset(); S.seed=fg.seed; } }
     return;
   }
@@ -1128,7 +1110,7 @@ function ghostLoad(){ // вызывается из startGame
   const g=ghostParse(grTrack);
   if (g){ ghost=g; ghostTagT=4; // первые 4 секунды — подпись «ЕЩЁ РАЗ?» (v1.87.0 отобрала у своей тени слова, 13.08.2026 вернула по просьбе владельца)
     // v1.282.20: то же правило для своего призрака — сид поднимаем только в личном небе
-    if ((runMode==='classic' || runMode==='caravan') && grSeed && typeof keyRNG==='function'){ // 05.09.2026: Caravan — тоже своё небо
+    if ((runMode==='classic') && grSeed && typeof keyRNG==='function'){
       mapRNG=keyRNG(String(grSeed)); mapSeedKey=String(grSeed); mapSeqReset(); S.seed=grSeed; } }
 }
 function ghostStep(){ // призрак идёт по своей траектории синхронно с текущей дистанцией
@@ -1258,10 +1240,7 @@ function update(dt){
      у преград (страж 60), просто раньше не всплывал в тексте страж, потому что страж
      останавливается на первой упавшей проверке (dObs), не доходя до dStars/dPows. */
   if (starT<=0){ starT = withTrack('st', function(){
-    // 06.09.2026 «Биатлон»: звёзды идут только внутри рубежа (300-500м, 800-1000м) — скоростные
-    // отрезки нарочно пустые от них, как в реальном биатлоне лыжня пуста от мишеней.
-    const biathlonGate = S.mode!=='biathlon' || (S.dist>=BIATHLON_R1_START&&S.dist<BIATHLON_R1_END) || (S.dist>=BIATHLON_R2_START&&S.dist<BIATHLON_R2_END);
-    if (biathlonGate) spawnStar();
+    spawnStar();
     return mapRand(.8,1.5); }); } // честный базовый темп (эталон v1.10.0)
   powT -= trackDt;
   if (powT<=0){ powT = withTrack('pw', function(){
@@ -1620,42 +1599,11 @@ function update(dt){
   const distKm=Math.floor(S.dist/1000); // v1.77.0 (владелец): золотая вспышка на каждом км — тот же приём, что у #score.pop/#livesCanvas.hit
   if(distKm>lastDistKm){ lastDistKm=distKm;
     elDistN.classList.remove('milestone'); void elDistN.offsetWidth; elDistN.classList.add('milestone'); }
-  if (S.mode==='speedrun'){ // Спидран: таймер + цель; 10 000 — финиш (v1.42.0)
-    const elMH=elModeHud, tSec=Math.floor(S.time*10)/10;
-    if (elMH && elMH._t!==tSec){ elMH._t=tSec;
-      elMH.textContent=fmtTime(S.time)+' · '+L.srGoal+' '+fmtN(SR_GOAL); }
-    if (S.score>=SR_GOAL && !S.dying){ startFinish(); S.srWin=1; } // 13.09.2026 «Ворота финиша»: победа по очкам — «оставшегося расстояния» нет, арки заранее не будет, салют на месте корабля
-  }
-  else if (S.mode==='caravan'){ // Caravan (v1.478.74): обратный отсчёт вместо «пока не умер» — время решает, не смерть
-    // 07.09.2026 «Пуля/Блиц»: раньше время забега было одной константой (CARAVAN_TIME=60).
-    // Теперь это выбор игрока на кнопке режима (10с/60с, S.caravanTime) — CARAVAN_TIME остаётся
-    // запасным значением на случай восстановленного забега без этого поля (S.wasRestored).
-    const CT=S.caravanTime||CARAVAN_TIME;
-    const elMH=elModeHud, left=Math.max(0,CT-S.time), tSec=Math.floor(left*10)/10;
-    if (elMH && elMH._t!==tSec){ elMH._t=tSec; elMH.textContent=L.modeCaravan+' · '+fmtTime(left); }
-    if (S.time>=CT && !S.dying){ startFinish(); S.caravanTimeUp=1; } // 13.09.2026 «Ворота финиша»: победа по времени — арки заранее не будет, тот же приём, что у Спидрана выше
-  }
-  else if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
+  if (S.mode==='slalom'){ // 06.09.2026: время + прогресс по трассе — срыв (slalomFail) ставится отдельно, в блоке столкновения с воротами
     const elMH=elModeHud, distI=Math.floor(S.dist);
     if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,SLALOM_DIST)+'/'+SLALOM_DIST+(L.unitM||'м'); }
     if (!S.dying) finishSetRemain(SLALOM_DIST-S.dist); // 13.09.2026 «Ворота финиша»
     if (S.dist>=SLALOM_DIST && !S.dying){ startFinish(); S.slalomWin=1; } // доехал до конца, ни разу не задев ворота — победа
-  }
-  else if (S.mode==='biathlon'){ // 06.09.2026: скорость+рубежи — штраф прибавляется к S.time на выходе из каждого рубежа
-    const elMH=elModeHud, distI=Math.floor(S.dist);
-    if (elMH && elMH._t!==distI){ elMH._t=distI; elMH.textContent=fmtTime(S.time)+' · '+Math.min(distI,BIATHLON_DIST)+'/'+BIATHLON_DIST+(L.unitM||'м')+(S.biathlonMisses?' · +'+(S.biathlonMisses*BIATHLON_PENALTY_SEC)+'с':''); }
-    if (S.dist>=BIATHLON_R1_END && !S.biathlonR1Done){
-      S.biathlonR1Done=1;
-      const missed=Math.max(0,S.starsSpawned-S.starsCollected);
-      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
-      S.biathlonSnapSpawned=S.starsSpawned; S.biathlonSnapCollected=S.starsCollected; // 1й рубеж закрыт — со 2го считаем только новые звёзды
-    }
-    if (!S.dying) finishSetRemain(BIATHLON_DIST-S.dist); // 13.09.2026 «Ворота финиша»
-    if (S.dist>=BIATHLON_DIST && !S.dying){
-      const missed=Math.max(0,(S.starsSpawned-S.biathlonSnapSpawned)-(S.starsCollected-S.biathlonSnapCollected));
-      if(missed){ S.time+=missed*BIATHLON_PENALTY_SEC; S.biathlonMisses+=missed; }
-      startFinish(); S.biathlonWin=1; // доехал до конца — победа, штрафы уже учтены в S.time
-    }
   }
   else if (S.mode==='relay'){
     const elMH=elModeHud;

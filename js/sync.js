@@ -583,52 +583,6 @@ function syncDailyCrowd(day){ // 06.09.2026 «Толпа Неба месяца»
   });
 }
 
-/* 03.09.2026 «Спидран получает свою таблицу» — зеркало очереди daily_submit выше, но СВОЯ
-   очередь (Store 'speedrunQ', свой _speedrunFlying): если переиспользовать dailyQ, забег дня
-   и забег спидрана в один день затёрли бы друг друга — syncDailyEnqueue дедупит только по
-   полю day, без различия действия. Тот же самый Edge Function (cosmogram-daily), другое
-   действие в payload — новый URL не нужен. */
-function syncSpeedrunQueue(){ return saneArray(Store.get('speedrunQ',[]),[]); }
-function syncSpeedrunEnqueue(o){
-  if(!o || !o.day) return;
-  const q=syncSpeedrunQueue().filter(x=>x&&x.day!==o.day);
-  q.push(Object.assign({},o));
-  Store.set('speedrunQ',q.slice(-14));
-}
-let _speedrunFlying=null;
-function syncSpeedrunFlush(){
-  if(_speedrunFlying) return (_speedrunFlying = _speedrunFlying.catch(()=>{}).then(()=>syncSpeedrunFlush()));
-  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
-  if(!syncBackoffReady('speedrun')) return Promise.resolve(null); // 18.09.2026: растущая пауза
-  const q=syncSpeedrunQueue(), item=q[0]; if(!item) return Promise.resolve(null);
-  const p=syncDailyPost(Object.assign({action:'speedrun_submit'},syncAuth(),item)).then(r=>{
-    if(!r){ syncBackoffFail('speedrun'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
-    // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
-    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
-      Store.set('speedrunQ',syncSpeedrunQueue().filter(x=>x!==item));
-      syncBackoffReset('speedrun');
-    } else { syncBackoffFail('speedrun'); }
-    return r;
-  }).catch(()=>{ syncBackoffFail('speedrun'); return null; }).finally(()=>{ _speedrunFlying=null; });
-  _speedrunFlying=p; return p;
-}
-function syncSpeedrunSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
-  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
-  syncSpeedrunEnqueue(o);
-  return syncSpeedrunFlush().then(r=>!!(r&&r.ok));
-}
-if(typeof window!=='undefined'){
-  window.addEventListener('online',()=>syncSpeedrunFlush());
-  setTimeout(()=>syncSpeedrunFlush(),4000);
-}
-function syncSpeedrunTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null} — тот же контракт, что у syncDailyTop()
-  if(!syncAvailable()) return Promise.resolve(null);
-  return syncDailyPost(Object.assign({action:'speedrun_top', day:day}, syncAuth())).then(r=>{
-    if(!r || !r.ok) return null;
-    return r.json().catch(()=>null);
-  });
-}
-
 /* 06.09.2026 «Слалом»: тот же приём Set Seed/очередь, что у Спидрана выше — тот же Edge
    Function (cosmogram-daily), свои действия в payload (slalom_submit/slalom_top), своя
    очередь на диске (slalomQ), чтобы не столкнуться со спидраном по дедупу-полю day. */
@@ -674,47 +628,6 @@ function syncSlalomTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me
 }
 
 /* 06.09.2026 «Биатлон»: тот же приём Set Seed/очередь, что у Слалома/Спидрана выше. */
-function syncBiathlonQueue(){ return saneArray(Store.get('biathlonQ',[]),[]); }
-function syncBiathlonEnqueue(o){
-  if(!o || !o.day) return;
-  const q=syncBiathlonQueue().filter(x=>x&&x.day!==o.day);
-  q.push(Object.assign({},o));
-  Store.set('biathlonQ',q.slice(-14));
-}
-let _biathlonFlying=null;
-function syncBiathlonFlush(){
-  if(_biathlonFlying) return (_biathlonFlying = _biathlonFlying.catch(()=>{}).then(()=>syncBiathlonFlush()));
-  if(!syncAvailable() || (typeof navigator!=='undefined' && navigator.onLine===false)) return Promise.resolve(null);
-  if(!syncBackoffReady('biathlon')) return Promise.resolve(null); // 18.09.2026: растущая пауза
-  const q=syncBiathlonQueue(), item=q[0]; if(!item) return Promise.resolve(null);
-  const p=syncDailyPost(Object.assign({action:'biathlon_submit'},syncAuth(),item)).then(r=>{
-    if(!r){ syncBackoffFail('biathlon'); return null; } // сеть/таймаут — очередь ждёт следующего триггера, пауза растёт
-    // 18.09.2026: та же правка, что у syncDailyFlush() выше — 401/400/409/429 тоже чистят очередь
-    if(r.ok || r.status===401 || r.status===400 || r.status===409 || r.status===429){
-      Store.set('biathlonQ',syncBiathlonQueue().filter(x=>x!==item));
-      syncBackoffReset('biathlon');
-    } else { syncBackoffFail('biathlon'); }
-    return r;
-  }).catch(()=>{ syncBackoffFail('biathlon'); return null; }).finally(()=>{ _biathlonFlying=null; });
-  _biathlonFlying=p; return p;
-}
-function syncBiathlonSubmit(o){ // {day, time_sec, skin, track?} — сохраняем до подтверждения сервера
-  if(typeof isLabEnv==='function' && isLabEnv()) return Promise.resolve(false);
-  syncBiathlonEnqueue(o);
-  return syncBiathlonFlush().then(r=>!!(r&&r.ok));
-}
-if(typeof window!=='undefined'){
-  window.addEventListener('online',()=>syncBiathlonFlush());
-  setTimeout(()=>syncBiathlonFlush(),4000);
-}
-function syncBiathlonTop(day){ // {ok,day,top:[{pid,name,username,provider,best,me}],me:{rank,best}|null}
-  if(!syncAvailable()) return Promise.resolve(null);
-  return syncDailyPost(Object.assign({action:'biathlon_top', day:day}, syncAuth())).then(r=>{
-    if(!r || !r.ok) return null;
-    return r.json().catch(()=>null);
-  });
-}
-
 /* 06.09.2026 «Эстафета»: открытая цепочка — свой Edge Function (cosmogram-relay), не
    cosmogram-daily — своя комната. relay_get_open/relay_start отдают текущее состояние сразу
    (клиенту нужно решить, смотреть повтор или лететь), очередь нужна только у relay_submit_leg —
@@ -911,11 +824,7 @@ function syncLocalScores(){
     touch: saneScore(Store.get('bestTouch',0)),
     bullet: saneScore(Store.get('bestBullet',0)),
     dist: saneScore(Store.get('bestDist',0)),
-    keys: saneScore(Store.get('bestKeys',0)),
-    caravan: saneScore(Store.get('bestCaravan',0)) // 05.09.2026: единая таблица Caravan, не по управлению
-    // 07.09.2026 «Пуля»: bestCaravan10 сознательно НЕ уходит на сервер — владелец вживую отклонил
-    // отдельную вкладку в Топе соревнований («был Caravan, зачем делить и занимать место»).
-    // Рекорд остаётся личным, только на устройстве (Store), общий Топ Caravan не тронут.
-    // 07.09.2026: bestIronman больше не шлётся — Ironman ушёл в Конструктор, рекорда там нет вообще.
+    keys: saneScore(Store.get('bestKeys',0))
+    // 01.10.2026: Caravan удалён — bestCaravan больше не уходит на сервер (старая запись там остаётся).
   };
 }

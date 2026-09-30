@@ -672,7 +672,7 @@ function forgeFill(){ // подписи + состояние виджетов п
     // удалён при переходе на 3 чипа, ключ L.forgeHardSpoilerGrpT остался в i18n.js неиспользуемым.
     ['forgeTempoLbl',L.forgeTempoLbl],['forgeStartLbl',L.forgeStartLbl],
     ['forgeDiffMeterLbl',L.forgeDiffMeterLbl],
-    ['forgePlay',L.forgePlayBtn],['forgeShareMapBtn',L.forgeShareMapBtn],
+    ['forgePlay',L.forgeTestBtn||'Тестировать'],
     ['forgeSaveRecapLenLbl',L.forgeRecapLen],['forgeSaveRecapPtsLbl',L.forgeRecapPts],['forgeSaveRecapFogLbl',L.forgeFog],
     ['ptEmptyHintTxt',L.ptEmptyHint]];
   // 22.09.2026: forgeResetBtn как отдельная кнопка убрана целиком (её работа — на долгом
@@ -857,6 +857,7 @@ function forgeRenderSaveRecap(){
   const lenEl=$('forgeSaveRecapLen'); if(lenEl) lenEl.textContent=forgeCfg.l>0?(forgeCfg.l+(L.unitM||'м')):'∞';
   const ptsEl=$('forgeSaveRecapPts'); if(ptsEl) ptsEl.textContent=(forgeCfg.sc||[]).length;
   const fogEl=$('forgeSaveRecapFog'); if(fogEl) fogEl.textContent=[L.fog0,L.fog1,L.fog2][forgeCfg.fog||0]||'—';
+  forgePubSync(); // 01.10.2026: кнопка «Опубликовать» и подпись — по состоянию теста/имени/публикации
 }
 function forgeSubTabSet(s){
   const leftArrange=(forgeSub==='arrange'&&s!=='arrange');
@@ -1011,6 +1012,63 @@ function forgeIsVerified(code){
   const list=Store.get('forgeVerified',[]);
   return Array.isArray(list) && list.indexOf(code)>=0;
 }
+/* 01.10.2026 «Тестировать → Опубликовать» (владелец: «пока не протестируешь, не опубликуешь»;
+   «после теста вернуться сюда, а не искать снова»; «Поделиться» уехало на карточку карты).
+   Шаг «Сохранить» теперь две равные кнопки: «Тестировать» (бывший «Полёт», тот же забег) и
+   «Опубликовать» — включается, когда ЭТА карта пройдена до финиша (тот же «Clear Check», что
+   был раньше за «Поделиться»). Проверка — по карте БЕЗ имени (forgeVerifyKey): назвал карту
+   уже после теста — тест не слетает; поменял любую точку/цвет — слетает, как и прежде. */
+let forgeTestReturn=false; // true — полёт запущен кнопкой «Тестировать» с этого шага: «Меню»/«Назад» на итогах ведут обратно сюда (toMenu, ui.js)
+function forgeVerifyKey(cfg){ return forgeEncode(forgeSanitize(Object.assign({},cfg,{n:''}))); }
+function forgePublishedHas(code){ const l=Store.get('forgePublished',[]); return Array.isArray(l) && l.indexOf(code)>=0; }
+function forgePublishedAdd(code){
+  let l=Store.get('forgePublished',[]); if(!Array.isArray(l)) l=[];
+  if(l.indexOf(code)<0) l.push(code);
+  if(l.length>FORGE_VERIFY_MAX) l=l.slice(l.length-FORGE_VERIFY_MAX);
+  Store.set('forgePublished',l);
+}
+function forgePubCfg(){ const nm=$('forgeName'); const c=Object.assign({},forgeCfg); if(nm) c.n=sanitizeTrackName(nm.value); return forgeSanitize(c); }
+function forgePubState(){ // 'untested' → 'noname' → 'ready' → 'done'
+  const cfg=forgePubCfg(), code=forgeEncode(cfg);
+  if(forgePublishedHas(code)) return {st:'done',cfg:cfg,code:code};
+  if(!(forgeIsVerified(code)||forgeIsVerified(forgeVerifyKey(cfg)))) return {st:'untested',cfg:cfg,code:code};
+  if(!cfg.n) return {st:'noname',cfg:cfg,code:code};
+  return {st:'ready',cfg:cfg,code:code};
+}
+function forgePubSync(warn){ // кнопка и подпись под ней по состоянию; warn — красная подпись (нажали, а нельзя)
+  const b=$('forgePubBtn'), h=$('forgePubHint'); if(!b||!h) return;
+  const s=forgePubState().st;
+  b.textContent = s==='done' ? (L.forgePubDone||'Опубликовано') : (L.forgePubBtn||'Опубликовать');
+  b.classList.toggle('off', s!=='ready');
+  h.textContent = ({
+    untested:(L.forgePubHintUntested||'Сначала нажмите «Тестировать» и пролетите карту до финиша — тогда «Опубликовать» включится.'),
+    noname:(L.forgePubHintNoName||'Карта пройдена. Дайте ей имя — и можно публиковать.'),
+    ready:(L.forgePubHintReady||'Карта пройдена. Можно публиковать — увидят все.'),
+    done:(L.forgePubHintDone||'Опубликовано. Карта теперь в «Летать» → «Мои»; отправить другу — значком на её карточке.')
+  })[s];
+  h.classList.toggle('warn', !!warn);
+}
+let _forgePublishBusy=false;
+function forgePublish(){
+  const s=forgePubState();
+  if(s.st==='done'){ haptic('light'); return; }
+  if(s.st==='untested'){ forgePubSync(true); haptic('error'); return; } // подпись красным — прямо на экране, не тостом под окном Telegram
+  if(s.st==='noname'){ forgePubSync(true); haptic('error'); const nm=$('forgeName'); if(nm) nm.focus(); return; }
+  if(_forgePublishBusy) return;
+  _forgePublishBusy=true; sfx.click(); haptic('light');
+  Store.set('forgeLast',s.cfg);
+  workshopSubmit(s.code, s.cfg.n).then(function(res){
+    if(res && res.ok){ forgePublishedAdd(s.code); toast(L.forgePublished||'Опубликовано в Галерее','rgba(255,215,106,.5)'); haptic('success'); forgePubSync(); return; }
+    const why=!res ? (L.syncOffline||'Нет связи') : ({ bad_name:'Имя не подходит — измените его', exists:'Такая карта уже опубликована', rate:'Слишком часто — подождите минуту', daily_limit:'На сегодня лимит публикаций', auth:'Нужен вход через Telegram' })[res.error] || (L.syncOffline||'Не вышло — попробуйте позже');
+    toast(why,'rgba(255,159,176,.5)'); haptic('error');
+  }).catch(function(){ toast(L.syncOffline||'Нет связи','rgba(255,159,176,.5)'); }).finally(function(){ _forgePublishBusy=false; });
+}
+function forgeTestPlay(){ forgeReadForm(); forgeTestReturn=true; forgePlay(); } // «Тестировать»: тот же полёт, что был «Полёт», + запомнить, куда вернуться
+function forgeReturnFromTest(){ // после теста — обратно на шаг «Сохранить» (а не в главное меню)
+  setScreen('forge');
+  forgeFill(); forgeSkyKick(); if(typeof ptFill==='function') ptFill(); forgeFavRowSync();
+  forgeTabSet('create'); forgeSubTabSet('hard');
+}
 /* 08.09.2026 (владелец, живой разговор): «Поделиться» и «Опубликовать в Галерею» были одним
    и тем же нажатием без предупреждения — «это бред, неудобно и непонятно» (ты делишься с
    другом, а тебя тихо публикуют всем под именем). Теперь публикация — отдельный явный вопрос
@@ -1091,27 +1149,26 @@ function forgeBootShort(onReady){ // true — ссылка с номером е�
   }).catch(()=>{ if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('map_short_fail', id); });
   return true;
 }
-function mapShare(){ // v1.87.0: «Поделиться» живёт в итогах трассы — там, где случился восторг, а не на панели кузницы
-  const cfg=forgeSanitize(forgeCfg);
-  const code=forgeEncode(cfg);
+function mapShare(){ const cfg=forgeSanitize(forgeCfg); mapShareCode(forgeEncode(cfg), cfg.n); } // v1.87.0
+/* 01.10.2026: «Поделиться» уехало с шага «Сохранить» на карточку карты в «Летать» (значок «отправить»,
+   data-act="share") — делиться можно любой картой списка, не только той, что сейчас в редакторе.
+   Вопрос «опубликовать?» после отправки убран: публикация — своя кнопка на шаге «Сохранить». */
+function mapShareCode(code, name){
+  if(!code) return;
   const links=forgeShareLinks(code); // 28.09.2026: короткий номер, если уже пришёл (forgeShortPrefetch на итогах), иначе прежняя длинная
   const link=links.tg; // тот же мост, что и у дуэлей (v1.68.0)
-  const txt=(L.forgeShareTxt||'').replace('%s', cfg.n||L.forgeDefName);
+  const txt=(L.forgeShareTxt||'').replace('%s', name||L.forgeDefName);
   forgeCopy(code, function(){ toast(L.forgeCopied,'rgba(255,215,106,.5)'); });
   const shareUrl='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt);
   if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ничего не меняем
-    try{ tg.openTelegramLink(shareUrl); haptic('success'); mapAskPublish(code, cfg.n); return; }catch(e){}
+    try{ tg.openTelegramLink(shareUrl); haptic('success'); return; }catch(e){}
   }
   if(navigator.share){ // v1.108.1 «Дверь пошире»: вне Telegram — системный лист ОС, как в shareScore()
     navigator.share({text:txt, url:links.web}).catch(()=>{}); // 28.09.2026: вне Telegram — наш адрес, не t.me (владелец: «в Telegram — t.me, вне — cosmogram.fun»)
-    haptic('success'); mapAskPublish(code, cfg.n); return;
+    haptic('success'); return;
   }
-  // 18.09.2026 (второй видео-аудит другими методами): раньше публикация предлагалась
-  // независимо от того, реально ли открылось окно — блокировщик всплывающих отдаёт null
-  // без исключения, «успех» был ложным. Тот же приём, что уже у duelBtn (ui.js:4168,
-  // v1.282.20) — считаем успехом только реально открывшееся окно.
   let w=null; try{ w=window.open(shareUrl,'_blank'); }catch(e2){}
-  if (w){ haptic('success'); mapAskPublish(code, cfg.n); }
+  if (w) haptic('success');
 }
 /* ---------- 05.09.2026 «Мастерская»: витрина трасс поверх уже готового кода/шаринга ---------- */
 function forgeWorkshopApply(code){ // тот же путь, что forgeLoadCode ниже, но код приходит не из поля ввода, а из карточки витрины
@@ -1137,6 +1194,7 @@ let workshopPlayingCode = null;
 function forgeWorkshopPlay(code){ // «Играть»: применить + взлёт; «сыграли» засчитывается в mapOver(), только если долетел до конца
   if(!forgeWorkshopApply(code)){ toast(L.forgeBadCode,'rgba(255,159,176,.5)'); haptic('light'); return; }
   workshopPlayingCode = code;
+  forgeTestReturn=false; // чужой/витринный полёт — «Меню» ведёт в главное меню, как раньше
   forgePlay();
 }
 // Маленький статичный свотч карточки Мастерской — тот же язык (звёзды/дальняя стая/туман/
@@ -1982,6 +2040,7 @@ function workshopRenderList(){
       // нему. Строку про «см. её комментарий» ниже (про getBBox()) не трогать — размер значков
       // остаётся посчитанным, меняется только положение.
       '<button class="wCorner wPickStar hidden" data-act="pickstar" title="'+(L.workshopPickTitle||'Отмечено автором игры')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star5-outline"></use></svg></button>'+
+      '<button class="wCorner" data-act="share" title="'+(L.workshopShare||'Отправить другу')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-share"></use></svg></button>'+
       '<button class="wCorner wVote" data-act="vote"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20.2c-.3 0-.6-.1-.8-.3C7.6 16.8 4 13.6 4 9.9 4 7.2 6.1 5 8.7 5c1.4 0 2.7.6 3.3 1.7C12.6 5.6 13.9 5 15.3 5 17.9 5 20 7.2 20 9.9c0 3.7-3.6 6.9-7.2 10-.2.2-.5.3-.8.3z"></path></svg></button>'+
       // 12.09.2026 «Что до полёта, что за (i)» (владелец, живой тест руками — «протестируй
       // как играет ребёнок и взрослый», потом отдельный разбор макета): Автор/Запуски не
@@ -2188,6 +2247,9 @@ wireOnLocal('workshopList','click',function(e){
     Store.set('workshopEditHintSeen',1); // 16.09.2026: первый тап «Изменить» где угодно — подсказка про него больше не нужна, гасится навсегда
     forgeWorkshopEdit(code); forgeTabSet('create'); return;
   } // 06.09.2026: уже на экране Конструктора — переключаем вкладку, не экран
+  if(act.dataset.act==='share'){ // 01.10.2026: отправить другу ЭТУ карту (код строки)
+    const shCfg=forgeDecode(code); mapShareCode(code, shCfg?shCfg.n:''); return;
+  }
   if(act.dataset.act==='info'){
     // 12.09.2026: overlay лежит поверх .wBanner (position:absolute;inset:0, index.html) —
     // тап только переключает класс, ничего не раздвигает; карточка одного размера всегда,
@@ -2311,8 +2373,8 @@ wireOnLocal('workshopList','click',function(e){
 });
 
 /* ---------- Привязка событий ---------- */
-wireOnLocal('forgePlay', 'click', forgePlay);
-wireOnLocal('forgeShareMapBtn', 'click', mapShare); // 02.09.2026: mapShare() существовала с v1.87.0, но была ничем не вызвана
+wireOnLocal('forgePlay', 'click', forgeTestPlay); // 01.10.2026: «Тестировать» — тот же полёт + возврат на этот шаг после него
+wireOnLocal('forgePubBtn', 'click', forgePublish);
 /* 12.09.2026 (макет karta-tochno-kak-referens-12-09-2026.html, одобрено): «Сбросить» —
    сбрасывает ВЕСЬ forgeCfg (не только точки), случайный тап слишком дорог.
    22.09.2026: отдельная кнопка-корзина с двойным нажатием «Точно?» убрана — то же самое
@@ -2329,4 +2391,4 @@ wireOnLocal('forgeSpd', 'input', function(){ forgeCfg.s=+this.value; const v=$('
 wireOnLocal('forgeWind', 'input', function(){ forgeCfg.wind=+this.value; const v=$('forgeWindV'); if(v) v.value=this.value; forgeUpdateDiffMeter(); }); // 06.09.2026 «Солнечный ветер» — не трогает превью неба, чисто игровая физика; 16.09.2026: .value, не .textContent (реальный input); 20.09.2026: живое кольцо «Сложность неба» — эти три ползунка не проходят через forgeSyncWidgets на каждое движение, зовём отдельно
 // v1.282.14: имя трассы попадает в конфиг по мере набора. Санацию оставляем на forgeReadForm
 // и forgeSanitize — резать текст прямо под пальцем нельзя, курсор прыгает.
-wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; });
+wireOnLocal('forgeName', 'input', function(){ forgeCfg.n=this.value; forgePubSync(); });

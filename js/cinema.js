@@ -458,7 +458,7 @@ async function cinemaDeleteFirst(){
    Тот же IndexedDB-стор (CINEMA_STORE), 6 именованных слотов по ключу 'gal_'+cat — Эстафета не
    входит (у неё нет своего рекорда, см. cinemaGalleryCat ниже). Слот принимает УЖЕ готовый Blob
    (см. cinemaHighlightStop) — здесь только хранение, кодирование не трогаем. */
-const CINEMA_GALLERY_CATS=['touch','daily','speedrun','caravan','slalom','biathlon'];
+const CINEMA_GALLERY_CATS=['touch','daily','slalom'];
 async function cinemaSaveGallery(cat, blob){
   try{
     const db = await cinemaDb();
@@ -493,11 +493,8 @@ function cinemaGalleryCat(){
   if (typeof S==='undefined') return null;
   if (typeof runMode!=='undefined' && (runMode==='theater' || runMode==='custom')) return null;
   if (S.mode==='relay') return null;
-  if (S.mode==='caravan') return (S.caravanTime && S.caravanTime!==60) ? null : 'caravan';
   if (S.mode==='daily') return 'daily';
-  if (S.mode==='speedrun') return 'speedrun';
   if (S.mode==='slalom') return 'slalom';
-  if (S.mode==='biathlon') return 'biathlon';
   return 'touch';
 }
 
@@ -617,7 +614,7 @@ function cinemaHighlightStart(canvas){
   if (_cinemaOwner || cinemaActive()) return; // 20.09.2026: _cinemaOwner — та же правка гонки, что у cinemaFirstFlightStart выше (без неё эта строка и крала 'first' себе)
   _cinemaOwner='highlight';
   const mode = (typeof controlMode==='function') ? controlMode() : 'touch'; // game.js, только чтение — как и S/Store/Q везде в этом файле
-  const modeKey = (typeof S!=='undefined' && S.mode==='caravan') ? 'bestCaravan' : (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // 05.09.2026: Caravan — свой рекорд, не по управлению (тот же приём, что в ui.js gameOver())
+  const modeKey = (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch')); // 05.09.2026: Caravan — свой рекорд, не по управлению (тот же приём, что в ui.js gameOver())
   _cinemaHighlightBest = (typeof Store!=='undefined') ? saneNumberSafe(Store.get(modeKey, 0)) : 0; // та же формула, что ui.js/gameOver считает рекордом
   cinemaStart(canvas, 12_000_000, 20_000_000).then(ok=>{
     if(!ok){ _cinemaOwner=null; return; }
@@ -734,7 +731,7 @@ function galleryFillLabels(){
   const nameFirst=$('galNameFirst'); if(nameFirst && L.ffcTitle) nameFirst.textContent=L.ffcTitle;
   // 16.09.2026: имена режимов в галерее — те же ключи, что уже наполняют карусель на главном
   // экране (modeClassic/modeDaily/...), не свои новые/захардкоженные — незачем дублировать перевод
-  const GAL_NAME_KEY={touch:'modeClassic',daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan',slalom:'modeSlalom',biathlon:'modeBiathlon'};
+  const GAL_NAME_KEY={touch:'modeClassic',daily:'modeDaily',slalom:'modeSlalom'};
   Object.keys(GAL_NAME_KEY).forEach(cat=>{ const el=$('galName_'+cat); if(el && L[GAL_NAME_KEY[cat]]) el.textContent=L[GAL_NAME_KEY[cat]]; });
   const nameRelay=$('galName_relay'); if(nameRelay && L.modeRelay) nameRelay.textContent=L.modeRelay;
   document.querySelectorAll('#flightGalleryGrid .galEmptyLbl').forEach(el=>{ if(el.id!=='galEmptyFirst' && el.id!=='galEmptyRelay' && L.galEmptySlot) el.textContent=L.galEmptySlot; });
