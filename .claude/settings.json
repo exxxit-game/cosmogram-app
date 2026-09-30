@@ -48,7 +48,8 @@
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-broad-git-add.sh" },
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-secrets-in-commit.sh" },
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/russian-description-guard.sh" }
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/russian-description-guard.sh" },
+          { "type": "command", "command": "TOOL_USAGE_READ_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-usage-read-guard.mjs" }
         ]
       },
       {
@@ -95,6 +96,12 @@
           { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/commit-tracker.sh" },
           { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
           { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-eval-vs-hwshot-guard.mjs" }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Bash",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-read-log.mjs" }
         ]
       },
       {
