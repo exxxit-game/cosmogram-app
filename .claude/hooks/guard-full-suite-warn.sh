@@ -24,6 +24,10 @@
 # подстрочное совпадение '*guard.mjs*' срабатывало на ЛЮБОМ файле, чьё имя
 # оканчивается на '-guard.mjs' (ask-then-act-guard.mjs и т.п.) — теперь сравнение
 # точного basename, не подстроки.
+# 30.09.2026: переключатель только у ВЛАДЕЛЬЦА — правкой команды этого хука в settings.json
+# ("GUARD_LOCAL_MODE=allow .claude/hooks/guard-full-suite-warn.sh"), тот же приём, что PROTECT_CORE_MODE=off.
+# В самой команде Bash я поставить это не могу: переменная окружения команды до хука не доходит.
+if [[ "${GUARD_LOCAL_MODE:-}" == "allow" ]]; then exit 0; fi
 input=$(cat)
 out=$(printf '%s' "$input" | node "$(dirname "$0")/lib/check-guard-mjs-invocation.mjs")
 tool=$(printf '%s' "$out" | sed -n '1p')
@@ -44,8 +48,11 @@ if [[ "$tool" == "Bash" && "$shouldBlock" == "1" ]]; then
   # `.github/workflows/guard.yml` на GitHub (сам по расписанию/push, или владелец
   # вручную через workflow_dispatch), не эта машина. Подключено к живому трейлу
   # rules — сама попытка (даже пойманная) значимый паттерн, стоит отслеживания.
-  node "$(dirname "$0")/lib/signal-trail.mjs" record guard-full-suite-attempt 3 "попытка полного прогона локально" --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ЗАПРЕЩЕНО: полный набор guard.mjs (без --only=) на локальной машине. Уже 5 случаев (17.09, 19.09, 24.09, 25.09×2, каждый раз ловился по-разному) — \"ask\" оказался слишком слабым барьером. Полный прогон идёт ТОЛЬКО на GitHub Actions (.github/workflows/guard.yml) — сам по push/расписанию, или владелец вручную через workflow_dispatch. Для локальной проверки — node tests/guard.mjs --only=<имяФункции>."}}'
+  # 30.09.2026: тест хука ставит GUARD_HOOK_TEST=1 — чтобы проверки не писали ложные «попытки» в живой журнал
+  if [[ -z "${GUARD_HOOK_TEST:-}" ]]; then
+    node "$(dirname "$0")/lib/signal-trail.mjs" record guard-full-suite-attempt 3 "попытка запуска стража локально" --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
+  fi
+  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ЗАПРЕЩЕНО: любой запуск стража (guard.mjs, в том числе с --only= и циклом) на локальной машине владельца. Правило владельца 30.09.2026: «для чего гитхаб?» — за один вечер набралось 46 локальных запусков, каждый поднимает браузер на слабом ноутбуке. Красный/зелёный/×3 идут ТОЛЬКО на GitHub Actions (cosmogram-crew/.github/workflows/guard.yml): после push сам, или владелец вручную через workflow_dispatch. Разрешить локально может только владелец, правкой команды этого хука в settings.json (GUARD_LOCAL_MODE=allow). node --check по файлу стража разрешён."}}'
   exit 0
 fi
 exit 0

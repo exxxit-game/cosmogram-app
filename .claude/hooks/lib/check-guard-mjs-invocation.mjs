@@ -65,7 +65,11 @@ function main() {
     }
     if (realInvocation) break;
   }
-  const shouldBlock = realInvocation && !cmd.includes('--only=') && !hasCheckFlag;
+  // 30.09.2026 (владелец: «для чего гитхаб?»): раньше блокировался только запуск БЕЗ --only=, а повторные
+  // фокусные запуски были свободны — за один вечер их набралось 46 (циклы «for i in 1 2 3», красный/зелёный на каждую
+  // правку), каждый поднимает браузер на слабой машине. Теперь блокируется ЛЮБОЙ реальный запуск стража; исключение —
+  // только если владелец сам включит GUARD_LOCAL_MODE=allow в команде хука в settings.json (см. guard-full-suite-warn.sh).
+  const shouldBlock = realInvocation && !hasCheckFlag;
 
   process.stdout.write(`${j.tool_name || ''}\n${shouldBlock ? '1' : '0'}\n${bg ? '1' : '0'}\n`);
 }
