@@ -34,7 +34,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // .claude/hooks/lib/ -> .claude/state/
-const STATE_DIR = join(__dirname, '..', '..', 'state');
+// 30.09.2026: SIGNAL_TRAIL_DIR — тестовые прогоны хуков пишут в свою папку, а не в настоящий журнал
+// (тесты трёх новых хуков в тот день добавили туда 45 ложных записей; см. память zhurnal-signalov-…).
+const STATE_DIR = process.env.SIGNAL_TRAIL_DIR || join(__dirname, '..', '..', 'state');
 const DEFAULT_HALF_LIFE_HOURS = 6; // след хуков теряет половину «яркости» за 6 часов —
 // подобрано так, чтобы событие внутри одной рабочей сессии оставалось горячим
 
@@ -57,12 +59,17 @@ function ensureDir() {
 const JC_WEIGHT = { honest: 1, atrisk: 1.5, violation: 2 }; // нарушение весит вдвое —
 // то же самое правило признаёт эскалацию обязательной, не опциональной, для violation
 
-export function recordSignal(category, severity, message, { trail = 'default', justCulture } = {}) {
+// 30.09.2026: запись из хука идёт в основной журнал только там, где Claude Code задаёт CLAUDE_PROJECT_DIR
+// (у настоящих хуков он задан). Запуск из обычной оболочки (тесты хуков) без этой переменной пишет в файл
+// signal-trail[-ТРЕК]-tests.jsonl, чтобы проверки не считались ошибками. Ручной вызов из командной строки (cli) — всегда основной.
+export function recordSignal(category, severity, message, { trail = 'default', justCulture, cli = false } = {}) {
   ensureDir();
   const sev = Math.max(1, Math.min(5, Number(severity) || 1));
   const jc = ['honest', 'atrisk', 'violation'].includes(justCulture) ? justCulture : undefined;
   const entry = { ts: Date.now(), category: String(category), severity: sev, message: String(message || ''), ...(jc ? { justCulture: jc } : {}) };
-  appendFileSync(trailPath(trail), JSON.stringify(entry) + '\n', 'utf8');
+  const file = trailPath(trail);
+  const toTests = !cli && !process.env.CLAUDE_PROJECT_DIR;
+  appendFileSync(toTests ? file.replace(/\.jsonl$/, '-tests.jsonl') : file, JSON.stringify(entry) + '\n', 'utf8');
   return entry;
 }
 
@@ -159,7 +166,7 @@ if (process.argv[1] && process.argv[1].endsWith('signal-trail.mjs')) {
   if (cmd === 'record') {
     const [category, severity, ...msgParts] = rest;
     if (!category) { console.error('usage: signal-trail.mjs record <category> <severity 1-5> <message> [--trail=NAME] [--just-culture=honest|atrisk|violation]'); process.exit(1); }
-    const entry = recordSignal(category, severity, msgParts.join(' '), { trail, justCulture: flags['just-culture'] });
+    const entry = recordSignal(category, severity, msgParts.join(' '), { trail, justCulture: flags['just-culture'], cli: true });
     console.log(JSON.stringify(entry));
   } else if (cmd === 'heat') {
     const heat = computeHeat({ trail, halfLifeHours });
