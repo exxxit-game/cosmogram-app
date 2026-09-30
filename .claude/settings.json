@@ -115,6 +115,26 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/only-what-owner-said.mjs prompt"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/only-what-owner-said.mjs stop"
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
