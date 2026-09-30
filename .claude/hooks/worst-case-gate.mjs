@@ -60,9 +60,19 @@ export function isResultsBashEdit(block) {
   return /writeFileSync\s*\(\s*['"`](?:[^'"`]*[\\/])?(?:js[\\/]ui\.js|ui\.js|index\.html)['"`]/.test(c) && RESULTS_TOKEN_RE.test(c);
 }
 
+/** Аргументы РЕАЛЬНОГО запуска `node …/worst-case.mjs …`; null — команда его не запускает (слова в heredoc / тексте коммита не считаются). */
+export function invocationArgs(cmd) {
+  const head = String(cmd).split(/<<-?\s*['"]?\w+/)[0]; // всё после heredoc — текст, не команда
+  const m = /(?:^|[\n;&|]\s*|&&\s*)node\s+(?:--\S+\s+)*[^\s;&|'"]*worst-case\.mjs\b([^\n;&|]*)/.exec(head);
+  return m ? m[1] : null;
+}
 function bashCommands(blocks) {
   const out = [];
-  blocks.forEach((b, i) => { if (b && b.type === 'tool_use' && b.name === 'Bash') out.push({ i, cmd: String((b.input && b.input.command) || '') }); });
+  blocks.forEach((b, i) => {
+    if (!(b && b.type === 'tool_use' && b.name === 'Bash')) return;
+    const cmd = String((b.input && b.input.command) || '');
+    out.push({ i, cmd, args: invocationArgs(cmd) });
+  });
   return out;
 }
 function readLog() {
@@ -89,11 +99,11 @@ export function evaluate(blocks, log, now = Date.now()) {
   const fresh = (e) => now - e.t <= FRESH_MS;
   const res = { needGame: lastGame >= 0, needMacet: macetFiles.size > 0, problems: [], waived: null };
   const firstPublish = publishIdx.find((i) => i > lastMacet); // первая публикация после последней правки макета
-  const waiveAfter = (idx) => cmds.find((c) => c.i > idx && /worst-case\.mjs/.test(c.cmd) && /--waive/.test(c.cmd));
+  const waiveAfter = (idx) => cmds.find((c) => c.i > idx && c.args !== null && /--waive/.test(c.args));
   const lastLog = (mode) => [...log].reverse().find((e) => e.mode === mode && fresh(e));
 
   if (res.needGame) {
-    const ran = cmds.find((c) => c.i > lastGame && /worst-case\.mjs/.test(c.cmd) && !/\bmacet\b/.test(c.cmd) && !/--fast/.test(c.cmd) && !/--waive/.test(c.cmd));
+    const ran = cmds.find((c) => c.i > lastGame && c.args !== null && !/\bmacet\b/.test(c.args) && !/--fast/.test(c.args) && !/--waive/.test(c.args));
     const w = waiveAfter(lastGame);
     const e = lastLog('game');
     if (ran && e && e.ok && !e.fast) { /* хорошо */ }
@@ -102,7 +112,7 @@ export function evaluate(blocks, log, now = Date.now()) {
     else res.problems.push('game: после последней правки экрана итогов нет полного прогона `node tools/worst-case.mjs` (быстрый --fast не считается)');
   }
   if (res.needMacet) {
-    const ran = cmds.find((c) => c.i > lastMacet && (firstPublish === undefined || c.i < firstPublish) && /worst-case\.mjs/.test(c.cmd) && /\bmacet\b/.test(c.cmd));
+    const ran = cmds.find((c) => c.i > lastMacet && (firstPublish === undefined || c.i < firstPublish) && c.args !== null && /\bmacet\b/.test(c.args));
     const w = waiveAfter(lastMacet);
     const e = lastLog('macet');
     if (ran && e && e.ok && [...macetFiles].every((f) => (e.files || []).includes(f))) { /* хорошо */ }

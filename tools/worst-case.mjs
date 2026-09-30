@@ -161,7 +161,12 @@ const SETUP_SRC = `({ H, lang, AUDIT_SRC, ROW_AUDIT_SRC }) => {
         const v = a.v.concat(rowAudit('#gameOverScreen'));
         const retry = $('retryBtn').getBoundingClientRect(), ov = $('overRow').getBoundingClientRect();
         if (retry.bottom > innerHeight + 1) v.push('«Ещё раз» ниже края экрана (' + Math.round(retry.bottom) + ' > ' + innerHeight + ')');
-        if (ov.bottom > innerHeight + 1 && !$('overRow').classList.contains('hidden')) v.push('ряд «Вызов / Поделиться / Меню» ниже края экрана (' + Math.round(ov.bottom) + ' > ' + innerHeight + ')');
+        let tight = false;
+        if (ov.bottom > innerHeight + 1 && !$('overRow').classList.contains('hidden')) {
+          // согласованное правило (страж «Итоги: первое приземление»): рисунок «Твоего полёта» сжимается до минимума (~90px); если и так тесно — экран прокручивается, «Ещё раз» на месте. Нарушение — только если рисунок ещё можно было сжать.
+          const bxs = document.querySelector('#overFlight .ofBox'); const boxH = bxs && !$('overFlight').classList.contains('hidden') ? bxs.getBoundingClientRect().height : 0;
+          if (boxH > 92) v.push('ряд «Вызов / Поделиться / Меню» ниже края экрана, хотя рисунок «Твоего полёта» ещё можно сжать (' + Math.round(ov.bottom) + ' > ' + innerHeight + ', рисунок ' + Math.round(boxH) + 'px)'); else tight = true;
+        }
         const card = $('overFlight');
         if (!card.classList.contains('hidden')) {
           const cr = card.getBoundingClientRect();
@@ -169,7 +174,7 @@ const SETUP_SRC = `({ H, lang, AUDIT_SRC, ROW_AUDIT_SRC }) => {
           if (card.scrollHeight > card.clientHeight + 1) v.push('карточка «Твой полёт» обрезана по высоте');
           const bx = card.querySelector('.ofBox'); if (bx && bx.getBoundingClientRect().height < 80) v.push('рисунок «Твоего полёта» сжат меньше 80px (' + Math.round(bx.getBoundingClientRect().height) + ')');
         }
-        return { id, v, ellipsis: a.ellipsis };
+        return { id, v, ellipsis: a.ellipsis, tight };
       } catch (e) { return { id, v: ['сценарий упал: ' + String((e && e.message) || e).slice(0, 140)], ellipsis: 0 }; }
     }
   };
@@ -188,6 +193,7 @@ async function runGame() {
   const found = new Map(); // «сценарий :: нарушение» → языки и размеры
   const shots = [];
   let runs = 0, ellipsis = 0;
+  const tightList = new Set();
   const t0 = Date.now();
   for (const vp of viewports) {
     for (const lang of langs) {
@@ -200,7 +206,7 @@ async function runGame() {
       const ids = await page.evaluate(() => window.__wc.ids);
       for (const id of ids) {
         const r = await page.evaluate((x) => window.__wc.run(x), id);
-        runs++; ellipsis += r.ellipsis || 0;
+        runs++; ellipsis += r.ellipsis || 0; if (r.tight) tightList.add(id + ' ' + vp.w + '×' + vp.h);
         // снимаем русский на обоих размерах (для просмотра глазами) и всё, где что-то нашли
         if (lang === 'ru' || r.v.length) {
           const f = path.join(outDir, id + '_' + lang + '_' + vp.w + 'x' + vp.h + '.png');
@@ -223,6 +229,7 @@ async function runGame() {
   console.log('Данные от ' + FIX.measuredAt + ': место ' + H.rank.value + ' · имя «' + H.playerName.value + '» · очки до ' + H.scoreAttack.value + ' · Спидран ' + H.speedrunTimeSec.value + ' с · Биатлон ' + H.biathlonMisses.value + ' промахов · многоточий (имена) ' + ellipsis);
   if (list.length) { console.log('\n❌ НАРУШЕНИЙ: ' + list.length); list.forEach((x) => console.log('  • ' + x.k + '   [' + x.langs + ' · ' + x.vps + ']')); }
   else console.log('\n✅ Ни одного нарушения на самом тяжёлом реалистичном случае.');
+  if (tightList.size) console.log('\nℹ️  Тесно, экран прокручивается (принято: рисунок уже на минимуме, «Ещё раз» на месте): ' + [...tightList].join(', '));
   console.log('\nСнимки (русский) — ПОСМОТРИ ГЛАЗАМИ каждый: ' + path.relative(ROOT, outDir) + '/ (' + shots.length + ' файлов)');
   writeLog({ mode: 'game', ok: list.length === 0, fast, runs, violations: list.length, head: list.slice(0, 5).map((x) => x.k), langs, vps: viewports.map((v) => v.w + 'x' + v.h), shots: shots.length });
   process.exit(list.length ? 1 : 0);

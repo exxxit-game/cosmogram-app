@@ -317,3 +317,4 @@ AI-DECISION-REGISTRY.md | Реестр всех решений ИИ с обос�
 > - **ImageBitmap + Transferable:** `createImageBitmap()` + передача как Transferable Object (через `postMessage(..., [bitmap])`) — zero‑copy передача текстур из Web Worker.
 > - **WebCodecs API:** Для видеорендеринга использовать `decodeVideoFrame()` с аппаратным ускорением и `drawImage()` zero‑copy.
 > - **Инкрементальный GC:** Единые `ArrayBuffer` через TypedArrays воспринимаются V8 как один компактный массив, снижая частоту инкрементального GC.
+- `RESEARCH-2026-09-MODE-COLORS.md` — цвета режимов на итогах: смысл × любимость × измерение (30.09.2026); золото только за результатом.
