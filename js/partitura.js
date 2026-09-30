@@ -522,6 +522,8 @@ function ptSyncTrayAvailability(){ // 02.09.2026: «Состав» может п
   Array.from(tray.children).forEach(function(item){
     const s=item.querySelector('.sticker'); if(!s || s.dataset.t!=='kind') return;
     const excluded=!(forgeCfg.e>>(+s.dataset.k)&1);
+    if(!s.dataset.kc){ const m=/rgb[(][^)]*[)]/.exec(s.style.background||s.style.backgroundImage||''); if(m) s.dataset.kc=m[0]; } // 01.10.2026: цвет вида — для пунктирного кружка выключенной преграды
+    if(s.dataset.kc) item.style.setProperty('--kc',s.dataset.kc);
     item.classList.toggle('excluded',excluded);
   });
 }
