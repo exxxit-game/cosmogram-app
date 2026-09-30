@@ -23,8 +23,20 @@ process.stdin.on('end',()=>{
 tool=$(printf '%s' "$out" | sed -n '1p')
 cmd=$(printf '%s' "$out" | sed -n '2p')
 
-if [[ "$tool" == "Bash" && "$cmd" == git\ commit* ]]; then
-  diff=$(git diff --cached)
+# 30.09.2026: раньше проверялась только команда, НАЧИНАЮЩАЯСЯ с «git commit» — «cd x && git commit» и
+# «git -C папка commit» проходили мимо; «git commit -a» смотрел только индекс, не изменённые файлы.
+# Найдено прогонщиком доказательств (.claude/hooks/proof), образцы лежат в proof/cases/.
+COMMIT_RE='(^|[;&|][[:space:]]*)git([[:space:]]+-[cC][[:space:]]+[^[:space:]]+)*[[:space:]]+commit([[:space:]]|$)'
+if [[ "$tool" == "Bash" && "$cmd" =~ $COMMIT_RE ]]; then
+  gitdir_args=()
+  if [[ "$cmd" =~ git[[:space:]]+-C[[:space:]]+([^[:space:]]+) ]]; then
+    d="${BASH_REMATCH[1]//\"/}"; d="${d//\'/}"; gitdir_args=(-C "$d")
+  fi
+  if [[ "$cmd" =~ commit[^\;\&\|]*[[:space:]](-[a-zA-Z]*a[a-zA-Z]*|--all)([[:space:]]|$) ]]; then
+    diff=$(git "${gitdir_args[@]}" diff HEAD)
+  else
+    diff=$(git "${gitdir_args[@]}" diff --cached)
+  fi
   hit=$(printf '%s' "$diff" | node -e "
 let d='';process.stdin.on('data',c=>d+=c);
 process.stdin.on('end',()=>{
@@ -40,7 +52,8 @@ process.stdin.on('end',()=>{
     [/sk-ant-[A-Za-z0-9-]{20,}/,'ключ вида sk-ant- (Anthropic)'],
     [/AIza[A-Za-z0-9_-]{35}/,'ключ вида AIza (Google API)'],
     [/\b\d{8,10}:[A-Za-z0-9_-]{34,35}\b/,'похоже на Telegram bot_token'],
-    [/GOCSPX-[A-Za-z0-9_-]{28,}/,'похоже на Google OAuth client_secret']
+    [/GOCSPX-[A-Za-z0-9_-]{28,}/,'похоже на Google OAuth client_secret'],
+    [/sb_secret_[A-Za-z0-9_-]{20,}/,'ключ вида sb_secret_ (Supabase, новый формат)']
   ];
   for(const [re,label] of pats){ if(re.test(added)){ console.log(label); process.exit(0); } }
 });

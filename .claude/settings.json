@@ -34,41 +34,66 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/protect-core.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-memory-index-format.sh" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/shared-constant-guard.mjs" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/geometry-measure-guard.mjs" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/protect-core.sh"
+          }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/version-guard.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/bash-safety-guard.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-broad-git-add.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-secrets-in-commit.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/russian-description-guard.sh" },
-          { "type": "command", "command": "TOOL_USAGE_READ_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-usage-read-guard.mjs" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/version-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/bash-safety-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-broad-git-add.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-secrets-in-commit.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh"
+          }
         ]
       },
       {
         "matcher": "mcp__.*__browser_run_code_unsafe",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh"
+          }
         ]
       },
       {
         "matcher": "mcp__.*__deploy_edge_function",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-deploy-content.sh" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-deploy-content.sh"
+          }
         ]
       },
       {
         "matcher": "mcp__.*__(execute_sql|apply_migration)",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-supabase-write.sh" },
-          { "type": "command", "command": "NEW_FUNCTION_REVOKE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/new-function-revoke-guard.mjs" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-supabase-write.sh"
+          },
+          {
+            "type": "command",
+            "command": "NEW_FUNCTION_REVOKE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/new-function-revoke-guard.mjs"
+          }
         ]
       }
     ],
@@ -76,52 +101,10 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/syntax-check-js.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/memory-typo-check.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/scan-code-mixed-script.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/repeat-edit-tracker.sh" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/skin-fit-registered-guard.mjs" },
-          { "type": "command", "command": "SCREEN_BACK_GUARD_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/screen-back-registered-guard.mjs" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/invented-names-guard.mjs" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/feedback-needs-mechanism-guard.mjs" },
-          { "type": "command", "command": "CLAUDE_MD_RULE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/claudemd-rule-mechanism-guard.mjs" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/visual-file-nudge.sh" }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/post-commit-drift-check.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/commit-tracker.sh" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-idle-nudge.mjs" },
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-eval-vs-hwshot-guard.mjs" }
-        ]
-      },
-      {
-        "matcher": "Read|Grep|Bash",
-        "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-read-log.mjs" }
-        ]
-      },
-      {
-        "matcher": "^(Skill|Agent|Task|mcp__.*)$",
-        "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-usage-log.mjs" }
-        ]
-      },
-      {
-        "matcher": "AskUserQuestion",
-        "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/deferred-fix-guard.mjs" }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "*",
-        "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/swear-pause-check.sh" }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/syntax-check-js.sh"
+          }
         ]
       }
     ],
@@ -129,34 +112,15 @@
       {
         "matcher": "compact|startup|resume",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/reinject-session-state.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-live-version.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-memory-backup-age.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/remind-connect-phones.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/whole-game-health-check.sh" },
-          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-tooling-currency.sh" }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          { "type": "command", "command": "CLAIM_CHECK_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/claim-check-hook.mjs" },
-          { "type": "command", "command": "ASK_THEN_ACT_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/ask-then-act-guard.mjs" },
-          { "type": "command", "command": "EXCUSE_WORDS_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/excuse-words-guard.mjs" },
-          { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/device-claim-guard.mjs" },
-          { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/evidence-anchoring-guard.mjs" },
-          { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/revoke-grant-verify-guard.mjs" },
-          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/mockup-unseen-guard.mjs" },
-          { "type": "command", "command": "WORST_CASE_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/worst-case-gate.mjs" },
-          { "type": "command", "command": "DEPLOY_READBACK_ENFORCE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/deploy-readback-guard.mjs" },
-          { "type": "command", "command": "DEFERRAL_RECORD_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/deferral-record-guard.mjs" },
-          { "type": "command", "command": "CATEGORY_DB_VERIFY_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/category-db-verify-guard.mjs" },
-          { "type": "command", "command": "FUNCTION_FAMILY_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/function-family-sync-guard.mjs" },
-          { "type": "prompt", "timeout": 30, "prompt": "Ты проверяешь текст ответа ИИ-помощника. Читатель — владелец игры, он НЕ программист и не читает код. Вход: $ARGUMENTS — JSON; в поле last_assistant_message лежит проверяемый ответ. Если в JSON stop_hook_active равно true — верни {\"ok\":true} и больше ничего не проверяй. Верни {\"ok\":false,\"reason\":\"...\"} ТОЛЬКО если в ответе ЯВНО есть одно из пяти: (1) собственная ошибка помощника (неверная команда, промах в коде, забытый шаг) описана так, будто случилась сама или по вине инструмента, проверки, оформления, «экранирования», среды (подвело, сломалось, отказало, не отработало, сбой и любые похожие обороты) вместо прямого «я сделал X, это неверно»; (2) предложение или абзац, которые человек без знания программирования не поймёт из-за жаргона (регулярка, экранирование, парсер, флейк, exit-код, константа, замок и подобное) без простого пояснения рядом — но слова, которыми владелец пользуется сам, жаргоном не считать: коммит, push, GitHub, CI, страж, хук, макет, скин, версия, телефон, экран; (3) туманная фраза, из которой не ясно, кто что именно сделал; (4) вывод выдан за отчёт: сказано, что что-то «надёжно», «корректно», «работает», «должно работать», «всё в порядке», но нигде рядом не названо, что именно было запущено, открыто или увидено; (5) слово «проверено», «протестировано», «исправлено» или «готово» стоит без указания, чем это проверено (что запускалось или что было увидено) и без слов о том, что осталось непроверенным. Пункты (4) и (5) НЕ применять, если рядом честно сказано «не проверял» или названо, что запускалось и что увидено; НЕ применять к вопросам, к пересказу чужих слов, к цитатам, к описанию плана на будущее. Во всех остальных случаях верни {\"ok\":true}: в том числе для коротких ответов, дословных цитат, вывода инструментов, названий файлов и кода. Сомневаешься — {\"ok\":true}: лучше пропустить, чем придраться зря. Если false — в reason напиши по-русски одну-две фразы: какое именно предложение переписать и как (назвать, кто что сделал, что именно проверено и чем, простыми словами)." }
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/check-live-version.sh"
+          }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": false
   }
 }

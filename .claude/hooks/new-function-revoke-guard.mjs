@@ -88,11 +88,16 @@ function main() {
     `У проекта новые функции автоматически открываются ролям anon и authenticated, а грант ещё висит на PUBLIC (CLAUDE.md, 06.09.2026: три промаха за вечер).\n` +
     `Добавь в ТОТ ЖЕ запрос по одной строке на функцию:\n` +
     `  revoke execute on function public.<имя>(<типы аргументов>) from public, anon, authenticated;\n` +
-    `Потом (в этом же ходу) перечитай права из information_schema.role_routine_grants и проверь настоящим анонимным ключом: ждать 42501. Порядок — в скилле supabase-permissions.\n` +
+    `Потом (в этом же ходу) перечитай права из information_schema.role_routine_grants и проверь настоящим анонимным ключом: ждать 42501. Порядок — в скилле deploy-edge, раздел «Права (REVOKE/GRANT)».\n` +
     `Отключить на раз: NEW_FUNCTION_REVOKE_MODE=off`;
 
   if (mode === 'warn') out({ continue: true, systemMessage: reason });
   out({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason } });
 }
 
-try { main(); } catch { ok(); }
+// 30.09.2026: раньше при любой своей ошибке хук молча пропускал запрос — сбой выглядел как
+// «нарушений нет» (список проблем в отчёте, п. «Неисправности в хуках»). Теперь пропускает,
+// но говорит вслух, что проверка прав НЕ выполнена.
+try { main(); } catch (e) {
+  out({ continue: true, systemMessage: `Хук new-function-revoke-guard сломался и НЕ проверил права новой функции: ${String(e && e.message || e).slice(0, 200)}. Проверь REVOKE сам.` });
+}
