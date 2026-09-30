@@ -1,8 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "env": {
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "350000"
-  },
   "permissions": {
     "defaultMode": "default",
     "deny": [
