@@ -11,12 +11,18 @@
    из ui.js; если есть fx-скин без записи в таблице — предупредить (не блокировать: сам факт
    отсутствия записи не значит, что скин реально переполняет холст, нужен живой замер, но
    ЗАМЕТИТЬ отсутствие регистрации хук может механически, без замера).
-   Отключить на раз: SKIN_FIT_GUARD_MODE=off */
+   30.09.2026 (владелец, окна выбора): warn → block, но блок ТОЛЬКО на правку game.js, которая САМА
+   добавляет fx-скин без записи в ANGAR_PV_FIT_COLOR (по old_string/new_string правки; для Write —
+   против версии из git HEAD). Старый долг (8 скинов без записи на момент решения: 130, 156, 157,
+   159, 198, 204, 208, 209) блока не вызывает — остаётся предупреждением, иначе каждая правка
+   game.js/ui.js стояла бы, пока эти 8 не откалиброваны замером на телефоне.
+   Режимы SKIN_FIT_GUARD_MODE: block (по умолчанию) | warn (только предупреждения) | off. */
 import { readFileSync, existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
-const MODE = (process.env.SKIN_FIT_GUARD_MODE || 'warn').toLowerCase();
+const MODE = (process.env.SKIN_FIT_GUARD_MODE || 'block').toLowerCase();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '..', '..');
 const GAME_JS = join(REPO_ROOT, 'js', 'game.js');
@@ -52,8 +58,25 @@ function extractFitTableIds(uiSrc) {
   return ids;
 }
 
+/** fx-скины, которые ЭТА правка game.js добавила и которых нет в таблице ANGAR_PV_FIT_COLOR. */
+function newlyAddedMissing(hookData, file, fitIds) {
+  const ti = hookData.tool_input || {};
+  let before, after;
+  if (hookData.tool_name === 'Edit') {
+    before = String(ti.old_string || '');
+    after = String(ti.new_string || '');
+  } else if (hookData.tool_name === 'Write') {
+    try {
+      before = execFileSync('git', ['-C', dirname(file), 'show', 'HEAD:./' + basename(file)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+    } catch { return []; }
+    try { after = readFileSync(file, 'utf8'); } catch { after = String(ti.content || ''); }
+  } else return [];
+  const had = new Set(extractFxSkinIds(before));
+  return [...new Set(extractFxSkinIds(after))].filter((id) => !had.has(id) && !fitIds.has(id));
+}
+
 function main() {
-  if (MODE === 'off') return;
+  if (MODE === 'off') return 0;
   let hookData;
   try { hookData = JSON.parse(readStdin() || '{}'); } catch { return; }
   const file = String((hookData.tool_input && hookData.tool_input.file_path) || '');
@@ -64,7 +87,19 @@ function main() {
   const uiSrc = readFileSync(UI_JS, 'utf8');
   const fxIds = extractFxSkinIds(gameSrc);
   const fitIds = extractFitTableIds(uiSrc);
-  if (!fitIds) return;
+  if (!fitIds) return 0;
+
+  if (MODE === 'block' && /[\\/]js[\\/]game\.js$/.test(file)) {
+    const added = newlyAddedMissing(hookData, file, fitIds);
+    if (added.length) {
+      console.error(
+        `❌ skin-fit-registered-guard: правка добавила fx-скин(ы) без записи в ANGAR_PV_FIT_COLOR (js/ui.js) — id: ${added.join(', ')}.\n` +
+        `  Так пропустили партию id113-210 (седьмой случай «новое подключено не везде», feedback_novoe_ne_podklyuchennoe_vezde_povtoryayushiysya_bag.md).\n` +
+        `  Скин с fx не считается добавленным, пока для него нет записи подгонки под зум «явления». Калибровка — живым замером (angarPvZoomOpen + getImageData), число не выдумывать.\n` +
+        `  Отключить на раз: SKIN_FIT_GUARD_MODE=warn или =off`);
+      return 2;
+    }
+  }
 
   const missing = fxIds.filter(id => !fitIds.has(id));
   if (missing.length === 0) return;
@@ -82,4 +117,6 @@ function main() {
   );
 }
 
-try { main(); } catch { /* fail-safe: тихо не мешать основной работе */ }
+let code = 0;
+try { code = main() || 0; } catch { /* fail-safe: тихо не мешать основной работе */ }
+process.exit(code);
