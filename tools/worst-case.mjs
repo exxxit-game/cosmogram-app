@@ -124,6 +124,11 @@ const SETUP_SRC = `({ H, lang, AUDIT_SRC, ROW_AUDIT_SRC }) => {
   const scenarios = {
     // Score Attack, глубоко в таблице: огромный номер места, маленькие очки (большой номер и большие очки вместе невозможны — это разные сценарии)
     sa_deep_rank: { mode: 'classic', store: [['bestTouch', 5000], ['bestDist', 20000]], s: { score: 840, dist: 600, bonuses: 3 }, rank: () => overRankFill({ ok: true, me: { rank: H.rank.value, best: 840 }, top: top(H.rank.value, 840, 850) }, 'touch') },
+    // глубокая таблица (слова владельца: «когда там 100 тысяч»): вместо номера «Топ N%» / «Лучше N% игроков»; если сервер не отдал общее число игроков — «1000+»
+    sa_pct_top: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600 }, rank: () => overRankFill({ ok: true, total: H.rankDeep.total, me: { rank: 40000, best: 840 }, top: top(40000, 840, 850) }, 'touch') },
+    sa_pct_better: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600, bonuses: 3 }, rank: () => overRankFill({ ok: true, total: H.rankDeep.total, me: { rank: H.rankDeep.value, best: 840 }, top: top(H.rankDeep.value, 840, 850) }, 'touch') },
+    sa_no_total: { mode: 'classic', store: [['bestTouch', 5000]], s: { score: 840, dist: 600 }, rank: () => overRankFill({ ok: true, me: { rank: H.rankDeep.value, best: 840 }, top: top(H.rankDeep.value, 840, 850) }, 'touch') },
+    sp_pct_better: { mode: 'speedrun', store: [['srBest', 660]], s: { srWin: 1, time: H.speedrunTimeSec.value, score: 10200, dist: 5200 }, rank: () => overTimeRankFill({ ok: true, total: H.rankDeep.total, me: { rank: H.rankDeep.value, best: 600 }, top: top(H.rankDeep.value, 600, 599, true) }, 'speedrun', false) },
     // Score Attack, верх таблицы: очки в шесть знаков, две медали, награды значками, полный «Цифры»
     sa_top_records: { mode: 'classic', store: [['bestTouch', 90000], ['bestDist', 8000]], s: { score: 99500, dist: H.dist.value, bonuses: 3, comboMax: H.combo.value, starsCollected: H.stars.value, nearMiss: H.nearMiss.value, mission: H.wave.value }, ghost: true,
       rank: () => overRankFill({ ok: true, me: { rank: 2, best: 99500 }, top: [{ pid: 9, name, best: H.rivalScore.value }, { me: true, best: 99500 }] }, 'touch') },

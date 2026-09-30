@@ -34,7 +34,7 @@ tool=$(printf '%s' "$out" | sed -n '1p')
 shouldBlock=$(printf '%s' "$out" | sed -n '2p')
 bg=$(printf '%s' "$out" | sed -n '3p')
 
-if [[ "$tool" == "Bash" && "$shouldBlock" == "1" ]]; then
+if [[ ( "$tool" == "Bash" || "$tool" == *browser_run_code_unsafe ) && "$shouldBlock" == "1" ]]; then
   # 25.09.2026, поймано в этой же сессии сразу после подъёма до "deny": старое условие
   # ловило ЛЮБОЕ упоминание строки "guard.mjs" в команде — блокировало даже безобидный
   # `git diff -- tests/guard.mjs`, не только реальный запуск. Требуем токен "node" тоже
@@ -52,7 +52,7 @@ if [[ "$tool" == "Bash" && "$shouldBlock" == "1" ]]; then
   if [[ -z "${GUARD_HOOK_TEST:-}" ]]; then
     node "$(dirname "$0")/lib/signal-trail.mjs" record guard-full-suite-attempt 3 "попытка запуска стража локально" --trail=rules --half-life-hours=720 --just-culture=atrisk >/dev/null 2>&1
   fi
-  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ЗАПРЕЩЕНО: любой запуск стража (guard.mjs, в том числе с --only= и циклом) на локальной машине владельца. Правило владельца 30.09.2026: «для чего гитхаб?» — за один вечер набралось 46 локальных запусков, каждый поднимает браузер на слабом ноутбуке. Красный/зелёный/×3 идут ТОЛЬКО на GitHub Actions (cosmogram-crew/.github/workflows/guard.yml): после push сам, или владелец вручную через workflow_dispatch. Разрешить локально может только владелец, правкой команды этого хука в settings.json (GUARD_LOCAL_MODE=allow). node --check по файлу стража разрешён."}}'
+  echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ЗАПРЕЩЕНО: любой запуск стража (guard.mjs, в том числе с --only= и циклом), полный прогон tools/worst-case.mjs (в т.ч. --fast) и прогон тела стража через Playwright на локальной машине владельца («ноут сразу виснет»). Правило владельца 30.09.2026: «для чего гитхаб?» — за один вечер набралось 46 локальных запусков, каждый поднимает браузер на слабом ноутбуке. Красный/зелёный/×3 идут ТОЛЬКО на GitHub Actions (cosmogram-crew/.github/workflows/guard.yml): после push сам, или владелец вручную через workflow_dispatch. Разрешить локально может только владелец, правкой команды этого хука в settings.json (GUARD_LOCAL_MODE=allow). node --check по файлу стража разрешён."}}'
   exit 0
 fi
 exit 0

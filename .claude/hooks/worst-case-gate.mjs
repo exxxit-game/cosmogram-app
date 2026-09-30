@@ -103,13 +103,11 @@ export function evaluate(blocks, log, now = Date.now()) {
   const lastLog = (mode) => [...log].reverse().find((e) => e.mode === mode && fresh(e));
 
   if (res.needGame) {
-    const ran = cmds.find((c) => c.i > lastGame && c.args !== null && !/\bmacet\b/.test(c.args) && !/--fast/.test(c.args) && !/--waive/.test(c.args));
-    const w = waiveAfter(lastGame);
-    const e = lastLog('game');
-    if (ran && e && e.ok && !e.fast) { /* хорошо */ }
-    else if (w) { const wl = lastLog('waive'); if (wl) res.waived = wl.reason; else res.problems.push('game: --waive без записи в журнале'); }
-    else if (ran && e && !e.ok) res.problems.push('game: прогон на тяжёлом случае КРАСНЫЙ (' + e.violations + ' нарушений: ' + (e.head || []).slice(0, 2).join('; ') + ') — почини и прогони снова');
-    else res.problems.push('game: после последней правки экрана итогов нет полного прогона `node tools/worst-case.mjs` (быстрый --fast не считается)');
+    // 30.09.2026 (владелец: «ты снова стражей на ноутбуке гоняешь… ноут сразу виснет»): прогон ИГРЫ идёт на GitHub Actions
+    // (cosmogram-crew/.github/workflows/guard.yml, шаг worst-case), не на этом ноутбуке — локальный запуск tools/worst-case.mjs
+    // запрещён хуком guard-full-suite-warn.sh. Поэтому здесь ход НЕ блокируется и локальный прогон не требуется — только напоминание
+    // (ciNote): результат смотреть в Actions после push и чинить, если красное.
+    res.ciNote = true;
   }
   if (res.needMacet) {
     const ran = cmds.find((c) => c.i > lastMacet && (firstPublish === undefined || c.i < firstPublish) && c.args !== null && /\bmacet\b/.test(c.args));
@@ -133,6 +131,7 @@ function main() {
   const r = evaluate(blocks, readLog());
   if (!r.needGame && !r.needMacet) emitOk();
   if (!r.problems.length) {
+    if (r.ciNote && !r.waived) emitWarn('ℹ️  Экран итогов правился: прогон на самом тяжёлом реалистичном случае (5 языков × 2 размера) идёт на GitHub Actions после push — локально он запрещён (ноутбук виснет). Посмотреть результат в Actions и починить красное.');
     if (r.waived) emitWarn('⚠️  Проверка на самом тяжёлом реалистичном случае ОСВОБОЖДЕНА. Причина: ' + r.waived + ' — владельцу сказать в ответе.');
     emitOk();
   }

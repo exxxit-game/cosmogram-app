@@ -49,6 +49,12 @@
         ]
       },
       {
+        "matcher": "mcp__.*__browser_run_code_unsafe",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/guard-full-suite-warn.sh" }
+        ]
+      },
+      {
         "matcher": "mcp__.*__deploy_edge_function",
         "hooks": [
           { "type": "command", "command": ".claude/hooks/guard-deploy-content.sh" }

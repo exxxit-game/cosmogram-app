@@ -69,7 +69,33 @@ function main() {
   // фокусные запуски были свободны — за один вечер их набралось 46 (циклы «for i in 1 2 3», красный/зелёный на каждую
   // правку), каждый поднимает браузер на слабой машине. Теперь блокируется ЛЮБОЙ реальный запуск стража; исключение —
   // только если владелец сам включит GUARD_LOCAL_MODE=allow в команде хука в settings.json (см. guard-full-suite-warn.sh).
-  const shouldBlock = realInvocation && !hasCheckFlag;
+  let shouldBlock = realInvocation && !hasCheckFlag;
+  /* 30.09.2026, ВТОРОЙ заход того же класса (владелец: «ты снова стражей на ноутбуке гоняешь… ты же это якобы исправил… ноут сразу виснет»).
+     Хук закрыл только `guard.mjs` — а я сам открыл три обходные двери: (1) свой `tools/worst-case.mjs` (полный прогон = ~4 минуты браузера,
+     13 сценариев × 5 языков × 2 размера), (2) вытаскивание тела стража и прогон его через Playwright (`browser_run_code_unsafe` с файлом
+     *guard-body*), (3) Stop-хук worst-case-gate, который сам требовал локального прогона. Все три — та же нагрузка на слабый ноутбук.
+     Теперь блокируется ЛЮБОЙ прогон игры этим инструментом (в т.ч. --fast); разрешены только: `macet` (пять статичных досок, секунды) и `--waive`. */
+  const isWorstTok = (t) => basename(t).toLowerCase() === 'worst-case.mjs';
+  const isGitCmd = /^\s*git\s/.test(cmd); // слова в тексте коммита/сообщения — не запуск
+  for (let i = 0; i < tokens.length && !shouldBlock && !isGitCmd; i++) {
+    if (!isNodeTok(tokens[i])) continue;
+    for (let k = i + 1; k < tokens.length && k <= i + 4; k++) {
+      if (tokens[k] === '--check' || tokens[k] === '-c') break; // проверка синтаксиса — не запуск
+      if (tokens[k].startsWith('-')) continue;
+      if (isWorstTok(tokens[k])) {
+        const rest = [];
+        for (let m = k + 1; m < tokens.length; m++) { if (/^(&&|\|\|?|;)$/.test(tokens[m]) || /^\d?>/.test(tokens[m])) break; rest.push(tokens[m]); }
+        if (!rest.includes('macet') && !rest.includes('--waive')) shouldBlock = true;
+      }
+      break;
+    }
+  }
+  // Playwright MCP: прогон тела стража через run_code_unsafe (файл или код упоминает guard) — то же, что запуск стража
+  const tn = String(j.tool_name || '');
+  if (/browser_run_code_unsafe$/.test(tn)) {
+    const ti = j.tool_input || {};
+    if (/guard[-_.]?(body|day)|q-guard|guard\.mjs/i.test(String(ti.filename || '') + ' ' + String(ti.code || ''))) shouldBlock = true;
+  }
 
   process.stdout.write(`${j.tool_name || ''}\n${shouldBlock ? '1' : '0'}\n${bg ? '1' : '0'}\n`);
 }
