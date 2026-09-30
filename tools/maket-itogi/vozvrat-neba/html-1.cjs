@@ -1,0 +1,15 @@
+const W=require('../cutlib.cjs'); const h=W('C:/Users/admin/Documents/GitHub/cosmogram-app/index.html');
+h.cut('        <div class="heroCard hc-caravan">','        <div class="heroCard hc-slalom">','','карточки Caravan и Speedrun');
+h.cut('        <div class="heroCard hc-biathlon">','      </div>\n      <div class="heroDots"','','карточка Биатлон');
+h.line('        <button class="topCat" data-cat="speedrun">','topCat speedrun');
+h.line('        <button class="topCat" data-cat="caravan">','topCat caravan');
+h.line('        <button class="topCat" data-cat="biathlon">','topCat biathlon');
+h.cut('      <div class="galCard galEmpty" id="galCard_speedrun">','      <div class="galCard galEmpty" id="galCard_slalom">','','галерея: speedrun, caravan');
+h.cut('      <div class="galCard galEmpty" id="galCard_biathlon">','      <div class="galCard galEmpty galLocked" id="galCard_relay">','','галерея: biathlon');
+h.line('.hc-speedrun::before{','css hc-speedrun');
+h.line('.hc-caravan::before{','css hc-caravan');
+h.line('.hc-biathlon::before{','css hc-biathlon');
+h.rx(/\.heroCard \.speedrunFlyBtn,\.heroCard \.caravanFlyBtn,\.heroCard \.relayFlyBtn,\.heroCard \.cardFlyBtn\{/,".heroCard .relayFlyBtn,.heroCard .cardFlyBtn{",'css FlyBtn общий');
+h.rx(/\.heroCard\.hc-speedrun \.speedrunFlyBtn,\n\.heroCard\.hc-caravan \.caravanFlyBtn\{width:auto;max-width:60%\}\n/,"",'css узкие кнопки');
+h.rx(/\.caravanFlyBtn\{all:unset;[^\n]*\n  width:100%;[^\n]*\n\.caravanFlyBtn:active\{opacity:\.7\}\n\.speedrunFlyBtn\{all:unset;[^\n]*\n  width:100%;[^\n]*\n\.speedrunFlyBtn:active\{opacity:\.7\}\n/,"",'css FlyBtn caravan/speedrun');
+h.save();

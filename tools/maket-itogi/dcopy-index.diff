@@ -1,0 +1,47 @@
+--- index.html	2026-09-30 22:54:50.198731200 +0300
++++ C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/6c91cddc-2718-4815-9d16-89ce9e20838a/scratchpad/rezhimy/dcopy/index.html	2026-09-30 23:08:19.335037300 +0300
+@@ -4262,7 +4262,7 @@
+ #finishDelta .fdRow.good { background:rgba(126,232,160,.12); border:1px solid rgba(126,232,160,.45); }
+ #finishDelta .fdRow.bad { background:rgba(255,178,122,.12); border:1px solid rgba(255,178,122,.45); }
+ #finishDelta .fdRow span { color:#b9c9e6; }
+-/* 30.09.2026 «Схема экрана итогов» (макет «Одно главное» + «Схема», владелец: «кнопки — на карточку "Ваш полёт"; разница — тоже на карточку, слева много свободного места;
++/* 30.09.2026 «Схема экрана итогов» (макет «Одно главное» + «Схема», владелец: «кнопки — на карточку "Твой полёт"; разница — тоже на карточку, слева много свободного места;
+    пусть что-то одно светится, чтобы экраны не были пустые»). Карточка: шапка → [слева ОДНО главное + мелкие значки | справа рисунок] → «Ещё раз» + «Смотреть».
+    Заполняет overFlightFillInner()/overFlightSlot() (ui.js). Без колонки (нечего показать) рисунок занимает всю ширину. */
+ #overFlight .ofBody { display:flex; align-items:flex-start; gap:10px; position:relative; }
+@@ -4309,7 +4309,7 @@
+ /* 30.09.2026 «Score Attack: новый порядок итогов» (макет «НОВЫЙ ПОРЯДОК 6», владелец: «Делаем, добавляй в игру»). Всё — только под классом .saNew: его ставит overSaMount() (ui.js)
+    для Score Attack с окном «Твой полёт» и снимает overBtnsHome(); остальные режимы этих правил не видят. Порядок: окно полёта → карточка соседа / приглашение гостю → четыре кнопки 2×2.
+    Промежутки между блоками равные: margin:auto на карточке и на ряде кнопок делит свободное место поровну, 12px — минимум (если места нет, overFlightFit сжимает рисунок). */
+-#gameOverScreen.saNew #overLoc { display:none; }
++#gameOverScreen.saNew #overLoc, #gameOverScreen.saNew #recordMedals, #gameOverScreen.saNew #goldChip, #gameOverScreen.saNew #watchBtn { display:none !important; } #gameOverScreen.saNew:has(#overRank.hidden) #overFlight { margin:0 0 22px !important; flex:1 1 auto; } #gameOverScreen.saNew:has(#overRank.hidden) #overFlight .ofBody { flex:1 1 auto; align-items:center; } .relFoot { margin-top:auto !important; } #gameOverScreen.saNew:has(#overRank.hidden) #overRow { margin:0 !important; } 
+ #gameOverScreen.saNew #overFlight { order:1; position:relative; display:flex; flex-direction:column; margin:0 0 12px; padding:0 0 24px; }
+ #gameOverScreen.saNew #overRank, #gameOverScreen.saNew #webJoin { order:2; margin:auto 0 12px; }
+ #gameOverScreen.saNew #gyroOfferWrap { order:3; }
+@@ -4355,7 +4355,7 @@
+ .gcard .gcEy { font-size:10.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:#ffe08a; }
+ .gcard .gcRow { display:flex; align-items:center; gap:12px; }
+ .gcard .gcAv { flex:none; width:54px; height:54px; padding:3px; box-sizing:border-box; position:relative; border-radius:50%; background:linear-gradient(150deg,#bfe6ff,#3b86c4 48%,#f0c040); box-shadow:0 0 12px rgba(95,188,244,.35); }
+-.gcard .gcRow.tight { gap:8px; } .gcard .gcRow.tight .gcAv { width:40px; height:40px; padding:2px; } .gcard .gcRow.tight .gcAv canvas { width:36px; height:36px; } .gcard .gcRow.tight .gcWho b { font-size:13px; } /* длинный счёт соседа («100 000»): аватар и имя уже, чтобы имя не рвалось по буквам */ /* длинный счёт соседа («100 000»): аватар и имя уже, чтобы имя не рвалось по буквам */
++.gcard .gcRow.tight .gcWho b { font-size:13px; } /* длинный счёт соседа («100 000»): аватар и имя уже, чтобы имя не рвалось по буквам */ /* длинный счёт соседа («100 000»): аватар и имя уже, чтобы имя не рвалось по буквам */
+ .gcard .gcRow.first .gcVal { margin-top:0; }
+ .gcard .gcAv canvas { width:48px; height:48px; border-radius:50%; display:block; background:radial-gradient(circle at 50% 38%,#24407a 0%,#101c3c 62%,#0a1228 100%); box-shadow:inset 0 2px 8px rgba(0,0,0,.6); }
+ .gcard .gcAv::after { content:""; position:absolute; inset:3px; border-radius:50%; background:radial-gradient(ellipse 55% 32% at 34% 20%,rgba(255,255,255,.28),transparent 70%); pointer-events:none; }
+@@ -5093,7 +5093,7 @@
+          больше нет что выключать» подтверждена вживую. Своего состояния в Store у неё не
+          было — то, что она обещала, уже честно делает ghostAgain/ghostActive() через
+          «ЕЩЁ РАЗ?» строкой выше, а не пустое место рядом. -->
+-    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Призрак</span><span class="setHint" id="againHint">ваш рекордный полёт летит рядом</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
++    <div class="setRow" id="setAgainBtn" role="button" tabindex="0"><span class="setKW"><span class="setK">Призрак</span><span class="setHint" id="againHint">твой рекордный полёт летит рядом</span></span><span class="setSw" role="switch" aria-checked="true"><i></i></span></div>
+   </div>
+   <!-- 28.09.2026 (владелец, макет nastroyki-pk-telefon): «Управление» — у каждого устройства своё.
+        ПК: клавиши + «Вернуть клавиши как было». Телефон: гироскоп, чувствительность, калибровка
+@@ -5127,7 +5127,7 @@
+     <!-- 28.09.2026 (макет nastroyki-pk-telefon): было «Ты в общей таблице как PO RO» над полем с
+          подсказкой «ПИЛОТ», а в заголовке группы — «PORO»: одно имя тремя способами. Теперь две
+          подписанные строки: имя из входа (так видят другие) и позывной (морзянка), каждая про своё. -->
+-    <div class="setRow" id="accTableRow"><span class="setKW"><span class="setK" id="accTableK">В общей таблице</span><span class="setHint" id="accTableHint">имя из входа — так вас видят другие</span></span><span class="setV" id="accTableV"></span></div>
++    <div class="setRow" id="accTableRow"><span class="setKW"><span class="setK" id="accTableK">В общей таблице</span><span class="setHint" id="accTableHint">имя из входа — так тебя видят другие</span></span><span class="setV" id="accTableV"></span></div>
+     <div class="setRow" id="csRow"><span class="setKW"><span class="setK" id="csRowK">Позывной</span><span class="setHint" id="csRowHint"></span></span><input id="csInput" class="csInput" maxlength="10" placeholder="Позывной" autocomplete="off" spellcheck="false"/></div>
+     <div id="accStatus" class="accStatus"></div>
+     <div id="dcWidget"></div>

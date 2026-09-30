@@ -1,0 +1,53 @@
+--- js/ui.js	2026-09-30 22:51:45.574959100 +0300
++++ C:/Users/admin/AppData/Local/Temp/claude/C--Users-admin-Documents-GitHub-cosmogram-app/6c91cddc-2718-4815-9d16-89ce9e20838a/scratchpad/rezhimy/dcopy/js/ui.js	2026-09-30 23:34:26.535268100 +0300
+@@ -4689,7 +4689,7 @@
+ function ovT(k){ return (L && L[k]!==undefined) ? L[k] : I18N.ru[k]; } // новые строки пока только по-русски
+ function overRankFill(d, cat){
+   const el=$('overRank'); if(!el) return;
+-  const ok = S.mode==='classic' && OVER_RANK_CATS.includes(cat) && d && d.ok && d.me && d.me.rank>0;
++  const ok = (S.mode==='classic'||S.mode==='daily'||S.mode==='caravan') && (OVER_RANK_CATS.includes(cat)||cat==='daily'||cat==='caravan') && d && d.ok && d.me && d.me.rank>0;
+   if(!ok){ el.classList.add('hidden'); el.classList.remove('gcard'); el.innerHTML=''; overSaWorld(null); return; }
+   const rank=Math.floor(d.me.rank), myBest=saneNumber(d.me.best,0), top=Array.isArray(d.top)?d.top:[];
+   const o={ rank:rank, total:Math.floor(saneNumber(d.total,0)), modeName:L.modeClassic, mode:'classic', rival:null, gapTxt:'', ghost:null, ratio:null };
+@@ -4901,7 +4901,7 @@
+   if(!overFlightWillShow()) return;
+   const slalom=(S.mode==='slalom'), fin=OF_FIN.on, mode=S.mode; // fin — финиш во «времени» (Спидран / «Без касаний» / Биатлон): флажок вместо стикера причины
+   const marks=overFlightMarks(OF_CHIPS); // все награды полёта: одна главная идёт в слот слева, остальные — мелкими значками под ним
+-  const slot=overFlightSlot(marks), sa=(mode==='classic'), side=!!(slot.html||slot.icons); // sa — Score Attack: новый порядок итогов, рекорды пирамидкой вместо левой колонки
++  const slot=overFlightSlot(marks), sa=(mode==='classic'||mode==='daily'||mode==='relay'||mode==='caravan'||mode==='speedrun'), side=!!(slot.html||slot.icons); // sa — Score Attack: новый порядок итогов, рекорды пирамидкой вместо левой колонки
+   OF_BOXW=(side && !sa)?189:299; // рисунок делит карточку с левой колонкой — подписи считаем по его ширине
+   const H=slalom?(side?330:290):((side||sa)?250:176), RAIL=slalom?30:0, RX=OF_W-18;
+   const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
+@@ -4969,7 +4969,7 @@
+   if(foot && rb){ foot.appendChild(rb); if(wb) foot.appendChild(wb); if(scr) scr.classList.add('ofBtnIn'); } // 30.09.2026 «Схема экрана итогов»: кнопки на карточке, не отдельной полосой внизу
+   if(slot.fd){ const fd=$('finishDelta'); if(fd) fd.classList.add('hidden'); } // разница уже в слоте — под цифрой её больше нет
+   if(sa){ el.classList.add('noRank'); overSaMount(); } // место в мире придёт позже (overRankFill → overSaWorld)
+-  if(marks.length===OF_CHIPS.length && (!sa || saRecs.nMarks===marks.length)) setHTML('newRecord',''); // только если ВСЕ плашки разобраны (слот или значок) — иначе непонятая плашка пропала бы бесследно
++  if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки разобраны (слот или значок) — иначе непонятая плашка пропала бы бесследно
+   toggleCls('overDetailsBtn','hidden',true); toggleCls('overMore','hidden',true); // подробности теперь внутри окошка — строка «Подробности полёта» внизу не нужна (в режимах без окошка остаётся)
+   const still=(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+   el.classList.toggle('draw', typeof Q!=='undefined' && Q.level>=2 && !still);
+@@ -5043,7 +5043,9 @@
+ }
+ function overSaRecs(marks){ // рекорды полёта → «пирамидка»: не больше трёх; сначала то, что важнее (рекорды), спокойные отметки — в последнюю очередь; в ряду спокойные идут первыми
+   const all=[], split=function(txt){ const i=String(txt).indexOf(' '); return i>0 ? {a:txt.slice(0,i), b:txt.slice(i+1)} : {a:'', b:txt}; };
++  const rm=$('recordMedals'); if(rm) rm.querySelectorAll('.medalCol').forEach(function(c){ const cap=c.querySelector('.medalCap'), u=c.querySelector('.medalIcon use'), sv=c.querySelector('.medalIcon'); if(!cap||!u||!sv) return; const t=split(cap.textContent.trim()); all.push({ic:'<svg viewBox="'+sv.getAttribute('viewBox').replace(/^0 -960 /,'0 0 ')+'" aria-hidden="true"><use href="'+u.getAttribute('href')+'"></use></svg>', a:t.a, b:t.b, rec:1}); });
+   marks.filter(function(m){ return !m.calm; }).forEach(function(m){ const t=split(m.txt); all.push({ic:ic(m.icn), a:t.a, b:t.b, rec:1, mark:1}); });
++  const gcE=$('goldChip'); if(gcE && !gcE.classList.contains('hidden')){ const t=split(gcE.textContent.replace('★','').trim()); all.push({ic:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor"/></svg>', a:t.a, b:t.b, rec:1}); }
+   if(OF_REC.combo){ const t=split(ovT('overRecCombo')(S.comboMax)); all.push({ic:SA_IC.flame, a:t.a, b:t.b, rec:1, mark:0}); }
+   if(OF_REC.wave){ const t=split(ovT('overRecWave')(S.mission)); all.push({ic:SA_IC.bars, a:t.a, b:t.b, rec:1, mark:0}); }
+   marks.filter(function(m){ return m.calm; }).forEach(function(m){ const t=split(m.txt); all.push({ic:(m.icn==='shield'||m.icn==='checkbadge')?SA_IC.shield:ic(m.icn), a:t.a, b:t.b, rec:0, mark:1}); });
+@@ -5102,10 +5104,10 @@
+   const r=o.rival, first=(o.rank===1), W=ovT('overRankWorld');
+   const sub=(o.rank<1000 && r.no) ? '<i>'+escapeHtml(r.no)+'</i><span>'+escapeHtml(W)+'</span>' : ''; // у соседа в глубине таблицы номер ничего не даёт — не показываем
+   const vl=String(r.val).length; // длина счёта соседа — чем длиннее, тем мельче цифры, иначе имя выдавливает
+-  let h='<div class="gcTop"><span class="gcEy">'+escapeHtml(first ? ovT('overSaFirst') : ovT('overBestAbove'))+'</span></div>'
+-    +'<div class="gcRow'+(first?' first':'')+(vl>=6?' tight':'')+'"><div class="gcAv"><canvas class="gcSkin" width="156" height="156"></canvas></div>'
++  let h='<div class="gcTop"><span class="gcEy">'+escapeHtml(first ? o.gapTxt : ovT('overBestAbove'))+'</span></div>'
++    +'<div class="gcRow'+(first?' first':'')+(vl>=7?' tight':'')+'"><div class="gcAv"><canvas class="gcSkin" width="156" height="156"></canvas></div>'
+     +'<div class="gcWho"><b>'+escapeHtml(r.name)+'</b></div>'
+-    +'<div class="gcVal"><b style="font-size:'+(vl<=4?42:(vl===5?36:(vl===6?32:28)))+'px">'+escapeHtml(r.val).replace(/ /g,' ')+'</b>'+sub+'</div></div>';
++    +'<div class="gcVal"><b style="font-size:'+(vl<=6?28:24)+'px">'+escapeHtml(r.val).replace(/ /g,' ')+'</b>'+sub+'</div></div>';
+   if(!first && o.ratio!=null && isFinite(o.ratio)){
+     const pct=Math.max(6,Math.min(100,Math.round(o.ratio*100)));
+     if(o.ghost) h+='<div class="gcGo"><i style="width:'+pct+'%"></i><span>'+escapeHtml(ovT('overGoGhost'))+'</span><em>'+SA_IC.ghost+'</em>'

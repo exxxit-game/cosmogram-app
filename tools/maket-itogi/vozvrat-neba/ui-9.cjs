@@ -1,0 +1,16 @@
+const W=require('../cutlib.cjs'); const u=W('C:/Users/admin/Documents/GitHub/cosmogram-app/js/ui.js');
+u.line("  biathlon: (typeof BIATHLON_ETERNAL_DAY!=='undefined'?BIATHLON_ETERNAL_DAY:'')+'·biathlon',",'FIXED biathlon');
+u.line("  speedrun: (typeof SPEEDRUN_ETERNAL_DAY!=='undefined'?SPEEDRUN_ETERNAL_DAY:'')+'·speedrun',",'FIXED speedrun');
+u.rx(/const MODE_ACC=\{ classic:'#5fbcf4', daily:'#db85b3', speedrun:'#f86f3c', caravan:'#cff3ac', slalom:'#6cf7f7', biathlon:'#15ad6e', relay:'#9875da' \};/,"const MODE_ACC={ classic:'#5fbcf4', daily:'#db85b3', slalom:'#6cf7f7', relay:'#9875da' };",'MODE_ACC');
+u.cut("  if(S.mode==='speedrun' && !S.srWin && sc>0){","/* Карточка места для времени","}\n",'цель Speedrun на вылете');
+u.rx(/\(mode==='speedrun'\|\|mode==='slalom'\|\|mode==='biathlon'\);/,"(mode==='slalom');",'overTimeRankFill ok');
+u.rx(/  const modeName=\(mode==='speedrun'\) \? L\.modeSpeedrun : \(mode==='slalom' \? L\.modeSlalom : L\.modeBiathlon\);/,"  const modeName=L.modeSlalom;",'modeName');
+u.rx(/  if\(!\(classic \|\| \(slalom && \(S\.slalomFail \|\| S\.slalomWin\)\) \|\| S\.mode==='speedrun' \|\| S\.mode==='biathlon' \|\| S\.mode==='daily' \|\| S\.mode==='caravan' \|\| S\.mode==='relay'\)\) return false;/,"  if(!(classic || (slalom && (S.slalomFail || S.slalomWin)) || S.mode==='daily' || S.mode==='relay')) return false;",'overFlightWillShow');
+u.rx(/const finTxt2=\(fin \? ovT\('overFinCap'\) : \(OF_FIN\.end==='caravan' \? ovT\('overCaravanEnd'\) : ovT\('overRelayLeg'\)\(S\.relayLeg\)\)\)\+/,"const finTxt2=(fin ? ovT('overFinCap') : ovT('overRelayLeg')(S.relayLeg))+",'finTxt2');
+u.line("  const bi=(mode==='biathlon');",'bi');
+u.rx(/\+\(bi \? cell\(S\.biathlonMisses\|\|0,ovT\('overStatMiss'\)\) : cell\(S\.mission,L\.missionLbl,OF_REC\.wave\)\);/,"+cell(S.mission,L.missionLbl,OF_REC.wave);",'cells');
+u.line("  const penTxt=(fin && bi && S.biathlonMisses>0)",'penTxt');
+u.rx(/  const marksTxt=\(penTxt \? \[penTxt\] : \[\]\)\.concat\(marks\.map\(function\(x\)\{ return x\.txt; \}\)\)\.join\(' · '\);/,"  const marksTxt=marks.map(function(x){ return x.txt; }).join(' · ');",'marksTxt');
+u.rx(/const dot=\(OF_REC\.combo\|\|\(!bi && OF_REC\.wave\)\) \?/,"const dot=(OF_REC.combo||OF_REC.wave) ?",'dot');
+u.rx(/const TOP_CAT_LBL=\{touch:L\.modeClassic,daily:L\.modeDaily,speedrun:L\.modeSpeedrun,caravan:L\.modeCaravan,slalom:L\.modeSlalom,biathlon:L\.modeBiathlon\};/,"const TOP_CAT_LBL={touch:L.modeClassic,daily:L.modeDaily,slalom:L.modeSlalom};",'TOP_CAT_LBL');
+u.save();

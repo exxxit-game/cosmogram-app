@@ -1,0 +1,10 @@
+const W=require('../cutlib.cjs'); const u=W('C:/Users/admin/Documents/GitHub/cosmogram-app/js/ui.js');
+u.cut("/* 07.09.2026 «Пуля/Блиц»: Caravan получил второй тайминг","/* 15.09.2026: заменяет modesFill()","", 'caravan/speedrun карточки');
+u.rx(/  speedrunCardFill\(\);[^\n]*\n  caravanCardFill\(\);[^\n]*\n/,"",'heroCarouselFill speedrun/caravan');
+u.line("  put('modeBiathlon',L.modeBiathlon,L.modeBiathlonD); // 06.09.2026",'heroCarouselFill biathlon');
+u.cut("  if(cat==='speedrun'){ // 15.09.2026 (владелец: «два рекорда?","  if(cat==='slalom') return","",'heroRecordFor speedrun/caravan');
+u.line("  if(cat==='biathlon') return { val:saneNumber(Store.get('biathlonBest',0),0), isTime:true };",'heroRecordFor biathlon');
+u.rep("[['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSpeedrun','speedrun'],\n   ['recBadgeCaravan','caravan'],['recBadgeSlalom','slalom'],['recBadgeBiathlon','biathlon']].forEach(","[['recBadgeClassic','touch'],['recBadgeDaily','daily'],['recBadgeSlalom','slalom']].forEach(",'бейджи');
+u.rep("const HERO_TRAIL_COLOR={touch:'#dfe8ff',daily:'#f0c040',speedrun:'#ffb27a',caravan:'#ffd76b',slalom:'#6be0ff',biathlon:'#7cf0af'};","const HERO_TRAIL_COLOR={touch:'#dfe8ff',daily:'#f0c040',slalom:'#6be0ff'};",'trail color');
+u.rep("const HERO_TRAIL_EL={touch:'trailClassic',daily:'trailDaily',speedrun:'trailSpeedrun',caravan:'trailCaravan',slalom:'trailSlalom',biathlon:'trailBiathlon'};","const HERO_TRAIL_EL={touch:'trailClassic',daily:'trailDaily',slalom:'trailSlalom'};",'trail el');
+u.save();

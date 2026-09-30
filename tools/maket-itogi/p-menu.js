@@ -1,0 +1,1 @@
+(async()=>{ toMenu(); const car=document.getElementById('heroCarousel'); const ids=car?[...car.children].map(c=>c.id||(c.querySelector('button[id]')||{}).id||c.className):[]; return 'карточек='+ids.length+' '+ids.join(','); })()

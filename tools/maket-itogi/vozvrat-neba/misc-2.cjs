@@ -1,0 +1,16 @@
+const W=require('../cutlib.cjs'); const R='C:/Users/admin/Documents/GitHub/cosmogram-app/';
+const c=W(R+'js/core.js');
+c.cut("// 03.09.2026 «Спидран — Set Seed»: исследование (speedrun.com/Minecraft)","// 06.09.2026 «Слалом»: тот же приём Set Seed, что у Спидрана выше","// 06.09.2026 «Слалом» (Set Seed, 01.10.2026: Speedrun удалён — остались Слалом и Эстафета).\n// Слалом: одна трасса навсегда, свой якорь-дата, чтобы не столкнуться с другими таблицами по ключу day.\n",'Speedrun-дни');
+c.cut("// 06.09.2026 «Биатлон»: тот же приём, свой якорь","/* v1.108.1 «Благодать не бесконечна»","",'Биатлон, Speedrun RSG');
+c.save();
+const ci=W(R+'js/cinema.js');
+ci.rx(/const CINEMA_GALLERY_CATS=\['touch','daily','speedrun','caravan','slalom','biathlon'\];/,"const CINEMA_GALLERY_CATS=['touch','daily','slalom'];",'галерея cats');
+ci.line("  if (S.mode==='caravan') return (S.caravanTime && S.caravanTime!==60) ? null : 'caravan';",'cinemaGalleryCat caravan');
+ci.line("  if (S.mode==='speedrun') return 'speedrun';",'cinemaGalleryCat speedrun');
+ci.line("  if (S.mode==='biathlon') return 'biathlon';",'cinemaGalleryCat biathlon');
+ci.rx(/const modeKey = \(typeof S!=='undefined' && S\.mode==='caravan'\) \? 'bestCaravan' : \(mode==='gyro'\?'bestGyro':\(mode==='keys'\?'bestKeys':'bestTouch'\)\);/,"const modeKey = (mode==='gyro'?'bestGyro':(mode==='keys'?'bestKeys':'bestTouch'));",'cinema modeKey');
+ci.rx(/const GAL_NAME_KEY=\{touch:'modeClassic',daily:'modeDaily',speedrun:'modeSpeedrun',caravan:'modeCaravan',slalom:'modeSlalom',biathlon:'modeBiathlon'\};/,"const GAL_NAME_KEY={touch:'modeClassic',daily:'modeDaily',slalom:'modeSlalom'};",'GAL_NAME_KEY');
+ci.save();
+const cd=W(R+'js/card.js');
+cd.rx(/  const names=\{ classic:function\(\)\{return L\.modeClassic;\},\n    speedrun:function\(\)\{return L\.modeSpeedrun;\}, daily:function\(\)\{return L\.modeDaily;\},\n    caravan:function\(\)\{return L\.modeCaravan;\} \}; \/\/ 05\.09\.2026/,"  const names={ classic:function(){return L.modeClassic;}, daily:function(){return L.modeDaily;} };",'card names');
+cd.save();
