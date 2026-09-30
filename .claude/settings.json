@@ -127,7 +127,8 @@
           { "type": "command", "command": "DEVICE_CLAIM_ENFORCE_MODE=block node .claude/hooks/device-claim-guard.mjs" },
           { "type": "command", "command": "EVIDENCE_ANCHOR_ENFORCE_MODE=warn node .claude/hooks/evidence-anchoring-guard.mjs" },
           { "type": "command", "command": "REVOKE_GRANT_VERIFY_ENFORCE_MODE=block node .claude/hooks/revoke-grant-verify-guard.mjs" },
-          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node .claude/hooks/mockup-unseen-guard.mjs" }
+          { "type": "command", "command": "MOCKUP_UNSEEN_ENFORCE_MODE=block node .claude/hooks/mockup-unseen-guard.mjs" },
+          { "type": "command", "command": "WORST_CASE_ENFORCE_MODE=block node .claude/hooks/worst-case-gate.mjs" }
         ]
       }
     ]
