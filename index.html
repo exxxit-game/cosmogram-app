@@ -1639,7 +1639,7 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .topN.m3 .crownIc { color:#d99a5b; filter:drop-shadow(0 0 3px rgba(200,140,80,.6)); }
 /* 15.09.2026 «Score Attack, один список»: иконка способа управления на строке слитого топа —
    единственное, что различает touch/гироскоп/клавиатуру теперь (владелец: «просто иконка»). */
-.topCtlIc { width:15px; height:15px; flex:none; color:var(--muted); opacity:.75; }
+.topCtlIc { width:15px; height:15px; flex:none; color:var(--muted); }
 .topNm { flex:1; color:var(--ink); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .topNm i { font-style:normal; color:var(--muted); font-size:12px; }
 .topSc { color:var(--gold-hi); font-family:var(--font-disp); font-weight:400; font-size:14px; flex:none; }
@@ -4657,6 +4657,57 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
      i-trophy/i-checkbadge/i-target/i-phone) — не задублировано. -->
 <symbol id="i-combo" viewBox="0 0 24 24"><path d="M4 17 10 11 14 15 20 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14 7h6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 <symbol id="i-nearmiss" viewBox="0 0 24 24"><path d="M6 3v18M18 3v18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="12" cy="12" r="2" fill="currentColor"></circle></symbol>
+<!-- 01.10.2026 «Иконки режимов» (макет, выбор владельца: «Звезда-комета», «Луна и звёзды», «Ворота и след»): цветные значки чипов Достижения→Турниры.
+     Цвета — цвета режимов (MODE_ACC: синий / розовый / ледяной циан), золото — только звёзды и колпачки. Рисунки с градиентами, поэтому у групп stroke="none":
+     общий .ic задаёт обводку currentColor, а здесь она нужна только там, где прописана явно. -->
+<linearGradient id="mgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9f2ff"></stop><stop offset=".5" stop-color="#5fbcf4"></stop><stop offset="1" stop-color="#2a7fc4"></stop></linearGradient>
+<linearGradient id="mgG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b8"></stop><stop offset=".5" stop-color="#ffc83d"></stop><stop offset="1" stop-color="#e08f1a"></stop></linearGradient>
+<linearGradient id="mgP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3f2"></stop><stop offset=".5" stop-color="#db85b3"></stop><stop offset="1" stop-color="#a94f85"></stop></linearGradient>
+<linearGradient id="mgC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6ffff"></stop><stop offset=".5" stop-color="#6cf7f7"></stop><stop offset="1" stop-color="#22b2c4"></stop></linearGradient>
+<linearGradient id="mgTail" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5fbcf4" stop-opacity="0"></stop><stop offset="1" stop-color="#9fdcff" stop-opacity=".95"></stop></linearGradient>
+<symbol id="i-mode-sa" viewBox="0 0 24 24"><g stroke="none" transform="translate(0.47 0.08) scale(0.959)">
+<path d="M2.2 21.8C6.6 19.6 10 16.2 12.2 11.6L9.2 9.6C8.4 14.4 5.8 18.6 2.2 21.8Z" fill="url(#mgTail)"></path>
+<path d="M6.6 22C9.8 20.6 12.8 18 14.6 14.4" fill="none" stroke="url(#mgTail)" stroke-width="1.2" stroke-linecap="round"></path>
+<g transform="translate(3.8 -1.7) scale(.95)"><path d="M12 4.8l2.1 4.5 4.9.7-3.6 3.4.9 4.9L12 15.9l-4.3 2.4.9-4.9L5 10l4.9-.7z" fill="url(#mgG)" stroke="#e08f1a" stroke-width=".8" stroke-linejoin="round"></path><path d="M12 4.8l2.1 4.5L12 11.9z" fill="#fff" opacity=".35"></path></g>
+<path d="M4.6 3.2Q4.6 4.8 6.2 4.8Q4.6 4.8 4.6 6.4Q4.6 4.8 3 4.8Q4.6 4.8 4.6 3.2Z" fill="url(#mgG)"></path>
+<circle cx="20.8" cy="16.6" r=".9" fill="#d9f2ff"></circle></g></symbol>
+<symbol id="i-mode-daily" viewBox="0 0 24 24"><g stroke="none" transform="translate(-0.67 0.02) scale(1)">
+<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="url(#mgP)" stroke="#a94f85" stroke-width=".7" stroke-linejoin="round"></path>
+<circle cx="8.4" cy="12.6" r="1.5" fill="#a94f85" opacity=".35"></circle>
+<circle cx="11.8" cy="16.8" r=".95" fill="#a94f85" opacity=".35"></circle>
+<circle cx="7.6" cy="8.4" r=".8" fill="#a94f85" opacity=".3"></circle>
+<path d="M18.2 3.2Q18.2 5.8 20.8 5.8Q18.2 5.8 18.2 8.4Q18.2 5.8 15.6 5.8Q18.2 5.8 18.2 3.2Z" fill="url(#mgG)"></path>
+<path d="M21.2 9.4Q21.2 10.5 22.3 10.5Q21.2 10.5 21.2 11.6Q21.2 10.5 20.1 10.5Q21.2 10.5 21.2 9.4Z" fill="url(#mgG)"></path></g></symbol>
+<symbol id="i-mode-slalom" viewBox="0 0 24 24"><g stroke="none" transform="translate(-0.03 0.48) scale(1.002)">
+<path d="M5.4 7.5V20.5M18.6 7.5V20.5" fill="none" stroke="url(#mgC)" stroke-width="2.6" stroke-linecap="round"></path>
+<circle cx="5.4" cy="5.4" r="2.1" fill="url(#mgG)"></circle>
+<circle cx="18.6" cy="5.4" r="2.1" fill="url(#mgG)"></circle>
+<path d="M12 21.4C12 17.4 8.8 16 11.4 13.2 14 10.4 12.2 8.4 12 7" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1.1 2.5" opacity=".95"></path>
+<path d="M12 1.6l2.7 5.6L12 6l-2.7 1.2z" fill="url(#mgB)" stroke="#2a7fc4" stroke-width=".6" stroke-linejoin="round"></path></g></symbol>
+<!-- 01.10.2026 «Иконки управления» (макет, выбор владельца: набор «Б» — «Отпечаток», «Кольца гироскопа», «Клавиши-стрелки»): блок «Управление» в Достижениях и строки таблицы рекордов.
+     Цвета: касание — бирюзовый, гироскоп — индиго, клавиатура — зелёный, золото — только акценты; размер подогнан замером, как у значков режимов выше. -->
+<linearGradient id="mgT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9fff9"></stop><stop offset=".5" stop-color="#4fd6c8"></stop><stop offset="1" stop-color="#1c978c"></stop></linearGradient>
+<linearGradient id="mgI" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3e7ff"></stop><stop offset=".5" stop-color="#7f8cff"></stop><stop offset="1" stop-color="#4650c4"></stop></linearGradient>
+<linearGradient id="mgK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e5ffe8"></stop><stop offset=".5" stop-color="#7fe08a"></stop><stop offset="1" stop-color="#2c9a48"></stop></linearGradient>
+<radialGradient id="mgSph" cx=".36" cy=".32" r=".8"><stop offset="0" stop-color="#fff6c8"></stop><stop offset=".45" stop-color="#ffc83d"></stop><stop offset="1" stop-color="#d9831a"></stop></radialGradient>
+<symbol id="i-ctl-touch" viewBox="0 0 24 24"><g stroke="none" transform="translate(0.73 0.73) scale(0.939)">
+<circle cx="12" cy="12" r="2" fill="url(#mgG)"></circle>
+<circle cx="12" cy="12" r="4.5" fill="none" stroke="url(#mgT)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="17 11.3" transform="rotate(-30 12 12)"></circle>
+<circle cx="12" cy="12" r="7.2" fill="none" stroke="url(#mgT)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="31 14.2" transform="rotate(100 12 12)"></circle>
+<circle cx="12" cy="12" r="9.9" fill="none" stroke="url(#mgT)" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="42 20.2" transform="rotate(230 12 12)" opacity=".8"></circle></g></symbol>
+<symbol id="i-ctl-gyro" viewBox="0 0 24 24"><g stroke="none" transform="translate(0.73 0.73) scale(0.939)">
+<ellipse cx="12" cy="12" rx="9.6" ry="3.8" fill="none" stroke="url(#mgI)" stroke-width="1.5"></ellipse>
+<ellipse cx="12" cy="12" rx="9.6" ry="3.8" fill="none" stroke="url(#mgI)" stroke-width="1.5" transform="rotate(60 12 12)" opacity=".85"></ellipse>
+<ellipse cx="12" cy="12" rx="9.6" ry="3.8" fill="none" stroke="url(#mgI)" stroke-width="1.5" transform="rotate(120 12 12)" opacity=".7"></ellipse>
+<circle cx="12" cy="12" r="3.3" fill="url(#mgSph)" stroke="#d9831a" stroke-width=".5"></circle>
+<circle cx="10.9" cy="10.9" r=".9" fill="#fff" opacity=".7"></circle></g></symbol>
+<symbol id="i-ctl-keys" viewBox="0 0 24 24"><g stroke="none" transform="translate(-0.65 0.62) scale(1.054)">
+<rect x="8.7" y="3.6" width="6.6" height="6.6" rx="1.8" fill="url(#mgK)" stroke="#2c9a48" stroke-width=".6"></rect>
+<rect x="1.8" y="11.4" width="6.6" height="6.6" rx="1.8" fill="url(#mgK)" stroke="#2c9a48" stroke-width=".6"></rect>
+<rect x="8.7" y="11.4" width="6.6" height="6.6" rx="1.8" fill="url(#mgK)" stroke="#2c9a48" stroke-width=".6"></rect>
+<rect x="15.6" y="11.4" width="6.6" height="6.6" rx="1.8" fill="url(#mgK)" stroke="#2c9a48" stroke-width=".6"></rect>
+<path d="M10.6 8.1 12 6.6l1.4 1.5M5.8 13.2 4.3 14.7l1.5 1.5M10.6 14.1l1.4 1.5 1.4-1.5M18.2 13.2l1.5 1.5-1.5 1.5" fill="none" stroke="#0f2a16" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></g></symbol>
+
 <symbol id="i-karman" viewBox="0 0 24 24"><path d="M2 15a10 6 0 0 1 20 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="1 3.2"></path><path d="M8 9 16 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.5 4.6 16 4l.4 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path><circle cx="5" cy="6" r=".9" fill="currentColor"></circle><circle cx="19" cy="9" r=".7" fill="currentColor"></circle></symbol>
 <symbol id="i-swords" viewBox="0 0 24 24"><path d="M4 4l7.5 7.5M4 4l1.6 5M4 4l5 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 4l-7.5 7.5M20 4l-1.6 5M20 4l-5 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8 16l3-3M16 16l-3-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5 19l3-3M19 19l-3-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5c-5 0-8.5 3.7-8.5 8 0 3 2 4.5 4 4.5 1 0 1.3-.6 1.3-1.2 0-.6-.4-1-.4-1.8 0-1 .8-1.8 2-1.8h2.4c2.6 0 5.7-1.8 5.7-5.6 0-3-2.9-2.1-6.5-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="8" cy="9.5" r=".9" fill="currentColor"></circle><circle cx="12" cy="7.3" r=".9" fill="currentColor"></circle><circle cx="15.8" cy="9.2" r=".9" fill="currentColor"></circle></symbol>
@@ -4824,9 +4875,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.600"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.600"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.600"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.601"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.601"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.601"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -5940,9 +5991,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
            Старая «Дистанция» (пробег, общий для ВСЕХ режимов, не своя дисциплина — js/ui.js,
            S.dist) сюда не переехала — она личная цифра, живёт в «Мои» (achStats). -->
       <div id="topCats">
-        <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-hand"></use></svg><span class="topCatLbl"></span></button>
-        <button class="topCat" data-cat="daily"><svg class="ic"><use href="#i-trophy"></use></svg><span class="topCatLbl"></span></button>
-        <button class="topCat" data-cat="slalom"><svg class="ic"><use href="#i-nearmiss"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat sel" data-cat="touch"><svg class="ic"><use href="#i-mode-sa"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="daily"><svg class="ic"><use href="#i-mode-daily"></use></svg><span class="topCatLbl"></span></button>
+        <button class="topCat" data-cat="slalom"><svg class="ic"><use href="#i-mode-slalom"></use></svg><span class="topCatLbl"></span></button>
       </div>
       <div id="topMe"></div>
       <div id="topList"></div>
@@ -6139,26 +6190,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.600" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.600"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.600"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.600"></script>
-<script defer src="js/game.js?v=1.478.600" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.600"></script>
-<script defer src="js/sync.js?v=1.478.600"></script>
-<script defer src="js/render.js?v=1.478.600"></script>
-<script defer src="js/planetarium.js?v=1.478.600"></script>
-<script defer src="js/goldstar.js?v=1.478.600"></script>
-<script defer src="js/finish.js?v=1.478.600"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.600"></script>
-<script defer src="js/gyro.js?v=1.478.600"></script>
-<script defer src="js/forge.js?v=1.478.600"></script>
-<script defer src="js/partitura.js?v=1.478.600"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.600"></script>
-<script defer src="js/card.js?v=1.478.600"></script>
-<script defer src="js/star.js?v=1.478.600"></script>
-<script defer src="js/cinema.js?v=1.478.600"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.600"></script>
+<script defer src="js/core.js?v=1.478.601" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.601"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.601"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.601"></script>
+<script defer src="js/game.js?v=1.478.601" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.601"></script>
+<script defer src="js/sync.js?v=1.478.601"></script>
+<script defer src="js/render.js?v=1.478.601"></script>
+<script defer src="js/planetarium.js?v=1.478.601"></script>
+<script defer src="js/goldstar.js?v=1.478.601"></script>
+<script defer src="js/finish.js?v=1.478.601"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.601"></script>
+<script defer src="js/gyro.js?v=1.478.601"></script>
+<script defer src="js/forge.js?v=1.478.601"></script>
+<script defer src="js/partitura.js?v=1.478.601"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.601"></script>
+<script defer src="js/card.js?v=1.478.601"></script>
+<script defer src="js/star.js?v=1.478.601"></script>
+<script defer src="js/cinema.js?v=1.478.601"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.601"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

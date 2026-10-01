@@ -243,9 +243,9 @@ function renderAch(){
   const gN=Stats.gGames||0, tN=Stats.tGames||0, kN=Stats.kGames||0;
   elCtlSub.textContent = (gN+tN+kN>0) ? favMode() : '';
   elCtlPanel.innerHTML =
-    '<div class="ctlRow">'+ic('phone')+'<span class="ctlLbl">'+L.modeGyro+'</span><b>'+fmtN(gN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('hand')+'<span class="ctlLbl">'+L.modeTouch+'</span><b>'+fmtN(tN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>';
+    '<div class="ctlRow">'+ic('ctl-gyro')+'<span class="ctlLbl">'+L.modeGyro+'</span><b>'+fmtN(gN)+'</b></div>'+
+    '<div class="ctlRow">'+ic('ctl-touch')+'<span class="ctlLbl">'+L.modeTouch+'</span><b>'+fmtN(tN)+'</b></div>'+
+    '<div class="ctlRow">'+ic('ctl-keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>';
   if(!renderAch._ctlBound){ renderAch._ctlBound=1; // 30.08.2026-стиль: биндим один раз, не на каждый рендер
     elCtlGrp.addEventListener('click', ()=>{
       const willOpen=elCtlPanel.classList.contains('hidden');

@@ -4380,7 +4380,7 @@ function renderTop(){
    три параллельных запроса, слияние и сортировка по счёту на клиенте, у каждой строки —
    иконка способа управления (не смешиваем на сервере, только на экране). */
 let scoreAttackGen=0;
-const CTL_ICON={touch:'i-hand',gyro:'i-phone',keys:'i-keys'};
+const CTL_ICON={touch:'i-ctl-touch',gyro:'i-ctl-gyro',keys:'i-ctl-keys'};
 function renderTopScoreAttack(){
   const list=$('topList'), me=$('topMe'), wb=$('topWouldBe'), jn=$('topJoin'), dl=$('dcLogin');
   const gost=(typeof syncAvailable!=='function')||!syncAvailable();
