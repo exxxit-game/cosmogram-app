@@ -92,6 +92,15 @@
             "command": "NEW_FUNCTION_REVOKE_MODE=block node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/new-function-revoke-guard.mjs"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/ask-push-first.mjs"
+          }
+        ]
       }
     ],
     "PostToolUse": [
