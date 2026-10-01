@@ -347,6 +347,7 @@ const I18N = {
        таблица одна на всех») стоял ВМЕСТО таблицы и читался как отказ по вине игрока. */
     topWouldBe:(s,r,t)=>'Ваши '+s+' — это '+r+'-е место из '+t,
     topJoinTitle:'Присоединяйтесь к Cosmogram', duelPicBeat:'Побей мою планку',
+    achPassPilot:'Пилот', achPassC1:'Выше Линии Кармана', achPassBest:n=>'Лучший полёт — '+n, achPassFirst:'первое место в мире', achPassNoRec:'Первый рекорд ждёт тебя', achPassFlights:'полётов', achPassKm:'км', achPassWent:'пройдено', achPassStars:'звёзд', achPassRecs:'Мои рекорды', achPassHow:'Как ты летаешь', achPassMast:'Мастерство', achPassSubScore:'рекорд счёта', achPassSubTime:'лучшее время', achPassSubLeg:'лучший этап', achPassSubNoLeg:'этапов сдано: 0', achPassGo:'лететь', achPassNear:'впритык', achPassPerfect:'идеальных', achPassCombo:'комбо', achPassBeat:'рекордов',
     topJoinSub:'Войдите, и ваш рекорд появится здесь с вашим именем.',
     webJoin:'Войдите, чтобы ваш полёт попал в таблицу рекордов',
     accGuest:'Общая таблица одна на всех — войдите',

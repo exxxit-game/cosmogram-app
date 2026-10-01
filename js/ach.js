@@ -222,37 +222,68 @@ const ACH_STAT_ICO=[
 ];
 const ACH_ICO={c1:'karman', f1:'phone', d1:'swords', d2:'trophy', h1:'palette', h2:'crown'};
 const CAT_COLOR={cosmos:'#9fe8ff', flight:'#8fb4ff', duel:'#ff9f8f', hangar:'#c58fff'};
+// 01.10.2026 «Паспорт пилота» (владелец выбрал вариант Б макета «Достижения → Мои»: «Мне очень бы понравилось. Красиво.»): вместо восьми плиток и папки «Управление» —
+// обложка пилота (свой самолёт, ник, звание, три числа), рекорды по режимам с местом в мире, полоска «Как ты летаешь» и «Мастерство». «Открыто N / M» и список достижений ниже не тронуты.
+function achPassportHtml(){
+  const T=ovT, esc=escapeHtml;
+  const g=Stats.gGames||0, t=Stats.tGames||0, k=Stats.kGames||0, tot=g+t+k;
+  const km=Math.round((Stats.totalDist||0)/1000), sa=heroRecordFor('touch').val, dl=heroRecordFor('daily').val, sl=heroRecordFor('slalom').val, rl=saneNumber(Store.get('bestRelayLeg',0),0);
+  const nick=esc((typeof myCallsign==='function'&&myCallsign())||'');
+  const month=(function(){ try{ return new Date().toLocaleDateString((typeof langEff!=='undefined'&&langEff)||'ru',{month:'long'}); }catch(e){ return ''; } })();
+  const row=function(ico,nm,sub,val,plId,hasVal){
+    return '<div class="mpRow">'+ic(ico,'mpMi')+'<div class="mpNm">'+nm+'<small>'+sub+'</small></div>'
+      +(hasVal?'<div class="mpVl">'+val+'</div><div class="mpPl hidden" id="'+plId+'"></div>':'<div class="mpVl mpGo">'+val+'</div>')+'</div>';
+  };
+  const pct=function(n){ return tot>0&&n>0?Math.max(1,Math.round(100*n/tot)):0; };
+  const pT=pct(t), pG=pct(g), pK=pct(k);
+  const how=tot>0
+    ? '<div class="mpSec">'+T('achPassHow')+'</div><div class="mpHow"><div class="mpBar">'
+      +(pT?'<i style="flex:'+pT+';background:linear-gradient(90deg,#4fd6c8,#1c978c)"></i>':'')
+      +(pG?'<i style="flex:'+pG+';background:linear-gradient(90deg,#7f8cff,#4650c4)"></i>':'')
+      +(pK?'<i style="flex:'+pK+';background:linear-gradient(90deg,#ffb84d,#d9831a)"></i>':'')+'</div>'
+      +'<div class="mpLeg"><div class="mpLg">'+ic('ctl-touch')+'<div><b>'+L.modeTouch+'</b><br>'+pT+'%</div></div>'
+      +'<div class="mpLg">'+ic('ctl-gyro')+'<div><b>'+L.modeGyro+'</b><br>'+pG+'%</div></div>'
+      +'<div class="mpLg">'+ic('ctl-keys')+'<div><b>'+L.modeKeys+'</b><br>'+pK+'%</div></div></div></div>'
+    : '';
+  const cc=function(ico,col,n,lbl){ return '<div class="mpCc">'+ic(ico,'mpCi')+'<div><b>'+n+'</b><span>'+lbl+'</span></div></div>'; };
+  return '<div class="mpHero"><div class="mpSt"></div><canvas class="mpShip" width="172" height="172"></canvas>'
+    +'<div class="mpTx"><b>'+(nick||T('achPassPilot'))+'</b><span>'+T(km>=100?'achPassC1':'achPassPilot')+'</span><em id="mpBest">'+(sa>0?T('achPassBest')(fmtN(sa)):T('achPassNoRec'))+'</em></div>'
+    +'<div class="mpRow3"><div><b style="color:#9fe8ff">'+fmtN(Stats.games||0)+'</b><span>'+T('achPassFlights')+'</span></div>'
+    +'<div><b>'+fmtN(km)+' '+T('achPassKm')+'</b><span>'+T('achPassWent')+'</span></div>'
+    +'<div><b style="color:#f0c040">'+fmtN(Stats.totalStars||0)+'</b><span>'+T('achPassStars')+'</span></div></div></div>'
+    +'<div class="mpSec">'+T('achPassRecs')+'</div>'
+    +row('mode-sa',L.modeClassic,T('achPassSubScore'),fmtN(sa),'mpPlSA',sa>0)
+    +row('mode-daily',L.modeDaily,esc(month),fmtN(dl),'mpPlDL',dl>0)
+    +row('mode-relay',L.modeRelay,rl>0?T('achPassSubLeg'):T('achPassSubNoLeg'),rl>0?fmtN(rl):T('achPassGo'),'mpPlRL',rl>0)
+    +row('mode-slalom',L.modeSlalom,T('achPassSubTime'),sl>0?fmtTimeRes(sl):'',  'mpPlSL',sl>0)
+    +how
+    +'<div class="mpSec">'+T('achPassMast')+'</div><div class="mpChips">'
+    +cc('nearmiss','#eef4ff',fmtN(Stats.nearMiss||0),T('achPassNear'))+cc('checkbadge','#f0c040',fmtN(Stats.perfectRuns||0),T('achPassPerfect'))
+    +cc('combo','#8fff9f','×'+(Stats.bestCombo||0),T('achPassCombo'))+cc('target','#ff9f8f',fmtN(Stats.recBeats||0),T('achPassBeat'))+'</div>';
+}
+let _achPassGen=0;
+function achPassportFill(root){
+  const cv=root.querySelector('.mpShip'); if(cv && typeof overSkinDraw==='function') overSkinDraw(cv, S.skin); // свой самолёт
+  if(typeof syncAvailable!=='function' || !syncAvailable()) return; // гостю места не показываем — только рекорды
+  const gen=++_achPassGen, put=function(id,rank){ if(gen!==_achPassGen) return; const el=document.getElementById(id); if(!el||!(rank>0)) return; el.textContent='#'+rank; el.classList.remove('hidden'); el.classList.toggle('g',rank===1); };
+  if(typeof syncTop==='function') Promise.all(['touch','gyro','keys'].map(function(c){ return syncTop(c).catch(function(){ return null; }); })).then(function(rs){
+    const mine=Math.max(myBestFor('touch'),myBestFor('gyro'),myBestFor('keys')); let rk=0;
+    rs.forEach(function(d){ if(d&&d.ok&&d.me&&Number(d.me.best)===mine&&d.me.rank>0) rk=rk?Math.min(rk,d.me.rank):d.me.rank; });
+    put('mpPlSA',rk);
+    const b=document.getElementById('mpBest'); if(b && rk===1 && mine>0) b.textContent=ovT('achPassBest')(fmtN(mine))+' · '+ovT('achPassFirst');
+  });
+  if(typeof syncDailyTop==='function') syncDailyTop(trackDayKey()).then(function(d){ if(d&&d.ok&&d.me) put('mpPlDL',d.me.rank); }).catch(function(){});
+  if(typeof syncSlalomTop==='function') syncSlalomTop(typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'').then(function(d){ if(d&&d.ok&&d.me) put('mpPlSL',d.me.rank); }).catch(function(){});
+}
 function renderAch(){
   const un=achUnlockedSet(), q=achQueue();
   const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList'),
-    elCtlGrp=$('achCtlGrp'), elCtlSub=$('achCtlSub'), elCtlPanel=$('achCtlPanel');
-  if(!elStats||!elProg||!elProgFill||!elList||!elCtlGrp||!elCtlSub||!elCtlPanel){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
+    elDummy=null;
+  if(!elStats||!elProg||!elProgFill||!elList){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','achStats');
     return;
   }
-  // статистика — своя иконка+цвет на каждой плитке (icon+число в ряд, не друг над другом —
-  // тот же язык, что уже у .achRw/.miniPill в этой же игре)
-  const statVals=[Stats.games||0,Stats.totalDist||0,Stats.totalStars||0,'×'+(Stats.bestCombo||0),
-    Stats.nearMiss||0,Stats.duelsWon||0,Stats.perfectRuns||0,Stats.recBeats||0];
-  const statLbls=[L.statFlights,L.statDist,L.statStars,L.statCombo,L.statNearMiss,L.statDuelsWon,L.statPerfect,L.statRecBeats];
-  const statCell=(v,l,i)=>'<div class="statCell" style="--sc:'+ACH_STAT_ICO[i][1]+'">'+ic(ACH_STAT_ICO[i][0],'scIc')+
-    '<span class="scTxt"><b>'+(typeof v==='number'?fmtN(v):v)+'</b><span>'+l+'</span></span></div>';
-  elStats.innerHTML = '<div class="statGrid">'+statVals.map((v,i)=>statCell(v,statLbls[i],i)).join('')+'</div>';
-  // «Управление» — та же голая пара иконка+число, что была всегда, но теперь подписана и
-  // свёрнута (не главное для этого экрана, реюз .setGrp/.setPanel — тот же приём, что в Настройках)
-  const gN=Stats.gGames||0, tN=Stats.tGames||0, kN=Stats.kGames||0;
-  elCtlSub.textContent = (gN+tN+kN>0) ? favMode() : '';
-  elCtlPanel.innerHTML =
-    '<div class="ctlRow">'+ic('ctl-gyro')+'<span class="ctlLbl">'+L.modeGyro+'</span><b>'+fmtN(gN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('ctl-touch')+'<span class="ctlLbl">'+L.modeTouch+'</span><b>'+fmtN(tN)+'</b></div>'+
-    '<div class="ctlRow">'+ic('ctl-keys')+'<span class="ctlLbl">'+L.modeKeys+'</span><b>'+fmtN(kN)+'</b></div>';
-  if(!renderAch._ctlBound){ renderAch._ctlBound=1; // 30.08.2026-стиль: биндим один раз, не на каждый рендер
-    elCtlGrp.addEventListener('click', ()=>{
-      const willOpen=elCtlPanel.classList.contains('hidden');
-      elCtlPanel.classList.toggle('hidden', !willOpen); elCtlGrp.classList.toggle('open', willOpen);
-      haptic('light'); sfx.click();
-    });
-  }
+  elStats.innerHTML=achPassportHtml(); achPassportFill(elStats); // 01.10.2026: «Паспорт пилота» вместо плиток и папки «Управление»
   elProg.innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
   elProgFill.style.width = (un.length/ACH.length*100)+'%';
   let h='', hI=0; // hI — счётчик каскадной задержки строк (+60ms, потолок 600ms)
