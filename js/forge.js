@@ -1144,17 +1144,75 @@ function mapShare(){ const cfg=forgeSanitize(forgeCfg); mapShareCode(forgeEncode
    Тот же путь, что у карточки результата (card.js cardSend): картинка уходит на сервер (share_map), сервер готовит
    сообщение (savePreparedInlineMessage), игра шлёт его tg.shareMessage(id). Картинка рисуется из самой карты —
    её цвета неба, туман, имя и длина. Нет нужного моста/сети/ответа — прежний путь со ссылкой (mapShareCode). */
-function forgeShareImagePng(cfg){
+/* 01.10.2026 «Анимация карты в сообщении» (владелец: «может это лучше гифка… просто анимация красивая»; прежняя
+   картинка была пустой — звёзды рисовались размером с точку). Один рисунок на всё: forgeShareDraw(x,W,H,t,cfg) —
+   небо карты (её цвета, настроение, туман), свечения-туманности, три слоя звёзд с мерцанием, имя и длина. Время t по
+   кругу FORGE_SHARE_LOOP секунд: все движения кратны кругу, конец петли ровно в начало. Из него же — запасная картинка. */
+const FORGE_SHARE_LOOP=4;
+function forgeShareDraw(x,W,H,t,cfg){
+  const T=FORGE_SHARE_LOOP, ph=(t%T)/T, TAU=6.2832, u=H/256;
+  const psl=forgePreviewMoodSL(cfg.mood);
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'hsl('+cfg.h1+','+psl.S0+'%,'+psl.L0+'%)'); g.addColorStop(1,'hsl('+cfg.h2+','+psl.S1+'%,'+psl.L1+'%)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  // туманности: два мягких свечения плывут по кругу
+  const glows=[[cfg.h2,.30,.38,.22,1],[(cfg.h1+40)%360,.72,.58,.18,-1]];
+  glows.forEach(function(gl,i){
+    const cx=W*(gl[1]+.06*Math.cos(TAU*ph*gl[4]+i)), cy=H*(gl[2]+.08*Math.sin(TAU*ph*gl[4]+i*2));
+    const r=W*(.42+.04*Math.sin(TAU*ph+i));
+    const rg=x.createRadialGradient(cx,cy,0,cx,cy,r);
+    rg.addColorStop(0,'hsla('+gl[0]+',75%,62%,'+gl[3]+')'); rg.addColorStop(1,'hsla('+gl[0]+',75%,62%,0)');
+    x.fillStyle=rg; x.fillRect(0,0,W,H);
+  });
+  // звёзды: три слоя, дальний медленно, ближний быстро; целое число экранов за круг — петля бесшовная
+  let seed=((cfg.h1|0)*7+(cfg.h2|0)*3+1)>>>0;
+  const rnd=function(){ seed=(seed*1103515245+12345)>>>0; return seed/4294967296; };
+  const layers=[[46,.7,1],[28,1.1,2],[14,1.8,3]];
+  layers.forEach(function(ly,li){
+    for(let i=0;i<ly[0];i++){
+      const x0=rnd()*W, y=rnd()*H*.92, tw=.5+.5*Math.sin(TAU*(ph*(1+(i%3))+rnd()));
+      const sx=((x0-W*ly[2]*ph)%W+W)%W, r=ly[1]*u*(.8+.5*rnd());
+      x.globalAlpha=.35+.6*tw;
+      x.fillStyle=(i%7===0)?'#ffe9b8':'#e6efff';
+      x.beginPath(); x.arc(sx,y,r,0,TAU); x.fill();
+      if(li===2){ x.globalAlpha=.18*tw; x.beginPath(); x.arc(sx,y,r*3,0,TAU); x.fill(); }
+    }
+  });
+  x.globalAlpha=1;
+  if(cfg.fog){ const v=x.createRadialGradient(W/2,H/2,H*.1,W/2,H/2,W*.62); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(2,4,12,.5)'); x.fillStyle=v; x.fillRect(0,0,W,H); }
+  const sh=x.createLinearGradient(0,H*.5,0,H); sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.6)');
+  x.fillStyle=sh; x.fillRect(0,H*.5,W,H*.5);
+  const ff=(typeof document!=='undefined'&&document.body)?(getComputedStyle(document.body).fontFamily||'sans-serif'):'sans-serif';
+  x.textBaseline='alphabetic'; x.textAlign='left';
+  x.fillStyle='#fff'; x.font='700 '+Math.round(30*u)+'px '+ff; x.fillText(String(cfg.n||L.forgeDefName).toUpperCase(),22*u,H-34*u);
+  x.fillStyle='rgba(255,255,255,.78)'; x.font='500 '+Math.round(15*u)+'px '+ff; x.fillText(cfg.l>0?(cfg.l+' '+(L.unitM||'м')):'∞',22*u,H-12*u);
+}
+function forgeShareImagePng(cfg){ // запасная картинка — тот же рисунок, кадр из середины петли
   const cv=document.createElement('canvas'); cv.width=800; cv.height=420;
-  forgeMiniSwatchPaint(cv,cfg);
-  const x=cv.getContext('2d');
-  const g=x.createLinearGradient(0,150,0,420); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.55)');
-  x.fillStyle=g; x.fillRect(0,150,800,270);
-  const ff=getComputedStyle(document.body).fontFamily||'sans-serif';
-  x.textBaseline='alphabetic';
-  x.fillStyle='#fff'; x.font='700 58px '+ff; x.fillText(String(cfg.n||L.forgeDefName).toUpperCase(),40,350);
-  x.fillStyle='rgba(255,255,255,.75)'; x.font='500 28px '+ff; x.fillText(cfg.l>0?(cfg.l+' '+(L.unitM||'м')):'∞',40,392);
+  forgeShareDraw(cv.getContext('2d'),800,420,1.3,cfg);
   return cv.toDataURL('image/png');
+}
+function forgeBlobToDataUrl(blob){ return new Promise(function(res,rej){ const fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.onerror=function(){ rej(fr.error); }; fr.readAsDataURL(blob); }); }
+async function forgeShareClip(cfg){ // зацикленная петля mp4 (Telegram покажет как гифку) + кадр-обложка; null — не вышло (тогда уйдёт картинка)
+  const mb=await loadMediabunny(); if(!mb) return null;
+  const W=480, H=256, FPS=15, N=FPS*FORGE_SHARE_LOOP;
+  const codec=await mb.getFirstEncodableVideoCodec(['avc'],{width:W,height:H}); if(!codec) return null;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
+  let src=null;
+  try{
+    const out=new mb.Output({ format:new mb.Mp4OutputFormat(), target:new mb.BufferTarget() });
+    src=new mb.CanvasSource(cv,{ codec:codec, quality:new mb.Quality(0.5) });
+    out.addVideoTrack(src); await out.start();
+    for(let i=0;i<N;i++){ forgeShareDraw(x,W,H,i/FPS,cfg); await src.add(i/FPS,1/FPS); }
+    src.close(); src=null; await out.finalize();
+    const blob=new Blob([out.target.buffer],{type:'video/mp4'});
+    if(blob.size>950000) return null; // Telegram: гиф-петля не больше 1 МБ
+    forgeShareDraw(x,W,H,1.3,cfg);
+    return { mp4:await forgeBlobToDataUrl(blob), thumb:cv.toDataURL('image/jpeg',0.82), size:blob.size, w:W, h:H, dur:FORGE_SHARE_LOOP };
+  }catch(e){
+    if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('map_clip_enc_err', String((e&&e.message)||e).slice(0,60));
+    return null;
+  }finally{ if(src){ try{ src.close(); }catch(e){} } }
 }
 let _mapShareBusy=false;
 async function mapShareRich(code, name){
@@ -1167,7 +1225,10 @@ async function mapShareRich(code, name){
     const cfg=forgeDecode(code); if(!cfg) throw new Error('bad_code');
     const link=forgeShareLinks(code).tg; const startapp=link.slice(link.indexOf('startapp=')+9);
     const caption=(L.forgeShareTxt||'').replace('%s', name||cfg.n||L.forgeDefName);
-    const r=await syncFetch(SYNC_URL,{action:'share_map',initData:tg.initData,png:forgeShareImagePng(Object.assign({},cfg,{n:name||cfg.n})),caption:caption,startapp:startapp});
+    const cfgN=Object.assign({},cfg,{n:name||cfg.n});
+    const clip=await forgeShareClip(cfgN); // анимация; не вышло — обычная картинка
+    const r=await syncFetch(SYNC_URL, clip ? {action:'share_map',initData:tg.initData,mp4:clip.mp4,thumb:clip.thumb,w:clip.w,h:clip.h,dur:clip.dur,caption:caption,startapp:startapp}
+                                          : {action:'share_map',initData:tg.initData,png:forgeShareImagePng(cfgN),caption:caption,startapp:startapp});
     const ans=await r.json();
     if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
     tg.shareMessage(ans.id,function(ok){ if(ok) haptic('success'); }); // окно выбора чата уже показано: отказ/отмена — не повод слать ссылку вдогонку (было: второе сообщение со ссылкой)
