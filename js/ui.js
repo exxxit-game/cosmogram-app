@@ -5221,6 +5221,8 @@ function charterHandFit(){ const tr=document.querySelector('#equalityScreen .chT
     if(rest>0.5){ c.style.paddingTop=(parseFloat(getComputedStyle(c).paddingTop)+rest/2)+'px'; c.style.paddingBottom=(parseFloat(getComputedStyle(c).paddingBottom)+rest/2)+'px'; } }); }
 window.addEventListener('resize', ()=>{ try{ charterHandFit(); }catch(e){} });
 function charterByeFill(){ const el=$('chBye'); if(!el) return; const h=new Date().getHours(); el.textContent=(h>=23||h<4)?'Можете идти спать.':'Можете идти играть.'; }
+// 02.10.2026 владелец: «где код игры открыт — нажать и перейти на GitHub». Внутри Telegram внешний адрес открывает tg.openLink, в браузере — обычная новая вкладка. Ссылка — открытый репозиторий игры (cosmogram-app; серверный cosmogram-crew закрыт).
+document.addEventListener('click', function(e){ const a=e.target.closest&&e.target.closest('a.chLink'); if(!a) return; e.preventDefault(); const u=a.getAttribute('href'); try{ if(tg&&tg.openLink){ tg.openLink(u); return; } }catch(e2){} try{ window.open(u,'_blank','noopener'); }catch(e3){ location.href=u; } });
 wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); charterSignFill(); charterByeFill(); charterHandInit(); charterHandFit(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ try{ charterHandFit(); }catch(e){} }); });
 wireOn('equalityBackBtn', 'click', toMenu);
 // 16.09.2026 «Галерея видео-рекордов»: дверь открывает обычный экран (тот же setScreen(), что и
