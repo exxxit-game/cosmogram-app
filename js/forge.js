@@ -1116,8 +1116,9 @@ function forgeShortPrefetch(code){
 }
 function forgeShareLinks(code){
   const id=forgeShortCache[code];
-  return id ? { tg:'https://t.me/realcosmogrambot/app?startapp=t_'+id, web:'https://cosmogram.fun/?t='+id }
-            : { tg:'https://t.me/realcosmogrambot/app?startapp=map_'+code, web:'https://cosmogram.fun/#map='+code };
+  // 01.10.2026: ссылка на главное приложение бота (без «/app») — проверено владельцем на телефоне: запускает игру сразу; форма «/app» открывала только чат бота
+  return id ? { tg:'https://t.me/realcosmogrambot?startapp=t_'+id, web:'https://cosmogram.fun/?t='+id }
+            : { tg:'https://t.me/realcosmogrambot?startapp=map_'+code, web:'https://cosmogram.fun/#map='+code };
 }
 function forgeShortId(){ // номер из входящей ссылки: startapp=t_<номер> (Telegram) или cosmogram.fun/?t=<номер>
   try{
