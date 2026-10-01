@@ -1,0 +1,19 @@
+{
+  "_про": "Требования к экрану «Равноправие» (Хартия) в стиле Galen: что должно держаться ОДНОВРЕМЕННО на всех размерах и ВСЕХ языках. Запуск: node tools/screen-audit.mjs --spec=tools/screen-specs/equality.json",
+  "screen": "equality",
+  "cards": ".chCard",
+  "refit": "charterHandFit",
+  "sizes": ["360x800", "360x700"],
+  "languages": "tools/screen-specs/languages.json",
+  "textSel": ".chAct p, .chSub, .chCard p",
+  "constraints": {
+    "overflowX": 0,
+    "cardHeightSpreadMax": 1,
+    "extraSpaceMax": 12,
+    "leadingStretchMax": 1.25,
+    "innerGapSpreadMax": 2,
+    "peekMin": 24,
+    "blockGapMax": 60,
+    "overlaps": 0
+  }
+}

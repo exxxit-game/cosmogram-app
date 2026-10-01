@@ -1,0 +1,19 @@
+{
+  "_про": "«Достижения → Мои» (Паспорт пилота): поля, значения которых меняются. Запуск: node tools/screen-audit.mjs --spec=tools/screen-specs/ach.json. Статичных текстов здесь нет — только данные игрока.",
+  "screen": "ach",
+  "refit": "achFitNick(document.getElementById('achStats'))",
+  "sizes": ["360x800", "360x700"],
+  "data": "tools/data-fixtures.json",
+  "cases": ["zero", "typical", "heavy", "widest"],
+  "unhide": [".mpPl"],
+  "dynamic": [
+    { "sel": "#achStats .mpTx b", "cls": "nick" },
+    { "sel": "#achStats .mpRow3 > div:nth-child(1) b", "cls": "n5" },
+    { "sel": "#achStats .mpRow3 > div:nth-child(2) b", "cls": "n5", "fmt": "{n} км" },
+    { "sel": "#achStats .mpRow3 > div:nth-child(3) b", "cls": "n6" },
+    { "sel": "#achStats .mpVl:not(.mpGo)", "cls": "n6" },
+    { "sel": "#achStats .mpPl", "cls": "rank" },
+    { "sel": "#achStats .mpCc b", "cls": "n6" }
+  ],
+  "constraints": { "overflowX": 0, "overlaps": 0, "blockGapMax": 80 }
+}
