@@ -67,6 +67,8 @@ function backAction(){
   // строкой, до screenName: модалка лежит ПОВЕРХ экрана «ангар», не является отдельным screenName.
   const zoomModal=$('angarPvZoomModal');
   if(zoomModal && zoomModal.classList.contains('open')){ angarPvZoomClose(); return; }
+  const ffPlayer=$('firstFlightPlayer'); // 01.10.2026: плеер видео открыт — родная «Назад» закрывает именно его (своя «✕» там гаснет, чтобы не было двух кнопок разом)
+  if(ffPlayer && !ffPlayer.classList.contains('hidden') && typeof playerClose==='function'){ playerClose(); return; }
   if(screenName==='game') pauseGame();
   else if(screenName==='pause') resumeGame();
   else if(screenName==='hangar') toMenu();
@@ -132,6 +134,9 @@ function pauseGhostSync(){
   // 11.09.2026: тот же приём для «✕» окна «явления» — не .menuBack (свой стиль, без обруча,
   // владелец 10.09.2026), но та же логика «родная Назад есть — своя дверь гаснет».
   toggleCls('angarPvZoomClose','ghost', nativeBack);
+  // 01.10.2026 (владелец, живой скрин плеера: «Назад» Telegram и наша «✕» видны разом): плеер поверх экрана галереи — родная «Назад» там есть, своя «✕» гаснет;
+  // плеер поверх меню — родной «Назад» там нет (setBack(name!=='menu')), своя «✕» остаётся единственной
+  toggleCls('firstFlightClose','ghost', nativeBack && screenName!=='menu');
 }
 pauseGhostSync();
 function setScreen(name){

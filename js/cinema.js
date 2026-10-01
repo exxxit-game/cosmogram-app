@@ -1234,6 +1234,7 @@ function playerOpen(url, caption){
   const fill=$('ffScrubFill'); if(fill) fill.style.width='0%';
   const cur=$('ffTimeCur'); if(cur) cur.textContent='0:00';
   const p=$('firstFlightPlayer'); if(p) p.classList.remove('hidden');
+  if (typeof pauseGhostSync==='function') pauseGhostSync(); // 01.10.2026: свою «✕» гасим, если родная «Назад» Telegram уже видна
   const playBtn=$('ffPlayBtn'); if(playBtn) playBtn.classList.remove('playing');
   v.play().then(()=>{ if(playBtn) playBtn.classList.add('playing'); }).catch(()=>{}); // автовоспроизведение может быть отклонено — плеер всё равно открыт, кнопка play доступна
   if (typeof sfx!=='undefined' && sfx.click) sfx.click();

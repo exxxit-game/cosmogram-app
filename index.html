@@ -3517,7 +3517,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
    10 стикеров (Передышка, Заметка + 8 видов) укладываются в сетку 5×2 без остатка. */
 .tray{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,auto);grid-auto-flow:column;width:100%;gap:10px 6px;padding:16px 4px 12px;justify-items:center} /* 01.10.2026 (владелец): «Передышка» над «Заметкой» в первом столбце (их нельзя выключить), остальные — дальше столбцами */
 .stickerItem{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px}
-.stickerCap{font-size:8.5px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.15;white-space:nowrap;padding:6px 4px} /* 01.10.2026 (владелец: «кривизна, одно там, другое там»): одинаковый отступ у всех подписей, чтобы «Передышка»/«Заметка» стояли на одной линии с остальными */
+.stickerCap{font-size:8.5px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.15;white-space:nowrap;padding:6px 4px;min-height:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:center} /* 01.10.2026: min-height 24px — подпись нажимается, ниже 24px ломается минимум WCAG 2.5.8 (страж 255); (владелец: «кривизна, одно там, другое там»): одинаковый отступ у всех подписей, чтобы «Передышка»/«Заметка» стояли на одной линии с остальными */
 /* 22.09.2026 «Слияние полосы значков и Преград», пересмотрено вечером: подпись под значком вида
    препятствия стала кликабельной — переключает участие в случайной генерации (js/partitura.js,
    ptWireTray). Рамка+фон — тот же язык «это можно нажать», что у .forgeChip, в уменьшенном виде,
@@ -4817,9 +4817,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.598"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.598"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.598"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.599"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.599"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.599"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -6132,26 +6132,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.598" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.598"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.598"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.598"></script>
-<script defer src="js/game.js?v=1.478.598" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.598"></script>
-<script defer src="js/sync.js?v=1.478.598"></script>
-<script defer src="js/render.js?v=1.478.598"></script>
-<script defer src="js/planetarium.js?v=1.478.598"></script>
-<script defer src="js/goldstar.js?v=1.478.598"></script>
-<script defer src="js/finish.js?v=1.478.598"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.598"></script>
-<script defer src="js/gyro.js?v=1.478.598"></script>
-<script defer src="js/forge.js?v=1.478.598"></script>
-<script defer src="js/partitura.js?v=1.478.598"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.598"></script>
-<script defer src="js/card.js?v=1.478.598"></script>
-<script defer src="js/star.js?v=1.478.598"></script>
-<script defer src="js/cinema.js?v=1.478.598"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.598"></script>
+<script defer src="js/core.js?v=1.478.599" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.599"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.599"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.599"></script>
+<script defer src="js/game.js?v=1.478.599" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.599"></script>
+<script defer src="js/sync.js?v=1.478.599"></script>
+<script defer src="js/render.js?v=1.478.599"></script>
+<script defer src="js/planetarium.js?v=1.478.599"></script>
+<script defer src="js/goldstar.js?v=1.478.599"></script>
+<script defer src="js/finish.js?v=1.478.599"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.599"></script>
+<script defer src="js/gyro.js?v=1.478.599"></script>
+<script defer src="js/forge.js?v=1.478.599"></script>
+<script defer src="js/partitura.js?v=1.478.599"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.599"></script>
+<script defer src="js/card.js?v=1.478.599"></script>
+<script defer src="js/star.js?v=1.478.599"></script>
+<script defer src="js/cinema.js?v=1.478.599"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.599"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
