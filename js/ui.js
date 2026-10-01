@@ -742,7 +742,7 @@ function startGame(saved){
   if (typeof graceReset==='function') graceReset(); // v1.108.1: новый забег — новый счёт благодати, лимит не переносится из прошлого полёта
   Object.assign(S,{running:true,paused:false,score:0,mission:1,lives:(runMode==='slalom'?1:3),invuln:1.5,speed:3.4,dist:0, // 06.09.2026: Слалом — 1 жизнь вместо 3; 07.09.2026: 1CC убран; 07.09.2026: Ironman ушёл в Конструктор
     combo:0,comboMax:0,starsCollected:0,shield:0,magnet:0,slowmo:0,dash:0,time:0,flash:0,shake:0,hueShift:0,timeScale:1,dying:0,dyingT:0,dyingWin:0,pausing:0, // v1.40.0: Таран и часы полёта — с чистого листа; dyingWin — 13.09.2026 «Ворота финиша»
-    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,everDash:0,everNova:0,starsSpawned:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
+    gyroSec:0,manSec:0,touchSec:0,keysSec:0,mouseSec:0,smooth:1,mode:runMode,hits:0,bonuses:0,nearMiss:0,gateRun:0,gateBest:0,wowDone:0,wowCenter:0,crowdSeen:-1,everDash:0,everNova:0,starsSpawned:0,slalomWin:0,slalomFail:0, // v1.280.0: сид этого забега — призрак унесёт его с собой; touchSec/keysSec — честная категория, не тонут в общем manSec
     relayLegDone:0,seed:freshSeed,
     mapWin:0,customName:'',customE:0,customD:1,customS:1,customL:0,customW:1,customFlat:0,customB:2,customLv:3,customWG:0,customHS:0,customHSTier:0,customH1:232,customH2:200,customMood:50, // v1.282.14: customLv тоже сбрасывается — единственное поле семейства, которое переживало забег; v1.282.15: и признак поколения кода // v1.42.0: дисциплина и паспорт — с чистого листа; v1.68.0/v1.69.0: трасса — тоже; 31.08.2026: customHS — «Высокая ставка»; 23.09.2026: customHSTier — «Ставка ×8» (0/1/2); 01.09.2026: customH1/H2 — «Свой фон»; customMood — «Настроение неба»
   lastHitKind:'', wasRestored:0}); // v1.282.20: метка восстановленного забега — с чистого листа // v1.282.13: причина гибели ставится только в hitPlane и раньше нигде не стиралась — забег без удара наследовал препятствие ПРОШЛОГО забега, и Мозг неба подкручивал сложность под то, чего в этой попытке не было
@@ -839,6 +839,7 @@ function startGame(saved){
     const crowdDay=trackDayKey(), crowdRunMode=runMode;
     syncDailyCrowd(crowdDay).then(r=>{
       if (runMode!==crowdRunMode || S.dailyDay!==crowdDay) return; // забег уже сменился, пока летел ответ — не подсаживаем толпу не в тот полёт
+      if (r && r.ok && Array.isArray(r.ghosts)) S.crowdSeen=r.ghosts.length; // 02.10.2026: сервер ответил — сколько чужих полётов в небе (0 → «Где все?»)
       if (r && r.ok && Array.isArray(r.ghosts) && typeof crowdGhostsLoad==='function') crowdGhostsLoad(r.ghosts);
     }).catch(()=>{});
   }
@@ -1081,7 +1082,9 @@ function gameOver(){
   overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
   overFinishFill(sc); // 30.09.2026 «Финиш по времени»: разница к рекорду под временем / «Цель · Не хватило» при вылете Спидрана; в остальных режимах прячет свой блок
   overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины (или флажок финиша) — Score Attack, «Без касаний», Спидран, Биатлон; в остальных режимах сама прячет и чистит карточку
+  if (typeof achRunCheck==='function') achRunCheck({distM:distM}); // 02.10.2026 «Награды-досье»: секреты и «Лишний манёвр» по итогам забега (ach.js)
   if (typeof achCheck==='function') achCheck(); // достижения: проверка после забега
+  if (typeof achLaikaArm==='function'){ if (S.mode==='slalom' && S.slalomWin && !S.wasRestored) achLaikaArm(); else achLaikaDisarm(); } // «Лайка»: 7 секунд тишины на итогах победы
   const dl=duelGet();
   const duelWinNow=!!(dl && distM>dl.best); // победа в дуэли — сервер оповестит вызвавшего (проверит по своим данным)
   const syncExtra={};

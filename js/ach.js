@@ -1,79 +1,64 @@
 'use strict';
 /* ============================================================
-   ACHIEVEMENTS + ПРОФИЛЬ (модуль): ОДНО достижение (v1.29.0) —
-   «Линия Кармана»: самолётик долетел до космоса. Реестр из 60
-   ярусов вычеркнут как лишний. Карман наград (achQ), экран,
-   профиль и онбординг остались — механика ждёт новых целей.
-   v1.13.0: эмодзи-иконки убраны из интерфейса (поля ic: оставлены в данных
-   как карта смыслов — линейные иконки нарисуем под финальный состав).
-   Зависит от core.js (Store, L, toast, haptic, sfx, saneNumber),
-   game.js (Stats, S), ui.js (setScreen) — грузится после game.js,
-   используется из ui.js.
+   НАГРАДЫ-ДОСЬЕ (модуль). 02.10.2026 владелец: «достижение, которое выглядит как статистика, как чек из магазина, — не достижение»;
+   макет «Награды — архив досье» (claude.ai/artifact/FmZVGKQ5YQPG5Hnrr1WWhH), «Делаем». Награда — сама эмблема и строка истории, без звёзд ✦ и без
+   связи со скинами/покупками (владелец: «это формирует зависимость покупать их»). Пять открытых наград (видно, как получить) и девять секретных
+   «досье» (условие не показывается, на закрытых — замок и намёк). Условия — только то, что игра реально определяет (см. achRunCheck).
+   Исследование и проверенные космические факты: .knowledge/RESEARCH-2026-10-ACHIEVEMENTS-SECRETS.md.
+   Зависит от core.js (Store, L, toast, haptic, sfx, saneNumber), game.js (Stats, S, rec), ui.js (setScreen) — грузится после game.js.
    ============================================================ */
 
 const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
-const needOf=a=>typeof a.need==='function'?a.need():a.need; // 08.09.2026: та же гибкость, что уже была у val() — нужна h2 (SKINS.length растёт с каждым сезоном, число не должно застревать)
-const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru); // v1.108.1: было бинарно en/ru — теперь честно по активному языку, с запасным путём
+const needOf=a=>typeof a.need==='function'?a.need():a.need;
+const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru);
 
-/* Профиль: счётчики живут в game.js (Stats). Старые сохранения мержатся
-   на дефолты в boot (ui.js) — новых полей там просто не было. */
+/* Строки экрана наград: пока только по-русски (как и текст Хартии) — ovT() берёт русскую, если на языке игрока строки нет. */
+Object.assign(I18N.ru,{
+  achSumOpen:(n,t)=>'Открыто '+n+' из '+t, achLast:'Последняя находка', achNotYet:'Ещё не найдено',
+  achFoundHd:'Найдено', achNotFoundHd:'Не найдено', achSecretHd:(f,t)=>'Засекречено · найдено '+f+' из '+t,
+  achSecretLbl:n=>'Засекречено · досье №'+n, achDossier:n=>'досье №'+n,
+  achClaimCls:'Достижение', achClaimSec:n=>'Секретное досье №'+n, achNext:'Дальше'
+});
 
-/* ---------- Список достижений: cat, need, val(), rw (награда ✦) ---------- */
+/* ---------- Список: открытые (open) — видно, как получить; секретные (secret, no — номер досье) — условие скрыто ----------
+   em — эмблема (символ #ea-<em> в спрайте index.html); val/need — прогресс для открытых; события секретных см. achRunCheck().
+   id c1/f1/d1/d2 оставлены прежними — уже полученные награды игроков не теряются. Скины и «Тюнинг» убраны совсем. */
 const ACH=[
-  // Единственная цель — суммарная дистанция 100 м: ты в космосе (v1.29.0)
-  {id:'c1', cat:'cosmos', ic:'🌍', need:100000, rw:25, val:()=>Stats.totalDist,
-    ru:{n:'Линия Кармана',d:'Ты в космосе! Официально.'}, en:{n:'Karman Line',d:'You are in space! Officially.'},
-    es:{n:'Línea de Kármán',d:'¡Estás en el espacio! Oficialmente.'}, pt:{n:'Linha de Kármán',d:'Você está no espaço! Oficialmente.'},
-    fr:{n:'Ligne de Kármán',d:'Tu es dans l\u2019espace ! Officiellement.'}},
-  // v1.108.1 «Ачивки-призраки»: achCheck() звал их по имени в комментариях с v1.99.7/v1.100.1/v1.6.0 —
-  // сам реестр после «Одна цель — одна категория» (v1.29.0) их не содержал. Стучались в пустую комнату,
-  // теперь дверь на месте — по одному достижению на каждый момент, что уже честно проверяется в коде.
-  {id:'f1', cat:'flight', ic:'📡', need:1, rw:15, val:()=>Store.get('gyroGold',0),
-    ru:{n:'Пилот',d:'Впервые послушался наклона — «Полёт без рук» ожил.'}, en:{n:'Pilot',d:'Tilt obeyed for the first time — "Hands-Free Flight" came alive.'},
-    es:{n:'Piloto',d:'La inclinación respondió por primera vez — «Vuelo sin manos» cobró vida.'}, pt:{n:'Piloto',d:'A inclinação obedeceu pela primeira vez — «Voo sem mãos» ganhou vida.'},
-    fr:{n:'Pilote',d:'L\u2019inclinaison a obéi pour la première fois — le « Vol mains libres » a pris vie.'}},
-  {id:'d1', cat:'duel', ic:'⚔️', need:1, rw:10, val:()=>Stats.duelsSent||0,
-    ru:{n:'Первый вызов',d:'Бросил другу вызов на Дуэль.'}, en:{n:'First Challenge',d:'Sent a friend a Duel challenge.'},
-    es:{n:'Primer reto',d:'Le enviaste a un amigo un reto de Duelo.'}, pt:{n:'Primeiro desafio',d:'Enviou a um amigo um desafio de Duelo.'},
-    fr:{n:'Premier défi',d:'Tu as envoyé un défi de Duel à un ami.'}},
-  {id:'d2', cat:'duel', ic:'🏆', need:1, rw:20, val:()=>Stats.duelsWon||0,
-    ru:{n:'Победитель дуэли',d:'Побил чужую планку в Дуэли.'}, en:{n:'Duel Winner',d:'Beat someone\u2019s bar in a Duel.'},
-    es:{n:'Ganador del duelo',d:'Superaste la marca de alguien en un Duelo.'}, pt:{n:'Vencedor do duelo',d:'Superou a marca de alguém em um Duelo.'},
-    fr:{n:'Vainqueur du duel',d:'Tu as battu la marque de quelqu\u2019un en Duel.'}},
-  {id:'h1', cat:'hangar', ic:'🎨', need:2, rw:10, val:()=>(typeof S!=='undefined'&&S.ownedSkins?S.ownedSkins.length:0),
-    ru:{n:'Первый скин',d:'Купил свой первый скин в Тюнинге.'}, en:{n:'First Skin',d:'Bought your first skin in Tuning.'},
-    es:{n:'Primera piel',d:'Compraste tu primera piel en Tuning.'}, pt:{n:'Primeira skin',d:'Comprou sua primeira skin em Tuning.'},
-    fr:{n:'Première skin',d:'Tu as acheté ta première skin dans Tuning.'}},
-  {id:'h2', cat:'hangar', ic:'👑', need:()=>(typeof SKINS!=='undefined'?SKINS.length:9), rw:400,
-    /* 09.09.2026: val() раньше был S.ownedSkins.length — просто ЧИСЛО купленных когда-либо id,
-       включая уже удалённые из игры (архив партий). Оно могло случайно совпасть с текущим
-       SKINS.length (need) по количеству, а не по составу — например владелец держал 45 старых
-       id из давно снятых партий, ровно когда SKINS.length тоже стал 45 — достижение открылось
-       бы «сам собой», хотя ни одного из 45 ТЕКУЩИХ скинов игрок не покупал. Поймано при сверке
-       партии «физика/культура-2» (44 новых скина разом подняли и опускали SKINS.length несколько
-       раз за день). Теперь считаем настоящее пересечение: сколько из СЕЙЧАС существующих id
-       реально есть в S.ownedSkins — так v может дойти до need() только когда владеет каждым
-       текущим скином по-настоящему, число в «x/y» на экране Достижений при этом остаётся честным
-       живым прогрессом, не 0/1. */
-    val:()=>{ if(typeof S==='undefined'||!S.ownedSkins||typeof SKINS==='undefined') return 0;
-      const owned=new Set(S.ownedSkins); let n=0; for(const sk of SKINS) if(owned.has(sk.id)) n++; return n; },
-    ru:{n:'Вся коллекция',d:'Собрал все скины Тюнинга.'}, en:{n:'Full Collection',d:'Collected every skin in Tuning.'},
-    es:{n:'Colección completa',d:'Reuniste todas las pieles de Tuning.'}, pt:{n:'Coleção completa',d:'Reuniu todas as skins de Tuning.'},
-    fr:{n:'Collection complète',d:'Tu as réuni toutes les skins de Tuning.'}}, // 08.09.2026: было захардкожено need:9, разошлось до 49 реальных скинов — теперь читает SKINS.length живьём, растёт сама с каждым новым сезонным добавлением, обновлять вручную больше не нужно
+  {id:'c1', em:'karman', need:100000, val:()=>Stats.totalDist,
+    ru:{n:'Линия Кармана', d:'Сто километров вверх. Граница космоса для всех, кроме американцев: им хватает восьмидесяти.'}},
+  {id:'f1', em:'pilot', need:1, val:()=>Store.get('gyroGold',0),
+    ru:{n:'Пилот', d:'Самолёт послушался наклона. Подозрительно.'}},
+  {id:'d1', em:'vyzov', need:1, val:()=>Stats.duelsSent||0,
+    ru:{n:'Первый вызов', d:'Бросил другу вызов. Друг пока не знает, что это было предупреждение.'}},
+  {id:'d2', em:'pobeditel', need:1, val:()=>Stats.duelsWon||0,
+    ru:{n:'Победитель дуэли', d:'Побил чужую планку. Друг называет это случайностью.'}},
+  {id:'o5', em:'lishniy', ev:true,
+    ru:{n:'Лишний манёвр', d:'За один полёт проехать по горизонтали двадцать пять ширин экрана. Самолёт не жаловался.'}},
+  {id:'s1', em:'poekhali', secret:true, no:1,
+    ru:{n:'Поехали!', d:'12 апреля 1961. Одно слово, которое запомнили лучше всего остального.', h:'Начало всегда одно.'}},
+  {id:'s2', em:'vernulis', secret:true, no:2,
+    ru:{n:'Все вернулись', d:'Белка и Стрелка: семнадцать витков вокруг Земли. Вернулись все, и мыши тоже.', h:'Счёт идёт подряд.'}},
+  {id:'s3', em:'laika', secret:true, no:3,
+    ru:{n:'Лайка', d:'3 ноября 1957. Долго говорили, что она прожила неделю. Правда стала известна в 2002 году.', h:'Тишина — тоже ответ.'}},
+  {id:'s4', em:'wow', secret:true, no:4,
+    ru:{n:'Wow!', d:'15 августа 1977. Сигнал длился 72 секунды и больше не повторился.', h:'Он длился чуть больше минуты.'}},
+  {id:'s5', em:'g2373', secret:true, no:5,
+    ru:{n:'23 на 73', d:'16 ноября 1974. 1679 точек, посланных к звёздному скоплению. Ответа ждём до сих пор.', h:'Если разложить, получится картинка.'}},
+  {id:'s6', em:'pylinka', secret:true, no:6,
+    ru:{n:'Пылинка', d:'14 февраля 1990. С шести миллиардов километров Земля — точка меньше пикселя.', h:'Чем меньше, тем лучше видно.'}},
+  {id:'s7', em:'panic', secret:true, no:7,
+    ru:{n:'Не паникуй', d:'Эта надпись стоит на приборной панели «Стармена», который летит мимо Земли с 6 февраля 2018 года.', h:'Ответ на главный вопрос.'}},
+  {id:'s8', em:'mir', secret:true, no:8,
+    ru:{n:'Мир', d:'23 марта 2001. Станция прожила пятнадцать лет и затонула в Тихом океане.', h:'Четыре этапа — один путь.'}},
+  {id:'s9', em:'gdevse', secret:true, no:9,
+    ru:{n:'Где все?', d:'Парадокс Ферми, 1950. Если они есть, где они? Пустое небо месяца — тоже ответ.', h:'Если они есть, где они?'}}
 ];
-const CATS=['cosmos','flight','duel','hangar']; // v1.108.1: было одно «одна цель — одна категория», теперь честно по числу целей
-const CAT_N={
-  cosmos:{ru:'Космическая шкала',en:'Cosmic ladder',es:'Escala cósmica',pt:'Escala cósmica',fr:'Échelle cosmique'},
-  flight:{ru:'Полёт',en:'Flight',es:'Vuelo',pt:'Voo',fr:'Vol'},
-  duel:{ru:'Дуэль',en:'Duel',es:'Duelo',pt:'Duelo',fr:'Duel'},
-  hangar:{ru:'Тюнинг',en:'Tuning',es:'Tuning',pt:'Tuning',fr:'Tuning'} // 07.09.2026: было «Ангар»/«Hangar» на всех 5 языках — экран переименован в Тюнинг ещё 30.08.2026, здесь забыли обновить
-};
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
+function achDates(){ const o=Store.get('achD',{}); return (o && typeof o==='object' && !Array.isArray(o))?o:{}; } // id → время получения (мс); у наград, полученных до 02.10.2026, даты нет
 
-/* Карман наград: открытые, но ещё не отпразднованные. Праздник — по одной
-   карточке (модуль Н2), здесь — только тихий учёт и бейдж-счётчик. */
-function achQueue(){ return saneArray(Store.get('achQ',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: то же
+/* Карман наград: открытые, но ещё не показанные карточкой. */
+function achQueue(){ return saneArray(Store.get('achQ',[]),[]).filter(x=>typeof x==='string'); }
 function achQShow(){
   const el=$('achBadge'); if(!el) return;
   const n=achQueue().length;
@@ -81,45 +66,52 @@ function achQShow(){
   el.classList.toggle('hidden', n<=0);
 }
 
-/* Проверка и выдача. Вызывать после gameOver, стрика, покупки в ангаре.
-   Тихо: свежие открытия складываются в карман — никакого тост-спама,
-   каждая награда получит свой отдельный момент. */
-function achCheck(){
-  const un=achUnlockedSet(); const fresh=[];
-  for(const a of ACH){
-    if(un.indexOf(a.id)>=0) continue;
-    let v=0; try{ v=a.val(); }catch(e){}
-    if(v>=needOf(a)){ un.push(a.id); fresh.push(a); }
-  }
+/* Выдача: список id → открытые, дата, карман. Тихо, без тост-спама: каждая награда получит свою карточку. */
+function achGrant(ids){
+  const un=achUnlockedSet(), d=achDates(), fresh=[];
+  for(const id of ids){ if(un.indexOf(id)<0 && ACH.some(a=>a.id===id)){ un.push(id); d[id]=Date.now(); fresh.push(id); } }
   if(!fresh.length) return;
-  Store.set('ach',un);
-  const q=achQueue(); // ✦ не начисляются здесь — только по «Забрать» в карточке награды
-  for(const a of fresh) if(q.indexOf(a.id)<0) q.push(a.id);
-  Store.set('achQ',q);
-  achQShow();
+  Store.set('ach',un); Store.set('achD',d);
+  const q=achQueue(); for(const id of fresh) if(q.indexOf(id)<0) q.push(id);
+  Store.set('achQ',q); achQShow();
+}
+/* Проверка по счётчикам (после забега, стрика, дуэли, наклона). */
+function achCheck(){
+  const un=achUnlockedSet(), ids=[];
+  for(const a of ACH){
+    if(!a.val || un.indexOf(a.id)>=0) continue;
+    let v=0; try{ v=a.val(); }catch(e){}
+    if(v>=needOf(a)) ids.push(a.id);
+  }
+  achGrant(ids);
+}
+/* Проверка секретов и «Лишнего манёвра» по итогам забега — зовёт gameOver() в ui.js. c: {distM}. Всё считается по тому, что игра уже знает (S, rec). */
+function achWidths(){ let t=0; for(let i=1;i<rec.length;i++) t+=Math.abs(rec[i][0]-rec[i-1][0]); return t/91; } // сколько ширин экрана самолёт проехал по горизонтали за забег (rec: x в 92 уровнях)
+function achRunCheck(c){
+  const ids=[], live=!S.wasRestored;
+  if(live && Stats.deaths>=1) ids.push('s1'); // «Поехали!» — первый полёт в жизни
+  if(live && (S.gateBest||0)>=17) ids.push('s2'); // «Все вернулись» — 17 ворот подряд (game.js: S.gateRun/gateBest)
+  if(live && S.wowCenter) ids.push('s4'); // «Wow!» — 72-я секунда по центру (game.js)
+  if(live && c.distM===1679) ids.push('s5'); // «23 на 73» — гибель ровно на 1 679-м метре
+  if(live && S.time>0 && S.time<2) ids.push('s6'); // «Пылинка» — гибель меньше чем через 2 секунды после взлёта (первые 1,5 с самолёт неуязвим)
+  if(c.distM===42) ids.push('s7'); // «Не паникуй» — гибель на 42-м метре (пасхалка уже была в игре)
+  if(live && S.mode==='relay' && S.relayLegDone && S.relayLeg>=RELAY_LEGS_TOTAL) ids.push('s8'); // «Мир» — Эстафета пройдена до конца
+  if(live && S.mode==='daily' && S.crowdSeen===0) ids.push('s9'); // «Где все?» — «Небо месяца», сервер ответил, и чужих полётов нет
+  if(live && rec.length>=20 && achWidths()>=25) ids.push('o5'); // «Лишний манёвр»
+  achGrant(ids);
+}
+/* «Лайка»: победа в «Без касаний» и потом 7 секунд ничего не трогать на экране итогов (тишина — тоже ответ). */
+let _laikaT=0;
+function achLaikaDisarm(){ if(_laikaT){ clearTimeout(_laikaT); _laikaT=0; } document.removeEventListener('pointerdown',achLaikaDisarm,true); document.removeEventListener('keydown',achLaikaDisarm,true); }
+function achLaikaArm(){
+  achLaikaDisarm();
+  _laikaT=setTimeout(function(){ _laikaT=0; achLaikaDisarm(); if(screenName==='over') achGrant(['s3']); },7000);
+  document.addEventListener('pointerdown',achLaikaDisarm,true); document.addEventListener('keydown',achLaikaDisarm,true);
 }
 
-/* ---------- Н2: карточка награды — праздник по одной ---------- */
-let claimOpen=false, claimTotal=0, claimPos=0, walletCountGen=0;
-function achTier(a){ return a.rw>=400?'mGold':(a.rw>=100?'mSilver':'mBronze'); }
-/* v1.284.3: досчёт искал #walletMenu — элемент, которого в разметке НЕТ ни одного:
-   кошелёк убрали с главного экрана, а функция осталась искать его и выходить по !el.
-   Игрок жал «Забрать» и не видел ни одного признака, что звёзды пришли. Теперь строка
-   награды на самой карточке («+25 ✦») превращается в новый итог кошелька, и только
-   после досчёта карточка уступает место следующей. Страж 125. */
-function walletCountUp(from,to,done){ // строка награды досчитывает до нового кошелька (0.5с, easeOutCubic)
-  const el=$('claimRw');
-  if(!el){ if(done) done(); return; }
-  const t0=performance.now(), g=++walletCountGen;
-  requestAnimationFrame(function tick(now){
-    if(g!==walletCountGen) return; // праздник перебит следующим — этот досчёт больше не наш
-    const k=Math.min(1,(now-t0)/500);
-    const v=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));
-    el.innerHTML = L.wallet+v;
-    if(k<1) requestAnimationFrame(tick);
-    else if(done) done();
-  });
-}
+/* ---------- Карточка награды: праздник по одной (без звёзд) ---------- */
+let claimOpen=false, claimTotal=0, claimPos=0;
+function achEmb(em,w,filt){ return '<svg viewBox="0 0 64 64" width="'+w+'" height="'+w+'"'+(filt?' style="filter:'+filt+'"':'')+' aria-hidden="true"><use href="#ea-'+em+'"></use></svg>'; }
 function achClaimMaybe(){ // автопоказ при возврате в меню с непустым карманом
   if(claimOpen || screenName!=='menu') return;
   if(!achQueue().length) return;
@@ -129,29 +121,24 @@ function achClaimMaybe(){ // автопоказ при возврате в ме�
 function achClaimShow(){
   const q=achQueue(); if(!q.length){ achClaimHide(); return; }
   const a=ACH.find(x=>x.id===q[0]);
-  if(!a){ Store.set('achQ',q.slice(1)); achQShow(); achClaimShow(); return; } // мусор в кармане — выкинуть
+  if(!a){ Store.set('achQ',q.slice(1)); achQShow(); achClaimShow(); return; } // мусор в кармане (например, снятые награды про скины) — выкинуть
   const md=$('claimMedal'), elCls=$('claimCls'), elName=$('claimName'), elDesc=$('claimDesc'),
     elRw=$('claimRw'), elQ=$('claimQ'), elBtn=$('claimBtn'), elBurst=$('claimBurst'), elScreen=$('claimScreen');
-  /* 23.08.2026: тот же приём, что wireOn() в ui.js — один общий вход для всех элементов
-     экрана награды. Раньше каждая строка читала $(id) напрямую: отсутствие любого одного
-     (устаревший кэш index.html) обрывало бы заполнение на середине, часть карточки
-     осталась бы от прошлой награды. Теперь — тихий выход с сигналом, ничего не рисуем наполовину. */
   if(!md||!elCls||!elName||!elDesc||!elRw||!elQ||!elBtn||!elBurst||!elScreen){
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','claimScreen');
     return;
   }
   claimOpen=true;
-  const tier=achTier(a), tt=aT(a);
-  md.className='claimMedal '+tier;
-  md.innerHTML=ic('trophy'); // линейный трофей вместо эмодзи; класс медали — по награде
-  elCls.textContent = tier==='mGold'?L.achClsG:(tier==='mSilver'?L.achClsS:L.achClsB);
+  const tt=aT(a);
+  md.className='claimMedal '+(a.secret?'mGold':'mSilver');
+  md.innerHTML=achEmb(a.em,76); // эмблема награды вместо трофея
+  elCls.textContent = a.secret ? ovT('achClaimSec')(a.no) : ovT('achClaimCls');
   elName.textContent=tt.n;
   elDesc.textContent=tt.d;
-  elRw.innerHTML='+'+a.rw+ic('star4','i-s4');
+  elRw.innerHTML=''; elRw.classList.add('hidden'); // 02.10.2026: звёзд за награды нет
   claimPos++;
   elQ.textContent=claimPos+' / '+claimTotal;
-  elBtn.textContent = q.length>1 ? L.achClaim : L.achDone;
-  // звёздный веер вокруг медали (DOM-частицы — виден поверх любого экрана)
+  elBtn.textContent = q.length>1 ? ovT('achNext') : L.achDone;
   elBurst.innerHTML='';
   for(let i=0;i<10;i++){
     const st=document.createElement('i');
@@ -162,66 +149,35 @@ function achClaimShow(){
     elBurst.appendChild(st);
   }
   elScreen.classList.remove('hidden');
-  haptic('success'); sfx.ach(); // колокольчик; золото — двойной
-  if(tier==='mGold') setTimeout(()=>{ if(claimOpen) sfx.ach(); },160);
+  haptic('success'); sfx.ach();
+  if(a.secret) setTimeout(()=>{ if(claimOpen) sfx.ach(); },160); // секретное — двойной колокольчик
 }
 function achClaimTake(){
-  const q=achQueue(); const a=ACH.find(x=>x.id===q[0]);
-  if(!a){ achClaimHide(); return; }
-  const from=S.wallet;
-  S.wallet+=a.rw; Store.set('wallet',S.wallet);
+  const q=achQueue();
   Store.set('achQ',q.slice(1)); achQShow();
   haptic('light');
-  /* Досчёт обязан быть виден: раньше карточка пряталась (или переписывалась следующей)
-     в тот же кадр, и анимация не успевала родиться. Ждём её конца. */
-  walletCountUp(from,S.wallet,()=>{
-    if(achQueue().length) achClaimShow(); else achClaimHide();
-  });
+  if(achQueue().length) achClaimShow(); else achClaimHide();
 }
 function achClaimHide(){ claimOpen=false; const s=$('claimScreen'); if(s) s.classList.add('hidden'); }
 if(typeof $==='function' && $('claimBtn')) $('claimBtn').addEventListener('click', achClaimTake);
 
-/* Забрать конкретную награду прямо из списка достижений (быстрый путь) */
-function achClaimId(id){
-  const q=achQueue(); const i=q.indexOf(id); if(i<0) return;
-  const a=ACH.find(x=>x.id===id); if(!a) return;
-  const from=S.wallet;
-  S.wallet+=a.rw; Store.set('wallet',S.wallet);
-  q.splice(i,1); Store.set('achQ',q); achQShow();
-  haptic('light'); sfx.ach();
-  walletCountUp(from,S.wallet);
-  renderAch(); // строка стала обычной открытой
-}
-if(typeof $==='function' && $('achList')) $('achList').addEventListener('click', e=>{
-  const b=e.target.closest?e.target.closest('[data-claim]'):null;
-  if(b) achClaimId(b.getAttribute('data-claim'));
-});
-
-/* Ближайшая непройденная точка космической шкалы — строка мотивации на итогах */
+/* Ближайшая непройденная точка космической шкалы — строка мотивации на итогах («До Линии Кармана») */
 function achNextLoc(){
-  const d=Stats.totalDist||0;
-  for(const a of ACH) if(a.cat==='cosmos' && d<needOf(a)) return a;
-  return null;
+  const a=ACH[0];
+  return ((Stats.totalDist||0)<needOf(a)) ? a : null;
 }
 
-/* ---------- Экран «🏆 Достижения»: статистика + список ---------- */
+/* ---------- Экран «Достижения»: статистика + архив досье ---------- */
 function favMode(){
   const g=Stats.gGames||0, t=Stats.tGames||0, k=Stats.kGames||0; // v1.280.0: keys — своя честная категория, не тонет в touch
   if(g===0&&t===0&&k===0) return '—';
   if(k>=g&&k>=t) return L.modeKeys;
   return g>=t?L.modeGyro:L.modeTouch;
 }
-/* 31.08.2026 «Переосмысление вида Достижений» (владелец, макет): своя иконка+цвет на каждой
-   плитке статистики и каждом достижении — раньше все плитки были одинаковой серой коробкой.
-   6 из 8+6 иконок переиспользуют уже существующие символы игры (i-plane/i-ruler/i-star4/
-   i-trophy/i-checkbadge/i-target/i-phone), 6 — новые (i-combo/i-nearmiss/i-karman/i-swords/
-   i-palette/i-crown, index.html). Текст/значения/логика — не тронуты, только вид. */
 const ACH_STAT_ICO=[
   ['plane','#9fb4d8'],['ruler','#9fe8ff'],['star4','#f0c040'],['combo','#8fff9f'],
   ['nearmiss','#eef4ff'],['trophy','#c58fff'],['checkbadge','#f0c040'],['target','#ff9f8f'],
 ];
-const ACH_ICO={c1:'karman', f1:'phone', d1:'swords', d2:'trophy', h1:'palette', h2:'crown'};
-const CAT_COLOR={cosmos:'#9fe8ff', flight:'#8fb4ff', duel:'#ff9f8f', hangar:'#c58fff'};
 // 01.10.2026 «Паспорт пилота» (владелец выбрал вариант Б макета «Достижения → Мои»: «Мне очень бы понравилось. Красиво.»): вместо восьми плиток и папки «Управление» —
 // обложка пилота (свой самолёт, ник, звание, три числа), рекорды по режимам с местом в мире, полоска «Как ты летаешь» и «Мастерство». «Открыто N / M» и список достижений ниже не тронуты.
 function achPassportHtml(){
@@ -277,42 +233,64 @@ function achPassportFill(root){ requestAnimationFrame(()=>achFitNick(root)); set
   if(typeof syncDailyTop==='function') syncDailyTop(trackDayKey()).then(function(d){ if(d&&d.ok&&d.me) put('mpPlDL',d.me.rank); }).catch(function(){});
   if(typeof syncSlalomTop==='function') syncSlalomTop(typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'').then(function(d){ if(d&&d.ok&&d.me) put('mpPlSL',d.me.rank); }).catch(function(){});
 }
+function achDateTxt(ts){ try{ return new Date(ts).toLocaleDateString((typeof langEff!=='undefined'&&langEff)||'ru',{day:'numeric',month:'short'}).replace(/\.$/,''); }catch(e){ return ''; } }
+/* Экран наград по макету «Награды — архив досье»: свёрнутый вид (полоса, последняя находка, значки), найденные, не найденные и засекреченные.
+   Проценты игроков и редкость — отдельным шагом с сервером; пока их нет, строка показывает только дату. */
 function renderAch(){
-  const un=achUnlockedSet(), q=achQueue();
-  const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList'),
-    elDummy=null;
-  if(!elStats||!elProg||!elProgFill||!elList){ // 23.08.2026: тот же приём, что и claimScreen выше — единый вход, не падение на середине
+  const T=ovT, esc=escapeHtml;
+  const ids=ACH.map(a=>a.id), un=achUnlockedSet().filter(id=>ids.indexOf(id)>=0), dates=achDates();
+  const elStats=$('achStats'), elProg=$('achProg'), elProgFill=$('achProgFill'), elList=$('achList');
+  if(!elStats||!elProg||!elProgFill||!elList){
     if(typeof BEACON!=='undefined' && BEACON.signal) BEACON.signal('dom_missing','achStats');
     return;
   }
-  elStats.innerHTML=achPassportHtml(); achPassportFill(elStats); // 01.10.2026: «Паспорт пилота» вместо плиток и папки «Управление»
-  elProg.innerHTML = ic('trophy')+L.achOf+' '+un.length+' / '+ACH.length;
-  elProgFill.style.width = (un.length/ACH.length*100)+'%';
-  let h='', hI=0; // hI — счётчик каскадной задержки строк (+60ms, потолок 600ms)
-  for(const cid of CATS){
-    const items=ACH.filter(a=>a.cat===cid); if(!items.length) continue;
-    const cc=CAT_COLOR[cid]||'var(--muted)';
-    h+='<div class="achCat" style="--cc:'+cc+'">'+(CAT_N[cid][typeof langEff!=='undefined'?langEff:'ru'] || CAT_N[cid].en || CAT_N[cid].ru)+'</div>';
-    // 07.09.2026: «Дуэль» — единственная категория без входной точки в меню (кнопка «Вызов»
-    // выскакивает сама на итогах хорошего полёта, её нигде заранее не объясняют) — короткая
-    // подсказка тем же .hint, что уже стоит под слайдерами Конструктора, без нового компонента.
-    if(cid==='duel') h+='<div class="hint" style="padding:0 20px 4px">'+(L.achDuelHint||'')+'</div>';
-    for(const a of items){
-      const got=un.indexOf(a.id)>=0, tt=aT(a);
-      const name=tt.n, desc=tt.d; // секретов в реестре нет (v1.32.0) — имя и описание всегда настоящие
-      const pend=q.indexOf(a.id)>=0; // открыто, но ждёт «Забрать»
-      const big=a.id==='c1'; // единственная по-настоящему большая веха (владелец, макет) — не выдумано, «Линия Кармана»
-      let side='', barHtml='';
-      if(!got&&!a.secret){ let v=0; try{ v=a.val(); }catch(e){}
-        const nd=needOf(a);
-        side='<span class="achPr">'+fmtN(Math.min(v,nd))+'/'+fmtN(nd)+'</span>';
-        barHtml='<span class="achBar"><i style="width:'+Math.min(100,Math.round(v/nd*100))+'%"></i></span>'; }
-      h+='<div class="achIt'+(got?' got':'')+(pend?' pend':'')+(big?' big':'')+
-        '" style="--ac:'+cc+';--acg:'+cc+'55;animation-delay:'+(Math.min(hI++,10)*60)+'ms">'+
-        '<span class="achIco">'+ic(ACH_ICO[a.id]||'star4')+'</span>'+
-        '<span class="achTx"><b>'+name+'</b><i>'+desc+'</i>'+barHtml+'</span>'+
-        (got?(pend?'<span class="achRw pendBtn" data-claim="'+a.id+'">'+L.achClaim+' +'+a.rw+ic('star4','i-s4')+'</span>':'<span class="achRw">+'+a.rw+ic('star4','i-s4')+'</span>'):side)+'</div>';
+  elStats.innerHTML=achPassportHtml(); achPassportFill(elStats); // «Паспорт пилота» не тронут
+  const pw=$('achProgWrap'); if(pw) pw.classList.add('hidden'); // старая полоса заменена свёрнутым видом ниже
+  const total=ACH.length, got=un.length;
+  const byId=id=>ACH.find(a=>a.id===id);
+  const found=un.map(byId).filter(Boolean).reverse(); // последняя находка — первой
+  const unearnedOpen=ACH.filter(a=>!a.secret && un.indexOf(a.id)<0);
+  const secretsLocked=ACH.filter(a=>a.secret && un.indexOf(a.id)<0);
+  const secTotal=ACH.filter(a=>a.secret).length, secFound=secTotal-secretsLocked.length;
+  const ring=a=>a.secret?'#b073ea':'#9fb4d8';
+  const lockSvg='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#8a99bd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>';
+  let h='<div class="dsSum"><div class="dsSumTop"><span>'+T('achSumOpen')(got,total)+'</span><b>'+Math.round(got/total*100)+'%</b></div>'
+    +'<div class="dsBar"><i style="width:'+(got/total*100)+'%"></i></div>';
+  if(found.length){
+    const a=found[0], tt=aT(a);
+    h+='<div class="dsLab">'+T('achLast')+'</div><div class="dsLast"><div class="dsMico" style="border-color:'+ring(a)+'">'+achEmb(a.em,31)+'</div><div class="dsLastTx"><b>'+esc(tt.n)+'</b><span>'+esc(tt.d)+'</span></div></div>'
+      +'<div class="dsMini">'+found.slice(0,6).map(x=>'<div class="dsMico" style="border-color:'+ring(x)+'">'+achEmb(x.em,31)+'</div>').join('')+(found.length>6?'<span class="dsMore">+'+(found.length-6)+'</span>':'')+'</div>';
+  }
+  const lockRest=unearnedOpen.length+secretsLocked.length;
+  if(lockRest){
+    h+='<div class="dsLab">'+T('achNotYet')+'</div><div class="dsMini">'
+      +Array(Math.min(5,lockRest)).fill('<div class="dsMico lk">'+lockSvg+'</div>').join('')+(lockRest>5?'<span class="dsMore">+'+(lockRest-5)+'</span>':'')+'</div>';
+  }
+  h+='</div>';
+  if(found.length){
+    h+='<div class="dsSec">'+T('achFoundHd')+'</div>';
+    for(const a of found){
+      const tt=aT(a), ts=dates[a.id];
+      const meta=[ts?achDateTxt(ts):'', a.secret?T('achDossier')(a.no):''].filter(Boolean).join(' · ');
+      h+='<div class="dsRow"><div class="dsIco" style="border-color:'+ring(a)+'">'+achEmb(a.em,50)+'</div><div class="dsTx"><b>'+esc(tt.n)+'</b><span>'+esc(tt.d)+'</span>'+(meta?'<div class="dsMeta">'+esc(meta)+'</div>':'')+'</div></div>';
+    }
+  }
+  if(unearnedOpen.length){
+    h+='<div class="dsSec">'+T('achNotFoundHd')+'</div>';
+    for(const a of unearnedOpen){
+      const tt=aT(a); let prog='', bar='';
+      if(a.val){ let v=0; try{ v=a.val(); }catch(e){} const nd=needOf(a); prog=fmtN(Math.min(v,nd))+' / '+fmtN(nd); bar='<div class="dsPb"><i style="width:'+Math.min(100,Math.round(v/nd*100))+'%"></i></div>'; }
+      h+='<div class="dsRow off"><div class="dsIco dim">'+achEmb(a.em,50,'grayscale(1) opacity(.5)')+'</div><div class="dsTx"><b>'+esc(tt.n)+'</b><span>'+esc(tt.d)+'</span>'+(prog?'<div class="dsMeta">'+prog+'</div>':'')+bar+'</div></div>';
+    }
+  }
+  if(secretsLocked.length){
+    h+='<div class="dsSec">'+T('achSecretHd')(secFound,secTotal)+'</div>';
+    for(const a of secretsLocked){
+      h+='<div class="dsRow sec"><div class="dsIco dim"><svg viewBox="0 0 64 64" width="50" height="50" aria-hidden="true"><use href="#ea-lock"></use></svg></div><div class="dsTx"><b class="q">'+T('achSecretLbl')(a.no)+'</b><span class="hint">'+esc(aT(a).h||'')+'</span></div></div>';
     }
   }
   elList.innerHTML=h;
+  // слабый телефон / «меньше движения»: эмблемы стоят неподвижно (анимация — удовольствие, не нагрузка)
+  try{ const still=(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || (typeof Q!=='undefined' && Q.level<2);
+    if(still) elList.querySelectorAll('svg').forEach(function(sv){ if(sv.pauseAnimations) sv.pauseAnimations(); }); }catch(e){}
 }

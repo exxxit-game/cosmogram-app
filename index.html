@@ -1524,8 +1524,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .mpRow3 div+div { border-left:1px solid rgba(159,220,255,.14); }
 .mpRow3 b { display:block; font-size:17px; font-weight:800; letter-spacing:.03em; white-space:nowrap; text-transform:none; }
 .mpRow3 span { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#8a99bd; }
-.mpSec { display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#eaf1ff; font-weight:800; padding:8px 4px 0; text-shadow:0 0 12px rgba(120,180,255,.35); }
-.mpSec::before { content:''; flex:none; width:8px; height:8px; border-radius:50%; background:linear-gradient(160deg,#ffe38a,#e8b83a); box-shadow:0 0 10px rgba(240,192,64,.75); }
+.mpSec { display:flex; align-items:center; justify-content:center; gap:10px; font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#eaf1ff; font-weight:800; padding:8px 4px 0; text-shadow:0 0 12px rgba(120,180,255,.35); }
+.mpSec::before { content:''; flex:1; height:1px; background:linear-gradient(270deg,rgba(159,220,255,.5),rgba(159,220,255,0)); } /* 02.10.2026 владелец: заголовок по центру, полоски в обе стороны, как везде в игре; была золотая точка слева и полоска только справа */
 .mpSec::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(159,220,255,.5),rgba(159,220,255,0)); }
 .mpRow { display:flex; align-items:center; gap:10px; border:1px solid rgba(60,74,110,.55); background:rgba(20,28,52,.7); border-radius:16px; padding:8px 12px; }
 .mpRow .mpMi { width:24px; height:24px; flex:none; }
@@ -1721,6 +1721,38 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
   border:1px solid rgba(201,164,92,.3); border-radius:var(--r-card); margin:2px 0 12px; overflow:hidden; }
 /* 15.09.2026 «Равноправие»: экран Хартии — тот же .setPanel, что у остальных текстовых
    экранов (Поддержка), только без формы — читаемая типографика длинного документа. */
+/* 02.10.2026 «Награды-досье» (макет «Награды — архив досье»): свёрнутый вид, карточки наград, закрытые секреты. Блоки разделены воздухом, тенью и тонкими линиями — не «сливаются в один текст». */
+.dsSum { border:1px solid rgba(90,108,160,.55); background:linear-gradient(160deg,rgba(30,42,82,.85),rgba(16,22,46,.9)); border-radius:18px; padding:12px 12px 14px; display:flex; flex-direction:column; gap:10px; margin:6px 0 16px; box-shadow:0 8px 18px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
+.dsSumTop { display:flex; justify-content:space-between; align-items:baseline; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:#9fb4d8; font-weight:700; }
+.dsSumTop b { color:#ffe38a; font-size:13px; }
+.dsBar { height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+.dsBar i { display:block; height:6px; background:linear-gradient(90deg,#6cf7f7,#f0c040); }
+.dsLab { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#8a99bd; }
+.dsLast { display:flex; gap:10px; align-items:center; }
+.dsLastTx { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.dsLastTx b { font-size:14px; color:#fff; line-height:1.2; }
+.dsLastTx span { font-size:11.5px; color:#b4c2e0; line-height:1.4; }
+.dsMini { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.dsMico { width:34px; height:34px; flex:none; border-radius:50%; border:1.5px solid #6cf7f7; background:rgba(10,14,32,.8); display:flex; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(108,247,247,.2); }
+.dsMico.lk { border-color:rgba(138,153,189,.5); box-shadow:none; }
+.dsMore { font-size:13px; color:#9fb4d8; font-weight:700; letter-spacing:.05em; margin-left:2px; }
+.dsSec { display:flex; align-items:center; justify-content:center; gap:10px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#eaf1ff; font-weight:800; padding:14px 4px 10px; text-shadow:0 0 12px rgba(120,180,255,.35); }
+.dsSec::before { content:''; flex:1; height:1px; background:linear-gradient(270deg,rgba(159,220,255,.5),rgba(159,220,255,0)); }
+.dsSec::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,rgba(159,220,255,.5),rgba(159,220,255,0)); }
+.dsRow { display:flex; gap:14px; align-items:center; border:1px solid rgba(90,108,160,.55); background:linear-gradient(160deg,rgba(30,42,82,.85),rgba(16,22,46,.9)); border-radius:18px; padding:14px; margin:0 0 14px; box-shadow:0 8px 18px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05); }
+.dsRow.off { opacity:.8; }
+.dsRow.sec { background:rgba(14,18,32,.6); border-style:dashed; }
+.dsIco { width:54px; height:54px; flex:none; border-radius:50%; border:2px solid #9fb4d8; background:radial-gradient(circle at 35% 30%,rgba(60,80,140,.55),rgba(10,14,32,.9)); display:flex; align-items:center; justify-content:center; }
+.dsIco.dim { border-color:rgba(138,153,189,.45); background:rgba(10,14,32,.9); }
+.dsTx { min-width:0; flex:1; display:flex; flex-direction:column; gap:4px; }
+.dsTx b { font-size:15.5px; font-weight:800; letter-spacing:.02em; color:#fff; line-height:1.2; margin-bottom:2px; }
+.dsTx b.q { color:#8a99bd; letter-spacing:.14em; text-transform:uppercase; font-size:13px; }
+.dsTx span, .dsTx b:not(.q), .dsLastTx b, .dsLastTx span, .dsMeta { text-transform:none; } /* как в одобренном макете: названия и описания обычным регистром (заглавными — только подписи и «засекречено») */
+.dsTx span { font-size:12px; line-height:1.4; color:#b4c2e0; }
+.dsTx span.hint { font-style:italic; color:#8a99bd; }
+.dsMeta { font-size:11px; color:#8a99bd; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.08); }
+.dsPb { height:4px; border-radius:2px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:6px; }
+.dsPb i { display:block; height:4px; background:linear-gradient(90deg,#6cf7f7,#ffe38a); }
 .charterBody { padding:14px 16px 20px; font-size:13.5px; line-height:1.55; color:var(--ink); }
 .charterBody .chSub { color:var(--gold-hi); font-weight:800; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
   text-align:center; margin-bottom:12px; } /* 02.10.2026 владелец: верх («Официальное уведомление…») сделать красивее, золотым жирным — это самое начало */
@@ -4968,10 +5000,96 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.8" fill="none" stroke="currentColor" stroke-width="1.5"></rect><path d="M6 10h1.2M9.5 10h1.2M13 10h1.2M16.5 10h1.2M6 13.5h1.2M9.5 13.5h1.2M13 13.5h1.2M16.5 13.5h1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M8 16.3h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
+<!-- 02.10.2026 «Награды-досье»: эмблемы наград (js/ach.js, achEmb) — символы #ea-<имя>, свои градиенты eaBg/eaAtm/…; размер 64×64, внутри круг со своим фоном -->
+<radialGradient id="eaBg" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#22307a"/><stop offset="1" stop-color="#080c22"/></radialGradient>
+<linearGradient id="eaAtm" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1f66e0"/><stop offset=".5" stop-color="#4aa8ff"/><stop offset="1" stop-color="#b073ea" stop-opacity="0"/></linearGradient>
+<linearGradient id="eaFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".5" stop-color="#ffb84a"/><stop offset="1" stop-color="#ff5f3a" stop-opacity="0"/></linearGradient>
+<linearGradient id="eaBeam" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".95"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></linearGradient>
+<linearGradient id="eaBar" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1fb5c9"/><stop offset="1" stop-color="#9cfcfc"/></linearGradient>
+<filter id="eaGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<clipPath id="eaClip"><circle cx="32" cy="32" r="31"/></clipPath>
+
+<symbol id="ea-karman" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<path d="M0 50 A44 44 0 0 1 64 50 L64 64 L0 64Z" fill="#1646a8"/><path d="M2 49 A42 42 0 0 1 62 49" fill="none" stroke="url(#eaAtm)" stroke-width="5"/>
+<path d="M6 44 A36 36 0 0 1 58 44" fill="none" stroke="#7a6cff" stroke-width="2.2" opacity=".75"/><path d="M10 38 A31 31 0 0 1 54 38" fill="none" stroke="#b073ea" stroke-width="1.8" opacity=".5"/>
+<line x1="6" y1="22" x2="58" y2="22" stroke="#ffd76a" stroke-width="1.5" stroke-dasharray="3 2.5" filter="url(#eaGlow)"/>
+<g><animateTransform attributeName="transform" type="translate" values="0 10;0 -14;0 10" dur="3.6s" repeatCount="indefinite"/><path d="M32 30 L36 42 L32 39.5 L28 42Z" fill="#fff" filter="url(#eaGlow)"/><path d="M32 42 L32 52" stroke="#6cf7f7" stroke-width="1.4" opacity=".6"/></g></g></symbol>
+
+<symbol id="ea-pilot" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g><animateTransform attributeName="transform" type="rotate" values="-16 32 32;16 32 32;-16 32 32" dur="3.6s" repeatCount="indefinite"/><rect x="-8" y="36" width="80" height="40" fill="#123a66" opacity=".7"/><line x1="-4" y1="36" x2="68" y2="36" stroke="#6cf7f7" stroke-width="1.6" filter="url(#eaGlow)"/>
+<path d="M32 14 L41 41 L32 35.5 L23 41Z" fill="#eaf1ff"/><circle cx="32" cy="29" r="2.2" fill="#6cf7f7"/></g></g></symbol>
+
+<symbol id="ea-vyzov" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<path d="M8 56 Q26 38 56 8" fill="none" stroke="#6cf7f7" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 3" filter="url(#eaGlow)"><animate attributeName="stroke-dashoffset" values="0;-18" dur="1.4s" repeatCount="indefinite"/></path>
+<path d="M56 56 Q38 38 8 8" fill="none" stroke="#ff9fb0" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 3" filter="url(#eaGlow)"><animate attributeName="stroke-dashoffset" values="0;-18" dur="1.4s" repeatCount="indefinite"/></path>
+<g filter="url(#eaGlow)"><circle cx="32" cy="32" r="4" fill="#ffe38a"><animate attributeName="r" values="3;5.5;3" dur="1.4s" repeatCount="indefinite"/></circle>
+<path d="M32 22V26M32 38V42M22 32H26M38 32H42" stroke="#ffe38a" stroke-width="1.6" stroke-linecap="round"/></g></g></symbol>
+
+<symbol id="ea-pobeditel" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<path d="M4 44 H25 M39 44 H60" stroke="#ffd76a" stroke-width="3" stroke-linecap="round" filter="url(#eaGlow)"/><path d="M25 44 L23 50 M39 44 L41 50 M28 44 L27 49 M36 44 L37 49" stroke="#ffd76a" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+<g><animateTransform attributeName="transform" type="translate" values="0 4;0 -3;0 4" dur="2.4s" repeatCount="indefinite"/><path d="M32 16 L38 34 L32 30.5 L26 34Z" fill="#eaf1ff" filter="url(#eaGlow)"/></g>
+<g stroke="#6cf7f7" stroke-width="1.4" stroke-linecap="round"><path d="M14 20 l3 3M50 20 l-3 3M10 30 h4M50 30 h4"><animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite"/></path></g></g></symbol>
+
+<symbol id="ea-lishniy" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 32 32;360 32 32" dur="9s" repeatCount="indefinite"/><ellipse cx="32" cy="32" rx="25" ry="10" fill="none" stroke="#6cf7f7" stroke-width="1.5" opacity=".9"/><ellipse cx="32" cy="32" rx="25" ry="10" fill="none" stroke="#6cf7f7" stroke-width="1.5" opacity=".7" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="25" ry="10" fill="none" stroke="#6cf7f7" stroke-width="1.5" opacity=".5" transform="rotate(120 32 32)"/><circle cx="57" cy="32" r="2.4" fill="#fff" filter="url(#eaGlow)"/></g>
+<path d="M24 28 L32 22 L41 27 L40 37 L31 41 L23 36Z" fill="#9c8a72" stroke="#cdb994" stroke-width="1"/><circle cx="30" cy="31" r="2" fill="#6f604d"/><circle cx="36" cy="34" r="1.4" fill="#6f604d"/></g></symbol>
+
+<symbol id="ea-vernulis" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 32 32;360 32 32" dur="24s" repeatCount="indefinite"/><path d="M54.6 32.0L54.4 32.4L53.8 32.8L52.9 33.1L51.7 33.4L50.3 33.6L49.0 33.8L47.7 33.9L46.5 34.0L45.7 34.2L45.3 34.3L45.2 34.6L45.5 34.9L46.2 35.3L47.1 35.8L48.2 36.4L49.5 37.0L50.6 37.7L51.7 38.4L52.5 39.1L53.0 39.6L53.1 40.1L52.8 40.4L52.2 40.6L51.3 40.6L50.1 40.4L48.8 40.2L47.4 39.8L46.1 39.5L45.0 39.2L44.1 39.0L43.6 39.0L43.4 39.1L43.5 39.5L43.9 40.0L44.6 40.8L45.4 41.7L46.3 42.8L47.2 43.9L47.9 44.9L48.5 45.8L48.8 46.6L48.8 47.1L48.5 47.4L47.9 47.3L47.0 47.0L46.0 46.5L44.9 45.8L43.7 45.0L42.6 44.2L41.7 43.5L40.9 43.0L40.4 42.7L40.1 42.7L40.0 43.0L40.2 43.7L40.5 44.6L40.9 45.7L41.4 47.0L41.8 48.3L42.1 49.6L42.4 50.7L42.4 51.5L42.2 52.1L41.9 52.3L41.4 52.1L40.7 51.6L40.0 50.7L39.2 49.7L38.4 48.6L37.6 47.4L37.0 46.4L36.4 45.6L36.0 45.1L35.7 44.9L35.5 45.1L35.4 45.7L35.4 46.6L35.4 47.8L35.3 49.1L35.3 50.5L35.1 51.8L34.9 53.0L34.7 53.9L34.4 54.4L34.0 54.5L33.6 54.2L33.1 53.5L32.7 52.6L32.3 51.3L32.0 50.0L31.7 48.7L31.5 47.4L31.2 46.4L31.0 45.7L30.8 45.4L30.6 45.4L30.3 45.9L29.9 46.7L29.5 47.7L29.0 48.9L28.5 50.2L27.9 51.4L27.3 52.5L26.7 53.3L26.2 53.7L25.8 53.7L25.5 53.4L25.3 52.7L25.2 51.6L25.3 50.4L25.5 49.0L25.7 47.7L25.9 46.4L26.1 45.3L26.2 44.5L26.1 44.1L25.9 44.0L25.5 44.2L24.9 44.8L24.2 45.6L23.3 46.5L22.3 47.5L21.3 48.5L20.4 49.3L19.5 49.8L18.8 50.1L18.4 50.0L18.2 49.7L18.2 49.0L18.5 48.1L19.0 46.9L19.6 45.7L20.3 44.5L21.0 43.4L21.6 42.4L22.0 41.7L22.1 41.2L22.0 41.0L21.6 41.0L20.9 41.3L20.0 41.8L18.8 42.3L17.6 42.9L16.3 43.4L15.1 43.8L14.1 44.1L13.3 44.1L12.8 44.0L12.7 43.6L13.0 43.0L13.5 42.2L14.3 41.4L15.3 40.5L16.4 39.6L17.4 38.8L18.4 38.1L19.1 37.5L19.4 37.1L19.5 36.8L19.1 36.7L18.5 36.7L17.5 36.7L16.2 36.8L14.9 36.9L13.5 37.0L12.2 36.9L11.1 36.8L10.3 36.6L9.8 36.3L9.8 35.9L10.2 35.5L10.9 35.0L11.9 34.5L13.1 34.0L14.5 33.5L15.8 33.1L16.9 32.8L17.8 32.5L18.4 32.2L18.6 32.0L18.4 31.8L17.8 31.5L16.9 31.2L15.8 30.9L14.5 30.5L13.1 30.0L11.9 29.5L10.9 29.0L10.2 28.5L9.8 28.1L9.8 27.7L10.3 27.4L11.1 27.2L12.2 27.1L13.5 27.0L14.9 27.1L16.2 27.2L17.5 27.3L18.5 27.3L19.1 27.3L19.5 27.2L19.4 26.9L19.1 26.5L18.4 25.9L17.4 25.2L16.4 24.4L15.3 23.5L14.3 22.6L13.5 21.8L13.0 21.0L12.7 20.4L12.8 20.0L13.3 19.9L14.1 19.9L15.1 20.2L16.3 20.6L17.6 21.1L18.8 21.7L20.0 22.2L20.9 22.7L21.6 23.0L22.0 23.0L22.1 22.8L22.0 22.3L21.6 21.6L21.0 20.6L20.3 19.5L19.6 18.3L19.0 17.1L18.5 15.9L18.2 15.0L18.2 14.3L18.4 14.0L18.8 13.9L19.5 14.2L20.4 14.7L21.3 15.5L22.3 16.5L23.3 17.5L24.1 18.4L24.9 19.2L25.5 19.8L25.9 20.0L26.1 19.9L26.2 19.5L26.1 18.7L25.9 17.6L25.7 16.3L25.5 15.0L25.3 13.6L25.2 12.4L25.3 11.3L25.5 10.6L25.8 10.3L26.2 10.3L26.7 10.7L27.3 11.5L27.9 12.6L28.5 13.8L29.0 15.1L29.5 16.3L29.9 17.3L30.3 18.1L30.6 18.6L30.8 18.6L31.0 18.3L31.2 17.6L31.5 16.6L31.7 15.3L32.0 14.0L32.3 12.7L32.7 11.4L33.1 10.5L33.6 9.8L34.0 9.5L34.4 9.6L34.7 10.1L34.9 11.0L35.1 12.2L35.3 13.5L35.3 14.9L35.4 16.2L35.4 17.4L35.4 18.3L35.5 18.9L35.7 19.1L36.0 18.9L36.4 18.4L37.0 17.6L37.6 16.6L38.4 15.4L39.2 14.3L40.0 13.3L40.7 12.4L41.4 11.9L41.9 11.7L42.2 11.9L42.4 12.5L42.4 13.3L42.1 14.4L41.8 15.7L41.4 17.0L40.9 18.3L40.5 19.4L40.2 20.3L40.0 21.0L40.1 21.3L40.4 21.3L40.9 21.0L41.7 20.5L42.6 19.8L43.7 19.0L44.9 18.2L46.0 17.5L47.0 17.0L47.9 16.7L48.5 16.6L48.8 16.9L48.8 17.4L48.5 18.2L47.9 19.1L47.2 20.1L46.3 21.2L45.4 22.3L44.6 23.2L43.9 24.0L43.5 24.5L43.4 24.9L43.6 25.0L44.1 25.0L45.0 24.8L46.1 24.5L47.4 24.2L48.8 23.8L50.1 23.6L51.3 23.4L52.2 23.4L52.8 23.6L53.1 23.9L53.0 24.4L52.5 24.9L51.7 25.6L50.6 26.3L49.5 27.0L48.2 27.6L47.1 28.2L46.2 28.7L45.5 29.1L45.2 29.4L45.3 29.7L45.7 29.8L46.5 30.0L47.7 30.1L49.0 30.2L50.3 30.4L51.7 30.6L52.9 30.9L53.8 31.2L54.4 31.6L54.6 32.0Z" fill="none" stroke="#b073ea" stroke-width="1.3" filter="url(#eaGlow)"/></g>
+<circle cx="32" cy="32" r="8" fill="#2f7fe6"/><path d="M26 30 q4 -4 9 -1 q-3 3 -9 1Z M31 36 q5 -1 6 2 q-4 1 -6 -2Z" fill="#7fe08a" opacity=".9"/><circle cx="32" cy="32" r="8" fill="none" stroke="#9cfcfc" stroke-width="1" opacity=".7"/></g></symbol>
+
+<symbol id="ea-poekhali" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g fill="#fff" opacity=".8"><circle cx="12" cy="14" r="1"/><circle cx="52" cy="10" r="1.2"/><circle cx="48" cy="34" r=".9"/><circle cx="14" cy="38" r=".9"/></g>
+<g><animateTransform attributeName="transform" type="translate" values="0 3;0 -3;0 3" dur="1.2s" repeatCount="indefinite"/>
+<path d="M32 38 Q28 52 32 62 Q36 52 32 38Z" fill="url(#eaFlame)"><animate attributeName="opacity" values="1;.55;1" dur=".5s" repeatCount="indefinite"/></path>
+<path d="M32 8 Q41 20 39 38 L25 38 Q23 20 32 8Z" fill="#eaf1ff"/><path d="M32 8 Q36 14 37 20 L27 20 Q28 14 32 8Z" fill="#ff5f6d"/><circle cx="32" cy="27" r="3.2" fill="#2f7fe6" stroke="#9cfcfc" stroke-width="1"/><path d="M25 38 L19 46 L25 44Z M39 38 L45 46 L39 44Z" fill="#ff9aa6"/></g></g></symbol>
+
+<symbol id="ea-wow" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g fill="url(#eaBar)"><rect x="9" y="45.2" width="6" height="6.8" rx="1"/><rect x="17" y="36" width="6" height="16" rx="1"/><rect x="25" y="22.5" width="6" height="29.5" rx="1"/><rect x="33" y="18" width="6" height="34" rx="1"/><rect x="41" y="30.5" width="6" height="21.5" rx="1"/><rect x="49" y="46.3" width="6" height="5.7" rx="1"/></g>
+<line x1="6" y1="52" x2="58" y2="52" stroke="#6cf7f7" stroke-width="1" opacity=".6"/><ellipse cx="36" cy="22" rx="9" ry="8" fill="none" stroke="#ff5f6d" stroke-width="2" filter="url(#eaGlow)"><animate attributeName="opacity" values="1;.3;1" dur="1.8s" repeatCount="indefinite"/></ellipse></g></symbol>
+
+<symbol id="ea-g2373" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g fill="#6cf7f7" filter="url(#eaGlow)"><rect x="29.5" y="9" width="5" height="5"/><rect x="24.5" y="14" width="5" height="5"/><rect x="29.5" y="14" width="5" height="5"/><rect x="34.5" y="14" width="5" height="5"/><rect x="29.5" y="19" width="5" height="5"/>
+<rect x="29.5" y="24" width="5" height="5"/><rect x="29.5" y="29" width="5" height="5"/><rect x="14.5" y="24" width="5" height="5"/><rect x="19.5" y="24" width="5" height="5"/><rect x="34.5" y="24" width="5" height="5"/><rect x="39.5" y="24" width="5" height="5"/>
+<rect x="24.5" y="34" width="5" height="5"/><rect x="34.5" y="34" width="5" height="5"/><rect x="24.5" y="39" width="5" height="5"/><rect x="34.5" y="39" width="5" height="5"/><rect x="24.5" y="44" width="5" height="5"/><rect x="34.5" y="44" width="5" height="5"/><animate attributeName="opacity" values="1;.55;1" dur="2.2s" repeatCount="indefinite"/></g></g></symbol>
+
+<symbol id="ea-gdevse" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<circle cx="32" cy="32" r="8" fill="none" stroke="#b073ea" stroke-width="1.3" stroke-dasharray="2 3"><animate attributeName="r" values="6;28" dur="3.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="3.6s" repeatCount="indefinite"/></circle>
+<circle cx="32" cy="32" r="8" fill="none" stroke="#b073ea" stroke-width="1.3" stroke-dasharray="2 3"><animate attributeName="r" values="6;28" begin="1.8s" dur="3.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" begin="1.8s" dur="3.6s" repeatCount="indefinite"/></circle>
+<circle cx="32" cy="32" r="3" fill="#ffe38a" filter="url(#eaGlow)"/><circle cx="50" cy="16" r="1.2" fill="#fff" opacity=".6"/></g></symbol>
+
+<symbol id="ea-pylinka" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="#070a1c"/>
+<path d="M64 0 L64 14 L4 64 L0 56Z" fill="url(#eaBeam)" opacity=".9"/><circle cx="34" cy="37" r="2.2" fill="#8ec5ff" filter="url(#eaGlow)"><animate attributeName="opacity" values="1;.55;1" dur="2.6s" repeatCount="indefinite"/></circle></g></symbol>
+
+<symbol id="ea-mir" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<path d="M0 54 Q16 46 32 52 T64 50 L64 64 L0 64Z" fill="#1646a8"/><path d="M0 54 Q16 46 32 52 T64 50" fill="none" stroke="#9cfcfc" stroke-width="1.4" opacity=".8"/>
+<g><animateTransform attributeName="transform" type="translate" values="0 -6;0 6;0 -6" dur="6s" repeatCount="indefinite"/>
+<rect x="28" y="20" width="8" height="16" rx="2" fill="#dfe8ff"/><rect x="12" y="25" width="16" height="6" fill="#2f7fe6" stroke="#9cfcfc" stroke-width=".8"/><rect x="36" y="25" width="16" height="6" fill="#2f7fe6" stroke="#9cfcfc" stroke-width=".8"/><rect x="30" y="14" width="4" height="6" fill="#cdb994"/><circle cx="32" cy="28" r="1.6" fill="#ff5f6d"/></g></g></symbol>
+
+<symbol id="ea-slovo" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g fill="#ffe38a" filter="url(#eaGlow)"><circle cx="12" cy="24" r="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle><rect x="18" y="21.4" width="12" height="5.2" rx="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin=".3s" repeatCount="indefinite"/></rect><circle cx="36" cy="24" r="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin=".6s" repeatCount="indefinite"/></circle><rect x="42" y="21.4" width="12" height="5.2" rx="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin=".9s" repeatCount="indefinite"/></rect></g>
+<g fill="#6cf7f7" filter="url(#eaGlow)"><rect x="10" y="37.4" width="12" height="5.2" rx="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></rect><circle cx="28" cy="40" r="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin="1.5s" repeatCount="indefinite"/></circle><rect x="34" y="37.4" width="12" height="5.2" rx="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin="1.8s" repeatCount="indefinite"/></rect><circle cx="52" cy="40" r="2.6"><animate attributeName="opacity" values=".25;1;.25" dur="2.4s" begin="2.1s" repeatCount="indefinite"/></circle></g></g></symbol>
+
+<symbol id="ea-zerkalo" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<line x1="32" y1="6" x2="32" y2="58" stroke="#9fb4d8" stroke-width="1.2" stroke-dasharray="2 3" opacity=".8"/>
+<g filter="url(#eaGlow)"><path d="M22 18 L28 40 L22 36.5 L16 40Z" fill="#6cf7f7"><animateTransform attributeName="transform" type="translate" values="0 0;0 -4;0 0" dur="2.6s" repeatCount="indefinite"/></path><path d="M42 18 L48 40 L42 36.5 L36 40Z" fill="#ff9fb0"><animateTransform attributeName="transform" type="translate" values="0 0;0 -4;0 0" dur="2.6s" repeatCount="indefinite"/></path></g>
+<path d="M22 44 Q32 54 42 44" fill="none" stroke="#ffe38a" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></g></symbol>
+
+<symbol id="ea-laika" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<ellipse cx="32" cy="34" rx="24" ry="12" fill="none" stroke="#9fb4d8" stroke-width="1.2" stroke-dasharray="3 3" opacity=".8"/><circle cx="32" cy="34" r="6" fill="#1f5fd0"/><circle cx="32" cy="34" r="6" fill="none" stroke="#9cfcfc" stroke-width=".8" opacity=".7"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 32 34;360 32 34" dur="14s" repeatCount="indefinite"/><g transform="translate(56 34)"><path d="M0 -3 L5 0 L0 3Z" fill="#eaf1ff"/><circle cx="-2" cy="0" r="2.2" fill="#cdb994"/></g></g>
+<circle cx="14" cy="14" r="1" fill="#fff" opacity=".6"/><circle cx="52" cy="12" r="1.2" fill="#fff" opacity=".5"/></g></symbol>
+
+<symbol id="ea-lock" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="#0b1026"/><rect x="19" y="29" width="26" height="19" rx="4" fill="none" stroke="#8a99bd" stroke-width="2.4"/><path d="M24 29 V23 a8 8 0 0 1 16 0 V29" fill="none" stroke="#8a99bd" stroke-width="2.4" stroke-linecap="round"/><circle cx="32" cy="38" r="2.4" fill="#8a99bd"/></g></symbol>
+<symbol id="ea-panic" viewBox="0 0 64 64"><g clip-path="url(#eaClip)"><circle cx="32" cy="32" r="31" fill="url(#eaBg)"/>
+<g fill="#fff" opacity=".8"><circle cx="12" cy="12" r="1"/><circle cx="52" cy="14" r="1.2"/><circle cx="48" cy="26" r=".9"/></g>
+<path d="M0 54 A46 46 0 0 1 64 54 L64 64 L0 64Z" fill="#1646a8"/><path d="M4 53 A44 44 0 0 1 60 53" fill="none" stroke="#9cfcfc" stroke-width="1.6" opacity=".8"/>
+<g><animateTransform attributeName="transform" type="translate" values="0 2;0 -3;0 2" dur="4s" repeatCount="indefinite"/>
+<path d="M14 36 Q16 28 26 27 L40 27 Q50 28 52 36 L52 40 L14 40Z" fill="#e2332f"/><path d="M26 27 L34 20 L40 27Z" fill="#ff6a5f"/><circle cx="24" cy="42" r="4.2" fill="#10152e" stroke="#9fb4d8" stroke-width="1.2"/><circle cx="44" cy="42" r="4.2" fill="#10152e" stroke="#9fb4d8" stroke-width="1.2"/><circle cx="33" cy="18" r="3.2" fill="#eaf1ff"/><path d="M30 17 h6" stroke="#2f7fe6" stroke-width="1.6" stroke-linecap="round"/></g></g></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.616"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.616"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.616"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.618"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.618"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.618"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -6281,26 +6399,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.616" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.616"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.616"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.616"></script>
-<script defer src="js/game.js?v=1.478.616" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.616"></script>
-<script defer src="js/sync.js?v=1.478.616"></script>
-<script defer src="js/render.js?v=1.478.616"></script>
-<script defer src="js/planetarium.js?v=1.478.616"></script>
-<script defer src="js/goldstar.js?v=1.478.616"></script>
-<script defer src="js/finish.js?v=1.478.616"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.616"></script>
-<script defer src="js/gyro.js?v=1.478.616"></script>
-<script defer src="js/forge.js?v=1.478.616"></script>
-<script defer src="js/partitura.js?v=1.478.616"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.616"></script>
-<script defer src="js/card.js?v=1.478.616"></script>
-<script defer src="js/star.js?v=1.478.616"></script>
-<script defer src="js/cinema.js?v=1.478.616"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.616"></script>
+<script defer src="js/core.js?v=1.478.618" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.618"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.618"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.618"></script>
+<script defer src="js/game.js?v=1.478.618" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.618"></script>
+<script defer src="js/sync.js?v=1.478.618"></script>
+<script defer src="js/render.js?v=1.478.618"></script>
+<script defer src="js/planetarium.js?v=1.478.618"></script>
+<script defer src="js/goldstar.js?v=1.478.618"></script>
+<script defer src="js/finish.js?v=1.478.618"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.618"></script>
+<script defer src="js/gyro.js?v=1.478.618"></script>
+<script defer src="js/forge.js?v=1.478.618"></script>
+<script defer src="js/partitura.js?v=1.478.618"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.618"></script>
+<script defer src="js/card.js?v=1.478.618"></script>
+<script defer src="js/star.js?v=1.478.618"></script>
+<script defer src="js/cinema.js?v=1.478.618"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.618"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

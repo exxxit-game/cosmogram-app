@@ -1339,6 +1339,7 @@ function update(dt){
   if (S.slowmo>0) S.slowmo-=dt;
   if (S.dash>0) S.dash-=dt; // Таран: 4 секунды пробоя (v1.40.0)
   S.time += dt; // часы полёта — по ним сверхновая узнаёт, что старт позади
+  if (!S.wowDone && S.time>=72 && !ghostDrivenWorld){ S.wowDone=1; S.wowCenter=Math.abs(plane.x-(fieldL()+fieldW()/2))<=fieldW()*.04; } // 02.10.2026 владелец разрешил (досье №4 «Wow!»: сигнал 15.08.1977 длился 72 с): на 72-й секунде живого полёта — самолёт строго по центру
   if (S.flash>0) S.flash-=dt; // вспышка — чисто визуальная (золотая секунда)
   if (ghostTagT>0) ghostTagT-=dt; // подпись призрака живёт первые 4 секунды
   S.dist += S.speed*dt*S.timeScale*8;
@@ -1461,7 +1462,8 @@ function update(dt){
           S.score+=pts;
           showPopup(L.gate+' +'+pts, o.x, plane.y-50, '#5eead4'); // 22.08.2026: насыщенная бирюза — холоднее и щита, и слоумо
           sfx.gate(); haptic('medium');
-        }
+          S.gateRun=(S.gateRun||0)+1; if (S.gateRun>(S.gateBest||0)) S.gateBest=S.gateRun; // 02.10.2026 владелец разрешил: серия ворот подряд за забег
+        } else S.gateRun=0;
       }
       continue;
     }
