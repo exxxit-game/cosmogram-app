@@ -606,6 +606,11 @@ function ptWireTray(){
      для обеих функций (значок ставит/тащит, подпись переключает участие в случайной генерации),
      но физически не пересекается с драгом значка вообще — обычный короткий тап, без таймера. */
   tray.addEventListener('click',ev=>{
+    const stk=ev.target.closest('.sticker'); // 01.10.2026 (владелец: «хочу его активировать, а не получается» — про пунктирные кружки): выключенный вид включается нажатием на сам пунктирный кружок, не только на подпись
+    if(stk){ const it=stk.closest('.stickerItem'); if(it && it.classList.contains('excluded') && stk.dataset.t==='kind'){
+      forgeCfg.e|=(1<<(+stk.dataset.k)); sfx.click(); haptic('light');
+      if(typeof forgeSyncWidgets==='function') forgeSyncWidgets();
+      return; } }
     const cap=ev.target.closest('.stickerCap'); if(!cap) return;
     const item=cap.closest('.stickerItem'); const s=item.querySelector('.sticker');
     if(!s || s.dataset.t!=='kind') return;
