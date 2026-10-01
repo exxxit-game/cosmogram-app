@@ -1722,8 +1722,9 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 /* 15.09.2026 «Равноправие»: экран Хартии — тот же .setPanel, что у остальных текстовых
    экранов (Поддержка), только без формы — читаемая типографика длинного документа. */
 .charterBody { padding:14px 16px 20px; font-size:13.5px; line-height:1.55; color:var(--ink); }
-.charterBody .chSub { color:var(--gold); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-  text-align:center; margin-bottom:12px; }
+.charterBody .chSub { color:var(--gold-hi); font-weight:800; font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+  text-align:center; margin-bottom:12px; } /* 02.10.2026 владелец: верх («Официальное уведомление…») сделать красивее, золотым жирным — это самое начало */
+.charterBody .chSub .chSubH { display:block; font-size:19px; letter-spacing:.14em; margin-bottom:6px; text-shadow:0 0 14px rgba(240,192,64,.35); }
 .charterBody h2 { font-family:var(--font-disp); font-size:14.5px; color:var(--gold-hi);
   letter-spacing:.02em; margin:18px 0 8px; }
 .charterBody h2:first-of-type { margin-top:0; }
@@ -1737,8 +1738,8 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .charterBody .chSub { margin-bottom:18px; line-height:1.55; }
 .charterBody .chAct p { margin:0 0 10px; font-size:13.5px; line-height:1.62; color:#b4c2e0; }
 .charterBody .chAct p:last-child { margin-bottom:0; }
-.charterBody .chAct b { color:#fff; font-weight:700; }
-.charterBody .chAct .chHit, .charterBody .chAct .chHit * { color:#fff; font-weight:700; }
+.charterBody .chAct b { color:var(--gold-hi); font-weight:800; } /* 02.10.2026 владелец: «где у нас жирный текст, его надо золотым» — тот же цвет, что у .chRule */
+.charterBody .chAct .chHit, .charterBody .chAct .chHit * { color:var(--gold-hi); font-weight:800; }
 .charterBody .chAct p.chHit { font-size:15.5px; line-height:1.42; letter-spacing:.01em; }
 .charterBody .chAct span.chHit { font-size:15.5px; }
 .charterBody .chAct .chPor { font-style:italic; color:#bfe0f0; }
@@ -1749,16 +1750,16 @@ button, input, select, textarea { text-transform:inherit; font-family:inherit; }
 .charterBody .chGap::after { transform:scaleX(-1); }
 .charterBody .chGap i { width:7px; height:7px; transform:rotate(45deg); border:1px solid var(--gold); margin:0 12px; flex:none; }
 /* 01.10.2026 «Рука карт» (макет «Хартия — рука карт»): карточки примеров листаются в сторону, как рука; каждая — игральная карта с бубнами в углах и ярким ударом внизу; точки под рукой — ромбы. */
-.charterBody .chHand { margin:14px -16px 16px; }
-.charterBody .chTrack { display:flex; align-items:flex-start; gap:12px; padding:0 16px; overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding-left:16px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.charterBody .chHand { margin:14px 0 16px; } /* 02.10.2026 владелец: «пока одно окно видно, видно ещё и кусок второго. Это некрасиво» — карточка на всю ширину, соседние не выглядывают */
+.charterBody .chTrack { display:flex; align-items:flex-start; gap:12px; padding:0; overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding-left:0; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
 .charterBody .chTrack::-webkit-scrollbar { display:none; }
-.charterBody .chCard { position:relative; flex:none; width:min(256px,86%); box-sizing:border-box; padding:30px 20px 26px; border-radius:16px; border:1px solid rgba(240,192,64,.55); background:linear-gradient(160deg,rgba(32,42,92,.95),rgba(14,20,48,.95)); box-shadow:0 8px 20px rgba(0,0,0,.35); display:flex; flex-direction:column; gap:10px; scroll-snap-align:start; }
+.charterBody .chCard { position:relative; flex:none; width:100%; box-sizing:border-box; padding:30px 20px 26px; border-radius:16px; border:1px solid rgba(240,192,64,.55); background:linear-gradient(160deg,rgba(32,42,92,.95),rgba(14,20,48,.95)); box-shadow:0 8px 20px rgba(0,0,0,.35); display:flex; flex-direction:column; gap:10px; scroll-snap-align:start; }
 /* 01.10.2026 владелец (по снимку макета «Хартия — рука карт»): бледная внутренняя линия убрана, вдоль верха и низа — ряды маленьких серо-синих ромбиков; золотая рамка и угловые золотые ромбики остаются. Верхний ряд начинается после левого углового, нижний кончается перед правым угловым. */
 .charterBody .chCard::before, .charterBody .chCard::after { content:''; position:absolute; height:8px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M6 1.2L9 4 6 6.8 3 4z' fill='%238a9cc8' fill-opacity='.6'/%3E%3C/svg%3E"); background-repeat:repeat-x; background-position:left center; pointer-events:none; }
 .charterBody .chCard::before { top:9px; left:28px; right:12px; }
 .charterBody .chCard::after { bottom:9px; left:12px; right:28px; }
 .charterBody .chCard p { margin:0; font-size:13.5px; line-height:1.55; color:#b4c2e0; }
-.charterBody .chCard p.chHitP { margin-top:4px; font-size:16px; line-height:1.35; color:#fff; font-weight:800; }
+.charterBody .chCard p.chHitP { margin-top:4px; font-size:16px; line-height:1.35; color:var(--gold-hi); font-weight:800; }
 .charterBody .chCn { position:absolute; color:var(--gold); font-size:15px; line-height:1; }
 .charterBody .chCn.tl { top:9px; left:12px; }
 .charterBody .chCn.br { bottom:9px; right:12px; transform:rotate(180deg); }
@@ -4967,9 +4968,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.611"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.611"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.611"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.612"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.612"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.612"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -5398,18 +5399,18 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
          серия NHL с 1991, Hockey Ultimate Team с NHL 11 (2010), Royal Match >6 млрд $, закрытия
          VR-студий. «Кит» отложен владельцем «на другой раз». Подписи (chSign) не сброшены. -->
     <!-- 01.10.2026 Хартия v2.2 (владелец: «давай теперь этот текст вставляем»): один голос — «вы», шесть актов, карточки примеров идут пока обычными строками (оформление «рукой карт» — отдельным шагом по макету); последняя фраза зависит от часов телефона (js/ui.js, charterByeFill: 23:00–4:00 — спать, иначе — играть). -->
-    <div class="chSub">Официальное уведомление. Прочтение не является обязательным. Понимание — тем более.</div>
-    <div class="chAct"><p>Если в вашем мире шанс до сих пор продаётся за деньги — сообщите об этом взрослому. Если взрослый — это вы, да поможет вам рассудок.</p><p>Игры придумали для игры. Платите — получаете то, что написано на коробке.</p><p>Потом кто-то сел и посчитал. Если человеку понравилось, он заплатит один раз. Если его не отпускать — будет платить каждый день.</p><p class="chHit">С этого дня игры стали делать для второго.</p></div>
+    <div class="chSub"><span class="chSubH">Официальное уведомление.</span> Прочтение не является обязательным. Понимание — тем более.</div>
+    <div class="chAct"><p>Если в вашем мире шанс до сих пор продаётся за деньги — сообщите об этом взрослому. Если взрослый — это вы, да поможет вам рассудок.</p><p><b>Игры придумали для игры.</b> Платите — получаете то, что написано на коробке.</p><p>Потом кто-то сел и посчитал. Если человеку понравилось, он заплатит один раз. Если его не отпускать — будет платить каждый день.</p><p class="chHit">С этого дня игры стали делать для второго.</p></div>
     <div class="chGap"><i></i></div>
-    <div class="chAct"><p>Возьмём карточную игру, в которой в конце нужно крикнуть одно слово.</p><p>Сначала её покупали. Коробка с картами: держите в руках, играете с друзьями, можете подарить, можете продать.</p><p>Потом колоду положили на экран. Карты те же. Но у экрана есть место для рекламы, а у колоды его не было.</p><p>Теперь между партиями — ролик, перед партией — окно «купить монеты». Отдых превратился в смену: окно, ролик, окно.</p><p>Если после отдыха вы устали сильнее, чем после работы, — вам не кажется.</p><p>Дальше — хуже. Колоду покупают один раз. Шанс вытянуть редкую карту — пока не повезёт.</p><p>Карты нарисованы. Печатать их не нужно, хранить не нужно, доставлять не нужно.</p><p class="chHit">Идеальный товар: его не существует.</p></div>
+    <div class="chAct"><p>Возьмём карточную игру, в которой в конце нужно крикнуть одно слово.</p><p>Сначала её покупали. Коробка с картами: держите в руках, играете с друзьями, можете подарить, можете продать.</p><p>Потом колоду положили на экран. Карты те же. Но у экрана есть место для рекламы, а у колоды его не было.</p><p>Теперь между партиями — ролик, перед партией — окно «купить монеты». <b>Отдых превратился в смену: окно, ролик, окно.</b></p><p><b>Если после отдыха вы устали сильнее, чем после работы, — вам не кажется.</b></p><p>Дальше — хуже. Колоду покупают один раз. Шанс вытянуть редкую карту — пока не повезёт.</p><p>Карты нарисованы. Печатать их не нужно, хранить не нужно, доставлять не нужно.</p><p class="chHit">Идеальный товар: его не существует.</p></div>
     <div class="chGap"><i></i></div>
-    <div class="chAct"><p>Работает ли это? Работает.</p><div class="chHand"><div class="chTrack"><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Игра бесплатная. Скачать её можно за секунду, начать играть — тоже. А потом выясняется, что у всего, что в ней интересно, есть цена.</p><p class="chHitP">Бесплатно — за исключением всего, что в ней интересно.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Вы купили игру за полную цену, как раньше покупали диск. Запускаете, а внутри магазин: скины, ускорители, дополнения.</p><p class="chHitP">Цена на коробке оказалась только входом.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Героя из любимого фильма можно открыть за десятки часов игры или за деньги. Издатель объяснил это так: чувство гордости за открытие.</p><p class="chHitP">Гордость тоже продаётся.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Первое улучшение героя стоит копейки. Каждое следующее дороже предыдущего, а последнее — как машина. А вы уже столько вложили, что бросить жалко.</p><p class="chHitP">Чем ближе к вершине, тем дороже воздух.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Покупку можно совершить одним нажатием. Иногда случайным: например, пока игра загружается или телефон просыпается.</p><p class="chHitP">Это называют удобством.</p></div></div><div class="chDots"><i class="on"></i><i></i><i></i><i></i><i></i></div></div><p>Продолжим в том же духе — и на Netflix каждую серию придётся покупать отдельно.</p><p>Если вы хотите идти по такой дороге, к сожалению, мы с вами не пойдём. Предлагаем повернуть сейчас.</p></div>
+    <div class="chAct"><p><b>Работает ли это? Работает.</b></p><div class="chHand"><div class="chTrack"><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Игра бесплатная. Скачать её можно за секунду, начать играть — тоже. А потом выясняется, что у всего, что в ней интересно, есть цена.</p><p class="chHitP">Бесплатно — за исключением всего, что в ней интересно.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Вы купили игру за полную цену, как раньше покупали диск. Запускаете, а внутри магазин: скины, ускорители, дополнения.</p><p class="chHitP">Цена на коробке оказалась только входом.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Героя из любимого фильма можно открыть за десятки часов игры или за деньги. Издатель объяснил это так: чувство гордости за открытие.</p><p class="chHitP">Гордость тоже продаётся.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Первое улучшение героя стоит копейки. Каждое следующее дороже предыдущего, а последнее — как машина. А вы уже столько вложили, что бросить жалко.</p><p class="chHitP">Чем ближе к вершине, тем дороже воздух.</p></div><div class="chCard"><span class="chCn tl">♦</span><span class="chCn br">♦</span><p>Покупку можно совершить одним нажатием. Иногда случайным: например, пока игра загружается или телефон просыпается.</p><p class="chHitP">Это называют удобством.</p></div></div><div class="chDots"><i class="on"></i><i></i><i></i><i></i><i></i></div></div><p><b>Продолжим в том же духе — и на Netflix каждую серию придётся покупать отдельно.</b></p><p>Если вы хотите идти по такой дороге, к сожалению, мы с вами не пойдём. <b>Предлагаем повернуть сейчас.</b></p></div>
     <div class="chGap"><i></i></div>
-    <div class="chAct"><p>Но честные названия плохо продаются. Поэтому всё переименовали.</p><p>Усталость, которую вам выдают бесплатно, чтобы продать её отмену, назвали <b>энергией</b>.</p><p>Предложение, которое вернётся в пятницу, назвали <b>ограниченным</b>.</p><p>Работу, за которую платите вы, назвали <b>боевым пропуском</b>.</p><p>Зарплату за то, что вы пришли на работу, назвали <b>ежедневной наградой</b>.</p><p>Ролик, который обязан досмотреть, назвали <b>бонусом</b>.</p><p>Десятки часов назвали <b>достижением</b>.</p><p>Шанс назвали <b>возможностью</b>.</p><p class="chHit">Ничего не поменялось. Просто стало звучать как игра.</p></div>
+    <div class="chAct"><p>Но честные названия плохо продаются. <b>Поэтому всё переименовали.</b></p><p>Усталость, которую вам выдают бесплатно, чтобы продать её отмену, назвали <b>энергией</b>.</p><p>Предложение, которое вернётся в пятницу, назвали <b>ограниченным</b>.</p><p>Работу, за которую платите вы, назвали <b>боевым пропуском</b>.</p><p>Зарплату за то, что вы пришли на работу, назвали <b>ежедневной наградой</b>.</p><p>Ролик, который обязан досмотреть, назвали <b>бонусом</b>.</p><p>Десятки часов назвали <b>достижением</b>.</p><p>Шанс назвали <b>возможностью</b>.</p><p class="chHit">Ничего не поменялось. Просто стало звучать как игра.</p></div>
     <div class="chGap"><i></i></div>
-    <div class="chAct"><p>Индустрия сравнила два пути: делать новое или доить старое. И подвела итог.</p><p class="chPor">Отчёт отдела прогресса. Виртуальная реальность: студии закрываются. «Три в ряд»: шесть миллиардов долларов с одной игры. Вывод отдела: прогресс нерентабелен. Отдел прогресса закрыт.</p><p class="chPor">Внимание: некоторые игры спроектированы так, чтобы вы не могли остановиться. Если вам удалось остановиться, пожалуйста, сообщите им об ошибке.</p></div>
+    <div class="chAct"><p><b>Индустрия сравнила два пути: делать новое или доить старое.</b> И подвела итог.</p><p class="chPor">Отчёт отдела прогресса. Виртуальная реальность: студии закрываются. «Три в ряд»: шесть миллиардов долларов с одной игры. Вывод отдела: прогресс нерентабелен. Отдел прогресса закрыт.</p><p class="chPor">Внимание: некоторые игры спроектированы так, чтобы вы не могли остановиться. Если вам удалось остановиться, пожалуйста, сообщите им об ошибке.</p></div>
     <div class="chGap"><i></i></div>
-    <div class="chAct"><p>Поэтому правило здесь одно.</p><p class="chRule">Одна игра зарабатывает, когда вы рады. Другая — когда вам без неё тревожно.</p><p>Когда-то врачу платили за то, что пациент здоров. Нам тоже выгоднее, чтобы вы были здоровы.</p><p>Честно: мы тоже вас ведём. Только к небу, а не к кошельку. Не верьте на слово — код игры открыт.</p><p>И деньги нам тоже нужны. «Мы» — это один человек: у него есть работа, а у игры есть сервер. Сервер стоит денег, человек тоже ест. Игра бесплатная. Поэтому есть кнопка «Спасибо». Вам она не даёт ничего. Совсем ничего. Нам она даёт возможность платить за игру.</p><p>И есть скины за доллар. Только для красоты: у самолёта своя вспышка, свой след, свой цвет. Скорость, щит и место в таблице от этого не меняются.</p><p>Чего здесь не будет никогда: рекламы, покупки победы, случайного за деньги и таймеров, которые торопят.</p><p>Достойные игры наградами и чинами не посрамлены. Они живут десятилетиями без единого крючка. Мы собираемся проверить, работает ли это до сих пор.</p><p class="chFin">Спасибо, что прочитали. <span id="chBye">Можете идти играть.</span> Вы приблизились к науке.</p></div>
+    <div class="chAct"><p>Поэтому правило здесь одно.</p><p class="chRule">Одна игра зарабатывает, когда вы рады. Другая — когда вам без неё тревожно.</p><p>Когда-то врачу платили за то, что пациент здоров. <b>Нам тоже выгоднее, чтобы вы были здоровы.</b></p><p>Честно: мы тоже вас ведём. <b>Только к небу, а не к кошельку.</b> Не верьте на слово — код игры открыт.</p><p>И деньги нам тоже нужны. «Мы» — это один человек: у него есть работа, а у игры есть сервер. Сервер стоит денег, человек тоже ест. Игра бесплатная. Поэтому есть кнопка «Спасибо». Вам она не даёт ничего. Совсем ничего. <b>Нам она даёт возможность платить за игру.</b></p><p>И есть скины за доллар. Только для красоты: у самолёта своя вспышка, свой след, свой цвет. Скорость, щит и место в таблице от этого не меняются.</p><p><b>Чего здесь не будет никогда:</b> рекламы, покупки победы, случайного за деньги и таймеров, которые торопят.</p><p>Достойные игры наградами и чинами не посрамлены. <b>Они живут десятилетиями без единого крючка.</b> Мы собираемся проверить, работает ли это до сих пор.</p><p class="chFin">Спасибо, что прочитали. <span id="chBye">Можете идти играть.</span> <b>Вы приблизились к науке.</b></p></div>
     <!-- 15.09.2026 (владелец, макет ravnopravie-podpis-macet.html, «отлично, да») — подпись под
          Хартией: общий счётчик (не личная отметка — владелец выбрал явно, «сложнее»), backend
          cosmogram-charter (charter_signatures, player_id PK — один раз навсегда, ON CONFLICT DO
@@ -6279,26 +6280,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.611" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.611"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.611"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.611"></script>
-<script defer src="js/game.js?v=1.478.611" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.611"></script>
-<script defer src="js/sync.js?v=1.478.611"></script>
-<script defer src="js/render.js?v=1.478.611"></script>
-<script defer src="js/planetarium.js?v=1.478.611"></script>
-<script defer src="js/goldstar.js?v=1.478.611"></script>
-<script defer src="js/finish.js?v=1.478.611"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.611"></script>
-<script defer src="js/gyro.js?v=1.478.611"></script>
-<script defer src="js/forge.js?v=1.478.611"></script>
-<script defer src="js/partitura.js?v=1.478.611"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.611"></script>
-<script defer src="js/card.js?v=1.478.611"></script>
-<script defer src="js/star.js?v=1.478.611"></script>
-<script defer src="js/cinema.js?v=1.478.611"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.611"></script>
+<script defer src="js/core.js?v=1.478.612" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.612"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.612"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.612"></script>
+<script defer src="js/game.js?v=1.478.612" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.612"></script>
+<script defer src="js/sync.js?v=1.478.612"></script>
+<script defer src="js/render.js?v=1.478.612"></script>
+<script defer src="js/planetarium.js?v=1.478.612"></script>
+<script defer src="js/goldstar.js?v=1.478.612"></script>
+<script defer src="js/finish.js?v=1.478.612"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.612"></script>
+<script defer src="js/gyro.js?v=1.478.612"></script>
+<script defer src="js/forge.js?v=1.478.612"></script>
+<script defer src="js/partitura.js?v=1.478.612"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.612"></script>
+<script defer src="js/card.js?v=1.478.612"></script>
+<script defer src="js/star.js?v=1.478.612"></script>
+<script defer src="js/cinema.js?v=1.478.612"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.612"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
