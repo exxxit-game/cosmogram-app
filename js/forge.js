@@ -1151,6 +1151,7 @@ function mapShare(){ const cfg=forgeSanitize(forgeCfg); mapShareCode(forgeEncode
    кругу FORGE_SHARE_LOOP секунд: все движения кратны кругу, конец петли ровно в начало. Из него же — запасная картинка. */
 const FORGE_SHARE_LOOP=4;
 function forgeShareDraw(x,W,H,t,cfg){
+  if(cfg.draw){ cfg.draw(x,W,H,t,cfg); return; } // свой рисунок поверх того же цикла (вызов другу — duelShareDraw в ui.js)
   const T=FORGE_SHARE_LOOP, ph=(t%T)/T, TAU=6.2832, u=H/256;
   const psl=forgePreviewMoodSL(cfg.mood);
   const g=x.createLinearGradient(0,0,0,H);
@@ -1186,7 +1187,7 @@ function forgeShareDraw(x,W,H,t,cfg){
   const ff=(typeof document!=='undefined'&&document.body)?(getComputedStyle(document.body).fontFamily||'sans-serif'):'sans-serif';
   x.textBaseline='alphabetic'; x.textAlign='left';
   x.fillStyle='#fff'; x.font='700 '+Math.round(30*u)+'px '+ff; x.fillText(String(cfg.n||L.forgeDefName).toUpperCase(),22*u,H-34*u);
-  x.fillStyle='rgba(255,255,255,.78)'; x.font='500 '+Math.round(15*u)+'px '+ff; x.fillText(cfg.l>0?(cfg.l+' '+(L.unitM||'м')):'∞',22*u,H-12*u);
+  x.fillStyle='rgba(255,255,255,.78)'; x.font='500 '+Math.round(15*u)+'px '+ff; x.fillText(cfg.sub!=null?cfg.sub:(cfg.l>0?(cfg.l+' '+(L.unitM||'м')):'∞'),22*u,H-12*u); // cfg.sub — своя вторая строка (вызов другу: «6 827 м · Волна 9»)
 }
 function forgeShareImagePng(cfg){ // запасная картинка — тот же рисунок, кадр из середины петли
   const cv=document.createElement('canvas'); cv.width=800; cv.height=420;

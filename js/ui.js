@@ -5087,11 +5087,57 @@ if (csInput) csInput.addEventListener('change', ()=>{ // позывной: бе�
 function csFill(){ if(!csInput) return; csInput.value=Store.get('callsign',''); csInput.placeholder=typeof myCallsign==='function'?myCallsign():''; }
 // v1.96.0 «Одна дверь»: кнопка «Поделиться» с итогов ушла — текстовая дверь живёт внутри карточки (cardShare, card.js).
 // Особая вода своей трассы (mapShare) переехала туда же.
+/* 01.10.2026 «Позвать друга как карту» (владелец: «позвать друга тоже надо исправить, картинку и прочее добавить, как мы справились в мастерской»).
+   Тот же путь, что у отправки карты (forge.js mapShareRich): анимация со звёздами рисуется тут же (forgeShareDraw — имя и «дальность · волна»),
+   уходит на сервер (share_map), сервер готовит сообщение с кнопкой «Играть» (ссылка на главное приложение бота), игра шлёт tg.shareMessage(id).
+   Нет моста/сети/ответа — прежний путь со ссылкой (plain). */
+/* Картинка вызова (владелец выбрал вариант «Планка» из трёх): то же небо, что у карты, поверх — твой след к золотому флажку «MRV · 6 827 м»,
+   за флажком пунктир к призрачному самолёту с «?» (это друг) и надпись «Побей мою планку». Всё движется по кругу FORGE_SHARE_LOOP — конец петли в начало. */
+function duelShareDraw(x,W,H,t,cfg){
+  forgeShareDraw(x,W,H,t,{h1:cfg.h1,h2:cfg.h2,mood:cfg.mood,fog:cfg.fog,n:' ',sub:' '}); // небо без своих подписей
+  const u=H/256, ph=(t%FORGE_SHARE_LOOP)/FORGE_SHARE_LOOP, TAU=6.2832;
+  const ff=(typeof document!=='undefined'&&document.body)?(getComputedStyle(document.body).fontFamily||'sans-serif'):'sans-serif';
+  const txt=function(s,px,py,size,col,w,ls){ x.font=w+' '+size+'px '+ff; x.fillStyle=col; x.textAlign='center'; x.textBaseline='alphabetic'; if('letterSpacing' in x) x.letterSpacing=(ls||0)+'px'; x.fillText(s,px,py); if('letterSpacing' in x) x.letterSpacing='0px'; };
+  const y0=170*u, xs=W*.1, xf=W*.58, fy=y0-34*u;
+  x.save(); x.lineWidth=4*u; x.lineCap='round';
+  const g=x.createLinearGradient(xs,0,xf,0); g.addColorStop(0,'rgba(95,188,244,0)'); g.addColorStop(1,'rgba(159,220,255,.95)'); x.strokeStyle=g;
+  x.beginPath(); x.moveTo(xs,y0); x.bezierCurveTo(W*.25,y0-50*u,W*.4,y0+30*u,xf,fy); x.stroke(); x.restore();
+  x.fillStyle='#ffc83d'; x.fillRect(xf,fy-46*u,3*u,46*u); x.beginPath(); x.moveTo(xf+3*u,fy-46*u); x.lineTo(xf+30*u,fy-36*u); x.lineTo(xf+3*u,fy-26*u); x.closePath(); x.fill(); // флажок планки
+  const gx=W*.8+6*u*Math.sin(TAU*ph), gy=y0-70*u+4*u*Math.sin(TAU*ph*2), s=22*u; // призрак-друг: качается по кругу
+  x.save(); x.globalAlpha=.9; x.translate(gx,gy); x.beginPath(); x.moveTo(0,-s); x.lineTo(s*.62,s*.78); x.lineTo(0,s*.42); x.lineTo(-s*.62,s*.78); x.closePath();
+  x.setLineDash([s*.2,s*.16]); x.lineWidth=s*.07; x.strokeStyle='#ffd26a'; x.stroke(); x.restore();
+  txt('?',gx,gy+9*u,20*u,'#ffd26a',800,0);
+  x.save(); x.setLineDash([4*u,6*u]); x.strokeStyle='rgba(255,210,106,.7)'; x.lineWidth=2*u; x.beginPath(); x.moveTo(xf+4*u,fy); x.lineTo(gx-24*u,gy+10*u); x.stroke(); x.restore();
+  txt(String(cfg.n||'')+' · '+fmtN(cfg.dist)+' '+(L.unitM||'м'),xf,fy-58*u,18*u,'#fff',800,0);
+  txt(ovT('duelPicBeat').toUpperCase(),W/2,226*u,24*u,'#ffd26a',800,2*u);
+}
+let _duelShareBusy=false;
+async function duelShareRich(pid, text, sent, plain){
+  const can=typeof tg!=='undefined' && tg && tg.shareMessage && tg.initData && typeof tgv==='function' && tgv('8.0') && typeof SYNC_URL!=='undefined' && typeof forgeShareClip==='function';
+  if(!can){ plain(); return; }
+  if(_duelShareBusy) return;
+  _duelShareBusy=true;
+  try{
+    const cfg={h1:228,h2:268,mood:40,fog:true,n:myCallsign(),dist:Math.floor(S.dist),draw:duelShareDraw};
+    const clip=await forgeShareClip(cfg); // анимация; не вышло — обычная картинка
+    const startapp='duel_'+pid;
+    const r=await syncFetch(SYNC_URL, clip ? {action:'share_map',initData:tg.initData,mp4:clip.mp4,thumb:clip.thumb,w:clip.w,h:clip.h,dur:clip.dur,caption:text,startapp:startapp}
+                                          : {action:'share_map',initData:tg.initData,png:forgeShareImagePng(cfg),caption:text,startapp:startapp});
+    const ans=await r.json();
+    if(!r.ok||!ans.ok||!ans.id) throw new Error(ans.error||('http_'+r.status));
+    tg.shareMessage(ans.id,function(ok){ if(ok) haptic('success'); }); // окно выбора чата уже показано: отказ — не повод слать ссылку вдогонку
+    sent();
+  }catch(e){
+    if(typeof BEACON!=='undefined') BEACON.signal('duel_share_fail', String(e&&e.message||e).slice(0,60));
+    _duelShareBusy=false; plain(); return; // не вышло — прежний путь со ссылкой
+  }
+  _duelShareBusy=false;
+}
 wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, планку друг получит с сервера
   const pid=(typeof syncMyId==='function')?syncMyId():null;
   if(!pid){ toast(L.duelTgOnly,'rgba(255,159,176,.5)'); haptic('error'); return; } // вне мини-аппа нет верифицированной личности
   haptic('success'); sfx.click();
-  const tgLink='https://t.me/realcosmogrambot/app?startapp=duel_'+pid;
+  const tgLink='https://t.me/realcosmogrambot?startapp=duel_'+pid; // 01.10.2026: главное приложение бота без «/app» — запускает игру сразу («/app» открывало только чат бота)
   /* 30.08.2026 (владелец): раньше ссылка ВСЕГДА вела в Telegram — друга без Telegram звать
      было некуда. Веб-версия игры уже умеет Discord/Google (см. duelBoot — тот же приём,
      что forgeBoot уже делает для #map=), поэтому вне Telegram шарим ссылку на неё саму,
@@ -5102,16 +5148,19 @@ wireOn('duelBtn', 'click', ()=>{ // вызвать друга: deep-link, пла
      рос по самому нажатию, и достижение «Дуэлянт» (+10 ✦) бралось тапом с немедленным
      закрытием диалога — награда за ничего. */
   const sent=()=>{ Stats.duelsSent=(Stats.duelsSent||0)+1; saveStats(); if(typeof achCheck==='function') achCheck(); };
-  if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ссылка сразу открывает мини-апп
+  const plain=()=>{
+    if(tg&&tg.openTelegramLink){ // внутри Telegram — родной диалог остаётся первым, ссылка сразу открывает мини-апп
+      const url='https://t.me/share/url?url='+encodeURIComponent(tgLink)+'&text='+encodeURIComponent(text);
+      try{ tg.openTelegramLink(url); sent(); return; }catch(e){}
+    }
+    if(navigator.share){ // вне Telegram — системный лист ОС (любой мессенджер), ссылка ведёт на веб-версию
+      navigator.share({text:text, url:webLink}).catch(()=>{});
+      sent(); return;
+    }
     const url='https://t.me/share/url?url='+encodeURIComponent(tgLink)+'&text='+encodeURIComponent(text);
-    try{ tg.openTelegramLink(url); sent(); return; }catch(e){}
-  }
-  if(navigator.share){ // вне Telegram — системный лист ОС (любой мессенджер), ссылка ведёт на веб-версию
-    navigator.share({text:text, url:webLink}).catch(()=>{});
-    sent(); return;
-  }
-  const url='https://t.me/share/url?url='+encodeURIComponent(tgLink)+'&text='+encodeURIComponent(text);
-  const w=window.open(url,'_blank'); if(w) sent();
+    const w=window.open(url,'_blank'); if(w) sent();
+  };
+  duelShareRich(pid, text, sent, plain);
 });
 wireOn('feedbackBtn', 'click', ()=>openFeedback('menu'));
 wireOn('feedbackBackBtn', 'click', closeFeedback);
