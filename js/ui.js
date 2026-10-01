@@ -4728,14 +4728,46 @@ function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec 
   if(bw<MINR){ x0=(x0+x1)/2-MINR/2; bw=MINR; }
   if(bh<MINR){ y0=(y0+y1)/2-MINR/2; bh=MINR; }
   const aw=W-pad.l-pad.r, ah=H-pad.t-pad.b;
-  let d='', sx=0, sy=0, ex=0, ey=0;
+  let d='', sx=0, sy=0, ex=0, ey=0; const mp=[];
   pts.forEach(function(p,i){
     const x=Math.round((pad.l+(p[0]-x0)/bw*aw)*10)/10, y=Math.round((pad.t+(p[1]-y0)/bh*ah)*10)/10;
-    d+=(i?' L':'M')+x+','+y;
+    d+=(i?' L':'M')+x+','+y; mp.push([x,y]);
     if(i===0){ sx=x; sy=y; }
     ex=x; ey=y;
   });
-  return { d:d, sx:sx, sy:sy, ex:ex, ey:ey };
+  return { d:d, sx:sx, sy:sy, ex:ex, ey:ey, pts:mp };
+}
+/* 02.10.2026 «Старт и финиш на самой линии» (макет «Срыв и финиш — рельса», доска «Ж»; владелец: «делаем»). Было: справа рельса с флажком, крестом и
+   подписью поверх линии. Владелец: «финиш отдельно от того, где ты летишь, старт отдельно от того, где стартуешь». Теперь отметки стоят НА линии:
+   голубой флаг в её начале, золотой клетчатый флаг с салютом в конце (победа), значок «Ворота» и плашка «Срыв · N м» в конце (срыв). Одна иконка флага
+   на старт и финиш (меняется только цвет и узор). Плашка сама ищет место, где нет линии и флага старта (ofSpot). Только «Без касаний»; Эстафета прежняя. */
+function ofFlag(x,y,col,gold){
+  const t='translate('+(Math.round((x-300)*10)/10)+' '+(Math.round((y-46)*10)/10)+')';
+  return '<g class="'+(gold?'ofFlagFin':'ofFlagStart')+'" transform="'+t+'"><line x1="286" y1="46" x2="314" y2="46" stroke="'+col+'" stroke-width="2" stroke-linecap="round"/><line x1="300" y1="12" x2="300" y2="46" stroke="'+col+'" stroke-width="2" stroke-linecap="round"/>'
+    +(gold ? '<rect x="277.5" y="12" width="22.5" height="13.5" fill="#1b2347"/><rect x="277.5" y="12" width="22.5" height="13.5" fill="url(#ofChk)"/><rect x="277.5" y="12" width="22.5" height="13.5" fill="none" stroke="#f0c040" stroke-width=".9"/>'
+           : '<rect x="277.5" y="12" width="22.5" height="13.5" fill="'+col+'"/><rect x="277.5" y="12" width="22.5" height="13.5" fill="none" stroke="#dfe8ff" stroke-width=".9"/>')+'</g>';
+}
+function ofConfetti(x,y){ // салют победы: те же четыре цвета, что у конфетти игры (js/finish.js COLS)
+  const R=[[-26,-22,'255,215,106',-30],[-10,-34,'168,200,255',20],[8,-32,'255,159,176',-15],[22,-20,'143,255,159',35],[-2,-44,'255,215,106',60]];
+  return '<g transform="translate('+(Math.round((x-8)*10)/10)+' '+(Math.round((y-18)*10)/10)+')">'+R.map(function(c){
+    return '<rect x="'+c[0]+'" y="'+c[1]+'" width="6" height="2.4" rx="1" fill="rgb('+c[2]+')" transform="rotate('+c[3]+' '+(c[0]+3)+' '+(c[1]+1.2)+')"/>'; }).join('')+'</g>';
+}
+function ofSpot(m,W,H,pw,ph,o){ // левый верхний угол плашки (в единицах рисунка): перебор сторон, штраф за линию под плашкой, за флаг старта и за выход за край
+  const ex=m.ex, ey=m.ey, g=o.gap, lift=o.lift||0;
+  const cs={ right:[ex+g,ey-ph/2], left:[ex-g-pw,ey-ph/2], above:[ex-pw/2,ey-g-ph-lift], below:[ex-pw/2,ey+g] };
+  let best=null, bs=1e9;
+  o.sides.forEach(function(sd){
+    const c=cs[sd], x0=Math.min(Math.max(c[0],2),W-2-pw), y0=Math.min(Math.max(c[1],2),H-2-ph);
+    let hit=0; const P=m.pts||[];
+    for(let i=1;i<P.length;i++) for(let t=0;t<=12;t++){
+      const x=P[i-1][0]+(P[i][0]-P[i-1][0])*t/12, y=P[i-1][1]+(P[i][1]-P[i-1][1])*t/12;
+      if(x>=x0 && x<=x0+pw && y>=y0 && y<=y0+ph) hit++;
+    }
+    if(!(m.sx+16<x0 || m.sx-26>x0+pw || m.sy+6<y0 || m.sy-36>y0+ph)) hit+=50;
+    const sc=hit+Math.abs(x0-c[0])*2+Math.abs(y0-c[1])*2;
+    if(sc<bs){ bs=sc; best=[x0,y0]; }
+  });
+  return best||[2,2];
 }
 function overBtnsHome(){ // 30.09.2026 «Схема экрана итогов»: «Ещё раз» и «Смотреть» переезжают в карточку «Твой полёт» (overFlightFillInner); перед очисткой карточки и на каждом итоге без неё они возвращаются на своё место — иначе спрятались бы вместе с ней
   const scr=$('gameOverScreen'), rb=$('retryBtn'), wb=$('watchBtn'), gw=$('gyroOfferWrap'), tb=$('tribuneBtn');
@@ -4775,7 +4807,7 @@ function overFlightFillInner(){
   const marks=overFlightMarks(OF_CHIPS); // все награды полёта: одна главная идёт в слот слева, остальные — мелкими значками под ним
   const slot=overFlightSlot(marks), sa=(mode==='classic'||mode==='daily'||mode==='relay'||mode==='slalom'), side=!!(slot.html||slot.icons); // sa — Score Attack: новый порядок итогов, рекорды пирамидкой вместо левой колонки
   OF_BOXW=(side && !sa)?189:299; // рисунок делит карточку с левой колонкой — подписи считаем по его ширине
-  const H=(slalom&&!sa)?(side?330:290):((side||sa)?250:176), RAIL=slalom?30:0, RX=OF_W-18;
+  const H=(slalom&&!sa)?(side?330:290):((side||sa)?250:176), RAIL=0; // 02.10.2026: рельсы справа больше нет (старт и финиш — флаги на самой линии), поле линии на всю ширину
   const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
   if(!m) return;
   let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
@@ -4784,17 +4816,7 @@ function overFlightFillInner(){
   const unit=' '+(L.unitM||'м'), dist=Math.max(0,Math.floor(S.dist));
   const distTxt=fmtN(slalom?Math.min(dist,SLALOM_DIST):dist)+unit; // пройденное — в подписи стикера / креста, а не в шапке (в шапке теперь переключатель)
   let svg='', failCap='';
-  if(slalom){ // рельса до финиша: сплошная — сколько долетел, пунктир — сколько осталось, флажок — финиш, красный крест — место срыва
-    const top=18, bot=H-18, yNow=Math.round((bot-(fin?1:Math.min(1,dist/SLALOM_DIST))*(bot-top))*10)/10; // победа — рельса сплошная целиком, без креста
-    svg+='<line class="ofRailLeft" x1="'+RX+'" y1="'+top+'" x2="'+RX+'" y2="'+yNow+'"/>'
-      +'<line class="ofRailDone" stroke="'+trailCol+'" x1="'+RX+'" y1="'+yNow+'" x2="'+RX+'" y2="'+bot+'"/>'
-      +'<path d="M'+RX+' '+top+'v14M'+RX+' '+top+'l12 4-12 4" fill="none" stroke="#f0c040" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(!fin){
-      svg+='<path class="ofCross" d="M'+(RX-6)+' '+(yNow-6)+'l12 12M'+(RX+6)+' '+(yNow-6)+'l-12 12" fill="none" stroke="#ff5f6d" stroke-width="2.6" stroke-linecap="round"/>';
-      // 30.09.2026 (владелец, скриншот): «срыв ставь там, где понятно, как Мину» — крест на самой рельсе в точке срыва + короткая подпись слева, а не строка под счётом
-      failCap='<div class="ofCap ofCapL" style="left:'+(Math.round((RX-11)/OF_W*10000)/100)+'%;top:'+(Math.round(yNow/H*10000)/100)+'%;transform:translate(-100%,-50%);color:#ff8b95">'+escapeHtml(ovT('overFailCap')+' · '+distTxt)+'</div>';
-    }
-  }
+  if(slalom) svg+='<defs><pattern id="ofChk" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="translate(277.5 12)"><rect width="4.5" height="4.5" fill="#f0c040"/><rect x="4.5" y="4.5" width="4.5" height="4.5" fill="#f0c040"/></pattern></defs>'; // узор клетчатого флага финиша
   svg+='<path class="ofTrail" pathLength="1" stroke="'+trailCol+'" d="'+m.d+'"/><circle cx="'+m.sx+'" cy="'+m.sy+'" r="3" fill="#dfe8ff"/>';
   let stk='', cap='';
   if(fin || OF_FIN.end){ // финиш: золотой круглый стикер с флажком на конце линии + «Финиш · очки» (очки ушли с главного числа на рисунок — решение владельца); Караван — «Время вышло · очки», Эстафета — «Этап N сдан · очки» (владелец, 30.09)
@@ -4814,6 +4836,21 @@ function overFlightFillInner(){
     const capTxt=(beam ? ovT('overBeamCap') : (L[OF_KIND_NAME[kind]]||'')) + (slalom ? '' : ' · '+distTxt); // «Мина · 640 м»: где остановило
     const capTop = m.ey > H-58 ? 'calc('+py+'% - 44px)' : 'calc('+py+'% + 25px)'; // у нижней кромки подпись уходит НАД стикер
     cap='<div class="ofCap" style="left:'+ofCapLeft(px,capTxt)+'%;top:'+capTop+'">'+escapeHtml(capTxt)+'</div>';
+  }
+  if(slalom){ // 02.10.2026 «Старт и финиш на самой линии»: см. ofFlag
+    const kk=OF_W/OF_BOXW, pc=function(v,of){ return Math.round(v/of*10000)/100; };
+    svg+=ofFlag(m.sx,m.sy,'#6cf7f7',false);
+    if(fin){ // победа: золотой флаг и салют в конце линии вместо «конфетки», плашка «Финиш · очки»
+      stk='';
+      svg+=ofFlag(m.ex,m.ey,'#f0c040',true)+ofConfetti(m.ex,m.ey);
+      const txt=ovT('overFinCap')+(OF_FIN.sc>0?' · '+fmtN(OF_FIN.sc):'');
+      const sp=ofSpot(m,OF_W,H,(String(txt).length*8.2+22)*kk,26*kk,{gap:26*kk,sides:['below','right','left','above'],lift:22*kk});
+      cap='<div class="ofCap ofChip fin" style="left:'+pc(sp[0],OF_W)+'%;top:'+pc(sp[1],H)+'%">'+escapeHtml(txt)+'</div>';
+    } else { // срыв: значок на конце линии (если известно, обо что) и плашка «чем · Срыв · сколько метров»
+      const nm=beam ? ovT('overBeamCap') : (haveStk ? (L[OF_KIND_NAME[kind]]||'') : '');
+      const sp=ofSpot(m,OF_W,H,74*kk,(nm?56:42)*kk,{gap:28*kk,sides:['right','left','above','below']});
+      cap='<div class="ofCap ofChip fail" style="left:'+pc(sp[0],OF_W)+'%;top:'+pc(sp[1],H)+'%">'+(nm?'<i>'+escapeHtml(nm)+'</i>':'')+'<b>'+escapeHtml(ovT('overFailCap'))+'</b><em>'+escapeHtml(distTxt)+'</em></div>';
+    }
   }
   /* 30.09.2026 «Подробности внутри окошка» (вариант А, макет «Итоги обычного игрока»): шесть чисел, которые объясняют счёт (время, звёзды,
      комбо, впритык, плавность, волна); побитое подсвечено золотом со стрелкой — игра хранит рекорды комбо и волны (Stats.bestCombo/bestWave),
