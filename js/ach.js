@@ -262,7 +262,9 @@ function achPassportHtml(){
     +cc('mast-combo','#8fff9f','×'+(Stats.bestCombo||0),T('achPassCombo'))+cc('mast-rec','#ff9f8f',fmtN(Stats.recBeats||0),T('achPassBeat'))+'</div>';
 }
 let _achPassGen=0;
-function achPassportFill(root){
+/* 01.10.2026 (находка tools/screen-audit.mjs на данных «самое широкое»): ник до 10 знаков из самых широких букв (ЩЩЩЩЩЩЩЩЩЩ, WWWWWWWWWW) не помещался в обложку и обрезался многоточием. Теперь кегль ника уменьшается, пока ник не влезет целиком (минимум 13 px). */
+function achFitNick(root){ const nb=root.querySelector('.mpTx b'); if(!nb) return; nb.style.fontSize=''; let fs=22; while(nb.scrollWidth>nb.clientWidth+1 && fs>13){ fs-=1; nb.style.fontSize=fs+'px'; } }
+function achPassportFill(root){ requestAnimationFrame(()=>achFitNick(root)); setTimeout(()=>achFitNick(root),350);
   const cv=root.querySelector('.mpShip'); if(cv && typeof overSkinDraw==='function') overSkinDraw(cv, S.skin); // свой самолёт
   if(typeof syncAvailable!=='function' || !syncAvailable()) return; // гостю места не показываем — только рекорды
   const gen=++_achPassGen, put=function(id,rank){ if(gen!==_achPassGen) return; const el=document.getElementById(id); if(!el||!(rank>0)) return; el.textContent='#'+rank; el.classList.remove('hidden'); el.classList.toggle('g',rank===1); };
