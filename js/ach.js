@@ -258,8 +258,8 @@ function achPassportHtml(){
     +row('mode-slalom',L.modeSlalom,T('achPassSubTime'),sl>0?fmtTimeRes(sl):'',  'mpPlSL',sl>0)
     +how
     +'<div class="mpSec">'+T('achPassMast')+'</div><div class="mpChips">'
-    +cc('nearmiss','#eef4ff',fmtN(Stats.nearMiss||0),T('achPassNear'))+cc('checkbadge','#f0c040',fmtN(Stats.perfectRuns||0),T('achPassPerfect'))
-    +cc('combo','#8fff9f','×'+(Stats.bestCombo||0),T('achPassCombo'))+cc('target','#ff9f8f',fmtN(Stats.recBeats||0),T('achPassBeat'))+'</div>';
+    +cc('mast-near','#eef4ff',fmtN(Stats.nearMiss||0),T('achPassNear'))+cc('mast-perfect','#f0c040',fmtN(Stats.perfectRuns||0),T('achPassPerfect'))
+    +cc('mast-combo','#8fff9f','×'+(Stats.bestCombo||0),T('achPassCombo'))+cc('mast-rec','#ff9f8f',fmtN(Stats.recBeats||0),T('achPassBeat'))+'</div>';
 }
 let _achPassGen=0;
 function achPassportFill(root){
