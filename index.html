@@ -4135,7 +4135,7 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   border:1px solid rgba(201,164,92,.4); background:rgba(14,18,32,.7); color:#dce9ff; font-size:12px;
   letter-spacing:.05em; text-transform:uppercase; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
 .overCard .topGh.orGhost .ic { width:1.1em; height:1.1em; }
-#webJoin.overCard { gap:8px; margin:18px 0 0; text-align:left; } /* id+класс: перебивает старое #webJoin{margin;text-align:center} */
+#webJoin.overCard { gap:8px; margin:18px 0 0; text-align:center; } /* id+класс: перебивает старое #webJoin{margin;text-align:center} */
 #webJoin.overCard #webJoinTxt { color:#9fb4d8; font-size:12px; font-weight:400; line-height:1.45; padding:0; margin:0; text-shadow:none; text-transform:none; letter-spacing:.02em; }
 #webJoinTitle { font-size:15px; font-weight:700; color:var(--gold-hi); letter-spacing:.04em; text-transform:uppercase; }
 #webJoinWould { font-size:13px; color:#f2f7ff; letter-spacing:.04em; text-transform:uppercase; }
@@ -4336,6 +4336,13 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 #gameOverScreen.saNew #overFlight .ofBody { flex:1 1 auto; display:flex; align-items:flex-start; position:relative; padding:6px 16px 0; }
 #gameOverScreen.saNew #overFlight .ofBox { margin:0 auto -14px; } /* верхний отступ выставляет overSaPlace() по высоте ряда рекордов */
 #gameOverScreen.saNew #overFlight .ofNums { padding-top:10px; box-sizing:border-box; }
+#gameOverScreen.saNew #watchBtn { display:none; } /* 01.10.2026 (владелец, макет Неба месяца): «Смотреть полёт» не нужен — видео у всех режимов в панели «Показать» */
+#gameOverScreen.saNew.stretch #overFlight { flex:1 1 auto; }
+#gameOverScreen.saNew.stretch #overFlight .ofBody { align-items:center; } /* рисунок — посередине растянутого окна */
+/* 01.10.2026 Эстафета (макет): финиш — золотая «конфетка» с флажком, этапы и «Продолжить эстафету» внутри окна */
+#gameOverScreen.saNew #overFlight .ofStk.candy { width:50px; height:50px; margin:-25px 0 0 -25px; border:3px solid #fff3c4; background:radial-gradient(circle at 35% 28%,#fff0b0,#f0b83a 70%) !important; box-shadow:0 0 0 6px rgba(255,217,102,.18),0 0 22px rgba(255,217,102,.75); }
+#gameOverScreen.saNew #overFlight.hasRel { padding-bottom:12px; }
+.relFoot{margin:6px 16px 4px;padding-top:12px;border-top:1px solid rgba(155,123,224,.28)} .relRail{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:12px} .rn{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 'Exo 2',sans-serif;color:#9fb4d8;border:2px solid rgba(155,123,224,.35);background:rgba(14,18,32,.6);box-sizing:border-box} .rn svg{width:16px;height:16px} .rn.done{color:#3a2604;border-color:#fff3c4;background:radial-gradient(circle at 35% 28%,#ffe9a0,#e3a92a 78%);box-shadow:0 0 10px rgba(240,192,64,.45)} .rn.next{color:#fff;border-color:#b79cf5;background:rgba(155,123,224,.22);box-shadow:0 0 12px rgba(155,123,224,.55)} .rl{flex:none;width:34px;height:3px;border-radius:2px;background:rgba(155,123,224,.3)} .rl.done{background:linear-gradient(90deg,#e3a92a,#ffe9a0)} .relFoot .gcGo{margin-top:0} /* режимы без таблицы мест (Небо месяца, Эстафета): окно растягивается до кнопок */
 #gameOverScreen.saNew #overFlight .ofVid { display:none; } /* видео — лампочка на «Показать» */
 /* карточка соседа */
 #gameOverScreen.saNew #overRank.gcard { position:relative; overflow:hidden; display:flex; flex-direction:column; gap:11px; padding:14px 16px; border:1px solid rgba(240,192,64,.28); background:rgba(22,28,54,.85); box-shadow:none; font-family:"Exo 2",sans-serif; }
@@ -4817,9 +4824,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <symbol id="i-medal-bullet" viewBox="0 0 24 24"><path d="M9.5 2.5h5M12 4.5v2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><circle cx="12" cy="14" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 10.2V14l2.8 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.2 8.2l1.6 1.6M19.8 8.2l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></symbol>
 <symbol id="i-medal-dist" viewBox="0 0 24 24"><circle cx="4.5" cy="19.5" r="1.3" fill="currentColor"></circle><path d="M6.5 17.7 8.3 15.9M10.1 14.1l1.8-1.8M13.7 10.5l1.8-1.8M17.3 6.9l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path d="M15.3 4.3 19 3.2l-1.1 3.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.599"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.599"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.599"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.600"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.600"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.600"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -6132,26 +6139,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.599" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.599"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.599"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.599"></script>
-<script defer src="js/game.js?v=1.478.599" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.599"></script>
-<script defer src="js/sync.js?v=1.478.599"></script>
-<script defer src="js/render.js?v=1.478.599"></script>
-<script defer src="js/planetarium.js?v=1.478.599"></script>
-<script defer src="js/goldstar.js?v=1.478.599"></script>
-<script defer src="js/finish.js?v=1.478.599"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.599"></script>
-<script defer src="js/gyro.js?v=1.478.599"></script>
-<script defer src="js/forge.js?v=1.478.599"></script>
-<script defer src="js/partitura.js?v=1.478.599"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.599"></script>
-<script defer src="js/card.js?v=1.478.599"></script>
-<script defer src="js/star.js?v=1.478.599"></script>
-<script defer src="js/cinema.js?v=1.478.599"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.599"></script>
+<script defer src="js/core.js?v=1.478.600" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.600"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.600"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.600"></script>
+<script defer src="js/game.js?v=1.478.600" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.600"></script>
+<script defer src="js/sync.js?v=1.478.600"></script>
+<script defer src="js/render.js?v=1.478.600"></script>
+<script defer src="js/planetarium.js?v=1.478.600"></script>
+<script defer src="js/goldstar.js?v=1.478.600"></script>
+<script defer src="js/finish.js?v=1.478.600"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.600"></script>
+<script defer src="js/gyro.js?v=1.478.600"></script>
+<script defer src="js/forge.js?v=1.478.600"></script>
+<script defer src="js/partitura.js?v=1.478.600"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.600"></script>
+<script defer src="js/card.js?v=1.478.600"></script>
+<script defer src="js/star.js?v=1.478.600"></script>
+<script defer src="js/cinema.js?v=1.478.600"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.600"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —

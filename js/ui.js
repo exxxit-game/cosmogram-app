@@ -4663,8 +4663,12 @@ function overTimeRankFill(d, mode, rsg){
       if(!rsg && up.pid && topFixedTrackByPid[up.pid]) o.ghost={ pid:Math.floor(Number(up.pid)), cat:mode, best:saneNumber(up.best,0) };
     }
   }
-  el.innerHTML=overRankHtml(o); ofTheme(el,mode);
-  el.classList.remove('hidden');
+  const sa=!!($('gameOverScreen') && $('gameOverScreen').classList.contains('saNew')); // «Без касаний» с окном «Твой полёт» — новый порядок итогов
+  if(sa){ el.innerHTML=o.rival ? overSaCardHtml(o) : ''; el.classList.toggle('gcard',!!o.rival); overSaWorld(o,mode); }
+  else { el.classList.remove('gcard'); el.innerHTML=overRankHtml(o); }
+  ofTheme(el,mode);
+  if(sa){ const cv=el.querySelector('.gcSkin'); if(cv) overSkinDraw(cv,o.rivalSkin); }
+  el.classList.toggle('hidden', sa && !o.rival);
 }
 /* Гостю — на месте карточки приглашение войти (#webJoin), с «Твои N — это M-е место из T»
    по тем же первым 100 строкам. Если он ниже всех строк ответа — строку не показываем:
@@ -4736,7 +4740,7 @@ function overFlightModel(samples, W, H, pad){ // чистая: сэмплы rec 
 function overBtnsHome(){ // 30.09.2026 «Схема экрана итогов»: «Ещё раз» и «Смотреть» переезжают в карточку «Твой полёт» (overFlightFillInner); перед очисткой карточки и на каждом итоге без неё они возвращаются на своё место — иначе спрятались бы вместе с ней
   const scr=$('gameOverScreen'), rb=$('retryBtn'), wb=$('watchBtn'), gw=$('gyroOfferWrap'), tb=$('tribuneBtn');
   const wasSa=!!(scr && scr.classList.contains('saNew'));
-  if(scr) scr.classList.remove('ofBtnIn','saNew');
+  if(scr) scr.classList.remove('ofBtnIn','saNew','stretch');
   if(rb && gw && gw.parentNode && rb.parentNode!==gw.parentNode) gw.parentNode.insertBefore(rb,gw);
   if(wb && tb && tb.parentNode && wb.parentNode!==tb.parentNode) tb.parentNode.insertBefore(wb,tb);
   if(wasSa) overSaUnmount();
@@ -4769,9 +4773,9 @@ function overFlightFillInner(){
   if(!overFlightWillShow()) return;
   const slalom=(S.mode==='slalom'), fin=OF_FIN.on, mode=S.mode; // fin — финиш во «времени» (Спидран / «Без касаний» / Биатлон): флажок вместо стикера причины
   const marks=overFlightMarks(OF_CHIPS); // все награды полёта: одна главная идёт в слот слева, остальные — мелкими значками под ним
-  const slot=overFlightSlot(marks), sa=(mode==='classic'), side=!!(slot.html||slot.icons); // sa — Score Attack: новый порядок итогов, рекорды пирамидкой вместо левой колонки
+  const slot=overFlightSlot(marks), sa=(mode==='classic'||mode==='daily'||mode==='relay'||mode==='slalom'), side=!!(slot.html||slot.icons); // sa — Score Attack: новый порядок итогов, рекорды пирамидкой вместо левой колонки
   OF_BOXW=(side && !sa)?189:299; // рисунок делит карточку с левой колонкой — подписи считаем по его ширине
-  const H=slalom?(side?330:290):((side||sa)?250:176), RAIL=slalom?30:0, RX=OF_W-18;
+  const H=(slalom&&!sa)?(side?330:290):((side||sa)?250:176), RAIL=slalom?30:0, RX=OF_W-18;
   const m=overFlightModel(rec, OF_W, H, {l:34, r:34+RAIL, t:36, b:26});
   if(!m) return;
   let kind=String(S.lastHitKind||''); const beam=(kind==='beam'); kind=OF_KIND_ALIAS[kind]||kind;
@@ -4795,10 +4799,10 @@ function overFlightFillInner(){
   let stk='', cap='';
   if(fin || OF_FIN.end){ // финиш: золотой круглый стикер с флажком на конце линии + «Финиш · очки» (очки ушли с главного числа на рисунок — решение владельца); Караван — «Время вышло · очки», Эстафета — «Этап N сдан · очки» (владелец, 30.09)
     const px=Math.round(m.ex/OF_W*10000)/100, py=Math.round(m.ey/H*10000)/100;
-    stk='<div class="ofStk" data-kind="finish" style="left:'+px+'%;top:'+py+'%;color:#2c3e50;background:linear-gradient(160deg,#ffe38a,#e0a92a)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v16M8 5l11 4-11 4"/></svg></div>';
+    stk='<div class="ofStk'+((mode==='relay'||fin)?' candy':'')+'" data-kind="finish" style="left:'+px+'%;top:'+py+'%;color:#2c3e50;background:linear-gradient(160deg,#ffe38a,#e0a92a)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v16M8 5l11 4-11 4"/></svg></div>';
     const capTop = m.ey > H-58 ? 'calc('+py+'% - 44px)' : 'calc('+py+'% + 25px)';
     const finTxt2=(fin ? ovT('overFinCap') : ovT('overRelayLeg')(S.relayLeg))+(OF_FIN.sc>0?' · '+fmtN(OF_FIN.sc):'');
-    cap='<div class="ofCap" style="left:'+ofCapLeft(px,finTxt2)+'%;top:'+capTop+'">'+escapeHtml(finTxt2)+'</div>';
+    cap=(mode==='relay') ? '' : '<div class="ofCap" style="left:'+ofCapLeft(px,finTxt2)+'%;top:'+capTop+'">'+escapeHtml(finTxt2)+'</div>'; // Эстафета: подпись у флажка не нужна — этап сдан виден по флажку и по ряду этапов внутри окна
   }
   else if(haveStk){
     const col=PT_KIND_COLOR[kind];
@@ -4830,10 +4834,12 @@ function overFlightFillInner(){
     +'<div class="ofBox"><svg viewBox="0 0 '+OF_W+' '+H+'" aria-hidden="true">'+svg+'</svg>'+stk+cap+failCap
     +'<button type="button" class="ofVid'+(OF_VID?'':' hidden')+'" aria-label="'+escapeHtml(ovT('overVideoBtn'))+'">'+ic('play')+'</button></div>' // видео этого полёта — левый нижний угол поля рисунка (владелец: «чтобы место не пустовало»); виден, только если «Момент полёта» записал клип
     +'<div class="ofNums"><div class="ofGrid">'+cells+'</div>'+(marksTxt?'<div class="ofMarks">'+escapeHtml(marksTxt)+'</div>':'')+'</div></div>' // «Цифры» лежат поверх всей области (колонка + рисунок), а не только поверх рисунка
-    +(sa ? '' : '<div class="ofFoot"></div>'); // сюда переезжают «Ещё раз» и «Смотреть»
+    +(sa ? (mode==='relay' ? overRelFootHtml() : '') : '<div class="ofFoot"></div>'); // сюда переезжают «Ещё раз» и «Смотреть»
   const foot=el.querySelector('.ofFoot'), rb=$('retryBtn'), wb=$('watchBtn'), scr=$('gameOverScreen');
   if(foot && rb){ foot.appendChild(rb); if(wb) foot.appendChild(wb); if(scr) scr.classList.add('ofBtnIn'); } // 30.09.2026 «Схема экрана итогов»: кнопки на карточке, не отдельной полосой внизу
   if(slot.fd){ const fd=$('finishDelta'); if(fd) fd.classList.add('hidden'); } // разница уже в слоте — под цифрой её больше нет
+  el.classList.toggle('hasRel', sa && mode==='relay');
+  const relGo=el.querySelector('.relGoBtn'); if(relGo) relGo.addEventListener('click', function(){ if(typeof flyRelay==='function') flyRelay(); }); // «Продолжить эстафету» — берём следующий этап
   if(sa){ el.classList.add('noRank'); overSaStop(); overSaMount(); overSaLabels(saRecs.items); } // место в мире придёт позже (overRankFill → overSaWorld)
   if(sa) setHTML('newRecord', OF_CHIPS.filter(function(h){ const m=overFlightMarks([h]); return !m.length; }).join('')); // Score Attack: рекорды и отметки уже подписями над числом; «призрак повержен» убран совсем (владелец 01.10: факт и так виден по месту и счёту); плашкой остаётся только непонятое
   else if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки разобраны (слот или значок) — иначе непонятая плашка пропала бы бесследно
@@ -4904,6 +4910,14 @@ const SA_IC={ // значки рекордов: форма огня — Lucide (
   bars:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="4.6" height="7.5" rx="1.7" fill="currentColor"/><rect x="9.7" y="8.3" width="4.6" height="12.2" rx="1.7" fill="currentColor"/><rect x="15.9" y="3.5" width="4.6" height="17" rx="1.7" fill="currentColor"/></svg>',
   ghost:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 2.2c-4.1 0-7 3.1-7 7.3v10c0 .9 1 1.3 1.6.7l1.6-1.5 1.7 1.6c.6.6 1.5.6 2.1 0l1.7-1.6 1.6 1.5c.6.6 1.6.2 1.6-.7v-10c0-4.2-2.9-7.3-7-7.3z"/><ellipse cx="9.3" cy="10.2" rx="1.35" ry="1.7" fill="#3a2a06"/><ellipse cx="14.7" cy="10.2" rx="1.35" ry="1.7" fill="#3a2a06"/></svg>'
 };
+function overRelFootHtml(){ // Эстафета: ряд этапов (сданные — золотые с галочкой, следующий — подсвечен) и кнопка «Продолжить эстафету»; макет 30.09
+  const tot=RELAY_LEGS_TOTAL, leg=Math.max(0,Math.min(tot,S.relayLeg|0));
+  const chk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let rail=''; for(let i=1;i<=tot;i++){ const st=i<=leg?'done':(i===leg+1?'next':''); rail+=(i>1?'<i class="rl'+(i<=leg?' done':'')+'"></i>':'')+'<span class="rn '+st+'">'+(i<=leg?chk:i)+'</span>'; }
+  const plane='<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" style="width:34px;height:34px;margin:6px 0 0 6px"><path d="M3 11.5l18-8-7 18-3-7.5z"/></svg>';
+  const go=(leg<tot) ? '<div class="gcGo"><i style="width:100%"></i><span>'+escapeHtml(ovT('overRelGo'))+'</span><em>'+plane+'</em><button type="button" class="gcHit relGoBtn" aria-label="'+escapeHtml(ovT('overRelGo'))+'"></button></div>' : '';
+  return '<div class="gcard relFoot"><div class="relRail" aria-label="'+escapeHtml(ovT('overRelRail'))+'">'+rail+'</div>'+go+'</div>';
+}
 function overSaHead(dot){ // шапка окна: слева результат (туда переезжают #finalScoreLabel/#finalScore), справа место в мире, между ними линия и «i» (тап — цифры полёта)
   return '<div class="orHead"><div class="hdR"></div><div class="hdL"></div><i class="hdDiv"></i>'
     +'<button type="button" class="ofInfo" aria-label="'+escapeHtml(ovT('overInfoAria'))+'"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="5.6" r="2.3" fill="currentColor"/><rect x="10" y="10" width="4" height="10" rx="2" fill="currentColor"/></svg>'+dot+'</button></div>';
@@ -4911,8 +4925,14 @@ function overSaHead(dot){ // шапка окна: слева результат 
 function overSaRecs(marks){ // рекорды и отметки полёта → список подписей, что сменяют друг друга над числом (overSaLabels): сначала рекорды (счёт, дистанция, комбо, волна), потом спокойные отметки; названия одинаковые во всех режимах
   const items=[], seen={}, add=function(txt,rec){ if(!txt||seen[txt]) return; seen[txt]=1; items.push({txt:txt, rec:rec}); };
   const rm=$('recordMedals'); // медали gameOver() (рекорд по способу управления / дистанции) — не рисуем над окном, а берём как подписи
-  if(rm) rm.querySelectorAll('.medalCap').forEach(function(c){ const t=c.textContent.trim(); add(t===String(L.recordDist) ? t : ovT('overRecScore'), 1); });
-  marks.forEach(function(m){ if(m.icn==='ghost' || m.calm) return; add(m.txt.replace(/^Новый\s+/i,''), 1); }); // «призрак повержен» — длинная строка со счётами, в подпись не идёт, остаётся плашкой
+  if(rm) rm.querySelectorAll('.medalCap').forEach(function(c){ const t=c.textContent.trim(); add((t===String(L.recordDist)||t===String(ovT('overMedalTime'))) ? t : ovT('overRecScore'), 1); });
+  if(OF_FIN.on && !S.wasRestored){ // «Без касаний»: разница к личному рекорду — подписью над временем (раньше стояла под числом)
+    const prev=OF_FIN.prev, sec=' '+ovT('overSecUnit');
+    if(prev>0){ const raw=S.time-prev; let mag=Math.round(Math.abs(raw)*10)/10; if(mag===0 && raw!==0) mag=0.1; const good=OF_FIN.rec;
+      add((good?'−':'+')+String(mag.toFixed(1)).replace(/.0$/,'')+sec+' · '+ovT(good?'overFinPrev':'overFinBest')+' '+fmtTimeRes(prev), good?1:0); }
+    else add(ovT('overFinFirst').charAt(0).toUpperCase()+ovT('overFinFirst').slice(1), 0);
+  }
+  marks.forEach(function(m){ if(m.icn==='ghost' || m.calm) return; if(S.mode==='relay' && m.txt===String(L.relayLegSent(S.relayLeg))) return; add((S.mode==='daily' && String(m.txt).indexOf(String(L.dlNewBest))===0) ? ovT('overRecScore') : m.txt.replace(/^Новый\s+/i,''), 1); }); // Небо месяца: «Новый рекорд Неба месяца» → «Рекорд счёта» (названия рекордов одинаковые во всех режимах) // «призрак повержен» — длинная строка со счётами, в подпись не идёт, остаётся плашкой
   if(OF_REC.combo) add(ovT('overRecCombo')(S.comboMax), 1);
   if(OF_REC.wave) add(ovT('overRecWave')(S.mission), 1);
   marks.forEach(function(m){ if(m.icn==='ghost' || !m.calm) return; add(m.txt, 0); });
@@ -4949,6 +4969,7 @@ function overSaMount(){ // на экране: счёт — в шапку окн�
   const cb=$('cinemaClipBtn'), pn=$('shareSheetPanel'), cd=$('cardBtn');
   if(cb && pn && cd){ if(!cb.dataset.t0) cb.dataset.t0=cb.textContent; cb.textContent=ovT('overVideoLbl'); pn.insertBefore(cb,cd); }
   scr.classList.add('saNew'); scr.classList.toggle('vidOn',OF_VID);
+  scr.classList.toggle('stretch', S.mode==='daily' || S.mode==='relay' || (S.mode==='slalom' && !S.slalomWin)); // нет таблицы мест — окно растягивается до кнопок
 }
 function overSaUnmount(){ overSaStop(); const fl0=$('finalScoreLabel'); if(fl0){ fl0.classList.remove('lbAlt'); fl0.style.color=''; fl0.style.opacity=''; } // обратно: счёт на своё место над окном, подписи кнопок и порядок панели — как у остальных режимов (кнопка «Ещё раз» вернулась в overBtnsHome)
   const fl=$('finalScoreLabel'), fs=$('finalScore'), rm=$('recordMedals');
