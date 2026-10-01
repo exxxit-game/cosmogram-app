@@ -11,7 +11,7 @@
      S  — центральное состояние забега (game.js). AC — AudioContext (core.js). */
 
 /* ---------- Авто-качество (Блок 3/10): shadowBlur — главный мобильный тормоз ---------- */
-const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hold:0, _ceil:-1, _prove:0, _elapsed:0, _baseFps:null }; // 0=low 1=med 2=high 3=ultra; mode — настройка игрока
+const Q = { level:2, fps:60, mode:'auto', _acc:0, _n:0, _t:0, _up:0, _dn:0, _hold:0, _ceil:-1, _prove:0, _elapsed:0, _baseFps:null, _res:0, _rdn:0, _rup:0 }; // 0=low 1=med 2=high 3=ultra; mode — настройка игрока
 /* v1.477.26 «Разогрев отличим от слабого» (найдено 27.08.2026, веб-исследование про тепловой
    троттлинг): fps_drop/fps_drop_severe раньше несли только текущий Q.fps — по нему нельзя было
    отличить «телефон слабый с самого начала» от «телефон разогрелся и просел». Решение владельца:
@@ -85,6 +85,18 @@ function qualityTick(dt){
        безопасно можно только там, где есть кому вовремя откатить. */
     const {dn,up}=qThr(), cap=3; // v1.7.0: среднему тиру красоту бережём до последнего; v1.12.0: флагману доступна «Ультра»
     const ceil = Q._ceil>=0 ? Math.min(cap,Q._ceil-1) : cap; // v1.35.0: уровень, с которого упали, авто не штурмует, пока устройство не докажет стабильность
+    if(Q.level>=3){ // 01.10.2026 «Ультра на 50+ fps» (владелец; замер на Oppo CPH2631: холст 720×1604 — 48 fps, 630×1404 — 56, 576×1283 — 60; эффекты «Ультра» на цену почти не влияют, цена — число пикселей): эффекты держим, чёткость холста снижаем шагом 0,1, пока кадр не станет держаться на цели; обратно поднимаем, только когда устройство упирается в частоту экрана
+      const tgt=Math.min(up,54), curRes=Q._res>0?Q._res:Math.min(window.devicePixelRatio||1,2.5);
+      if(Q.fps<tgt && curRes>1.5+.001){
+        Q._up=0; Q._rup=0;
+        if(++Q._rdn>=3){ Q._rdn=0; Q._res=Math.max(1.5,Math.round((curRes-.1)*100)/100); Q._hold=3; Store.set('gfxRes',Q._res); gfxCap(); resize(); }
+        return;
+      }
+      Q._rdn=0;
+      if(Q._res>0){ const hz=Math.min(Store.get('dispHz',60),60);
+        if(Q.fps>=hz*.97){ if(++Q._rup>=15){ Q._rup=0; const capR=Math.min(window.devicePixelRatio||1,2.5); Q._res=(Q._res+.1>=capR-.001)?0:Math.round((Q._res+.1)*100)/100; Q._hold=3; Store.set('gfxRes',Q._res); gfxCap(); resize(); } }
+        else Q._rup=0; }
+    }
     if(Q.fps<dn && Q.level>0){ if(++Q._dn>=3){ // 3 секунды просадки подряд — жертвуем и эффектами, и резолюцией
       Q._ceil = Q.level;
       const changed = applyLevelChange(Q.level-1, Q._ceil);
@@ -1096,10 +1108,27 @@ const PREM_FX_MAP={
    мерит другой, более ранний слой — фон/поле, не отрисовку скина). Копится в буфер,
    один сигнал на весь полёт (при посадке), не каждый кадр — не спамить BEACON. */
 let premFxAccum=0, premFxN=0, premFxKey=null;
+/* 01.10.2026 «Тяжёлые скины» (владелец: «сделать игру легче»; замер на Oppo CPH2631 при Ультра 720×1604: медиана скинов 47 fps, а эти шесть — «Фрактал Ляпунова» 32,5,
+   «Открытый научный спор» 35,8, «Круг → шестиугольник» 40,8, «Реликтовое излучение» 41,3, «Наклон ~13°» 42,5, «Фотонное кольцо M87*» 42,5): сотни фигур под вырезом
+   каждый кадр. Теперь они рисуются в маленькую готовую картинку (рамка тела 32×22…14, размер — по текущему масштабу), картинка обновляется 20 раз в секунду, на кадр —
+   один drawImage. Остальные скины не тронуты. */
+const HEAVY_FX_SPRITE=new Set(['freshZirconZity','bioHoneyDebate','bioHoneyCircleHex','cosCMB','bioHoneyTilt13','cosBHPhotonRingM87']);
+const fxSprites=new Map();
+function fxSpriteDraw(ctx, sk, fx, nowMs, fn){
+  const m=ctx.getTransform(), k=Math.max(1,Math.min(6,Math.round(Math.hypot(m.a,m.b)*2)/2)); // пикселей на единицу тела
+  const key=fx+'|'+k; let e=fxSprites.get(key);
+  if(!e){ const cv=document.createElement('canvas'); cv.width=Math.ceil(32*k); cv.height=Math.ceil(36*k); e={cv:cv, x:cv.getContext('2d'), t:-1e9, sk:null}; fxSprites.set(key,e); }
+  if(nowMs-e.t>=50 || e.sk!==sk){
+    e.t=nowMs; e.sk=sk; const x=e.x; x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,e.cv.width,e.cv.height); x.setTransform(k,0,0,k,16*k,22*k);
+    fn(x, sk, nowMs);
+  }
+  ctx.drawImage(e.cv,-16,-22,32,36);
+}
 function drawPremiumFx2(ctx, sk, fx, nowMs){
   const fn=PREM_FX_MAP[fx]; if(!fn) return;
   const t0=performance.now();
-  fn(ctx, sk, nowMs);
+  if(HEAVY_FX_SPRITE.has(fx) && ctx.getTransform && typeof document!=='undefined') fxSpriteDraw(ctx, sk, fx, nowMs, fn);
+  else fn(ctx, sk, nowMs);
   const dt=performance.now()-t0;
   if(premFxKey!==fx){ premFxAccum=0; premFxN=0; premFxKey=fx; }
   premFxAccum+=dt; premFxN++;
