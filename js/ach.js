@@ -426,6 +426,79 @@ const ACH_TR_UK={
  }
 };
 ACH.forEach(a=>{ if(ACH_TR_UK[a.id]) a.x=Object.assign(a.x||{}, {uk:ACH_TR_UK[a.id]}); });
+Object.assign(I18N.de,{
+  achSumOpen:(n,t)=>n+' von '+t+' freigeschaltet', achLast:'Letzter Fund', achNotYet:'Noch nicht gefunden', achFoundHd:'Gefunden', achNotFoundHd:'Nicht gefunden',
+  achSecretHd:(f,t)=>'Geheim · '+f+' von '+t+' gefunden', achSecretLbl:n=>'Geheim · Akte Nr. '+n, achDossier:n=>'Akte Nr. '+n,
+  achClaimCls:'Erfolg', achClaimSec:n=>'Geheime Akte Nr. '+n, achNext:'Weiter'
+});
+const ACH_TR_DE={
+ "c1": {
+  n: "Kármán-Linie",
+  d: "Hundert Kilometer nach oben. Die Grenze des Weltraums für alle außer den Amerikanern: Ihnen genügen achtzig."
+ },
+ "f1": {
+  n: "Pilot",
+  d: "Das Flugzeug hat der Neigung gehorcht. Verdächtig."
+ },
+ "d1": {
+  n: "Erste Herausforderung",
+  d: "Du hast einen Freund herausgefordert. Der Freund weiß noch nicht, dass es eine Warnung war."
+ },
+ "d2": {
+  n: "Duellsieger",
+  d: "Du hast die Marke eines anderen übertroffen. Dein Freund nennt es Zufall."
+ },
+ "o5": {
+  n: "Ein Manöver zu viel",
+  d: "Lege in einem Flug fünfundzwanzig Bildschirmbreiten in der Horizontalen zurück. Das Flugzeug hat sich nicht beschwert."
+ },
+ "s1": {
+  n: "Poyekhali!",
+  d: "12. April 1961. Ein Wort, an das man sich besser erinnert als an alles andere.",
+  h: "Der Anfang ist immer nur einer."
+ },
+ "s2": {
+  n: "Alle kamen zurück",
+  d: "Belka und Strelka: siebzehn Umläufe um die Erde. Alle kamen zurück, auch die Mäuse.",
+  h: "Die Zählung geht der Reihe nach."
+ },
+ "s3": {
+  n: "Laika",
+  d: "3. November 1957. Lange hieß es, sie habe eine Woche gelebt. Die Wahrheit wurde 2002 bekannt.",
+  h: "Schweigen ist auch eine Antwort."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15. August 1977. Das Signal dauerte 72 Sekunden und wiederholte sich nie.",
+  h: "Es dauerte etwas mehr als eine Minute."
+ },
+ "s5": {
+  n: "23 mal 73",
+  d: "16. November 1974. 1679 Punkte, gesendet zu einem Sternhaufen. Auf die Antwort warten wir bis heute.",
+  h: "Ordnet man sie, ergibt sich ein Bild."
+ },
+ "s6": {
+  n: "Staubkorn",
+  d: "14. Februar 1990. Aus sechs Milliarden Kilometern ist die Erde ein Punkt, kleiner als ein Pixel.",
+  h: "Je kleiner, desto besser zu sehen."
+ },
+ "s7": {
+  n: "Keine Panik",
+  d: "Diese Aufschrift steht auf dem Armaturenbrett von „Starman“, der seit dem 6. Februar 2018 an der Erde vorbeifliegt.",
+  h: "Die Antwort auf die wichtigste Frage."
+ },
+ "s8": {
+  n: "Mir",
+  d: "23. März 2001. Die Station lebte fünfzehn Jahre und versank im Pazifischen Ozean.",
+  h: "Vier Etappen — ein Weg."
+ },
+ "s9": {
+  n: "Wo sind alle?",
+  d: "Das Fermi-Paradoxon, 1950. Wenn es sie gibt, wo sind sie? Der leere Himmel des Monats ist auch eine Antwort.",
+  h: "Wenn es sie gibt, wo sind sie?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_DE[a.id]) a.x=Object.assign(a.x||{}, {de:ACH_TR_DE[a.id]}); });
 
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись

@@ -122,6 +122,15 @@ const CINEMA_LINES={
     nearrecord:[n=>`Не вистачило ${n} ${ukPtsWord(n)} до рекорду.`,'Так близько до рекорду!',
       n=>`Ще ${n} — і рекорд твій.`,'Майже переписав історію.',n=>`До рекорду — лише ${n} ${ukPtsWord(n)}.`,
       'Наступного разу — точно.',n=>`${n} ${ukPtsWord(n)} до величі.`,'Рекорд був зовсім поряд.'] },
+  de:{ record:['NEUER REKORD!','Kosmisches Tempo.','So ist noch niemand geflogen.','Der alte Rekord zittert.',
+      'Was für ein Antritt!','Höher geflogen als der Kosmos.','Rekord? Alltag.','Der Himmel wird sich an diesen Flug erinnern.'],
+    nearmiss:['Haarscharf!','Nerven wie Drahtseile.','Noch ein Zentimeter — und aus.','Pfeifend vorbeigerauscht.',
+      'Kaltblütiger Pilot.','Das All hat den Flügel gestreift.','Präzisionsarbeit.','Knapper geht es nicht.'],
+    death:['Wenigstens sah es gut aus.','Der Asteroid war härter.','Diesmal nicht.','Landung... missglückt.',
+      'An der eigenen Kühnheit zerschellt.','Flug beendet. Der Ruhm war nah.','Das All hat sich geholt, was ihm zusteht.','Ein weiterer Held, mit Stil gefallen.'],
+    nearrecord:[n=>`Es fehlten ${n} ${n===1?'Punkt':'Punkte'} bis zum Rekord.`,'So nah am Rekord!',
+      n=>`Noch ${n} — und der Rekord gehört dir.`,'Fast hätte er Geschichte umgeschrieben.',n=>`Nur ${n} ${n===1?'Punkt':'Punkte'} bis zum Rekord.`,
+      'Beim nächsten Mal — bestimmt.',n=>`${n} ${n===1?'Punkt':'Punkte'} bis zur Größe.`,'Der Rekord war ganz nah.'] },
 };
 function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';
