@@ -131,6 +131,15 @@ const CINEMA_LINES={
     nearrecord:[n=>`Es fehlten ${n} ${n===1?'Punkt':'Punkte'} bis zum Rekord.`,'So nah am Rekord!',
       n=>`Noch ${n} — und der Rekord gehört dir.`,'Fast hätte er Geschichte umgeschrieben.',n=>`Nur ${n} ${n===1?'Punkt':'Punkte'} bis zum Rekord.`,
       'Beim nächsten Mal — bestimmt.',n=>`${n} ${n===1?'Punkt':'Punkte'} bis zur Größe.`,'Der Rekord war ganz nah.'] },
+  it:{ record:['NUOVO RECORD!','Velocità cosmica.','Nessuno ha mai volato così.','Il vecchio record è sotto shock.',
+      'Che accelerazione!','Volato oltre il cosmo.','Record? Ordinaria amministrazione.','Il cielo ricorderà questo volo.'],
+    nearmiss:['Per un soffio!','Che nervi.','Ancora un centimetro e addio.','Ha fischiato lì accanto.',
+      'Pilota a sangue freddo.','Lo spazio ha sfiorato l’ala.','Un lavoro di precisione.','Più vicino non si può.'],
+    death:['Almeno era bello da vedere.','L’asteroide è stato più duro.','Non stavolta.','Atterraggio... fallito.',
+      'Si è schiantato contro il proprio coraggio.','Volo finito. La gloria era vicina.','Lo spazio si è ripreso ciò che è suo.','Un altro eroe caduto con stile.'],
+    nearrecord:[n=>`Mancavano ${n} ${n===1?'punto':'punti'} al record.`,'Così vicino al record!',
+      n=>`Ancora ${n} e il record è tuo.`,'Ha quasi riscritto la storia.',n=>`Solo ${n} ${n===1?'punto':'punti'} dal record.`,
+      'La prossima volta, di sicuro.',n=>`${n} ${n===1?'punto':'punti'} alla grandezza.`,'Il record era vicinissimo.'] },
 };
 function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';

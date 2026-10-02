@@ -499,6 +499,79 @@ const ACH_TR_DE={
  }
 };
 ACH.forEach(a=>{ if(ACH_TR_DE[a.id]) a.x=Object.assign(a.x||{}, {de:ACH_TR_DE[a.id]}); });
+Object.assign(I18N.it,{
+  achSumOpen:(n,t)=>'Sbloccati '+n+' su '+t, achLast:'Ultimo ritrovamento', achNotYet:'Non ancora trovato', achFoundHd:'Trovati', achNotFoundHd:'Non trovati',
+  achSecretHd:(f,t)=>'Riservato · trovati '+f+' su '+t, achSecretLbl:n=>'Riservato · fascicolo n. '+n, achDossier:n=>'fascicolo n. '+n,
+  achClaimCls:'Traguardo', achClaimSec:n=>'Fascicolo riservato n. '+n, achNext:'Avanti'
+});
+const ACH_TR_IT={
+ "c1": {
+  n: "Linea di Kármán",
+  d: "Cento chilometri in alto. Il confine dello spazio per tutti tranne che per gli americani: a loro ne bastano ottanta."
+ },
+ "f1": {
+  n: "Pilota",
+  d: "L’aereo ha obbedito all’inclinazione. Sospetto."
+ },
+ "d1": {
+  n: "Prima sfida",
+  d: "Hai sfidato un amico. L’amico non sa ancora che era un avvertimento."
+ },
+ "d2": {
+  n: "Vincitore del duello",
+  d: "Hai battuto la soglia di un altro. Il tuo amico lo chiama caso."
+ },
+ "o5": {
+  n: "Una manovra di troppo",
+  d: "In un solo volo, percorri in orizzontale venticinque larghezze di schermo. L’aereo non si è lamentato."
+ },
+ "s1": {
+  n: "Poyekhali!",
+  d: "12 aprile 1961. Una parola ricordata meglio di tutto il resto.",
+  h: "L’inizio è sempre uno solo."
+ },
+ "s2": {
+  n: "Sono tornati tutti",
+  d: "Belka e Strelka: diciassette giri attorno alla Terra. Sono tornati tutti, anche i topi.",
+  h: "Il conto va di seguito."
+ },
+ "s3": {
+  n: "Laika",
+  d: "3 novembre 1957. Per molto tempo si disse che era vissuta una settimana. La verità si seppe nel 2002.",
+  h: "Il silenzio è anche una risposta."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15 agosto 1977. Il segnale durò 72 secondi e non si ripeté mai più.",
+  h: "Durò poco più di un minuto."
+ },
+ "s5": {
+  n: "23 per 73",
+  d: "16 novembre 1974. 1679 punti inviati verso un ammasso stellare. Aspettiamo ancora la risposta.",
+  h: "Se li disponi, esce un’immagine."
+ },
+ "s6": {
+  n: "Granello di polvere",
+  d: "14 febbraio 1990. Da sei miliardi di chilometri la Terra è un punto più piccolo di un pixel.",
+  h: "Più è piccolo, meglio si vede."
+ },
+ "s7": {
+  n: "Niente panico",
+  d: "Questa scritta si trova sul cruscotto di «Starman», che sfreccia accanto alla Terra dal 6 febbraio 2018.",
+  h: "La risposta alla domanda fondamentale."
+ },
+ "s8": {
+  n: "Mir",
+  d: "23 marzo 2001. La stazione è vissuta quindici anni ed è affondata nell’Oceano Pacifico.",
+  h: "Quattro tappe — un solo cammino."
+ },
+ "s9": {
+  n: "Dove sono tutti?",
+  d: "Il paradosso di Fermi, 1950. Se esistono, dove sono? Anche il cielo vuoto del mese è una risposta.",
+  h: "Se esistono, dove sono?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_IT[a.id]) a.x=Object.assign(a.x||{}, {it:ACH_TR_IT[a.id]}); });
 
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
