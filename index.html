@@ -66,7 +66,7 @@
    догоняющей поправкой на случай, когда игрок сменит язык руками. */
 (function(){
   try{
-    var M={ru:'manifest.ru.json',en:'manifest.en.json',es:'manifest.es.json',pt:'manifest.pt.json',fr:'manifest.fr.json',id:'manifest.id.json',tr:'manifest.tr.json',vi:'manifest.vi.json',uk:'manifest.uk.json',de:'manifest.de.json',it:'manifest.it.json',fa:'manifest.fa.json',ar:'manifest.ar.json'};
+    var M={ru:'manifest.ru.json',en:'manifest.en.json',es:'manifest.es.json',pt:'manifest.pt.json',fr:'manifest.fr.json',id:'manifest.id.json',tr:'manifest.tr.json',vi:'manifest.vi.json',uk:'manifest.uk.json',de:'manifest.de.json',it:'manifest.it.json',fa:'manifest.fa.json',ar:'manifest.ar.json',hi:'manifest.hi.json'};
     var lang=null;
     try{ var raw=localStorage.getItem('cosmogram_v2'); if(raw){ var s=JSON.parse(raw); if(s&&s.lang&&s.lang!=='auto') lang=s.lang; } }catch(e){}
     if(!lang){ var n=(navigator.language||'ru').slice(0,2).toLowerCase(); if(M[n]) lang=n; }
@@ -139,6 +139,17 @@ canvas{display:block}
 @font-face { font-family:'Exo 2'; font-style:normal; font-weight:100 900; font-display:swap;
   src:url('fonts/vazirmatn-arabic.woff2') format('woff2');
   unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC; }
+/* 03.10.2026 хинди: шрифт Poppins (SIL OFL 1.1, @fontsource/poppins 5.3.0, fonts/OFL-Poppins.txt) — срезы деванагари 400 и 700, по 39 КБ.
+   Тем же именем 'Exo 2', диапазон деванагари не пересекается с остальными: буквы хинди берутся отсюда, латиница и цифры — из Exo 2. Вес до 500 — файл 400, от 501 — файл 700. */
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:100 500; font-display:swap;
+  src:url('fonts/poppins-devanagari-400.woff2') format('woff2');
+  unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF,U+11B00-11B09; }
+@font-face { font-family:'Exo 2'; font-style:normal; font-weight:501 900; font-display:swap;
+  src:url('fonts/poppins-devanagari-700.woff2') format('woff2');
+  unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF,U+11B00-11B09; }
+/* Деванагари: межбуквенный интервал разрывает общую верхнюю черту слова — выключен везде (заглавные хинди не касаются). */
+html:lang(hi), html:lang(hi) body, html:lang(hi) *:not(#brandName):not(.wm-base):not(.wm-shadow):not(.wm-gold):not(.wm-white):not(.wm-red) { letter-spacing:0 !important; }
+html:lang(hi) #brandName { letter-spacing:.05em; }
 /* Арабская вязь: межбуквенный интервал и заглавные ломают соединения букв — выключены везде, кроме логотипа. */
 html:lang(fa), html:lang(fa) body, html:lang(fa) *:not(#brandName):not(.wm-base):not(.wm-shadow):not(.wm-gold):not(.wm-white):not(.wm-red),
 html:lang(ar), html:lang(ar) body, html:lang(ar) *:not(#brandName):not(.wm-base):not(.wm-shadow):not(.wm-gold):not(.wm-white):not(.wm-red) { letter-spacing:0 !important; text-transform:none !important; }
@@ -5099,9 +5110,9 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
 <g><animateTransform attributeName="transform" type="translate" values="0 2;0 -3;0 2" dur="4s" repeatCount="indefinite"/>
 <path d="M14 36 Q16 28 26 27 L40 27 Q50 28 52 36 L52 40 L14 40Z" fill="#e2332f"/><path d="M26 27 L34 20 L40 27Z" fill="#ff6a5f"/><circle cx="24" cy="42" r="4.2" fill="#10152e" stroke="#9fb4d8" stroke-width="1.2"/><circle cx="44" cy="42" r="4.2" fill="#10152e" stroke="#9fb4d8" stroke-width="1.2"/><circle cx="33" cy="18" r="3.2" fill="#eaf1ff"/><path d="M30 17 h6" stroke="#2f7fe6" stroke-width="1.6" stroke-linecap="round"/></g></g></symbol>
 </defs></svg>
-<script defer src="js/vendor/telegram-web-app.js?v=1.478.633"></script><!-- мост: под затравкой, раньше core.js -->
-<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.633"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
-<script defer src="js/i18n.js?v=1.478.633"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
+<script defer src="js/vendor/telegram-web-app.js?v=1.478.634"></script><!-- мост: под затравкой, раньше core.js -->
+<script defer src="js/vendor/mp4-muxer.min.js?v=1.478.634"></script><!-- 28.08.2026: «Кино полёта», упаковщик mp4 (Vanilagy/mp4-muxer, MIT) — глобальный Mp4Muxer, ещё никем не вызывается -->
+<script defer src="js/i18n.js?v=1.478.634"></script><!-- 26.08.2026: вынесено из core.js — грузится ДО него, core.js:358 читает I18N/L уже после Store -->
 <!-- v1.109.2 «Партия 16, второй заход»: чистка хеша с подписью Telegram переехала в
      начало js/core.js. Здесь, инлайновым нехеджированным <script>, она исполнялась
      СРАЗУ при разборе — а `defer` на теге моста выше не значит «мост уже отработал»,
@@ -6411,26 +6422,26 @@ canvas.flashPv { width:26px; height:26px; } /* 29.08.2026: та же ловуш�
   <button class="menuBack" id="ffDelBtn" aria-label="Удалить"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg></button>
 </div>
 
-<script defer src="js/core.js?v=1.478.633" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/blackbox.js?v=1.478.633"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
-<script defer src="js/skymail.js?v=1.478.633"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
-<script defer src="js/input.js?v=1.478.633"></script>
-<script defer src="js/game.js?v=1.478.633" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
-<script defer src="js/ach.js?v=1.478.633"></script>
-<script defer src="js/sync.js?v=1.478.633"></script>
-<script defer src="js/render.js?v=1.478.633"></script>
-<script defer src="js/planetarium.js?v=1.478.633"></script>
-<script defer src="js/goldstar.js?v=1.478.633"></script>
-<script defer src="js/finish.js?v=1.478.633"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
-<script defer src="js/music.js?v=1.478.633"></script>
-<script defer src="js/gyro.js?v=1.478.633"></script>
-<script defer src="js/forge.js?v=1.478.633"></script>
-<script defer src="js/partitura.js?v=1.478.633"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
-<script defer src="js/adaptive.js?v=1.478.633"></script>
-<script defer src="js/card.js?v=1.478.633"></script>
-<script defer src="js/star.js?v=1.478.633"></script>
-<script defer src="js/cinema.js?v=1.478.633"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
-<script defer src="js/ui.js?v=1.478.633"></script>
+<script defer src="js/core.js?v=1.478.634" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/blackbox.js?v=1.478.634"></script><!-- v1.99.7 «Чёрный ящик»: самописец — раньше всех, чтобы писать с первой секунды -->
+<script defer src="js/skymail.js?v=1.478.634"></script><!-- v1.108.0 «Почта неба»: открытки об ошибках летят сами; сразу за самописцем — лента нужна ему свежая --><!-- 03.09.2026: переименован из beacon.js — слово «beacon» в имени файла попадает под стандартные фильтры блокировщиков рекламы (EasyPrivacy и т.п.), файл не грузился у части игроков -->
+<script defer src="js/input.js?v=1.478.634"></script>
+<script defer src="js/game.js?v=1.478.634" onerror="window.__bootFail=1;var b=document.getElementById('bootLoad');if(b)b.innerHTML='<div style=&quot;text-align:center;padding:0 24px&quot;>Не удалось загрузить игру.<br>Проверьте соединение и обновите страницу.</div>'"></script>
+<script defer src="js/ach.js?v=1.478.634"></script>
+<script defer src="js/sync.js?v=1.478.634"></script>
+<script defer src="js/render.js?v=1.478.634"></script>
+<script defer src="js/planetarium.js?v=1.478.634"></script>
+<script defer src="js/goldstar.js?v=1.478.634"></script>
+<script defer src="js/finish.js?v=1.478.634"></script><!-- 13.09.2026 «Ворота финиша»: победный момент для всех целей-финишей, тот же приём модуля, что у goldstar.js выше -->
+<script defer src="js/music.js?v=1.478.634"></script>
+<script defer src="js/gyro.js?v=1.478.634"></script>
+<script defer src="js/forge.js?v=1.478.634"></script>
+<script defer src="js/partitura.js?v=1.478.634"></script><!-- 01.09.2026: Конструктор — Партитура (лента событий), зависит от forgeCfg/FORGE_KINDS выше -->
+<script defer src="js/adaptive.js?v=1.478.634"></script>
+<script defer src="js/card.js?v=1.478.634"></script>
+<script defer src="js/star.js?v=1.478.634"></script>
+<script defer src="js/cinema.js?v=1.478.634"></script><!-- 28.08.2026: «Кино полёта», шаг 1 — только подбор кодека, ещё ничем не вызывается -->
+<script defer src="js/ui.js?v=1.478.634"></script>
 <script>// v1.108.1 «defer»: теги выше теперь грузятся параллельно (defer), а не один за другим —
 // выполняются в том же порядке, что и раньше, но только когда разбор HTML полностью закончен.
 // Раньше этот скрипт полагался на «соседний тег уже отработал»; с defer это больше не гарантия —
