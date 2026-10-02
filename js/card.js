@@ -210,11 +210,13 @@ function cardDraw(){
 
   // --- бренд + ссылка — внизу, в золоте (не блёклые, владелец 01.09.2026)
   cardStar4(x,W/2-52,660,4.5); x.fillStyle='#f0c040'; x.fill();
+  x.direction="ltr"; // 03.10.2026: в тексте справа налево «@» в начале латинской строки уезжал в конец — бренд и имя бота всегда слева направо
   x.fillStyle='#ffd76a'; x.font='600 15px "Exo 2",sans-serif'; x.letterSpacing='.1em';
   x.shadowColor='rgba(240,192,64,.4)'; x.shadowBlur=6;
   x.fillText('COSMOGRAM',W/2+8,663); x.shadowBlur=0; x.letterSpacing='0px';
   x.fillStyle='#c9a45c'; x.font='500 16px "Exo 2",sans-serif';
   x.fillText('@realcosmogrambot',W/2,690);
+  x.direction='inherit';
 }
 
 function cardShareRecordGlow(){ // 30.08.2026: разовое свечение «Поделиться» — только в момент рекорда

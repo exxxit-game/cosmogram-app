@@ -8,7 +8,9 @@
    Зависит от core.js (Store, L, toast, haptic, sfx, saneNumber), game.js (Stats, S, rec), ui.js (setScreen) — грузится после game.js.
    ============================================================ */
 
-const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,document.documentElement.getAttribute('dir')==='rtl'?'\u00A0':' '); // 03.10.2026: в тексте справа налево обычный пробел разрывает число («1 238» → «238 1»), неразрывный — нет
+// 03.10.2026: даты и месяцы — по григорианскому календарю и обычными цифрами на любом языке (у fa без этого был бы иранский календарь и месяц «مهر», а месяц неба считает сервер по григорианскому)
+const locTag=()=>((typeof langEff!=='undefined'&&langEff)||'ru')+'-u-ca-gregory-nu-latn';
 const needOf=a=>typeof a.need==='function'?a.need():a.need;
 const aT=a=>{ const l=(typeof langEff!=='undefined')?langEff:'ru'; return ((a.x&&a.x[l]) || (l==='id'?null:a[l]) || a.en || a.ru); }; // у награды есть поле id (идентификатор), совпадающее с кодом индонезийского языка: его перевод лежит в a.tr.id
 
@@ -572,6 +574,79 @@ const ACH_TR_IT={
  }
 };
 ACH.forEach(a=>{ if(ACH_TR_IT[a.id]) a.x=Object.assign(a.x||{}, {it:ACH_TR_IT[a.id]}); });
+Object.assign(I18N.fa,{
+  achSumOpen:(n,t)=>n+' از '+t+' باز شد', achLast:'آخرین یافته', achNotYet:'هنوز پیدا نشده', achFoundHd:'پیدا شد', achNotFoundHd:'پیدا نشد',
+  achSecretHd:(f,t)=>'محرمانه · '+f+' از '+t+' پیدا شد', achSecretLbl:n=>'محرمانه · پروندهٔ شمارهٔ '+n, achDossier:n=>'پروندهٔ شمارهٔ '+n,
+  achClaimCls:'دستاورد', achClaimSec:n=>'پروندهٔ محرمانهٔ شمارهٔ '+n, achNext:'بعدی'
+});
+const ACH_TR_FA={
+ "c1": {
+  n: "خط کارمان",
+  d: "صد کیلومتر به بالا. مرز فضا برای همه جز آمریکایی‌ها: برای آنها هشتاد کافی است."
+ },
+ "f1": {
+  n: "خلبان",
+  d: "هواپیما از شیب فرمان برد. مشکوک است."
+ },
+ "d1": {
+  n: "اولین چالش",
+  d: "دوستی را به چالش کشیدی. دوستت هنوز نمی‌داند که این یک هشدار بود."
+ },
+ "d2": {
+  n: "برندهٔ دوئل",
+  d: "آستانهٔ دیگری را شکستی. دوستت اسمش را اتفاق می‌گذارد."
+ },
+ "o5": {
+  n: "مانور اضافه",
+  d: "در یک پرواز بیست‌وپنج برابر عرض صفحه را افقی طی کن. هواپیما شکایتی نکرد."
+ },
+ "s1": {
+  n: "Poyekhali!",
+  d: "12 آوریل 1961. یک کلمه که از هر چیز دیگری بهتر به یاد مانده.",
+  h: "آغاز همیشه یکی است."
+ },
+ "s2": {
+  n: "همه برگشتند",
+  d: "بلکا و استرلکا: هفده دور دور زمین. همه برگشتند، موش‌ها هم.",
+  h: "شمارش پشت‌سرهم می‌رود."
+ },
+ "s3": {
+  n: "لایکا",
+  d: "3 نوامبر 1957. مدت‌ها می‌گفتند یک هفته زنده ماند. حقیقت در سال 2002 معلوم شد.",
+  h: "سکوت هم یک پاسخ است."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15 اوت 1977. سیگنال 72 ثانیه طول کشید و دیگر تکرار نشد.",
+  h: "کمی بیشتر از یک دقیقه طول کشید."
+ },
+ "s5": {
+  n: "23 در 73",
+  d: "16 نوامبر 1974. 1679 نقطه به سوی یک خوشهٔ ستاره‌ای فرستاده شد. هنوز منتظر پاسخیم.",
+  h: "اگر بچینی، تصویری درمی‌آید."
+ },
+ "s6": {
+  n: "ذرهٔ غبار",
+  d: "14 فوریهٔ 1990. از شش میلیارد کیلومتری، زمین نقطه‌ای کوچک‌تر از یک پیکسل است.",
+  h: "هرچه کوچک‌تر، بهتر دیده می‌شود."
+ },
+ "s7": {
+  n: "وحشت نکن",
+  d: "این نوشته روی داشبورد «استارمن» است که از 6 فوریهٔ 2018 از کنار زمین می‌گذرد.",
+  h: "پاسخ پرسش اصلی."
+ },
+ "s8": {
+  n: "میر",
+  d: "23 مارس 2001. ایستگاه پانزده سال زیست و در اقیانوس آرام غرق شد.",
+  h: "چهار مرحله — یک راه."
+ },
+ "s9": {
+  n: "همه کجایند؟",
+  d: "پارادوکس فرمی، 1950. اگر هستند، کجایند؟ آسمان خالی ماه هم یک پاسخ است.",
+  h: "اگر هستند، کجایند؟"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_FA[a.id]) a.x=Object.assign(a.x||{}, {fa:ACH_TR_FA[a.id]}); });
 
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
@@ -705,7 +780,7 @@ function achPassportHtml(){
   const g=Stats.gGames||0, t=Stats.tGames||0, k=Stats.kGames||0, tot=g+t+k;
   const km=Math.round((Stats.totalDist||0)/1000), sa=heroRecordFor('touch').val, dl=heroRecordFor('daily').val, sl=heroRecordFor('slalom').val, rl=saneNumber(Store.get('bestRelayContrib',0),0);
   const nick=esc((typeof myCallsign==='function'&&myCallsign())||'');
-  const month=(function(){ try{ return new Date().toLocaleDateString((typeof langEff!=='undefined'&&langEff)||'ru',{month:'long'}); }catch(e){ return ''; } })();
+  const month=(function(){ try{ return new Date().toLocaleDateString(locTag(),{month:'long'}); }catch(e){ return ''; } })();
   const row=function(ico,nm,sub,val,plId,hasVal){
     return '<div class="mpRow">'+ic(ico,'mpMi')+'<div class="mpNm">'+nm+'<small>'+sub+'</small></div>'
       +(hasVal?'<div class="mpVl">'+val+'</div><div class="mpPl hidden" id="'+plId+'"></div>':'<div class="mpVl mpGo">'+val+'</div>')+'</div>';
@@ -753,7 +828,7 @@ function achPassportFill(root){ requestAnimationFrame(()=>achFitNick(root)); set
   if(typeof syncDailyTop==='function') syncDailyTop(trackDayKey()).then(function(d){ if(d&&d.ok&&d.me) put('mpPlDL',d.me.rank); }).catch(function(){});
   if(typeof syncSlalomTop==='function') syncSlalomTop(typeof SLALOM_ETERNAL_DAY!=='undefined'?SLALOM_ETERNAL_DAY:'').then(function(d){ if(d&&d.ok&&d.me) put('mpPlSL',d.me.rank); }).catch(function(){});
 }
-function achDateTxt(ts){ try{ return new Date(ts).toLocaleDateString((typeof langEff!=='undefined'&&langEff)||'ru',{day:'numeric',month:'short'}).replace(/\.$/,''); }catch(e){ return ''; } }
+function achDateTxt(ts){ try{ return new Date(ts).toLocaleDateString(locTag(),{day:'numeric',month:'short'}).replace(/\.$/,''); }catch(e){ return ''; } }
 /* Экран наград по макету «Награды — архив досье»: свёрнутый вид (полоса, последняя находка, значки), найденные, не найденные и засекреченные.
    Проценты игроков и редкость — отдельным шагом с сервером; пока их нет, строка показывает только дату. */
 function renderAch(){

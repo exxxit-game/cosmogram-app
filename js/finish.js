@@ -163,7 +163,7 @@ const FINISH=(()=>{
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.font='800 30px -apple-system,"Segoe UI",Roboto,sans-serif';
         // посимвольный интервал (надёжнее letterSpacing в WebView) — считаем общую ширину, рисуем от левого края к центру
-        const sp=3, chars=txt.split(''), widths=chars.map(c=>ctx.measureText(c).width);
+        const sp=3, chars=/[\u0590-\u08FF]/.test(txt)?[txt]:txt.split(''), widths=chars.map(c=>ctx.measureText(c).width);
         const total=widths.reduce((a,b)=>a+b,0)+sp*(chars.length-1);
         let cx=-total/2;
         ctx.globalAlpha=a*.3; ctx.fillStyle='#ffd76a'; ctx.save(); ctx.scale(1.16,1.16); ctx.fillText(txt,0,0); ctx.restore(); // halo — тот же приём, что у popups (render.js:2912-2913)
