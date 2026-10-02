@@ -1506,7 +1506,7 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
   put('setGrpProfSub', L.csRowK+' '+((typeof myCallsign==='function'?myCallsign():'')||L.csDefault)); // 28.09.2026: подписано, что это позывной — было голое «PORO»
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
-function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français',id:'Bahasa Indonesia'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
+function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français',id:'Bahasa Indonesia',tr:'Türkçe'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
 let langEff='ru'; // v1.108.1: активный язык наружу — единый источник для aT() и всего, что спросит «на каком языке мы сейчас»
 function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор игрока
   const base=LANG; // автоопределение уже посчитано в core.js
@@ -1517,7 +1517,7 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
   // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
   // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
   // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.
-  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json', id:'manifest.id.json'};
+  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json', id:'manifest.id.json', tr:'manifest.tr.json'};
   const mLink=document.getElementById('manifestLink');
   if(mLink) mLink.href=MANIFEST_BY_LANG[eff]||MANIFEST_BY_LANG.ru;
 }
@@ -3658,7 +3658,7 @@ wireOn('setMusicBtn', 'click', ()=>{
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
 wireOn('setLangBtn', 'click', ()=>{
-  const order=['auto','ru','en','es','pt','fr','id']; // v1.108.1: добавляются языки по мере перевода
+  const order=['auto','ru','en','es','pt','fr','id','tr']; // v1.108.1: добавляются языки по мере перевода
   langPref=order[(order.indexOf(langPref)+1)%order.length];
   Store.set('lang',langPref); applyLangPref(); applyLang(); refreshMenu(); langLabel(); sfx.click();
 });
@@ -4980,7 +4980,7 @@ function overSaRecs(marks){ // рекорды и отметки полёта →
     const prev=OF_FIN.prev, sec=' '+ovT('overSecUnit');
     if(prev>0){ const raw=S.time-prev; let mag=Math.round(Math.abs(raw)*10)/10; if(mag===0 && raw!==0) mag=0.1; const good=OF_FIN.rec;
       add((good?'−':'+')+String(mag.toFixed(1)).replace(/.0$/,'')+sec+' · '+ovT(good?'overFinPrev':'overFinBest')+' '+fmtTimeRes(prev), good?1:0); }
-    else add(ovT('overFinFirst').charAt(0).toUpperCase()+ovT('overFinFirst').slice(1), 0);
+    else add(upperL(ovT('overFinFirst').charAt(0))+ovT('overFinFirst').slice(1), 0);
   }
   marks.forEach(function(m){ if(m.icn==='ghost' || m.calm) return; if(S.mode==='relay' && m.txt===String(L.relayLegSent(S.relayLeg))) return; add((S.mode==='daily' && String(m.txt).indexOf(String(L.dlNewBest))===0) ? ovT('overRecScore') : m.txt.replace(/^Новый\s+/i,''), 1); }); // Небо месяца: «Новый рекорд Неба месяца» → «Рекорд счёта» (названия рекордов одинаковые во всех режимах) // «призрак повержен» — длинная строка со счётами, в подпись не идёт, остаётся плашкой
   if(OF_REC.combo) add(ovT('overRecCombo')(S.comboMax), 1);
@@ -5159,7 +5159,7 @@ function duelShareDraw(x,W,H,t,cfg){
   txt('?',gx,gy+9*u,20*u,'#ffd26a',800,0);
   x.save(); x.setLineDash([4*u,6*u]); x.strokeStyle='rgba(255,210,106,.7)'; x.lineWidth=2*u; x.beginPath(); x.moveTo(xf+4*u,fy); x.lineTo(gx-24*u,gy+10*u); x.stroke(); x.restore();
   txt(String(cfg.n||'')+' · '+fmtN(cfg.dist)+' '+(L.unitM||'м'),xf,fy-58*u,18*u,'#fff',800,0);
-  txt(ovT('duelPicBeat').toUpperCase(),W/2,226*u,24*u,'#ffd26a',800,2*u);
+  txt(upperL(ovT('duelPicBeat')),W/2,226*u,24*u,'#ffd26a',800,2*u);
 }
 let _duelShareBusy=false;
 async function duelShareRich(pid, text, sent, plain){

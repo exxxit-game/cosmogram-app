@@ -10,7 +10,7 @@
 
 const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 const needOf=a=>typeof a.need==='function'?a.need():a.need;
-const aT=a=>{ const l=(typeof langEff!=='undefined')?langEff:'ru'; return ((l==='id' ? (a.tr&&a.tr.id) : a[l]) || a.en || a.ru); }; // у награды есть поле id (идентификатор), совпадающее с кодом индонезийского языка: его перевод лежит в a.tr.id
+const aT=a=>{ const l=(typeof langEff!=='undefined')?langEff:'ru'; return ((a.x&&a.x[l]) || (l==='id'?null:a[l]) || a.en || a.ru); }; // у награды есть поле id (идентификатор), совпадающее с кодом индонезийского языка: его перевод лежит в a.tr.id
 
 /* Строки экрана наград: пока только по-русски (как и текст Хартии) — ovT() берёт русскую, если на языке игрока строки нет. */
 Object.assign(I18N.ru,{
@@ -206,7 +206,80 @@ const ACH_TR_ID={
   h: "Jika mereka ada, di mana mereka?"
  }
 };
-ACH.forEach(a=>{ if(ACH_TR_ID[a.id]) a.tr={id:ACH_TR_ID[a.id]}; });
+ACH.forEach(a=>{ if(ACH_TR_ID[a.id]) a.x={id:ACH_TR_ID[a.id]}; });
+Object.assign(I18N.tr,{
+  achSumOpen:(n,t)=>t+' içinden '+n+' açık', achLast:'Son keşif', achNotYet:'Henüz bulunmadı', achFoundHd:'Bulundu', achNotFoundHd:'Bulunmadı',
+  achSecretHd:(f,t)=>'Gizli · '+t+' içinden '+f+' bulundu', achSecretLbl:n=>'Gizli · dosya No. '+n, achDossier:n=>'dosya No. '+n,
+  achClaimCls:'Başarım', achClaimSec:n=>'Gizli dosya No. '+n, achNext:'Sonraki'
+});
+const ACH_TR_TR={
+ "c1": {
+  n: "Kármán Çizgisi",
+  d: "Yüz kilometre yukarı. Amerikalılar dışında herkes için uzayın sınırı: onlara seksen yeter."
+ },
+ "f1": {
+  n: "Pilot",
+  d: "Uçak eğime uydu. Şüpheli."
+ },
+ "d1": {
+  n: "İlk Meydan Okuma",
+  d: "Bir arkadaşına meydan okudun. Arkadaşın bunun bir uyarı olduğunu henüz bilmiyor."
+ },
+ "d2": {
+  n: "Düello Galibi",
+  d: "Başkasının çıtasını geçtin. Arkadaşın buna tesadüf diyor."
+ },
+ "o5": {
+  n: "Fazladan Manevra",
+  d: "Tek uçuşta yatayda yirmi beş ekran genişliği katet. Uçak şikâyet etmedi."
+ },
+ "s1": {
+  n: "Poyehali!",
+  d: "12 Nisan 1961. Her şeyden iyi hatırlanan tek bir söz.",
+  h: "Başlangıç hep tektir."
+ },
+ "s2": {
+  n: "Hepsi Döndü",
+  d: "Belka ve Strelka: Dünya çevresinde on yedi tur. Hepsi döndü, fareler de.",
+  h: "Sayım art arda gider."
+ },
+ "s3": {
+  n: "Layka",
+  d: "3 Kasım 1957. Uzun süre bir hafta yaşadığı söylendi. Gerçek 2002’de öğrenildi.",
+  h: "Sessizlik de bir cevaptır."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15 Ağustos 1977. Sinyal 72 saniye sürdü ve bir daha tekrarlanmadı.",
+  h: "Bir dakikadan biraz uzun sürdü."
+ },
+ "s5": {
+  n: "23’e 73",
+  d: "16 Kasım 1974. Bir yıldız kümesine 1679 nokta gönderildi. Cevabı hâlâ bekliyoruz.",
+  h: "Dizersen bir resim çıkar."
+ },
+ "s6": {
+  n: "Toz Zerresi",
+  d: "14 Şubat 1990. Altı milyar kilometre uzaktan Dünya, bir pikselden küçük bir nokta.",
+  h: "Ne kadar küçükse o kadar iyi görünür."
+ },
+ "s7": {
+  n: "Panik Yapma",
+  d: "Bu söz, 6 Şubat 2018’den beri Dünya’nın yanından geçip giden Starman’ın gösterge panelinde yazıyor.",
+  h: "Asıl sorunun cevabı."
+ },
+ "s8": {
+  n: "Mir",
+  d: "23 Mart 2001. İstasyon on beş yıl yaşadı ve Pasifik Okyanusu’na gömüldü.",
+  h: "Dört etap — tek yol."
+ },
+ "s9": {
+  n: "Herkes Nerede?",
+  d: "Fermi paradoksu, 1950. Varlarsa, neredeler? Ayın boş göğü de bir cevap.",
+  h: "Varlarsa, neredeler?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_TR[a.id]) a.x=Object.assign(a.x||{}, {tr:ACH_TR_TR[a.id]}); });
 
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись

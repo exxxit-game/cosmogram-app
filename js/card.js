@@ -147,7 +147,7 @@ function cardDraw(){
   // на рамку, не выдуман заново)
   const isRec=!!cardData.rec;
   const tierA=isRec?'#ffd76a':'#8fa3c8', tierGlow=isRec?'255,210,110':'150,165,200';
-  const badgeTxt=(isRec?L.cardRec:(cardData.win?L.forgeWin:cardModeName())).toUpperCase();
+  const badgeTxt=upperL(isRec?L.cardRec:(cardData.win?L.forgeWin:cardModeName()));
 
   x.drawImage(cardBakeNebula(W,H,seed),0,0);
   for(let i=0;i<90;i++){

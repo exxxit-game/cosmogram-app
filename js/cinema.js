@@ -90,6 +90,15 @@ const CINEMA_LINES={
     nearrecord:[n=>`Kurang ${n} poin dari rekor.`,'Dekat sekali dengan rekor!',
       n=>`${n} lagi dan rekor jadi milikmu.`,'Nyaris menulis ulang sejarah.',n=>`Hanya ${n} poin dari rekor.`,
       'Lain kali, pasti.',n=>`${n} poin lagi menuju kehebatan.`,'Rekornya sudah sangat dekat.'] },
+  tr:{ record:['YENİ REKOR!','Kozmik hız.','Daha önce kimse böyle uçmadı.','Eski rekor titredi.',
+      'Ne hızlanma!','Kozmosun ötesine uçtu.','Rekor mu? Sıradan iş.','Gökyüzü bu uçuşu hatırlayacak.'],
+    nearmiss:['Kıl payı!','Çelik gibi sinirler.','Bir karış kala bitiyordu.','Hemen yanından geçti.',
+      'Soğukkanlı pilot.','Uzay kanadı sıyırdı.','Cerrah hassasiyeti.','Daha yakını olmazdı.'],
+    death:['En azından güzel göründü.','Bu sefer asteroit kazandı.','Bu sefer olmadı.','İniş... başarısız.',
+      'Kendi cesaretine çarptı.','Uçuş bitti. Zafer yakındı.','Uzay payını aldı.','Bir kahraman daha, şıklıkla düştü.'],
+    nearrecord:[n=>`Rekora ${n} puan kaldı.`,'Rekora çok yakın!',
+      n=>`${n} daha ve rekor senin.`,'Neredeyse tarihi yeniden yazdı.',n=>`Rekordan yalnızca ${n} puan.`,
+      'Bir dahaki sefere kesin.',n=>`Büyüklüğe ${n} puan kaldı.`,'Rekor çok yakındı.'] },
 };
 function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';
