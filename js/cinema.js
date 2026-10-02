@@ -35,6 +35,11 @@ function ruPtsWord(n){ const a=Math.abs(n)%100, b=a%10;
   if (b===1) return 'очко';
   if (b>=2 && b<=4) return 'очка';
   return 'очков'; }
+function ukPtsWord(n){ const a=Math.abs(n)%100, b=a%10; // украинское «очко/очки/очок», как ruPtsWord выше
+  if (a>=11 && a<=14) return 'очок';
+  if (b===1) return 'очко';
+  if (b>=2 && b<=4) return 'очки';
+  return 'очок'; }
 const CINEMA_LINES={
   ru:{ record:['НОВЫЙ РЕКОРД!','Космическая скорость.','Так ещё никто не летал.','Старый рекорд в шоке.',
       'Вот это разгон!','Улетел выше космоса.','Рекорд? Обычное дело.','Небо запомнит этот полёт.'],
@@ -99,6 +104,24 @@ const CINEMA_LINES={
     nearrecord:[n=>`Rekora ${n} puan kaldı.`,'Rekora çok yakın!',
       n=>`${n} daha ve rekor senin.`,'Neredeyse tarihi yeniden yazdı.',n=>`Rekordan yalnızca ${n} puan.`,
       'Bir dahaki sefere kesin.',n=>`Büyüklüğe ${n} puan kaldı.`,'Rekor çok yakındı.'] },
+  vi:{ record:['KỶ LỤC MỚI!','Tốc độ vũ trụ.','Chưa ai từng bay như thế.','Kỷ lục cũ đã rung chuyển.',
+      'Tăng tốc thật đỉnh!','Bay vượt cả vũ trụ.','Kỷ lục ư? Chuyện thường.','Bầu trời sẽ nhớ chuyến bay này.'],
+    nearmiss:['Suýt soát!','Thần kinh thép.','Chỉ cách một gang tay.','Lướt qua sát rạt.',
+      'Phi công lạnh như băng.','Vũ trụ sượt qua cánh.','Chính xác như phẫu thuật.','Không thể sát hơn nữa.'],
+    death:['Ít nhất cũng đẹp mắt.','Lần này tiểu hành tinh thắng.','Lần này chưa được.','Hạ cánh... thất bại.',
+      'Tự đâm vào lòng can đảm của mình.','Chuyến bay kết thúc. Chiến thắng đã gần.','Vũ trụ lấy phần của nó.','Thêm một anh hùng ngã xuống đầy phong độ.'],
+    nearrecord:[n=>`Còn thiếu ${n} điểm là tới kỷ lục.`,'Rất gần kỷ lục!',
+      n=>`Thêm ${n} nữa là kỷ lục thuộc về bạn.`,'Suýt nữa đã viết lại lịch sử.',n=>`Chỉ còn ${n} điểm nữa là tới kỷ lục.`,
+      'Lần sau chắc chắn được.',n=>`Còn ${n} điểm nữa là tới vinh quang.`,'Kỷ lục đã ở rất gần.'] },
+  uk:{ record:['НОВИЙ РЕКОРД!','Космічна швидкість.','Так ще ніхто не літав.','Старий рекорд у шоці.',
+      'Оце розгін!','Злетів вище за космос.','Рекорд? Звичайна справа.','Небо запам’ятає цей політ.'],
+    nearmiss:['На волосинку!','Оце нерви.','Ще сантиметр — і все.','Просвистіло поряд.',
+      'Холоднокровний пілот.','Космос дихав у крило.','Ювелірна робота.','Тонше нікуди.'],
+    death:['Ну хоч гарно.','Астероїд виявився міцнішим.','Не цього разу.','Приземлення... невдале.',
+      'Розбився об власну відвагу.','Політ закінчено. Слава була поряд.','Космос забрав своє.','Ще один герой упав красиво.'],
+    nearrecord:[n=>`Не вистачило ${n} ${ukPtsWord(n)} до рекорду.`,'Так близько до рекорду!',
+      n=>`Ще ${n} — і рекорд твій.`,'Майже переписав історію.',n=>`До рекорду — лише ${n} ${ukPtsWord(n)}.`,
+      'Наступного разу — точно.',n=>`${n} ${ukPtsWord(n)} до величі.`,'Рекорд був зовсім поряд.'] },
 };
 function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';

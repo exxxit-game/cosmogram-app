@@ -280,6 +280,152 @@ const ACH_TR_TR={
  }
 };
 ACH.forEach(a=>{ if(ACH_TR_TR[a.id]) a.x=Object.assign(a.x||{}, {tr:ACH_TR_TR[a.id]}); });
+Object.assign(I18N.vi,{
+  achSumOpen:(n,t)=>'Đã mở '+n+' trên '+t, achLast:'Phát hiện gần nhất', achNotYet:'Chưa tìm thấy', achFoundHd:'Đã tìm thấy', achNotFoundHd:'Chưa tìm thấy',
+  achSecretHd:(f,t)=>'Bí mật · đã tìm thấy '+f+' trên '+t, achSecretLbl:n=>'Bí mật · hồ sơ số '+n, achDossier:n=>'hồ sơ số '+n,
+  achClaimCls:'Thành tựu', achClaimSec:n=>'Hồ sơ bí mật số '+n, achNext:'Tiếp theo'
+});
+const ACH_TR_VI={
+ "c1": {
+  n: "Đường Kármán",
+  d: "Một trăm kilômét thẳng lên. Ranh giới của không gian với tất cả mọi người, trừ người Mỹ: với họ tám mươi là đủ."
+ },
+ "f1": {
+  n: "Phi công",
+  d: "Máy bay nghe theo độ nghiêng. Đáng ngờ."
+ },
+ "d1": {
+  n: "Thách đấu đầu tiên",
+  d: "Bạn đã thách đấu một người bạn. Bạn của bạn chưa biết đó là một lời cảnh báo."
+ },
+ "d2": {
+  n: "Người thắng đấu tay đôi",
+  d: "Bạn đã vượt mốc của người khác. Bạn của bạn gọi đó là tình cờ."
+ },
+ "o5": {
+  n: "Thêm một cú lượn",
+  d: "Trong một chuyến bay, đi ngang được hai mươi lăm lần bề rộng màn hình. Máy bay không phàn nàn."
+ },
+ "s1": {
+  n: "Poyekhali!",
+  d: "Ngày 12 tháng 4 năm 1961. Một từ được nhớ rõ hơn mọi thứ còn lại.",
+  h: "Khởi đầu bao giờ cũng chỉ có một."
+ },
+ "s2": {
+  n: "Tất cả đã trở về",
+  d: "Belka và Strelka: mười bảy vòng quanh Trái Đất. Tất cả đã trở về, cả những con chuột nữa.",
+  h: "Việc đếm đi liên tục."
+ },
+ "s3": {
+  n: "Laika",
+  d: "Ngày 3 tháng 11 năm 1957. Suốt thời gian dài người ta nói nó sống được một tuần. Sự thật chỉ được biết vào năm 2002.",
+  h: "Im lặng cũng là một câu trả lời."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "Ngày 15 tháng 8 năm 1977. Tín hiệu kéo dài 72 giây và không bao giờ lặp lại.",
+  h: "Nó kéo dài hơn một phút một chút."
+ },
+ "s5": {
+  n: "23 nhân 73",
+  d: "Ngày 16 tháng 11 năm 1974. 1679 chấm được gửi tới một cụm sao. Chúng ta vẫn đang chờ câu trả lời.",
+  h: "Xếp lại thì sẽ ra một bức tranh."
+ },
+ "s6": {
+  n: "Hạt bụi",
+  d: "Ngày 14 tháng 2 năm 1990. Từ cách sáu tỉ kilômét, Trái Đất là một chấm nhỏ hơn một điểm ảnh.",
+  h: "Càng nhỏ, càng thấy rõ."
+ },
+ "s7": {
+  n: "Đừng hoảng sợ",
+  d: "Dòng chữ này nằm trên bảng điều khiển của «Starman», người bay ngang qua Trái Đất từ ngày 6 tháng 2 năm 2018.",
+  h: "Câu trả lời cho câu hỏi lớn nhất."
+ },
+ "s8": {
+  n: "Mir",
+  d: "Ngày 23 tháng 3 năm 2001. Trạm sống được mười lăm năm rồi chìm xuống Thái Bình Dương.",
+  h: "Bốn chặng — một con đường."
+ },
+ "s9": {
+  n: "Mọi người đâu cả?",
+  d: "Nghịch lý Fermi, 1950. Nếu họ tồn tại, họ ở đâu? Bầu trời trống của tháng cũng là một câu trả lời.",
+  h: "Nếu họ tồn tại, họ ở đâu?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_VI[a.id]) a.x=Object.assign(a.x||{}, {vi:ACH_TR_VI[a.id]}); });
+Object.assign(I18N.uk,{
+  achSumOpen:(n,t)=>'Відкрито '+n+' з '+t, achLast:'Остання знахідка', achNotYet:'Ще не знайдено', achFoundHd:'Знайдено', achNotFoundHd:'Не знайдено',
+  achSecretHd:(f,t)=>'Засекречено · знайдено '+f+' з '+t, achSecretLbl:n=>'Засекречено · досьє №'+n, achDossier:n=>'досьє №'+n,
+  achClaimCls:'Досягнення', achClaimSec:n=>'Секретне досьє №'+n, achNext:'Далі'
+});
+const ACH_TR_UK={
+ "c1": {
+  n: "Лінія Кармана",
+  d: "Сто кілометрів угору. Межа космосу для всіх, крім американців: їм вистачає вісімдесяти."
+ },
+ "f1": {
+  n: "Пілот",
+  d: "Літак послухався нахилу. Підозріло."
+ },
+ "d1": {
+  n: "Перший виклик",
+  d: "Кинув другові виклик. Друг поки не знає, що це було попередження."
+ },
+ "d2": {
+  n: "Переможець дуелі",
+  d: "Побив чужу планку. Друг називає це випадковістю."
+ },
+ "o5": {
+  n: "Зайвий маневр",
+  d: "За один політ проїхати по горизонталі двадцять п’ять ширин екрана. Літак не скаржився."
+ },
+ "s1": {
+  n: "Поїхали!",
+  d: "12 квітня 1961. Одне слово, яке запам’ятали краще за все інше.",
+  h: "Початок завжди один."
+ },
+ "s2": {
+  n: "Усі повернулися",
+  d: "Білка й Стрілка: сімнадцять витків навколо Землі. Повернулися всі, і миші теж.",
+  h: "Лік іде поспіль."
+ },
+ "s3": {
+  n: "Лайка",
+  d: "3 листопада 1957. Довго казали, що вона прожила тиждень. Правда стала відома у 2002 році.",
+  h: "Тиша — теж відповідь."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15 серпня 1977. Сигнал тривав 72 секунди й більше не повторився.",
+  h: "Він тривав трохи більше хвилини."
+ },
+ "s5": {
+  n: "23 на 73",
+  d: "16 листопада 1974. 1679 точок, надісланих до зоряного скупчення. Відповіді чекаємо досі.",
+  h: "Якщо розкласти, вийде картинка."
+ },
+ "s6": {
+  n: "Порошинка",
+  d: "14 лютого 1990. З шести мільярдів кілометрів Земля — точка менша за піксель.",
+  h: "Чим менше, тим краще видно."
+ },
+ "s7": {
+  n: "Не панікуй",
+  d: "Цей напис стоїть на приладовій панелі «Стармена», який летить повз Землю з 6 лютого 2018 року.",
+  h: "Відповідь на головне питання."
+ },
+ "s8": {
+  n: "Мир",
+  d: "23 березня 2001. Станція прожила п’ятнадцять років і затонула в Тихому океані.",
+  h: "Чотири етапи — один шлях."
+ },
+ "s9": {
+  n: "Де всі?",
+  d: "Парадокс Фермі, 1950. Якщо вони є, де вони? Порожнє небо місяця — теж відповідь.",
+  h: "Якщо вони є, де вони?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_UK[a.id]) a.x=Object.assign(a.x||{}, {uk:ACH_TR_UK[a.id]}); });
 
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
