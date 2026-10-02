@@ -46,18 +46,16 @@ function toolsRun(command) {
   return [...names];
 }
 
-function main() {
+// 02.10.2026: проверка вынесена в evaluate(d), чтобы её звал и общий файл pre-bash.mjs. Возвращает null (пускаем) или { reason, mode }.
+export function evaluate(d) {
   const mode = (process.env.TOOL_USAGE_READ_MODE || 'block').toLowerCase();
-  if (mode === 'off') ok();
-
-  let d = {};
-  try { d = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch { ok(); }
-  if (String(d.tool_name || '') !== 'Bash') ok();
+  if (mode === 'off') return null;
+  if (String(d.tool_name || '') !== 'Bash') return null;
 
   const command = norm((d.tool_input || {}).command);
   const names = toolsRun(command);
-  if (!names.length) ok();
-  if (/\s(--help|-h)(\s|$)/.test(command)) ok();
+  if (!names.length) return null;
+  if (/\s(--help|-h)(\s|$)/.test(command)) return null;
 
   const opened = new Set(readNames('Bash', { command }));
   try {
@@ -66,7 +64,7 @@ function main() {
   } catch { /* нет записи — считаем, что ничего не открывали */ }
 
   const unread = names.filter((n) => !opened.has(n));
-  if (!unread.length) ok();
+  if (!unread.length) return null;
 
   const list = unread.map((n) => 'tools/' + n).join(', ');
   const reason =
@@ -76,8 +74,16 @@ function main() {
     `Отключить на раз: TOOL_USAGE_READ_MODE=off`;
 
   try { recordSignal('tool-usage-read', mode === 'block' ? 4 : 3, 'запуск без чтения: ' + list); } catch { /* след необязателен */ }
-  if (mode === 'warn') out({ continue: true, systemMessage: reason });
-  out({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason } });
+  return { reason, mode };
 }
 
-try { main(); } catch { ok(); }
+function main() {
+  let d = {};
+  try { d = JSON.parse(fs.readFileSync(0, 'utf8') || '{}'); } catch { ok(); }
+  const r = evaluate(d);
+  if (!r) ok();
+  if (r.mode === 'warn') out({ continue: true, systemMessage: r.reason });
+  out({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: r.reason } });
+}
+
+if (process.argv[1] && process.argv[1].endsWith('tool-usage-read-guard.mjs')) { try { main(); } catch { ok(); } }

@@ -51,23 +51,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/version-guard.sh"
-          },
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/pre-bash.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Artifact",
+        "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/bash-safety-guard.sh"
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-broad-git-add.sh"
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/no-secrets-in-commit.sh"
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh"
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/skin-lab-guard.mjs publish"
           }
         ]
       },
@@ -76,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/guard-full-suite-warn.sh"
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/pre-bash.mjs"
           }
         ]
       },
@@ -112,6 +105,15 @@
             "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/syntax-check-js.sh"
           }
         ]
+      },
+      {
+        "matcher": "Read|Grep|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tool-read-log.mjs"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -140,7 +142,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/only-what-owner-said.mjs stop"
+            "command": "node \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/stop-checks.mjs"
           }
         ]
       }

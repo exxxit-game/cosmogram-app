@@ -21,14 +21,8 @@ function readStdin() {
   }
 }
 
-function main() {
-  let j;
-  try {
-    j = JSON.parse(readStdin() || '{}');
-  } catch {
-    process.stdout.write('\n0\n0\n');
-    return;
-  }
+// 02.10.2026: логика вынесена в analyze(j), чтобы её звал и общий файл pre-bash.mjs; запуск как отдельная программа работает как раньше.
+export function analyze(j) {
   const cmd = (j.tool_input && j.tool_input.command) || '';
   const bg = !!(j.tool_input && j.tool_input.run_in_background);
 
@@ -97,7 +91,19 @@ function main() {
     if (/guard[-_.]?(body|day)|q-guard|guard\.mjs/i.test(String(ti.filename || '') + ' ' + String(ti.code || ''))) shouldBlock = true;
   }
 
-  process.stdout.write(`${j.tool_name || ''}\n${shouldBlock ? '1' : '0'}\n${bg ? '1' : '0'}\n`);
+  return { tool: String(j.tool_name || ''), shouldBlock, bg };
 }
 
-main();
+function main() {
+  let j;
+  try {
+    j = JSON.parse(readStdin() || '{}');
+  } catch {
+    process.stdout.write('\n0\n0\n');
+    return;
+  }
+  const r = analyze(j);
+  process.stdout.write(`${r.tool}\n${r.shouldBlock ? '1' : '0'}\n${r.bg ? '1' : '0'}\n`);
+}
+
+if (process.argv[1] && process.argv[1].endsWith('check-guard-mjs-invocation.mjs')) main();

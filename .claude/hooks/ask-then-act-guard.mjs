@@ -154,6 +154,30 @@ function findViolation(blocks) {
   return null;
 }
 
+// 02.10.2026 (владелец: «объединяй, где возможно»): текст требования и проверка вынесены в функции, чтобы их звал объединённый stop-checks.mjs.
+function reasonText(violation) {
+  return `⚠️  ask-then-act — в этом же ходу задан вопрос владельцу и вызван инструмент,\n` +
+    `меняющий/показывающий что-то, БЕЗ реального ответа владельца между ними.\n` +
+    `Вопрос: "${violation.question}"\n` +
+    `Инструмент, вызванный после: ${violation.tool}\n\n` +
+    `Авиация называет это self-answered challenge (silent checklist) — формальное\n` +
+    `нарушение Challenge-Response, не мелочь. Если вопрос был риторическим —\n` +
+    `не задавай его как вопрос. Если это правда вопрос — дождись ответа, не\n` +
+    `действуй в этом же ответе.\n\n` +
+    `Отключить на раз: ASK_THEN_ACT_ENFORCE_MODE=off`;
+}
+
+/** Для stop-checks.mjs: возвращает { reason, tool } или null. */
+export function askThenActCheck(transcriptPath) {
+  if (!transcriptPath) return null;
+  const blocks = collectTurnItems(transcriptPath);
+  if (!blocks.length) return null;
+  const violation = findViolation(blocks);
+  if (!violation) return null;
+  try { recordSignal('ask-then-act', 4, violation.tool); } catch { /* см. комментарий у импорта выше */ }
+  return { reason: reasonText(violation), tool: violation.tool };
+}
+
 function emitOk() {
   process.stdout.write('{"continue": true, "suppressOutput": true}\n');
   process.exit(0);
@@ -214,8 +238,11 @@ function main() {
   emitBlock(reason);
 }
 
-try {
-  main();
-} catch {
-  emitOk();
+// запуск как отдельная программа; при import из stop-checks.mjs main() не вызывается
+if (process.argv[1] && process.argv[1].endsWith('ask-then-act-guard.mjs')) {
+  try {
+    main();
+  } catch {
+    emitOk();
+  }
 }

@@ -12,6 +12,7 @@
  *            сверить каждую правку со словами владельца. Заранее находит новые видимые русские
  *            слова в добавленных строках, которых нет в последних сообщениях владельца.
  *            Второй раз (stop_hook_active) пропускает — не зацикливается.
+ *            С 02.10.2026 эту проверку зовёт и объединённый stop-checks.mjs (функция stopReason).
  * Режим блокировки: ONLY_OWNER_WORDS_MODE = block (по умолчанию) | warn | off.
  */
 import fs from 'node:fs';
@@ -76,27 +77,11 @@ function visibleCyrillic(text) {
   return t.match(/[А-Яа-яЁё]+(?:[ \-—«»:,.!?;…0-9]+[А-Яа-яЁё]+)*/g) || [];
 }
 
-const mode = process.argv[2];
-const input = readStdin();
-
-if (mode === 'prompt') {
-  try {
-    fs.mkdirSync(path.dirname(STATE), { recursive: true });
-    const snap = { ts: Date.now(), diffs: {} };
-    for (const [k, dir] of Object.entries(REPOS)) snap.diffs[k] = gitDiff(dir);
-    fs.writeFileSync(STATE, JSON.stringify(snap));
-  } catch { /* не мешаем работе */ }
-  process.stdout.write(
-    'ПРАВИЛО ВЛАДЕЛЬЦА (хук only-what-owner-said): делай РОВНО то, что владелец сказал или показал на макете. ' +
-    'Ничего сверх: ни подписей, ни значков, ни рамок, ни «заодно», ни своих решений. ' +
-    'Чего не хватает в задаче — не додумывай, а спроси одной строкой. В конце хода код сверяется с его словами.\n');
-  process.exit(0);
-}
-
-if (mode === 'stop') {
-  if (MODE === 'off' || input.stop_hook_active) process.exit(0);
+/** Проверка конца хода: текст требования или '' (код за ход не менялся, режим off, повторный вход). */
+export async function stopReason(input) {
+  if (MODE === 'off' || input.stop_hook_active) return '';
   let snap;
-  try { snap = JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { process.exit(0); }
+  try { snap = JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { return ''; }
   const extras = [];
   let changed = 0;
   for (const [k, dir] of Object.entries(REPOS)) {
@@ -107,7 +92,7 @@ if (mode === 'stop') {
       extras.push(l);
     }
   }
-  if (!changed) process.exit(0);
+  if (!changed) return '';
   const stems = await ownerStems(input.transcript_path || '').catch(() => new Set()); // нет транскрипта — считаем, что слов владельца нет
   const flagged = [];
   for (const l of extras) {
@@ -117,13 +102,37 @@ if (mode === 'stop') {
     }
   }
   const uniq = [...new Set(flagged)].slice(0, 10);
-  const reason =
-    'ХУК «только то, что сказал владелец». За этот ход изменён код (' + changed + ' добавленных строк). ' +
+  return 'ХУК «только то, что сказал владелец». За этот ход изменён код (' + changed + ' добавленных строк). ' +
     (uniq.length ? 'Новые видимые слова, которых владелец не произносил:\n• ' + uniq.join('\n• ') + '\n' : '') +
     'Сверь КАЖДУЮ правку со словами владельца и его макетом. Всё, чего он не просил, убери сейчас же, потом отвечай. ' +
     'В ответе два списка: «Твои пометки» (его слова дословно) и «Сделано» (напротив каждой пометки — что изменено); сверх пометок в «Сделано» ничего нет.';
-  if (MODE === 'warn') { process.stderr.write(reason + '\n'); process.exit(0); }
-  process.stdout.write(JSON.stringify({ decision: 'block', reason }));
+}
+
+// запуск как отдельная программа; при import из stop-checks.mjs ничего ниже не выполняется
+if (process.argv[1] && process.argv[1].endsWith('only-what-owner-said.mjs')) {
+  const mode = process.argv[2];
+  const input = readStdin();
+
+  if (mode === 'prompt') {
+    try {
+      fs.mkdirSync(path.dirname(STATE), { recursive: true });
+      const snap = { ts: Date.now(), diffs: {} };
+      for (const [k, dir] of Object.entries(REPOS)) snap.diffs[k] = gitDiff(dir);
+      fs.writeFileSync(STATE, JSON.stringify(snap));
+    } catch { /* не мешаем работе */ }
+    process.stdout.write(
+      'ПРАВИЛО ВЛАДЕЛЬЦА (хук only-what-owner-said): делай РОВНО то, что владелец сказал или показал на макете. ' +
+      'Ничего сверх: ни подписей, ни значков, ни рамок, ни «заодно», ни своих решений. ' +
+      'Чего не хватает в задаче — не додумывай, а спроси одной строкой. В конце хода код сверяется с его словами.\n');
+    process.exit(0);
+  }
+
+  if (mode === 'stop') {
+    const reason = await stopReason(input);
+    if (!reason) process.exit(0);
+    if (MODE === 'warn') { process.stderr.write(reason + '\n'); process.exit(0); }
+    process.stdout.write(JSON.stringify({ decision: 'block', reason }));
+    process.exit(0);
+  }
   process.exit(0);
 }
-process.exit(0);
