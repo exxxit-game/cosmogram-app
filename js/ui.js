@@ -1506,7 +1506,7 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
   put('setGrpProfSub', L.csRowK+' '+((typeof myCallsign==='function'?myCallsign():'')||L.csDefault)); // 28.09.2026: подписано, что это позывной — было голое «PORO»
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
-function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français',id:'Bahasa Indonesia',tr:'Türkçe',vi:'Tiếng Việt',uk:'Українська',de:'Deutsch',it:'Italiano',fa:'فارسی'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
+function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français',id:'Bahasa Indonesia',tr:'Türkçe',vi:'Tiếng Việt',uk:'Українська',de:'Deutsch',it:'Italiano',fa:'فارسی',ar:'العربية'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
 let langEff='ru'; // v1.108.1: активный язык наружу — единый источник для aT() и всего, что спросит «на каком языке мы сейчас»
 function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор игрока
   const base=LANG; // автоопределение уже посчитано в core.js
@@ -1519,7 +1519,7 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
   // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
   // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
   // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.
-  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json', id:'manifest.id.json', tr:'manifest.tr.json', vi:'manifest.vi.json', uk:'manifest.uk.json', de:'manifest.de.json', it:'manifest.it.json', fa:'manifest.fa.json'};
+  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json', id:'manifest.id.json', tr:'manifest.tr.json', vi:'manifest.vi.json', uk:'manifest.uk.json', de:'manifest.de.json', it:'manifest.it.json', fa:'manifest.fa.json', ar:'manifest.ar.json'};
   const mLink=document.getElementById('manifestLink');
   if(mLink) mLink.href=MANIFEST_BY_LANG[eff]||MANIFEST_BY_LANG.ru;
 }
@@ -3660,7 +3660,7 @@ wireOn('setMusicBtn', 'click', ()=>{
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
 wireOn('setLangBtn', 'click', ()=>{
-  const order=['auto','ru','en','es','pt','fr','id','tr','vi','uk','de','it','fa']; // v1.108.1: добавляются языки по мере перевода
+  const order=['auto','ru','en','es','pt','fr','id','tr','vi','uk','de','it','fa','ar']; // v1.108.1: добавляются языки по мере перевода
   langPref=order[(order.indexOf(langPref)+1)%order.length];
   Store.set('lang',langPref); applyLangPref(); applyLang(); refreshMenu(); langLabel(); sfx.click();
 });
