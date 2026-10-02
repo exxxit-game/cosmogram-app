@@ -10,7 +10,7 @@
 
 const fmtN=n=>String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 const needOf=a=>typeof a.need==='function'?a.need():a.need;
-const aT=a=>(a[typeof langEff!=='undefined'?langEff:'ru'] || a.en || a.ru);
+const aT=a=>{ const l=(typeof langEff!=='undefined')?langEff:'ru'; return ((l==='id' ? (a.tr&&a.tr.id) : a[l]) || a.en || a.ru); }; // у награды есть поле id (идентификатор), совпадающее с кодом индонезийского языка: его перевод лежит в a.tr.id
 
 /* Строки экрана наград: пока только по-русски (как и текст Хартии) — ovT() берёт русскую, если на языке игрока строки нет. */
 Object.assign(I18N.ru,{
@@ -134,6 +134,80 @@ const ACH_TR={
     fr:{n:'Où sont-ils tous ?',d:'Le paradoxe de Fermi, 1950. S’ils existent, où sont-ils ? La trace vide du mois est aussi une réponse.',h:'S’ils existent, où sont-ils ?'}}
 };
 ACH.forEach(a=>{ const tr=ACH_TR[a.id]; if(tr) Object.assign(a,tr); });
+Object.assign(I18N.id,{
+  achSumOpen:(n,t)=>'Terbuka '+n+' dari '+t, achLast:'Temuan terakhir', achNotYet:'Belum ditemukan', achFoundHd:'Ditemukan', achNotFoundHd:'Tidak ditemukan',
+  achSecretHd:(f,t)=>'Rahasia · ditemukan '+f+' dari '+t, achSecretLbl:n=>'Rahasia · berkas No. '+n, achDossier:n=>'berkas No. '+n,
+  achClaimCls:'Pencapaian', achClaimSec:n=>'Berkas rahasia No. '+n, achNext:'Berikutnya'
+});
+const ACH_TR_ID={
+ "c1": {
+  n: "Garis Kármán",
+  d: "Seratus kilometer ke atas. Batas antariksa bagi semua orang kecuali orang Amerika: bagi mereka delapan puluh sudah cukup."
+ },
+ "f1": {
+  n: "Pilot",
+  d: "Pesawat menuruti kemiringan. Mencurigakan."
+ },
+ "d1": {
+  n: "Tantangan Pertama",
+  d: "Kamu menantang seorang teman. Temanmu belum tahu bahwa itu peringatan."
+ },
+ "d2": {
+  n: "Pemenang Duel",
+  d: "Kamu mengalahkan batas orang lain. Temanmu menyebutnya kebetulan."
+ },
+ "o5": {
+  n: "Manuver Berlebih",
+  d: "Dalam satu penerbangan, tempuh dua puluh lima lebar layar secara horizontal. Pesawat tidak mengeluh."
+ },
+ "s1": {
+  n: "Poyekhali!",
+  d: "12 April 1961. Satu kata yang diingat lebih baik daripada yang lain.",
+  h: "Awal selalu hanya satu."
+ },
+ "s2": {
+  n: "Semuanya Kembali",
+  d: "Belka dan Strelka: tujuh belas putaran mengelilingi Bumi. Semuanya kembali, tikus-tikusnya juga.",
+  h: "Hitungannya berurutan."
+ },
+ "s3": {
+  n: "Laika",
+  d: "3 November 1957. Lama dikatakan ia hidup seminggu. Kebenarannya baru terungkap pada 2002.",
+  h: "Hening juga sebuah jawaban."
+ },
+ "s4": {
+  n: "Wow!",
+  d: "15 Agustus 1977. Sinyalnya berlangsung 72 detik dan tidak pernah terulang.",
+  h: "Lamanya sedikit lebih dari semenit."
+ },
+ "s5": {
+  n: "23 kali 73",
+  d: "16 November 1974. 1679 titik dikirim ke gugus bintang. Kita masih menunggu jawabannya.",
+  h: "Jika disusun, muncul sebuah gambar."
+ },
+ "s6": {
+  n: "Debu Kecil",
+  d: "14 Februari 1990. Dari jarak enam miliar kilometer, Bumi hanyalah titik yang lebih kecil dari satu piksel.",
+  h: "Semakin kecil, semakin jelas terlihat."
+ },
+ "s7": {
+  n: "Jangan Panik",
+  d: "Frasa ini ada di dasbor Starman, yang melintas di dekat Bumi sejak 6 Februari 2018.",
+  h: "Jawaban atas pertanyaan utama."
+ },
+ "s8": {
+  n: "Mir",
+  d: "23 Maret 2001. Stasiun itu hidup lima belas tahun dan tenggelam di Samudra Pasifik.",
+  h: "Empat etape, satu jalan."
+ },
+ "s9": {
+  n: "Ke Mana Semua Orang?",
+  d: "Paradoks Fermi, 1950. Jika mereka ada, di mana mereka? Langit bulan ini yang kosong juga sebuah jawaban.",
+  h: "Jika mereka ada, di mana mereka?"
+ }
+};
+ACH.forEach(a=>{ if(ACH_TR_ID[a.id]) a.tr={id:ACH_TR_ID[a.id]}; });
+
 
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
 function achDates(){ const o=Store.get('achD',{}); return (o && typeof o==='object' && !Array.isArray(o))?o:{}; } // id → время получения (мс); у наград, полученных до 02.10.2026, даты нет
@@ -264,7 +338,7 @@ const ACH_STAT_ICO=[
 function achPassportHtml(){
   const T=ovT, esc=escapeHtml;
   const g=Stats.gGames||0, t=Stats.tGames||0, k=Stats.kGames||0, tot=g+t+k;
-  const km=Math.round((Stats.totalDist||0)/1000), sa=heroRecordFor('touch').val, dl=heroRecordFor('daily').val, sl=heroRecordFor('slalom').val, rl=saneNumber(Store.get('bestRelayLeg',0),0);
+  const km=Math.round((Stats.totalDist||0)/1000), sa=heroRecordFor('touch').val, dl=heroRecordFor('daily').val, sl=heroRecordFor('slalom').val, rl=saneNumber(Store.get('bestRelayContrib',0),0);
   const nick=esc((typeof myCallsign==='function'&&myCallsign())||'');
   const month=(function(){ try{ return new Date().toLocaleDateString((typeof langEff!=='undefined'&&langEff)||'ru',{month:'long'}); }catch(e){ return ''; } })();
   const row=function(ico,nm,sub,val,plId,hasVal){

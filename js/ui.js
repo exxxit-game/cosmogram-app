@@ -1079,6 +1079,10 @@ function gameOver(){
   const cardBtnEl=$('cardBtn'); if(cardBtnEl) cardBtnEl.classList.remove('hidden'); // v1.282.10: настоящий забег — кнопка снова видна, если Театр её прятал раньше в этой сессии
   setText('toRecord', (!isRecord && sc>0 && prevCat>sc) ? L.toRecord+(prevCat-sc) : ''); // мотивация: сколько не хватило
   OF_TOREC=(!foreignRecordMode && !isRecord && sc>0 && prevCat>sc) ? prevCat-sc : 0; // 30.09.2026: то же число — золотой строкой на рисунке «Твоего полёта» (раньше жило только в спойлере); только Score Attack: у Спидрана/«Без касаний»/Биатлона prevCat — рекорд чужой дисциплины (см. foreignRecordMode выше), «До рекорда» по нему был бы враньём
+  if (S.mode==='relay'){ // 02.10.2026 «Вклад» (владелец, вариант А): очки, добавленные именно игроком = счёт в конце этапа минус принесённый прошлыми этапами. Личный рекорд — только за сданный этап. В bestRelayLeg лежит счёт цепочки с чужими очками, в шапке его больше не показываем
+    OF_RELAY={ contrib:Math.max(0,Math.floor(S.score)-Math.floor(saneNumber(S.relayInheritScore,0))), rec:false };
+    const pbR=saneNumber(Store.get('bestRelayContrib',0),0);
+    if (S.relayLegDone && !S.wasRestored && OF_RELAY.contrib>pbR){ Store.set('bestRelayContrib',OF_RELAY.contrib); OF_RELAY.rec=true; } }
   overLocFill(); // космическая шкала: «До Линии Кармана» — полоской на экране (28.09.2026, вариант Б)
   overFinishFill(sc); // 30.09.2026 «Финиш по времени»: разница к рекорду под временем / «Цель · Не хватило» при вылете Спидрана; в остальных режимах прячет свой блок
   overFlightFill(); // 30.09.2026 «Твой полёт»: линия из rec + стикер причины (или флажок финиша) — Score Attack, «Без касаний», Спидран, Биатлон; в остальных режимах сама прячет и чистит карточку
@@ -1502,7 +1506,7 @@ function setWellFill(){ // v1.91.0 «Настройки по полочкам»:
   put('setGrpProfSub', L.csRowK+' '+((typeof myCallsign==='function'?myCallsign():'')||L.csDefault)); // 28.09.2026: подписано, что это позывной — было голое «PORO»
 }
 function soundLabel(){ rowSw('setSoundBtn', !MUTED); setWellFill(); }
-function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
+function langLabel(){ const names={ru:'Русский',en:'English',es:'Español',pt:'Português',fr:'Français',id:'Bahasa Indonesia'}; rowV('setLangBtn', langPref==='auto'?L.langAuto:(names[langPref]||langPref)); }
 let langEff='ru'; // v1.108.1: активный язык наружу — единый источник для aT() и всего, что спросит «на каком языке мы сейчас»
 function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор игрока
   const base=LANG; // автоопределение уже посчитано в core.js
@@ -1513,7 +1517,7 @@ function applyLangPref(){ // 'auto' → язык Telegram, иначе выбор
   // v1.108.1 «Манифест говорит на своём языке»: паспорт приложения (имя/описание при установке)
   // подстраивается под тот же язык, что и сама игра — не только internal L. Новый язык интерфейса
   // добавляется тем же способом: файл manifest.XX.json + одна строка в MANIFEST_BY_LANG.
-  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json'};
+  const MANIFEST_BY_LANG={ru:'manifest.ru.json', en:'manifest.en.json', es:'manifest.es.json', pt:'manifest.pt.json', fr:'manifest.fr.json', id:'manifest.id.json'};
   const mLink=document.getElementById('manifestLink');
   if(mLink) mLink.href=MANIFEST_BY_LANG[eff]||MANIFEST_BY_LANG.ru;
 }
@@ -3654,7 +3658,7 @@ wireOn('setMusicBtn', 'click', ()=>{
   else music.start(screenName==='game'?'game':'menu'); // включили — играем там, где находимся
 });
 wireOn('setLangBtn', 'click', ()=>{
-  const order=['auto','ru','en','es','pt','fr']; // v1.108.1: добавляются языки по мере перевода
+  const order=['auto','ru','en','es','pt','fr','id']; // v1.108.1: добавляются языки по мере перевода
   langPref=order[(order.indexOf(langPref)+1)%order.length];
   Store.set('lang',langPref); applyLangPref(); applyLang(); refreshMenu(); langLabel(); sfx.click();
 });
@@ -4707,7 +4711,7 @@ function overLocFill(){ // полоска «До Линии Кармана» (и
    Пока только Score Attack и срыв в «Без касаний» (остальные режимы — без карточки, решение владельца). */
 let OF_BOXW=299; // ширина поля рисунка: 299 на всю карточку, 189 рядом с левой колонкой (слот + значки) — для расчёта подписей
 const OF_W=326;// ширина рисунка = внутренняя ширина карточки на телефоне 390px; на уже́ — SVG масштабируется по ширине
-let OF_REC={combo:false,wave:false}, OF_TOREC=0, OF_CHIPS=[]; // что побито в этом полёте / сколько до рекорда / плашки gameOver() — заполняет gameOver(), читает overFlightFill()
+let OF_REC={combo:false,wave:false}, OF_TOREC=0, OF_CHIPS=[], OF_RELAY={contrib:0,rec:false}; // что побито в этом полёте / сколько до рекорда / плашки gameOver() — заполняет gameOver(), читает overFlightFill()
 let OF_FIN={on:false,prev:0,rec:false,sc:0,raw:0,end:''}, OF_VID=false; // 30.09.2026 «Финиш по времени»: победа во «времени» (on), прежний рекорд (prev), побит ли (rec), очки итога / до множителя; OF_VID — есть ли клип «Момента полёта» (cinemaClipRefresh) для кнопки видео в углу окошка
 const OF_KIND_ALIAS={beam:'seeker'};
 const OF_KIND_NAME={rock:'fkRock',debris:'fkDebris',drift:'fkDrift',mine:'fkMine',sat:'fkSat',comet:'fkComet',seeker:'fkSeeker',gate:'fkGate'}; // тот же набор, что PT_KIND_LABEL (partitura.js), имена — из i18n на всех языках
@@ -4880,7 +4884,7 @@ function overFlightFillInner(){
   if(slot.fd){ const fd=$('finishDelta'); if(fd) fd.classList.add('hidden'); } // разница уже в слоте — под цифрой её больше нет
   el.classList.toggle('hasRel', sa && mode==='relay');
   const relGo=el.querySelector('.relGoBtn'); if(relGo) relGo.addEventListener('click', function(){ if(typeof flyRelay==='function') flyRelay(); }); // «Продолжить эстафету» — берём следующий этап
-  if(sa){ el.classList.add('noRank'); overSaStop(); overSaMount(); overSaLabels(saRecs.items); } // место в мире придёт позже (overRankFill → overSaWorld)
+  if(sa){ el.classList.add('noRank'); overSaStop(); overSaMount(); setText('finalScoreLabel', mode==='relay' ? ovT('overChainLbl') : L.finalScoreLabel); overSaLabels(mode==='relay' ? [] : saRecs.items); if(mode==='relay') overRelHead(el); } // место в мире придёт позже (overRankFill → overSaWorld)
   if(sa) setHTML('newRecord', OF_CHIPS.filter(function(h){ const m=overFlightMarks([h]); return !m.length; }).join('')); // Score Attack: рекорды и отметки уже подписями над числом; «призрак повержен» убран совсем (владелец 01.10: факт и так виден по месту и счёту); плашкой остаётся только непонятое
   else if(marks.length===OF_CHIPS.length) setHTML('newRecord',''); // только если ВСЕ плашки разобраны (слот или значок) — иначе непонятая плашка пропала бы бесследно
   toggleCls('overDetailsBtn','hidden',true); toggleCls('overMore','hidden',true); // подробности теперь внутри окошка — строка «Подробности полёта» внизу не нужна (в режимах без окошка остаётся)
@@ -4962,6 +4966,12 @@ function overSaHead(dot){ // шапка окна: слева результат 
   return '<div class="orHead"><div class="hdR"></div><div class="hdL"></div><i class="hdDiv"></i>'
     +'<button type="button" class="ofInfo" aria-label="'+escapeHtml(ovT('overInfoAria'))+'"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="5.6" r="2.3" fill="currentColor"/><rect x="10" y="10" width="4" height="10" rx="2" fill="currentColor"/></svg>'+dot+'</button></div>';
 }
+function overRelHead(el){ // 02.10.2026 Эстафета: правая половина шапки — «Ваш вклад / +N»; когда вклад — личный рекорд, подпись по очереди меняется на золотое «Новый рекорд»
+  const hl=el.querySelector('.hdL'); if(!hl) return;
+  hl.innerHTML='<span>'+escapeHtml(ovT('overContribLbl'))+'</span><b>+'+escapeHtml(fmtN(OF_RELAY.contrib))+'</b>';
+  el.classList.remove('noRank');
+  overSaSlot('R', hl.querySelector('span'), OF_RELAY.rec ? [{txt:ovT('overRecContribLbl'), rec:1}] : null);
+}
 function overSaRecs(marks){ // рекорды и отметки полёта → список подписей, что сменяют друг друга над числом (overSaLabels): сначала рекорды (счёт, дистанция, комбо, волна), потом спокойные отметки; названия одинаковые во всех режимах
   const items=[], seen={}, add=function(txt,rec){ if(!txt||seen[txt]) return; seen[txt]=1; items.push({txt:txt, rec:rec}); };
   const rm=$('recordMedals'); // медали gameOver() (рекорд по способу управления / дистанции) — не рисуем над окном, а берём как подписи
@@ -5039,7 +5049,7 @@ function overSaWorldParts(o){ // что показать справа в шап�
 function overSaWorld(o, cat){ // место в мире — в правую половину шапки окна; без места (гость, нет связи) шапка — один результат по центру
   const el=$('overFlight'); if(!el) return;
   const hl=el.querySelector('.hdL'); if(!hl) return;
-  if(!o){ hl.innerHTML=''; el.classList.add('noRank'); delete OF_SA.slots.R; return; }
+  if(!o){ if(S.mode==='relay') return; hl.innerHTML=''; el.classList.add('noRank'); delete OF_SA.slots.R; return; } // у эстафеты справа вклад, а не место в мире
   const p=overSaWorldParts(o);
   hl.innerHTML='<span>'+escapeHtml(p.lab)+'</span><b>'+escapeHtml(p.val)+'</b>';
   el.classList.remove('noRank');

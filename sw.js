@@ -5,7 +5,7 @@
    v1.108.1 «Один источник»: версия раньше повторялась вручную в каждой строке —
    забыть одну означало тихо раздать игроку смесь старого и нового файла. Теперь
    она называется один раз здесь, остальное собирается из неё же. */
-const V = '1.478.624';
+const V = '1.478.625';
 const CACHE = 'cosmogram-v' + V;
 /* 28.09.2026: музыка — готовые записи (music/*.mp3, ~6 МБ). Свой кэш, который НЕ стирается при смене
    версии игры — иначе каждый выпуск заново качал бы 6 МБ. Меняется только когда перезаписана сама
@@ -21,7 +21,7 @@ const JS_FILES = [
   'goldstar','finish','music','gyro','forge','partitura','adaptive','card','star','cinema','ui','vendor/telegram-web-app','vendor/mp4-muxer.min','vendor/eruda.min','vendor/mediabunny.min'
 ];
 const SHELL = [
-  './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', // v1.108.1: манифест по языку — все варианты в кеше
+  './', 'index.html', 'manifest.ru.json', 'manifest.en.json', 'manifest.es.json', 'manifest.pt.json', 'manifest.fr.json', 'manifest.id.json', // v1.108.1: манифест по языку — все варианты в кеше
   ...JS_FILES.map(f => 'js/' + f + '.js?v=' + V),
   /* v1.282.13: fonts/OFL.txt был убран отсюда — файла не было на диске, а caches.addAll
      атомарен: один 404 роняет весь install, воркер не активируется, офлайна нет. Мина

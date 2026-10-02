@@ -81,6 +81,15 @@ const CINEMA_LINES={
     nearrecord:[n=>`À ${n} ${n===1?'point':'points'} du record.`,'Si près du record !',
       n=>`${n} de plus et c'était le tien.`,'Presque réécrit l\'histoire.',n=>`Seulement ${n} ${n===1?'point':'points'} du record.`,
       'La prochaine fois, c\'est sûr.',n=>`À ${n} ${n===1?'point':'points'} de la gloire.`,'Le record était si proche.'] },
+  id:{ record:['REKOR BARU!','Kecepatan kosmik.','Belum ada yang terbang seperti ini.','Rekor lama gemetar.',
+      'Percepatan luar biasa!','Terbang melampaui kosmos.','Rekor? Biasa saja.','Langit akan mengingat penerbangan ini.'],
+    nearmiss:['Nyaris banget!','Saraf baja.','Tinggal sejengkal lagi.','Melesat tepat di sebelahnya.',
+      'Pilot berdarah dingin.','Antariksa menyentuh sayap.','Presisi bedah.','Tak bisa lebih dekat lagi.'],
+    death:['Setidaknya kelihatan keren.','Asteroid menang kali ini.','Belum kali ini.','Pendaratan... gagal.',
+      'Jatuh karena keberaniannya sendiri.','Penerbangan selesai. Kejayaan sudah dekat.','Antariksa mengambil bagiannya.','Satu pahlawan lagi, gugur dengan gaya.'],
+    nearrecord:[n=>`Kurang ${n} poin dari rekor.`,'Dekat sekali dengan rekor!',
+      n=>`${n} lagi dan rekor jadi milikmu.`,'Nyaris menulis ulang sejarah.',n=>`Hanya ${n} poin dari rekor.`,
+      'Lain kali, pasti.',n=>`${n} poin lagi menuju kehebatan.`,'Rekornya sudah sangat dekat.'] },
 };
 function cinemaPickLine(cat, n){
   const lang=(typeof langEff!=='undefined' && CINEMA_LINES[langEff]) ? langEff : 'ru';
