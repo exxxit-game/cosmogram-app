@@ -23,7 +23,16 @@
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:mcpmarket.com)",
+      "WebFetch(domain:app.mcpmarket.com)",
+      "WebFetch(domain:skillsmp.com)",
+      "WebFetch(domain:claudemarketplaces.com)",
+      "WebFetch(domain:smithery.ai)",
+      "WebFetch(domain:aitmpl.com)",
+      "WebFetch(domain:claude-plugins.dev)"
     ]
   },
   "hooks": {
