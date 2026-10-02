@@ -13,7 +13,7 @@ description: "Мышление учёных" — как я думаю ДО то�
 подозреваю инструмент, среду или «оформление». Слова вроде «подвело» — следствие. Причина раньше:
 я не проверил то, что мог проверить сам.
 
-Источники и проверка легенд: `.knowledge/RESEARCH-2026-09-EPISTEMOLOGY-HISTORY.md`,
+Источники и проверка легенд: `.knowledge/archive/do-30-09/RESEARCH-2026-09-EPISTEMOLOGY-HISTORY.md`,
 память `feedback_kak_ya_sam_dolzhen_rassuzhdat_sintez_25_09.md`.
 
 ## Пять вопросов перед утверждением
