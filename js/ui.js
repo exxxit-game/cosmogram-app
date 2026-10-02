@@ -5208,25 +5208,10 @@ wireOn('feedbackSendBtn', 'click', feedbackSend);
 // 15.09.2026 «Равноправие»/«Благодарность»: оба — простые статичные экраны, открываются
 // только из меню, тот же минимальный приём, что у setScreen+toMenu пары hangar/ach выше.
 /* 01.10.2026 Хартия v2.2: последняя фраза говорит правду для этого часа — ночью (23:00–4:00 по часам телефона) «Можете идти спать», в остальное время «Можете идти играть» (владелец: «не надо будет гадать, ночь или не ночь»). */
-/* 01.10.2026 «Рука карт»: под листающимися карточками примеров подсвечивается ромб той карточки, что сейчас у левого края. */
-function charterHandInit(){ const tr=document.querySelector('#equalityScreen .chTrack'); if(!tr||tr._hand) return; tr._hand=1;
-  const dots=[...document.querySelectorAll('#equalityScreen .chDots i')];
-  tr.addEventListener('scroll', ()=>{ const c=tr.querySelector('.chCard'); if(!c) return; const step=c.offsetWidth+12; const k=Math.max(0,Math.min(dots.length-1,Math.round(tr.scrollLeft/step))); dots.forEach((d,i)=>d.classList.toggle('on',i===k)); }, {passive:true}); }
-/* 01.10.2026 «Рука карт»: все карточки ОДНОЙ высоты и без пустых дырок — недостающее место в коротких карточках раздаётся поровну между строками (межстрочный интервал), слова не меняются. Вызывается при открытии экрана и при смене размера. */
-function charterHandFit(){ const tr=document.querySelector('#equalityScreen .chTrack'); if(!tr||tr.offsetParent===null) return;
-  const cs=[...tr.querySelectorAll('.chCard')]; cs.forEach(c=>{ c.style.paddingTop=''; c.style.paddingBottom=''; c.querySelectorAll('p').forEach(p=>{ p.style.lineHeight=''; }); });
-  const hs=cs.map(c=>c.getBoundingClientRect().height), max=Math.max(...hs);
-  cs.forEach((c,i)=>{ const d=max-hs[i]; if(d<0.5) return; const ps=[...c.querySelectorAll('p')];
-    const lines=ps.reduce((n,p)=>n+Math.round(p.getBoundingClientRect().height/parseFloat(getComputedStyle(p).lineHeight)),0); if(!lines) return;
-    /* предел: строки растягиваются не больше чем на 25% (иначе текст разваливается); остаток делится поровну в поля сверху и снизу — карточка остаётся той же высоты на любой длине текста и в любом языке */
-    const lh0=parseFloat(getComputedStyle(ps[0]).lineHeight), add=Math.min(d/lines, lh0*0.25), rest=d-add*lines;
-    ps.forEach(p=>{ p.style.lineHeight=(parseFloat(getComputedStyle(p).lineHeight)+add)+'px'; });
-    if(rest>0.5){ c.style.paddingTop=(parseFloat(getComputedStyle(c).paddingTop)+rest/2)+'px'; c.style.paddingBottom=(parseFloat(getComputedStyle(c).paddingBottom)+rest/2)+'px'; } }); }
-window.addEventListener('resize', ()=>{ try{ charterHandFit(); }catch(e){} });
 function charterByeFill(){ const el=$('chBye'); if(!el) return; const h=new Date().getHours(); el.textContent=(h>=23||h<4)?(L.charterByeNight||'Можете идти спать.'):(L.charterByeDay||'Можете идти играть.'); }
 // 02.10.2026 владелец: «где код игры открыт — нажать и перейти на GitHub». Внутри Telegram внешний адрес открывает tg.openLink, в браузере — обычная новая вкладка. Ссылка — открытый репозиторий игры (cosmogram-app; серверный cosmogram-crew закрыт).
 document.addEventListener('click', function(e){ const a=e.target.closest&&e.target.closest('a.chLink'); if(!a) return; e.preventDefault(); const u=a.getAttribute('href'); try{ if(tg&&tg.openLink){ tg.openLink(u); return; } }catch(e2){} try{ window.open(u,'_blank','noopener'); }catch(e3){ location.href=u; } });
-wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); charterSignFill(); charterByeFill(); charterHandInit(); charterHandFit(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ try{ charterHandFit(); }catch(e){} }); });
+wireOn('equalityBtn', 'click', ()=>{ setScreen('equality'); sfx.click(); charterSignFill(); charterByeFill(); });
 wireOn('equalityBackBtn', 'click', toMenu);
 // 16.09.2026 «Галерея видео-рекордов»: дверь открывает обычный экран (тот же setScreen(), что и
 // остальные) — сама галерея (#flightGalleryGrid клики, плеер) живёт в js/cinema.js, здесь только
