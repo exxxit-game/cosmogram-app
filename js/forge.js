@@ -647,6 +647,10 @@ function forgeChipBuild(el,text,get,set){
    выводят цвет из sky (обратная совместимость), просто UI-пикер для него больше не строится. */
 
 /* ---------- Экран: наполнение и события ---------- */
+function forgeLocPresetName(n){ // 02.10.2026: названия встроенных трасс лежат на сервере по-русски; на другом языке берём из словаря (fpWarm…fpPulse)
+  if(!n||typeof I18N==='undefined'||!I18N.ru) return n;
+  for(const k in I18N.ru){ if(/^fp[A-Z]/.test(k) && I18N.ru[k]===n && L[k]) return L[k]; }
+  return n; }
 function forgeFill(){ // подписи + состояние виджетов по текущему языку (вызывается из applyLang)
   if(typeof L==='undefined'||!L.forgeTitle) return;
   /* 23.08.2026: тот же класс защиты, что и в ui.js/ach.js — раньше каждая строка читала
@@ -2147,12 +2151,12 @@ function workshopRenderList(){
       // 15.09.2026), а из-за тонкой обводки самой буквы — мало закрашенной площади. Утолщено
       // (rect 3.6×9, точка r2.1), .ic-размер поднят следом до 13px (index.html), геометрия
       // круга/цвет не тронуты — просто более жирная буква, ничего не придумано заново.
-      '<button class="wCorner" data-act="info" title="Подробнее"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><rect x="10.2" y="9.4" width="3.6" height="9" rx="1.8" fill="#0b1626"></rect><circle cx="12" cy="6" r="2.1" fill="#0b1626"></circle></svg></button>'+
+      '<button class="wCorner" data-act="info" title="'+(L.workshopInfoT||'Подробнее')+'"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"></circle><rect x="10.2" y="9.4" width="3.6" height="9" rx="1.8" fill="#0b1626"></rect><circle cx="12" cy="6" r="2.1" fill="#0b1626"></circle></svg></button>'+
       // 08.09.2026 (владелец, живой макет): «не вижу причин им быть под кнопкой ⋯, можно
       // без лишнего клика» — Закрепить/Скрыть тоже открытые значки в углу, залитые как
       // жалоба, «⋯»/скрывающий wModRow убраны совсем.
-      (isOwner ? '<button class="wCorner wPin" data-act="pin" title="Закрепить"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
-      '<button class="wCorner wHide" data-act="hide" title="Скрыть"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
+      (isOwner ? '<button class="wCorner wPin" data-act="pin" title="'+(L.workshopPin||'Закрепить')+'"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6.5 6.5 0 0 0-6.5 6.5C5.5 14 12 21 12 21s6.5-7 6.5-11.5A6.5 6.5 0 0 0 12 3z"></path><circle cx="12" cy="9.3" r="2.3" fill="#0b1626"></circle></svg></button>'+
+      '<button class="wCorner wHide" data-act="hide" title="'+(L.workshopHide||'Скрыть')+'"><svg class="ic" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"></path><circle cx="12" cy="12" r="2.6" fill="#0b1626"></circle></svg></button>' : '')+
       '</div>'+
       // 15.09.2026: имя переехало вниз, прямо над значками препятствий — оба в левом нижнем
       // углу, одной колонкой (.wNameStack), тем же приёмом, что уже был у стикеров.
@@ -2225,7 +2229,7 @@ function workshopRenderList(){
       }
       const cfg=forgeDecode(t.code);
       if(cfg) forgeMiniSwatchPaint(row.querySelector('canvas'), cfg);
-      row.querySelector('.wName').textContent=t.name||L.forgeDefName||'';
+      row.querySelector('.wName').textContent=forgeLocPresetName(t.name)||L.forgeDefName||'';
       // 08.09.2026/12.09.2026: значки препятствий — всегда видимая часть карточки (не помогают
       // решить «лететь или нет» сами по себе, но и не текст — см. .knowledge/RESEARCH...),
       // Автор/Запуски — внутри панели (i), второстепенные. 13.09.2026: у автора есть подпись

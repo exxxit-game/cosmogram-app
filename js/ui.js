@@ -5479,6 +5479,7 @@ wireOn('feedbackText', 'input', feedbackUpdateCount);
 
 /* ---------- Локализация DOM ---------- */
 function applyLang(){
+  if (typeof applyStaticLabels==='function') applyStaticLabels(); // 02.10.2026: подписи из index.html, что лежали голым русским (i18n.js)
   resetUniformTitleSize(); // 15.09.2026: смена языка — тексты меню-заголовков другие, старый общий кегль не годится
   // v1.34.0 «Единая палуба»: иконки перед текстом убраны из всех окон — кнопки говорят текстом
   /* 13.08.2026: подписи pillGyro/pillTouch/pillDist/pillBullet больше некому раздавать —

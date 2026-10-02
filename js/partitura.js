@@ -12,7 +12,9 @@
    forgeSyncWidgets — куда добавлен один вызов ptRender()).
    ============================================================ */
 
-const PT_KIND_LABEL={rock:'Астероид',debris:'Обломок',drift:'Дрейфер',mine:'Мина',sat:'Спутник',comet:'Комета',seeker:'Ловец',gate:'Ворота'}; // сверено с js/i18n.js: fkRock..fkGate
+const PT_KIND_LABEL={ // 02.10.2026: имена видов — из словаря текущего языка (L.fk*), русский остаётся запасным
+  get rock(){return (L&&L.fkRock)||'Астероид';}, get debris(){return (L&&L.fkDebris)||'Обломок';}, get drift(){return (L&&L.fkDrift)||'Дрейфер';}, get mine(){return (L&&L.fkMine)||'Мина';},
+  get sat(){return (L&&L.fkSat)||'Спутник';}, get comet(){return (L&&L.fkComet)||'Комета';}, get seeker(){return (L&&L.fkSeeker)||'Ловец';}, get gate(){return (L&&L.fkGate)||'Ворота';}}; // сверено с js/i18n.js: fkRock..fkGate
 /* 17.09.2026 (владелец, живой разговор): у Астероида/Кометы почти один и тот же оранжевый
    (реально измерено: rock hue≈33°, comet hue≈25° — 8° разницы) и у Передышки/Обломка не только
    один синий, но ещё и похожие иконки (две полосы, просто повёрнутые) — то же синее семейство у
@@ -214,7 +216,7 @@ function ptSpreadOffsets(pins){
   });
   return offs;
 }
-function ptPinName(p){ return p.type==='pause'?'передышку':p.type==='marker'?'заметку':(PT_KIND_LABEL[FORGE_KINDS[p.kind]]||'').toLowerCase(); }
+function ptPinName(p){ return p.type==='pause'?L.ptPinPause:p.type==='marker'?L.ptPinNote:(PT_KIND_LABEL[FORGE_KINDS[p.kind]]||'').toLowerCase(); }
 
 let ptToastTimer=null;
 /* 14.09.2026 (владелец, живой скрин с кружком — «эта кнопка теперь лишняя»): у Тюнинга
@@ -382,10 +384,10 @@ function ptRenderPanel(){
   // 16.09.2026: панель — нижний лист (position:fixed, index.html), ptPositionBubble() (якорила
   // её у самой точки) больше не нужна и удалена — точку по-прежнему видно по .pin.sel на ленте.
   const kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
-  const title=$('ptPanelTitle'); if(title) title.textContent=p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':(PT_KIND_LABEL[kindName]||'');
+  const title=$('ptPanelTitle'); if(title) title.textContent=p.type==='pause'?L.ptCapPause:p.type==='marker'?L.ptCapNote:(PT_KIND_LABEL[kindName]||'');
   const icon=$('ptPanelIcon'); if(icon) icon.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
   const av=$('ptAtVal'); if(av) av.value=p.at;
-  const kl=$('ptKindLbl'); if(kl){ kl.style.display=p.type==='kind'?'block':'none'; if(p.type==='kind') kl.textContent='Здесь всегда будет '+(PT_KIND_LABEL[kindName]||'').toLowerCase()+' — не случайный вид.'; }
+  const kl=$('ptKindLbl'); if(kl){ kl.style.display=p.type==='kind'?'block':'none'; if(p.type==='kind') kl.textContent=L.ptKindFixed((PT_KIND_LABEL[kindName]||'').toLowerCase()); }
   // 01.09.2026 «Направление»: сторона видна только у кометы/дрейфера — у остальных видов (и у
   // спутника, который лишь колеблется) стороны не существует физически, контрол не показываем.
   const dr=$('ptDirRow');
@@ -396,7 +398,7 @@ function ptRenderPanel(){
       const seg=$('ptDirSeg');
       if(seg){
         seg.innerHTML='';
-        [[0,'Случайно'],[-1,'Влево'],[1,'Вправо']].forEach(function(it){
+        [[0,L.ptRandom],[-1,L.setKeyLeft],[1,L.setKeyRight]].forEach(function(it){
           const b=document.createElement('button');
           b.className='forgeSegBtn'+((p.dir||0)===it[0]?' sel':'');
           b.textContent=it[1];
@@ -434,9 +436,9 @@ function ptRenderList(){
   const listPanel=$('ptListPanel'), listSub=$('ptListSub'); if(!listPanel||!listSub) return;
   const pins=ptPins();
   const curve=ptSimulateFlightCurve(ptLen());
-  listSub.textContent=pins.length?pins.length+' шт. · весь полёт ~'+ptFmtTime(curve.total):'пусто';
+  listSub.textContent=pins.length?L.ptListCount(pins.length,ptFmtTime(curve.total)):L.ptListEmptySub;
   listPanel.innerHTML='';
-  if(!pins.length){ listPanel.innerHTML='<div class="evtEmpty">пока ничего не добавлено</div>'; return; }
+  if(!pins.length){ listPanel.innerHTML='<div class="evtEmpty">'+L.ptListEmpty+'</div>'; return; }
   const order=pins.map((p,i)=>i).sort((a,b)=>pins[a].at-pins[b].at);
   order.forEach(i=>{
     const p=pins[i], kindName=p.type==='kind'?FORGE_KINDS[p.kind]:null;
@@ -445,7 +447,7 @@ function ptRenderList(){
     if(p.type==='kind'){ const c=PT_KIND_COLOR[kindName]||'#8fa3c8'; ic.style.background='linear-gradient(180deg, '+c+', '+c+'dd)'; }
     else ic.style.background=p.type==='pause'?'linear-gradient(180deg,rgba(160,210,255,.9),rgba(160,210,255,.65))':'linear-gradient(180deg,rgba(240,192,64,.9),rgba(240,192,64,.65))';
     ic.innerHTML=p.type==='pause'?PT_ICON_SVG.pause:p.type==='marker'?PT_ICON_SVG.marker:(PT_ICON_SVG[kindName]||'');
-    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=p.type==='pause'?'Передышка':p.type==='marker'?'Заметка':(PT_KIND_LABEL[kindName]||'');
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=p.type==='pause'?L.ptCapPause:p.type==='marker'?L.ptCapNote:(PT_KIND_LABEL[kindName]||'');
     const evtT=ptTimeAtDistance(curve,p.at);
     const mt=document.createElement('div'); mt.className='mt'; mt.style.cssText='font-size:10.5px;color:var(--gold-hi);flex-shrink:0;text-align:right';
     mt.textContent=p.at+(L.unitM||'м')+' · '+ptFmtTime(evtT);
@@ -468,7 +470,7 @@ function ptRemovePin(i){
   pins.splice(i,1); ptSelIdx=-1;
   sfx.click(); haptic('light');
   const revert=()=>{ pins.push(p); pins.sort((a,b)=>a.at-b.at); ptSelIdx=pins.findIndex(x=>x===p); ptRender(); };
-  ptShowToast('Убрал '+ptPinName(p));
+  ptShowToast(L.ptRemoved(ptPinName(p)));
   ptSetUndo(revert);
   ptRender();
 }
@@ -540,8 +542,13 @@ function ptArmSticker(item,d){
   if(!same) item.classList.add('armed');
 }
 function ptWireTray(){
-  const tray=$('ptTray'); if(!tray||tray._ptWired) return; tray._ptWired=1;
-  const stickerDefs=[{t:'pause',k:0,cap:'Передышка'},{t:'marker',k:0,cap:'Заметка'}]
+  const tray=$('ptTray'); if(!tray) return;
+  if(tray._ptWired){ // 02.10.2026: лоток строится один раз; при смене языка обновляем только подписи
+    const caps=[L.ptCapPause,L.ptCapNote].concat(FORGE_KINDS.map(function(k){ return PT_KIND_LABEL[k]||k; }));
+    tray.querySelectorAll('.stickerCap').forEach(function(el,i){ if(caps[i]) el.textContent=caps[i]; });
+    return; }
+  tray._ptWired=1;
+  const stickerDefs=[{t:'pause',k:0,cap:L.ptCapPause},{t:'marker',k:0,cap:L.ptCapNote}]
     .concat(FORGE_KINDS.map((k,i)=>({t:'kind',k:i,cap:PT_KIND_LABEL[k]||k})));
   tray.innerHTML='';
   stickerDefs.forEach(function(d){
@@ -837,8 +844,8 @@ function ptSyncColorUI(){
 }
 function ptFill(){
   if(typeof L==='undefined'||!L.forgeTitle) return; // тот же ранний выход, что и forgeFill — язык ещё не загружен
-  const t=$('ptTitle'); if(t) t.textContent='Расстановка';
-  const s=$('ptSub'); if(s) s.textContent='Точки на дистанции — где будет передышка или препятствие';
+  const t=$('ptTitle'); if(t) t.textContent=L.ptTitleT;
+  const s=$('ptSub'); if(s) s.textContent=L.ptSubT;
   ptH2Touched=false; // новое открытие экрана — авто-гармония снова ведёт второй цвет, пока автор сам его не тронет
   const ov0=$('ptListOverlay'); if(ov0) ov0.classList.remove('show'); // 12.09.2026: свежее открытие Конструктора не должно наследовать открытый лист прошлого раза
   ptArmedType=null; ptSelIdx=-1; // 12.09.2026: тем же принципом — не наследуем взведённый стикер/выбранную точку прошлого раза

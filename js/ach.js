@@ -54,6 +54,87 @@ const ACH=[
     ru:{n:'Где все?', d:'Парадокс Ферми, 1950. Если они есть, где они? Пустое небо месяца — тоже ответ.', h:'Если они есть, где они?'}}
 ];
 
+/* 02.10.2026 перевод наград на en/es/pt/fr (черновик ИИ, носитель не читал). Факты те же, что в русском тексте; даты и числа не менялись. */
+Object.assign(I18N.en,{
+  achSumOpen:(n,t)=>'Unlocked '+n+' of '+t, achLast:'Last find', achNotYet:'Not found yet', achFoundHd:'Found', achNotFoundHd:'Not found',
+  achSecretHd:(f,t)=>'Classified · found '+f+' of '+t, achSecretLbl:n=>'Classified · file No. '+n, achDossier:n=>'file No. '+n,
+  achClaimCls:'Achievement', achClaimSec:n=>'Classified file No. '+n, achNext:'Next'
+});
+Object.assign(I18N.es,{
+  achSumOpen:(n,t)=>'Desbloqueado '+n+' de '+t, achLast:'Último hallazgo', achNotYet:'Aún sin encontrar', achFoundHd:'Encontrados', achNotFoundHd:'Sin encontrar',
+  achSecretHd:(f,t)=>'Clasificado · encontrados '+f+' de '+t, achSecretLbl:n=>'Clasificado · expediente n.º '+n, achDossier:n=>'expediente n.º '+n,
+  achClaimCls:'Logro', achClaimSec:n=>'Expediente clasificado n.º '+n, achNext:'Siguiente'
+});
+Object.assign(I18N.pt,{
+  achSumOpen:(n,t)=>'Desbloqueado '+n+' de '+t, achLast:'Última descoberta', achNotYet:'Ainda por encontrar', achFoundHd:'Encontradas', achNotFoundHd:'Não encontradas',
+  achSecretHd:(f,t)=>'Sigiloso · encontradas '+f+' de '+t, achSecretLbl:n=>'Sigiloso · dossiê n.º '+n, achDossier:n=>'dossiê n.º '+n,
+  achClaimCls:'Conquista', achClaimSec:n=>'Dossiê sigiloso n.º '+n, achNext:'Próxima'
+});
+Object.assign(I18N.fr,{
+  achSumOpen:(n,t)=>'Débloqué '+n+' sur '+t, achLast:'Dernière trouvaille', achNotYet:'Pas encore trouvé', achFoundHd:'Trouvés', achNotFoundHd:'Non trouvés',
+  achSecretHd:(f,t)=>'Classifié · trouvés '+f+' sur '+t, achSecretLbl:n=>'Classifié · dossier n° '+n, achDossier:n=>'dossier n° '+n,
+  achClaimCls:'Succès', achClaimSec:n=>'Dossier classifié n° '+n, achNext:'Suivant'
+});
+const ACH_TR={
+  c1:{en:{n:'Kármán Line',d:'One hundred kilometers straight up. The edge of space for everyone except the Americans: eighty is enough for them.'},
+    es:{n:'Línea de Kármán',d:'Cien kilómetros hacia arriba. El límite del espacio para todos, salvo para los estadounidenses: a ellos les bastan ochenta.'},
+    pt:{n:'Linha de Kármán',d:'Cem quilômetros para cima. O limite do espaço para todos, exceto os americanos: para eles, oitenta bastam.'},
+    fr:{n:'Ligne de Kármán',d:'Cent kilomètres à la verticale. La limite de l’espace pour tout le monde, sauf pour les Américains : quatre-vingts leur suffisent.'}},
+  f1:{en:{n:'Pilot',d:'The plane obeyed the tilt. Suspicious.'},
+    es:{n:'Piloto',d:'El avión obedeció la inclinación. Sospechoso.'},
+    pt:{n:'Piloto',d:'O avião obedeceu à inclinação. Suspeito.'},
+    fr:{n:'Pilote',d:'L’avion a obéi à l’inclinaison. Suspect.'}},
+  d1:{en:{n:'First Challenge',d:'You challenged a friend. The friend does not know yet that it was a warning.'},
+    es:{n:'Primer desafío',d:'Desafiaste a un amigo. Tu amigo todavía no sabe que era una advertencia.'},
+    pt:{n:'Primeiro desafio',d:'Você desafiou um amigo. Seu amigo ainda não sabe que era um aviso.'},
+    fr:{n:'Premier défi',d:'Vous avez défié un ami. Il ne sait pas encore que c’était un avertissement.'}},
+  d2:{en:{n:'Duel Winner',d:'You beat someone else’s mark. Your friend calls it luck.'},
+    es:{n:'Ganador del duelo',d:'Superaste la marca de otro. Tu amigo lo llama casualidad.'},
+    pt:{n:'Vencedor do duelo',d:'Você superou a marca de outro. Seu amigo chama isso de acaso.'},
+    fr:{n:'Vainqueur du duel',d:'Vous avez battu le record d’un autre. Votre ami appelle ça un coup de chance.'}},
+  o5:{en:{n:'Extra Maneuver',d:'In a single flight, travel twenty-five screen widths sideways. The plane did not complain.'},
+    es:{n:'Maniobra de más',d:'En un solo vuelo, recorre veinticinco anchos de pantalla en horizontal. El avión no se quejó.'},
+    pt:{n:'Manobra extra',d:'Em um único voo, percorra vinte e cinco larguras de tela na horizontal. O avião não reclamou.'},
+    fr:{n:'Manœuvre de trop',d:'En un seul vol, parcourez vingt-cinq largeurs d’écran à l’horizontale. L’avion ne s’est pas plaint.'}},
+  s1:{en:{n:'Poyekhali!',d:'April 12, 1961. One word remembered better than anything else.',h:'There is only ever one beginning.'},
+    es:{n:'¡Poyekhali!',d:'12 de abril de 1961. Una palabra que se recuerda mejor que todo lo demás.',h:'El comienzo siempre es uno.'},
+    pt:{n:'Poyekhali!',d:'12 de abril de 1961. Uma palavra lembrada melhor do que todo o resto.',h:'O começo é sempre um só.'},
+    fr:{n:'Poïekhali !',d:'12 avril 1961. Un mot que l’on retient mieux que tout le reste.',h:'Le début est toujours unique.'}},
+  s2:{en:{n:'All Came Back',d:'Belka and Strelka: seventeen orbits around the Earth. They all came back, the mice too.',h:'The count goes in a row.'},
+    es:{n:'Todos volvieron',d:'Belka y Strelka: diecisiete vueltas a la Tierra. Volvieron todos, y los ratones también.',h:'La cuenta va seguida.'},
+    pt:{n:'Todos voltaram',d:'Belka e Strelka: dezessete voltas ao redor da Terra. Voltaram todos, os ratos também.',h:'A contagem segue em sequência.'},
+    fr:{n:'Tous sont revenus',d:'Belka et Strelka : dix-sept tours autour de la Terre. Tous sont revenus, les souris aussi.',h:'Le compte se fait d’affilée.'}},
+  s3:{en:{n:'Laika',d:'November 3, 1957. For a long time it was said she lived a week. The truth became known in 2002.',h:'Silence is also an answer.'},
+    es:{n:'Laika',d:'3 de noviembre de 1957. Durante mucho tiempo se dijo que vivió una semana. La verdad se supo en 2002.',h:'El silencio también es una respuesta.'},
+    pt:{n:'Laika',d:'3 de novembro de 1957. Por muito tempo se disse que ela viveu uma semana. A verdade só foi conhecida em 2002.',h:'O silêncio também é uma resposta.'},
+    fr:{n:'Laïka',d:'3 novembre 1957. On a longtemps dit qu’elle avait vécu une semaine. La vérité n’a été connue qu’en 2002.',h:'Le silence est aussi une réponse.'}},
+  s4:{en:{n:'Wow!',d:'August 15, 1977. The signal lasted 72 seconds and never repeated.',h:'It lasted a little over a minute.'},
+    es:{n:'¡Wow!',d:'15 de agosto de 1977. La señal duró 72 segundos y no se repitió nunca más.',h:'Duró poco más de un minuto.'},
+    pt:{n:'Wow!',d:'15 de agosto de 1977. O sinal durou 72 segundos e nunca mais se repetiu.',h:'Durou pouco mais de um minuto.'},
+    fr:{n:'Wow !',d:'15 août 1977. Le signal a duré 72 secondes et ne s’est jamais répété.',h:'Il a duré un peu plus d’une minute.'}},
+  s5:{en:{n:'23 by 73',d:'November 16, 1974. 1679 dots sent toward a star cluster. We are still waiting for an answer.',h:'Arrange them in a grid and a picture appears.'},
+    es:{n:'23 por 73',d:'16 de noviembre de 1974. 1679 puntos enviados hacia un cúmulo estelar. Seguimos esperando respuesta.',h:'Si los ordenas, aparece una imagen.'},
+    pt:{n:'23 por 73',d:'16 de novembro de 1974. 1679 pontos enviados a um aglomerado estelar. Seguimos esperando a resposta.',h:'Se você os organizar, surge uma imagem.'},
+    fr:{n:'23 sur 73',d:'16 novembre 1974. 1679 points envoyés vers un amas d’étoiles. Nous attendons toujours la réponse.',h:'Une fois disposés en grille, une image apparaît.'}},
+  s6:{en:{n:'Mote of Dust',d:'February 14, 1990. From six billion kilometers away, Earth is a dot smaller than a pixel.',h:'The smaller it is, the clearer it shows.'},
+    es:{n:'Mota de polvo',d:'14 de febrero de 1990. Desde seis mil millones de kilómetros, la Tierra es un punto más pequeño que un píxel.',h:'Cuanto más pequeño, mejor se ve.'},
+    pt:{n:'Grão de poeira',d:'14 de fevereiro de 1990. A seis bilhões de quilômetros, a Terra é um ponto menor que um pixel.',h:'Quanto menor, melhor se vê.'},
+    fr:{n:'Grain de poussière',d:'14 février 1990. À six milliards de kilomètres, la Terre est un point plus petit qu’un pixel.',h:'Plus c’est petit, mieux on voit.'}},
+  s7:{en:{n:'Don’t Panic',d:'This phrase is on the dashboard of Starman, who has been flying past Earth since February 6, 2018.',h:'The answer to the main question.'},
+    es:{n:'No entres en pánico',d:'Esta frase está en el salpicadero de Starman, que pasa volando junto a la Tierra desde el 6 de febrero de 2018.',h:'La respuesta a la pregunta fundamental.'},
+    pt:{n:'Não entre em pânico',d:'Esta frase está no painel do Starman, que passa voando pela Terra desde 6 de fevereiro de 2018.',h:'A resposta para a questão principal.'},
+    fr:{n:'Pas de panique',d:'Cette inscription figure sur le tableau de bord de « Starman », qui file au large de la Terre depuis le 6 février 2018.',h:'La réponse à la grande question.'}},
+  s8:{en:{n:'Mir',d:'March 23, 2001. The station lived for fifteen years and sank into the Pacific Ocean.',h:'Four stages, one path.'},
+    es:{n:'Mir',d:'23 de marzo de 2001. La estación vivió quince años y se hundió en el océano Pacífico.',h:'Cuatro etapas, un solo camino.'},
+    pt:{n:'Mir',d:'23 de março de 2001. A estação viveu quinze anos e afundou no oceano Pacífico.',h:'Quatro etapas, um só caminho.'},
+    fr:{n:'Mir',d:'23 mars 2001. La station a vécu quinze ans avant de sombrer dans l’océan Pacifique.',h:'Quatre étapes, un seul chemin.'}},
+  s9:{en:{n:'Where Is Everybody?',d:'The Fermi paradox, 1950. If they exist, where are they? The empty track of the month is also an answer.',h:'If they exist, where are they?'},
+    es:{n:'¿Dónde está todo el mundo?',d:'La paradoja de Fermi, 1950. Si existen, ¿dónde están? La pista vacía del mes también es una respuesta.',h:'Si existen, ¿dónde están?'},
+    pt:{n:'Onde está todo mundo?',d:'O paradoxo de Fermi, 1950. Se eles existem, onde estão? A pista vazia do mês também é uma resposta.',h:'Se eles existem, onde estão?'},
+    fr:{n:'Où sont-ils tous ?',d:'Le paradoxe de Fermi, 1950. S’ils existent, où sont-ils ? La trace vide du mois est aussi une réponse.',h:'S’ils existent, où sont-ils ?'}}
+};
+ACH.forEach(a=>{ const tr=ACH_TR[a.id]; if(tr) Object.assign(a,tr); });
+
 function achUnlockedSet(){ return saneArray(Store.get('ach',[]),[]).filter(x=>typeof x==='string'); } // v1.282.20: битое значение роняло achCheck прямо из gameOver — забег и очки терялись
 function achDates(){ const o=Store.get('achD',{}); return (o && typeof o==='object' && !Array.isArray(o))?o:{}; } // id → время получения (мс); у наград, полученных до 02.10.2026, даты нет
 
